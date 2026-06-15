@@ -122,12 +122,16 @@ class WikiDialog(QtWidgets.QDialog):
         self.search_input.textChanged.connect(self._filter_pages)
         search_layout.addWidget(self.search_input)
 
-        self.refresh_btn = QtWidgets.QPushButton("🔄 Refresh")
+        self.refresh_btn = QtWidgets.QToolButton()
+        self.refresh_btn.setText("🔄 Refresh")
+        self.refresh_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.refresh_btn.clicked.connect(self.load_wiki_index)
         search_layout.addWidget(self.refresh_btn)
 
-        self.populate_btn = QtWidgets.QPushButton("📡 Populate Wiki")
+        self.populate_btn = QtWidgets.QToolButton()
+        self.populate_btn.setText("📡 Populate Wiki")
         self.populate_btn.setToolTip("Feed current codebase to LLM Wiki")
+        self.populate_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         if self._populate_callback:
             self.populate_btn.clicked.connect(self._on_populate_clicked)
         else:
@@ -157,7 +161,9 @@ class WikiDialog(QtWidgets.QDialog):
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addStretch()
 
-        self.close_btn = QtWidgets.QPushButton("Close")
+        self.close_btn = QtWidgets.QToolButton()
+        self.close_btn.setText("Close")
+        self.close_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.close_btn.clicked.connect(self.close)
         button_layout.addWidget(self.close_btn)
 
@@ -334,11 +340,6 @@ class AgentPanelWidget(QtWidgets.QWidget):
         self.rpc_status_label.setStyleSheet("color: #888; font-size: 10pt; margin-right: 4px;")
         header_layout.addWidget(self.rpc_status_label)
 
-        self.wiki_btn = QtWidgets.QPushButton("📚 Wiki")
-        self.wiki_btn.setToolTip("Open LLM Wiki")
-        self.wiki_btn.clicked.connect(self._open_wiki)
-        header_layout.addWidget(self.wiki_btn)
-
         layout.addLayout(header_layout)
 
         self.transcript = QtWidgets.QTextBrowser(self)
@@ -357,7 +358,6 @@ class AgentPanelWidget(QtWidgets.QWidget):
             "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
             " stop:0 #7aa2f7, stop:1 #9ece6a); border-radius: 3px; }"
         )
-        layout.addWidget(self.progress_bar)
 
         self.input = EnterAwarePlainTextEdit(self)
         self.input.setPlaceholderText("Ask something... (Enter to send, Shift+Enter for newline)")
@@ -370,32 +370,46 @@ class AgentPanelWidget(QtWidgets.QWidget):
 
         button_layout = QtWidgets.QHBoxLayout()
 
-        self.restart_btn = QtWidgets.QPushButton("🔄 Restart")
+        self.restart_btn = QtWidgets.QToolButton()
+        self.restart_btn.setText("🔄 Restart")
         self.restart_btn.setToolTip("Clear chat history")
+        self.restart_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.restart_btn.clicked.connect(self.clear_history)
         button_layout.addWidget(self.restart_btn)
 
-        button_layout.addStretch()
-
-        self.send_btn = QtWidgets.QPushButton("➡ Send")
-        self.send_btn.setEnabled(False)
-        self.send_btn.setToolTip("Send message (Enter)")
-        self.send_btn.clicked.connect(self._on_send)
-        button_layout.addWidget(self.send_btn)
-
-        self.cancel_btn = QtWidgets.QPushButton("✕ Cancel")
-        self.cancel_btn.setEnabled(False)
-        self.cancel_btn.setToolTip("Cancel running agent operation")
-        self.cancel_btn.setStyleSheet("color: #e06c75; font-weight: bold;")
-        self.cancel_btn.clicked.connect(self._on_cancel)
-        button_layout.addWidget(self.cancel_btn)
-
-        layout.addLayout(button_layout)
+        self.wiki_btn = QtWidgets.QToolButton()
+        self.wiki_btn.setText("📚 Wiki")
+        self.wiki_btn.setToolTip("Open LLM Wiki")
+        self.wiki_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.wiki_btn.clicked.connect(self._open_wiki)
+        button_layout.addWidget(self.wiki_btn)
 
         self.status_label = QtWidgets.QLabel("")
         self.status_label.setStyleSheet("color: #888; font-size: 9pt; padding: 2px 8px;")
         self.status_label.setWordWrap(True)
-        layout.addWidget(self.status_label)
+        button_layout.addWidget(self.status_label)
+
+        self.progress_bar.setParent(self)
+        button_layout.addWidget(self.progress_bar)
+
+        self.send_btn = QtWidgets.QToolButton()
+        self.send_btn.setText("➡ Send")
+        self.send_btn.setEnabled(False)
+        self.send_btn.setToolTip("Send message (Enter)")
+        self.send_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.send_btn.clicked.connect(self._on_send)
+        button_layout.addWidget(self.send_btn)
+
+        self.cancel_btn = QtWidgets.QToolButton()
+        self.cancel_btn.setText("✕ Cancel")
+        self.cancel_btn.setEnabled(False)
+        self.cancel_btn.setToolTip("Cancel running agent operation")
+        self.cancel_btn.setStyleSheet("color: #e06c75; font-weight: bold;")
+        self.cancel_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.cancel_btn.clicked.connect(self._on_cancel)
+        button_layout.addWidget(self.cancel_btn)
+
+        layout.addLayout(button_layout)
 
         self._runtime: Optional[AgentRuntime] = None
         self._runtime_thread: Optional[threading.Thread] = None

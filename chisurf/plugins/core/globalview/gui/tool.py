@@ -56,7 +56,7 @@ QGroupBox::title {
 }
 QToolButton {
     margin: 0;
-    padding: 1px 4px;
+    padding: 1px 6px;
 }
 QCheckBox {
     margin: 0;
@@ -65,13 +65,16 @@ QCheckBox {
 }
 QLabel {
     margin: 0;
-    padding: 0;
+    padding: 0 2px 0 0;
 }
 QLineEdit,
-QComboBox,
 QDoubleSpinBox {
     margin: 0;
     padding: 1px 3px;
+}
+QComboBox {
+    margin: 0;
+    padding: 1px 8px;
 }
 QTabWidget::pane {
     margin: 0;
@@ -89,7 +92,7 @@ QTableView {
 
 
 @persist_plugin_state("globalview")
-class GraphWizard(QtWidgets.QWidget):
+class GraphWizard(QtWidgets.QMainWindow):
 
     graph_layouts = GRAPH_LAYOUTS
 
@@ -108,6 +111,203 @@ class GraphWizard(QtWidgets.QWidget):
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(1)
 
+    def _setup_ui(self):
+        """Set up the main window UI with toolbar, tabs, and statusbar."""
+        self.setWindowTitle("🕸️ ChiSurf Network Visualization")
+        
+        self.parameter_layout = QtWidgets.QVBoxLayout()
+        self.parameter_layout.setContentsMargins(0, 0, 0, 0)
+        self.parameter_layout.setSpacing(0)
+        
+        central_widget = QtWidgets.QWidget(self)
+        self.setCentralWidget(central_widget)
+        
+        main_layout = QtWidgets.QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(2, 2, 2, 2)
+        main_layout.setSpacing(2)
+        
+        self._setup_toolbar()
+        self._setup_tabs(central_widget, main_layout)
+        self._setup_statusbar()
+
+    def _setup_toolbar(self):
+        """Create the toolbar with save, load, and other actions."""
+        toolbar = self.addToolBar("GlobalView Toolbar")
+        toolbar.setObjectName("globalview_toolbar")
+        toolbar.setIconSize(QtCore.QSize(16, 16))
+        toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        
+        self._btn_save = QtWidgets.QToolButton()
+        self._btn_save.setText("💾 Save")
+        self._btn_save.setToolTip("💾 Save the current graph to a GraphML file")
+        toolbar.addWidget(self._btn_save)
+        
+        self._btn_load = QtWidgets.QToolButton()
+        self._btn_load.setText("📂 Load")
+        self._btn_load.setToolTip("📂 Load a graph from a GraphML file")
+        toolbar.addWidget(self._btn_load)
+        
+        toolbar.addSeparator()
+        
+        self._btn_redraw = QtWidgets.QToolButton()
+        self._btn_redraw.setText("🔄 Redraw")
+        self._btn_redraw.setToolTip("🔄 Redraw the graph with current settings")
+        toolbar.addWidget(self._btn_redraw)
+
+    def _setup_tabs(self, central_widget, main_layout):
+        """Create the tab widget with Graph and Parameters tabs."""
+        self.tab_widget = QtWidgets.QTabWidget()
+        main_layout.addWidget(self.tab_widget)
+        
+        self._setup_graph_tab()
+        self._setup_params_tab()
+
+    def _setup_graph_tab(self):
+        """Set up the Graph tab with visualization and link controls."""
+        graph_tab = QtWidgets.QWidget()
+        graph_tab_layout = QtWidgets.QVBoxLayout(graph_tab)
+        graph_tab_layout.setContentsMargins(2, 2, 2, 2)
+        graph_tab_layout.setSpacing(2)
+        
+        self.graphTabLayout = graph_tab_layout
+        
+        self.tab_widget.addTab(graph_tab, "🕸️ Graph")
+        
+        self._setup_visualization_controls(graph_tab_layout)
+        self._setup_link_controls(graph_tab_layout)
+
+    def _setup_visualization_controls(self, parent_layout):
+        """Create the visualization controls group."""
+        viz_group = QtWidgets.QGroupBox("🕸️ Visualization")
+        viz_group.setToolTip("🕸️ Graph visualization settings")
+        viz_layout = QtWidgets.QGridLayout(viz_group)
+        viz_layout.setContentsMargins(2, 2, 2, 2)
+        viz_layout.setSpacing(2)
+        
+        row = 0
+        
+        self._label_node_size = QtWidgets.QLabel("⚪ Node size:")
+        self._label_node_size.setToolTip("⚪ Size of nodes in the graph visualization")
+        viz_layout.addWidget(self._label_node_size, row, 0)
+        
+        self._spin_node_size = QtWidgets.QDoubleSpinBox()
+        self._spin_node_size.setMinimum(0.01)
+        self._spin_node_size.setSingleStep(0.05)
+        self._spin_node_size.setValue(0.02)
+        self._spin_node_size.setToolTip("⚪ Adjust the size of parameter nodes in the graph")
+        viz_layout.addWidget(self._spin_node_size, row, 1)
+        
+        row += 1
+        
+        self._label_graph_scale = QtWidgets.QLabel("📏 Graph scale:")
+        self._label_graph_scale.setToolTip("📏 Scale factor for the graph layout")
+        viz_layout.addWidget(self._label_graph_scale, row, 0)
+        
+        self._spin_graph_scale = QtWidgets.QDoubleSpinBox()
+        self._spin_graph_scale.setMinimum(0.01)
+        self._spin_graph_scale.setSingleStep(0.01)
+        self._spin_graph_scale.setValue(1.00)
+        self._spin_graph_scale.setToolTip("📏 Scale the entire graph layout")
+        viz_layout.addWidget(self._spin_graph_scale, row, 1)
+        
+        row += 1
+        
+        self._label_layout = QtWidgets.QLabel("🎨 Layout:")
+        self._label_layout.setToolTip("🎨 Choose a graph layout algorithm")
+        viz_layout.addWidget(self._label_layout, row, 0)
+        
+        self._combo_layout = QtWidgets.QComboBox()
+        self._combo_layout.setToolTip("🎨 Select graph layout algorithm (kamada_kawai, spring, shell, arf, spectral)")
+        viz_layout.addWidget(self._combo_layout, row, 1, 1, 2)
+        
+        row += 1
+        
+        self._btn_redraw_tab = QtWidgets.QToolButton()
+        self._btn_redraw_tab.setText("🔄 Redraw")
+        self._btn_redraw_tab.setToolTip("🔄 Redraw the graph with current settings")
+        viz_layout.addWidget(self._btn_redraw_tab, row, 2)
+        
+        row += 1
+        
+        self._check_connect_fits = QtWidgets.QCheckBox("🔗 Connect fits")
+        self._check_connect_fits.setToolTip("🔗 Draw connections between fits (visual only, does not link parameters)")
+        viz_layout.addWidget(self._check_connect_fits, row, 0, 1, 2)
+        
+        row += 1
+        
+        self._check_include_fixed = QtWidgets.QCheckBox("📌 Include fixed")
+        self._check_include_fixed.setToolTip("📌 Include fixed parameters in the graph visualization")
+        viz_layout.addWidget(self._check_include_fixed, row, 0, 1, 2)
+        
+        parent_layout.addWidget(viz_group)
+
+    def _setup_link_controls(self, parent_layout):
+        """Create the link controls group."""
+        link_group = QtWidgets.QGroupBox("🔗 Link")
+        link_group.setToolTip("🔗 Parameter linking controls")
+        link_layout = QtWidgets.QGridLayout(link_group)
+        link_layout.setContentsMargins(2, 2, 2, 2)
+        link_layout.setSpacing(2)
+        
+        self._param_widget = QtWidgets.QWidget()
+        self._param_widget.setLayout(self.parameter_layout)
+        link_layout.addWidget(self._param_widget, 0, 0, 4, 1)
+        
+        self._btn_link = QtWidgets.QToolButton()
+        self._btn_link.setText("🔗 Link")
+        self._btn_link.setToolTip("🔗 Link selected parameters (first selection = master)")
+        link_layout.addWidget(self._btn_link, 0, 1)
+        
+        self._btn_clear_links = QtWidgets.QToolButton()
+        self._btn_clear_links.setText("🧹 Clear")
+        self._btn_clear_links.setToolTip("🧹 Clear links from selected parameters")
+        link_layout.addWidget(self._btn_clear_links, 1, 1)
+        
+        self._check_clear_all = QtWidgets.QCheckBox("☑️ all")
+        self._check_clear_all.setToolTip("☑️ Clear links from ALL parameters when clearing")
+        link_layout.addWidget(self._check_clear_all, 2, 1)
+        
+        parent_layout.addWidget(link_group)
+
+    def _setup_params_tab(self):
+        """Set up the Parameters tab."""
+        params_tab = QtWidgets.QWidget()
+        params_tab_layout = QtWidgets.QVBoxLayout(params_tab)
+        params_tab_layout.setContentsMargins(0, 0, 0, 0)
+        params_tab_layout.setSpacing(0)
+        
+        self.paramsTabLayout = params_tab_layout
+        self.tab_widget.addTab(params_tab, "🎛️ Parameters")
+
+    def _setup_statusbar(self):
+        """Create the status bar."""
+        self.status_bar = QtWidgets.QStatusBar(self)
+        self.setStatusBar(self.status_bar)
+        self.status_bar.showMessage("Ready", 3000)
+
+    def _setup_connections(self):
+        """Set up widget connections after UI is created."""
+        self.parameter_table_view = ParameterTableView(self)
+        self.parameter_table_view.refresh_from_fits(self.fit_list)
+        if self.paramsTabLayout is not None:
+            self.paramsTabLayout.addWidget(self.parameter_table_view)
+        self.parameter_table_view.paramChanged.connect(self.recompute_graph)
+        
+        self._combo_layout.addItems(self.graph_layouts)
+        
+        self._btn_link.clicked.connect(self.link_selection)
+        self._btn_clear_links.clicked.connect(self.link_clear)
+        self._btn_redraw.clicked.connect(self.recompute_graph)
+        self._btn_redraw_tab.clicked.connect(self.recompute_graph)
+        self._btn_save.clicked.connect(self.write_graph)
+        self._btn_load.clicked.connect(self.read_graph)
+
+        self._check_connect_fits.stateChanged.connect(self.recompute_graph)
+        self._check_include_fixed.stateChanged.connect(self.recompute_graph)
+        self._combo_layout.currentIndexChanged.connect(self.recompute_graph)
+        self._spin_node_size.valueChanged.connect(self.recompute_graph)
+        self._spin_graph_scale.valueChanged.connect(self.recompute_graph)
+
     def recompute_graph(self):
         node_data = self.make_graph_plot(
             update_callback=self.callback_selection,
@@ -120,7 +320,7 @@ class GraphWizard(QtWidgets.QWidget):
 
     @property
     def clear_all(self):
-        return self.checkBox_3.isChecked()
+        return self._check_clear_all.isChecked()
 
     @property
     def selected_nodes(self):
@@ -128,23 +328,23 @@ class GraphWizard(QtWidgets.QWidget):
 
     @property
     def graph_layout(self):
-        return self.comboBox_layout.currentText()
+        return self._combo_layout.currentText()
 
     @property
     def include_fixed(self):
-        return self.checkBox_include_fixed.isChecked()
+        return self._check_include_fixed.isChecked()
 
     @property
     def connect_fits(self):
-        return self.checkBox_connect_fits.isChecked()
+        return self._check_connect_fits.isChecked()
 
     @property
     def graph_scale(self):
-        return self.doubleSpinBox_2.value()
+        return self._spin_graph_scale.value()
 
     @property
     def node_size(self):
-        return self.doubleSpinBox.value()
+        return self._spin_node_size.value()
 
     def read_graph(self, evt, *args, **kwargs):
         path = kwargs.get(
@@ -462,10 +662,6 @@ class GraphWizard(QtWidgets.QWidget):
         self._compact_layouts(w)
         return node_data
 
-    @cs.gui.decorators.init_with_ui(
-        "globalview.ui",
-        path=cs.core.settings.plugin_path / "core" / "globalview",
-    )
     def __init__(
         self,
         fit_list: Optional[List[Any]] = None,
@@ -475,6 +671,7 @@ class GraphWizard(QtWidgets.QWidget):
         *args,
         **kwargs,
     ):
+        super().__init__(parent)
         if fit_list is None:
             fc = get_fitting_client()
             fit_list = fc.get_fit_objects() if fc is not None else []
@@ -487,31 +684,43 @@ class GraphWizard(QtWidgets.QWidget):
         self.node_data: Dict[str, Any] = {}
         self.connections: List[List[int]] = []
 
+        self._setup_ui()
+        self._setup_connections()
+        
         self.node_data = self.make_graph_plot(
             connect_fits=connect_fits,
             update_callback=self.callback_selection,
             include_fixed=include_fixed,
             fit_list=fit_list,
         )
-
-        self.parameter_table_view = ParameterTableView(self)
-        self.parameter_table_view.refresh_from_fits(fit_list)
-        if hasattr(self, "paramsTabLayout") and self.paramsTabLayout is not None:
-            self.paramsTabLayout.addWidget(self.parameter_table_view)
-        self.parameter_table_view.paramChanged.connect(self.recompute_graph)
-
-        self.toolButton.clicked.connect(self.link_selection)
-        self.toolButton_2.clicked.connect(self.link_clear)
-        self.toolButton_3.clicked.connect(self.recompute_graph)
-        self.toolButton_4.clicked.connect(self.write_graph)
-        self.toolButton_5.clicked.connect(self.read_graph)
-
-        self.checkBox_connect_fits.stateChanged.connect(self.recompute_graph)
-        self.checkBox_include_fixed.stateChanged.connect(self.recompute_graph)
-        self.comboBox_layout.currentIndexChanged.connect(self.recompute_graph)
-        self.comboBox_layout.addItems(self.graph_layouts)
+        
         self.setStyleSheet(COMPACT_STYLE)
         self._compact_layouts(self)
+        self._connect_events()
+
+    def _connect_events(self) -> None:
+        """Subscribe to server events that require a graph rebuild."""
+        from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+        fc = get_fitting_client()
+        if fc is None:
+            return
+        self._subscription_tokens = []
+        cb = lambda p: QtCore.QTimer.singleShot(0, self.recompute_graph)
+        fc.subscribe("fit.", cb)
+        self._subscription_tokens.append(("fit.", cb))
+        cb2 = lambda p: QtCore.QTimer.singleShot(0, self.recompute_graph)
+        fc.subscribe("parameter.", cb2)
+        self._subscription_tokens.append(("parameter.", cb2))
+
+    def closeEvent(self, event):
+        fc = get_fitting_client()
+        if fc is not None:
+            for topic, cb in getattr(self, '_subscription_tokens', []):
+                try:
+                    fc.unsubscribe(topic, cb)
+                except Exception:
+                    pass
+        super().closeEvent(event)
 
 
 if __name__ == "plugin":

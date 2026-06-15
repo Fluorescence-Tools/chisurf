@@ -123,6 +123,7 @@ class CodeEditor(QtWidgets.QWidget):
         self._actions: dict[str, QtWidgets.QAction] = {}
 
         if can_load or filename:
+            self.agent_panel.clear_history()
             self._create_editor_tab(filename=filename, language=language)
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setNewTabButtonVisible(True)
@@ -167,6 +168,7 @@ class CodeEditor(QtWidgets.QWidget):
 
         self.diagnostics_list = QtWidgets.QListWidget(self)
         self.diagnostics_list.setObjectName("code_editor_diagnostics_list")
+        self.diagnostics_list.setMaximumHeight(100)
 
     def project_browser_widget(self) -> QtWidgets.QWidget:
         """Return the shared project file browser widget."""
@@ -425,6 +427,7 @@ class CodeEditor(QtWidgets.QWidget):
 
     def _add_new_editor_tab(self):
         """Create a new blank editor tab with a unique name."""
+        self.agent_panel.clear_history()
         base = "Untitled"
         used = set()
         for i in range(self.tab_widget.count()):

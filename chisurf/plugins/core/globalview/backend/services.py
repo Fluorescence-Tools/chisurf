@@ -13,24 +13,34 @@ def register_services(dispatcher: Any) -> None:
     dispatcher : ServiceDispatcher
         The dispatcher to register handlers with.
     """
-    dispatcher.register("globalview.graph.build", lambda params: graph_build_handler(**params))
-    dispatcher.register("globalview.parameters.list", lambda params: parameters_list_handler(**params))
-    dispatcher.register("globalview.parameters.link", lambda params: parameters_link_handler(**params))
-    dispatcher.register("globalview.parameters.unlink", lambda params: parameters_unlink_handler(**params))
-
-
-def _get_fits() -> List[Any]:
-    """Helper: import cs.fits lazily."""
-    import chisurf as cs
-    return list(getattr(cs, "fits", []))
+    state = getattr(dispatcher, "_state", None)
+    if state is None:
+        import chisurf as _cs
+        class _FallbackState:
+            @property
+            def fits(self):
+                return getattr(_cs, "fits", [])
+        state = _FallbackState()
+    dispatcher.register("globalview.graph.build", lambda params: graph_build_handler(state=state, **params))
+    dispatcher.register("globalview.parameters.list", lambda params: parameters_list_handler(state=state, **params))
+    dispatcher.register("globalview.parameters.link", lambda params: parameters_link_handler(state=state, **params))
+    dispatcher.register("globalview.parameters.unlink", lambda params: parameters_unlink_handler(state=state, **params))
 
 
 def _select_fits(
     fit_indices: Optional[List[int]] = None,
     fit_uids: Optional[List[str]] = None,
+    state: Any = None,
 ) -> List[Any]:
     """Select a subset of fits by index or uid, or all if neither given."""
-    fits = _get_fits()
+    if state is None:
+        import chisurf as _cs
+        class _FallbackState:
+            @property
+            def fits(self):
+                return getattr(_cs, "fits", [])
+        state = _FallbackState()
+    fits = list(getattr(state, "fits", []))
     if fit_uids:
         uid_set = set(fit_uids)
         return [f for f in fits if str(getattr(f, "unique_identifier", "")) in uid_set]
@@ -44,11 +54,12 @@ def graph_build_handler(
     fit_uids: Optional[List[str]] = None,
     include_fixed: bool = True,
     connect_fits: bool = False,
+    state: Any = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Build a parameter relationship graph."""
     try:
-        fits = _select_fits(fit_indices, fit_uids)
+        fits = _select_fits(fit_indices, fit_uids, state=state)
         result = build_graph(
             fit_list=fits,
             include_fixed=include_fixed,
@@ -84,11 +95,12 @@ def parameters_list_handler(
     fit_indices: Optional[List[int]] = None,
     fit_uids: Optional[List[str]] = None,
     include_fixed: bool = True,
+    state: Any = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """List all parameters across fits."""
     try:
-        fits = _select_fits(fit_indices, fit_uids)
+        fits = _select_fits(fit_indices, fit_uids, state=state)
         params_list = []
         for fi, fit in enumerate(fits):
             try:
@@ -135,16 +147,25 @@ def _safe_bounds(bounds: Any) -> List[Optional[float]]:
         return [None, None]
 
 
+def _get_fits_from_state(state: Any = None) -> List[Any]:
+    """Get fits from state or fall back to chisurf module."""
+    if state is not None:
+        return list(getattr(state, "fits", []))
+    import chisurf as cs
+    return list(getattr(cs, "fits", []))
+
+
 def parameters_link_handler(
     source_parameter_name: str,
     target_parameter_name: str,
     source_fit_index: int,
     target_fit_index: int,
+    state: Any = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Link two parameters by name across fits."""
     try:
-        fits = _get_fits()
+        fits = _get_fits_from_state(state)
         if source_fit_index >= len(fits) or target_fit_index >= len(fits):
             return {"ok": False, "error": "Fit index out of range"}
         source_fit = fits[source_fit_index]
@@ -167,11 +188,12 @@ def parameters_link_handler(
 def parameters_unlink_handler(
     parameter_name: str,
     fit_index: int,
+    state: Any = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Unlink a parameter."""
     try:
-        fits = _get_fits()
+        fits = _get_fits_from_state(state)
         if fit_index >= len(fits):
             return {"ok": False, "error": "Fit index out of range"}
         fit = fits[fit_index]

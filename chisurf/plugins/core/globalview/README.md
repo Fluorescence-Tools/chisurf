@@ -25,13 +25,32 @@ Global fitting is a powerful approach in data analysis where multiple datasets a
 parameters. This approach can significantly improve parameter estimation by leveraging information across different 
 experimental conditions or measurements.
 
+## Technical Details
+
+### Workflow/API Contract
+
+GlobalView provides a client-server architecture for parameter relationship visualization and management.
+The GUI communicates with backend services via ZMQ JSON-RPC for graph building and parameter operations.
+
+Integration surfaces:
+
+- Python API: `chisurf.plugins.core.globalview.api`
+- GUI: `chisurf.plugins.core.globalview.gui:GraphWizard`
+- Canonical RPC methods:
+  - `globalview.graph.build` - Build parameter relationship graph
+  - `globalview.parameters.list` - List all parameters across fits
+  - `globalview.parameters.link` - Link parameters by name
+  - `globalview.parameters.unlink` - Unlink a parameter
+
+The GUI is an adapter over `GlobalViewClient`; graph behavior belongs in `api/` and JSON/RPC adaptation belongs in `backend/services.py`.
+
 ## Requirements
 
 - Python packages:
   - PyQt5
+  - PyQtGraph
   - numpy
   - networkx (for graph representation)
-  - matplotlib (for visualization)
 
 ## Usage
 

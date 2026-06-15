@@ -224,7 +224,7 @@ def _validate_fdb_methods_in_manifest(manifest_path: str | Path | None = None) -
     return _validate_mfdb_methods_in_manifest(manifest_path)
 
 
-def status_handler() -> dict[str, Any]:
+def status_handler(auth: dict[str, Any] | None = None, **_: Any) -> dict[str, Any]:
     with FluorescenceDatabase(resolve_database_path()) as db:
         return {
             "source_database": str(source_database_path()),

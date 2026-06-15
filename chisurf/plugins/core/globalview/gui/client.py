@@ -19,34 +19,42 @@ class GlobalViewState:
 class GlobalViewClient:
     """Client for GlobalView backend services.
 
-    Wraps either an InProcessClient (local, default) or a ZmqClient (remote)
-    to provide typed access to GlobalView RPC methods.
+    Wraps a ZmqClient connected to the running ChiSurf RPC server.
     """
 
     def __init__(self, client: Optional[Any] = None):
         self._client = client if client is not None else self._make_local_client()
-        self._is_local = client is None
 
     @staticmethod
     def _make_local_client() -> Any:
-        """Create an in-process client with GlobalView services registered."""
-        from chisurf.server.dispatcher import ServiceDispatcher
-        from chisurf.server.session import SessionState
-        state = SessionState()
-        dispatcher = ServiceDispatcher(state)
-        dispatcher._build_default_registry()
-        from chisurf.plugins.core.globalview.backend.services import register_services
-        register_services(dispatcher)
-        from chisurf.core.plugin.client import InProcessClient
-        return InProcessClient(dispatcher)
+        """Create a ZMQ client connected to the running ChiSurfServer.
+
+        Returns
+        -------
+        ZmqClient
+            Connected ZMQ client using the MFDB RPC port settings.
+        """
+        from chisurf.server.transport.zmq import ZmqClient
+        try:
+            import chisurf.core.settings as _cs_settings
+            mfdb_cfg = _cs_settings.cs_settings.get("mfdb", {}) or {}
+        except Exception:
+            mfdb_cfg = {}
+        client = ZmqClient(
+            cmd_port=int(mfdb_cfg.get("cmd_port", 8765)),
+            pub_port=int(mfdb_cfg.get("pub_port", 8766)),
+            host=str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
+        )
+        client.connect()
+        return client
 
     def call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Call an RPC method.
+        """Call an RPC method, logging any failure.
 
         Parameters
         ----------
         method : str
-            The method name (e.g. ``"globalview.graph.build"``).
+            The method name.
         params : dict or None
             Parameters to pass.
 
@@ -55,7 +63,12 @@ class GlobalViewClient:
         dict
             Response with at least ``"ok"``.
         """
-        return self._client.call(method, params or {})
+        try:
+            return self._client.call(method, params or {})
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("GlobalViewClient: RPC call '%s' failed", method)
+            return {"ok": False}
 
     def build_graph(
         self,

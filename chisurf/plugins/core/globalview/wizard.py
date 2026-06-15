@@ -13,6 +13,6 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.aboutToQuit.connect(app.deleteLater)
     graph_wiz = GraphWizard()
-    graph_wiz.setWindowTitle("🕸️ ChiSurf Parameter Network")
+    graph_wiz.setWindowTitle("ChiSurf Parameter Network 🕸️")
     graph_wiz.show()
     sys.exit(app.exec_())

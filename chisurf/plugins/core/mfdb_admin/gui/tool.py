@@ -98,9 +98,10 @@ class PasswordChangeDialog(QtWidgets.QDialog):
         self.user_id = user_id
         self.is_admin = is_admin
         self.password = ""
+        self.cleared = False
         self.score = 0
         self.setWindowTitle(f"Change Password for {user_id}")
-        self.resize(380, 220)
+        self.resize(380, 240)
         self._setup_ui()
         self._update_strength("")
 
@@ -137,12 +138,31 @@ class PasswordChangeDialog(QtWidgets.QDialog):
         layout.addWidget(self.feedback_label)
 
         buttons = QtWidgets.QHBoxLayout()
-        save_button = QtWidgets.QPushButton("Save")
-        cancel_button = QtWidgets.QPushButton("Cancel")
+        save_button = QtWidgets.QToolButton()
+        save_button.setText("💾 Save")
+        save_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        save_button.setAutoRaise(True)
+        save_button.setToolTip("Save password")
+        clear_button = QtWidgets.QToolButton()
+        clear_button.setText("🚫 Clear")
+        clear_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        clear_button.setAutoRaise(True)
+        clear_button.setToolTip(
+            "Clear the password — the user will be able to log in without one"
+            + (" (disabled for administrators)" if self.is_admin else "")
+        )
+        clear_button.setEnabled(not self.is_admin)
+        cancel_button = QtWidgets.QToolButton()
+        cancel_button.setText("❌ Cancel")
+        cancel_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        cancel_button.setAutoRaise(True)
+        cancel_button.setToolTip("Cancel password change")
         save_button.clicked.connect(self._accept_password)
+        clear_button.clicked.connect(self._clear_password)
         cancel_button.clicked.connect(self.reject)
         buttons.addStretch()
         buttons.addWidget(save_button)
+        buttons.addWidget(clear_button)
         buttons.addWidget(cancel_button)
         layout.addLayout(buttons)
 
@@ -192,6 +212,34 @@ class PasswordChangeDialog(QtWidgets.QDialog):
             )
             return
         self.password = password
+        self.cleared = False
+        self.accept()
+
+    def _clear_password(self) -> None:
+        """Confirm and accept the dialog with an empty (cleared) password."""
+        if self.is_admin:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Not allowed",
+                "Administrator passwords cannot be cleared.",
+            )
+            return
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            "Clear password",
+            (
+                f"Remove the password for '{self.user_id}'?\n\n"
+                "The user will be able to log in without a password. "
+                "Enable 'Allow passwordless login' on the user record if "
+                "you want passwordless login to actually work."
+            ),
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
+        if confirm != QtWidgets.QMessageBox.Yes:
+            return
+        self.password = ""
+        self.cleared = True
         self.accept()
 
     @staticmethod
@@ -230,6 +278,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.client = client or MFDBClient()
         self._loading = False
+        self._auth_login_user: str | None = None
+        self._checkable_tables: list[QtWidgets.QTableWidget] = []
+
+        self._verify_admin_access()
+        self._ensure_authenticated()
 
         # Selection state
         self.current_sample_id = None
@@ -243,7 +296,112 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.setup_menu_bar()
         self.setup_toolbar()
         self.setup_status_bar()
+        self._update_login_actions(logged_in=bool(getattr(self.client, "token", None)))
         self.refresh()
+
+    def _verify_admin_access(self) -> None:
+        """Raise ``PermissionError`` when the active user is not an admin.
+
+        Access is allowed for administrators and during bootstrap (when no
+        admin user exists yet). When the MFDB transport is unreachable the
+        check is skipped so the widget can still surface the transport error
+        through its normal status path.
+        """
+        try:
+            users = self.client.list_users()
+        except Exception:
+            return
+        if not users:
+            return
+        has_any_admin = any(u.get("is_admin") for u in users)
+        if not has_any_admin:
+            return
+        active_id = self._active_mfdb_user_id()
+        active = next((u for u in users if u.get("user_id") == active_id), None)
+        if active and active.get("is_admin"):
+            return
+        raise PermissionError(
+            f"User '{active_id}' is not an administrator. "
+            "mfdb-admin is restricted to MFDB administrators."
+        )
+
+    def _ensure_authenticated(self, username: str | None = None, password: str | None = None) -> None:
+        """Acquire an MFDB session token for the active user.
+
+        Most ``mfdb.*`` endpoints require authentication. We first attempt a
+        passwordless login (works for bootstrap users and accounts that have
+        not set a password yet); if that fails we prompt the operator for the
+        password, retrying up to three times. Cancelling the prompt is allowed
+        — the widget still opens but most tables will surface auth errors.
+        
+        Parameters
+        ----------
+        username : str, optional
+            User ID to authenticate as. Falls back to active MFDB user if not provided.
+        password : str, optional
+            Password to use for authentication. If not provided, tries passwordless login first.
+        """
+        if getattr(self.client, "token", None):
+            self._auth_login_user = getattr(self.client, "_auth_user_id", None)
+            return
+            
+        user_id = username or self._active_mfdb_user_id()
+        if not user_id:
+            return
+        
+        client_metadata = {"name": "mfdb-admin", "host": "local"}
+        
+        # Try with provided password first, or passwordless if no password provided
+        try:
+            result = self.client.login(
+                user_id=user_id, password=password or "", client_metadata=client_metadata
+            )
+        except Exception:
+            result = {}
+            
+        if isinstance(result, dict) and result.get("ok"):
+            self._auth_login_user = user_id
+            return
+            
+        # Only show error if password was explicitly provided and non-empty
+        # If password is empty or None, prompt for it
+        if password is not None and password != "":
+            QtWidgets.QMessageBox.warning(
+                self,
+                "MFDB login failed",
+                "Invalid credentials. Please try again.",
+            )
+            return
+            
+        # No password provided or it failed, prompt for password
+        for _ in range(3):
+            password, ok = QtWidgets.QInputDialog.getText(
+                self,
+                f"MFDB login required ({user_id})",
+                f"Password for '{user_id}':",
+                QtWidgets.QLineEdit.Password,
+            )
+            if not ok:
+                return
+            try:
+                result = self.client.login(
+                    user_id=user_id,
+                    password=password,
+                    client_metadata=client_metadata,
+                )
+            except Exception as exc:
+                QtWidgets.QMessageBox.warning(
+                    self, "MFDB login failed", str(exc)
+                )
+                continue
+            if isinstance(result, dict) and result.get("ok"):
+                self._auth_login_user = user_id
+                return
+            QtWidgets.QMessageBox.warning(
+                self,
+                "MFDB login failed",
+                "Invalid credentials. Please try again.",
+            )
 
     def _is_deleted(self) -> bool:
         return sip is not None and sip.isdeleted(self)
@@ -259,9 +417,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
             pass
 
     @staticmethod
-    def _icon_button(icon: QtWidgets.QStyle.StandardPixmap, tooltip: str, slot: Any) -> QtWidgets.QPushButton:
-        btn = QtWidgets.QPushButton()
+    def _icon_button(icon: QtWidgets.QStyle.StandardPixmap, tooltip: str, slot: Any) -> QtWidgets.QToolButton:
+        btn = QtWidgets.QToolButton()
         btn.setIcon(btn.style().standardIcon(icon))
+        btn.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        btn.setAutoRaise(True)
         btn.setToolTip(tooltip)
         btn.setFixedWidth(32)
         btn.setFixedHeight(28)
@@ -269,12 +429,317 @@ class MFDBWidget(QtWidgets.QMainWindow):
         return btn
 
     @staticmethod
-    def _text_icon_button(text: str, icon: QtWidgets.QStyle.StandardPixmap, tooltip: str, slot: Any) -> QtWidgets.QPushButton:
-        btn = QtWidgets.QPushButton(text)
-        btn.setIcon(btn.style().standardIcon(icon))
+    def _text_icon_button(text: str, icon: QtWidgets.QStyle.StandardPixmap, tooltip: str, slot: Any) -> QtWidgets.QToolButton:
+        btn = QtWidgets.QToolButton()
+        btn.setText(text)
+        btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        btn.setAutoRaise(True)
         btn.setToolTip(tooltip)
         btn.clicked.connect(slot)
         return btn
+
+    @staticmethod
+    def _text_button(text: str, tooltip: str, slot: Any) -> QtWidgets.QToolButton:
+        btn = QtWidgets.QToolButton()
+        btn.setText(text)
+        btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
+        btn.setAutoRaise(True)
+        btn.setToolTip(tooltip)
+        btn.clicked.connect(slot)
+        return btn
+
+    # ------------------------------------------------------------------ #
+    # Table context-menu + checkbox helpers
+    # ------------------------------------------------------------------ #
+
+    def _install_table_context_menu(
+        self,
+        table: QtWidgets.QTableWidget,
+        *,
+        item_kind: str = "item",
+        id_col: int = 0,
+        delete_one_fn: Any = None,
+        usage_fn: Any = None,
+        extra_actions: list[tuple[str, Any]] | None = None,
+    ) -> None:
+        """Install a right-click context menu on *table*.
+
+        The first column is marked checkable so the menu can act on
+        every checked row. ``delete_one_fn(item_id) -> None`` performs
+        the actual delete (we loop over checked ids). ``usage_fn(ids)``
+        returns ``{id: human_description}`` for items that are
+        referenced elsewhere; when non-empty, a second confirmation
+        dialog with a mandatory checkbox is shown.
+
+        Parameters
+        ----------
+        item_kind : str
+            Human label for the items (e.g. ``"user"``).
+        id_col : int
+            Column index that holds the unique id.
+        extra_actions : list of (label, callable)
+            Optional additional menu actions appended at the bottom.
+        """
+        table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        table.customContextMenuRequested.connect(
+            lambda pos, t=table: self._show_table_context_menu(
+                t,
+                pos,
+                item_kind=item_kind,
+                id_col=id_col,
+                delete_one_fn=delete_one_fn,
+                usage_fn=usage_fn,
+                extra_actions=extra_actions or [],
+            )
+        )
+        if table not in self._checkable_tables:
+            self._checkable_tables.append(table)
+        self._apply_checkable_first_column(table)
+
+    def _show_table_context_menu(
+        self,
+        table: QtWidgets.QTableWidget,
+        pos: QtCore.QPoint,
+        *,
+        item_kind: str,
+        id_col: int,
+        delete_one_fn: Any,
+        usage_fn: Any,
+        extra_actions: list[tuple[str, Any]],
+    ) -> None:
+        menu = QtWidgets.QMenu(table)
+        menu.addAction("☑ Check all", lambda: self._set_all_checks(table, True))
+        menu.addAction("☐ Uncheck all", lambda: self._set_all_checks(table, False))
+        menu.addAction("🔁 Invert checks", lambda: self._invert_checks(table))
+        menu.addSeparator()
+        menu.addAction("⬛ Select all rows", table.selectAll)
+        menu.addAction("🔳 Clear selection", table.clearSelection)
+        if delete_one_fn is not None:
+            menu.addSeparator()
+            menu.addAction(
+                f"🗑 Delete checked {item_kind}s…",
+                lambda: self._confirm_and_delete_checked(
+                    table,
+                    item_kind=item_kind,
+                    id_col=id_col,
+                    delete_one_fn=delete_one_fn,
+                    usage_fn=usage_fn,
+                ),
+            )
+        for label, slot in extra_actions:
+            menu.addAction(label, slot)
+        menu.exec(table.viewport().mapToGlobal(pos))
+
+    @staticmethod
+    def _apply_checkable_first_column(table: QtWidgets.QTableWidget) -> None:
+        """Make the first column of every row in *table* user-checkable."""
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            if item is None:
+                item = QtWidgets.QTableWidgetItem("")
+                table.setItem(row, 0, item)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            if item.checkState() not in (QtCore.Qt.Checked, QtCore.Qt.PartiallyChecked):
+                item.setCheckState(QtCore.Qt.Unchecked)
+
+    @staticmethod
+    def _set_all_checks(table: QtWidgets.QTableWidget, checked: bool) -> None:
+        state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            if item is not None and item.flags() & QtCore.Qt.ItemIsUserCheckable:
+                item.setCheckState(state)
+
+    @staticmethod
+    def _invert_checks(table: QtWidgets.QTableWidget) -> None:
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            if item is None or not (item.flags() & QtCore.Qt.ItemIsUserCheckable):
+                continue
+            state = QtCore.Qt.Unchecked if item.checkState() == QtCore.Qt.Checked else QtCore.Qt.Checked
+            item.setCheckState(state)
+
+    @staticmethod
+    def _checked_row_ids(table: QtWidgets.QTableWidget, id_col: int = 0) -> list[str]:
+        result: list[str] = []
+        for row in range(table.rowCount()):
+            mark = table.item(row, 0)
+            if mark is None or mark.checkState() != QtCore.Qt.Checked:
+                continue
+            id_item = table.item(row, id_col)
+            if id_item is not None and id_item.text():
+                result.append(id_item.text())
+        return result
+
+    def _confirm_and_delete_checked(
+        self,
+        table: QtWidgets.QTableWidget,
+        *,
+        item_kind: str,
+        id_col: int,
+        delete_one_fn: Any,
+        usage_fn: Any,
+    ) -> None:
+        ids = self._checked_row_ids(table, id_col=id_col)
+        if not ids:
+            QtWidgets.QMessageBox.information(
+                self,
+                "Nothing checked",
+                f"Check at least one {item_kind} first (use the checkboxes in the first column).",
+            )
+            return
+
+        preview = "\n  • ".join(ids[:10])
+        if len(ids) > 10:
+            preview += f"\n  …(+{len(ids) - 10} more)"
+        first = QtWidgets.QMessageBox.question(
+            self,
+            f"Delete {item_kind}s",
+            f"You are about to delete {len(ids)} {item_kind}(s):\n\n  • {preview}\n\nProceed?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
+        if first != QtWidgets.QMessageBox.Yes:
+            return
+
+        usages: dict[str, str] = {}
+        if usage_fn is not None:
+            try:
+                usages = usage_fn(ids) or {}
+            except Exception:
+                usages = {}
+
+        if usages:
+            details = "\n".join(f"  • {k}: {v}" for k, v in usages.items())
+            warn = QtWidgets.QMessageBox(self)
+            warn.setIcon(QtWidgets.QMessageBox.Warning)
+            warn.setWindowTitle(f"⚠️ {item_kind.capitalize()}s in use")
+            warn.setText(
+                f"The following {item_kind}(s) are referenced elsewhere in MFDB.\n"
+                "Deleting them may cascade or fail:\n\n" + details
+            )
+            warn.setInformativeText(
+                "You must tick the box below to confirm you understand the consequences."
+            )
+            confirm_cb = QtWidgets.QCheckBox(
+                f"I understand — delete these {item_kind}(s) anyway"
+            )
+            warn.setCheckBox(confirm_cb)
+            proceed_btn = warn.addButton("Delete anyway", QtWidgets.QMessageBox.DestructiveRole)
+            warn.addButton(QtWidgets.QMessageBox.Cancel)
+            warn.exec()
+            if warn.clickedButton() is not proceed_btn or not confirm_cb.isChecked():
+                self.status_label.setText("Deletion cancelled.")
+                return
+
+        failures: list[str] = []
+        for item_id in ids:
+            try:
+                delete_one_fn(item_id)
+            except Exception as exc:
+                failures.append(f"{item_id}: {exc}")
+
+        if failures:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Some deletes failed",
+                "\n".join(failures[:10])
+                + ("" if len(failures) <= 10 else f"\n…(+{len(failures) - 10} more)"),
+            )
+        else:
+            self.status_label.setText(
+                f"Deleted {len(ids)} {item_kind}(s) successfully."
+            )
+        self.refresh()
+
+    # ------------------------------------------------------------------ #
+    # Usage-check helpers (count references across MFDB)
+    # ------------------------------------------------------------------ #
+
+    def _safe_list(self, fn) -> list[dict[str, Any]]:
+        try:
+            return list(fn() or [])
+        except Exception:
+            return []
+
+    def _usage_check_users(self, ids: list[str]) -> dict[str, str]:
+        samples = self._safe_list(self.client.list_samples)
+        experiments = self._safe_list(self.client.list_experiments)
+        out: dict[str, str] = {}
+        for uid in ids:
+            n_s = sum(
+                1 for s in samples
+                if s.get("measured_by_user_id") == uid or s.get("measured_by_user") == uid
+            )
+            n_e = sum(
+                1 for e in experiments
+                if e.get("measured_by_user_id") == uid or e.get("measured_by_user") == uid
+            )
+            parts = []
+            if n_s:
+                parts.append(f"{n_s} sample(s)")
+            if n_e:
+                parts.append(f"{n_e} experiment(s)")
+            if parts:
+                out[uid] = ", ".join(parts)
+        return out
+
+    def _usage_check_devices(self, ids: list[str]) -> dict[str, str]:
+        samples = self._safe_list(self.client.list_samples)
+        experiments = self._safe_list(self.client.list_experiments)
+        out: dict[str, str] = {}
+        for did in ids:
+            n_s = sum(1 for s in samples if s.get("measured_by_device_id") == did)
+            n_e = sum(1 for e in experiments if e.get("measured_by_device_id") == did)
+            parts = []
+            if n_s:
+                parts.append(f"{n_s} sample(s)")
+            if n_e:
+                parts.append(f"{n_e} experiment(s)")
+            if parts:
+                out[did] = ", ".join(parts)
+        return out
+
+    def _usage_check_samples(self, ids: list[str]) -> dict[str, str]:
+        experiments = self._safe_list(self.client.list_experiments)
+        out: dict[str, str] = {}
+        for sid in ids:
+            n_e = sum(1 for e in experiments if e.get("sample_id") == sid)
+            if n_e:
+                out[sid] = f"{n_e} experiment(s)"
+        return out
+
+    def _usage_check_experiments(self, ids: list[str]) -> dict[str, str]:
+        raw = self._safe_list(self.client.list_raw_data)
+        runs = self._safe_list(self.client.list_processing_runs)
+        analyses = self._safe_list(self.client.list_analysis_runs)
+        out: dict[str, str] = {}
+        for eid in ids:
+            parts = []
+            n_r = sum(1 for r in raw if r.get("experiment_id") == eid)
+            n_p = sum(1 for r in runs if r.get("experiment_id") == eid)
+            n_a = sum(1 for a in analyses if a.get("experiment_id") == eid)
+            if n_r:
+                parts.append(f"{n_r} raw")
+            if n_p:
+                parts.append(f"{n_p} processing run(s)")
+            if n_a:
+                parts.append(f"{n_a} analysis run(s)")
+            if parts:
+                out[eid] = ", ".join(parts)
+        return out
+
+    def _usage_check_experiment_types(self, ids: list[str]) -> dict[str, str]:
+        experiments = self._safe_list(self.client.list_experiments)
+        out: dict[str, str] = {}
+        for tid in ids:
+            n = sum(
+                1 for e in experiments
+                if str(e.get("type_id")) == tid or str(e.get("experiment_type_id")) == tid
+            )
+            if n:
+                out[tid] = f"{n} experiment(s)"
+        return out
 
     def setup_ui(self) -> None:
         self._central_widget = QtWidgets.QWidget()
@@ -287,104 +752,533 @@ class MFDBWidget(QtWidgets.QMainWindow):
         header.setContentsMargins(4, 4, 4, 0)
         layout.addWidget(header)
 
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.splitter.setHandleWidth(4)
-        layout.addWidget(self.splitter, stretch=1)
-
-        self.left_widget = QtWidgets.QWidget()
-        left_layout = QtWidgets.QVBoxLayout(self.left_widget)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(2)
-
-        search_bar = QtWidgets.QHBoxLayout()
-        search_bar.setContentsMargins(0, 0, 0, 0)
-        search_bar.setSpacing(2)
-        self.sample_search_edit = QtWidgets.QLineEdit()
-        self.sample_search_edit.setPlaceholderText("Search samples by id, description, project, or UUID...")
-        self.sample_search_edit.textChanged.connect(self._filter_sample_table)
-        clear_search = QtWidgets.QPushButton("Clear")
-        clear_search.setFixedWidth(60)
-        clear_search.clicked.connect(lambda: self.sample_search_edit.clear())
-        self.sample_count_label = QtWidgets.QLabel("")
-        search_bar.addWidget(self.sample_search_edit, stretch=1)
-        search_bar.addWidget(self.sample_count_label)
-        search_bar.addWidget(clear_search)
-        left_layout.addLayout(search_bar)
-
-        self.sample_table = QtWidgets.QTableWidget(0, 4)
-        self.sample_table.setHorizontalHeaderLabels(["sample id", "uuid", "description", "probes"])
-        self.sample_table.horizontalHeader().setStretchLastSection(True)
-        self.sample_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.sample_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.sample_table.itemSelectionChanged.connect(self.on_sample_selected)
-        self.sample_table.setAlternatingRowColors(True)
-        left_layout.addWidget(self.sample_table, stretch=1)
-        self.splitter.addWidget(self.left_widget)
-
-        self.tabs = DockArea(self)
+        self.tabs = DockArea(self, stacked_tabs=True)
         self.tabs.setNewTabButtonVisible(False)
         self.tabs.setContextMenuEnabled(True)
         self.tabs.setContextMenuMode("basic")
-        self.tabs.addTab(self.sample_tab(), "Sample")
-        self.tabs.addTab(self.condition_tab(), "Condition")
-        self.tabs.addTab(self.entities_tab(), "Entities")
-        self.tabs.addTab(self.probes_tab(), "Probes")
-        self.tabs.addTab(self.positions_tab(), "Label positions")
-        self.tabs.addTab(self.metadata_tab(), "Metadata")
-        self.tabs.addTab(self.users_tab(), "Users")
-        self.tabs.addTab(self.branches_tab(), "Branches")
-        self.tabs.addTab(self.devices_tab(), "Devices")
-        self.tabs.addTab(self.setups_tab(), "Setups")
-        self.tabs.addTab(self.raw_data_tab(), "Raw data")
-        self.tabs.addTab(self.processing_runs_tab(), "Processing runs")
-        self.tabs.addTab(self.processed_products_tab(), "Processed products")
-        self.tabs.addTab(self.analyses_tab(), "Analyses")
-        self.tabs.addTab(self.provenance_tab(), "Provenance")
-        self.tabs.addTab(self.provenance_graph_dock(), "Provenance graph")
-        self.tabs.addTab(self.experiment_types_tab(), "Experiment types")
-        self.tabs.addTab(self.experiments_tab(), "Experiments")
-        self.tabs.addTab(self.projects_tab(), "Projects")
-        self.tabs.addTab(self.import_export_tab(), "Import/Export")
-        self.splitter.addWidget(self.tabs)
-        self.splitter.setSizes([360, 740])
+        self._tabs_by_name: dict[str, QtWidgets.QWidget] = {}
+        layout.addWidget(self.tabs, stretch=1)
+        tab_widgets = (
+            ("All items", self.all_items_tab()),
+            ("Sample", self.sample_tab()),
+            ("Condition", self.condition_tab()),
+            ("Entities", self.entities_tab()),
+            ("Probes", self.probes_tab()),
+            ("Label positions", self.positions_tab()),
+            ("Metadata", self.metadata_tab()),
+            ("Users", self.users_tab()),
+            ("Branches", self.branches_tab()),
+            ("Devices", self.devices_tab()),
+            ("Setups", self.setups_tab()),
+            ("Raw data", self.raw_data_tab()),
+            ("Processing runs", self.processing_runs_tab()),
+            ("Processed products", self.processed_products_tab()),
+            ("Analyses", self.analyses_tab()),
+            ("Provenance", self.provenance_tab()),
+            ("Provenance graph", self.provenance_graph_dock()),
+            ("Experiment types", self.experiment_types_tab()),
+            ("Experiments", self.experiments_tab()),
+            ("Projects", self.projects_tab()),
+            ("Import/Export", self.import_export_tab()),
+        )
+        for label, widget in tab_widgets:
+            self.tabs.addTab(widget, label)
+            self._tabs_by_name[label] = widget
         self.tabs.layoutChanged.connect(self._save_dock_layout)
 
         self.status_label = QtWidgets.QLabel("")
         self.status_label.setWordWrap(True)
+        layout.addWidget(self.status_label)
 
     def setup_menu_bar(self) -> None:
         file_menu = self.menuBar().addMenu("&File")
-        file_menu.addAction("&Import...", self.import_file)
-        file_menu.addAction("&Export selected sample...", self.export_selected_sample)
-        file_menu.addAction("&Backup database...", self.backup_database)
-        file_menu.addAction("Reset database from source...", self.reset_from_source)
+        file_menu.addAction("⬇️ &Import...", self.import_file)
+        file_menu.addAction("⬆️ &Export selected sample...", self.export_selected_sample)
+        file_menu.addAction("💾 &Backup database...", self.backup_database)
+        file_menu.addAction("♻️ Reset database from source...", self.reset_from_source)
         file_menu.addSeparator()
-        file_menu.addAction("&Close", self.close)
+        file_menu.addAction("❌ &Close", self.close)
 
         settings_menu = self.menuBar().addMenu("&Settings")
-        settings_menu.addAction("&Reset window layout", self.reset_window_layout)
+        settings_menu.addAction("🗔 &Reset window layout", self.reset_window_layout)
 
         help_menu = self.menuBar().addMenu("&Help")
-        help_menu.addAction("&About mfdb-admin", self.show_about)
+        help_menu.addAction("ℹ️ &About mfdb-admin", self.show_about)
+
+    DEFAULT_URL = "tcp://127.0.0.1:8765"
 
     def setup_toolbar(self) -> None:
         toolbar = self.addToolBar("mfdb-admin")
         toolbar.setObjectName("mfdbPluginToolBar")
-        self.refresh_action = toolbar.addAction("Refresh", self.refresh)
+
+        toolbar.addWidget(QtWidgets.QLabel(" 🌐 "))
+        # Server and port fields
+        server_layout = QtWidgets.QHBoxLayout()
+        server_layout.setContentsMargins(0, 0, 0, 0)
+        server_layout.setSpacing(2)
+        
+        # Load server and port from settings
+        import chisurf.core.settings as cs_settings
+        mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
+        last_server = mfdb_settings.get("last_server", "127.0.0.1")
+        last_port = mfdb_settings.get("last_port", 8765)
+        
+        self.server_edit = QtWidgets.QLineEdit()
+        self.server_edit.setText(last_server)
+        self.server_edit.setPlaceholderText("127.0.0.1")
+        self.server_edit.setFixedWidth(140)
+        self.server_edit.setToolTip("MFDB server host")
+        self.server_edit.returnPressed.connect(self._on_login_clicked)
+        self.port_spin = QtWidgets.QSpinBox()
+        self.port_spin.setRange(1, 65535)
+        self.port_spin.setValue(int(last_port))
+        self.port_spin.setFixedWidth(60)
+        self.port_spin.setToolTip("MFDB server port")
+        server_layout.addWidget(self.server_edit)
+        server_layout.addWidget(self.port_spin)
+        
+        # Container widget for the layout
+        server_container = QtWidgets.QWidget()
+        server_container.setLayout(server_layout)
+        toolbar.addWidget(server_container)
+        
+        # Keep url_edit for backwards compatibility with existing code
+        self.url_edit = QtWidgets.QLineEdit()
+        self.url_edit.setText(self.DEFAULT_URL)
+
+        toolbar.addSeparator()
+        toolbar.addWidget(QtWidgets.QLabel(" 👤 "))
+        self.username_edit = QtWidgets.QLineEdit()
+        self.username_edit.setFixedWidth(120)
+        self.username_edit.setToolTip("MFDB username")
+        self.username_edit.returnPressed.connect(self._on_login_clicked)
+        toolbar.addWidget(self.username_edit)
+
+        toolbar.addWidget(QtWidgets.QLabel(" 🔑 "))
+        self.password_edit = QtWidgets.QLineEdit()
+        self.password_edit.setFixedWidth(120)
+        self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.password_edit.setToolTip("MFDB password (not required if already logged in on remote)")
+        self.password_edit.returnPressed.connect(self._on_login_clicked)
+        toolbar.addWidget(self.password_edit)
+
+        self.login_action = toolbar.addAction("🔐 Login", self._on_login_clicked)
+        self.logout_action = toolbar.addAction("🚪 Logout", self._on_logout_clicked)
+        self.login_action.setToolTip("Connect and authenticate at the URL above")
+        self.logout_action.setToolTip("Drop the current MFDB session")
+
+        toolbar.addSeparator()
+        self.user_label = QtWidgets.QLabel(" (not connected) ")
+        self.user_label.setStyleSheet("color: #888; padding: 0 6px;")
+        toolbar.addWidget(self.user_label)
+
+        toolbar.addSeparator()
+        # Add expanding spacer to push transport actions to the right
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        toolbar.addWidget(spacer)
+        toolbar.addSeparator()
+        
+        self.refresh_action = toolbar.addAction("🔄 Refresh", self.refresh)
         self._transport_actions = [self.refresh_action]
         for text, slot in (
-            ("New sample", self.new_sample),
-            ("Import", self.import_file),
-            ("Delete sample", self.delete_sample),
-            ("Backup", self.backup_database),
-            ("Reset from source", self.reset_from_source),
+            ("⬇️ Import", self.import_file),
+            ("💾 Backup", self.backup_database),
+            ("♻️ Reset from source", self.reset_from_source),
         ):
             self._transport_actions.append(toolbar.addAction(text, slot))
         self._set_transport_connected(False)
+        self._update_login_actions(logged_in=False)
+        
+        # Prefill username with current user
+        self._update_username_prefill()
+
+    # ------------------------------------------------------------------ #
+    # Login / logout via toolbar URL
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _parse_url(text: str) -> tuple[str, str, int]:
+        """Return ``(transport, host, port)`` parsed from a URL string.
+
+        ``transport`` is ``"inprocess"`` or ``"tcp"``. Anything that isn't
+        ``inprocess`` is interpreted as a ``host:port`` (``tcp://`` prefix
+        optional). Falls back to ``127.0.0.1:8765`` on parse failure.
+        """
+        raw = (text or "").strip()
+        if not raw or raw.lower() in {"inprocess", "in-process", "local"}:
+            return ("inprocess", "127.0.0.1", 8765)
+        stripped = raw.split("://", 1)[1] if "://" in raw else raw
+        host, _, port_s = stripped.partition(":")
+        host = host or "127.0.0.1"
+        try:
+            port = int(port_s) if port_s else 8765
+        except ValueError:
+            port = 8765
+        return ("tcp", host, port)
+
+    def _update_login_actions(self, *, logged_in: bool = False, connecting: bool = False) -> None:
+        self.login_action.setVisible(not logged_in and not connecting)
+        self.logout_action.setVisible(logged_in)
+        
+        # Set connection status indicator with colored dot
+        if connecting:
+            self.user_label.setText(" ● ")
+            self.user_label.setStyleSheet("color: #ffc107; padding: 0 6px; font-weight: bold;")
+            self.user_label.setToolTip("Connecting...")
+        elif logged_in:
+            self.user_label.setText(" ● ")
+            self.user_label.setStyleSheet("color: #2e7d32; padding: 0 6px; font-weight: bold;")
+            self.user_label.setToolTip("Connected")
+            # Update username field with the logged-in user
+            if self._auth_login_user:
+                self.username_edit.setText(self._auth_login_user)
+        else:
+            self.user_label.setText(" ● ")
+            self.user_label.setStyleSheet("color: #f44336; padding: 0 6px; font-weight: bold;")
+            self.user_label.setToolTip("Not connected")
+        
+        # Always ensure username is prefilled
+        self._update_username_prefill()
+
+    def _update_username_prefill(self) -> None:
+        """Prefill username field with current user, if available."""
+        # Try to get current user from active login
+        if self._auth_login_user:
+            self.username_edit.setText(self._auth_login_user)
+        else:
+            # Fall back to default user from settings
+            default_user = self._active_mfdb_user_id()
+            self.username_edit.setText(default_user)
+
+    def _on_login_clicked(self) -> None:
+        """Reconnect the client at the URL in the toolbar and authenticate."""
+        # Show connecting state
+        self._update_login_actions(logged_in=False, connecting=True)
+        QtWidgets.QApplication.processEvents()
+        
+        # Use server and port fields if available, otherwise fall back to URL parsing
+        if hasattr(self, 'server_edit') and hasattr(self, 'port_spin'):
+            host = self.server_edit.text() or "127.0.0.1"
+            port = self.port_spin.value()
+            transport = "tcp"
+        else:
+            transport, host, port = self._parse_url(self.url_edit.text())
+        
+        try:
+            if transport == "inprocess":
+                self.client = MFDBClient(inprocess=True)
+            else:
+                self.client = MFDBClient(host=host, cmd_port=port, pub_port=port + 1)
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(self, "Connection failed", str(exc))
+            self._update_login_actions(logged_in=False, connecting=False)
+            return
+        
+        try:
+            self._verify_admin_access()
+        except PermissionError as exc:
+            QtWidgets.QMessageBox.critical(self, "Access denied", str(exc))
+            self._update_login_actions(logged_in=False, connecting=False)
+            return
+        
+        # Use username from toolbar field, or fall back to active user
+        username = self.username_edit.text() or self._active_mfdb_user_id()
+        password = self.password_edit.text()
+        
+        self._auth_login_user = None
+        self._ensure_authenticated(username=username, password=password)
+        self._update_login_actions(logged_in=bool(getattr(self.client, "token", None)), connecting=False)
+        self.refresh()
+
+    def _on_logout_clicked(self) -> None:
+        """Log out of MFDB and clear the session token."""
+        try:
+            self.client.logout()
+        except Exception:
+            pass
+        try:
+            self.client.token = None
+        except Exception:
+            pass
+        self._auth_login_user = None
+        self._update_login_actions(logged_in=False)
+        self.status_label.setText("Logged out.")
+
+    # Backwards-compat alias used in earlier revisions
+    def _relogin(self) -> None:
+        self._on_logout_clicked()
+        self._on_login_clicked()
 
     def setup_status_bar(self) -> None:
         self.statusBar().addPermanentWidget(self.status_label, stretch=1)
         self.statusBar().showMessage("Ready")
+
+    # ------------------------------------------------------------------ #
+    # All items dock
+    # ------------------------------------------------------------------ #
+
+    @property
+    def _all_items_sources(self) -> list[dict[str, Any]]:
+        """Definitions describing every MFDB type surfaced in the unified dock.
+
+        Each entry maps a logical type to the client listing call, the dict
+        keys used to render id/label, the target tab the user is jumped to,
+        and the table attribute + id column used for the selection.
+        """
+        return [
+            {"type": "sample", "list": lambda: self.client.list_samples(),
+             "id": "sample_id", "label": "description",
+             "tab": "Sample", "table": None, "id_col": 1},
+            {"type": "experiment", "list": lambda: self.client.list_experiments(),
+             "id": "experiment_id", "label": "sample_id",
+             "tab": "Experiments", "table": "experiments_table", "id_col": 0},
+            {"type": "user", "list": lambda: self.client.list_users(),
+             "id": "user_id", "label": "display_name",
+             "tab": "Users", "table": "users_table", "id_col": 0},
+            {"type": "device", "list": lambda: self.client.list_devices(),
+             "id": "device_id", "label": "name",
+             "tab": "Devices", "table": "devices_table", "id_col": 0},
+            {"type": "probe", "list": lambda: self.client.list_probes(),
+             "id": "probe_id", "label": "chromophore_name",
+             "tab": "Probes", "table": "probes_table", "id_col": 0},
+            {"type": "branch", "list": lambda: self.client.list_branches(),
+             "id": "branch_uuid", "label": "name",
+             "tab": "Branches", "table": "branches_table", "id_col": 1},
+            {"type": "experiment_type",
+             "list": lambda: self.client.list_experiment_types(),
+             "id": "type_id", "label": "name",
+             "tab": "Experiment types", "table": "experiment_types_table", "id_col": 0},
+            {"type": "setup",
+             "list": lambda: self.client._call("mfdb.setups.list").get("setups", []),
+             "id": "setup_id", "label": "name",
+             "tab": "Setups", "table": "setups_table", "id_col": 0},
+            {"type": "raw_data", "list": lambda: self.client.list_raw_data(),
+             "id": "raw_data_id", "label": "data_type",
+             "tab": "Raw data", "table": "raw_data_table", "id_col": 0},
+            {"type": "processing_run",
+             "list": lambda: self.client.list_processing_runs(),
+             "id": "processing_id", "label": "processing_type",
+             "tab": "Processing runs", "table": "processing_runs_table",
+             "id_col": 0},
+            {"type": "processed_data",
+             "list": lambda: self.client.list_processed_data(),
+             "id": "processed_data_id", "label": "product_type",
+             "tab": "Processed products", "table": "processed_products_table",
+             "id_col": 0},
+            {"type": "analysis",
+             "list": lambda: self.client.list_analysis_runs(),
+             "id": "analysis_id", "label": "model_name",
+             "tab": "Analyses", "table": "analyses_table", "id_col": 0},
+            {"type": "project", "list": lambda: self.client.list_projects(),
+             "id": "analysis_id", "label": "model_name",
+             "tab": "Projects", "table": "projects_table", "id_col": 0},
+        ]
+
+    def all_items_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        controls = QtWidgets.QHBoxLayout()
+        controls.setContentsMargins(0, 0, 0, 0)
+        controls.setSpacing(4)
+        controls.addWidget(QtWidgets.QLabel("Type:"))
+        self.all_items_type_combo = QtWidgets.QComboBox()
+        self.all_items_type_combo.addItem("all", "all")
+        for source in self._all_items_sources:
+            self.all_items_type_combo.addItem(source["type"], source["type"])
+        self.all_items_type_combo.currentIndexChanged.connect(
+            lambda _idx: self._filter_all_items_table()
+        )
+        controls.addWidget(self.all_items_type_combo)
+
+        self.all_items_search_edit = QtWidgets.QLineEdit()
+        self.all_items_search_edit.setPlaceholderText("Filter by id, label, or substring...")
+        self.all_items_search_edit.textChanged.connect(self._filter_all_items_table)
+        controls.addWidget(self.all_items_search_edit, stretch=1)
+
+        self.all_items_count_label = QtWidgets.QLabel("0 / 0")
+        controls.addWidget(self.all_items_count_label)
+        refresh_btn = self._text_icon_button(
+            "🔄 Refresh",
+            QtWidgets.QStyle.SP_BrowserReload,
+            "Reload all MFDB items",
+            self._populate_all_items,
+        )
+        controls.addWidget(refresh_btn)
+        layout.addLayout(controls)
+
+        self.all_items_table = QtWidgets.QTableWidget(0, 4)
+        self.all_items_table.setHorizontalHeaderLabels(["type", "id", "label", "details"])
+        self.all_items_table.horizontalHeader().setStretchLastSection(True)
+        self.all_items_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.all_items_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.all_items_table.setAlternatingRowColors(True)
+        self.all_items_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.all_items_table.itemDoubleClicked.connect(self._on_all_item_activated)
+        self.all_items_table.itemActivated.connect(self._on_all_item_activated)
+        layout.addWidget(self.all_items_table, stretch=1)
+
+        hint = QtWidgets.QLabel(
+            "Double-click any row to jump to the matching dock and select the item."
+        )
+        hint.setStyleSheet("color: #777777;")
+        layout.addWidget(hint)
+        return widget
+
+    def _populate_all_items(self) -> None:
+        if not hasattr(self, "all_items_table"):
+            return
+        if self._is_widget_deleted(self.all_items_table):
+            return
+        self.all_items_table.setRowCount(0)
+        for source in self._all_items_sources:
+            try:
+                items = source["list"]() or []
+            except Exception:
+                items = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                row = self.all_items_table.rowCount()
+                self.all_items_table.insertRow(row)
+                payload = {
+                    "type": source["type"],
+                    "tab": source["tab"],
+                    "table": source["table"],
+                    "id_col": source["id_col"],
+                    "id": str(item.get(source["id"], "") or ""),
+                    "data": item,
+                }
+                type_item = QtWidgets.QTableWidgetItem(source["type"])
+                type_item.setData(QtCore.Qt.UserRole, payload)
+                self.all_items_table.setItem(row, 0, type_item)
+                self.all_items_table.setItem(row, 1, QtWidgets.QTableWidgetItem(payload["id"]))
+                label_value = str(item.get(source["label"], "") or "")
+                self.all_items_table.setItem(row, 2, QtWidgets.QTableWidgetItem(label_value))
+                details = self._summarise_item(source["type"], item)
+                self.all_items_table.setItem(row, 3, QtWidgets.QTableWidgetItem(details))
+        self._filter_all_items_table()
+
+    @staticmethod
+    def _summarise_item(item_type: str, item: dict[str, Any]) -> str:
+        """Return a short, single-line description for the all-items table."""
+        keys: tuple[str, ...]
+        if item_type == "sample":
+            keys = ("project_id", "sample_uuid")
+        elif item_type == "experiment":
+            keys = ("experiment_type", "project_id", "status")
+        elif item_type == "user":
+            keys = ("email", "affiliation", "role")
+        elif item_type == "device":
+            keys = ("device_type", "model", "serial_number")
+        elif item_type == "probe":
+            keys = ("category", "probe_origin")
+        elif item_type == "branch":
+            keys = ("parent_branch_uuid", "head_operation_id")
+        elif item_type == "setup":
+            keys = ("instrument_type",)
+        elif item_type == "experiment_type":
+            keys = ("category",)
+        elif item_type == "raw_data":
+            keys = ("storage_mode", "experiment_id")
+        elif item_type == "processing_run":
+            keys = ("status", "experiment_id")
+        elif item_type == "processed_data":
+            keys = ("product_type", "processing_id")
+        elif item_type == "analysis":
+            keys = ("analysis_type", "experiment_id")
+        elif item_type == "project":
+            keys = ("experiment_id", "created_at")
+        else:
+            keys = ()
+        parts = [f"{k}={item.get(k)}" for k in keys if item.get(k)]
+        return ", ".join(parts)
+
+    def _filter_all_items_table(self) -> None:
+        if not hasattr(self, "all_items_table"):
+            return
+        query = self.all_items_search_edit.text().strip().lower()
+        type_filter = self.all_items_type_combo.currentData() or "all"
+        visible = 0
+        for row in range(self.all_items_table.rowCount()):
+            type_item = self.all_items_table.item(row, 0)
+            row_type = type_item.text() if type_item else ""
+            if type_filter != "all" and row_type != type_filter:
+                self.all_items_table.setRowHidden(row, True)
+                continue
+            if query:
+                hit = False
+                for col in range(self.all_items_table.columnCount()):
+                    cell = self.all_items_table.item(row, col)
+                    if cell and query in cell.text().lower():
+                        hit = True
+                        break
+                self.all_items_table.setRowHidden(row, not hit)
+                if hit:
+                    visible += 1
+            else:
+                self.all_items_table.setRowHidden(row, False)
+                visible += 1
+        self.all_items_count_label.setText(
+            f"{visible} / {self.all_items_table.rowCount()}"
+        )
+
+    def _on_all_item_activated(self, item: QtWidgets.QTableWidgetItem) -> None:
+        if item is None:
+            return
+        type_item = self.all_items_table.item(item.row(), 0)
+        if type_item is None:
+            return
+        payload = type_item.data(QtCore.Qt.UserRole)
+        if not isinstance(payload, dict):
+            return
+        self._jump_to_item(payload)
+
+    def _jump_to_item(self, payload: dict[str, Any]) -> None:
+        tab_name = payload.get("tab", "")
+        tab_widget = self._tabs_by_name.get(tab_name)
+        if tab_widget is not None:
+            try:
+                index = self.tabs.indexOf(tab_widget)
+            except Exception:
+                index = -1
+            if index >= 0:
+                if hasattr(self.tabs, "isTabVisible") and hasattr(self.tabs, "showTab"):
+                    try:
+                        if not self.tabs.isTabVisible(index):
+                            self.tabs.showTab(index)
+                    except Exception:
+                        pass
+                try:
+                    self.tabs.setCurrentWidget(tab_widget)
+                except Exception:
+                    pass
+        # Try to select in table first
+        table_attr = payload.get("table")
+        table = getattr(self, table_attr, None) if table_attr else None
+        if table is not None and not self._is_widget_deleted(table):
+            self._select_row_by_id(table, int(payload.get("id_col", 0)), payload.get("id", ""))
+        # If no table or table not found, try to call a load method
+        elif tab_name:
+            item_type = payload.get("type", "")
+            item_id = payload.get("id", "")
+            load_method = getattr(self, f"load_{item_type}", None)
+            if load_method and item_id:
+                load_method(item_id)
+
+    @staticmethod
+    def _select_row_by_id(table: QtWidgets.QTableWidget, id_col: int, value: str) -> None:
+        if table is None or not value:
+            return
+        for row in range(table.rowCount()):
+            cell = table.item(row, id_col)
+            if cell and cell.text() == value:
+                table.selectRow(row)
+                table.scrollToItem(cell, QtWidgets.QAbstractItemView.PositionAtCenter)
+                return
 
     def reset_window_layout(self) -> None:
         settings = self._dock_settings()
@@ -392,7 +1286,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
         settings.remove("geometry")
         settings.remove("state")
         self.resize(1100, 760)
-        self.splitter.setSizes([360, 740])
         self._restore_dock_layout()
 
     def show_about(self) -> None:
@@ -401,24 +1294,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "About mfdb-admin",
             "mfdb-admin\n\nMultiparametric Fluorescence Database\n\nBrowse, edit, import, and export fluorescence measurements, samples, setups, and analysis runs.",
         )
-
-    def _filter_sample_table(self) -> None:
-        query = self.sample_search_edit.text().strip().lower()
-        visible = 0
-        for row in range(self.sample_table.rowCount()):
-            match = False
-            if not query:
-                match = True
-            else:
-                for col in range(self.sample_table.columnCount()):
-                    item = self.sample_table.item(row, col)
-                    if item and query in item.text().lower():
-                        match = True
-                        break
-            self.sample_table.setRowHidden(row, not match)
-            if match:
-                visible += 1
-        self.sample_count_label.setText(f"{visible} / {self.sample_table.rowCount()}")
 
     def sample_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
@@ -431,7 +1306,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.uuid_edit.setPlaceholderText("Auto-generated if left empty")
         self.description_edit = QtWidgets.QLineEdit()
         self.details_edit = QtWidgets.QPlainTextEdit()
-        self.details_edit.setMaximumHeight(90)
+        self.details_edit.setMinimumHeight(60)
         self.num_probes_spin = QtWidgets.QSpinBox()
         self.num_probes_spin.setRange(0, 1000)
         self.solvent_edit = QtWidgets.QComboBox()
@@ -444,9 +1319,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.measured_at_edit = QtWidgets.QLineEdit()
 
         btn_row = QtWidgets.QHBoxLayout()
-        save_btn = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save sample", self.save_sample)
-        clear_btn = self._icon_button(QtWidgets.QStyle.SP_DialogResetButton, "Clear form", self.clear_form)
+        new_btn = self._text_icon_button("🧪 New", QtWidgets.QStyle.SP_FileDialogNewFolder, "Create new sample", self.new_sample)
+        save_btn = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save sample", self.save_sample)
+        delete_btn = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete sample", self.delete_sample)
+        clear_btn = self._text_icon_button("🧹 Clear", QtWidgets.QStyle.SP_DialogResetButton, "Clear form", self.clear_form)
+        btn_row.addWidget(new_btn)
         btn_row.addWidget(save_btn)
+        btn_row.addWidget(delete_btn)
         btn_row.addWidget(clear_btn)
         btn_row.addStretch()
 
@@ -535,11 +1414,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.ionic_spin.setSpecialValueText("auto")
         self.buffer_edit = QtWidgets.QLineEdit()
         self.condition_details_edit = QtWidgets.QPlainTextEdit()
-        self.condition_details_edit.setMaximumHeight(100)
+        self.condition_details_edit.setMinimumHeight(60)
 
         cond_btn_row = QtWidgets.QHBoxLayout()
-        cond_save_btn = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save condition", self.save_condition)
-        cond_clear_btn = self._icon_button(QtWidgets.QStyle.SP_DialogResetButton, "Clear condition", self.clear_condition_form)
+        cond_save_btn = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save condition", self.save_condition)
+        cond_clear_btn = self._text_icon_button("🧹 Clear", QtWidgets.QStyle.SP_DialogResetButton, "Clear condition", self.clear_condition_form)
         cond_btn_row.addWidget(cond_save_btn)
         cond_btn_row.addWidget(cond_clear_btn)
         cond_btn_row.addStretch()
@@ -608,7 +1487,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             ["entity id", "type", "description", "common name", "sequence"]
         )
         self.entities_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.entities_table)
+        layout.addWidget(self.entities_table, stretch=1)
         return widget
 
     def probes_tab(self) -> QtWidgets.QWidget:
@@ -621,7 +1500,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             ["id", "name", "category", "origin", "link", "abs", "em", "QY"]
         )
         self.probes_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.probes_table)
+        layout.addWidget(self.probes_table, stretch=1)
         return widget
 
     def positions_tab(self) -> QtWidgets.QWidget:
@@ -644,7 +1523,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             ]
         )
         self.positions_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.positions_table)
+        layout.addWidget(self.positions_table, stretch=1)
         return widget
 
     def import_export_tab(self) -> QtWidgets.QWidget:
@@ -656,20 +1535,16 @@ class MFDBWidget(QtWidgets.QMainWindow):
         file_row.setContentsMargins(0, 0, 0, 0)
         file_row.setSpacing(2)
         self.file_edit = QtWidgets.QLineEdit()
-        browse_button = QtWidgets.QPushButton("Browse")
-        browse_button.clicked.connect(self.browse_import_file)
+        browse_button = self._text_icon_button("📁 Browse", QtWidgets.QStyle.SP_DirOpenIcon, "Browse for file", self.browse_import_file)
         file_row.addWidget(self.file_edit)
         file_row.addWidget(browse_button)
         layout.addLayout(file_row)
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        import_button = QtWidgets.QPushButton("Import file")
-        export_button = QtWidgets.QPushButton("Export selected sample")
-        export_table_button = QtWidgets.QPushButton("Export table CSV/XLSX")
-        import_button.clicked.connect(self.import_file)
-        export_button.clicked.connect(self.export_selected_sample)
-        export_table_button.clicked.connect(self.export_table)
+        import_button = self._text_icon_button("⬇️ Import file", QtWidgets.QStyle.SP_ArrowDown, "Import file into database", self.import_file)
+        export_button = self._text_icon_button("⬆️ Export selected sample", QtWidgets.QStyle.SP_ArrowUp, "Export selected sample to FLR CIF", self.export_selected_sample)
+        export_table_button = self._text_icon_button("📊 Export table CSV/XLSX", QtWidgets.QStyle.SP_FileIcon, "Export sample table", self.export_table)
         buttons.addWidget(import_button)
         buttons.addWidget(export_button)
         buttons.addWidget(export_table_button)
@@ -681,42 +1556,178 @@ class MFDBWidget(QtWidgets.QMainWindow):
         return widget
 
     def metadata_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        self.metadata_sample_label = QtWidgets.QLabel("No sample selected")
+        self.metadata_sample_label.setStyleSheet("color: #555555;")
+        self.metadata_sample_label.setContentsMargins(4, 4, 4, 0)
+        layout.addWidget(self.metadata_sample_label)
+
         self.metadata_editor = MetadataEditor(columns=3)
-        return self.metadata_editor
+        layout.addWidget(self.metadata_editor, stretch=1)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(2)
+        save_metadata_btn = self._text_icon_button(
+            "💾 Save metadata",
+            QtWidgets.QStyle.SP_DialogSaveButton,
+            "Persist metadata key/value rows for the selected sample",
+            self.save_sample_metadata,
+        )
+        add_metadata_btn = self._text_icon_button(
+            "➕ Add row",
+            QtWidgets.QStyle.SP_FileDialogNewFolder,
+            "Add an empty metadata row",
+            self.add_metadata_row,
+        )
+        delete_metadata_btn = self._text_icon_button(
+            "🗑 Delete row",
+            QtWidgets.QStyle.SP_TrashIcon,
+            "Delete the selected metadata row",
+            self.delete_metadata_row,
+        )
+        buttons.addWidget(save_metadata_btn)
+        buttons.addWidget(add_metadata_btn)
+        buttons.addWidget(delete_metadata_btn)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        return widget
+
+    def save_sample_metadata(self) -> None:
+        """Persist the current metadata editor rows for the loaded sample."""
+        sample_id = (self.current_sample_id or self.sample_id_edit.text()).strip()
+        if not sample_id:
+            self.status_label.setText("Select or save a sample before saving metadata")
+            QtWidgets.QMessageBox.warning(
+                self,
+                "No sample selected",
+                "Select or create a sample first; metadata is stored per sample.",
+            )
+            return
+        try:
+            self.client.save_sample_key_values(sample_id, self.metadata_editor.get_data())
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(self, "Save metadata failed", str(exc))
+            return
+        self.status_label.setText(f"Metadata saved for sample '{sample_id}'")
+
+    USER_ROLE_OPTIONS = [
+        "",
+        "Generic",
+        "Principal Investigator",
+        "Postdoc",
+        "PhD Student",
+        "Master Student",
+        "Bachelor Student",
+        "Technician",
+        "Industry Professional",
+        "Scientist",
+        "Manager",
+        "Other",
+    ]
+
+    USERS_TABLE_COLUMNS = [
+        "id",
+        "display name",
+        "email",
+        "role",
+        "department",
+        "affiliation",
+        "admin",
+        "password",
+    ]
 
     def users_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.users_table = QtWidgets.QTableWidget(0, 7)
-        self.users_table.setHorizontalHeaderLabels(
-            ["id", "display name", "email", "affiliation", "admin", "password", "details"]
-        )
+        self.users_table = QtWidgets.QTableWidget(0, len(self.USERS_TABLE_COLUMNS))
+        self.users_table.setHorizontalHeaderLabels(list(self.USERS_TABLE_COLUMNS))
         self.users_table.horizontalHeader().setStretchLastSection(True)
+        self.users_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.users_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.users_table.setAlternatingRowColors(True)
         self.users_table.itemSelectionChanged.connect(self.load_user)
-        layout.addWidget(self.users_table)
+        self._install_table_context_menu(
+            self.users_table,
+            item_kind="user",
+            id_col=0,
+            delete_one_fn=lambda uid: self.client.delete_user(uid),
+            usage_fn=self._usage_check_users,
+        )
+        layout.addWidget(self.users_table, stretch=1)
+
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
         form.setSpacing(2)
+
+        self.user_uuid_edit = QtWidgets.QLineEdit()
+        self.user_uuid_edit.setPlaceholderText("Auto-generated if left empty")
         self.user_id_edit = QtWidgets.QLineEdit()
         self.user_display_edit = QtWidgets.QLineEdit()
         self.user_email_edit = QtWidgets.QLineEdit()
+        self.user_role_combo = QtWidgets.QComboBox()
+        self.user_role_combo.setEditable(True)
+        self.user_role_combo.addItems(self.USER_ROLE_OPTIONS)
         self.user_affiliation_edit = QtWidgets.QLineEdit()
+        self.user_department_edit = QtWidgets.QLineEdit()
+        self.user_phone_edit = QtWidgets.QLineEdit()
+        self.user_website_edit = QtWidgets.QLineEdit()
+        self.user_address_edit = QtWidgets.QPlainTextEdit()
+        self.user_address_edit.setMinimumHeight(60)
+        self.user_is_admin_check = QtWidgets.QCheckBox("Administrator")
+        self.user_passwordless_check = QtWidgets.QCheckBox("Allow passwordless login")
+        self.user_active_branch_edit = QtWidgets.QLineEdit()
+        self.user_active_branch_edit.setReadOnly(True)
+        self.user_has_password_label = QtWidgets.QLabel("—")
+        self.user_created_label = QtWidgets.QLabel("—")
+        self.user_updated_label = QtWidgets.QLabel("—")
         self.user_details_edit = QtWidgets.QPlainTextEdit()
-        self.user_details_edit.setMaximumHeight(70)
+        self.user_details_edit.setMinimumHeight(60)
+
+        form.addRow("User UUID", self.user_uuid_edit)
         form.addRow("User id", self.user_id_edit)
         form.addRow("Display name", self.user_display_edit)
         form.addRow("Email", self.user_email_edit)
+        form.addRow("Role", self.user_role_combo)
         form.addRow("Affiliation", self.user_affiliation_edit)
+        form.addRow("Department", self.user_department_edit)
+        form.addRow("Phone", self.user_phone_edit)
+        form.addRow("Website", self.user_website_edit)
+        form.addRow("Address", self.user_address_edit)
+        form.addRow("Flags", self.user_is_admin_check)
+        form.addRow("", self.user_passwordless_check)
+        form.addRow("Active branch", self.user_active_branch_edit)
+        form.addRow("Password set", self.user_has_password_label)
+        form.addRow("Created at", self.user_created_label)
+        form.addRow("Updated at", self.user_updated_label)
         form.addRow("Details", self.user_details_edit)
         layout.addLayout(form)
+
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_user_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save user", self.save_user)
-        change_password_button = self._text_icon_button("Pass", QtWidgets.QStyle.SP_DialogApplyButton, "Change password", self.change_user_password)
-        delete_user_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete user", self.delete_user)
+        new_user_button = self._text_icon_button(
+            "👤 New user",
+            QtWidgets.QStyle.SP_FileDialogNewFolder,
+            "Prepare the form for a new user (auto-generates UUID)",
+            self.new_user,
+        )
+        save_user_button = self._text_icon_button(
+            "💾 Save user", QtWidgets.QStyle.SP_DialogSaveButton, "Save user", self.save_user
+        )
+        change_password_button = self._text_icon_button(
+            "🔑 Password", QtWidgets.QStyle.SP_DialogApplyButton, "Change password", self.change_user_password
+        )
+        delete_user_button = self._text_icon_button(
+            "🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete user", self.delete_user
+        )
+        buttons.addWidget(new_user_button)
         buttons.addWidget(save_user_button)
         buttons.addWidget(change_password_button)
         buttons.addWidget(delete_user_button)
@@ -735,7 +1746,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.devices_table.horizontalHeader().setStretchLastSection(True)
         self.devices_table.itemSelectionChanged.connect(self.load_device)
-        layout.addWidget(self.devices_table)
+        self._install_table_context_menu(
+            self.devices_table,
+            item_kind="device",
+            id_col=0,
+            delete_one_fn=lambda did: self.client.delete_device(did),
+            usage_fn=self._usage_check_devices,
+        )
+        layout.addWidget(self.devices_table, stretch=1)
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
         form.setSpacing(2)
@@ -747,7 +1765,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.device_location_edit = QtWidgets.QLineEdit()
         self.device_owner_edit = QtWidgets.QLineEdit()
         self.device_details_edit = QtWidgets.QPlainTextEdit()
-        self.device_details_edit.setMaximumHeight(70)
+        self.device_details_edit.setMinimumHeight(60)
         form.addRow("Device id", self.device_id_edit)
         form.addRow("Name", self.device_name_edit)
         form.addRow("Type", self.device_type_edit)
@@ -760,8 +1778,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_device_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save device", self.save_device)
-        delete_device_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete device", self.delete_device)
+        save_device_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save device", self.save_device)
+        delete_device_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete device", self.delete_device)
         buttons.addWidget(save_device_button)
         buttons.addWidget(delete_device_button)
         buttons.addStretch()
@@ -780,7 +1798,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.branches_table.horizontalHeader().setStretchLastSection(True)
         self.branches_table.itemSelectionChanged.connect(self.load_branch)
-        layout.addWidget(self.branches_table)
+        self._install_table_context_menu(
+            self.branches_table,
+            item_kind="branch",
+            id_col=1,  # branch_uuid lives in col 1
+            delete_one_fn=lambda uuid: self.client.delete_branch(uuid),
+        )
+        layout.addWidget(self.branches_table, stretch=1)
 
         user_group = QtWidgets.QGroupBox("User's Active Branch")
         user_group_layout = QtWidgets.QFormLayout(user_group)
@@ -793,11 +1817,19 @@ class MFDBWidget(QtWidgets.QMainWindow):
         user_group_layout.addRow("Active Branch", self.active_branch_label)
 
         user_buttons = QtWidgets.QHBoxLayout()
-        self.set_active_branch_button = QtWidgets.QPushButton("Switch Active Branch")
-        self.set_active_branch_button.clicked.connect(self.switch_active_branch)
+        self.set_active_branch_button = self._text_icon_button(
+            "🔀 Switch Active Branch",
+            QtWidgets.QStyle.SP_BrowserReload,
+            "Switch the selected user to the chosen branch",
+            self.switch_active_branch,
+        )
         user_buttons.addWidget(self.set_active_branch_button)
-        self.jump_branch_button = QtWidgets.QPushButton("Create Time Branch")
-        self.jump_branch_button.clicked.connect(self.create_time_branch)
+        self.jump_branch_button = self._text_icon_button(
+            "⏱ Create Time Branch",
+            QtWidgets.QStyle.SP_FileDialogNewFolder,
+            "Create and activate a branch at the requested operation",
+            self.create_time_branch,
+        )
         user_buttons.addWidget(self.jump_branch_button)
         user_buttons.addStretch()
         user_group_layout.addRow("", user_buttons)
@@ -812,7 +1844,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.branch_parent_uuid_edit = QtWidgets.QLineEdit()
         self.branch_head_op_edit = QtWidgets.QLineEdit()
         self.branch_description_edit = QtWidgets.QPlainTextEdit()
-        self.branch_description_edit.setMaximumHeight(50)
+        self.branch_description_edit.setMinimumHeight(60)
         form.addRow("Branch UUID", self.branch_uuid_edit)
         form.addRow("Branch Name", self.branch_name_edit)
         form.addRow("Parent Branch UUID", self.branch_parent_uuid_edit)
@@ -823,9 +1855,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_branch_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save/Create branch", self.save_branch)
-        fork_branch_button = self._text_icon_button("Fork", QtWidgets.QStyle.SP_FileDialogNewFolder, "Prefill branch from selected head", self.prefill_branch_fork)
-        delete_branch_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete branch", self.delete_branch)
+        save_branch_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save/Create branch", self.save_branch)
+        fork_branch_button = self._text_icon_button("🍴 Fork", QtWidgets.QStyle.SP_FileDialogNewFolder, "Prefill branch from selected head", self.prefill_branch_fork)
+        delete_branch_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete branch", self.delete_branch)
         buttons.addWidget(save_branch_button)
         buttons.addWidget(fork_branch_button)
         buttons.addWidget(delete_branch_button)
@@ -844,7 +1876,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.experiment_types_table.horizontalHeader().setStretchLastSection(True)
         self.experiment_types_table.itemSelectionChanged.connect(self.load_experiment_type)
-        layout.addWidget(self.experiment_types_table)
+        self._install_table_context_menu(
+            self.experiment_types_table,
+            item_kind="experiment type",
+            id_col=0,
+            delete_one_fn=lambda tid: self.client.delete_experiment_type(int(tid)),
+            usage_fn=self._usage_check_experiment_types,
+        )
+        layout.addWidget(self.experiment_types_table, stretch=1)
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
         form.setSpacing(2)
@@ -853,7 +1892,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.experiment_type_category_edit = QtWidgets.QLineEdit()
         self.experiment_type_description_edit = QtWidgets.QLineEdit()
         self.experiment_type_details_edit = QtWidgets.QPlainTextEdit()
-        self.experiment_type_details_edit.setMaximumHeight(70)
+        self.experiment_type_details_edit.setMinimumHeight(60)
         form.addRow("Type id", self.experiment_type_id_edit)
         form.addRow("Name", self.experiment_type_name_edit)
         form.addRow("Category", self.experiment_type_category_edit)
@@ -863,8 +1902,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment type", self.save_experiment_type)
-        delete_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment type", self.delete_experiment_type)
+        save_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment type", self.save_experiment_type)
+        delete_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment type", self.delete_experiment_type)
         buttons.addWidget(save_button)
         buttons.addWidget(delete_button)
         buttons.addStretch()
@@ -882,7 +1921,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.experiments_table.horizontalHeader().setStretchLastSection(True)
         self.experiments_table.itemSelectionChanged.connect(self.load_experiment)
-        layout.addWidget(self.experiments_table)
+        self._install_table_context_menu(
+            self.experiments_table,
+            item_kind="experiment",
+            id_col=0,
+            delete_one_fn=lambda eid: self.client.delete_experiment(eid),
+            usage_fn=self._usage_check_experiments,
+        )
+        layout.addWidget(self.experiments_table, stretch=2)
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
         form.setSpacing(2)
@@ -896,7 +1942,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.experiment_ended_edit = QtWidgets.QLineEdit()
         self.experiment_status_edit = QtWidgets.QLineEdit()
         self.experiment_details_edit = QtWidgets.QPlainTextEdit()
-        self.experiment_details_edit.setMaximumHeight(70)
+        self.experiment_details_edit.setMinimumHeight(60)
         form.addRow("Experiment id", self.experiment_id_edit)
         form.addRow("Type", self.experiment_type_combo)
         form.addRow("Sample", self.experiment_sample_combo)
@@ -916,16 +1962,16 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.experiment_data_table.horizontalHeader().setStretchLastSection(True)
         self.experiment_data_table.itemSelectionChanged.connect(self.load_experiment_data)
-        layout.addWidget(self.experiment_data_table)
+        layout.addWidget(self.experiment_data_table, stretch=1)
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_experiment_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment", self.save_experiment)
-        delete_experiment_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment", self.delete_experiment)
-        add_data_button = self._text_icon_button("+", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add data row", self.add_experiment_data_row)
-        save_data_button = self._icon_button(QtWidgets.QStyle.SP_DialogSaveButton, "Save data", self.save_experiment_data)
-        delete_data_button = self._text_icon_button("Del", QtWidgets.QStyle.SP_TrashIcon, "Delete data", self.delete_experiment_data)
-        open_data_button = self._text_icon_button("Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open linked data", self.open_experiment_data)
+        save_experiment_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment", self.save_experiment)
+        delete_experiment_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment", self.delete_experiment)
+        add_data_button = self._text_icon_button("➕ Add", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add data row", self.add_experiment_data_row)
+        save_data_button = self._text_icon_button("💾 Save data", QtWidgets.QStyle.SP_DialogSaveButton, "Save data", self.save_experiment_data)
+        delete_data_button = self._text_icon_button("🗑 Del data", QtWidgets.QStyle.SP_TrashIcon, "Delete data", self.delete_experiment_data)
+        open_data_button = self._text_icon_button("📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open linked data", self.open_experiment_data)
         buttons.addWidget(save_experiment_button)
         buttons.addWidget(delete_experiment_button)
         buttons.addWidget(add_data_button)
@@ -957,63 +2003,71 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 action.setEnabled(True)
             else:
                 action.setEnabled(bool(connected))
-        self.splitter.setEnabled(bool(connected))
 
     def refresh(self) -> None:
         self._loading = True
+        failures: list[str] = []
+        transport_ok = False
         try:
-            status = self.client.status()
+            status = self.client.status() or {}
+            transport_ok = True
+            user_db = status.get("user_database", "—")
+            schema = status.get("schema_version", "?")
+            sample_count = status.get("sample_count", "?")
+            experiment_count = status.get("experiment_count", "?")
             status_text = (
-                f"User DB: {status['user_database']} | schema {status['schema_version']} | "
-                f"samples {status['sample_count']} | experiments {status.get('experiment_count', 0)}"
+                f"User DB: {user_db} | schema {schema} | "
+                f"samples {sample_count} | experiments {experiment_count}"
             )
             self.status_label.setText(status_text)
-            self.sample_table.setRowCount(0)
-            for row in self.client.list_samples():
-                index = self.sample_table.rowCount()
-                self.sample_table.insertRow(index)
-                for column, key in enumerate(
-                    [
-                        "sample_id",
-                        "sample_uuid",
-                        "description",
-                        "mapped_probe_count",
-                    ]
-                ):
-                    self.sample_table.setItem(
-                        index, column, QtWidgets.QTableWidgetItem(str(row.get(key, "")))
-                    )
-            self.fill_users()
-            self.fill_devices()
-            self.fill_user_table()
-            self.fill_device_table()
-            self.fill_branch_table()
-            self.fill_branch_user_combo()
-            self.fill_experiment_types()
-            self.fill_experiment_type_table()
-            self.fill_experiment_table()
-            self.fill_project_table()
-            self.fill_experiment_sample_combo()
-            self.fill_experiment_user_combo()
-            self.fill_experiment_device_combo()
-            self.fill_setup_table()
-            self.fill_raw_data_table()
-            self.fill_processing_runs_table()
-            self.fill_processed_products_table()
-            self.fill_analyses_table()
-            self._refresh_sample_id_completer()
-            self._filter_sample_table()
-            if self.sample_table.rowCount() > 0:
-                self.sample_table.selectRow(0)
-            else:
-                self.clear_form()
-            self._set_transport_connected(True)
         except Exception as exc:
-            self._set_transport_connected(False)
             self.status_label.setText(f"MFDB transport unavailable: {exc}")
-            self.sample_table.setRowCount(0)
-        finally:
+            self._set_transport_connected(False)
             self._loading = False
+            return
+
+        def _safe(label: str, fn) -> None:
+            try:
+                fn()
+            except Exception as exc:
+                failures.append(f"{label}: {exc}")
+
+
+        _safe("users (combo)", self.fill_users)
+        _safe("devices (combo)", self.fill_devices)
+        _safe("users", self.fill_user_table)
+        _safe("devices", self.fill_device_table)
+        _safe("branches", self.fill_branch_table)
+        _safe("branch user combo", self.fill_branch_user_combo)
+        _safe("experiment types (combo)", self.fill_experiment_types)
+        _safe("experiment types", self.fill_experiment_type_table)
+        _safe("experiments", self.fill_experiment_table)
+        _safe("projects", self.fill_project_table)
+        _safe("experiment sample combo", self.fill_experiment_sample_combo)
+        _safe("experiment user combo", self.fill_experiment_user_combo)
+        _safe("experiment device combo", self.fill_experiment_device_combo)
+        _safe("setups", self.fill_setup_table)
+        _safe("raw data", self.fill_raw_data_table)
+        _safe("processing runs", self.fill_processing_runs_table)
+        _safe("processed products", self.fill_processed_products_table)
+        _safe("analyses", self.fill_analyses_table)
+        _safe("all items", self._populate_all_items)
+        _safe("sample completer", self._refresh_sample_id_completer)
+        for _table in self._checkable_tables:
+            try:
+                self._apply_checkable_first_column(_table)
+            except Exception:
+                pass
+
+        self._set_transport_connected(transport_ok)
+        if failures:
+            short = failures[0]
+            if len(failures) > 1:
+                short = f"{short} (+{len(failures) - 1} more)"
+            self.status_label.setText(
+                f"{self.status_label.text()}  ⚠ partial refresh — {short}"
+            )
+        self._loading = False
 
     def clear_form(self) -> None:
         for widget in (
@@ -1027,9 +2081,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.condition_id_field,
             self.buffer_edit,
             self.user_id_edit,
+            self.user_uuid_edit,
             self.user_display_edit,
             self.user_email_edit,
             self.user_affiliation_edit,
+            self.user_department_edit,
+            self.user_phone_edit,
+            self.user_website_edit,
+            self.user_active_branch_edit,
             self.device_id_edit,
             self.branch_uuid_edit,
             self.branch_name_edit,
@@ -1055,6 +2114,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.details_edit.clear()
         self.condition_details_edit.clear()
         self.user_details_edit.clear()
+        self.user_address_edit.clear()
+        self.user_is_admin_check.setChecked(False)
+        self.user_passwordless_check.setChecked(False)
+        self.user_has_password_label.setText("—")
+        self.user_created_label.setText("—")
+        self.user_updated_label.setText("—")
+        self.user_role_combo.setCurrentIndex(0)
         self.device_details_edit.clear()
         self.branch_description_edit.clear()
         self.branches_table.setRowCount(0)
@@ -1068,23 +2134,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.probes_table.setRowCount(0)
         self.positions_table.setRowCount(0)
         self.metadata_editor.clear()
+        if hasattr(self, "metadata_sample_label"):
+            self.metadata_sample_label.setText("No sample selected")
         self.users_table.setRowCount(0)
         self.devices_table.setRowCount(0)
         self.experiment_types_table.setRowCount(0)
         self.experiments_table.setRowCount(0)
         self.experiment_data_table.setRowCount(0)
         self.preview_edit.clear()
-
-    def on_sample_selected(self) -> None:
-        if self._is_deleted():
-            return
-        if self._loading:
-            return
-        rows = self.sample_table.selectionModel().selectedRows()
-        if not rows:
-            return
-        sample_id = self.sample_table.item(rows[0].row(), 0).text()
-        self.load_sample(sample_id)
 
     def load_sample(self, sample_id: str) -> None:
         if self._is_deleted():
@@ -1220,6 +2277,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
     def fill_metadata(self, key_values: list[dict[str, Any]]) -> None:
         self.metadata_editor.set_data(key_values)
+        sample_id = (self.current_sample_id or self.sample_id_edit.text()).strip()
+        if sample_id:
+            self.metadata_sample_label.setText(
+                f"Editing metadata for sample: <b>{sample_id}</b>"
+            )
+        else:
+            self.metadata_sample_label.setText("No sample selected")
 
     def collect_sample(self) -> dict[str, Any]:
         entities = []
@@ -1303,13 +2367,51 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.metadata_editor._on_delete_row()
 
     def collect_user(self) -> dict[str, Any]:
-        return {
+        role = self.user_role_combo.currentText().strip() or None
+        payload: dict[str, Any] = {
             "user_id": self.user_id_edit.text().strip(),
+            "user_uuid": self.user_uuid_edit.text().strip() or None,
             "display_name": self.user_display_edit.text().strip(),
             "email": self.user_email_edit.text().strip() or None,
+            "role": role,
             "affiliation": self.user_affiliation_edit.text().strip() or None,
+            "department": self.user_department_edit.text().strip() or None,
+            "phone": self.user_phone_edit.text().strip() or None,
+            "website": self.user_website_edit.text().strip() or None,
+            "address": self.user_address_edit.toPlainText().strip() or None,
             "details": self.user_details_edit.toPlainText().strip() or None,
+            "is_admin": 1 if self.user_is_admin_check.isChecked() else 0,
+            "allow_passwordless_login": 1 if self.user_passwordless_check.isChecked() else 0,
+            "requester_id": self._active_mfdb_user_id(),
         }
+        return payload
+
+    def new_user(self) -> None:
+        """Prepare the user form for a new entry with a generated UUID."""
+        self.users_table.clearSelection()
+        self._loading = True
+        try:
+            self.user_uuid_edit.setText(str(uuid.uuid4()))
+            self.user_id_edit.clear()
+            self.user_display_edit.clear()
+            self.user_email_edit.clear()
+            self.user_role_combo.setCurrentIndex(0)
+            self.user_affiliation_edit.clear()
+            self.user_department_edit.clear()
+            self.user_phone_edit.clear()
+            self.user_website_edit.clear()
+            self.user_address_edit.clear()
+            self.user_is_admin_check.setChecked(False)
+            self.user_passwordless_check.setChecked(False)
+            self.user_active_branch_edit.clear()
+            self.user_has_password_label.setText("not set")
+            self.user_created_label.setText("—")
+            self.user_updated_label.setText("—")
+            self.user_details_edit.clear()
+        finally:
+            self._loading = False
+        self.user_id_edit.setFocus()
+        self.status_label.setText("New user — fill fields and Save")
 
     def save_user(self) -> None:
         users = self.client.save_user(self.collect_user())
@@ -1325,38 +2427,73 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def change_user_password(self) -> None:
-        """Change the selected user's password through the MFDB RPC client."""
+        """Set or clear the selected user's MFDB password.
+
+        Goes through ``save_user`` so the active admin can change the
+        password of any other user. ``change_password`` only updates the
+        password of the currently authenticated principal and is therefore
+        unsuitable for this admin tool.
+        """
         user_id = self.user_id_edit.text().strip()
         if not user_id:
-            QtWidgets.QMessageBox.warning(self, "Selection Required", "Please select or save a user first.")
+            QtWidgets.QMessageBox.warning(
+                self, "Selection Required", "Please select or save a user first."
+            )
             return
         user = self._selected_user_payload()
         is_admin = bool(user.get("is_admin")) if user else False
         dialog = PasswordChangeDialog(user_id=user_id, is_admin=is_admin, parent=self)
         if dialog.exec() != QtWidgets.QDialog.Accepted:
             return
-        requester_id = self._active_mfdb_user_id()
+        payload = {
+            "user_id": user_id,
+            "password": "" if dialog.cleared else dialog.password,
+            "requester_id": self._active_mfdb_user_id(),
+        }
         try:
-            self.client.change_password(
-                user_id=user_id,
-                password=dialog.password,
-                requester_id=requester_id,
-            )
-            self.refresh()
-            QtWidgets.QMessageBox.information(self, "Success", "Password updated.")
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Could not change password: {e}")
+            self.client.save_user(payload)
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Could not change password: {exc}")
+            return
+        self.refresh()
+        if dialog.cleared:
+            QtWidgets.QMessageBox.information(self, "Success", f"Password cleared for '{user_id}'.")
+        else:
+            QtWidgets.QMessageBox.information(self, "Success", f"Password updated for '{user_id}'.")
 
     def load_user(self) -> None:
         rows = self.users_table.selectionModel().selectedRows()
         if not rows:
             return
-        row = rows[0].row()
-        self.user_id_edit.setText(self.users_table.item(row, 0).text() or "")
-        self.user_display_edit.setText(self.users_table.item(row, 1).text() or "")
-        self.user_email_edit.setText(self.users_table.item(row, 2).text() or "")
-        self.user_affiliation_edit.setText(self.users_table.item(row, 3).text() or "")
-        self.user_details_edit.setPlainText(self.users_table.item(row, 6).text() or "")
+        user = self._selected_user_payload()
+        if not user:
+            return
+        self._loading = True
+        try:
+            self.user_uuid_edit.setText(str(user.get("user_uuid") or ""))
+            self.user_id_edit.setText(str(user.get("user_id") or ""))
+            self.user_display_edit.setText(str(user.get("display_name") or ""))
+            self.user_email_edit.setText(str(user.get("email") or ""))
+            role = str(user.get("role") or "")
+            idx = self.user_role_combo.findText(role)
+            if idx >= 0:
+                self.user_role_combo.setCurrentIndex(idx)
+            else:
+                self.user_role_combo.setEditText(role)
+            self.user_affiliation_edit.setText(str(user.get("affiliation") or ""))
+            self.user_department_edit.setText(str(user.get("department") or ""))
+            self.user_phone_edit.setText(str(user.get("phone") or ""))
+            self.user_website_edit.setText(str(user.get("website") or ""))
+            self.user_address_edit.setPlainText(str(user.get("address") or ""))
+            self.user_is_admin_check.setChecked(bool(user.get("is_admin")))
+            self.user_passwordless_check.setChecked(bool(user.get("allow_passwordless_login")))
+            self.user_active_branch_edit.setText(str(user.get("active_branch_uuid") or ""))
+            self.user_has_password_label.setText("set" if user.get("has_password") else "not set")
+            self.user_created_label.setText(str(user.get("created_at") or "—"))
+            self.user_updated_label.setText(str(user.get("updated_at") or "—"))
+            self.user_details_edit.setPlainText(str(user.get("details") or ""))
+        finally:
+            self._loading = False
 
     def fill_user_table(self, users: list[dict[str, Any]] | None = None) -> None:
         users = users if users is not None else self.client.list_users()
@@ -1368,10 +2505,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 user.get("user_id", ""),
                 user.get("display_name", ""),
                 user.get("email", ""),
+                user.get("role", ""),
+                user.get("department", ""),
                 user.get("affiliation", ""),
                 "yes" if user.get("is_admin") else "no",
                 "set" if user.get("has_password") else "none",
-                user.get("details", ""),
             ]
             for column, value in enumerate(values):
                 item = QtWidgets.QTableWidgetItem(str(value or ""))
@@ -2003,6 +3141,10 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.entities_table.setRowCount(0)
         self.positions_table.setRowCount(0)
         self.metadata_editor.clear()
+        if hasattr(self, "metadata_sample_label"):
+            self.metadata_sample_label.setText(
+                f"Editing metadata for sample: <b>{sample_id}</b>"
+            )
 
     def delete_sample(self) -> None:
         sample_id = self.sample_id_edit.text().strip()
@@ -2079,7 +3221,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.projects_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.projects_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.projects_table.itemSelectionChanged.connect(self.load_project_details)
-        layout.addWidget(self.projects_table)
+        self._install_table_context_menu(
+            self.projects_table,
+            item_kind="project",
+            id_col=0,
+            delete_one_fn=lambda pid: self.client.delete_project(pid),
+        )
+        layout.addWidget(self.projects_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2090,7 +3238,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.project_name_edit.setReadOnly(True)
         self.project_notes_edit = QtWidgets.QPlainTextEdit()
         self.project_notes_edit.setReadOnly(True)
-        self.project_notes_edit.setMaximumHeight(100)
+        self.project_notes_edit.setMinimumHeight(60)
 
         form.addRow("Project ID", self.project_id_edit)
         form.addRow("Name", self.project_name_edit)
@@ -2100,10 +3248,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        restore_button = QtWidgets.QPushButton("Restore project to ChiSurf")
-        delete_button = QtWidgets.QPushButton("Delete archived project")
-        restore_button.clicked.connect(self.restore_selected_project)
-        delete_button.clicked.connect(self.delete_selected_project)
+        restore_button = self._text_icon_button(
+            "📥 Restore project to ChiSurf",
+            QtWidgets.QStyle.SP_DialogOpenButton,
+            "Restore project state from database",
+            self.restore_selected_project,
+        )
+        delete_button = self._text_icon_button(
+            "🗑 Delete archived project",
+            QtWidgets.QStyle.SP_TrashIcon,
+            "Delete the archived project",
+            self.delete_selected_project,
+        )
         buttons.addWidget(restore_button)
         buttons.addWidget(delete_button)
         buttons.addStretch()
@@ -2216,7 +3372,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.setups_table.horizontalHeader().setStretchLastSection(True)
         self.setups_table.itemSelectionChanged.connect(self.load_setup)
-        layout.addWidget(self.setups_table)
+        self._install_table_context_menu(
+            self.setups_table,
+            item_kind="setup",
+            id_col=0,
+            delete_one_fn=lambda sid: self.client._call("mfdb.setups.delete", {"setup_id": sid}),
+        )
+        layout.addWidget(self.setups_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2227,7 +3389,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.setup_lasers_edit = QtWidgets.QLineEdit()
         self.setup_detectors_edit = QtWidgets.QLineEdit()
         self.setup_details_edit = QtWidgets.QPlainTextEdit()
-        self.setup_details_edit.setMaximumHeight(70)
+        self.setup_details_edit.setMinimumHeight(60)
 
         form.addRow("Setup id", self.setup_id_edit)
         form.addRow("Name", self.setup_name_edit)
@@ -2244,12 +3406,15 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
-        save_setup_button = QtWidgets.QPushButton("Save setup")
-        delete_setup_button = QtWidgets.QPushButton("Delete setup")
-        validate_setup_button = QtWidgets.QPushButton("Validate setup")
-        save_setup_button.clicked.connect(self.save_setup)
-        delete_setup_button.clicked.connect(self.delete_setup)
-        validate_setup_button.clicked.connect(self.validate_setup)
+        save_setup_button = self._text_icon_button(
+            "💾 Save setup", QtWidgets.QStyle.SP_DialogSaveButton, "Save setup", self.save_setup
+        )
+        delete_setup_button = self._text_icon_button(
+            "🗑 Delete setup", QtWidgets.QStyle.SP_TrashIcon, "Delete setup", self.delete_setup
+        )
+        validate_setup_button = self._text_icon_button(
+            "✅ Validate setup", QtWidgets.QStyle.SP_DialogApplyButton, "Validate setup", self.validate_setup
+        )
         buttons.addWidget(save_setup_button)
         buttons.addWidget(delete_setup_button)
         buttons.addWidget(validate_setup_button)
@@ -2384,7 +3549,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.raw_data_table.horizontalHeader().setStretchLastSection(True)
         self.raw_data_table.itemSelectionChanged.connect(self.load_raw_data)
-        layout.addWidget(self.raw_data_table)
+        layout.addWidget(self.raw_data_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2397,7 +3562,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.raw_checksum_edit = QtWidgets.QLineEdit()
         self.raw_validation_edit = QtWidgets.QLineEdit()
         self.raw_details_edit = QtWidgets.QPlainTextEdit()
-        self.raw_details_edit.setMaximumHeight(70)
+        self.raw_details_edit.setMinimumHeight(60)
 
         for w in (self.raw_id_edit, self.raw_exp_edit, self.raw_type_edit, self.raw_storage_edit, self.raw_path_edit, self.raw_checksum_edit, self.raw_validation_edit, self.raw_details_edit):
             w.setReadOnly(True)
@@ -2413,12 +3578,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
         layout.addLayout(form)
 
         btn_layout = QtWidgets.QHBoxLayout()
-        btn_open = QtWidgets.QPushButton("Open")
-        btn_open.clicked.connect(self._on_raw_open_clicked)
-        btn_copy = QtWidgets.QPushButton("Copy ID")
-        btn_copy.clicked.connect(self._on_raw_copy_clicked)
-        btn_seed = QtWidgets.QPushButton("Use as provenance seed")
-        btn_seed.clicked.connect(self._on_raw_seed_clicked)
+        btn_open = self._text_icon_button(
+            "📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open raw data file/URL", self._on_raw_open_clicked
+        )
+        btn_copy = self._text_icon_button(
+            "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy raw data ID to clipboard", self._on_raw_copy_clicked
+        )
+        btn_seed = self._text_icon_button(
+            "🌱 Use as provenance seed",
+            QtWidgets.QStyle.SP_ArrowRight,
+            "Load this record into the provenance graph",
+            self._on_raw_seed_clicked,
+        )
         btn_layout.addWidget(btn_open)
         btn_layout.addWidget(btn_copy)
         btn_layout.addWidget(btn_seed)
@@ -2521,7 +3692,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.processing_runs_table.horizontalHeader().setStretchLastSection(True)
         self.processing_runs_table.itemSelectionChanged.connect(self.load_processing_run)
-        layout.addWidget(self.processing_runs_table)
+        layout.addWidget(self.processing_runs_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2531,7 +3702,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.proc_type_edit = QtWidgets.QLineEdit()
         self.proc_status_edit = QtWidgets.QLineEdit()
         self.proc_settings_edit = QtWidgets.QPlainTextEdit()
-        self.proc_settings_edit.setMaximumHeight(70)
+        self.proc_settings_edit.setMinimumHeight(60)
 
         for w in (self.proc_id_edit, self.proc_exp_edit, self.proc_type_edit, self.proc_status_edit, self.proc_settings_edit):
             w.setReadOnly(True)
@@ -2544,10 +3715,15 @@ class MFDBWidget(QtWidgets.QMainWindow):
         layout.addLayout(form)
 
         btn_layout = QtWidgets.QHBoxLayout()
-        btn_copy = QtWidgets.QPushButton("Copy ID")
-        btn_copy.clicked.connect(self._on_proc_copy_clicked)
-        btn_seed = QtWidgets.QPushButton("Use as provenance seed")
-        btn_seed.clicked.connect(self._on_proc_seed_clicked)
+        btn_copy = self._text_icon_button(
+            "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy processing ID to clipboard", self._on_proc_copy_clicked
+        )
+        btn_seed = self._text_icon_button(
+            "🌱 Use as provenance seed",
+            QtWidgets.QStyle.SP_ArrowRight,
+            "Load this run into the provenance graph",
+            self._on_proc_seed_clicked,
+        )
         btn_layout.addWidget(btn_copy)
         btn_layout.addWidget(btn_seed)
         btn_layout.addStretch()
@@ -2635,7 +3811,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.processed_products_table.horizontalHeader().setStretchLastSection(True)
         self.processed_products_table.itemSelectionChanged.connect(self.load_processed_product)
-        layout.addWidget(self.processed_products_table)
+        layout.addWidget(self.processed_products_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2666,20 +3842,30 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(2)
 
-        btn_open = QtWidgets.QPushButton("Open")
-        btn_open.clicked.connect(self._on_prod_open_clicked)
+        btn_open = self._text_icon_button(
+            "📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open processed product", self._on_prod_open_clicked
+        )
         buttons.addWidget(btn_open)
 
-        ndx_button = QtWidgets.QPushButton("Open in NDXplorer")
-        ndx_button.clicked.connect(self.open_in_ndxplorer)
+        ndx_button = self._text_icon_button(
+            "🔬 Open in NDXplorer",
+            QtWidgets.QStyle.SP_FileDialogContentsView,
+            "Open the selected product in NDXplorer",
+            self.open_in_ndxplorer,
+        )
         buttons.addWidget(ndx_button)
 
-        btn_copy = QtWidgets.QPushButton("Copy ID")
-        btn_copy.clicked.connect(self._on_prod_copy_clicked)
+        btn_copy = self._text_icon_button(
+            "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy product ID to clipboard", self._on_prod_copy_clicked
+        )
         buttons.addWidget(btn_copy)
 
-        btn_seed = QtWidgets.QPushButton("Use as provenance seed")
-        btn_seed.clicked.connect(self._on_prod_seed_clicked)
+        btn_seed = self._text_icon_button(
+            "🌱 Use as provenance seed",
+            QtWidgets.QStyle.SP_ArrowRight,
+            "Load this product into the provenance graph",
+            self._on_prod_seed_clicked,
+        )
         buttons.addWidget(btn_seed)
 
         buttons.addStretch()
@@ -2843,7 +4029,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.analyses_table.horizontalHeader().setStretchLastSection(True)
         self.analyses_table.itemSelectionChanged.connect(self.load_analysis)
-        layout.addWidget(self.analyses_table)
+        layout.addWidget(self.analyses_table, stretch=1)
 
         form = QtWidgets.QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
@@ -2853,7 +4039,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.analysis_type_field = QtWidgets.QLineEdit()
         self.analysis_model_field = QtWidgets.QLineEdit()
         self.analysis_settings_field = QtWidgets.QPlainTextEdit()
-        self.analysis_settings_field.setMaximumHeight(70)
+        self.analysis_settings_field.setMinimumHeight(60)
 
         for w in (self.analysis_id_field, self.analysis_exp_field, self.analysis_type_field, self.analysis_model_field, self.analysis_settings_field):
             w.setReadOnly(True)
@@ -2866,10 +4052,15 @@ class MFDBWidget(QtWidgets.QMainWindow):
         layout.addLayout(form)
 
         btn_layout = QtWidgets.QHBoxLayout()
-        btn_copy = QtWidgets.QPushButton("Copy ID")
-        btn_copy.clicked.connect(self._on_analysis_copy_clicked)
-        btn_seed = QtWidgets.QPushButton("Use as provenance seed")
-        btn_seed.clicked.connect(self._on_analysis_seed_clicked)
+        btn_copy = self._text_icon_button(
+            "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy analysis ID to clipboard", self._on_analysis_copy_clicked
+        )
+        btn_seed = self._text_icon_button(
+            "🌱 Use as provenance seed",
+            QtWidgets.QStyle.SP_ArrowRight,
+            "Load this analysis into the provenance graph",
+            self._on_analysis_seed_clicked,
+        )
         btn_layout.addWidget(btn_copy)
         btn_layout.addWidget(btn_seed)
         btn_layout.addStretch()
@@ -2950,24 +4141,44 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.prov_seed_id_edit = QtWidgets.QLineEdit()
         toolbar.addWidget(self.prov_seed_id_edit)
 
-        self.btn_load_upstream = QtWidgets.QPushButton("Load upstream")
-        self.btn_load_upstream.clicked.connect(self.load_provenance_upstream)
+        self.btn_load_upstream = self._text_icon_button(
+            "⬆️ Load upstream",
+            QtWidgets.QStyle.SP_ArrowUp,
+            "Trace ancestors of the seed",
+            self.load_provenance_upstream,
+        )
         toolbar.addWidget(self.btn_load_upstream)
 
-        self.btn_load_downstream = QtWidgets.QPushButton("Load downstream")
-        self.btn_load_downstream.clicked.connect(self.load_provenance_downstream)
+        self.btn_load_downstream = self._text_icon_button(
+            "⬇️ Load downstream",
+            QtWidgets.QStyle.SP_ArrowDown,
+            "Trace descendants of the seed",
+            self.load_provenance_downstream,
+        )
         toolbar.addWidget(self.btn_load_downstream)
 
-        self.btn_load_full = QtWidgets.QPushButton("Load full graph")
-        self.btn_load_full.clicked.connect(self.load_provenance_full_graph)
+        self.btn_load_full = self._text_icon_button(
+            "🕸 Load full graph",
+            QtWidgets.QStyle.SP_FileDialogContentsView,
+            "Load the full provenance graph for the seed",
+            self.load_provenance_full_graph,
+        )
         toolbar.addWidget(self.btn_load_full)
 
-        self.btn_export_json = QtWidgets.QPushButton("Export JSON")
-        self.btn_export_json.clicked.connect(self.export_provenance_json_action)
+        self.btn_export_json = self._text_icon_button(
+            "📄 Export JSON",
+            QtWidgets.QStyle.SP_DialogSaveButton,
+            "Export provenance graph as JSON",
+            self.export_provenance_json_action,
+        )
         toolbar.addWidget(self.btn_export_json)
 
-        self.btn_export_zip = QtWidgets.QPushButton("Export ZIP")
-        self.btn_export_zip.clicked.connect(self.export_provenance_zip_action)
+        self.btn_export_zip = self._text_icon_button(
+            "📦 Export ZIP",
+            QtWidgets.QStyle.SP_DriveHDIcon,
+            "Export provenance graph as ZIP archive",
+            self.export_provenance_zip_action,
+        )
         toolbar.addWidget(self.btn_export_zip)
 
         layout.addLayout(toolbar)

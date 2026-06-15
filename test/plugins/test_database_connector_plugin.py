@@ -6,7 +6,7 @@ from pathlib import Path
 
 from chisurf.core.plugin.manifest import load_manifest
 from chisurf.core.plugin.registry import PluginRegistry
-from chisurf.core.plugins.database_connector.services import register_services
+from chisurf.plugins.core.database_connector.services import register_services
 from chisurf.server.dispatcher import ServiceDispatcher
 from chisurf.server.session import SessionState
 
@@ -16,8 +16,8 @@ def test_database_connector_manifest_is_valid():
     manifest_path = (
         Path(__file__).resolve().parents[2]
         / "chisurf"
-        / "core"
         / "plugins"
+        / "core"
         / "database_connector"
         / "manifest.json"
     )
@@ -45,8 +45,8 @@ def test_database_connector_registry_discovers_core_plugin():
     core_plugin_path = (
         Path(__file__).resolve().parents[2]
         / "chisurf"
-        / "core"
         / "plugins"
+        / "core"
     )
     manifests = registry.discover(search_paths=[core_plugin_path])
     assert any(manifest.id == "database_connector" for manifest in manifests)

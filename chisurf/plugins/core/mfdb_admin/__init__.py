@@ -31,14 +31,26 @@ if __name__ == "plugin":
     if existing is not None and sip is not None and sip.isdeleted(existing):
         existing = None
     if existing is None:
-        window = MFDBWidget()
-        if _manifest is not None:
-            apply_manifest_statefulness(window, _manifest)
+        try:
+            window = MFDBWidget()
+        except PermissionError as exc:
+            from qtpy import QtWidgets
+
+            QtWidgets.QMessageBox.critical(
+                None,
+                "mfdb-admin — Access denied",
+                str(exc) or "Administrator privileges are required to open mfdb-admin.",
+            )
+            window = None
+        else:
+            if _manifest is not None:
+                apply_manifest_statefulness(window, _manifest)
     else:
         window = existing
-    window.show()
-    try:
-        window.raise_()
-        window.activateWindow()
-    except Exception:
-        pass
+    if window is not None:
+        window.show()
+        try:
+            window.raise_()
+            window.activateWindow()
+        except Exception:
+            pass
