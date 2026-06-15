@@ -13,6 +13,7 @@ from chisurf.core.models.fcs.maxent import fcs_maxent, fcs_maxent_rh
 from chisurf.gui import plots
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
 import chisurf.core.math.regularization
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 class MaxEntFCSModel(ModelCurve):
@@ -233,7 +234,13 @@ class MaxEntFCSModel(ModelCurve):
         old_log10 = current_log10
         for i, v in enumerate(grid):
             try:
-                self._reg.value = float(v)
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._reg.name),
+                        value=float(v),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
                 self.update_model()
                 chi2_vals[i] = float(self.fit.chi2r)
                 result = self._result
@@ -254,7 +261,13 @@ class MaxEntFCSModel(ModelCurve):
         self._l_curve_solution_norm = sol_vals
         finite_mask = np.isfinite(chi2_vals) & np.isfinite(sol_vals)
         print(f"MaxEntFCSModel.compute_l_curve: done, n={grid.size}, n_finite={int(finite_mask.sum())}")
-        self._reg.value = old_log10
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(self._reg.name),
+                value=old_log10,
+                fit_index=getattr(self.fit, "fit_idx", None),
+            )
         try:
             self.update_model()
         except Exception as e:
@@ -291,7 +304,13 @@ class MaxEntFCSModel(ModelCurve):
             return
         new_log10 = float(vals[idx])
         print(f"MaxEntFCSModel.set_reg_from_lcurve_index: idx={idx}, log10_reg={new_log10}")
-        self._reg.value = new_log10
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(self._reg.name),
+                value=new_log10,
+                fit_index=getattr(self.fit, "fit_idx", None),
+            )
         # For plain model instances, just refresh the MaxEnt result; for
         # widgets (ModelWidget subclasses) the GUI layer will call
         # update_widgets and update_plots around this.
@@ -1094,9 +1113,16 @@ class MaxEntRHModel(ModelCurve):
         chi2_vals = np.empty_like(grid, dtype=float)
         sol_vals = np.empty_like(grid, dtype=float)
         old_log10 = current_log10
+        fc = get_fitting_client()
+        fit_index = getattr(self.fit, "fit_idx", None)
         for i, v in enumerate(grid):
             try:
-                self._reg.value = float(v)
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._reg.name),
+                        value=float(v),
+                        fit_index=fit_index,
+                    )
                 self.update_model()
                 chi2_vals[i] = float(self.fit.chi2r)
                 result = self._result
@@ -1114,7 +1140,12 @@ class MaxEntRHModel(ModelCurve):
         self._l_curve_log10_reg = grid
         self._l_curve_chi2 = chi2_vals
         self._l_curve_solution_norm = sol_vals
-        self._reg.value = old_log10
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(self._reg.name),
+                value=old_log10,
+                fit_index=fit_index,
+            )
         try:
             self.update_model()
         except Exception:
@@ -1149,9 +1180,16 @@ class MaxEntRHModel(ModelCurve):
         if idx < 0 or idx >= vals.size:
             return
         new_log10 = float(vals[idx])
-        self._reg.value = new_log10
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(self._reg.name),
+                value=new_log10,
+                fit_index=getattr(self.fit, "fit_idx", None),
+            )
         try:
-            self.fit.update()
+            if fc is not None:
+                fc.update_fit(fit_index=getattr(self.fit, "fit_idx", None))
         except Exception:
             try:
                 self.update_model()

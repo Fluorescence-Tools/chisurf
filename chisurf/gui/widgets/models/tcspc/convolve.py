@@ -160,9 +160,11 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         # For now, we'll use the existing model update action and handle the
         # property changes through the model's own methods
         try:
-            for f in cs.fits:
+            from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+            fit_objects = get_fitting_client().get_fit_objects()
+            for f in fit_objects:
                 f.model.convolve.mode = self.gui_mode
-            cs.fits[0].model.convolve.do_convolution = self.checkBox.isChecked()
+            fit_objects[0].model.convolve.do_convolution = self.checkBox.isChecked()
             cs.core.actions.dispatch(
                 name="model.update",
                 payload={},

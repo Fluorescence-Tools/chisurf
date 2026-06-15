@@ -20,9 +20,16 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+
 
 @chisurf.core.decorators.register
 class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
+
+    @property
+    def _fc(self):
+        """Try to get the global fitting client; may be None."""
+        return get_fitting_client()
 
     @property
     def selected_fit_index(self) -> int:
@@ -36,12 +43,22 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_fit(self) -> chisurf.core.fitting.fit.FitGroup:
-        return chisurf.fits[self.selected_fit_index]
+    def selected_fit(self):
+        fc = self._fc
+        if fc is not None:
+            fits = fc.list_fits()
+            idx = self.selected_fit_index
+            if 0 <= idx < len(fits):
+                return fits[idx]
+        return {}
 
     @property
-    def selected_fits(self) -> typing.List[chisurf.core.fitting.fit.FitGroup]:
-        return [chisurf.fits[i] for i in self.selected_fit_idx]
+    def selected_fits(self) -> typing.List:
+        fc = self._fc
+        if fc is not None:
+            fits = fc.list_fits()
+            return [fits[i] for i in self.selected_fit_idx if 0 <= i < len(fits)]
+        return []
 
     @property
     def selected_fit_idx(self) -> typing.List[int]:
@@ -57,32 +74,58 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
             self.onRemoveFit()
 
     def onCurveChanged(self):
-        for fit_window in chisurf.cs.mdiarea.subWindowList():
-            if fit_window.fit == self.selected_fit:
-                chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
-                break
+        fc = self._fc
+        if fc is not None:
+            fits = fc.list_fits()
+            sel = self.selected_fit
+            sel_uid = sel.get("uid") if isinstance(sel, dict) else getattr(sel, "unique_identifier", None)
+            _mdiarea = getattr(chisurf, "cs", None)
+            _mdiarea = getattr(_mdiarea, "mdiarea", None) if _mdiarea is not None else None
+            if _mdiarea is not None:
+                for fit_window in _mdiarea.subWindowList():
+                    fit = getattr(fit_window, 'fit', None)
+                    if fit is not None:
+                        win_uid = (fit.get("uid") if isinstance(fit, dict)
+                                   else str(getattr(fit, "unique_identifier", "")))
+                        if win_uid and win_uid == sel_uid:
+                            _mdiarea.setActiveSubWindow(fit_window)
+                            break
+                    elif isinstance(sel, dict) and hasattr(fit_window, 'fit_uid'):
+                        if getattr(fit_window, 'fit_uid', None) == sel_uid:
+                            _mdiarea.setActiveSubWindow(fit_window)
+                            break
         self.change_event()
 
     def onChangeCurveName(self):
-        # select current curve and change its name
         pass
 
     def onRemoveFit(self):
-        fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
-        for fit_idx in fit_idxs:
-            try:
-                chisurf.core.actions.dispatch(
-                    name="fit.close",
-                    payload={"idx": int(fit_idx)},
-                )
-            except Exception:
-                pass
+        fc = self._fc
+        if fc is not None:
+            fit_uids = []
+            fits = fc.list_fits()
+            for si in self.selectedIndexes():
+                idx = si.row()
+                if 0 <= idx < len(fits):
+                    uid = fits[idx].get("uid")
+                    if uid:
+                        fit_uids.append(uid)
+            if fit_uids:
+                fc.remove_fits(fit_uids=fit_uids)
         self.update(update_others=True)
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
-        for fit_window in chisurf.cs.mdiarea.subWindowList():
-            chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
-            chisurf.cs.onSaveFit()
+        fc = self._fc
+        if fc is not None:
+            fits = fc.list_fits()
+            for si in self.selectedIndexes():
+                idx = si.row()
+                if 0 <= idx < len(fits):
+                    fit_data = fits[idx]
+                    fc.save_fit(
+                        filename=fit_data.get("name", "fit_export"),
+                        fit_uid=fit_data.get("uid"),
+                    )
 
     def contextMenuEvent(self, event):
         if self.context_menu_enabled:
@@ -94,45 +137,37 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
             menu.exec_(event.globalPos())
 
     def update(self, *args, update_others=True, **kwargs):
-        # Optimize: avoid triggering expensive fit.update() on every list rebuild
-        # and minimize signal/paint churn during population.
         try:
             self.blockSignals(True)
             self.setUpdatesEnabled(False)
             super().update()
             self.clear()
 
-            for nbr, fit in enumerate(chisurf.fits):
-                # Only use lightweight data to populate the list; do not call fit.update() here.
-                try:
-                    widget_name = pathlib.Path(fit.data.name).name
-                except Exception:
-                    widget_name = getattr(fit.data, 'name', 'Unknown')
-                try:
-                    model_name = fit.model.__class__.name
-                except Exception:
-                    model_name = getattr(fit.model.__class__, '__name__', 'Model')
-                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
-                item.setToolTip(1, getattr(fit, 'name', widget_name))
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+            fc = self._fc
+            if fc is not None:
+                for nbr, fit_dto in enumerate(fc.list_fits()):
+                    widget_name = fit_dto.get("dataset_name", "Unknown")
+                    model_name = fit_dto.get("model_name", "Model")
+                    item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
+                    item.setToolTip(1, fit_dto.get("name", widget_name))
+                    item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
         finally:
             self.setUpdatesEnabled(True)
             self.blockSignals(False)
 
     def onItemChanged(self):
         if self.selected_fits:
-            ds = self.selected_fits[0]
-
-            # Find the index of the selected dataset
-            index_of_ds = chisurf.fits.index(ds)
-
-            # Remove "c" from its current position
-            chisurf.fits.pop(index_of_ds)
-
-            # Insert "c" at position 1
-            idx_new = int(self.currentItem().text(0))
-            chisurf.fits.insert(idx_new, ds)
-
+            fc = self._fc
+            if fc is not None:
+                ds = self.selected_fits[0]
+                idx_new = int(self.currentItem().text(0))
+                fits = fc.list_fits()
+                uids = [f.get("uid") for f in fits if f.get("uid")]
+                ds_uid = ds.get("uid") if isinstance(ds, dict) else getattr(ds, "unique_identifier", None)
+                if ds_uid in uids:
+                    uids.remove(ds_uid)
+                    uids.insert(idx_new, ds_uid)
+                    fc.reorder_fits(uids)
             self.update(update_others=True)
 
     def change_event(self):
@@ -158,7 +193,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         if get_data_sets is None:
             def get_data_sets(**kwargs):
                 return chisurf.core.data.get_data(
-                    data_set=chisurf.imported_datasets,
+                    data_set=getattr(chisurf, "imported_datasets", []),
                     **kwargs
                 )
             self.get_data_sets = get_data_sets

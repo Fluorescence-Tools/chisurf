@@ -13,6 +13,7 @@ from chisurf.core.models.model import ModelCurve
 from chisurf.core.fitting.parameter import FittingParameter
 from chisurf.gui import plots
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 # Reuse dye database and physical helpers from the FCS calculator plugin
 from chisurf.plugins.fcs.fcs_calculator.wizard import (
@@ -295,15 +296,29 @@ class DyeShapeFCSModel(ModelCurve):
         # Update derived diffusion coefficient in µm²/s for display.
         try:
             D_um2_s = D_m2_s * 1.0e12
-            self._D.value = D_um2_s
-            self._D.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._D.name), value=D_um2_s, fit_index=fit_idx,
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._D.name), fixed=True, fit_index=fit_idx,
+                )
         except Exception:
             pass
 
         # Update derived diffusion time in ms for display.
         try:
-            self._tauD.value = tauD_ms
-            self._tauD.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._tauD.name), value=tauD_ms, fit_index=fit_idx,
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._tauD.name), fixed=True, fit_index=fit_idx,
+                )
         except Exception:
             pass
 
@@ -349,8 +364,15 @@ class DyeShapeFCSModel(ModelCurve):
         # Simple CPM definition: mean count rate per bright molecule.
         cpm = cr / N_val
         try:
-            self._cpm.value = cpm
-            self._cpm.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._cpm.name), value=cpm, fit_index=fit_idx,
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._cpm.name), fixed=True, fit_index=fit_idx,
+                )
         except Exception:
             pass
 
@@ -382,8 +404,15 @@ class DyeShapeFCSModel(ModelCurve):
                 return
 
             cpm_all = cr / N_all
-            self._cpm_all.value = cpm_all
-            self._cpm_all.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._cpm_all.name), value=cpm_all, fit_index=fit_idx,
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._cpm_all.name), fixed=True, fit_index=fit_idx,
+                )
         except Exception:
             pass
 

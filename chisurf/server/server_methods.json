@@ -62,6 +62,9 @@
     {"rpc": "fit.update", "service": "fits.fit_update", "event_bus": true},
     {"rpc": "fit.save", "service": "fits.fit_save", "event_bus": true},
     {"rpc": "fit.curve_data", "service": "fits.fit_curve_data"},
+    {"rpc": "fit.diagnostics", "service": "fits.fit_diagnostics"},
+    {"rpc": "fit.parameter_snapshot", "service": "fits.fit_parameter_snapshot"},
+    {"rpc": "fit.restore_parameters", "service": "fits.fit_restore_parameters"},
 
     {"rpc": "parameter.get", "service": "parameters.get_parameter"},
     {"rpc": "parameter.set_value", "service": "parameters.set_parameter_value"},
@@ -85,6 +88,7 @@
     {"rpc": "graph.build_fits", "service": "graph.build_fit_graph"},
     {"rpc": "graph.build", "service": "graph.build_fit_graph"},
     {"rpc": "log.write", "service": "log_svc.write_log"},
+
     {"rpc": "editor.document.list", "service": "code_editor.list_documents"},
     {"rpc": "editor.document.get", "service": "code_editor.get_document"},
     {"rpc": "editor.document.set", "service": "code_editor.set_document"},
@@ -106,6 +110,28 @@
     {"rpc": "flr.photon_stream.list", "service": "flr.flr_photon_stream_list"},
     {"rpc": "flr.export", "service": "flr.flr_export"},
     {"rpc": "flr.probe_types", "service": "flr.flr_probe_types"},
-    {"rpc": "flr.probes", "service": "flr.flr_probes"}
+    {"rpc": "flr.probes", "service": "flr.flr_probes"},
+
+    {"rpc": "fit.reorder", "service": "fits.fit_reorder", "event_bus": true},
+    {"rpc": "fit.select", "service": "fits.fit_select", "event_bus": true},
+    {"rpc": "fit.range.auto", "service": "fits.fit_range_auto"},
+    {"rpc": "fit.mask.set", "service": "fits.fit_mask_set", "event_bus": true},
+    {"rpc": "fit.sample.start", "service": "fits.fit_sample_start"},
+    {"rpc": "fit.sample.cancel", "service": "fits.fit_sample_cancel"},
+    {"rpc": "fit.sample.status", "service": "fits.fit_sample_status"},
+    {"rpc": "fit.parameter_scan.start", "service": "fits.fit_parameter_scan_start"},
+    {"rpc": "fit.parameter_scan.cancel", "service": "fits.fit_parameter_scan_cancel"},
+    {"rpc": "fit.parameter_scan.result", "service": "fits.fit_parameter_scan_result"},
+    {"rpc": "fit.group.select_member", "service": "fits.fit_group_select_member", "event_bus": true},
+    {"rpc": "fit.group.add_member", "service": "fits.fit_group_add_member", "event_bus": true},
+    {"rpc": "fit.group.remove_member", "service": "fits.fit_group_remove_member", "event_bus": true},
+    {"rpc": "fit.group.link_parameters_by_name", "service": "fits.fit_group_link_parameters_by_name", "event_bus": true},
+
+    {"rpc": "model.component.add", "service": "model_svc.model_component_add", "event_bus": true},
+    {"rpc": "model.component.remove", "service": "model_svc.model_component_remove", "event_bus": true},
+    {"rpc": "model.state.get", "service": "model_svc.model_state_get"},
+    {"rpc": "model.state.set", "service": "model_svc.model_state_set", "event_bus": true},
+
+    {"rpc": "plot.fit_data", "service": "plot_svc.plot_fit_data"}
   ]
 }

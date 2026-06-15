@@ -1,6 +1,7 @@
 from __future__ import annotations
 from chisurf import typing
 
+import time
 import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets, QtCore
@@ -14,6 +15,7 @@ import chisurf.core.parameter
 import chisurf.core.decorators
 import chisurf.core.models
 from chisurf.gui.plots import plotbase
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 plot_settings = cs.core.settings.gui['plot']
 colors = plot_settings['colors']
@@ -81,6 +83,35 @@ class ParameterScanWidget(
         self.comboBox.blockSignals(False)
         self.model.update_plots()
 
+    def _poll_scan_result(self, job_id: str, param) -> None:
+        """Poll server for scan results and store locally.
+
+        Called in a loop from scan_parameter / smart_scan_parameter
+        when using the RPC path.
+        """
+        fc = get_fitting_client()
+        if fc is None:
+            return
+        deadline = time.monotonic() + 300.0  # 5 min timeout
+        while time.monotonic() < deadline:
+            try:
+                result = fc.parameter_scan_result(job_id)
+                status = result.get("status", "")
+                if status == "completed":
+                    values = result.get("values", [])
+                    chi2 = result.get("chi2", [])
+                    if values and chi2:
+                        param.parameter_scan = (values, chi2)
+                    break
+                if status in ("failed", "cancelled"):
+                    break
+            except Exception:
+                break
+            # Process Qt events while polling so the UI stays responsive
+            QtCore.QCoreApplication.processEvents()
+            time.sleep(0.05)
+        self.parent.update()
+
     def scan_parameter(self) -> None:
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
@@ -90,38 +121,22 @@ class ParameterScanWidget(
         v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())
 
-        # Use action controller if available, otherwise fall back to cs.run
-        controller = getattr(cs, "action_controller", None)
-        if controller is not None:
+        fc = get_fitting_client()
+        if fc is not None:
             try:
-                controller.execute(
-                    name="parameter.scan",
-                    payload={
-                        "parameter_name": name,
-                        "fit_index": self.parameter.fit_idx,
-                        "scan_range": (v_min, v_max),
-                        "n_steps": n_steps,
-                    },
+                fit_uid = str(getattr(self.parent.fit, "unique_identifier", "") or "")
+                result = fc.start_parameter_scan(
+                    parameter_name=self.parameter.name,
+                    n_steps=n_steps,
+                    range_factor=2.0,
+                    fit_uid=fit_uid,
                 )
+                job_id = result.get("job_id")
+                if job_id:
+                    self._poll_scan_result(job_id, self.parameter)
+                    return
             except Exception:
-                # Fall back to cs.run if action controller fails
-                cs.run(
-                    f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
-                        self.parameter.name,
-                        v_min,
-                        v_max,
-                        n_steps
-                    )
-                )
-        else:
-            cs.run(
-                f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
-                    self.parameter.name,
-                    v_min,
-                    v_max,
-                    n_steps
-                )
-            )
+                pass
         self.parent.update()
 
     def smart_scan_parameter(self) -> None:
@@ -141,37 +156,22 @@ class ParameterScanWidget(
         else:
             scan_range = (None, None)
 
-        controller = getattr(cs, "action_controller", None)
-        if controller is not None:
+        fc = get_fitting_client()
+        if fc is not None:
             try:
-                controller.execute(
-                    name="parameter.adaptive_scan",
-                    payload={
-                        "parameter_name": name,
-                        "fit_index": self.parameter.fit_idx,
-                        "scan_range": scan_range,
-                        "p_value": p_value,
-                        "max_points_per_side": max_points,
-                    },
+                fit_uid = str(getattr(self.parent.fit, "unique_identifier", "") or "")
+                result = fc.start_parameter_scan(
+                    parameter_name=self.parameter.name,
+                    n_steps=max_points,
+                    range_factor=2.0,
+                    fit_uid=fit_uid,
                 )
+                job_id = result.get("job_id")
+                if job_id:
+                    self._poll_scan_result(job_id, self.parameter)
+                    return
             except Exception:
-                cs.run(
-                    f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
-                        self.parameter.name,
-                        scan_range,
-                        p_value,
-                        max_points
-                    )
-                )
-        else:
-            cs.run(
-                f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
-                    self.parameter.name,
-                    scan_range,
-                    p_value,
-                    max_points
-                )
-            )
+                pass
         self.parent.update()
 
     @property

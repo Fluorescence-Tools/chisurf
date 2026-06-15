@@ -10,6 +10,7 @@ import chisurf.gui.plots
 from chisurf.core.models.model import ModelCurve
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 def _compute_p1(k_vals: np.ndarray, brightness: float, x_vals: np.ndarray, dx: float) -> np.ndarray:
@@ -350,12 +351,23 @@ class PchMultiComponentModel(ModelCurve):
                 p_eps, p_N = self._eps3, self._N3
             else:
                 return
-            if float(p_eps.value) <= 0.0:
-                p_eps.value = 2.0
-            if float(p_N.value) <= 0.0:
-                p_N.value = 3.0
-            p_eps.fixed = False
-            p_N.fixed = False
+            fc = get_fitting_client()
+            fit_idx = getattr(self.fit, "fit_idx", None)
+            if fc is not None:
+                if float(p_eps.value) <= 0.0:
+                    fc.set_parameter_value(
+                        parameter_name=str(p_eps.name), value=2.0, fit_index=fit_idx,
+                    )
+                if float(p_N.value) <= 0.0:
+                    fc.set_parameter_value(
+                        parameter_name=str(p_N.name), value=3.0, fit_index=fit_idx,
+                    )
+                fc.set_parameter_fixed(
+                    parameter_name=str(p_eps.name), fixed=False, fit_index=fit_idx,
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(p_N.name), fixed=False, fit_index=fit_idx,
+                )
         except Exception:
             pass
 
@@ -376,8 +388,15 @@ class PchMultiComponentModel(ModelCurve):
                 p_eps, p_N = self._eps3, self._N3
             else:
                 return
-            p_eps.value = 0.0
-            p_N.value = 0.0
+            fc = get_fitting_client()
+            fit_idx = getattr(self.fit, "fit_idx", None)
+            if fc is not None:
+                fc.set_parameter_value(
+                    parameter_name=str(p_eps.name), value=0.0, fit_index=fit_idx,
+                )
+                fc.set_parameter_value(
+                    parameter_name=str(p_N.name), value=0.0, fit_index=fit_idx,
+                )
         except Exception:
             pass
 
@@ -605,8 +624,6 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
                     name="model.add_component",
                     payload={"component_name": "components"},
                 )
-            else:
-                cs.run("cs.macros.model.add_component('components')")
         except Exception:
             pass
 
@@ -621,8 +638,6 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
                     name="model.remove_component",
                     payload={"component_name": "components"},
                 )
-            else:
-                cs.run("cs.macros.model.remove_component('components')")
         except Exception:
             pass
 

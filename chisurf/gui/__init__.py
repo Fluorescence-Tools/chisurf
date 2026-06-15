@@ -1356,6 +1356,25 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     splash.update_progress(100)
     app.processEvents()
 
+    # Install FittingClient (ZMQ RPC adapter for widget/backend communication)
+    # Always installed.  When the server is unreachable, RPC calls return
+    # ``{"ok": False}`` — no direct in-process fallback.
+    from chisurf.gui.widgets.fitting.fitting_client import install_fitting_client
+    try:
+        from chisurf.core.api._client import ChisurfClient
+        import chisurf.core.settings as cs_settings
+        mfdb_cfg = cs_settings.cs_settings.get("mfdb", {})
+        _fitting_client = ChisurfClient(
+            cmd_port=int(mfdb_cfg.get("cmd_port", 8765)),
+            pub_port=int(mfdb_cfg.get("pub_port", 8766)),
+            host=str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
+        )
+        _fitting_client.connect()
+        install_fitting_client(_fitting_client)
+    except Exception as _fc_err:
+        logging.warning(f"FittingClient server unreachable: {_fc_err}")
+        install_fitting_client()
+
     window.show()
     splash.hide()
     splash.finish(window)

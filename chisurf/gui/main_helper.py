@@ -9,6 +9,7 @@ import importlib
 
 import chisurf as cs
 from chisurf.history import replay as _hr
+from qtpy import QtCore, QtWidgets
 
 
 if typing.TYPE_CHECKING:

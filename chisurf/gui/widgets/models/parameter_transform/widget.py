@@ -17,6 +17,7 @@ from qtpy import uic
 from chisurf.gui import plots
 from chisurf.core.models.parameter_transform.model import ParameterTransformModel
 from chisurf.gui.widgets.models import model_widget as model
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
@@ -66,12 +67,21 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
         d = self.codes[self.code_name]['initial']
         param_keys = list(self.parameters_all_dict.keys())
 
-        for k in param_keys:
-            initial = d.get(k, None)
-            if initial is not None:
-                self.parameters_all_dict[k].value = initial['value']
-                self.parameters_all_dict[k].bounds = initial['bounds']
-                self.parameters_all_dict[k].bounds_on = True
+        fc = get_fitting_client()
+        fit_index = getattr(self.fit, "fit_idx", None)
+        if fc is not None and fit_index is not None:
+            for k in param_keys:
+                initial = d.get(k, None)
+                if initial is not None:
+                    fc.set_parameter_value(
+                        parameter_name=k, value=initial['value'], fit_index=fit_index,
+                    )
+                    fc.set_parameter_bounds(
+                        parameter_name=k, bounds=tuple(initial['bounds']), fit_index=fit_index,
+                    )
+                    fc.set_parameter_bounds_on(
+                        parameter_name=k, bounds_on=True, fit_index=fit_index,
+                    )
 
     @property
     def code_name(self):

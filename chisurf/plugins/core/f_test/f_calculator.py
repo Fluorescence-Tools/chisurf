@@ -11,6 +11,7 @@ import chisurf.gui.decorators
 import chisurf.core.models
 import chisurf.core.fitting.fit
 import chisurf.core.math.statistics
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 try:
     from chisurf.gui.misc_helpers import persist_plugin_state
@@ -71,7 +72,7 @@ class FTestWidget(QtWidgets.QWidget):
     def read_n(self):
         """Build a toolButton menu that copies ``n_points``, ``n_free`` and ``chi2r`` from any loaded fit."""
         menu = QtWidgets.QMenu()
-        for f in chisurf.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(
@@ -84,7 +85,7 @@ class FTestWidget(QtWidgets.QWidget):
     def read_n1(self):
         """Build a toolButton menu that copies ``dof`` and ``chi2r`` for model 1 from any loaded fit."""
         menu = QtWidgets.QMenu()
-        for f in chisurf.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(
@@ -95,7 +96,7 @@ class FTestWidget(QtWidgets.QWidget):
     def read_n2(self):
         """Build a toolButton menu that copies ``dof`` and ``chi2r`` for model 2 from any loaded fit."""
         menu = QtWidgets.QMenu()
-        for f in chisurf.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(

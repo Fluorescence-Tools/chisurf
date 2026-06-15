@@ -17,6 +17,7 @@ from chisurf.core.fitting.parameter import FittingParameter
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 from chisurf.core.models.structure.proteinmc import (
     ProteinMCProgress,
     ProteinMCRunner,
@@ -639,7 +640,13 @@ class ProteinMCModelWidget(ModelWidget):
                     try:
                         distance_value = float(np.linalg.norm(xyz[p1_idx] - xyz[p2_idx]))
                         param = self._distance_parameters[dist_name]
-                        param.value = distance_value
+                        fc = get_fitting_client()
+                        if fc is not None:
+                            fc.set_parameter_value(
+                                parameter_name=str(param.name),
+                                value=distance_value,
+                                fit_index=getattr(self.fit, "fit_idx", None),
+                            )
                         
                         # Update the widget if it exists
                         if dist_name in self._distance_widgets:

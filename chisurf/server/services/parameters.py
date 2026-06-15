@@ -17,6 +17,7 @@ def _resolve_parameter(
     parameter_name: str,
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
     *,
     fit_error: str = "fit not found",
     access_error: Optional[str] = "cannot access model parameters",
@@ -36,6 +37,8 @@ def _resolve_parameter(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when *fit* is a fit group.
     fit_error : str
         Error message when fit is not found.
     access_error : str or None
@@ -47,6 +50,11 @@ def _resolve_parameter(
     fit, _ = _resolve_fit(state, fit_index, fit_uid)
     if fit is None:
         return None, None, service_error(fit_error, error_code=NOT_FOUND)
+    if local_idx is not None:
+        grouped_fits = getattr(fit, "grouped_fits", None)
+        if not grouped_fits or not 0 <= local_idx < len(grouped_fits):
+            return fit, None, service_error("local fit not found", error_code=NOT_FOUND)
+        fit = grouped_fits[local_idx]
     try:
         parameters = getattr(fit.model, "parameters_all_dict", {}) or {}
     except Exception:
@@ -124,6 +132,7 @@ def set_parameter_value(
     value: float,
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Set the numeric value of a parameter and update the model.
 
@@ -139,9 +148,11 @@ def set_parameter_value(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when the selected fit is a fit group.
 
     """
-    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid)
+    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid, local_idx)
     if error is not None:
         return error
     try:
@@ -161,6 +172,7 @@ def set_parameter_fixed(
     fixed: bool,
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Fix or free a parameter and finalise the model.
 
@@ -176,9 +188,11 @@ def set_parameter_fixed(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when the selected fit is a fit group.
 
     """
-    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid)
+    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid, local_idx)
     if error is not None:
         return error
     try:
@@ -196,6 +210,7 @@ def set_parameter_bounds(
     bounds: Tuple[float, float],
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Set the (min, max) bounds for a parameter.
 
@@ -211,9 +226,11 @@ def set_parameter_bounds(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when the selected fit is a fit group.
 
     """
-    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid)
+    fit, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid, local_idx)
     if error is not None:
         return error
     try:
@@ -231,6 +248,7 @@ def set_parameter_bounds_on(
     bounds_on: bool,
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Enable or disable bound constraints for a parameter.
 
@@ -246,9 +264,11 @@ def set_parameter_bounds_on(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when the selected fit is a fit group.
 
     """
-    _, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid)
+    _, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid, local_idx)
     if error is not None:
         return error
     try:
@@ -266,6 +286,8 @@ def parameter_link(
     target_fit_index: Optional[int] = None,
     fit_uid: Optional[str] = None,
     target_fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
+    target_local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Link a parameter to another parameter (same or different fit).
 
@@ -285,6 +307,10 @@ def parameter_link(
         Source fit UID.
     target_fit_uid : str, optional
         Target fit UID.
+    local_idx : int, optional
+        Source local fit index when the source fit is a fit group.
+    target_local_idx : int, optional
+        Target local fit index when the target fit is a fit group.
 
     """
     fit, p, error = _resolve_parameter(
@@ -292,6 +318,7 @@ def parameter_link(
         parameter_name,
         fit_index,
         fit_uid,
+        local_idx,
         fit_error="source fit not found",
         access_error="cannot access source parameters",
         parameter_error=f"source parameter '{parameter_name}' not found",
@@ -304,6 +331,15 @@ def parameter_link(
         target_fit, _ = _resolve_fit(state, target_fit_index or 0, target_fit_uid)
         if target_fit is None:
             return service_error("target fit not found", error_code=NOT_FOUND)
+    elif target_local_idx is not None:
+        target_fit, _ = _resolve_fit(state, fit_index, fit_uid)
+        if target_fit is None:
+            return service_error("target fit not found", error_code=NOT_FOUND)
+    if target_local_idx is not None:
+        grouped_fits = getattr(target_fit, "grouped_fits", None)
+        if not grouped_fits or not 0 <= target_local_idx < len(grouped_fits):
+            return service_error("target local fit not found", error_code=NOT_FOUND)
+        target_fit = grouped_fits[target_local_idx]
 
     link_to = None
     if target_parameter_name:
@@ -327,6 +363,7 @@ def parameter_unlink(
     parameter_name: str,
     fit_index: int = 0,
     fit_uid: Optional[str] = None,
+    local_idx: Optional[int] = None,
 ) -> ServiceResult:
     """Remove a parameter's link (make it independent).
 
@@ -340,9 +377,11 @@ def parameter_unlink(
         Fit index.
     fit_uid : str, optional
         Fit UID.
+    local_idx : int, optional
+        Local fit index when the selected fit is a fit group.
 
     """
-    _, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid)
+    _, p, error = _resolve_parameter(state, parameter_name, fit_index, fit_uid, local_idx)
     if error is not None:
         return error
     try:

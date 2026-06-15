@@ -37,7 +37,7 @@ class _MaxentUIMixin:
         data_layout.setSpacing(2)
 
         self.label_data_source = QtWidgets.QLabel(
-            "Using cs.current_fit.data (not yet checked)", data_group
+            "Using current_fit.data (not yet checked)", data_group
         )
         self.btn_refresh_data = QtWidgets.QToolButton(data_group)
         self.btn_refresh_data.setText("Read from fit")

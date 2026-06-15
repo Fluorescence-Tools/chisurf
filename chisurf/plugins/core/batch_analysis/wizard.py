@@ -14,6 +14,7 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt
 import chisurf as cs  # your chisurf module with fits, macros, etc.
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 # Custom QListWidget that supports drag-and-drop.
@@ -303,7 +304,7 @@ class LoadedDataSelectionPage(QWizardPage):
         """Populate the list widget with the currently imported datasets (excluding the global one)."""
         self.loaded_list.clear()
         try:
-            for idx, ds in enumerate(cs.imported_datasets):
+            for idx, ds in enumerate(getattr(cs, "imported_datasets", [])):
                 # Skip the global dataset from being listed/selectable
                 ds_name_attr = getattr(ds, 'name', None)
                 if isinstance(ds_name_attr, str) and ds_name_attr == 'Global Dataset':
@@ -482,7 +483,7 @@ class FileAndFitSelectionPage(QWizardPage):
             prev_text = self.fit_combo_box.currentText() if self.fit_combo_box.count() > 0 else ""
 
             self.fit_combo_box.clear()
-            for f in cs.fits:
+            for f in get_fitting_client().get_fit_objects():
                 # store the actual fit object for robust matching
                 self.fit_combo_box.addItem(f.name, f)
 
@@ -505,7 +506,7 @@ class FileAndFitSelectionPage(QWizardPage):
                     if idx >= 0:
                         self.fit_combo_box.setCurrentIndex(idx)
         except Exception as e:
-            print(f"Error loading fits from cs.fits: {e}")
+            print(f"Error loading fits: {e}")
             self.fit_combo_box.addItem("No fits available")
 
     def initializePage(self):
@@ -528,7 +529,7 @@ class FileAndFitSelectionPage(QWizardPage):
         try:
             fit_obj = self.fit_combo_box.currentData()
             if fit_obj is not None:
-                for idx, f in enumerate(cs.fits):
+                for idx, f in enumerate(get_fitting_client().get_fit_objects()):
                     if f is fit_obj:
                         return idx
         except Exception:
@@ -844,7 +845,10 @@ class AnalysisPage(QWizardPage):
         self.results = []
 
         # Get the chosen fit and save the initial parameters.
-        fit = cs.fits[fit_idx]
+        fit_objects = get_fitting_client().get_fit_objects()
+        fit = fit_objects[fit_idx] if 0 <= fit_idx < len(fit_objects) else None
+        if fit is None:
+            return
         initial_params = {param.name: (param.value, param.fixed) for param in fit.model.parameters_all}
 
         # Build processing queue: first loaded datasets, then files
@@ -868,13 +872,26 @@ class AnalysisPage(QWizardPage):
             # Restore the initial parameter values before each run
             for param in fit.model.parameters_all:
                 if param.name in initial_params:
-                    param.value, param.fixed = initial_params[param.name]
+                    val, fix = initial_params[param.name]
+                    fc = get_fitting_client()
+                    if fc is not None:
+                        fc.set_parameter_value(
+                            parameter_name=str(param.name),
+                            value=val,
+                            fit_index=fit_idx,
+                        )
+                        fc.set_parameter_fixed(
+                            parameter_name=str(param.name),
+                            fixed=fix,
+                            fit_index=fit_idx,
+                        )
 
             # Run fit depending on item type
             try:
                 if item["kind"] == "dataset":
                     ds = item["value"]
-                    ds_idx = cs.imported_datasets.index(ds)
+                    _imported = getattr(cs, "imported_datasets", [])
+                    ds_idx = _imported.index(ds) if ds in _imported else -1
                     cs.core.actions.dispatch(
                         name="fit.set_dataset",
                         payload={

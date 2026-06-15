@@ -10,9 +10,15 @@ from .qt_stack import ensure_qt_stack
 
 class _MaxentDataMixin:
     def _current_fit(self):
-        _, _, _, chisurf, _ = ensure_qt_stack()
         try:
-            return chisurf.cs.current_fit
+            from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+            fc = get_fitting_client()
+            if fc is not None:
+                from chisurf.core.fitting import find_fit_idx
+                fits = fc.get_fit_objects()
+                if fits:
+                    return fits[0] if len(fits) == 1 else None
+            return None
         except Exception:
             return None
 

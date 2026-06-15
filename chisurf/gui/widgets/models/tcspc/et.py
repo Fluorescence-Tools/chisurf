@@ -423,7 +423,9 @@ class EtModelFree(
     @property
     def fits(self):
         """List of fits with LifetimeModel instances."""
-        fits = [f for f in chisurf.fits if isinstance(f.model, LifetimeModel) and not isinstance(f.model, EtModelFree)]
+        import chisurf as _cs
+        fit_objects = getattr(_cs, "fits", [])
+        fits = [f for f in fit_objects if isinstance(f.model, LifetimeModel) and not isinstance(f.model, EtModelFree)]
         return fits
 
     @fits.setter

@@ -15,6 +15,7 @@ from chisurf.core.models.tcspc.fret import rda_axis
 from chisurf.core.settings.settings_utils import set_fret_rda_axis, build_fret_rda_axis
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 from qtpy import QtWidgets, QtGui, QtCore
 from chisurf.core.models.pda.nusiance import Background, PdaFretNuisance, PdaPhotonRange
 from chisurf.core.models.pda.simple import ProbCh0, PdaSimpleModel
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 def _get_fit_index_for_model(model) -> int:
     """Get the fit index for a given model, defaulting to 0 if not found."""
     try:
-        for i, fit_obj in enumerate(cs.fits):
+        for i, fit_obj in enumerate(get_fitting_client().get_fit_objects()):
             if hasattr(fit_obj, 'model') and fit_obj.model is model:
                 return i
     except Exception:
@@ -399,7 +400,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         """Populate the 'read' menu with all compatible ProbCh0 groups."""
         menu = self.readFrom_menu
         menu.clear()
-        for f in cs.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -425,7 +426,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
             fit_index = 0
             try:
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(cs.fits):
+                for i, fit_obj in enumerate(get_fitting_client().get_fit_objects()):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
@@ -453,7 +454,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         """Populate the 'link' menu with all compatible ProbCh0 groups."""
         menu = self.linkFrom_menu
         menu.clear()
-        for f in cs.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -1182,7 +1183,10 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
             pass
 
         try:
-            cs.run("cs.current_fit.update()")
+            fc = get_fitting_client()
+            if fc is not None:
+                for i, _ in enumerate(fc.get_fit_objects()):
+                    fc.update_fit(fit_index=i)
         except Exception:
             pass
 

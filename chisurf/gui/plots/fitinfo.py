@@ -12,67 +12,7 @@ from qtpy.QtCore import Qt
 
 import chisurf.core.fitting
 from chisurf.gui.plots import plotbase
-from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys, get_pdbx_metadata_descriptions
-
-# Curated common keys shown first; then all PDBx keys are appended.
-COMMON_METADATA_KEYS = [
-    "pH", "temperature", "ionic_strength", "buffer_composition",
-    "solvent_phase", "labeling_efficiency", "donor_only_fraction",
-    "acceptor_only_fraction", "dye_ratio", "quencher_concentration",
-    "time_resolution", "excitation_wavelength", "emission_wavelength",
-    "power", "temperature_control", "data_notes",
-    "_exptl_crystal_grow.ph",
-    "_exptl_crystal_grow.temp",
-    "_exptl_crystal_grow.method",
-    "_exptl_crystal_grow.comp_details",
-    "_diffrn_radiation_wavelength.wavelength",
-    "_diffrn_radiation.monochromator",
-    "_diffrn_detector.detector",
-    "_diffrn_detector.type",
-    "_diffrn_standards.number",
-    "_diffrn_standards.interval_count",
-]
-
-# Build the full key list once
-try:
-    _PDBX_KEYS = get_pdbx_metadata_keys()
-except Exception:
-    _PDBX_KEYS = []
-ALL_METADATA_KEYS = COMMON_METADATA_KEYS + [k for k in _PDBX_KEYS if k not in COMMON_METADATA_KEYS]
-
-# Load PDBx key -> description mapping
-try:
-    _PDBX_DESCRIPTIONS = get_pdbx_metadata_descriptions()
-except Exception:
-    _PDBX_DESCRIPTIONS = {}
-
-# Manual descriptions for common keys
-_COMMON_DESCRIPTIONS: Dict[str, str] = {
-    "pH": "Solution pH",
-    "temperature": "Temperature in Kelvin",
-    "ionic_strength": "Ionic strength (mM or M)",
-    "buffer_composition": "Buffer composition and concentration",
-    "solvent_phase": "Solvent phase (liquid, solid, gas)",
-    "labeling_efficiency": "Fraction of labeled molecules",
-    "donor_only_fraction": "Fraction of donor-only molecules",
-    "acceptor_only_fraction": "Fraction of acceptor-only molecules",
-    "dye_ratio": "Dye stoichiometry ratio",
-    "quencher_concentration": "Quencher concentration",
-    "time_resolution": "Time resolution of the measurement",
-    "excitation_wavelength": "Excitation wavelength in nm",
-    "emission_wavelength": "Emission wavelength in nm",
-    "power": "Excitation power",
-    "temperature_control": "Temperature control method",
-    "data_notes": "Free-form data notes",
-}
-
-def _key_description(key: str) -> str:
-    """Return a description for a metadata key."""
-    desc = _COMMON_DESCRIPTIONS.get(key)
-    if desc:
-        return desc
-    return _PDBX_DESCRIPTIONS.get(key, "")
-
+from chisurf.gui.widgets.metadata_editor import MetadataEditor
 
 def _configure_fill_table(table: QtWidgets.QTableWidget) -> None:
     """Configure a table to fill the available tab space."""
@@ -84,29 +24,6 @@ def _configure_fill_table(table: QtWidgets.QTableWidget) -> None:
     table.setMaximumSize(16777215, 16777215)
     table.setWordWrap(False)
     table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-
-
-class MetadataKeyComboBox(QtWidgets.QComboBox):
-    """Editable combobox with dropdown item tooltips."""
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        view = self.view()
-        if view is not None:
-            view.setMouseTracking(True)
-            view.setItemDelegate(TooltipDelegate(view))
-
-    def event(self, event):
-        if event.type() == QtCore.QEvent.ToolTip:
-            view = self.view()
-            if view is not None and view.isVisible():
-                index = view.indexAt(view.mapFromGlobal(event.globalPos()))
-                if index.isValid():
-                    tip = index.data(Qt.UserRole + 1)
-                    if tip:
-                        QtWidgets.QToolTip.showText(event.globalPos(), tip, view)
-                        return True
-        return super().event(event)
 
 
 class DropTable(QtWidgets.QTableWidget):
@@ -157,16 +74,6 @@ class DropTable(QtWidgets.QTableWidget):
         if added:
             event.acceptProposedAction()
 
-
-class TooltipDelegate(QtWidgets.QStyledItemDelegate):
-    """Show tooltips from Qt.UserRole in item views."""
-
-    def helpEvent(self, event, view, option, index):
-        tip = index.data(Qt.UserRole)
-        if tip:
-            QtWidgets.QToolTip.showText(event.globalPos(), tip, view)
-            return True
-        return super().helpEvent(event, view, option, index)
 
 
 class FitInfo(plotbase.Plot):
@@ -441,86 +348,9 @@ class FitInfo(plotbase.Plot):
     # ── Metadata tab ──────────────────────────────────────────────
 
     def _build_metadata_tab(self):
-        tab = QtWidgets.QWidget()
-        tab.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Expanding,
-        )
-        tab.setMinimumSize(0, 0)
-        layout = QtWidgets.QVBoxLayout(tab)
-        layout.setSpacing(2)
-        layout.setContentsMargins(4, 4, 4, 4)
-        self.metadata_table = QtWidgets.QTableWidget(0, 2)
-        self.metadata_table.setHorizontalHeaderLabels(["key", "value"])
-        self.metadata_table.horizontalHeader().setStretchLastSection(True)
-        self.metadata_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Interactive)
-        self.metadata_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.metadata_table.setColumnWidth(0, 360)
-        _configure_fill_table(self.metadata_table)
-        layout.addWidget(self.metadata_table, 1)
-
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setSpacing(2)
-        add_btn = QtWidgets.QPushButton("+")
-        add_btn.setFixedWidth(24)
-        add_btn.setToolTip("Add metadata row")
-        add_btn.clicked.connect(self._add_empty_metadata_row)
-        delete_btn = QtWidgets.QPushButton("−")
-        delete_btn.setFixedWidth(24)
-        delete_btn.setToolTip("Delete selected row")
-        delete_btn.clicked.connect(self._delete_metadata_row)
-        buttons.addWidget(add_btn)
-        buttons.addWidget(delete_btn)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        self.metadata_table.itemChanged.connect(self._on_changed)
-        self.plot_controller.addTab(tab, "Metadata")
-
-    def _add_empty_metadata_row(self):
-        self._suppress_change = True
-        self._add_metadata_row()
-        self._suppress_change = False
-
-    def _add_metadata_row(self, key: str = "", value: str = ""):
-        row = self.metadata_table.rowCount()
-        self.metadata_table.insertRow(row)
-        combo = MetadataKeyComboBox()
-        combo.setEditable(True)
-        combo.addItems(ALL_METADATA_KEYS)
-        for idx, key in enumerate(ALL_METADATA_KEYS):
-            combo.setItemData(idx, _key_description(key), Qt.UserRole + 1)
-        # Autocomplete while typing
-        comp = combo.completer()
-        if comp is not None:
-            comp.setFilterMode(Qt.MatchContains)
-            comp.setCaseSensitivity(Qt.CaseInsensitive)
-        combo.currentTextChanged.connect(lambda text, r=row: self._update_metadata_description(r, text))
-        self.metadata_table.setCellWidget(row, 0, combo)
-        self.metadata_table.setItem(row, 1, QtWidgets.QTableWidgetItem(value))
-        self.metadata_table.item(row, 1).setToolTip(_key_description(key))
-        combo.setToolTip(_key_description(key))
-        if key:
-            combo.blockSignals(True)
-            combo.setCurrentText(key)
-            combo.blockSignals(False)
-            self._update_metadata_description(row, key)
-        else:
-            combo.setCurrentIndex(-1)
-        combo.currentTextChanged.connect(self._on_changed)
-
-    def _update_metadata_description(self, row: int, key: str):
-        desc = _key_description(key)
-        combo = self.metadata_table.cellWidget(row, 0)
-        if isinstance(combo, QtWidgets.QComboBox):
-            combo.setToolTip(desc)
-        item = self.metadata_table.item(row, 1)
-        if item is not None:
-            item.setToolTip(desc)
-
-    def _delete_metadata_row(self):
-        row = self.metadata_table.currentRow()
-        if row >= 0:
-            self.metadata_table.removeRow(row)
+        self.metadata_editor = MetadataEditor(columns=2)
+        self.metadata_editor.changed.connect(self._on_changed)
+        self.plot_controller.addTab(self.metadata_editor, "Metadata")
 
     # ── External data tab (simplified: path + format only) ────────
 
@@ -790,9 +620,7 @@ class FitInfo(plotbase.Plot):
         self._update_sample_uuid_display()
         # Metadata table
         metadata = self._get_metadata()
-        self.metadata_table.setRowCount(0)
-        for key, value in sorted(metadata.items()):
-            self._add_metadata_row(str(key), str(value))
+        self.metadata_editor.set_data([{"key": str(k), "value": str(v)} for k, v in sorted(metadata.items())])
         # External table
         self.external_table.setRowCount(0)
         if self.db is not None:
@@ -808,21 +636,6 @@ class FitInfo(plotbase.Plot):
                 self.external_table.setItem(idx, 0, QtWidgets.QTableWidgetItem(str(row.get("file_path", ""))))
                 self.external_table.setItem(idx, 1, QtWidgets.QTableWidgetItem(str(row.get("file_format", ""))))
         self._suppress_change = False
-
-    def _collect_metadata(self):
-        metadata = {}
-        for row in range(self.metadata_table.rowCount()):
-            widget = self.metadata_table.cellWidget(row, 0)
-            if isinstance(widget, QtWidgets.QComboBox):
-                key = widget.currentText().strip()
-            else:
-                key_item = self.metadata_table.item(row, 0)
-                key = key_item.text().strip() if key_item is not None else ""
-            value_item = self.metadata_table.item(row, 1)
-            value = value_item.text().strip() if value_item is not None else ""
-            if key:
-                metadata[key] = value
-        return metadata
 
     def _on_changed(self):
         if not hasattr(self, "_suppress_change") or self._suppress_change:
@@ -845,9 +658,9 @@ class FitInfo(plotbase.Plot):
                 "INSERT OR REPLACE INTO flr_sample_condition (condition_id, details) VALUES (?, ?)",
                 (f"condition_{self.analysis_id}", self.condition_details_edit.toPlainText().strip()),
             )
-            self.db.set_analysis_metadata(self.analysis_id, self._collect_metadata())
+            self.db.set_analysis_metadata(self.analysis_id, self.metadata_editor.as_dict())
         else:
-            self._memory_metadata = self._collect_metadata()
+            self._memory_metadata = self.metadata_editor.as_dict()
             self.fit.flr_metadata = self._memory_metadata
         self.update()
 

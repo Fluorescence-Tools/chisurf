@@ -24,47 +24,7 @@ import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
 from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 from chisurf.core.actions import record_action
-
-
-class SamplerWorker(QtCore.QObject):
-    """Worker to run MCMC sampling in a background thread."""
-
-    finished = QtCore.Signal(bool)  # success
-    progress = QtCore.Signal(int, int)  # done, total
-
-    def __init__(self, fit, target_directory, kw):
-        super().__init__()
-        self.fit = fit
-        self.target_directory = target_directory
-        self.kw = kw
-        self._cancelled = False
-
-    def check_cancel(self):
-        return self._cancelled
-
-    def cancel(self):
-        self._cancelled = True
-
-    @QtCore.Slot()
-    def run(self):
-        try:
-            def _prog(done, total):
-                self.progress.emit(int(done), int(total))
-
-            cs.core.fitting.fit.sample_fit(
-                self.fit,
-                self.target_directory,
-                check_cancel=self.check_cancel,
-                progress_callback=_prog,
-                **self.kw
-            )
-            self.finished.emit(True)
-        except Exception as e:
-            try:
-                cs.logging.error(f"Sampling worker error: {e}")
-            except Exception:
-                pass
-            self.finished.emit(False)
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 class FittingControllerWidget(Controller):
@@ -211,19 +171,14 @@ class FittingControllerWidget(Controller):
 
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
-        try:
-            fit_index = cs.fits.index(self.fit)
-            dataset_index = cs.imported_datasets.index(dataset)
-            cs.core.actions.dispatch(
-                name="fit.set_dataset",
-                payload={
-                    "fit_index": int(fit_index),
-                    "dataset_index": int(dataset_index),
-                },
+        fc = get_fitting_client()
+        if fc is not None:
+            fit_index = int(getattr(self.fit, "fit_idx", 0))
+            dataset_uid = str(getattr(dataset, "unique_identifier", "") or "")
+            fc.set_fit_dataset(
+                fit_index=fit_index,
+                dataset_uid=dataset_uid,
             )
-        except Exception:
-            self.fit.data = dataset
-            self.fit.update()
         full_name = os.path.basename(
             getattr(dataset, 'name', getattr(dataset, 'filename', ''))
         )
@@ -465,10 +420,20 @@ class FittingControllerWidget(Controller):
 
     def _result_changed(self):
         result_idx = self.spinBox_3.value() - 1
-        cs.run(f"cs.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_fit_result_idx(
+                fit_index=getattr(self.fit, "fit_idx", 0),
+                result_idx=result_idx,
+            )
 
     def onDatasetChanged(self):
-        cs.run(f"cs.macros.change_selected_fit_of_group({self.selected_fit})")
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.group_select_member(
+                fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                member_index=self.selected_fit,
+            )
 
     def onErrorEstimate(self):
         sampling_handler = self._model_sampling_handler()
@@ -477,20 +442,14 @@ class FittingControllerWidget(Controller):
             if target_dir is None:
                 cs.logging.info("Model-defined sampling canceled!")
                 return
-            try:
-                sampling_handler(
-                    output_directory=target_dir,
-                    run_count=self.n_runs,
-                    n_iter=self.n_steps,
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.start_sampling(
+                    fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                    n_steps=self.n_steps,
+                    n_runs=self.n_runs,
+                    target_directory=str(target_dir) if target_dir else None,
                 )
-            except TypeError:
-                try:
-                    sampling_handler(output_directory=target_dir, run_count=self.n_runs)
-                except TypeError:
-                    try:
-                        sampling_handler(output_directory=target_dir)
-                    except TypeError:
-                        sampling_handler(target_dir)
             return
         if self._is_proteinmc_fit():
             cs.logging.warning("ProteinMC must handle Sampling itself; refusing to run generic emcee sampling.")
@@ -509,70 +468,15 @@ class FittingControllerWidget(Controller):
         kw['n_runs'] = self.n_runs
         kw['steps'] = self.n_steps
         
-        # GUI Progress Integration
-        dialog = None
-        try:
-            wrapped_name = cs.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
-        except Exception:
-            wrapped_name = fit_name
-        base_label = f"Sampling {wrapped_name}..."
-        try:
-            dialog = cs.gui.widgets.progress.EnhancedProgressDialog(
-                title="Sampling",
-                label_text=base_label,
-                min_value=0,
-                max_value=100,
-                parent=self,
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.start_sampling(
+                fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                n_steps=self.n_steps,
+                n_runs=self.n_runs,
+                target_directory=target_dir_str,
             )
-            dialog.setWindowModality(QtCore.Qt.WindowModal)
-            dialog.show()
-            dialog.update_progress(0)
-        except Exception:
-            dialog = None
-
-        worker = SamplerWorker(self.fit, target_dir_str, kw)
-        thread = QtCore.QThread(self)
-        worker.moveToThread(thread)
-
-        t0_sampling = time.perf_counter()
-
-        def _on_progress(done, total):
-            if dialog is not None and total > 0:
-                val = int(round(100.0 * done / float(total)))
-                remaining_str = ""
-                if done > 0:
-                    elapsed = time.perf_counter() - t0_sampling
-                    remaining = (elapsed / float(done)) * (total - done)
-                    if remaining > 3600:
-                        remaining_str = f" (ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m)"
-                    elif remaining > 60:
-                        remaining_str = f" (ETA: {int(remaining // 60)}m {int(remaining % 60)}s)"
-                    else:
-                        remaining_str = f" (ETA: {int(remaining)}s)"
-                msg = f"{base_label}\nStep {done} / {total}{remaining_str}"
-                dialog.update_progress(val, text=msg)
-
-        def _on_finished(success):
-            if dialog is not None:
-                final_text = "Sampling finished!" if success else "Sampling interrupted."
-                dialog.finish(final_text=final_text, auto_close=True)
-            thread.quit()
-            thread.wait()
-            cs.logging.info(f"Sampling {'done' if success else 'failed/aborted'}!")
-
-        def _on_cancel():
-            worker.cancel()
-
-        worker.progress.connect(_on_progress)
-        worker.finished.connect(_on_finished)
-        if dialog is not None:
-            dialog.canceled.connect(_on_cancel)
-        thread.started.connect(worker.run)
-        thread.start()
-
-        # Hold references to prevent GC
-        self._sampling_thread = thread
-        self._sampling_worker = worker
+            cs.logging.info("Sampling started on server.")
 
     def _run_fit_impl(self):
         if self._proteinmc_model_widget() is not None:
@@ -705,16 +609,19 @@ class FittingControllerWidget(Controller):
             # Run the fit synchronously, allowing the optimizer to invoke
             # the progress callback from within the residual evaluations.
             try:
-                self.fit.run(
-                    local_first=self.local_first,
-                    progress_callback=_on_progress,
-                )
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.run_fit(
+                        fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                    )
             except OptimizationCancelled:
                 cs.logging.info("Fitting cancelled by user.")
                 success = False
             else:
-                # Finalize model and parameter controllers as before.
-                self.fit.model.finalize()
+                if fc is not None:
+                    fc.model_finalize(
+                        fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                    )
                 for pa in cs.core.fitting.parameter.FittingParameter.get_instances():
                     try:
                         pa.controller.finalize()
@@ -770,10 +677,9 @@ class FittingControllerWidget(Controller):
             self._apply_proteinmc_controls()
             cs.logging.info("ProteinMC does not use generic Fit. Use Sampling to start ProteinMC.")
             return
-        cs.core.actions.dispatch(
-            name="fit.run.execute",
-            payload={"fit_controller": self},
-        )
+        fc = get_fitting_client()
+        if fc is not None:
+            self._run_fit_impl()
 
     @property
     def xmin(self):
@@ -813,95 +719,81 @@ class FittingControllerWidget(Controller):
             self.xmin = xmin
         if xmax is not None:
             self.xmax = xmax
-        try:
-            # Apply directly to this widget's fit to avoid depending on cs.current_fit
-            self.fit.fit_range = (self.xmin, self.xmax)
-        except Exception as e:
-            cs.logging.warning(f'Failed to set fit range directly: {e}')
-        # For intrinsically 2D datasets (PDA/RICS), update the Fit/FitGroup
-        # mask from the four spin boxes interpreted as (x_min, x_max,
-        # y_min, y_max) indices on the underlying 2D grid.
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_fit_range(
+                fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                xmin=self.xmin,
+                xmax=self.xmax,
+            )
         if getattr(self, '_is_2d_dataset', False):
             try:
                 self._update_2d_mask_from_spinboxes()
             except Exception as e:
                 cs.logging.warning(f'Failed to update 2D mask from spinboxes: {e}')
-        # Avoid deep re-entrant updates when auto-fit-range is already
-        # driving a fit update.
         if getattr(self, '_auto_fit_range_in_progress', False):
             return
-        self.fit.update()
+        if fc is not None:
+            fc.update_fit(
+                fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+            )
 
 
     def onAutoFitRange(self):
-        data = getattr(self.fit, "data", None)
-        reader = getattr(data, "data_reader", None)
-        if reader is None or not hasattr(reader, "autofitrange"):
-            return
+        """Apply the reader-provided default fit range and update the fit."""
         try:
-            fit_range = reader.autofitrange(data)
-            cs.logging.info(f'onAutoFitRange: {fit_range}')
-            xmin_1d, xmax_1d = fit_range
+            fc = get_fitting_client()
+            fit_uid_val = str(getattr(self.fit, "unique_identifier", "") or "")
+            if fc is not None:
+                result = fc.auto_fit_range(fit_uid=fit_uid_val)
+                if result.get("ok"):
+                    xmin_1d, xmax_1d = result.get("xmin", 0), result.get("xmax", 0)
+                else:
+                    return
+            else:
+                return
 
-            # Guard against re-entrant updates when auto-fit-range is itself
-            # driving a fit update.
+            cs.logging.info(f'onAutoFitRange: {xmin_1d, xmax_1d}')
+
             try:
                 self._auto_fit_range_in_progress = True
             except Exception:
                 pass
 
+            deferred_update_scheduled = False
+            blocked_widgets = []
+            for widget in (self.spinBox_2, self.spinBox_4, self.spinBox, self.spinBox_6):
+                try:
+                    blocked_widgets.append((widget, widget.blockSignals(True)))
+                except Exception:
+                    pass
+
             try:
                 if getattr(self, '_is_2d_dataset', False) and self._2d_shape is not None:
-                    # For intrinsically 2D datasets (e.g. PDA, RICS) we treat
-                    # autofitrange as a suggestion for the *flattened* 1D
-                    # extent, but the UI spin boxes encode 2D index bounds.
-                    # Here we default the 2D selection to the full grid and
-                    # use the full 1D range for the fit; any further
-                    # restriction is expressed via the 2D mask only.
-
                     ny, nx = int(self._2d_shape[0]), int(self._2d_shape[1])
-
-                    # Ensure spin box ranges match the grid shape
                     self.spinBox_2.setRange(0, max(0, nx - 1))
                     self.spinBox_4.setRange(0, max(0, nx - 1))
                     self.spinBox.setRange(0, max(0, ny - 1))
                     self.spinBox_6.setRange(0, max(0, ny - 1))
-
-                    # Full 2D extents in index space
                     self.spinBox_2.setValue(0)
                     self.spinBox_4.setValue(max(0, nx - 1))
                     self.spinBox.setValue(0)
                     self.spinBox_6.setValue(max(0, ny - 1))
-
-                    # Full 1D range over the flattened data vector
                     try:
                         n_flat = int(len(self.fit.data.y))
                     except Exception:
                         n_flat = max(0, int(xmax_1d))
-                    try:
-                        self.fit.fit_range = (0, n_flat)
-                    except Exception as e:
-                        cs.logging.warning(f'Failed to set 1D fit range during 2D auto-fit: {e}')
-
-                    # Refresh the 2D mask from the full-extent spin boxes
+                    if fc is not None:
+                        fc.set_fit_range(fit_uid=fit_uid_val, xmin=0, xmax=n_flat)
                     try:
                         self._update_2d_mask_from_spinboxes()
                     except Exception as e:
                         cs.logging.warning(f'Failed to update 2D mask after 2D autofitrange: {e}')
                 else:
-                    # 1D datasets: keep the original semantics where the two
-                    # spin boxes encode [xmin, xmax) directly.
                     self.xmin, self.xmax = (xmin_1d, xmax_1d)
-                    try:
-                        self.fit.fit_range = (xmin_1d, xmax_1d)
-                    except Exception as e:
-                        cs.logging.warning(f'Failed to set fit range during auto-fit: {e}')
+                    if fc is not None:
+                        fc.set_fit_range(fit_uid=fit_uid_val, xmin=xmin_1d, xmax=xmax_1d)
 
-                # Defer the model update and subsequent hooks to the next
-                # event-loop iteration to allow pending Qt events (spinbox
-                # repaints, layout updates) to complete before the fit update
-                # mutates widget state. This avoids deep re-entrancy that can
-                # cause SIGBUS on macOS ARM64.
                 fit = self.fit
                 xmin_val = int(self.xmin)
                 xmax_val = int(self.xmax)
@@ -910,57 +802,73 @@ class FittingControllerWidget(Controller):
                 xmax2_val = int(self.xmax2) if is_2d else 0
 
                 def _do_deferred_update():
-                    fit.update()
-                    # Record history
                     try:
-                        payload = {
-                            "fit_group": str(getattr(fit, "name", "")),
-                            "xmin": xmin_val,
-                            "xmax": xmax_val,
-                            "source": "auto_fit_range",
-                            "is_2d": is_2d,
-                        }
-                        if is_2d:
-                            payload.update({
-                                "x_min": xmin_val,
-                                "x_max": xmin2_val,
-                                "y_min": xmax_val,
-                                "y_max": xmax2_val,
-                            })
-                        self._record_history(
-                            action_type="fit_range_set",
-                            summary=f"auto fit range for '{getattr(fit, 'name', '')}' to [{xmin_val}, {xmax_val})",
-                            payload=payload,
-                        )
-                    except Exception:
-                        pass
-                    # Model hooks
-                    try:
-                        grouped = getattr(fit, "grouped_fits", None)
-                        if isinstance(grouped, (list, tuple)):
-                            models = [getattr(f, "model", None) for f in grouped]
-                        else:
-                            models = [getattr(fit, "model", None)]
-                        for m in models:
-                            hook = getattr(m, "on_auto_fit_range_completed", None)
-                            if callable(hook):
-                                try:
-                                    hook()
-                                except Exception as e:
-                                    cs.logging.warning(
-                                        f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
-                                    )
-                    except Exception:
-                        pass
+                        if fc is not None:
+                            fc.update_fit(fit_uid=fit_uid_val)
+                        try:
+                            payload = {
+                                "fit_group": str(getattr(fit, "name", "")),
+                                "xmin": xmin_val,
+                                "xmax": xmax_val,
+                                "source": "auto_fit_range",
+                                "is_2d": is_2d,
+                            }
+                            if is_2d:
+                                payload.update({
+                                    "x_min": xmin_val,
+                                    "x_max": xmin2_val,
+                                    "y_min": xmax_val,
+                                    "y_max": xmax2_val,
+                                })
+                            self._record_history(
+                                action_type="fit_range_set",
+                                summary=f"auto fit range for '{getattr(fit, 'name', '')}' to [{xmin_val}, {xmax_val})",
+                                payload=payload,
+                            )
+                        except Exception:
+                            pass
+                        try:
+                            grouped = getattr(fit, "grouped_fits", None)
+                            if isinstance(grouped, (list, tuple)):
+                                models = [getattr(f, "model", None) for f in grouped]
+                            else:
+                                models = [getattr(fit, "model", None)]
+                            for m in models:
+                                hook = getattr(m, "on_auto_fit_range_completed", None)
+                                if callable(hook):
+                                    try:
+                                        hook()
+                                    except Exception as e:
+                                        cs.logging.warning(
+                                            f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
+                                        )
+                        except Exception:
+                            pass
+                    finally:
+                        try:
+                            self._auto_fit_range_in_progress = False
+                        except Exception:
+                            pass
 
                 QtCore.QTimer.singleShot(0, _do_deferred_update)
+                deferred_update_scheduled = True
             finally:
-                try:
-                    self._auto_fit_range_in_progress = False
-                except Exception:
-                    pass
+                for widget, previous_state in reversed(blocked_widgets):
+                    try:
+                        widget.blockSignals(previous_state)
+                    except Exception:
+                        pass
+                if not deferred_update_scheduled:
+                    try:
+                        self._auto_fit_range_in_progress = False
+                    except Exception:
+                        pass
         except Exception as e:
             cs.logging.warning(f"onAutoFitRange failed: {e}")
+            try:
+                self._auto_fit_range_in_progress = False
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Dimensionality and 2D mask helpers
@@ -1079,19 +987,6 @@ class FittingControllerWidget(Controller):
             pass
 
     def _update_2d_mask_from_spinboxes(self) -> None:
-        """Build a 1D mask from 2D bounds for PDA/RICS datasets.
-
-        Spin box mapping:
-            spinBox_2 -> x_min
-            spinBox_4 -> x_max
-            spinBox   -> y_min
-            spinBox_6 -> y_max
-
-        The resulting 1D mask is stored on ``self.fit.mask`` so that the
-        abstract Fit/FitGroup machinery can remain unaware of PDA/RICS
-        specifics while still respecting the 2D selection.
-        """
-
         if not getattr(self, '_is_2d_dataset', False):
             return
 
@@ -1100,7 +995,6 @@ class FittingControllerWidget(Controller):
         except Exception:
             return
 
-        # Read bounds and normalize order
         x_min = int(self.xmin)
         x_max = int(self.xmin2)
         y_min = int(self.xmax)
@@ -1112,31 +1006,24 @@ class FittingControllerWidget(Controller):
         if ny <= 0 or nx <= 0:
             return
 
-        # Clamp to valid index ranges and ensure min <= max
         x0 = max(0, min(x_min, x_max))
         x1 = min(nx - 1, max(x_min, x_max))
         y0 = max(0, min(y_min, y_max))
         y1 = min(ny - 1, max(y_min, y_max))
 
         if x1 < x0 or y1 < y0:
-            # Degenerate rectangle -> clear mask
-            try:
-                self.fit.mask = None
-            except Exception:
-                pass
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.set_fit_mask(
+                    mask=[],
+                    fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                )
             return
-
-        # Use the generic grid metadata to map 2D bounds back to the 1D
-        # flattened representation. By default we assume a dense 2D grid
-        # flattened in NumPy 'C' (row-major) order. Experiments may
-        # optionally provide explicit index arrays (row_indices/col_indices)
-        # to describe sparse or non-rectangular supports.
 
         grid_meta = getattr(self, '_grid_meta', {}) or {}
 
-        # Prefer explicit index arrays when available
+        mask_data = None
         if 'row_indices' in grid_meta and 'col_indices' in grid_meta:
-            # 1D flattening via explicit (row_indices, col_indices)
             try:
                 row_indices = np.asarray(grid_meta.get('row_indices'), dtype=np.int64)
                 col_indices = np.asarray(grid_meta.get('col_indices'), dtype=np.int64)
@@ -1149,25 +1036,23 @@ class FittingControllerWidget(Controller):
                 (col_indices[:n] >= x0) & (col_indices[:n] <= x1) &
                 (row_indices[:n] >= y0) & (row_indices[:n] <= y1)
             )
+            mask_data = mask.astype(float)
+        else:
             try:
-                self.fit.mask = mask.astype(float)
+                ny_img, nx_img = int(ny), int(nx)
             except Exception:
-                pass
-            return
+                ny_img, nx_img = ny, nx
+            yy, xx = np.indices((ny_img, nx_img))
+            mask_2d = (
+                (xx >= x0) & (xx <= x1) &
+                (yy >= y0) & (yy <= y1)
+            )
+            mask_data = mask_2d.ravel().astype(float)
 
-        # Default: full 2D grid, flattened in NumPy 'C' (row-major) order
-        try:
-            ny_img, nx_img = int(ny), int(nx)
-        except Exception:
-            ny_img, nx_img = ny, nx
-
-        yy, xx = np.indices((ny_img, nx_img))
-        mask_2d = (
-            (xx >= x0) & (xx <= x1) &
-            (yy >= y0) & (yy <= y1)
-        )
-        mask_1d = mask_2d.ravel()
-        try:
-            self.fit.mask = mask_1d.astype(float)
-        except Exception:
-            pass
+        if mask_data is not None:
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.set_fit_mask(
+                    mask=mask_data.tolist(),
+                    fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                )

@@ -22,6 +22,7 @@ import chisurf.core.fitting
 import chisurf.core.settings
 
 import chisurf.macros
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 import pyqtgraph as pg
 
@@ -165,7 +166,9 @@ class ChisurfWizard(QtWidgets.QWizard):
 
     def data_files_setup(self):
         # Check if we're using Jordi format
-        is_jordi = chisurf.cs.current_setup.is_jordi
+        _cs_mod = getattr(chisurf, "cs", object())
+        _current_setup = getattr(_cs_mod, "current_setup", None)
+        is_jordi = getattr(_current_setup, "is_jordi", False)
         
         if is_jordi:
             # For Jordi format, we only need one file for IRF and one for data
@@ -188,8 +191,23 @@ class ChisurfWizard(QtWidgets.QWizard):
         return True
 
     def load_data(self):
-        # Check if we're using Jordi format
-        is_jordi = chisurf.cs.current_setup.is_jordi
+        _cs_mod = getattr(chisurf, "cs", object())
+        _current_setup = getattr(_cs_mod, "current_setup", None)
+        is_jordi = getattr(_current_setup, "is_jordi", False)
+        
+        def _load_polarized(v, suffix, filename_str):
+            ts = v + "_" + suffix
+            name = os.path.splitext(filename_str)[0] + suffix
+            if _current_setup is not None:
+                _current_setup.polarization = suffix
+            _reader = getattr(_current_setup, "experiment_reader", None)
+            if _reader is None:
+                _reader = getattr(_cs_mod, "current_experiment_reader", None)
+            dataset = _reader.get_data(filename=f"{filename_str}", name=f"{name}")
+            dataset = dataset[0]
+            n, _ = os.path.splitext(dataset.name)
+            dataset.name = n + "_" + suffix
+            self.data[ts] = dataset
         
         if is_jordi:
             # For Jordi format, we need to load each file twice with different polarization parameters
@@ -201,15 +219,7 @@ class ChisurfWizard(QtWidgets.QWizard):
             ]
             
             for v, suffix, filename_str in jordi_pairs:
-                ts = v + "_" + suffix
-                chisurf.run(f"cs.current_setup.polarization = '{suffix}'")
-                name = os.path.splitext(filename_str)[0] + suffix
-                expriment_reader = chisurf.cs.current_experiment_reader
-                dataset = expriment_reader.get_data(filename=f"{filename_str}", name=f"{name}")
-                dataset = dataset[0]
-                n, _ = os.path.splitext(dataset.name)
-                dataset.name = n + "_" + suffix
-                self.data[ts] = dataset
+                _load_polarized(v, suffix, filename_str)
         else:
             # For regular format, we load each file separately
             pairs = [
@@ -220,15 +230,7 @@ class ChisurfWizard(QtWidgets.QWizard):
             ]
             
             for v, suffix, filename_str in pairs:
-                ts = v + "_" + suffix
-                chisurf.run(f"cs.current_setup.polarization = '{suffix}'")
-                name = os.path.splitext(filename_str)[0] + suffix
-                expriment_reader = chisurf.cs.current_experiment_reader
-                dataset = expriment_reader.get_data(filename=f"{filename_str}", name=f"{name}")
-                dataset = dataset[0]
-                n, _ = os.path.splitext(dataset.name)
-                dataset.name = n + "_" + suffix
-                self.data[ts] = dataset
+                _load_polarized(v, suffix, filename_str)
 
     def update_plot(self):
         for pk in self.plots:
@@ -283,16 +285,18 @@ class ChisurfWizard(QtWidgets.QWizard):
             if vh_sum > 0:
                 vh = vh * (s / vh_sum)
 
+        _cs_mod = getattr(chisurf, "cs", object())
+        _current_experiment = getattr(_cs_mod, "current_experiment", None)
         self.data['irf_vv_bg_norm'] = chisurf.core.data.DataCurve(
             x=self.data['irf_vv'].x, y=vv, ey=self.data['irf_vv'].ey,
-            experiment=chisurf.cs.current_experiment,
+            experiment=_current_experiment,
             setup=chisurf.core.experiments.tcspc.TCSPCReader,
             name=os.path.splitext(self.data['irf_vv'].name)[0] + "_vv"
         )
 
         self.data['irf_vh_bg_norm'] = chisurf.core.data.DataCurve(
             x=self.data['irf_vh'].x, y=vh, ey=self.data['irf_vh'].ey,
-            experiment=chisurf.cs.current_experiment,
+            experiment=_current_experiment,
             setup=chisurf.core.experiments.tcspc.TCSPCReader,
             name=os.path.splitext(self.data['irf_vh'].name)[0] + "_vh"
         )
@@ -434,7 +438,9 @@ class ChisurfWizard(QtWidgets.QWizard):
             )
             return
 
-        n = len(chisurf.imported_datasets)
+        _cs_mod = getattr(chisurf, "cs", object())
+        n = len(getattr(_cs_mod, "imported_datasets", []))
+        fc = get_fitting_client()
 
         # Create lifetime fit for added data sets
         ##########################################
@@ -449,8 +455,10 @@ class ChisurfWizard(QtWidgets.QWizard):
                 "model_kw": model_kw,
             },
         )
-        self.fit_vv = chisurf.fits[-2]
-        self.fit_vh = chisurf.fits[-1]
+        self.fit_vv = fc.get_fit_objects()[-2]
+        self.fit_vh = fc.get_fit_objects()[-1]
+        _vv_idx = len(fc.get_fit_objects()) - 2
+        _vh_idx = len(fc.get_fit_objects()) - 1
 
         # add lifetimes
         self.fit_vv.model.lifetimes.pop()
@@ -496,66 +504,94 @@ class ChisurfWizard(QtWidgets.QWizard):
             },
         )
 
-        self.global_fit = chisurf.fits[-1]
+        self.global_fit = fc.get_fit_objects()[-1]
         self.global_fit.model.append_fit(self.fit_vv)
         self.global_fit.model.append_fit(self.fit_vh)
 
         # Link VH parameters to VV
         #######################################
         # number of photons
-        self.fit_vh.model.parameters_all_dict['n0'].link = self.fit_vv.model.parameters_all_dict['n0']
-        self.fit_vv.model.parameters_all_dict['n0'].fixed = False
-        self.fit_vh.model.parameters_all_dict['n0'].fixed = False
+        fc.link_parameters(
+            parameter_name='n0', target_parameter_name='n0',
+            fit_index=_vh_idx, target_fit_index=_vv_idx,
+        )
+        fc.set_parameter_fixed(parameter_name='n0', fixed=False, fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='n0', fixed=False, fit_index=_vh_idx)
 
-        self.fit_vv.model.parameters_all_dict['l1'].fixed = False
-        self.fit_vv.model.parameters_all_dict['l1'].value = self.conf_edit.dict['l1']
-        self.fit_vv.model.parameters_all_dict['l1'].fixed = True
-        self.fit_vv.model.parameters_all_dict['l1'].controller.finalize()
+        fc.set_parameter_fixed(parameter_name='l1', fixed=False, fit_index=_vv_idx)
+        fc.set_parameter_value(parameter_name='l1', value=self.conf_edit.dict['l1'], fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='l1', fixed=True, fit_index=_vv_idx)
+        fc.update_fit(fit_index=_vv_idx)
 
-        self.fit_vv.model.parameters_all_dict['l2'].fixed = False
-        self.fit_vv.model.parameters_all_dict['l2'].value = self.conf_edit.dict['l2']
-        self.fit_vv.model.parameters_all_dict['l2'].fixed = True
-        self.fit_vv.model.parameters_all_dict['l2'].controller.finalize()
+        fc.set_parameter_fixed(parameter_name='l2', fixed=False, fit_index=_vv_idx)
+        fc.set_parameter_value(parameter_name='l2', value=self.conf_edit.dict['l2'], fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='l2', fixed=True, fit_index=_vv_idx)
+        fc.update_fit(fit_index=_vv_idx)
 
-        self.fit_vv.model.parameters_all_dict['g'].fixed = False
-        self.fit_vv.model.parameters_all_dict['g'].value = self.conf_edit.dict['g_factor']
-        self.fit_vv.model.parameters_all_dict['g'].fixed = True
-        self.fit_vv.model.parameters_all_dict['g'].controller.finalize()
+        fc.set_parameter_fixed(parameter_name='g', fixed=False, fit_index=_vv_idx)
+        fc.set_parameter_value(parameter_name='g', value=self.conf_edit.dict['g_factor'], fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='g', fixed=True, fit_index=_vv_idx)
+        fc.update_fit(fit_index=_vv_idx)
 
         # rotation
         self.fit_vv.model.anisotropy.polarization_type = 'vv'
         self.fit_vh.model.anisotropy.polarization_type = 'vh'
         n_rotation = len(rs) // 2
         for i in range(1, n_rotation + 1):
-            self.fit_vh.model.parameters_all_dict[f'rho({i})'].link = self.fit_vv.model.parameters_all_dict[f'rho({i})']
-            self.fit_vh.model.parameters_all_dict[f'b({i})'].link = self.fit_vv.model.parameters_all_dict[f'b({i})']
+            fc.link_parameters(
+                parameter_name=f'rho({i})', target_parameter_name=f'rho({i})',
+                fit_index=_vh_idx, target_fit_index=_vv_idx,
+            )
+            fc.link_parameters(
+                parameter_name=f'b({i})', target_parameter_name=f'b({i})',
+                fit_index=_vh_idx, target_fit_index=_vv_idx,
+            )
 
         # lifetime
         n_lifetime = len(lt) // 2
         for i in range(1, n_lifetime + 1):
-            self.fit_vh.model.parameters_all_dict[f'xL{i}'].link = self.fit_vv.model.parameters_all_dict[f'xL{i}']
-            self.fit_vh.model.parameters_all_dict[f'tL{i}'].link = self.fit_vv.model.parameters_all_dict[f'tL{i}']
+            fc.link_parameters(
+                parameter_name=f'xL{i}', target_parameter_name=f'xL{i}',
+                fit_index=_vh_idx, target_fit_index=_vv_idx,
+            )
+            fc.link_parameters(
+                parameter_name=f'tL{i}', target_parameter_name=f'tL{i}',
+                fit_index=_vh_idx, target_fit_index=_vv_idx,
+            )
 
-        self.fit_vv.model.parameters_all_dict['lb'].fixed = True
-        self.fit_vh.model.parameters_all_dict['lb'].fixed = True
+        fc.set_parameter_fixed(parameter_name='lb', fixed=True, fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='lb', fixed=True, fit_index=_vh_idx)
 
-        self.fit_vv.model.parameters_all_dict['l1'].fixed = True
-        self.fit_vv.model.parameters_all_dict['l2'].fixed = True
-        self.fit_vv.model.parameters_all_dict['g'].fixed = True
-        self.fit_vh.model.parameters_all_dict['l1'].link = self.fit_vv.model.parameters_all_dict['l1']
-        self.fit_vh.model.parameters_all_dict['l2'].link = self.fit_vv.model.parameters_all_dict['l2']
-        self.fit_vh.model.parameters_all_dict['g'].link = self.fit_vv.model.parameters_all_dict['g']
+        fc.set_parameter_fixed(parameter_name='l1', fixed=True, fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='l2', fixed=True, fit_index=_vv_idx)
+        fc.set_parameter_fixed(parameter_name='g', fixed=True, fit_index=_vv_idx)
+        fc.link_parameters(
+            parameter_name='l1', target_parameter_name='l1',
+            fit_index=_vh_idx, target_fit_index=_vv_idx,
+        )
+        fc.link_parameters(
+            parameter_name='l2', target_parameter_name='l2',
+            fit_index=_vh_idx, target_fit_index=_vv_idx,
+        )
+        fc.link_parameters(
+            parameter_name='g', target_parameter_name='g',
+            fit_index=_vh_idx, target_fit_index=_vv_idx,
+        )
 
         self.fit_vv.update()
         self.fit_vh.update()
 
     def onFinish(self):
-        # Add corrected data to data selector
-        for k in ['irf_vv_bg_norm', 'irf_vh_bg_norm', 'data_vv', 'data_vh']:
-            dg = self.data[k]
-            if dg is not None:
-                chisurf.imported_datasets.append(dg)
-        chisurf.cs.dataset_selector.update()
+        _cs_mod = getattr(chisurf, "cs", object())
+        _datasets = getattr(_cs_mod, "imported_datasets", None)
+        if _datasets is not None:
+            for k in ['irf_vv_bg_norm', 'irf_vh_bg_norm', 'data_vv', 'data_vh']:
+                dg = self.data[k]
+                if dg is not None:
+                    _datasets.append(dg)
+        _ds_selector = getattr(_cs_mod, "dataset_selector", None)
+        if _ds_selector is not None:
+            _ds_selector.update()
 
         self.create_fits()
 
@@ -632,8 +668,9 @@ class ChisurfWizard(QtWidgets.QWizard):
 
     def update_ui_for_jordi(self):
         """Update the UI based on the is_jordi flag."""
-        # Check if we're using Jordi format
-        is_jordi = chisurf.cs.current_setup.is_jordi
+        _cs_mod = getattr(chisurf, "cs", object())
+        _current_setup = getattr(_cs_mod, "current_setup", None)
+        is_jordi = getattr(_current_setup, "is_jordi", False)
         
         if is_jordi:
             # For Jordi format, disable and hide the VH file input fields

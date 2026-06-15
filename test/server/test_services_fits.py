@@ -379,6 +379,208 @@ class TestGraphService:
         assert len(result["graph"]["nodes"]) == 2  # 1 fit + 1 free param
         assert len(result["graph"]["edges"]) == 1
 
+    def test_fit_diagnostics_not_found(self):
+        from chisurf.server.services.fits import fit_diagnostics
+        state = SessionState()
+        result = fit_diagnostics(state, fit_index=0)
+        assert not result["ok"]
+        assert result["error_code"] == "NOT_FOUND"
+
+    def test_fit_diagnostics_returns_metrics(self):
+        from chisurf.server.services.fits import fit_diagnostics
+        fit = MagicMock()
+        fit.unique_identifier = "fit-diag-1"
+        fit.name = "DiagFit"
+        fit.chi2 = 1.5
+        fit.chi2r = 1.2
+        fit.data = MagicMock()
+        fit.data.name = "DiagData"
+        fit.data.x = [1.0, 2.0, 3.0]
+        fit.data.y = [4.0, 5.0, 6.0]
+        fit.model = MagicMock()
+        fit.model.chi2r = 1.2
+        fit.model.n_points = 3
+        fit.model.n_free = 2
+        fit.model.y = [4.1, 5.2, 5.9]
+        fit.model.residuals = [-0.1, -0.2, 0.1]
+        fit.model.parameters_all_dict = {"tau1": MagicMock()}
+        p = MagicMock()
+        p.name = "tau1"
+        p.value = 3.5
+        p.fixed = False
+        p.bounds = (0, 10)
+        p.bounds_on = True
+        p.link = None
+        p.error_estimate = 0.1
+        fit.model.parameters_all = [p]
+
+        state = SessionState(fits=[fit])
+        result = fit_diagnostics(state, fit_index=0)
+        assert result["ok"]
+        assert result["metrics"]["chi2"] == 1.5
+        assert result["metrics"]["chi2r"] == 1.2
+        assert result["metrics"]["n_points"] == 3
+        assert result["metrics"]["n_free"] == 2
+        assert len(result["parameters"]) == 1
+        assert result["parameters"][0]["name"] == "tau1"
+        assert result["residual_stats"]["mean"] is not None
+
+    def test_fit_diagnostics_downsampling(self):
+        from chisurf.server.services.fits import fit_diagnostics
+        fit = MagicMock()
+        fit.unique_identifier = "fit-down-1"
+        fit.name = "Down"
+        fit.chi2 = 1.5
+        fit.chi2r = 1.2
+        fit.data = MagicMock()
+        fit.data.name = "D"
+        fit.data.x = list(range(1000))
+        fit.data.y = [float(i) for i in range(1000)]
+        fit.model = MagicMock()
+        fit.model.chi2r = 1.2
+        fit.model.n_points = 1000
+        fit.model.n_free = 2
+        fit.model.y = [float(i + 0.1) for i in range(1000)]
+        fit.model.residuals = [0.1 for _ in range(1000)]
+        fit.model.parameters_all_dict = {}
+        fit.model.parameters_all = []
+
+        state = SessionState(fits=[fit])
+        result = fit_diagnostics(state, fit_index=0, max_points=100)
+        assert result["ok"]
+        assert len(result["curve"]["x"]) <= 100
+        assert len(result["curve"]["y"]) <= 100
+        assert len(result["curve"]["fit_y"]) <= 100
+        assert len(result["curve"]["residuals"]) <= 100
+
+    def test_fit_diagnostics_sanitizes_nan(self):
+        from chisurf.server.services.fits import fit_diagnostics
+        fit = MagicMock()
+        fit.unique_identifier = "fit-nan"
+        fit.name = "NaN"
+        fit.chi2 = float("nan")
+        fit.chi2r = float("inf")
+        fit.data = MagicMock()
+        fit.data.name = "D"
+        fit.model = MagicMock()
+        fit.model.n_points = 0
+        fit.model.n_free = 0
+        fit.model.parameters_all_dict = {}
+        fit.model.parameters_all = []
+
+        state = SessionState(fits=[fit])
+        result = fit_diagnostics(state, fit_index=0)
+        assert result["metrics"]["chi2"] is None
+        assert result["metrics"]["chi2r"] is None
+
+    def test_parameter_snapshot_not_found(self):
+        from chisurf.server.services.fits import fit_parameter_snapshot
+        state = SessionState()
+        result = fit_parameter_snapshot(state, fit_index=0)
+        assert not result["ok"]
+
+    def test_parameter_snapshot_captures_params(self):
+        from chisurf.server.services.fits import fit_parameter_snapshot
+        fit = MagicMock()
+        fit.unique_identifier = "fit-snap-1"
+        fit.name = "SnapFit"
+        fit.data = MagicMock()
+        fit.data.name = "D"
+        fit.model = MagicMock()
+        p = MagicMock()
+        p.name = "tau1"
+        p.value = 3.5
+        p.fixed = False
+        p.bounds = (0, 10)
+        p.bounds_on = True
+        p.link = None
+        fit.model.parameters_all_dict = {"tau1": p}
+        fit.model.parameters_all = [p]
+
+        state = SessionState(fits=[fit])
+        result = fit_parameter_snapshot(state, fit_index=0)
+        assert result["ok"]
+        snap = result["snapshot"]
+        assert len(snap["parameters"]) == 1
+        assert snap["parameters"][0]["name"] == "tau1"
+        assert snap["parameters"][0]["value"] == 3.5
+
+    def test_restore_parameters_not_found(self):
+        from chisurf.server.services.fits import fit_restore_parameters
+        state = SessionState()
+        result = fit_restore_parameters(state, fit_index=0, snapshot={"parameters": []})
+        assert not result["ok"]
+
+    def test_restore_parameters_missing_snapshot(self):
+        from chisurf.server.services.fits import fit_restore_parameters
+        state = SessionState()
+        result = fit_restore_parameters(state, fit_index=0, snapshot=None)
+        assert not result["ok"]
+
+    def test_restore_parameters_restores_values(self):
+        from chisurf.server.services.fits import fit_restore_parameters
+        fit = MagicMock()
+        fit.unique_identifier = "fit-rest-1"
+        fit.name = "RestFit"
+        fit.data = MagicMock()
+        fit.data.name = "D"
+        fit.model = MagicMock()
+        fit.model.update_model = MagicMock()
+        fit.model.finalize = MagicMock()
+        p = MagicMock()
+        p.name = "tau1"
+        p.value = 3.5
+        p.fixed = False
+        p.bounds = (0, 10)
+        p.bounds_on = True
+        p.link = None
+        fit.model.parameters_all_dict = {"tau1": p}
+        fit.model.parameters_all = [p]
+        fit.chi2 = 1.5
+        fit.chi2r = 1.2
+
+        state = SessionState(fits=[fit])
+        snapshot = {
+            "parameters": [
+                {"name": "tau1", "value": 5.0, "fixed": True, "bounds": (1, 15), "bounds_on": False},
+            ]
+        }
+        result = fit_restore_parameters(state, fit_index=0, snapshot=snapshot)
+        assert result["ok"]
+        assert result["restored_count"] == 1
+        assert p.value == 5.0
+        assert p.fixed is True
+        assert p.bounds == (1, 15)
+        assert p.bounds_on is False
+        fit.model.update_model.assert_called_once()
+        fit.model.finalize.assert_called_once()
+
+    def test_fit_select_by_index(self):
+        from chisurf.server.services.fits import fit_select
+        fit = MagicMock()
+        fit.unique_identifier = "fit-sel-1"
+        fit.name = "SelFit"
+        state = SessionState(fits=[fit])
+        result = fit_select(state, fit_index=0)
+        assert result["ok"]
+        assert state.current_fit_uid == "fit-sel-1"
+
+    def test_fit_select_by_uid(self):
+        from chisurf.server.services.fits import fit_select
+        fit = MagicMock()
+        fit.unique_identifier = "fit-sel-2"
+        fit.name = "SelFit2"
+        state = SessionState(fits=[fit])
+        result = fit_select(state, fit_uid="fit-sel-2")
+        assert result["ok"]
+        assert state.current_fit_uid == "fit-sel-2"
+
+    def test_fit_select_not_found(self):
+        from chisurf.server.services.fits import fit_select
+        state = SessionState()
+        result = fit_select(state, fit_index=0)
+        assert not result["ok"]
+
     def test_build_graph_linked_parameters(self):
         from chisurf.server.services.graph import build_fit_graph
         link_target = MagicMock()

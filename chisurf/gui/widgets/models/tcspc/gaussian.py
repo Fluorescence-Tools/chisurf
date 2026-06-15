@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 import chisurf.core.models.tcspc.fret as fret
 
@@ -194,7 +195,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         setattr(self, 'is_distance_between_gaussians', checked)
         # Update the model for all fits in the current fit group
         try:
-            for fit_obj in cs.fits:
+            for fit_obj in get_fitting_client().get_fit_objects():
                 cs.core.actions.dispatch(
                     name="model.update",
                     payload={},

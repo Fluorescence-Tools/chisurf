@@ -10,6 +10,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.core.fitting
 from chisurf.gui.plots import plotbase
 from chisurf.core.actions import record_action
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 
 class NoBackgroundProxy(QtCore.QIdentityProxyModel):
@@ -489,25 +490,23 @@ class FitTablePlot(plotbase.Plot):
         else:
             ey = np.ones_like(y)
         data_curve.set_data(x=x, y=y, ex=ex, ey=ey)
-        # Recompute model and residuals
-        try:
-            self.fit.update()
-        except Exception:
-            # Fallback: attempt to call model.update directly
-            try:
-                self.fit.model.update()
-            except Exception:
-                pass
+        # Recompute model and residuals via FittingClient or fallback
+        fc = get_fitting_client()
+        if fc is not None:
+            fit_uid = str(getattr(self.fit, "unique_identifier", "") or "")
+            if fit_uid:
+                fc.update_fit(fit_uid=fit_uid)
 
     def _set_mask(self, mask: np.ndarray) -> None:
         try:
             m = np.asarray(mask, dtype=float).ravel()
         except Exception:
             return
-        try:
-            self.fit.mask = m
-        except Exception:
-            return
+        fc = get_fitting_client()
+        if fc is not None:
+            fit_uid = str(getattr(self.fit, "unique_identifier", "") or "")
+            if fit_uid:
+                fc.set_fit_mask(mask=m.tolist(), fit_uid=fit_uid)
         try:
             fit_group_name = str(getattr(self.fit, "name", ""))
             record_action(
@@ -716,7 +715,11 @@ class FitTablePlot(plotbase.Plot):
                 except Exception:
                     pass
                 return False
-            
+
+            fc = get_fitting_client()
+            fit_uid = str(getattr(self.fit, "unique_identifier", "") or "")
+            fit_idx = getattr(self.fit, "fit_idx", None)
+
             for _, row in new_df.iterrows():
                 name = row.get('name')
                 if name not in pmap:
@@ -726,28 +729,33 @@ class FitTablePlot(plotbase.Plot):
                 # Update value
                 try:
                     if pd.notna(row.get('value')):
-                        p.value = float(row['value'])
+                        val = float(row['value'])
+                        fc.set_parameter_value(name, val, fit_uid=fit_uid, fit_index=fit_idx)
                 except Exception:
                     pass
 
                 # Update bounds
                 try:
                     if pd.notna(row.get('lb')) and pd.notna(row.get('ub')):
-                        p.bounds = (float(row['lb']), float(row['ub']))
+                        lb = float(row['lb'])
+                        ub = float(row['ub'])
+                        fc.set_parameter_bounds(name, (lb, ub), fit_uid=fit_uid, fit_index=fit_idx)
                 except Exception:
                     pass
 
                 # Update fixed
                 try:
                     if 'fixed' in row:
-                        p.fixed = _parse_bool(row['fixed'])
+                        fixed_val = _parse_bool(row['fixed'])
+                        fc.set_parameter_fixed(name, fixed_val, fit_uid=fit_uid, fit_index=fit_idx)
                 except Exception:
                     pass
 
                 # Update bounds_on
                 try:
                     if 'bounds_on' in row:
-                        p.bounds_on = _parse_bool(row['bounds_on'])
+                        bounds_on_val = _parse_bool(row['bounds_on'])
+                        fc.set_parameter_bounds_on(name, bounds_on_val, fit_uid=fit_uid, fit_index=fit_idx)
                 except Exception:
                     pass
 
@@ -760,34 +768,15 @@ class FitTablePlot(plotbase.Plot):
                 target_name = target_name.strip()
                 try:
                     if want_linked and target_name and target_name in pmap and target_name != name:
-                        target_param = pmap[target_name]
-                        try:
-                            p.link = target_param
-                        except Exception:
-                            # If invalid (e.g., recursive), ignore
-                            pass
+                        fc.link_parameters(name, target_name, fit_uid=fit_uid, fit_index=fit_idx)
                     else:
-                        # Explicitly unlink if not wanted or invalid
-                        try:
-                            p.link = None
-                        except Exception:
-                            pass
+                        fc.unlink_parameter(name, fit_uid=fit_uid, fit_index=fit_idx)
                 except Exception:
                     pass
 
-            # Recompute model and refresh
-            try:
-                self.fit.update()
-            except Exception:
-                try:
-                    self.fit.model.update()
-                except Exception:
-                    pass
-            # Update parameter control widgets so changes reflect in the UI
-            try:
-                self.fit.model.finalize()
-            except Exception:
-                pass
+            # Recompute model and refresh via FittingClient or fallback
+            fc.update_fit(fit_uid=fit_uid, fit_index=fit_idx)
+            fc.model_finalize(fit_uid=fit_uid, fit_index=fit_idx)
             self._refresh_arrays_into_model()
 
     # ---- Plot API ----

@@ -10,6 +10,7 @@ from chisurf.gui import plots
 from chisurf.gui.widgets.models.parse.widget import ParseModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 from chisurf.core.fluorescence.fcs import background_factor_ac
 
 
@@ -281,8 +282,18 @@ class ParseFCSWidget(ParseModelWidget):
 
         if mean_cr_total is not None:
             try:
-                self._S.value = float(mean_cr_total)
-                self._S.fixed = True
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._S.name),
+                        value=float(mean_cr_total),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
+                    fc.set_parameter_fixed(
+                        parameter_name=str(self._S.name),
+                        fixed=True,
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
             except Exception:
                 pass
 
@@ -306,8 +317,18 @@ class ParseFCSWidget(ParseModelWidget):
         cpm = cr / N
 
         try:
-            self._cpm.value = cpm
-            self._cpm.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.set_parameter_value(
+                    parameter_name=str(self._cpm.name),
+                    value=cpm,
+                    fit_index=getattr(self.fit, "fit_idx", None),
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._cpm.name),
+                    fixed=True,
+                    fit_index=getattr(self.fit, "fit_idx", None),
+                )
         except Exception:
             pass
 
@@ -339,8 +360,18 @@ class ParseFCSWidget(ParseModelWidget):
 
             cpm_all = cr / N_all
 
-            self._cpm_all.value = cpm_all
-            self._cpm_all.fixed = True
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.set_parameter_value(
+                    parameter_name=str(self._cpm_all.name),
+                    value=cpm_all,
+                    fit_index=getattr(self.fit, "fit_idx", None),
+                )
+                fc.set_parameter_fixed(
+                    parameter_name=str(self._cpm_all.name),
+                    fixed=True,
+                    fit_index=getattr(self.fit, "fit_idx", None),
+                )
         except Exception:
             pass
 
@@ -348,6 +379,8 @@ class ParseFCSWidget(ParseModelWidget):
         """Qt slot: toggle model-based background correction on/off."""
         self._bg_correction_enabled = bool(checked)
         try:
-            self.fit.update()
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.update_fit(fit_index=getattr(self.fit, "fit_idx", None))
         except Exception:
             pass

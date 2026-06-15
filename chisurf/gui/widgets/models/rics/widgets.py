@@ -10,6 +10,7 @@ import chisurf.gui.plots
 from chisurf.core.models.model import ModelCurve
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 from chisurf.core.models.rics.models import rics_simple, rics_diffusion_triplet
 
@@ -295,9 +296,19 @@ class RicsSimpleModel(ModelCurve):
             pd_meta = rics_meta.get('pixel_duration_us', None)
             ld_meta = rics_meta.get('line_duration_ms', None)
             if isinstance(pd_meta, (int, float)) and pd_meta > 0:
-                self._pixel_duration.value = float(pd_meta)
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._pixel_duration.name), value=float(pd_meta),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
             if isinstance(ld_meta, (int, float)) and ld_meta > 0:
-                self._line_duration.value = float(ld_meta)
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._line_duration.name), value=float(ld_meta),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
         except Exception:
             pass
 
@@ -362,8 +373,17 @@ class RicsSimpleModel(ModelCurve):
         # Keep the underlying fitting parameters synchronized so that the
         # GUI displays the actual values used in the model calculation.
         try:
-            self._pixel_duration.value = float(pixel_duration_val)
-            self._line_duration.value = float(line_duration_val)
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._pixel_duration.name), value=float(pixel_duration_val),
+                    fit_index=fit_idx,
+                )
+                fc.set_parameter_value(
+                    parameter_name=str(self._line_duration.name), value=float(line_duration_val),
+                    fit_index=fit_idx,
+                )
         except Exception:
             pass
 
@@ -616,9 +636,19 @@ class RicsTripletModel(ModelCurve):
             pd_meta = rics_meta.get('pixel_duration_us', None)
             ld_meta = rics_meta.get('line_duration_ms', None)
             if isinstance(pd_meta, (int, float)) and pd_meta > 0:
-                self._pixel_duration.value = float(pd_meta)
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._pixel_duration.name), value=float(pd_meta),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
             if isinstance(ld_meta, (int, float)) and ld_meta > 0:
-                self._line_duration.value = float(ld_meta)
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._line_duration.name), value=float(ld_meta),
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
         except Exception:
             pass
 
@@ -677,8 +707,17 @@ class RicsTripletModel(ModelCurve):
         # the model so that the fitting table reflects the experimental
         # pixel/line durations derived from the RICS metadata.
         try:
-            self._pixel_duration.value = float(pixel_duration_val)
-            self._line_duration.value = float(line_duration_val)
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_idx = getattr(self.fit, "fit_idx", None)
+                fc.set_parameter_value(
+                    parameter_name=str(self._pixel_duration.name), value=float(pixel_duration_val),
+                    fit_index=fit_idx,
+                )
+                fc.set_parameter_value(
+                    parameter_name=str(self._line_duration.name), value=float(line_duration_val),
+                    fit_index=fit_idx,
+                )
         except Exception:
             pass
 

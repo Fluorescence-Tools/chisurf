@@ -233,7 +233,7 @@ class RPCMonitorWidget(QtWidgets.QWidget):
             lines.append("\t".join(values))
 
         QtWidgets.QApplication.clipboard().setText("\n".join(lines))
-        cs.logging.info(f"Copied {len(lines)} RPC entries to clipboard")
+        logger.info(f"Copied {len(lines)} RPC entries to clipboard")
 
     def _on_pause_toggled(self, paused: bool) -> None:
         self._suspend_updates = paused

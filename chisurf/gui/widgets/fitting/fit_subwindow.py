@@ -21,6 +21,7 @@ import chisurf.core.settings
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.mdi_custom_titlebar import CustomMdiSubWindow
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 from chisurf.gui.widgets.dock_area import DockArea
 
@@ -564,7 +565,9 @@ class FitSubWindow(CustomMdiSubWindow):
                     new_class = getattr(module, class_name, None)
                     if new_class:
                         self.fit.model.__class__ = new_class
-                        self.fit.update()
+                        fc = get_fitting_client()
+                        if fc is not None:
+                            fc.update_fit(fit_index=getattr(self.fit, "fit_idx", None))
                         self.updateStatusBar("Model code applied successfully.")
         except Exception as e:
             from qtpy import QtWidgets

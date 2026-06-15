@@ -22,6 +22,8 @@ import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
 from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 from chisurf.core.actions import record_action
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+from chisurf.macros.core_fit import link_fit_group
 
 parameter_settings = chisurf.core.settings.parameter
 
@@ -170,7 +172,12 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
     def _on_unlink(self):
         fp = self.controller.fitting_parameter
         source = self.controller._parameter_context(fp)
-        fp.link = None
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.unlink_parameter(
+                parameter_name=str(fp.name),
+                fit_uid=source.get("fit_uid"),
+            )
         self.controller._trace_operation(
             "parameter_unlink",
             f"unlink parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -180,15 +187,20 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
             },
         )
         self.controller.finalize()
-        # Update the unlinked parameter to show its own value again
         self.controller._update_linked_parameters()
         self.refresh_from_model()
 
     def _on_fixed_toggled(self):
         fp = self.controller.fitting_parameter
         new_fixed = self.cb_fixed.isChecked()
-        fp.fixed = new_fixed
         source = self.controller._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_fixed(
+                parameter_name=str(fp.name),
+                fixed=new_fixed,
+                fit_uid=source.get("fit_uid"),
+            )
         self.controller._trace_operation(
             "parameter_fixed",
             f"set fixed={new_fixed} for parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -204,8 +216,14 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
     def _on_bounds_on_toggled(self):
         fp = self.controller.fitting_parameter
         checked = self.cb_bounds_on.isChecked()
-        fp.bounds_on = checked
         source = self.controller._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_bounds_on(
+                parameter_name=str(fp.name),
+                bounds_on=checked,
+                fit_uid=source.get("fit_uid"),
+            )
         self.controller._trace_operation(
             "parameter_bounds_on",
             f"set bounds_on={checked} for parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -215,10 +233,8 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
                 **source,
             },
         )
-        # Enable/disable editors immediately for better UX
         self.sb_lb.setEnabled(checked)
         self.sb_ub.setEnabled(checked)
-        # If turning ON and current bounds are invalid/missing, initialize them from the UI spin boxes
         if checked:
             bounds_valid = False
             try:
@@ -227,7 +243,12 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
             except Exception:
                 bounds_valid = False
             if not bounds_valid:
-                fp.bounds = (self.sb_lb.value(), self.sb_ub.value())
+                if fc is not None:
+                    fc.set_parameter_bounds(
+                        parameter_name=str(fp.name),
+                        bounds=(self.sb_lb.value(), self.sb_ub.value()),
+                        fit_uid=source.get("fit_uid"),
+                    )
                 self.controller._trace_operation(
                     "parameter_bounds_set",
                     f"initialize bounds for parameter '{fp.name}' to ({self.sb_lb.value()}, {self.sb_ub.value()})",
@@ -238,14 +259,19 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
                         **source,
                     },
                 )
-        # Refresh UI/model without risking unpack errors
         self.controller.finalize()
         self.refresh_from_model()
 
     def _on_bounds_changed(self):
         fp = self.controller.fitting_parameter
-        fp.bounds = (self.sb_lb.value(), self.sb_ub.value())
         source = self.controller._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_bounds(
+                parameter_name=str(fp.name),
+                bounds=(self.sb_lb.value(), self.sb_ub.value()),
+                fit_uid=source.get("fit_uid"),
+            )
         self.controller._trace_operation(
             "parameter_bounds_set",
             f"set bounds for parameter '{fp.name}' to ({self.sb_lb.value()}, {self.sb_ub.value()}) in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -262,11 +288,14 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
     def _on_value_changed(self):
         fp = self.controller.fitting_parameter
         old_value = float(fp.value)
-        fixed = bool(getattr(fp, "fixed", False))
-        fp.fixed = False
-        fp.value = self.sb_value.value()
-        fp.fixed = fixed
         source = self.controller._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(fp.name),
+                value=self.sb_value.value(),
+                fit_uid=source.get("fit_uid"),
+            )
         self.controller._trace_operation(
             "parameter_value",
             f"set value for parameter '{fp.name}' from {old_value} to {self.sb_value.value()} in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -278,9 +307,7 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
             },
         )
         self.controller.finalize()
-        # Update all linked parameters to show the new value
         self.controller._update_linked_parameters()
-        # Trigger model update to refresh plots
         self.controller._trigger_model_update()
 
     def refresh_from_model(self):
@@ -364,7 +391,7 @@ class FittingParameterWidget(Controller):
             return fit_group_label, local_fit_label
 
     def _locate_parameter_uids(self, parameter) -> typing.Tuple[str, str, str]:
-        fit_group_uid = ""
+        fit_uid = ""
         local_fit_uid = ""
         parameter_uid = str(getattr(parameter, "unique_identifier", ""))
         try:
@@ -385,9 +412,35 @@ class FittingParameterWidget(Controller):
                                 return fg_uid, lf_uid, parameter_uid
                         except Exception:
                             pass
-            return fit_group_uid, local_fit_uid, parameter_uid
+            return fit_uid, local_fit_uid, parameter_uid
         except Exception:
-            return fit_group_uid, local_fit_uid, parameter_uid
+            return fit_uid, local_fit_uid, parameter_uid
+
+    def _parameter_indices(self, parameter) -> typing.Tuple[int, int]:
+        """Return (fit_group_idx, local_idx) for the given parameter."""
+        fit_objects = get_fitting_client().get_fit_objects()
+        for fit_group_idx, fit_group in enumerate(fit_objects):
+            for local_idx, local_fit in enumerate(fit_group):
+                local_fit_model = getattr(local_fit, "model", None)
+                if local_fit_model is None:
+                    continue
+                params = getattr(local_fit_model, "parameters_all", [])
+                for p in params:
+                    if p is parameter:
+                        return fit_group_idx, local_idx
+        for fit_group_idx, fit_group in enumerate(fit_objects):
+            for local_idx, local_fit in enumerate(fit_group):
+                local_fit_model = getattr(local_fit, "model", None)
+                if local_fit_model is None:
+                    continue
+                params = getattr(local_fit_model, "parameters_all", [])
+                for p in params:
+                    try:
+                        if getattr(p, "_port", None) is getattr(parameter, "_port", object()):
+                            return fit_group_idx, local_idx
+                    except Exception:
+                        pass
+        return -1, -1
 
     def _parameter_context(self, parameter) -> typing.Dict[str, str]:
         group_name, local_name = self._locate_parameter(parameter)
@@ -500,11 +553,20 @@ class FittingParameterWidget(Controller):
                     )
                 else:
                     tooltip = " linked to " + str(getattr(param_other, "name", "?"))
-                    param_self.link = param_other
                     source_group, source_local = self._locate_parameter(param_self)
                     target_group, target_local = self._locate_parameter(param_other)
                     source_group_uid, source_local_uid, source_param_uid = self._locate_parameter_uids(param_self)
                     target_group_uid, target_local_uid, target_param_uid = self._locate_parameter_uids(param_other)
+                    source_fit_idx, source_local_idx = self._parameter_indices(param_self)
+                    target_fit_idx, target_local_idx = self._parameter_indices(param_other)
+                    get_fitting_client().link_parameters(
+                        parameter_name=str(param_self.name),
+                        target_parameter_name=str(param_other.name),
+                        fit_uid=source_group_uid,
+                        target_fit_uid=target_group_uid,
+                        local_idx=source_local_idx if source_local_idx >= 0 else None,
+                        target_local_idx=target_local_idx if target_local_idx >= 0 else None,
+                    )
                     self._trace_operation(
                         "parameter_link",
                         (
@@ -550,39 +612,46 @@ class FittingParameterWidget(Controller):
             "Link " + self.fitting_parameter.name + " to:"
         )
 
-        for f in chisurf.fits:
-            for fs in f:
+        fc = get_fitting_client()
+        if fc is not None:
+            # Build menu from DTOs via RPC
+            fits_data = fc.list_fits()
+            for fit_dto in fits_data:
+                fit_uid = fit_dto.get("uid", "")
+                fit_detail = fc.get_fit(fit_uid=fit_uid)
+                model_data = fit_detail.get("model", {})
+                params = model_data.get("parameters_all", [])
                 submenu = QtWidgets.QMenu(menu)
-                submenu.setTitle(fs.name)
-
-                # Sorted by "Aggregation"
-                for a in fs.model.aggregated_parameters:
-                    action_submenu = QtWidgets.QMenu(submenu)
-                    action_submenu.setTitle(a.name)
-                    ut = a.parameters_all
-                    ut.sort(key=lambda x: x.name, reverse=False)
-                    for p in ut:
-                        if p is not self.fitting_parameter:
-                            Action = action_submenu.addAction(p.name)
-                            Action.triggered.connect(
-                                self.make_linkcall(p)
-                            )
-                    submenu.addMenu(action_submenu)
+                submenu.setTitle(fit_dto.get("name", "Fit"))
                 action_submenu = QtWidgets.QMenu(submenu)
-
-                # Simply all parameters
                 action_submenu.setTitle("All parameters")
-                keys = list(fs.model.parameters_all_dict.keys())
-                sorted_keys = sorted(keys)
-                for key in sorted_keys:
-                    p = fs.model.parameters_all_dict[key]
-                    if p is not self.fitting_parameter:
-                        Action = action_submenu.addAction(p.name)
-                        Action.triggered.connect(self.make_linkcall(p))
+                for p in params:
+                    pname = p.get("name", "")
+                    if pname != self.fitting_parameter.name:
+                        Action = action_submenu.addAction(pname)
+                        Action.triggered.connect(
+                            self.make_linkcall_by_name(pname, fit_dto)
+                        )
                 submenu.addMenu(action_submenu)
-
                 menu.addMenu(submenu)
         return menu
+
+    def make_linkcall_by_name(self, target_name: str, target_fit_dto: dict):
+        """Create a closure that links this parameter to a target by name."""
+        param_self = self.fitting_parameter
+
+        def linkcall():
+            fc = get_fitting_client()
+            if fc is not None:
+                fc.link_parameters(
+                    parameter_name=str(param_self.name),
+                    target_parameter_name=target_name,
+                    fit_uid=target_fit_dto.get("uid"),
+                )
+            self.finalize()
+            self._update_linked_parameters()
+
+        return linkcall
 
     def contextMenuEvent(self, event: QtGui.QCloseEvent):
 
@@ -634,16 +703,10 @@ class FittingParameterWidget(Controller):
         # Capture absolute fit index at creation time to avoid dynamic lookup issues
         try:
             self._absolute_fit_idx = fitting_parameter.fit_idx
-            # Validate the fit index
             if not isinstance(self._absolute_fit_idx, int) or self._absolute_fit_idx < 0:
-                try:
-                    n_fits = len(chisurf.fits)
-                    if self._absolute_fit_idx == -1 and n_fits > 0:
-                        # Parameter not found in fits, use current fit as fallback
-                        self._absolute_fit_idx = getattr(chisurf, 'current_fit_idx', 0)
-                        if self._absolute_fit_idx >= n_fits:
-                            self._absolute_fit_idx = 0
-                except Exception:
+                fc = get_fitting_client()
+                n_fits = fc.fit_count() if fc is not None else 0
+                if self._absolute_fit_idx == -1 and n_fits > 0:
                     self._absolute_fit_idx = 0
         except Exception:
             self._absolute_fit_idx = 0
@@ -886,7 +949,7 @@ class FittingParameterWidget(Controller):
         try:
             if fit_index is None:
                 raise ValueError("No active fit is available for support-plane analysis.")
-            fit_obj = chisurf.fits[int(fit_index)]
+            fit_obj = get_fitting_client().get_fit_objects()[int(fit_index)]
 
             def run_scan_directly() -> None:
                 """Run the scan without the action controller.
@@ -1117,11 +1180,16 @@ class FittingParameterWidget(Controller):
                 try:
                     source_group, source_local = self._locate_parameter(fp)
                     source_group_uid, source_local_uid, source_param_uid = self._locate_parameter_uids(fp)
+                    _, source_local_idx = self._parameter_indices(fp)
                     old_link = getattr(fp, "link", None)
                     old_target_parameter = str(getattr(old_link, "name", "")) if old_link is not None else ""
                     old_target_group, old_target_local = self._locate_parameter(old_link) if old_link is not None else ("", "")
                     old_target_group_uid, old_target_local_uid, old_target_param_uid = self._locate_parameter_uids(old_link) if old_link is not None else ("", "", "")
-                    fp.link = None
+                    get_fitting_client().unlink_parameter(
+                        parameter_name=str(fp.name),
+                        fit_uid=source_group_uid,
+                        local_idx=source_local_idx if source_local_idx >= 0 else None,
+                    )
                     self._trace_operation(
                         "parameter_unlink",
                         f"unlink parameter '{fp.name}' in fit '{source_group}' / local '{source_local}'",
@@ -1169,9 +1237,7 @@ class FittingParameterWidget(Controller):
                         "local_fit": source_local,
                     },
                 )
-                chisurf.run(
-                    f"chisurf.macros.link_fit_group('{fp.name}', {state})"
-                )
+                link_fit_group(fp.name, int(state))
                 # After group linking/unlinking, update all affected parameters.
                 QtCore.QTimer.singleShot(100, self._update_linked_parameters)
                 QtCore.QTimer.singleShot(100, self._refresh_group_link_visuals)
@@ -1187,21 +1253,16 @@ class FittingParameterWidget(Controller):
         self.widget_value.setValue(v)
 
     def _update_linked_parameters(self):
-        """Update all parameters that are linked to this parameter's master."""
         try:
             if not self.fitting_parameter.is_linked:
-                # This is a master parameter - find and update all followers
                 master_param = self.fitting_parameter
-                # Search through all fits to find parameters linked to this master
-                for fit_idx, fit in enumerate(chisurf.fits):
-                    for model_fit in fit:
-                        if hasattr(model_fit, 'model') and model_fit.model:
-                            for param in model_fit.model.parameters_all:
-                                if (hasattr(param, 'link') and param.link is not None and 
-                                    id(param.link) == id(master_param)):
-                                    # Found a linked parameter - update its controller
-                                    if hasattr(param, 'controller') and param.controller:
-                                        param.controller.finalize()
+                fc = get_fitting_client()
+                if fc is not None:
+                    # Update via RPC - fit.model.finalize will handle linked params
+                    fit_uid = getattr(master_param, "fit_uid", None) or (
+                        self._parameter_context(master_param).get("fit_uid"))
+                    if fit_uid:
+                        fc.model_finalize(fit_uid=fit_uid)
         except Exception:
             pass
 
@@ -1236,11 +1297,14 @@ class FittingParameterWidget(Controller):
         fp = self.fitting_parameter
         value = self.widget_value.value()
         old_value = float(fp.value)
-        fixed = bool(getattr(fp, "fixed", False))
-        fp.fixed = False
-        fp.value = value
-        fp.fixed = fixed
         source = self._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_value(
+                parameter_name=str(fp.name),
+                value=value,
+                fit_uid=source.get("fit_uid"),
+            )
         self._trace_operation(
             "parameter_value",
             f"set value for '{fp.name}' from {old_value} to {value} in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -1252,64 +1316,31 @@ class FittingParameterWidget(Controller):
             },
         )
         self.finalize()
-        
-        # Update all linked parameters to show the new value
         self._update_linked_parameters()
-        
-        # Trigger model update to refresh plots
         self._trigger_model_update()
 
     def _trigger_model_update(self):
         try:
-            fit_idx = self._resolve_fit_idx()
-            if fit_idx is not None and 0 <= fit_idx < len(chisurf.fits):
-                fit = chisurf.fits[fit_idx]
-                fit.update()
-
-                # Recompute and refresh any output/result parameters that depend
-                # on the updated model/parameter state (e.g. TCSPC anisotropy
-                # rS,I depends on g).
-                try:
-                    model = getattr(fit, "model", None)
-                    finalize = getattr(model, "finalize", None)
-                    if callable(finalize):
-                        finalize()
-                except Exception:
-                    pass
-
-                try:
-                    model = getattr(fit, "model", None)
-                    params = getattr(model, "parameters_all", None)
-                    if isinstance(params, (list, tuple)):
-                        for p in params:
-                            try:
-                                if not bool(getattr(p, "is_output", False)):
-                                    continue
-                                ctrl = getattr(p, "controller", None)
-                                if ctrl is not None and hasattr(ctrl, "finalize"):
-                                    ctrl.finalize()
-                            except Exception:
+            fc = get_fitting_client()
+            if fc is not None:
+                fit_uid = self._parameter_context(self.fitting_parameter).get("fit_uid")
+                if fit_uid:
+                    fc.update_fit(fit_uid=fit_uid)
+                    fc.model_finalize(fit_uid=fit_uid)
+            # Fallback (UI-scoped): refresh visible output parameter widgets
+            try:
+                root = self.window()
+                if root is not None:
+                    for w in root.findChildren(QtWidgets.QWidget):
+                        try:
+                            if not bool(getattr(w, "_is_output_param", False)):
                                 continue
-                except Exception:
-                    pass
-
-                # Fallback (UI-scoped): refresh visible output parameter widgets
-                # in the same fit window. This catches output parameters that
-                # are displayed in the active UI but are not exposed through
-                # model.parameters_all in some model/widget compositions.
-                try:
-                    root = self.window()
-                    if root is not None:
-                        for w in root.findChildren(QtWidgets.QWidget):
-                            try:
-                                if not bool(getattr(w, "_is_output_param", False)):
-                                    continue
-                                if hasattr(w, "finalize"):
-                                    w.finalize()
-                            except Exception:
-                                continue
-                except Exception:
-                    pass
+                            if hasattr(w, "finalize"):
+                                w.finalize()
+                        except Exception:
+                            continue
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -1318,8 +1349,14 @@ class FittingParameterWidget(Controller):
             return
         fp = self.fitting_parameter
         checked = self.widget_bounds_on.isChecked()
-        fp.bounds_on = checked
         source = self._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_bounds_on(
+                parameter_name=str(fp.name),
+                bounds_on=checked,
+                fit_uid=source.get("fit_uid"),
+            )
         self._trace_operation(
             "parameter_bounds_on",
             f"set bounds_on={checked} for '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -1329,7 +1366,6 @@ class FittingParameterWidget(Controller):
                 **source,
             },
         )
-        # If turning ON and current bounds are invalid/missing, initialize them from the UI spin boxes
         if checked:
             bounds_valid = False
             try:
@@ -1338,7 +1374,12 @@ class FittingParameterWidget(Controller):
             except Exception:
                 bounds_valid = False
             if not bounds_valid:
-                fp.bounds = (self.widget_lower_bound.value(), self.widget_upper_bound.value())
+                if fc is not None:
+                    fc.set_parameter_bounds(
+                        parameter_name=str(fp.name),
+                        bounds=(self.widget_lower_bound.value(), self.widget_upper_bound.value()),
+                        fit_uid=source.get("fit_uid"),
+                    )
                 self._trace_operation(
                     "parameter_bounds_set",
                     f"initialize bounds for '{fp.name}' to ({self.widget_lower_bound.value()}, {self.widget_upper_bound.value()})",
@@ -1349,14 +1390,11 @@ class FittingParameterWidget(Controller):
                         **source,
                     },
                 )
-        # Refresh UI/model without risking unpack errors
         self.finalize()
 
     def _resolve_fit_idx(self, default: int = 0):
-        try:
-            n_fits = len(chisurf.fits)
-        except Exception:
-            n_fits = 0
+        fc = get_fitting_client()
+        n_fits = fc.fit_count() if fc is not None else 0
         if n_fits <= 0:
             return None
 
@@ -1364,22 +1402,8 @@ class FittingParameterWidget(Controller):
         if isinstance(idx, int) and 0 <= idx < n_fits:
             return idx
 
-        try:
-            idxs = chisurf.core.fitting.find_fit_idx_of_parameter(self.fitting_parameter)
-            if idxs:
-                idx = int(idxs[0])
-        except Exception:
-            idx = default
-
         if not isinstance(idx, int) or idx < 0 or idx >= n_fits:
-            try:
-                idx = int(getattr(chisurf, "current_fit_idx", 0))
-            except Exception:
-                idx = 0
-            if idx < 0:
-                idx = 0
-            if idx >= n_fits:
-                idx = n_fits - 1
+            idx = 0
 
         self._absolute_fit_idx = idx
         return idx
@@ -1389,8 +1413,14 @@ class FittingParameterWidget(Controller):
             return
         fp = self.fitting_parameter
         new_fixed = self.widget_fix.isChecked()
-        fp.fixed = new_fixed
         source = self._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_fixed(
+                parameter_name=str(fp.name),
+                fixed=new_fixed,
+                fit_uid=source.get("fit_uid"),
+            )
         self._trace_operation(
             "parameter_fixed",
             f"set fixed={new_fixed} for '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
@@ -1406,8 +1436,14 @@ class FittingParameterWidget(Controller):
         if getattr(self, "_is_output_param", False):
             return
         fp = self.fitting_parameter
-        fp.bounds = (self.widget_lower_bound.value(), self.widget_upper_bound.value())
         source = self._parameter_context(fp)
+        fc = get_fitting_client()
+        if fc is not None:
+            fc.set_parameter_bounds(
+                parameter_name=str(fp.name),
+                bounds=(self.widget_lower_bound.value(), self.widget_upper_bound.value()),
+                fit_uid=source.get("fit_uid"),
+            )
         self._trace_operation(
             "parameter_bounds_set",
             (

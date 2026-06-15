@@ -9,6 +9,7 @@ import chisurf.gui.widgets.general
 import chisurf.core.math.datatools
 import chisurf.gui.plots
 import chisurf.core.fitting.parameter
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.models.tcspc.lifetime import Lifetime, LifetimeModel, LifetimeMixtureModel
@@ -85,7 +86,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         """Build the read-from menu."""
         menu = self.readFrom_menu
         menu.clear()
-        for f in cs.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -105,7 +106,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             fit_index = 0
             try:
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(cs.fits):
+                for i, fit_obj in enumerate(get_fitting_client().get_fit_objects()):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
@@ -128,7 +129,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             fit_index = 0
             try:
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(cs.fits):
+                for i, fit_obj in enumerate(get_fitting_client().get_fit_objects()):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
@@ -145,7 +146,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         """Build the link-from menu."""
         menu = self.linkFrom_menu
         menu.clear()
-        for f in cs.fits:
+        for f in get_fitting_client().get_fit_objects():
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
