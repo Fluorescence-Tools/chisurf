@@ -39,14 +39,11 @@ dependencies:
   - python-docx
   - qtconsole
   - hmmlearn
-  - sympy
-  - zeus-mcmc
+  - latexify-py
   - pygments
   - pyarrow
   - boost-histogram
-  - fastmcp
   - pyqtwebengine
-  - pymol-open-source
   - hdf5
   - cmake<4
   - ninja

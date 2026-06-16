@@ -44,14 +44,11 @@ guiqwt = "*"
 python-docx = "*"
 qtconsole = "*"
 hmmlearn = "*"
-sympy = "*"
-zeus-mcmc = "*"
+latexify-py = "*"
 pygments = "*"
 pyarrow = "*"
 boost-histogram = "*"
-fastmcp = ">=3.1.0,<4"
 setuptools = ">=82.0.1,<83"
-pymol-open-source = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-qt = "*"
@@ -66,7 +63,7 @@ cmake-build-extension = ">=0.6.1,<0.7"
 [pypi-dependencies]
 
 [pypi-options]
-dependency-overrides = { "pymol-open-source" = {}, "numpy" = {} }
+dependency-overrides = { "numpy" = {} }
 
 [feature.build.dependencies]
 rattler-build = ">=0.58.0"

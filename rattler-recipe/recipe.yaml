@@ -105,16 +105,13 @@ requirements:
     - python-docx
     - qtconsole
     - hmmlearn
-    - sympy
-    - zeus-mcmc
+    - latexify-py
     - ${{ "libcxx" if osx }}
     - micromamba
     - pygments
     - pyarrow
     - boost-histogram
-    - fastmcp
     - pyqtwebengine
-    - pymol-open-source
     - ${{ "hdf5" if win }}
 
 tests:

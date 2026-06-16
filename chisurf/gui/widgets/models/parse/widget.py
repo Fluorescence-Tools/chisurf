@@ -9,12 +9,9 @@ import importlib
 from chisurf import typing
 
 import yaml
-import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from qtpy import QtWidgets, QtCore, QtGui
-import sympy
 
 
 import chisurf as cs
@@ -26,6 +23,7 @@ import chisurf.gui.decorators
 import chisurf.core.models
 import chisurf.core.settings
 import chisurf.gui.widgets
+from chisurf.gui.widgets.models.parse.latex import convert_python_expression_to_latex
 
 class EquationDialog(QtWidgets.QDialog):
     """A dialog that displays a formatted equation."""
@@ -350,8 +348,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         """
         Render a math equation using matplotlib's built-in mathtext and return a QPixmap.
 
-        This method takes a TeX-formatted equation (already processed by sympy or other means)
-        and renders it using matplotlib's built-in mathtext.
+        This method takes a TeX-formatted equation and renders it using
+        matplotlib's built-in mathtext.
 
         Args:
             equation (str): The TeX-formatted equation to render
@@ -360,8 +358,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         Returns:
             QtGui.QPixmap: The rendered equation as a QPixmap
         """
-        # No need for regex transformations here as the equation should already be in TeX format
-        # from sympy conversion
+        # No need for regex transformations here as the equation should already
+        # be in TeX format from the AST-based converter
 
         # Create a formatted equation
         math_equation = f"${equation}$"
@@ -409,11 +407,10 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
     def convert_python_to_tex(self, equation: str) -> str:
         """
-        Convert a Python equation to a TeX-like equation using sympy.
+        Convert a Python equation to a TeX-like equation.
 
-        This method uses sympy to parse a Python equation and convert it to a TeX-like
-        equation. It handles Python's power operator ** automatically, as sympy understands
-        this operator. It also handles common mathematical functions like sin, cos, etc.
+        The conversion is delegated to ``latexify-py`` through the parse-model
+        LaTeX helper.
 
         Args:
             equation (str): The Python equation to convert
@@ -421,63 +418,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         Returns:
             str: The TeX-like equation, or the original equation if conversion fails
         """
-        try:
-            # Find all variable names in the equation
-            # This regex finds all alphanumeric identifiers that are not part of function calls
-            # It will match variable names like x, y, alpha, beta1, etc.
-            variables = set(re.findall(r'(?<![a-zA-Z0-9_])([a-zA-Z][a-zA-Z0-9_]*)(?!\()', equation))
-            # Remove known function names and constants
-            function_names = {'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'pi', 'np'}
-            variables = variables - function_names
-
-            # Create symbols for all variables
-            symbols = {var: sympy.symbols(var) for var in variables}
-
-            # Create a comprehensive dictionary of mathematical functions and constants
-            math_dict = {
-                # Basic sympy functions
-                'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan,
-                'exp': sympy.exp, 'log': sympy.log, 'sqrt': sympy.sqrt,
-                'pi': sympy.pi, 'E': sympy.E, 'I': sympy.I,
-
-                # Additional sympy functions
-                'asin': sympy.asin, 'acos': sympy.acos, 'atan': sympy.atan,
-                'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh,
-                'asinh': sympy.asinh, 'acosh': sympy.acosh, 'atanh': sympy.atanh,
-                'factorial': sympy.factorial, 'gamma': sympy.gamma,
-                'abs': sympy.Abs, 'erf': sympy.erf,
-
-                # Constants
-                'inf': sympy.oo, 'nan': sympy.nan,
-
-                # Numpy module (for np.* functions)
-                'np': np
-            }
-
-            # Combine symbols and math functions
-            locals_dict = {**symbols, **math_dict}
-
-            # Replace numpy functions with sympy functions
-            equation = equation.replace('np.', '')
-
-            # Parse the equation using sympy's sympify function if possible
-            try:
-                expr = sympy.sympify(equation)
-                tex_equation = sympy.latex(expr)
-                return tex_equation
-            except Exception:
-                # If sympify fails, fall back to eval
-                try:
-                    expr = eval(equation, {"__builtins__": {}}, locals_dict)
-                    tex_equation = sympy.latex(expr)
-                    return tex_equation
-                except Exception as e:
-                    print(f"Error converting equation to sympy expression: {e}")
-                    return equation
-
-        except Exception as e:
-            print(f"Error in convert_python_to_tex: {e}")
-            return equation
+        return convert_python_expression_to_latex(equation)
 
     def cleanup_temp_files(self):
         """Clean up temporary files created for equation rendering."""
@@ -497,13 +438,14 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
     def format_equation(self, equation: str) -> str:
         """
-        Format the equation nicely using matplotlib's built-in mathtext and sympy.
+        Format the equation nicely using matplotlib's built-in mathtext.
 
-        This method converts the equation to TeX using sympy, which handles Python's
-        power operator ** automatically. It then renders the equation using matplotlib's
-        built-in mathtext and returns an HTML string that displays the rendered equation.
+        Converts the Python equation to TeX via AST parsing, then renders it
+        using matplotlib's built-in mathtext and returns an HTML string that
+        displays the rendered equation.
 
-        If sympy conversion or mathtext rendering fails, it falls back to simple HTML formatting.
+        If AST conversion or mathtext rendering fails, falls back to simple
+        HTML formatting.
 
         Args:
             equation (str): The equation to format
@@ -512,7 +454,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             str: HTML string that displays the formatted equation
         """
         try:
-            # Convert the equation to TeX using sympy
+            # Convert the equation to TeX using AST parsing
             tex_equation = self.convert_python_to_tex(equation)
             # Use the TeX equation for rendering
             equation = tex_equation
@@ -642,7 +584,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         if equation is None:
             equation = self.plainTextEdit.toPlainText()
 
-        # Convert the equation to TeX using sympy
+        # Convert the equation to TeX using AST parsing
         tex_equation = self.convert_python_to_tex(equation)
 
         # Render a larger version of the equation

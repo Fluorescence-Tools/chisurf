@@ -200,12 +200,10 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         python-docx ^
         qtconsole ^
         hmmlearn ^
-        sympy ^
-        zeus-mcmc ^
+        latexify-py ^
         pygments ^
         pyarrow ^
         boost-histogram ^
-        fastmcp ^
         hdf5
     if errorlevel 1 (
         echo ERROR: Failed to create base ChiSurf runtime environment
@@ -532,4 +530,3 @@ if exist "%BUILDER_ENV_PATH%" (
 cd /d "%SOURCE_PATH%"
 echo Done.
 exit /b 0
-

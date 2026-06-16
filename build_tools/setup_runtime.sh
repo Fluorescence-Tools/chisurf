@@ -62,13 +62,10 @@ DEPS=(
     "python-docx"
     "qtconsole"
     "hmmlearn"
-    "sympy"
-    "zeus-mcmc"
+    "latexify-py"
     "pygments"
     "pyarrow"
     "boost-histogram"
-    "fastmcp"
-    "pymol-open-source"
 )
 
 if [[ "$BUILD_MODE" == "build" ]]; then
