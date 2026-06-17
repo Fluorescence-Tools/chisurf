@@ -14,6 +14,11 @@ from .reader import TCSPCReader
 
 
 class TCSPCTTTRReader(TCSPCReader):
+    operation_type = "tcspc_histogram_computation"
+    artifact_kind_source = "raw_data"
+    artifact_kind_derived = "tcspc_decay"
+    derived_data_format = "json"
+    derived_mime_type = "application/json"
 
     def __init__(
             self,

@@ -19,6 +19,11 @@ from chisurf.core.experiments.core.reader import ExperimentReader
 
 
 class TCSPCReader(ExperimentReader):
+    operation_type = "tcspc_curve_load"
+    artifact_kind_source = "raw_data"
+    artifact_kind_derived = "tcspc_decay"
+    derived_data_format = "json"
+    derived_mime_type = "application/json"
 
     @staticmethod
     def _safe_float(value: typing.Any, default: typing.Any):

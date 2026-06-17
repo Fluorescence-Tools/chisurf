@@ -20,6 +20,12 @@ class PCHReader(ExperimentReader):
     experimental P(k) together with rich metadata.
     """
 
+    operation_type = "pch_histogram_computation"
+    artifact_kind_source = "raw_data"
+    artifact_kind_derived = "pch_histogram"
+    derived_data_format = "json"
+    derived_mime_type = "application/json"
+
     name: str = "PCH (TTTR)"
 
     def __init__(

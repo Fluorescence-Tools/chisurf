@@ -36,6 +36,12 @@ class FCS(ExperimentReader):
     ('demo', 'csv', 2)
     """
 
+    operation_type = "fcs_correlation_load"
+    artifact_kind_source = "raw_data"
+    artifact_kind_derived = "fcs_correlation"
+    derived_data_format = "json"
+    derived_mime_type = "application/json"
+
     name: str = "FCS-CSV"
     skiprows: int = 0
     use_header: bool = False

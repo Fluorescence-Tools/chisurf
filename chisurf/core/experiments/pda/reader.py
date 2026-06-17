@@ -41,6 +41,11 @@ from .index_map import build_idx_map
 
 
 class PdaReader(ExperimentReader):
+    operation_type = "pda_histogram_computation"
+    artifact_kind_source = "raw_data"
+    artifact_kind_derived = "pda_histogram"
+    derived_data_format = "json"
+    derived_mime_type = "application/json"
 
     """Experiment reader for PDA TTTR data.
 
