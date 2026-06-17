@@ -9,7 +9,6 @@ import pyqtgraph as pg
 
 import chisurf as cs
 from chisurf.core.experiments.core import reader
-from chisurf.gui.widgets.experiments.sample_selector_widget import SampleSelectorWidget
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
 

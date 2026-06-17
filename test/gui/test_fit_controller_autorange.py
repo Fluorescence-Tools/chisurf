@@ -125,3 +125,47 @@ def test_auto_fit_range_defers_update_and_blocks_spinbox_signals(qtbot, monkeypa
     qtbot.waitUntil(lambda: widget._auto_fit_range_in_progress is False)
 
     assert widget.fit.update_count == 1
+
+
+def test_finalize_iteration_uses_current_fit_parameters_only():
+    """Fit-controller finalization should not touch unrelated global parameters."""
+
+    class _Controller:
+        def __init__(self):
+            """Track whether a controller was finalized."""
+            self.finalized = False
+
+        def finalize(self):
+            """Mark the controller as finalized."""
+            self.finalized = True
+
+    class _Param:
+        def __init__(self, name, controller=None):
+            """Create a minimal fitting parameter."""
+            self.name = name
+            self.controller = controller
+
+    class _Model:
+        def __init__(self, parameters):
+            """Create a minimal model with parameters."""
+            self.parameters_all = parameters
+
+    class _Fit:
+        def __init__(self, model):
+            """Create a minimal fit."""
+            self.model = model
+
+    widget = FittingControllerWidget.__new__(FittingControllerWidget)
+    local_controller = _Controller()
+    unrelated_controller = _Controller()
+    fit = _Fit(_Model([_Param("a", local_controller), _Param("b")]))
+    unrelated_fit = _Fit(_Model([_Param("c", unrelated_controller)]))
+    fit.grouped_fits = []
+    unrelated_fit.grouped_fits = []
+
+    finalized = list(widget._iter_fit_parameters_to_finalize(fit))
+
+    assert finalized == [fit.model.parameters_all[0], fit.model.parameters_all[1]]
+    assert unrelated_fit.model.parameters_all[0] not in finalized
+    assert local_controller.finalized is False
+    assert unrelated_controller.finalized is False

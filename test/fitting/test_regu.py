@@ -91,6 +91,17 @@ class Tests(unittest.TestCase):
         k = regularization.corner(rho, eta)
         self.assertIsInstance(k, (int, type(None)))
 
+    def test_corner_with_axis_points(self):
+        """Test corner detection for L-curves with zero-valued branches."""
+        rho = np.r_[np.linspace(3.0, 0.0, 20), np.zeros(12)]
+        eta = np.r_[np.zeros(20), np.linspace(0.0, 1.0, 12)]
+
+        k = regularization.corner(rho, eta)
+
+        self.assertIsInstance(k, int)
+        self.assertGreaterEqual(k, 0)
+        self.assertLess(k, rho.size)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,12 +1,13 @@
-import os
-import sys
-import pytest
-import numpy as np
 from pathlib import Path
-from chisurf.gui.plots.lineplot.lineplot import LinePlot
+
+import numpy as np
+from qtpy import QtWidgets
+
+import chisurf.core.plot_transforms as plot_transforms
+from chisurf.gui.plots.lineplot.lineplot import LinePlot, LinePlotControl
 
 def _lineplot_source() -> str:
-    path = Path(__file__).resolve().parents[2] / "chisurf" / "plots" / "lineplot" / "lineplot.py"
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "gui" / "plots" / "lineplot" / "lineplot.py"
     return path.read_text(encoding="utf-8")
 
 def test_group_display_methods_exist():
@@ -26,47 +27,159 @@ def test_group_display_uses_selected_fit_when_available():
     assert "selected_fit" in src
     assert "hasattr(self.fit, 'grouped_fits')" in src or "hasattr(fit, 'grouped_fits')" in src
 
-def test_lineplot_reference_no_attribute(qtbot):
-    """
-    Verify that LinePlot handles models without a 'reference' attribute 
-    gracefully when reference_curve=True is set.
-    """
-    # Create simple test data
-    x = np.linspace(0, 10, 100)
-    y = np.exp(-x)
-    
-    # Mock data class
-    class MockData:
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
-    
-    # Mock fit class
-    class MockFit:
-        def __init__(self, x, y):
-            self.data = MockData(x, y)
-            self.xmin = 0
-            self.xmax = len(x)
-            
-        def get_curves(self):
-            return {'data': MockData(self.data.x, self.data.y)}
-    
-    # Mock model without reference attribute
-    class MockModelWithoutReference:
-        def __init__(self, fit):
-            self.fit = fit
-            
-    fit = MockFit(x, y)
-    fit.model = MockModelWithoutReference(fit)
-    
-    # Create a LinePlot with reference_curve=True
-    # This usually creates internal widgets, so we use qtbot to track it
-    plot = LinePlot(fit, reference_curve=True)
-    qtbot.addWidget(plot)
-    
-    # Update the plot - this should not raise an error
-    plot.update()
-    
-    # Check if the reference checkbox is disabled/available
-    assert plot.plot_controller.checkBox_5.isEnabled() is False
-    assert plot.plot_controller.use_reference is False
+def test_lineplot_without_reference_modes_uses_raw(qtbot):
+    """LinePlotControl should expose raw mode when no modes are registered."""
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    controller = LinePlotControl(parent=parent)
+    qtbot.addWidget(controller)
+
+    controller.set_reference_modes([])
+
+    assert controller.reference_mode == "raw"
+    assert controller.comboBox_reference.count() == 1
+
+
+def test_lineplot_controller_state_roundtrip(qtbot):
+    """LinePlot controller state should be project-serializable."""
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    source = LinePlotControl(parent=parent)
+    target = LinePlotControl(parent=parent)
+    qtbot.addWidget(source)
+    qtbot.addWidget(target)
+
+    source.scale_x = "log"
+    source.data_logy = "log"
+    source.x_shift = 1.25
+    source.y_shift = -0.5
+    source.display_group = True
+    source.checkBox_4.setChecked(True)
+    source.doubleSpinBox.setValue(2.0)
+    mode = plot_transforms.PlotReferenceMode(
+        key="scale",
+        label="Scale",
+        callback=lambda context: context.y,
+        parameters=(
+            plot_transforms.PlotReferenceParameter(
+                key="factor",
+                label="factor",
+                kind="float",
+                default=2.0,
+            ),
+        ),
+    )
+    source.set_reference_modes([mode])
+    source.reference_mode = "scale"
+    source.reference_parameters = {"factor": 3.5}
+    target.set_reference_modes([mode])
+
+    target.set_state(source.get_state())
+
+    assert target.scale_x == "log"
+    assert target.data_logy == "log"
+    assert target.x_shift == 1.25
+    assert target.y_shift == -0.5
+    assert target.display_group is True
+    assert target.checkBox_4.isChecked() is True
+    assert target.doubleSpinBox.value() == 2.0
+    assert target.reference_mode == "scale"
+    assert target.reference_parameters["factor"] == 3.5
+
+
+def test_reference_mode_callback_receives_parameters(qtbot):
+    """LinePlot should pass GUI parameter values into selected callbacks."""
+    plot = LinePlot.__new__(LinePlot)
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    plot.plot_controller = LinePlotControl(parent=parent)
+    plot._reference_y_label_override = None
+    x = np.array([1.0, 2.0])
+    y = np.array([5.0, 9.0])
+
+    class MockModel:
+        """Mock model with plot reference modes."""
+
+        def transform(self, context):
+            """Scale y-values using the GUI parameter."""
+            return plot_transforms.PlotReferenceResult(
+                x=context.x,
+                y=context.y * float(context.parameters["factor"]),
+            )
+
+        def get_plot_reference_modes(self):
+            """Return the available mock mode."""
+            return [
+                plot_transforms.PlotReferenceMode(
+                    key="scale",
+                    label="Scale",
+                    callback=self.transform,
+                    parameters=(
+                        plot_transforms.PlotReferenceParameter("factor", "factor", "float", 2.0),
+                    ),
+                    applies_to=("data",),
+                )
+            ]
+
+    model = MockModel()
+    plot.plot_controller.set_reference_modes(model.get_plot_reference_modes())
+    plot.plot_controller.reference_mode = "scale"
+    plot.plot_controller.reference_parameters = {"factor": 3.0}
+
+    result = plot._apply_reference_mode_to_curve(
+        fit=None,
+        model=model,
+        curve_key="data",
+        x=x,
+        y=y,
+        curves={},
+    )
+    np.testing.assert_allclose(result.y, y * 3.0)
+
+
+def test_reference_mode_hidden_result(qtbot):
+    """LinePlot reference modes may hide non-applicable curves."""
+    plot = LinePlot.__new__(LinePlot)
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    plot.plot_controller = LinePlotControl(parent=parent)
+    plot._reference_y_label_override = None
+    x = np.array([1.0, 2.0])
+    y = np.array([6.0, 10.0])
+
+    class MockModel:
+        """Mock model with a hiding mode."""
+
+        def get_plot_reference_modes(self):
+            """Return the available mock mode."""
+            return [
+                plot_transforms.PlotReferenceMode(
+                    key="hide",
+                    label="Hide",
+                    callback=lambda context: plot_transforms.PlotReferenceResult(context.x, context.y, visible=False),
+                )
+            ]
+
+    model = MockModel()
+    plot.plot_controller.set_reference_modes(model.get_plot_reference_modes())
+    plot.plot_controller.reference_mode = "hide"
+
+    result = plot._apply_reference_mode_to_curve(
+        fit=None,
+        model=model,
+        curve_key="data",
+        x=x,
+        y=y,
+        curves={},
+    )
+    assert result.visible is False
+
+
+def test_axis_range_skips_invalid_log_axis():
+    """Manual axis ranges must not produce NaN ranges in log mode."""
+
+    assert LinePlot._axis_range(1.0, 3.0, np.array([1.0, 2.0, 3.0]), True) == [0.0, np.log10(3.0)]
+    assert LinePlot._axis_range(None, 3.0, np.array([1.0, 2.0, 3.0]), True) == [0.0, np.log10(3.0)]
+    assert LinePlot._axis_range(0.0, None, np.array([1.0, 2.0]), True) is None
+    assert LinePlot._axis_range(None, -1.0, np.array([1.0, 2.0]), True) is None
+    assert LinePlot._axis_range(0.0, 2.0, np.array([1.0, 3.0]), False) == [0.0, 2.0]

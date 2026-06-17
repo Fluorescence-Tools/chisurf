@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import gc
+import hashlib
 import importlib
+import inspect
 import json
 import os
 import pathlib
 import shutil
+import tempfile
 
 import numpy as np
 
@@ -18,10 +21,54 @@ import chisurf.gui.widgets
 from chisurf import typing
 from chisurf.core.actions import get_action_catalog, record_action
 from chisurf.core.experiments.core.reader import ExperimentReader
+from chisurf.core.experiments.core.serialize import decode_array, encode_array
 from chisurf.core.project import Project as CSProject
-from chisurf.core.project import fit_state as project_fit_state
+from chisurf.core.project import ProjectArchive, fit_state as project_fit_state
 from chisurf.core.project import load_project as project_load_json
-from chisurf.core.project import save_project as project_save_json
+from chisurf.core.project.archive import DATA_DIR, PROJECT_ARCHIVE_SUFFIX, PROJECT_JSON
+
+
+def _call_gui_reinitialize(
+    gui: typing.Any,
+    show_confirmation: bool = True,
+    show_success: bool = True,
+) -> None:
+    """Call the GUI reinitializer with the requested dialog behavior.
+
+    Parameters
+    ----------
+    gui : object
+        Main window object that may provide ``reinitialize`` or ``onCloseAllFits``.
+    show_confirmation : bool, optional
+        Whether the GUI reinitializer should ask for confirmation.
+    show_success : bool, optional
+        Whether the GUI reinitializer should show a completion message.
+    """
+    reinit = getattr(gui, "reinitialize", None)
+    if callable(reinit):
+        try:
+            signature = inspect.signature(reinit)
+            accepts_kwargs = any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in signature.parameters.values()
+            )
+            accepts_dialog_flags = accepts_kwargs or {
+                "show_confirmation",
+                "show_success",
+            }.issubset(signature.parameters)
+        except (TypeError, ValueError):
+            accepts_dialog_flags = False
+
+        if accepts_dialog_flags:
+            reinit(show_confirmation=show_confirmation, show_success=show_success)
+        else:
+            reinit()
+        return
+
+    try:
+        gui.onCloseAllFits()
+    except Exception:
+        pass
 
 
 def _iter_group_members(group):
@@ -302,6 +349,205 @@ def _history_event_count() -> int:
     return 0
 
 
+def _project_archive_path(target_path: str, project_name: str) -> tuple[pathlib.Path, str]:
+    """Return the ``.csp`` save path and canonical project name."""
+    path = pathlib.Path(target_path)
+    if path.suffix.lower() == PROJECT_ARCHIVE_SUFFIX:
+        return path, path.stem or project_name
+    return path / f"{project_name}{PROJECT_ARCHIVE_SUFFIX}", project_name
+
+
+def _project_archive_input_path(project_path: str) -> pathlib.Path:
+    """Return a ``.csp`` archive path from a user-selected project path."""
+    path = pathlib.Path(project_path)
+    if path.suffix.lower() == PROJECT_ARCHIVE_SUFFIX:
+        return path
+    if path.is_dir():
+        return path / f"project{PROJECT_ARCHIVE_SUFFIX}"
+    # If no suffix, treat the path as a stem and append .csp
+    return pathlib.Path(f"{path}{PROJECT_ARCHIVE_SUFFIX}")
+
+
+def _current_project_root() -> pathlib.Path | None:
+    gui = getattr(cs, "cs", None)
+    current_path = getattr(gui, "_current_project_path", None)
+    if current_path:
+        return pathlib.Path(current_path).parent
+    return None
+
+
+def _history_snapshot_bytes() -> bytes | None:
+    history_obj = getattr(cs, "history", None)
+    if history_obj is None or not hasattr(history_obj, "save_jsonl"):
+        return None
+    with tempfile.TemporaryDirectory() as tmpdir:
+        history_path = history_obj.save_jsonl(pathlib.Path(tmpdir) / HISTORY_FILENAME)
+        return pathlib.Path(history_path).read_bytes()
+
+
+def _write_history_snapshot_to_archive(archive: ProjectArchive) -> None:
+    history_bytes = _history_snapshot_bytes()
+    if history_bytes is not None:
+        archive.write_bytes(HISTORY_FILENAME, history_bytes)
+
+
+def _write_chinet_session_to_archive(archive: ProjectArchive) -> None:
+    try:
+        import chinet
+    except (ImportError, AttributeError):
+        return
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        session_path = pathlib.Path(tmpdir) / "session.jsonl"
+        chinet.session.save(str(session_path))
+        archive.write_bytes("session.jsonl", session_path.read_bytes())
+
+
+def _resolve_external_path(value: str, project_root: pathlib.Path | None) -> pathlib.Path | None:
+    path = pathlib.Path(value)
+    candidates: list[pathlib.Path] = []
+    if path.is_absolute():
+        candidates.append(path)
+    else:
+        if project_root is not None:
+            candidates.append(project_root / path)
+        candidates.append(pathlib.Path.cwd() / path)
+
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _archive_name_for_file(source_path: pathlib.Path, used_names: set[str]) -> str:
+    base_name = f"{DATA_DIR}/{source_path.name}"
+    if base_name not in used_names:
+        used_names.add(base_name)
+        return base_name
+
+    digest = hashlib.md5(str(source_path.resolve()).encode("utf-8", errors="ignore")).hexdigest()[:8]
+    stem = source_path.stem or "file"
+    suffix = source_path.suffix
+    name = f"{DATA_DIR}/{stem}-{digest}{suffix}"
+    counter = 1
+    while name in used_names:
+        name = f"{DATA_DIR}/{stem}-{digest}-{counter}{suffix}"
+        counter += 1
+    used_names.add(name)
+    return name
+
+
+def _rewrite_proteinmc_paths(
+    state: typing.Any,
+    archive: ProjectArchive,
+    used_names: set[str],
+    missing: list[str],
+    project_root: pathlib.Path | None,
+    log: typing.Any,
+) -> None:
+    """Rewrite known ProteinMC file paths to archive-relative paths."""
+    if not isinstance(state, dict):
+        return
+    proteinmc = state.get("proteinmc")
+    if not isinstance(proteinmc, dict):
+        return
+
+    for key in ("structure_source", "labeling_file", "output_file", "trajectory_file"):
+        value = proteinmc.get(key)
+        if not isinstance(value, str) or not value:
+            continue
+        source_path = _resolve_external_path(value, project_root)
+        if source_path is not None:
+            archive_name = _archive_name_for_file(source_path, used_names)
+            try:
+                archive.write_file(archive_name, source_path)
+            except Exception as exc:
+                log.warning(f"save_project: could not embed {source_path}: {exc}")
+                continue
+            proteinmc[key] = archive_name
+        elif value.startswith(f"{DATA_DIR}/"):
+            continue
+        else:
+            missing.append(value)
+
+
+def _embed_external_file_refs(
+    proj: CSProject,
+    archive: ProjectArchive,
+    project_root: pathlib.Path | None,
+    log: typing.Any,
+) -> None:
+    """Embed known external project files into a project archive."""
+    used_names: set[str] = set()
+    missing: list[str] = []
+
+    for payload in (proj.datasets or {}).values():
+        if not isinstance(payload, dict) or not _is_file_backed_dataset(payload):
+            continue
+        value = payload.get("path")
+        if not isinstance(value, str) or not value:
+            continue
+        source_path = _resolve_external_path(value, project_root)
+        if source_path is not None:
+            archive_name = _archive_name_for_file(source_path, used_names)
+            try:
+                archive.write_file(archive_name, source_path)
+            except Exception as exc:
+                log.warning(f"save_project: could not embed {source_path}: {exc}")
+                continue
+            payload["path"] = archive_name
+        elif value.startswith(f"{DATA_DIR}/"):
+            continue
+        else:
+            missing.append(value)
+
+    ui_state = proj.ui_state if isinstance(proj.ui_state, dict) else {}
+    chimol = ui_state.get("chimol")
+    if isinstance(chimol, dict) and isinstance(chimol.get("open_files"), list):
+        open_files = []
+        for value in chimol["open_files"]:
+            if not isinstance(value, str):
+                open_files.append(value)
+                continue
+            source_path = _resolve_external_path(value, project_root)
+            if source_path is not None:
+                archive_name = _archive_name_for_file(source_path, used_names)
+                try:
+                    archive.write_file(archive_name, source_path)
+                except Exception as exc:
+                    log.warning(f"save_project: could not embed {source_path}: {exc}")
+                    open_files.append(value)
+                    continue
+                open_files.append(archive_name)
+            elif value.startswith(f"{DATA_DIR}/"):
+                open_files.append(value)
+            else:
+                missing.append(value)
+                open_files.append(value)
+        chimol["open_files"] = open_files
+
+    _rewrite_proteinmc_paths(ui_state, archive, used_names, missing, project_root, log)
+
+    for fit_record in proj.fits or []:
+        if not isinstance(fit_record, dict):
+            continue
+        for local_fit in fit_record.get("local_fits") or []:
+            if isinstance(local_fit, dict):
+                _rewrite_proteinmc_paths(
+                    local_fit.get("fit_state"),
+                    archive,
+                    used_names,
+                    missing,
+                    project_root,
+                    log,
+                )
+
+    if missing:
+        proj.extra["missing_external_files"] = sorted(set(missing))
+        log.warning(f"save_project: could not embed external files: {missing}")
+
+
+
 def export_action_catalog(
     target_path: str = "",
     file_type: str = "yaml",
@@ -440,6 +686,56 @@ def _deserialize_reader(
     except Exception:
         pass
     return reader
+
+
+def _datacurve_arrays(
+    dc: cs.core.data.DataCurve,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return x/y/ex/ey arrays for a DataCurve as float64 arrays."""
+    try:
+        x = np.asarray(getattr(dc, "x", []), dtype=float)
+        y = np.asarray(getattr(dc, "y", []), dtype=float)
+        ex = np.asarray(getattr(dc, "ex", np.zeros_like(x)), dtype=float)
+        ey = np.asarray(getattr(dc, "ey", np.ones_like(y)), dtype=float)
+    except Exception:
+        x = np.asarray([], dtype=float)
+        y = np.asarray([], dtype=float)
+        ex = np.asarray([], dtype=float)
+        ey = np.asarray([], dtype=float)
+    return x, y, ex, ey
+
+
+def _encode_curve_array(arr: np.ndarray) -> dict[str, typing.Any]:
+    """Encode a numeric project curve array as base64 JSON."""
+    encoded = encode_array(np.asarray(arr, dtype=float))
+    encoded["encoding"] = "base64"
+    return encoded
+
+
+def _decode_project_array(value: typing.Any) -> np.ndarray:
+    """Decode a project curve array from base64 or legacy list form."""
+    if isinstance(value, dict) and value.get("encoding") == "base64":
+        return decode_array(value)
+    if value is None:
+        return np.asarray([], dtype=float)
+    return np.asarray(value, dtype=float)
+
+
+def _decode_curve_payload(
+    payload: typing.Dict[str, typing.Any],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Decode x/y/ex/ey arrays from a project dataset payload."""
+    x = _decode_project_array(payload.get("x", []))
+    y = _decode_project_array(payload.get("y", []))
+    if "ex" in payload:
+        ex = _decode_project_array(payload.get("ex"))
+    else:
+        ex = np.zeros_like(x)
+    if "ey" in payload:
+        ey = _decode_project_array(payload.get("ey"))
+    else:
+        ey = np.ones_like(y)
+    return x, y, ex, ey
 
 
 _BULK_PDA_KEYS = frozenset({
@@ -975,7 +1271,7 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
     # 1) dump numeric data
     log.debug("Saving fit CSV and curves to %r.csv", basename)
     fit.save(basename, "csv", save_curves=True)
-    # Also persist a fit.json (single-fit project-style state without global links)
+    # Also persist fit.json as ChiSurf project-style state without global links.
     try:
         fg_key, fit_payload = _build_fitgroup_payload_from_window(
             fit_window,
@@ -988,30 +1284,18 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
         try:
             data_obj = getattr(fit, "data", None)
             if isinstance(data_obj, cs.core.data.DataCurve):
-                try:
-                    x = np.asarray(getattr(data_obj, "x", []), dtype=float)
-                    y = np.asarray(getattr(data_obj, "y", []), dtype=float)
-                    ex = np.asarray(getattr(data_obj, "ex", np.zeros_like(x)), dtype=float)
-                    ey = np.asarray(getattr(data_obj, "ey", np.ones_like(y)), dtype=float)
-                except Exception:
-                    x = np.asarray([], dtype=float)
-                    y = np.asarray([], dtype=float)
-                    ex = np.asarray([], dtype=float)
-                    ey = np.asarray([], dtype=float)
+                x, y, ex, ey = _datacurve_arrays(data_obj)
                 datasets["ds000"] = {
                     "name": getattr(data_obj, "name", ""),
                     "filename": getattr(data_obj, "filename", ""),
-                    "x": x.tolist(),
-                    "y": y.tolist(),
-                    "ex": ex.tolist(),
-                    "ey": ey.tolist(),
+                    "x": _encode_curve_array(x),
+                    "y": _encode_curve_array(y),
+                    "ex": _encode_curve_array(ex),
+                    "ey": _encode_curve_array(ey),
                 }
                 # attach dataset_id directly to the fit payload
                 if fit_payload and fit_payload.get("local_fits"):
-                    try:
-                        fit_payload["local_fits"][0]["dataset_id"] = "ds000"
-                    except Exception:
-                        pass
+                    fit_payload["local_fits"][0]["dataset_id"] = "ds000"
         except Exception as exc:
             log.warning(f"save_fit: could not build dataset payload for fit.json: {exc}")
 
@@ -1564,24 +1848,15 @@ def get_project_payload(project_name: str = "chisurf_project") -> CSProject:
             return dataset_id_by_obj[key]
         ds_id = f"ds{ds_counter:03d}"
         ds_counter += 1
-        try:
-            x = np.asarray(getattr(dc, "x", []), dtype=float)
-            y = np.asarray(getattr(dc, "y", []), dtype=float)
-            ex = np.asarray(getattr(dc, "ex", np.zeros_like(x)), dtype=float)
-            ey = np.asarray(getattr(dc, "ey", np.ones_like(y)), dtype=float)
-        except Exception:
-            x = np.asarray([], dtype=float)
-            y = np.asarray([], dtype=float)
-            ex = np.asarray([], dtype=float)
-            ey = np.asarray([], dtype=float)
+        x, y, ex, ey = _datacurve_arrays(dc)
         filename = getattr(dc, "filename", "")
         datasets[ds_id] = {
             "name": getattr(dc, "name", ""),
             "filename": filename,
-            "x": x.tolist(),
-            "y": y.tolist(),
-            "ex": ex.tolist(),
-            "ey": ey.tolist(),
+            "x": _encode_curve_array(x),
+            "y": _encode_curve_array(y),
+            "ex": _encode_curve_array(ex),
+            "ey": _encode_curve_array(ey),
             "data_reader": _serialize_reader(getattr(dc, "data_reader", None)),
             "experiment_name": getattr(getattr(dc, "experiment", None), "name", None),
         }
@@ -1704,14 +1979,16 @@ def get_project_payload(project_name: str = "chisurf_project") -> CSProject:
 
             local_fits_state.append(rec)
 
-        manifest_fits.append(
-            {
-                "id": fg_id,
-                "name": getattr(fit_group, "name", fg_id),
-                "model_name": model_name,
-                "local_fits": local_fits_state,
-            }
-        )
+        fit_record = {
+            "id": fg_id,
+            "name": getattr(fit_group, "name", fg_id),
+            "model_name": model_name,
+            "local_fits": local_fits_state,
+        }
+        plot_state = _fitgroup_plot_state(fit_group)
+        if plot_state:
+            fit_record["plot_state"] = plot_state
+        manifest_fits.append(fit_record)
 
     ui_state = {}
     if dataset_layout:
@@ -1763,58 +2040,82 @@ def get_project_payload(project_name: str = "chisurf_project") -> CSProject:
     return proj
 
 
-def save_project(target_path: str, project_name: str = "chisurf_project"):
-    """Save the current state of the application as a project.
+def build_project_archive(
+    project_name: str = "chisurf_project",
+    *,
+    include_save_history_event: bool = False,
+    target_path: pathlib.Path | None = None,
+) -> typing.Tuple[CSProject, bytes]:
+    """Build a complete project payload and finalized ``.csp`` archive bytes.
 
-    This implementation writes a JSON ``project.json`` file using
-    :class:`cs.core.project.Project` together with a snapshot of all datasets,
-    fits and UI state. Everything is embedded in ``project.json``.
+    Parameters
+    ----------
+    project_name : str, optional
+        Project display name.
+    include_save_history_event : bool, optional
+        Whether to record a project-save event before writing history.
+    target_path : pathlib.Path, optional
+        Target path used only for the optional history event.
+
+    Returns
+    -------
+    tuple
+        The project payload and finalized archive bytes.
+    """
+    log = cs.logging
+    proj = get_project_payload(project_name)
+    project_root = _current_project_root()
+    archive = ProjectArchive()
+
+    _embed_external_file_refs(proj, archive, project_root, log)
+    _write_chinet_session_to_archive(archive)
+    if include_save_history_event and target_path is not None:
+        _record_history(
+            action_type="project_save",
+            summary=f"save project '{project_name}' to '{target_path.as_posix()}'",
+            payload={
+                "project_path": target_path.as_posix(),
+                "project_name": project_name,
+            },
+        )
+    _write_history_snapshot_to_archive(archive)
+    archive.write_text(PROJECT_JSON, json.dumps(proj.to_dict(), indent=2, sort_keys=True))
+    return proj, archive.to_bytes()
+
+
+def save_project(target_path: str, project_name: str = "chisurf_project"):
+    """Save the current state of the application as a ``.csp`` project archive.
 
     Works in headless mode (without GUI).
     """
     log = cs.logging
     gui = getattr(cs, "cs", None)
 
-    base_dir = os.path.abspath(str(target_path))
-    project_dir = os.path.join(base_dir, project_name)
-
-    # Clean the target directory to avoid stale files from earlier saves
-    try:
-        if os.path.isdir(project_dir):
-            shutil.rmtree(project_dir)
-    except Exception as exc:
-        log.error(f"save_project: could not clean existing project directory {project_dir}: {exc}")
-        return
+    project_path, project_name = _project_archive_path(target_path, project_name)
 
     try:
-        os.makedirs(project_dir, exist_ok=True)
+        _, archive_bytes = build_project_archive(
+            project_name,
+            include_save_history_event=True,
+            target_path=project_path,
+        )
+        project_path.parent.mkdir(parents=True, exist_ok=True)
+        project_path.write_bytes(archive_bytes)
     except Exception as exc:
-        log.error(f"save_project: could not create project directory {project_dir}: {exc}")
-        return
+        log.error(f"save_project: could not save project archive {project_path}: {exc}")
+        return None
 
-    proj = get_project_payload(project_name)
-
-    project_save_json(proj, project_dir)
-    hist_path = _save_history_snapshot(project_dir)
-    _record_history(
-        action_type="project_save",
-        summary=f"save project '{project_name}' to '{project_dir}'",
-        payload={
-            "project_dir": project_dir,
-            "project_name": project_name,
-            "history_file": str(hist_path) if hist_path is not None else None,
-        },
-    )
-    if hist_path is not None:
-        _save_history_snapshot(project_dir)
-    log.info(f"Project saved to {project_dir}")
+    log.info(f"Project saved to {project_path}")
     try:
         if gui is not None:
+            gui._current_project_path = project_path
             from chisurf.gui.project_helpers import add_recent_project
 
-            add_recent_project(gui, project_dir)
+            add_recent_project(gui, project_path)
     except Exception:
         pass
+
+    return project_path
 
 
 def _write_fit_docx(
@@ -2089,12 +2390,44 @@ def _resolve_project_local_model_state(
     return state
 
 
-def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf_fit"):
-    """Save a single fit (data + model state + window) in the project format.
+def _fitgroup_plot_state(fit_group: typing.Any) -> typing.Dict[str, typing.Any]:
+    """Return project-serializable plot/window state for a fit group."""
+    try:
+        import chisurf.gui as _gui_mod
+    except Exception:
+        return {}
 
-    The output is a folder containing ``project.json`` so it can be reloaded
-    with :func:`load_fit_project` similarly to full projects, but without
-    touching other open fits.
+    for fit_window in list(getattr(_gui_mod, "fit_windows", []) or []):
+        try:
+            if getattr(fit_window, "fit", None) is not fit_group:
+                continue
+            get_state = getattr(fit_window, "get_project_plot_state", None)
+            if callable(get_state):
+                state = get_state()
+                if isinstance(state, dict):
+                    return state
+        except Exception:
+            continue
+    return {}
+
+
+def _apply_pending_plot_state(fit_group: typing.Any, fit_record: typing.Dict[str, typing.Any]) -> None:
+    """Attach serialized plot state to a fit group for later GUI restoration."""
+    if not isinstance(fit_record, dict):
+        return
+    state = fit_record.get("plot_state")
+    if isinstance(state, dict) and state:
+        try:
+            setattr(fit_group, "_project_plot_state", state)
+        except Exception:
+            pass
+
+
+def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf_project"):
+    """Save a single fit (data + model state + window) as a ``.csp`` archive.
+
+    The output can be reloaded with :func:`load_fit_project` similarly to full
+    projects, but without touching other open fits.
     """
     log = cs.logging
     gui = getattr(cs, "cs", None)
@@ -2114,14 +2447,9 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
             log.error("save_fit_project: fit window has no fit group")
             return
 
-    base_dir = os.path.abspath(str(target_path))
-    project_dir = os.path.join(base_dir, fit_name)
-
-    try:
-        os.makedirs(project_dir, exist_ok=True)
-    except Exception as exc:
-        log.error(f"save_fit_project: could not create directory {project_dir}: {exc}")
-        return
+    project_path, fit_name = _project_archive_path(target_path, fit_name)
+    archive = ProjectArchive()
+    project_root = _current_project_root()
 
     datasets: typing.Dict[str, typing.Dict] = {}
     dataset_id_by_obj: typing.Dict[int, str] = {}
@@ -2134,24 +2462,15 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
             return dataset_id_by_obj[key]
         ds_id = f"ds{ds_counter:03d}"
         ds_counter += 1
-        try:
-            x = np.asarray(getattr(dc, "x", []), dtype=float)
-            y = np.asarray(getattr(dc, "y", []), dtype=float)
-            ex = np.asarray(getattr(dc, "ex", np.zeros_like(x)), dtype=float)
-            ey = np.asarray(getattr(dc, "ey", np.ones_like(y)), dtype=float)
-        except Exception:
-            x = np.asarray([], dtype=float)
-            y = np.asarray([], dtype=float)
-            ex = np.asarray([], dtype=float)
-            ey = np.asarray([], dtype=float)
+        x, y, ex, ey = _datacurve_arrays(dc)
         filename = getattr(dc, "filename", "")
         datasets[ds_id] = {
             "name": getattr(dc, "name", ""),
             "filename": filename,
-            "x": x.tolist(),
-            "y": y.tolist(),
-            "ex": ex.tolist(),
-            "ey": ey.tolist(),
+            "x": _encode_curve_array(x),
+            "y": _encode_curve_array(y),
+            "ex": _encode_curve_array(ex),
+            "ey": _encode_curve_array(ey),
         }
         dataset_id_by_obj[key] = ds_id
         return ds_id
@@ -2197,31 +2516,31 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
     except Exception:
         pass
 
-    # Write both project.json (compat) and fit.json (explicit single-fit entry point)
-    project_save_json(proj, project_dir)
-    hist_path = _save_history_snapshot(project_dir)
-    _record_history(
-        action_type="fit_save",
-        summary=f"save fit '{fit_name}' to '{project_dir}'",
-        payload={
-            "project_dir": project_dir,
-            "fit_name": fit_name,
-            "history_file": str(hist_path) if hist_path is not None else None,
-        },
-    )
-    if hist_path is not None:
-        _save_history_snapshot(project_dir)
     try:
-        fit_json_path = os.path.join(project_dir, "fit.json")
-        with open(fit_json_path, "w", encoding="utf-8") as f:
-            json.dump(proj.to_dict(), f, indent=2, sort_keys=True)
+        _embed_external_file_refs(proj, archive, project_root, log)
+        _write_chinet_session_to_archive(archive)
+        archive.write_text(PROJECT_JSON, json.dumps(proj.to_dict(), indent=2, sort_keys=True))
+        archive.write_text("fit.json", json.dumps(proj.to_dict(), indent=2, sort_keys=True))
+        _record_history(
+            action_type="fit_save",
+            summary=f"save fit '{fit_name}' to '{project_path.as_posix()}'",
+            payload={
+                "project_path": project_path.as_posix(),
+                "fit_name": fit_name,
+            },
+        )
+        _write_history_snapshot_to_archive(archive)
+        project_path = archive.save(project_path)
     except Exception as exc:
-        log.warning(f"save_fit_project: could not write fit.json: {exc}")
-    log.info(f"Fit saved to {project_dir}")
+        log.error(f"save_fit_project: could not save fit archive {project_path}: {exc}")
+        return None
+
+    log.info(f"Fit saved to {project_path}")
+    return project_path
 
 
 def load_fit_project(project_path: str):
-    """Load a single-fit project and append its fit/data to the current session.
+    """Load a ChiSurf project and append its fit/data to the current session.
 
     Existing datasets and fits are left untouched. The stored dataset(s) are
     appended, then the fit group is rebuilt and its state restored.
@@ -2233,7 +2552,28 @@ def load_fit_project(project_path: str):
 
     proj = None
     history_base_dir = None
-    if project_path.endswith(".json") and os.path.isfile(project_path):
+    archive_handle = None
+    path = pathlib.Path(project_path)
+    if path.suffix.lower() == PROJECT_ARCHIVE_SUFFIX or path.is_dir():
+        archive_path = _project_archive_input_path(project_path)
+        try:
+            archive = ProjectArchive.open(archive_path)
+            temp_dir, archive_handle = archive.extract_to_temp()
+            data = json.loads(archive.read_text(PROJECT_JSON))
+            proj = CSProject.from_dict(data)
+            proj._archive = archive
+            proj._archive_path = archive_path
+            proj._archive_temp_dir = temp_dir
+            proj._archive_temp_handle = archive_handle
+            history_base_dir = temp_dir
+            if gui is not None:
+                temp_dirs = list(getattr(gui, "_project_archive_temp_dirs", []) or [])
+                temp_dirs.append(temp_dir)
+                gui._project_archive_temp_dirs = temp_dirs
+        except Exception as exc:
+            log.error(f"load_fit_project: failed to read project archive {archive_path}: {exc}")
+            return
+    elif project_path.endswith(".json") and os.path.isfile(project_path):
         # Accept direct fit.json/project.json paths
         try:
             with open(project_path, encoding="utf-8") as f:
@@ -2276,10 +2616,7 @@ def load_fit_project(project_path: str):
         try:
             name = payload.get("name", ds_id)
             filename = payload.get("filename", "")
-            x = np.asarray(payload.get("x", []), dtype=float)
-            y = np.asarray(payload.get("y", []), dtype=float)
-            ex = np.asarray(payload.get("ex", np.zeros_like(x)), dtype=float)
-            ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
+            x, y, ex, ey = _decode_curve_payload(payload)
             dc = cs.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
 
             if filename:
@@ -2356,11 +2693,13 @@ def load_fit_project(project_path: str):
             fit_group = cs.fits[-1]
         except Exception:
             continue
+        _apply_pending_plot_state(fit_group, rec)
 
         grouped_new = getattr(fit_group, "grouped_fits", [])
         for lf_rec, new_fit in zip(local_fits, grouped_new):
             state = lf_rec.get("fit_state") or {}
-            state = _resolve_project_local_model_state(state, pathlib.Path(project_path))
+            project_root = getattr(proj, "_archive_temp_dir", history_base_dir)
+            state = _resolve_project_local_model_state(state, pathlib.Path(project_root) if project_root else None)
             if isinstance(state, dict):
                 try:
                     set_state = getattr(new_fit, "set_state", None)
@@ -2406,7 +2745,7 @@ def load_fit_project(project_path: str):
     _refresh_history_browser()
     _record_history(
         action_type="fit_load",
-        summary=f"load fit project from '{project_path}'",
+        summary=f"load ChiSurf project from '{project_path}'",
         payload={
             "project_path": str(project_path),
             "history_loaded": bool(history_loaded),
@@ -2427,11 +2766,15 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
     log = cs.logging
     gui = getattr(cs, "cs", None)
 
+    project_root = getattr(proj, "_archive_temp_dir", None)
+    if project_root is None and project_path is not None:
+        project_root = pathlib.Path(project_path)
+
     # Full project load replaces current operation history when available.
     history_loaded = False
-    if project_path is not None:
+    if project_root is not None:
         try:
-            history_loaded = bool(_load_history_snapshot(project_path, replace=True))
+            history_loaded = bool(_load_history_snapshot(project_root, replace=True))
         except Exception:
             pass
 
@@ -2448,14 +2791,11 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
 
     if gui is not None:
         try:
-            reinit = getattr(gui, "reinitialize", None)
-            if callable(reinit):
-                reinit()
-            else:
-                try:
-                    gui.onCloseAllFits()
-                except Exception:
-                    pass
+            _call_gui_reinitialize(
+                gui,
+                show_confirmation=False,
+                show_success=False,
+            )
         except Exception:
             pass
 
@@ -2531,10 +2871,7 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
         try:
             name = payload.get("name", ds_id)
             filename = payload.get("filename", "")
-            x = np.asarray(payload.get("x", []), dtype=float)
-            y = np.asarray(payload.get("y", []), dtype=float)
-            ex = np.asarray(payload.get("ex", np.zeros_like(x)), dtype=float)
-            ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
+            x, y, ex, ey = _decode_curve_payload(payload)
             dc = cs.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
 
             if filename:
@@ -2667,7 +3004,6 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
         except Exception:
             pass
 
-    project_root = pathlib.Path(project_path) if project_path is not None else None
     _restore_chimol_project_files(gui, project_root, ui_state, log)
 
     # --- Rebuild fit groups and restore their state -----------------------
@@ -2720,6 +3056,7 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
             fit_group = cs.fits[-1]
         except Exception:
             continue
+        _apply_pending_plot_state(fit_group, rec)
 
         grouped_new = getattr(fit_group, "grouped_fits", [])
         for lf_rec, new_fit in zip(local_fits, grouped_new):
@@ -2794,6 +3131,26 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
         log.info("Project loaded from database")
 
 
+def _load_project_archive(project_path: str) -> CSProject:
+    """Load a full project from a ``.csp`` archive."""
+    archive_path = _project_archive_input_path(project_path)
+    archive = ProjectArchive.open(archive_path)
+    data = json.loads(archive.read_text(PROJECT_JSON))
+    proj = CSProject.from_dict(data)
+    temp_dir, temp_handle = archive.extract_to_temp()
+    proj._archive = archive
+    proj._archive_path = archive_path
+    proj._archive_temp_dir = temp_dir
+    proj._archive_temp_handle = temp_handle
+
+    gui = getattr(cs, "cs", None)
+    if gui is not None:
+        temp_dirs = list(getattr(gui, "_project_archive_temp_dirs", []) or [])
+        temp_dirs.append(temp_dir)
+        gui._project_archive_temp_dirs = temp_dirs
+    return proj
+
+
 def load_project_data(project_path: str) -> list:
     """Restore datasets and fits into cs.fits/cs.imported_datasets.
 
@@ -2802,14 +3159,14 @@ def load_project_data(project_path: str) -> list:
     Parameters
     ----------
     project_path : str
-        Path to the project directory containing ``project.json``.
+        Path to the ``.csp`` project archive.
 
     Returns
     -------
     list of str
         UIDs of the fits that were restored.
     """
-    proj = project_load_json(project_path)
+    proj = _load_project_archive(project_path)
     load_project_payload(proj, project_path, _skip_gui_creation=True)
     return [str(getattr(f, "unique_identifier", "")) for f in getattr(cs, "fits", [])]
 
@@ -2846,28 +3203,28 @@ def restore_gui_from_fits(fit_uids: list) -> None:
 
 
 def load_project(project_path: str):
-    """Load a project from a JSON-based project folder.
+    """Load a project from a ``.csp`` archive.
 
-    The folder must contain a ``project.json`` file created by
-    :func:`save_project`. Datasets are reconstructed from the stored x/y/ex/ey
-    arrays, :func:`add_fit` is used to rebuild each :class:`FitGroup`, and
-    per-fit parameter state plus global links are restored via
+    Datasets are reconstructed from the stored x/y/ex/ey arrays,
+    :func:`add_fit` is used to rebuild each :class:`FitGroup`, and per-fit
+    parameter state plus global links are restored via
     :mod:`cs.core.project.fit_state`.
 
     Parameters
     ----------
     project_path : str
-        Path to the project folder containing ``project.json``.
+        Path to the ``.csp`` project archive.
     """
     log = cs.logging
-    if not os.path.isdir(project_path):
-        log.error(f"Project path {project_path} does not exist")
+    archive_path = _project_archive_input_path(project_path)
+    if not archive_path.is_file():
+        log.error(f"Project archive {archive_path} does not exist")
         return
 
     try:
-        proj = project_load_json(project_path)
+        proj = _load_project_archive(str(archive_path))
     except Exception as exc:
-        log.error(f"load_project: failed to read project.json from {project_path}: {exc}")
+        log.error(f"load_project: failed to read project archive {archive_path}: {exc}")
         return
 
-    load_project_payload(proj, project_path)
+    load_project_payload(proj, str(archive_path))

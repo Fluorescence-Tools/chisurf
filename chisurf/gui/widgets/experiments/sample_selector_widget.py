@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import chisurf as cs
-
 
 class SampleLookupDialog(QtWidgets.QDialog):
     """Modal sample lookup dialog shown when a newly loaded file has no sample."""
@@ -108,18 +106,17 @@ class SampleLookupDialog(QtWidgets.QDialog):
         if self._updating:
             return
         self._updating = True
-        self.sample_combo.clear()
-        self.sample_combo.addItem("Skip")
         try:
+            self.sample_combo.clear()
+            self.sample_combo.addItem("Skip")
             db = self._db()
-            if db is None:
-                return
-            for row in db.search_samples(query):
-                self.sample_combo.addItem(row["sample_id"])
+            if db is not None:
+                for row in db.search_samples(query):
+                    self.sample_combo.addItem(row["sample_id"])
+            if query and self.sample_combo.findText(query) < 0:
+                self.sample_combo.addItem(query)
         except Exception:
             pass
-        if query and self.sample_combo.findText(query) < 0:
-            self.sample_combo.addItem(query)
         finally:
             self._updating = False
 
@@ -155,23 +152,23 @@ class SampleLookupDialog(QtWidgets.QDialog):
         if reader is not None:
             reader.sample_id = sample_id
 
-    def _store_sample(self, sample_id, details):
+    def _store_sample(self, sample_id, details, object_uuid=None):
         """Store the selected sample ID in MFDB and object metadata."""
         try:
             db = self._db()
-            if db is None:
-                return
             reader = self._reader()
-            object_uuid = getattr(reader, "_source_object_uuids", [None])[-1]
+            if object_uuid is None:
+                object_uuid = getattr(reader, "_source_object_uuids", [None])[-1]
             if sample_id:
-                if db.get_sample(sample_id) is None:
-                    db.add_sample(sample_id, details=details or "")
-                elif details:
-                    db.update_sample(sample_id, details=details)
-                if object_uuid:
-                    db.set_object_sample_id(object_uuid, sample_id)
+                if db is not None:
+                    if db.get_sample(sample_id) is None:
+                        db.add_sample(sample_id, details=details or "")
+                    elif details:
+                        db.update_sample(sample_id, details=details)
+                    if object_uuid:
+                        db.set_object_sample_id(object_uuid, sample_id)
                 self._sync_reader_sample_id(sample_id)
-            elif object_uuid:
+            elif object_uuid and db is not None:
                 db.set_object_sample_id(object_uuid, None)
                 self._sync_reader_sample_id(None)
         except Exception:
@@ -191,7 +188,7 @@ class SampleLookupDialog(QtWidgets.QDialog):
         self.reject()
 
 
-def show_sample_lookup_dialog(controller, filename, content_md5, object_uuid=None):
+def show_sample_lookup_dialog(controller, filename, content_md5, object_uuid=None, parent=None):
     """Show the sample lookup dialog and return the selected sample ID.
 
     Parameters
@@ -204,13 +201,15 @@ def show_sample_lookup_dialog(controller, filename, content_md5, object_uuid=Non
         MD5 hex digest of the file content.
     object_uuid : str, optional
         Object-store UUID of the loaded file.
+    parent : QWidget, optional
+        Parent widget.
 
     Returns
     -------
     str or None
         Selected sample ID, or None when the user skips.
     """
-    dialog = SampleLookupDialog(controller, filename, content_md5)
+    dialog = SampleLookupDialog(controller, filename, content_md5, parent=parent)
     if dialog.exec_() == QtWidgets.QDialog.Accepted:
         return dialog.sample_combo.currentText().strip() or None
     return None
