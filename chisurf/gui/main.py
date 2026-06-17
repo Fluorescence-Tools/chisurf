@@ -1262,6 +1262,21 @@ class Main(
         # --- Code dock navigation toolbar (same as FitSubWindow) ---
         self._code_toolbar = QtWidgets.QHBoxLayout()
         self._code_toolbar.setContentsMargins(5, 5, 5, 5)
+        code_button_style = """
+            QToolButton {
+                background-color: transparent;
+                border: none;
+                border-radius: 4px;
+                padding: 3px 6px;
+                margin: 0px;
+            }
+            QToolButton:hover {
+                background-color: rgba(255, 255, 255, 35);
+            }
+            QToolButton:pressed {
+                background-color: rgba(255, 255, 255, 55);
+            }
+        """
 
         self._code_agent_btn = QtWidgets.QToolButton()
         self._code_agent_btn.setText("\U0001f916")
@@ -1294,6 +1309,16 @@ class Main(
         self._code_toolbar.addStretch()
         self._code_toolbar.addWidget(self._code_settings_btn)
         self._code_toolbar.addWidget(self._code_save_btn)
+
+        for button in (
+            self._code_agent_btn,
+            self._code_nav_back_btn,
+            self._code_nav_forward_btn,
+            self._code_save_btn,
+            self._code_settings_btn,
+        ):
+            button.setAutoRaise(True)
+            button.setStyleSheet(code_button_style)
 
         self.verticalLayout_10.addLayout(self._code_toolbar)
 

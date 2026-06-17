@@ -113,9 +113,9 @@ class BatchProcessingDialog(QtWidgets.QDialog):
 
         # Buttons: delete selected, clear, process
         btn_row = QtWidgets.QHBoxLayout()
-        self.btn_delete = QtWidgets.QPushButton("Delete Selected")
-        self.btn_clear = QtWidgets.QPushButton("Clear All")
-        self.btn_process = QtWidgets.QPushButton("Process")
+        self.btn_delete = QtWidgets.QPushButton("🗑️ Delete Selected")
+        self.btn_clear = QtWidgets.QPushButton("🧹 Clear All")
+        self.btn_process = QtWidgets.QPushButton("🚀 Process")
         btn_row.addStretch(1)
         btn_row.addWidget(self.btn_delete)
         btn_row.addWidget(self.btn_clear)
@@ -408,7 +408,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         dialog_layout.addWidget(self.channel_definer)
 
         # Add OK button to close the dialog
-        ok_button = QtWidgets.QPushButton("OK", self.channel_settings_dialog)
+        ok_button = QtWidgets.QPushButton("✅ OK", self.channel_settings_dialog)
         ok_button.clicked.connect(self.channel_settings_dialog.accept)
         dialog_layout.addWidget(ok_button)
 

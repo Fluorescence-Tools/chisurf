@@ -146,9 +146,9 @@ class MetadataDialog(QtWidgets.QDialog):
         layout.addWidget(self.metadata_table)
 
         buttons = QtWidgets.QHBoxLayout()
-        add_btn = QtWidgets.QPushButton("Add metadata")
+        add_btn = QtWidgets.QPushButton("➕ Add metadata")
         add_btn.clicked.connect(self._add_metadata_row)
-        delete_btn = QtWidgets.QPushButton("Delete selected")
+        delete_btn = QtWidgets.QPushButton("🗑️ Delete selected")
         delete_btn.clicked.connect(self._delete_metadata_row)
         buttons.addWidget(add_btn)
         buttons.addWidget(delete_btn)
@@ -263,9 +263,9 @@ class BatchProcessingDialog(QtWidgets.QDialog):
         layout.addWidget(self.list_widget, 1)
         buttons = QtWidgets.QHBoxLayout()
         buttons.addStretch(1)
-        self.delete_button = QtWidgets.QPushButton("Delete Selected", self)
-        self.clear_button = QtWidgets.QPushButton("Clear All", self)
-        self.add_button = QtWidgets.QPushButton("Add", self)
+        self.delete_button = QtWidgets.QPushButton("🗑️ Delete Selected", self)
+        self.clear_button = QtWidgets.QPushButton("🧹 Clear All", self)
+        self.add_button = QtWidgets.QPushButton("➕ Add", self)
         buttons.addWidget(self.delete_button)
         buttons.addWidget(self.clear_button)
         buttons.addWidget(self.add_button)
@@ -376,6 +376,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         self._on_setup_changed(self.wizard.comboBox.currentText())
         self.dock_area.layoutChanged.connect(self._save_dock_layout)
         self._restore_dock_layout()
+        self._restore_window_geometry()
         self.setAcceptDrops(True)
 
     def _build_ui(self) -> None:
@@ -383,8 +384,8 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         central = QtWidgets.QWidget(self)
         self.setCentralWidget(central)
         layout = QtWidgets.QVBoxLayout(central)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(0, 4, 0, 0)
+        layout.setSpacing(2)
         layout.addLayout(self._build_action_bar(central))
 
         self.dock_area = DockArea(central)
@@ -595,56 +596,59 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
                 QtWidgets.QSizePolicy.Policy.Expanding,
             )
 
-    def _build_histogram_group(self, parent: QtWidgets.QWidget) -> QtWidgets.QGroupBox:
+    def _build_histogram_group(self, parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
         """Create histogram and optional GMM controls."""
-        group = QtWidgets.QGroupBox("Histogram", parent)
-        layout = QtWidgets.QFormLayout(group)
+        widget = QtWidgets.QWidget(parent)
+        layout = QtWidgets.QFormLayout(widget)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(2)
-        self.feature_combo = QtWidgets.QComboBox(group)
+        self.feature_combo = QtWidgets.QComboBox(widget)
         self.feature_combo.addItems(HISTOGRAM_FEATURES)
         self.feature_combo.setCurrentText("Proximity Ratio")
         layout.addRow("Feature", self.feature_combo)
-        self.hist_bins_spin = QtWidgets.QSpinBox(group)
+        self.hist_bins_spin = QtWidgets.QSpinBox(widget)
         self.hist_bins_spin.setRange(1, 999)
         self.hist_bins_spin.setValue(DEFAULT_HISTOGRAM_BINS)
         layout.addRow("# Bins", self.hist_bins_spin)
-        self.hist_min_spin = QtWidgets.QDoubleSpinBox(group)
+        self.hist_min_spin = QtWidgets.QDoubleSpinBox(widget)
         self.hist_min_spin.setRange(-9999.0, 9999.0)
         self.hist_min_spin.setDecimals(6)
         self.hist_min_spin.setValue(0.0)
-        self.hist_max_spin = QtWidgets.QDoubleSpinBox(group)
+        self.hist_max_spin = QtWidgets.QDoubleSpinBox(widget)
         self.hist_max_spin.setRange(-9999.0, 9999.0)
         self.hist_max_spin.setDecimals(6)
         self.hist_max_spin.setValue(1.0)
         range_layout = QtWidgets.QHBoxLayout()
         range_layout.setSpacing(2)
         range_layout.addWidget(self.hist_min_spin)
-        range_layout.addWidget(QtWidgets.QLabel("to", group))
+        range_layout.addWidget(QtWidgets.QLabel("to", widget))
         range_layout.addWidget(self.hist_max_spin)
-        self.auto_range_button = QtWidgets.QPushButton("Auto", group)
+        self.auto_range_button = QtWidgets.QPushButton("⚡ Auto", widget)
         range_layout.addWidget(self.auto_range_button)
         layout.addRow("Range", range_layout)
-        self.hist_log_y_check = QtWidgets.QCheckBox("Log x", group)
+        self.hist_log_y_check = QtWidgets.QCheckBox("Log x", widget)
         layout.addRow(self.hist_log_y_check)
-        self.gmm_components_spin = QtWidgets.QSpinBox(group)
+        self.gmm_components_spin = QtWidgets.QSpinBox(widget)
         self.gmm_components_spin.setRange(0, 10)
-        self.gmm_auto_components_check = QtWidgets.QCheckBox("Auto components", group)
-        self.fit_gmm_button = QtWidgets.QPushButton("Fit GMM", group)
+        self.gmm_auto_components_check = QtWidgets.QCheckBox("Auto components", widget)
+        self.fit_gmm_button = QtWidgets.QPushButton("🎯 Fit GMM", widget)
         gmm_layout = QtWidgets.QHBoxLayout()
         gmm_layout.setSpacing(2)
         gmm_layout.addWidget(self.gmm_components_spin)
         gmm_layout.addWidget(self.gmm_auto_components_check)
         gmm_layout.addWidget(self.fit_gmm_button)
         layout.addRow("GMM", gmm_layout)
-        self.gmm_summary = QtWidgets.QTextEdit(group)
+        self.gmm_summary = QtWidgets.QTextEdit(widget)
         self.gmm_summary.setReadOnly(True)
-        self.gmm_summary.setMaximumHeight(40)
+        self.gmm_summary.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Expanding,
+        )
         layout.addRow(self.gmm_summary)
         self._connect_histogram_controls(self._update_histogram_if_available)
         self.auto_range_button.clicked.connect(self._set_histogram_range_to_data)
         self.fit_gmm_button.clicked.connect(self._fit_gmm)
-        return group
+        return widget
 
     def _build_plot_group(self, parent: QtWidgets.QWidget) -> QtWidgets.QGroupBox:
         """Create burst diagnostic plot controls (deprecated - kept for compatibility)."""
@@ -672,8 +676,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(self._build_histogram_group(panel))
-        layout.addStretch(1)
+        layout.addWidget(self._build_histogram_group(panel), 1)
         return panel
 
     def _build_files_controls_panel(self, parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
@@ -2507,31 +2510,96 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
     def _setup_toolbar(self) -> None:
         """Create the main toolbar."""
         toolbar = self.addToolBar("Main")
+        toolbar.setObjectName("burstSelectionMainToolbar")
         toolbar.setMovable(False)
+        toolbar.setFloatable(False)
+        toolbar.setIconSize(QtCore.QSize(16, 16))
+        toolbar.setContentsMargins(4, 2, 4, 2)
+        if toolbar.layout() is not None:
+            toolbar.layout().setSpacing(6)
+        toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        toolbar.setStyleSheet(
+            """
+            QToolBar#burstSelectionMainToolbar {
+                background-color: transparent;
+                border: none;
+                padding: 3px 4px;
+                spacing: 6px;
+            }
+            QToolBar#burstSelectionMainToolbar::separator {
+                width: 8px;
+            }
+            QToolBar#burstSelectionMainToolbar QToolButton {
+                background-color: rgba(45, 45, 45, 210);
+                border: 1px solid rgba(255, 255, 255, 45);
+                border-radius: 4px;
+                padding: 4px 8px;
+                margin: 0px;
+            }
+            QToolBar#burstSelectionMainToolbar QToolButton:hover {
+                background-color: rgba(70, 70, 70, 230);
+            }
+            QToolBar#burstSelectionMainToolbar QToolButton:pressed {
+                background-color: rgba(90, 90, 90, 240);
+            }
+            QToolBar#burstSelectionMainToolbar QCheckBox,
+            QToolBar#burstSelectionMainToolbar QLabel {
+                margin: 0px 3px;
+            }
+            QToolBar#burstSelectionMainToolbar QSpinBox {
+                min-width: 70px;
+                max-height: 22px;
+                margin: 0px 2px;
+            }
+            QToolBar#burstSelectionMainToolbar #burstToolbarAdd {
+                color: #7de3ff;
+            }
+            QToolBar#burstSelectionMainToolbar #burstToolbarBatch {
+                color: #ffb347;
+            }
+            QToolBar#burstSelectionMainToolbar #burstToolbarProcess {
+                color: #8ab4ff;
+            }
+            QToolBar#burstSelectionMainToolbar #burstToolbarClear {
+                color: #ff7b7b;
+            }
+            QToolBar#burstSelectionMainToolbar #burstToolbarRefresh {
+                color: #c0c0c0;
+            }
+            """
+        )
 
-        add_files_action = QtWidgets.QAction("Add", self)
+        name_map = {
+            "📂 Add": "burstToolbarAdd",
+            "🗂️ Batch": "burstToolbarBatch",
+            "🚀 Process": "burstToolbarProcess",
+            "🗑️ Clear": "burstToolbarClear",
+            "🔄 Refresh": "burstToolbarRefresh",
+        }
+
+        add_files_action = QtWidgets.QAction("📂 Add", self)
         add_files_action.triggered.connect(self.add_files)
         toolbar.addAction(add_files_action)
 
-        batch_action = QtWidgets.QAction("Batch", self)
+        batch_action = QtWidgets.QAction("🗂️ Batch", self)
         batch_action.triggered.connect(self.open_batch_dialog)
         toolbar.addAction(batch_action)
 
         toolbar.addSeparator()
 
-        analyze_action = QtWidgets.QAction("Process", self)
+        analyze_action = QtWidgets.QAction("🚀 Process", self)
         analyze_action.triggered.connect(self.analyze_files)
         toolbar.addAction(analyze_action)
 
         toolbar.addSeparator()
 
-        clear_action = QtWidgets.QAction("Clear", self)
+        clear_action = QtWidgets.QAction("🗑️ Clear", self)
         clear_action.triggered.connect(self.clear)
         toolbar.addAction(clear_action)
 
         toolbar.addSeparator()
 
-        refresh_action = QtWidgets.QAction("Refresh", self)
+        refresh_action = QtWidgets.QAction("🔄 Refresh", self)
         refresh_action.triggered.connect(self.update_burst_plots)
         toolbar.addAction(refresh_action)
 
@@ -2573,23 +2641,16 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         toolbar.addWidget(QtWidgets.QLabel("to"))
         toolbar.addWidget(self.plot_max_spin)
 
-        # Apply colors to toolbar buttons
+        # Apply object names so the toolbar stylesheet can color only the text.
         for widget in toolbar.children():
             if isinstance(widget, QtWidgets.QToolButton):
                 action = widget.defaultAction()
                 if action is None:
                     continue
-                text = action.text()
-                if text == "Add":
-                    widget.setStyleSheet("color: cyan;")
-                elif text == "Batch":
-                    widget.setStyleSheet("color: orange;")
-                elif text == "Process":
-                    widget.setStyleSheet("color: blue;")
-                elif text == "Clear":
-                    widget.setStyleSheet("color: red;")
-                elif text == "Refresh":
-                    widget.setStyleSheet("color: gray;")
+                object_name = name_map.get(action.text())
+                if object_name is not None:
+                    widget.setObjectName(object_name)
+                    widget.setAutoRaise(True)
 
     def _setup_statusbar(self) -> None:
         """Create the status bar."""
@@ -2687,9 +2748,29 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         event.acceptProposedAction()
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        """Save dock layout before closing."""
+        """Save window geometry and dock layout before closing."""
+        self._save_window_geometry()
         self._save_dock_layout()
         super().closeEvent(event)
+
+    def _save_window_geometry(self) -> None:
+        """Save the main window geometry to QSettings."""
+        try:
+            settings = QtCore.QSettings("chisurf", "BurstSelectionTool")
+            settings.setValue("geometry", self.saveGeometry())
+            settings.sync()
+        except Exception as exc:
+            self._status_bar.showMessage(f"Failed to save window geometry: {exc}")
+
+    def _restore_window_geometry(self) -> None:
+        """Restore the main window geometry from QSettings."""
+        try:
+            settings = QtCore.QSettings("chisurf", "BurstSelectionTool")
+            geometry = settings.value("geometry")
+            if geometry is not None:
+                self.restoreGeometry(geometry)
+        except Exception as exc:
+            self._status_bar.showMessage(f"Failed to restore window geometry: {exc}")
 
     def _save_dock_layout(self) -> None:
         """Save the current dock layout to QSettings."""
