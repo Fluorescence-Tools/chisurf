@@ -31,6 +31,9 @@ class PDBSelector(
         :param update:
         """
         self._pdb = None
+        self._chain_combo = self.comboBox
+        self._residue_combo = self.comboBox_2
+        self._atom_combo = self.comboBox_3
         self.comboBox.currentIndexChanged[int].connect(self.onChainChanged)
         self.comboBox_2.currentIndexChanged[int].connect(self.onResidueChanged)
         if not show_labels:
@@ -40,6 +43,71 @@ class PDBSelector(
         if update is not None:
             self.comboBox_2.currentIndexChanged[int].connect(update)
             self.comboBox_2.currentIndexChanged[int].connect(update)
+
+    @property
+    def chain_combo(self):
+        return self._chain_combo
+
+    @property
+    def residue_combo(self):
+        return self._residue_combo
+
+    @property
+    def atom_combo(self):
+        return self._atom_combo
+
+    def set_atom_index(self, index: int) -> None:
+        """Set the selection to the atom at the given index in the atoms array.
+
+        Parameters
+        ----------
+        index : int
+            Index into the atoms array.
+        """
+        if self._pdb is None or index < 0 or index >= len(self._pdb):
+            return
+
+        atom = self._pdb[index]
+        chain = str(atom['chain'])
+        residue_id = int(atom['res_id'])
+        atom_name = str(atom['atom_name'])
+
+        self._chain_combo.blockSignals(True)
+        self._residue_combo.blockSignals(True)
+        self._atom_combo.blockSignals(True)
+
+        try:
+            chain_index = self._chain_combo.findText(chain, QtCore.Qt.MatchFixedString)
+            if chain_index >= 0:
+                self._chain_combo.setCurrentIndex(chain_index)
+            else:
+                self.update_chain()
+                chain_index = self._chain_combo.findText(chain, QtCore.Qt.MatchFixedString)
+                if chain_index >= 0:
+                    self._chain_combo.setCurrentIndex(chain_index)
+
+            residue_index = self._residue_combo.findText(str(residue_id), QtCore.Qt.MatchFixedString)
+            if residue_index >= 0:
+                self._residue_combo.setCurrentIndex(residue_index)
+            else:
+                self.onChainChanged()
+                residue_index = self._residue_combo.findText(str(residue_id), QtCore.Qt.MatchFixedString)
+                if residue_index >= 0:
+                    self._residue_combo.setCurrentIndex(residue_index)
+
+            atom_index = self._atom_combo.findText(atom_name, QtCore.Qt.MatchFixedString)
+            if atom_index >= 0:
+                self._atom_combo.setCurrentIndex(atom_index)
+            else:
+                self.onResidueChanged()
+                atom_index = self._atom_combo.findText(atom_name, QtCore.Qt.MatchFixedString)
+                if atom_index >= 0:
+                    self._atom_combo.setCurrentIndex(atom_index)
+
+        finally:
+            self._chain_combo.blockSignals(False)
+            self._residue_combo.blockSignals(False)
+            self._atom_combo.blockSignals(False)
 
     @property
     def atoms(self):

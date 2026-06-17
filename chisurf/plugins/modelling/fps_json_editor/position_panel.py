@@ -182,6 +182,10 @@ class PositionPanel(QtWidgets.QWidget):
         self.splitter.addWidget(self.mol_view_3d)
         self.splitter.setSizes([350, 400])
 
+        self.mol_view_3d.atomSelectionChanged.connect(
+            self.on_chimol_atom_selection_changed
+        )
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(self.splitter)
 
@@ -489,3 +493,17 @@ class PositionPanel(QtWidgets.QWidget):
         """
         self.positions_list.clear()
         self.positions_list.addItems(list(positions.keys()))
+
+    def on_chimol_atom_selection_changed(self, selected_atom_indices):
+        """Handle atom selection from the chimol view.
+
+        Parameters
+        ----------
+        selected_atom_indices : list of int
+            List of selected atom indices.
+        """
+        if not selected_atom_indices:
+            return
+
+        atom_index = selected_atom_indices[0]
+        self.atom_select.set_atom_index(atom_index)

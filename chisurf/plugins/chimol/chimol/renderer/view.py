@@ -127,6 +127,9 @@ class MolView(QtWidgets.QWidget):
     # payload is a list of integer residue indices along the CA trace.
     residueSelectionChanged = QtCore.Signal(object)
     objectResidueSelectionChanged = QtCore.Signal(object, object)
+    # Emitted when atoms are selected via picking in the 3D view. The
+    # payload is a list of integer atom indices.
+    atomSelectionChanged = QtCore.Signal(object)
     """Minimal 3D protein viewer widget (Chimol).
 
     This widget embeds a :class:`QtWidgets.QOpenGLWidget`-based renderer and
@@ -1266,6 +1269,19 @@ class MolView(QtWidgets.QWidget):
         register_update_listener(self._config_listener)
         self.destroyed.connect(self._unregister_config_listener)
 
+    # ------------------------------------------------------------------
+    # Public properties for accessing CA trace data
+    # ------------------------------------------------------------------
+    @property
+    def ca_indices(self):
+        """NumPy array of indices into the atoms array for CA atoms, or None."""
+        return self._ca_indices
+
+    @property
+    def residue_ids_for_ca_trace(self):
+        """NumPy array of residue ids for the CA trace, or None."""
+        return self._residue_ids
+
     def _unregister_config_listener(self) -> None:
         """Remove the config-change listener on widget destruction."""
         try:
@@ -2025,12 +2041,14 @@ class MolView(QtWidgets.QWidget):
     # ------------------------------------------------------------------
 
     def handle_mouse_click(self, ev: QtGui.QMouseEvent) -> None:  # type: ignore[name-defined]
-        """Handle a mouse-click in the GL view for residue picking.
+        """Handle a mouse-click in the GL view for atom picking.
 
-        A left-click near the backbone/CA trace selects the nearest residue;
+        A left-click near an atom selects the nearest atom;
         clicking in empty space clears the selection.
+        Updates both atom and residue selection states.
         """
-        indices = []
+        atom_indices = []
+        residue_indices = []
         mods = None
         if self._coords is not None and getattr(self, "_gl_enabled", False) and self.view is not None:
             picking_mod = _get_picking_module()
@@ -2050,8 +2068,29 @@ class MolView(QtWidgets.QWidget):
             except Exception:
                 mods = None
 
-            picked_idx = None
-            if picking_mod is not None:
+            picked_atom_idx = None
+            if picking_mod is not None and self._all_atom_coords is not None:
+                try:
+                    picked_atom_idx = picking_mod.pick_atom_from_click(
+                        self._all_atom_coords,
+                        self.view,
+                        ev,
+                        radius_px,
+                    )
+                except Exception:
+                    picked_atom_idx = None
+
+            if picked_atom_idx is not None:
+                atom_indices = [picked_atom_idx]
+                if self._all_atom_res_ids is not None and self._residue_ids is not None:
+                    try:
+                        residue_id = int(self._all_atom_res_ids[picked_atom_idx])
+                        matches = np.where(self._residue_ids == residue_id)[0]
+                        if len(matches) > 0:
+                            residue_indices = [int(matches[0])]
+                    except Exception:
+                        residue_indices = []
+            elif picking_mod is not None:
                 try:
                     picked_idx = picking_mod.pick_residue_from_click(
                         self._coords,
@@ -2059,40 +2098,19 @@ class MolView(QtWidgets.QWidget):
                         ev,
                         radius_px,
                     )
+                    if picked_idx is not None:
+                        residue_indices = [picked_idx]
                 except Exception:
-                    picked_idx = None
-
-            try:
-                pos = ev.pos()
-                x = int(pos.x())
-                y = int(pos.y())
-            except Exception:
-                x = int(ev.x())
-                y = int(ev.y())
-
-            if picked_idx is not None:
-                indices = [picked_idx]
-            else:
-                half = int(max(1, round(radius_px)))
-                rect = QtCore.QRect(x - half, y - half, 2 * half, 2 * half)
-
-                if picking_mod is not None:
-                    try:
-                        idx_arr = picking_mod.pick_residues_in_rect(self._coords, self.view, rect)
-                    except Exception:
-                        idx_arr = np.zeros(0, dtype=int)
-                else:
-                    idx_arr = np.zeros(0, dtype=int)
-
-                try:
-                    indices = [int(i) for i in np.asarray(idx_arr, dtype=int) if int(i) >= 0]
-                except Exception:
-                    indices = []
+                    residue_indices = []
 
         try:
-            self._apply_selection_indices(indices, mods)
+            self.atomSelectionChanged.emit(atom_indices)
         except Exception:
-            # Fallback: ignore selection errors for robustness.
+            pass
+
+        try:
+            self._apply_selection_indices(residue_indices, mods)
+        except Exception:
             pass
 
         if self._coords is not None and getattr(self, "_gl_enabled", False):

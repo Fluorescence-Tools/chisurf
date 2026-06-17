@@ -226,4 +226,66 @@ def pick_residues_in_rect(
     return arr
 
 
-__all__ = ["pick_residue_from_click", "pick_residues_in_rect"]
+def pick_atom_from_click(
+    coords: np.ndarray,
+    view,
+    ev: QtGui.QMouseEvent,  # type: ignore[name-defined]
+    radius_px: float,
+) -> Optional[int]:
+    """Return index of the atom closest to the click in screen space.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        (N, 3) array of atom coordinates.
+    view : QtGLRenderer
+        The GL view widget.
+    ev : QtGui.QMouseEvent
+        The mouse event.
+    radius_px : float
+        Click radius in pixels.
+
+    Returns
+    -------
+    int or None
+        Index of the picked atom, or None if no atom is within the radius.
+    """
+    projected = _project_points_to_screen(coords, view)
+    if projected is None:
+        return None
+
+    sx, sy, mask = projected
+    if not np.any(mask):
+        return None
+
+    try:
+        pos = ev.pos()
+        click_x = float(pos.x())
+        click_y = float(pos.y())
+    except Exception:
+        click_x = float(ev.x())
+        click_y = float(ev.y())
+
+    valid_idx = np.nonzero(mask)[0]
+    dx = sx[mask] - click_x
+    dy = sy[mask] - click_y
+    dist2 = dx * dx + dy * dy
+    if dist2.size == 0:
+        return None
+
+    i_local = int(np.argmin(dist2))
+    if i_local < 0 or i_local >= dist2.shape[0]:
+        return None
+
+    try:
+        radius2 = float(radius_px) ** 2
+    except Exception:
+        radius2 = 64.0  # default 8px squared
+
+    if not np.isfinite(dist2[i_local]) or dist2[i_local] > radius2:
+        return None
+
+    return int(valid_idx[i_local])
+
+
+__all__ = ["pick_residue_from_click", "pick_residues_in_rect", "pick_atom_from_click"]
