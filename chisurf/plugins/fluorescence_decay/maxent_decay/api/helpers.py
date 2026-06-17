@@ -12,7 +12,8 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
-from .core import (
+from ..api.models import MEMRequest, MEMResult, MEMSettings
+from ..core.solver import (
     load_tcspc_two_column,
     solve_lifetime_mem,
     solve_fret_mem,
@@ -246,9 +247,94 @@ def run_fret_mem_from_files(
     return run_fret_mem_from_arrays(decay=decay_arr, irf=irf_arr, dt=float(dt), R=R, **kwargs)
 
 
+def request_to_result(request: MEMRequest) -> MEMResult:
+    """Run a MaxEnt request and normalize the solver dictionary."""
+    settings = request.settings
+    if settings.mode == "fret":
+        r_axis = build_distance_grid(
+            R0=settings.R0,
+            r_min_frac=settings.r_min_frac,
+            r_max_frac=settings.r_max_frac,
+            r_bins=settings.r_bins,
+        )
+        raw = run_fret_mem_from_arrays(
+            decay=request.decay,
+            irf=request.irf,
+            dt=request.dt,
+            R=r_axis,
+            tau0=settings.tau0,
+            R0=settings.R0,
+            x_donly=settings.x_donly,
+            timeshift=settings.timeshift,
+            background=settings.background,
+            lamp_scatter=settings.lamp_scatter,
+            fitrange=request.fitrange,
+            irf_background=settings.irf_background,
+            fit_start_fraction=settings.fit_start_fraction,
+            nu=settings.nu,
+            max_iter=settings.max_iter,
+            tol=settings.tol,
+            period=settings.period,
+            donly=request.donly,
+            optimize_nuisance=settings.optimize_nuisance,
+            prior=request.prior,
+        )
+        axis = np.asarray(raw.get("R", []), dtype=float).tolist()
+    else:
+        tau_grid = build_tau_grid(
+            tau_min=settings.tau_min,
+            tau_max=settings.tau_max,
+            tau_bins=settings.tau_bins,
+        )
+        raw = run_lifetime_mem_from_arrays(
+            decay=request.decay,
+            irf=request.irf,
+            dt=request.dt,
+            tau=tau_grid,
+            timeshift=settings.timeshift,
+            background=settings.background,
+            lamp_scatter=settings.lamp_scatter,
+            fitrange=request.fitrange,
+            irf_background=settings.irf_background,
+            fit_start_fraction=settings.fit_start_fraction,
+            nu=settings.nu,
+            max_iter=settings.max_iter,
+            tol=settings.tol,
+            optimize_nuisance=settings.optimize_nuisance,
+            prior=request.prior,
+        )
+        axis = np.asarray(raw.get("tau", []), dtype=float).tolist()
+
+    p = np.asarray(raw.get("p", []), dtype=float).ravel()
+    fit_curve = np.asarray(raw.get("fit_curve", []), dtype=float).ravel()
+    if fit_curve.size == 0:
+        fit_curve = np.asarray(raw.get("y", []), dtype=float).ravel()
+    y = np.asarray(raw.get("y", []), dtype=float).ravel()
+    if fit_curve.size == y.size:
+        residuals = (y - fit_curve).tolist()
+    else:
+        residuals = []
+    return MEMResult(
+        p=p.tolist(),
+        axis=axis,
+        chisq=float(raw.get("chisq", 0.0)),
+        S=float(raw.get("S", 0.0)),
+        nu=float(raw.get("nu", raw.get("nu_input", settings.nu))),
+        timeshift=float(raw.get("timeshift", settings.timeshift)),
+        background=float(raw.get("background", settings.background)),
+        fit_curve=fit_curve.tolist(),
+        residuals=residuals,
+        fitrange=tuple(int(x) for x in raw.get("fitrange", request.fitrange or (0, 0))),
+        history=[tuple(float(x) for x in item) for item in raw.get("history", [])],
+        mode=settings.mode,
+        raw=raw,
+    )
+
+
 __all__ = [
     "build_tau_grid",
     "build_distance_grid",
+    "request_to_result",
     "run_lifetime_mem_from_arrays",
     "run_lifetime_mem_from_files",
     "run_fret_mem_from_arrays",

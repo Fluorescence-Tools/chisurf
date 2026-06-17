@@ -1,0 +1,60 @@
+{
+  "id": "maxent_decay",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:MaxEnt MEM",
+  "description": "Maximum-entropy analysis of TCSPC decays (lifetime and FRET distance).",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence"],
+  "state_namespace": "maxent_decay",
+  "state_schema": {
+    "type": "object",
+    "properties": {
+      "mode": {"type": "string", "enum": ["lifetime", "fret"]},
+      "last_job_id": {"type": ["string", "null"]},
+      "settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorescence_decay.maxent_decay.gui.gui:MaxentDecayWidget",
+    "cli": "maxent-decay=chisurf.plugins.fluorescence_decay.maxent_decay.cli.cli:cli",
+    "services": "chisurf.plugins.fluorescence_decay.maxent_decay.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "maxent_decay.jobs.run_lifetime_mem",
+      "summary": "Run MaxEnt lifetime MEM on arrays.",
+      "long_running": true,
+      "cancelable": true,
+      "events": ["maxent_decay.jobs.progress", "maxent_decay.jobs.completed"]
+    },
+    {
+      "name": "maxent_decay.jobs.run_fret_mem",
+      "summary": "Run MaxEnt FRET distance MEM on arrays.",
+      "long_running": true,
+      "cancelable": true
+    },
+    {
+      "name": "maxent_decay.jobs.run_lcurve",
+      "summary": "Sweep regularization values and return L-curve data.",
+      "long_running": true,
+      "cancelable": true
+    },
+    {
+      "name": "maxent_decay.contract.describe",
+      "summary": "Return the MaxEnt workflow contract.",
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {"topic": "maxent_decay.jobs.*", "description": "Job lifecycle events"},
+    {"topic": "maxent_decay.state.*", "description": "State patch events"}
+  ]
+}

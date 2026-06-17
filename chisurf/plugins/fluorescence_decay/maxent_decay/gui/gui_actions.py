@@ -8,7 +8,7 @@ from typing import Optional
 
 import numpy as np
 
-from chisurf.plugins.fluorescence_decay.maxent_decay.fmem.sampling import sample_mem_distribution_emcee
+from chisurf.plugins.fluorescence_decay.maxent_decay.core.sampling import sample_mem_distribution_emcee
 from .qt_stack import ensure_qt_stack
 
 
@@ -17,7 +17,7 @@ class _MaxentActionsMixin:
         _, QtWidgets, _, _, _ = ensure_qt_stack()
 
         try:
-            readme_path = Path(__file__).resolve().parents[1] / "README.md"
+            readme_path = Path(__file__).resolve().parents[2] / "README.md"
         except Exception:
             readme_path = None
 

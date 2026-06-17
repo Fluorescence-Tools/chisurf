@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from chisurf.plugins.fluorescence_decay.maxent_decay.fmem import settings as maxent_settings
+from chisurf.plugins.fluorescence_decay.maxent_decay.core.settings import get_settings_file, load_maxent_settings
 from .qt_stack import ensure_qt_stack
 
 
@@ -72,7 +72,7 @@ class _MaxentUIMixin:
         self.btn_edit_settings.setText("Edit JSON settings")
         try:
             self.btn_edit_settings.setToolTip(
-                f"Open MaxEnt JSON settings file:\n{maxent_settings.get_settings_file()}"
+                f"Open MaxEnt JSON settings file:\n{get_settings_file()}"
             )
         except Exception:
             pass

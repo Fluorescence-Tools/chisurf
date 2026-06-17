@@ -4,7 +4,11 @@ import json
 
 import numpy as np
 
-from chisurf.plugins.fluorescence_decay.maxent_decay.fmem import settings as maxent_settings
+from chisurf.plugins.fluorescence_decay.maxent_decay.core.settings import (
+    get_settings_file,
+    load_maxent_settings,
+    save_maxent_settings,
+)
 from .qt_stack import ensure_qt_stack
 
 
@@ -199,14 +203,14 @@ class _MaxentDataMixin:
         # Load the raw file contents, creating the file from defaults if
         # needed.
         try:
-            path = maxent_settings.get_settings_file()
+            path = get_settings_file()
         except Exception:
             path = None
 
         current_dict: dict = {}
         if path is not None:
             try:
-                current_dict = maxent_settings.load_maxent_settings()
+                current_dict = load_maxent_settings()
             except Exception:
                 current_dict = {}
 
@@ -255,7 +259,7 @@ class _MaxentDataMixin:
                 return
 
             # Persist via helper so we reuse the same logic everywhere.
-            ok = maxent_settings.save_maxent_settings(data)
+            ok = save_maxent_settings(data)
             if not ok:
                 QtWidgets.QMessageBox.critical(
                     dialog,
@@ -266,7 +270,7 @@ class _MaxentDataMixin:
 
             # Refresh cached settings for future runs.
             try:
-                self._settings = maxent_settings.load_maxent_settings()
+                self._settings = load_maxent_settings()
             except Exception:
                 self._settings = {}
 

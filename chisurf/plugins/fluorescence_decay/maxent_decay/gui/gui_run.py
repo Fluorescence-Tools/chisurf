@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 
 import numpy as np
 
-from chisurf.plugins.fluorescence_decay.maxent_decay.fmem.core import solve_fret_mem, solve_lifetime_mem
+from chisurf.plugins.fluorescence_decay.maxent_decay.core.solver import solve_fret_mem, solve_lifetime_mem
 from .qt_stack import ensure_qt_stack
 
 
@@ -107,9 +107,10 @@ class _MaxentRunMixin:
                     raise RuntimeError("L-curve computation cancelled")
                 try:
                     if is_fret:
-                        period_arg = self._get_period_arg(use_periodic)
+                # TODO: route via MaxEntClient for ZMQ support
+                period_arg = self._get_period_arg(use_periodic)
 
-                        res = solve_fret_mem(
+                res = solve_fret_mem(
                             decay=decay,
                             lamp=lamp,
                             dt=dt,
@@ -358,6 +359,7 @@ class _MaxentRunMixin:
                     nuisance_step_x_donly=nuisance_step_x_donly,
                 )
             else:
+                # TODO: route via MaxEntClient for ZMQ support
                 tau = self._build_tau_grid()
                 result = solve_lifetime_mem(
                     decay=decay,

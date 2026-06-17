@@ -12,7 +12,7 @@ from .gui_priors import _MaxentPriorsMixin
 from .gui_plotting import _MaxentPlottingMixin
 from .gui_run import _MaxentRunMixin
 from .gui_ui import _MaxentUIMixin
-from chisurf.plugins.fluorescence_decay.maxent_decay.fmem import settings as maxent_settings
+from chisurf.plugins.fluorescence_decay.maxent_decay.core.settings import load_maxent_settings as maxent_load_settings
 
 try:
     from qtpy import QtWidgets  # type: ignore
@@ -71,7 +71,7 @@ class MaxentDecayWidget(
         # to initialize defaults and can later be edited via the JSON
         # settings editor.
         try:
-            self._settings = maxent_settings.load_maxent_settings()
+            self._settings = maxent_load_settings()
         except Exception:
             self._settings = {}
 

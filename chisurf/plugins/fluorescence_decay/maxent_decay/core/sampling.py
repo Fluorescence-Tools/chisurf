@@ -21,7 +21,7 @@ try:  # optional dependency; checked at call time
 except Exception:  # pragma: no cover - handled lazily in the sampler
     emcee = None  # type: ignore[assignment]
 
-from .core import MIN_PROB
+from .solver import MIN_PROB
 
 
 logger = logging.getLogger(__name__)
