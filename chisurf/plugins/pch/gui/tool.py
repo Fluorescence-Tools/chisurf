@@ -57,22 +57,22 @@ class PCHApp(QMainWindow):
         tb.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.addToolBar(tb)
 
-        self.action_load = tb.addAction("Load TTTR")
+        self.action_load = tb.addAction("📥 Load TTTR")
         self.action_load.triggered.connect(self._on_load)
 
         tb.addSeparator()
 
-        self.action_compute = tb.addAction("Compute PCH")
+        self.action_compute = tb.addAction("📊 Compute PCH")
         self.action_compute.setEnabled(False)
         self.action_compute.triggered.connect(self._on_compute)
 
-        self.action_fit = tb.addAction("Fit Model")
+        self.action_fit = tb.addAction("🧪 Fit Model")
         self.action_fit.setEnabled(False)
         self.action_fit.triggered.connect(self._on_fit)
 
         tb.addSeparator()
 
-        self.action_save = tb.addAction("Save Results")
+        self.action_save = tb.addAction("💾 Save Results")
         self.action_save.setEnabled(False)
         self.action_save.triggered.connect(self._on_save)
 
