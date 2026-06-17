@@ -6,6 +6,7 @@ This module contains category creation methods for the ribbon interface.
 """
 
 import functools
+import importlib
 from pathlib import Path
 
 from qtpy.QtCore import Qt
@@ -15,6 +16,36 @@ from qtpy import QtWidgets
 
 import chisurf as cs
 from chisurf import logging
+
+
+def _plugin_icon_from_metadata(package_dir: Path, module_path: str, module_name: str, logger) -> QIcon:
+    """Resolve a plugin icon from manifest, module metadata, or icon files."""
+    icon = None
+    try:
+        from chisurf.core.plugin.manifest import load_manifest
+        from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
+
+        manifest = load_manifest(Path(package_dir) / "manifest.json")
+        plugin_module = importlib.import_module(module_path or module_name)
+        icon = create_plugin_icon_with_fallback(
+            module=plugin_module,
+            package_dir=package_dir,
+            size=16,
+            manifest=manifest,
+        )
+        if icon.isNull():
+            icon = None
+    except Exception as e:
+        logger.debug("Failed to resolve plugin icon for %s: %s", module_path or module_name, e)
+
+    if icon is None:
+        for icon_name in ("icon.png", "icon.svg"):
+            icon_path = Path(package_dir) / icon_name
+            if icon_path.exists():
+                icon = QIcon(str(icon_path))
+                break
+
+    return icon
 
 
 class CategoryMethodsMixin:
@@ -215,13 +246,7 @@ class CategoryMethodsMixin:
                         globals={'__name__': 'plugin'}
                     )
 
-                    # Check for icon
-                    icon = None
-                    for _icon_name in ("icon.png", "icon.svg"):
-                        icon_path = plugin_dir / _icon_name
-                        if icon_path.exists():
-                            icon = QIcon(str(icon_path))
-                            break
+                    icon = _plugin_icon_from_metadata(package_dir, module_path, module_name, self.logger)
 
                     # Get description
                     description = info.get('description') or "No description available."
@@ -447,24 +472,7 @@ class CategoryMethodsMixin:
                         globals={'__name__': 'plugin'}
                     )
 
-                    # Check for icon
-                    icon = None
-                    try:
-                        import importlib as _importlib
-                        from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
-
-                        plugin_module = _importlib.import_module(module_path or module_name)
-                        icon = create_plugin_icon_with_fallback(plugin_module, package_dir, size=16)
-                        if icon.isNull():
-                            icon = None
-                    except Exception:
-                        icon = None
-                    if icon is None:
-                        for _icon_name in ("icon.png", "icon.svg"):
-                            icon_path = plugin_dir / _icon_name
-                            if icon_path.exists():
-                                icon = QIcon(str(icon_path))
-                                break
+                    icon = _plugin_icon_from_metadata(package_dir, module_path, module_name, self.logger)
 
                     # Get description
                     description = info.get('description') or "No description available."

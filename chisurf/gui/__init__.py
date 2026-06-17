@@ -27,6 +27,8 @@ from chisurf import logging
 import chisurf.gui.decorators
 
 
+plugin_menu_action: QtWidgets.QAction | None = None
+
 
 class _GuiExecutor(QtCore.QObject):
     """Internal helper to execute callables on the GUI thread via queued signals."""
@@ -867,23 +869,31 @@ def setup_gui(
                     globals={'__name__': 'plugin'}
                 )
 
-                # Check for icon (emoji/text fallback via icon_utils, then icon.png)
+                # Check for icon (manifest, module metadata, then icon files)
                 icon = None
                 try:
+                    from chisurf.core.plugin.manifest import load_manifest
                     from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
-                    try:
-                        mod = importlib.import_module(module_path or module_name)
-                    except Exception:
-                        mod = None
-                    if mod is not None:
-                        icon = create_plugin_icon_with_fallback(mod, plugin_dir, size=16)
-                        if icon.isNull():
-                            icon = None
-                except Exception:
-                    icon = None
+
+                    manifest = load_manifest(package_dir / "manifest.json")
+                    mod = importlib.import_module(module_path or module_name)
+                    icon = create_plugin_icon_with_fallback(
+                        mod,
+                        package_dir,
+                        size=16,
+                        manifest=manifest,
+                    )
+                    if icon.isNull():
+                        icon = None
+                except Exception as e:
+                    cs.logging.debug(
+                        "Failed to resolve plugin icon for %s: %s",
+                        module_path or module_name,
+                        e,
+                    )
                 if icon is None:
                     for _icon_name in ("icon.png", "icon.svg"):
-                        icon_path = plugin_dir / _icon_name
+                        icon_path = package_dir / _icon_name
                         if icon_path.exists():
                             icon = QtGui.QIcon(str(icon_path))
                             break
@@ -1020,20 +1030,18 @@ def setup_gui(
             if not notebook_file.exists():
                 return
 
-            try:
-                notebook_file = notebook_file.resolve()  # Ensure absolute path
+            jupyter_address = getattr(cs, "__jupyter_address__", None)
+            if not jupyter_address:
+                return
 
-                # If the file is not inside home_dir, copy it to ~/notebooks/
+            try:
+                notebook_file = notebook_file.resolve()
+
                 if not notebook_file.is_relative_to(home_dir):
                     notebook_file = copy_notebook(notebook_file, chisurf_notebooks_dir)
 
-                # Convert path to POSIX format (to avoid Windows `\` issues in URL)
                 notebook_path_str = notebook_file.relative_to(home_dir).as_posix()
-
-                # Correct Jupyter notebook URL with `/tree/`
-                # http://localhost:8932/notebooks/Links/smFRET_01_Burst_Search_ALEX.
-                adr = f"{cs.__jupyter_address__}/notebooks/{notebook_path_str}"
-
+                adr = f"{jupyter_address}/notebooks/{notebook_path_str}"
                 p = partial(webbrowser.open_new_tab, adr)
 
                 menu_text = notebook_file.stem
@@ -1041,10 +1049,8 @@ def setup_gui(
                 action.triggered.connect(p)
                 notebook_menu.addAction(action)
 
-            except AttributeError:
-                action = QtWidgets.QAction(f"{notebook_file}", window)
-                action.triggered.connect(p)
-                notebook_menu.addAction(action)
+            except (AttributeError, ValueError) as e:
+                cs.logging.debug("Failed to add notebook menu entry for %s: %s", notebook_file, e)
 
         # Copy all notebooks from the package to the user's home directory
         # This ensures that all shipped notebooks are available to the user
@@ -1273,7 +1279,7 @@ def setup_gui(
         except Exception:
             _start_jupyter = False
 
-        if not _start_jupyter or cs.__jupyter_address__ is None:
+        if not _start_jupyter or getattr(cs, "__jupyter_address__", None) is None:
             cs.logging.info("Skipping notebook menu population (Jupyter disabled or not running).")
             return None
 

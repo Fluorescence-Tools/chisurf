@@ -21,6 +21,7 @@ works best for their workflow.
 """
 
 name = "Setup:Menu Switch"
+icon = "🔄"
 
 # Import the main functionality
 from .menu_switch import run, MenuSwitchWidget

@@ -56,6 +56,7 @@ except ImportError:
 
 # Plugin category/name for the ChiSurf menu
 name = "Setup:FCS Definitions"
+icon = "📡"
 
 
 @persist_plugin_state("fcs_channel_preset")

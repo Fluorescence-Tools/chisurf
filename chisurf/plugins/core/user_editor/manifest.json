@@ -14,5 +14,6 @@
   },
   "entrypoints": {
     "gui": "chisurf.plugins.core.user_editor.gui:UserEditorWidget"
-  }
+  },
+  "icon": "👥"
 }
