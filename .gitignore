@@ -27,9 +27,7 @@
 *.egg-info
 *.exe
 *.json
-!chisurf/plugins/sample_database/manifest.json
-!chisurf/plugins/chimol/manifest.json
-!chisurf/plugins/burst/burst_selection/manifest.json
+!chisurf/**/manifest.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
 *.log
@@ -57,6 +55,9 @@ Thumbs.db
 .vscode
 /htmlcov
 /AGENT
+/llm-wiki
+/overhaul
+/thirdparty
 /build_tools/osx/resources/
 /modules/*/.git/
 /modules/*/b2/
