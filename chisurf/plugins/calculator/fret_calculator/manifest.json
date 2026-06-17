@@ -1,0 +1,86 @@
+{
+  "id": "fret_calculator",
+  "version": "1.0.0",
+  "display_name": "Main:Tools:FRET-Calculator",
+  "description": "Combined heteroFRET and homoFRET parameter calculator.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Main", "Tools"],
+  "icon": "icon.png",
+  "state_namespace": "fret_calculator",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "last_fret_settings": {"type": "object"},
+      "last_homo_fret_settings": {"type": "object"},
+      "last_fret_result": {"type": ["object", "null"]},
+      "last_homo_fret_result": {"type": ["object", "null"]}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.calculator.fret_calculator.gui.tool:FretCalculatorTool",
+    "cli": null,
+    "services": "chisurf.plugins.calculator.fret_calculator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "fret_calculator.fret.compute",
+      "summary": "Compute FRET parameters from donor-acceptor distance.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fret_calculator.fret.compute_from_efficiency",
+      "summary": "Compute FRET parameters from transfer efficiency.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fret_calculator.fret.compute_from_lifetime",
+      "summary": "Compute FRET parameters from donor lifetime with acceptor.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fret_calculator.fret.compute_from_rate",
+      "summary": "Compute FRET parameters from rate constant.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fret_calculator.homo.compute",
+      "summary": "Compute homoFRET exchange rate and effective distance.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fret_calculator.homo.backmap",
+      "summary": "Back-map homoFRET distance to anisotropy relaxation time.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}

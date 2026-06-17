@@ -1,37 +1,34 @@
-"""
-FRET Calculator
+"""Combined FRET / HomoFRET Calculator Plugin.
 
-This plugin provides a calculator for Förster Resonance Energy Transfer (FRET) parameters.
-It allows users to calculate and convert between various FRET-related quantities such as:
-- FRET efficiency (E)
-- Distance between fluorophores (R)
-- Förster radius (R0)
-- Donor lifetime in the presence of acceptor (τDA)
-- Donor lifetime in the absence of acceptor (τD)
-- FRET rate constant (kFRET)
-
-The calculator automatically updates all values when any parameter is changed,
-making it easy to explore the relationships between different FRET parameters.
+Provides heteroFRET and homoFRET parameter calculations in a single tabbed
+window, backed by the new client-server architecture.
 """
 
-import sys
-from qtpy import QtWidgets
-from .tau2r import FRETCalculator
+from __future__ import annotations
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Main:Tools:FRET-Calculator"
+from pathlib import Path
 
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
+# Load manifest as source of truth
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Main:Tools:FRET-Calculator"
+
+from .gui.tool import FretCalculatorTool  # noqa: E402
+
+__all__ = ["FretCalculatorTool"]
+
 if __name__ == "plugin":
-    # Create an instance of the FRETCalculator class
-    window = FRETCalculator()
+    window = FretCalculatorTool()
+    if _manifest is not None:
+        apply_manifest_statefulness(window, _manifest)
     window.show()
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    win = FRETCalculator()
-    win.show()
-    sys.exit(app.exec_())
+    try:
+        window.raise_()
+        window.activateWindow()
+    except Exception:
+        pass
