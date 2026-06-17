@@ -192,6 +192,42 @@ def set_check_experiment_config_updates_on_startup(check_updates: bool) -> bool:
         return False
 
 
+def set_mfdb_login_settings(mfdb_settings: dict) -> bool:
+    """Persist MFDB login settings in the user's settings YAML.
+
+    Parameters
+    ----------
+    mfdb_settings : dict
+        MFDB settings to merge into the ``mfdb`` section of
+        ``settings_chisurf.yaml``.
+
+    Returns
+    -------
+    bool
+        ``True`` when the settings file was written successfully.
+    """
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+        mfdb_cfg = data.get('mfdb')
+        if not isinstance(mfdb_cfg, dict):
+            mfdb_cfg = {}
+            data['mfdb'] = mfdb_cfg
+        mfdb_cfg.update(mfdb_settings)
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+        return True
+    except Exception:
+        return False
+
+
 def set_use_ribbon_interface(use_ribbon: bool) -> bool:
     """Persist the ribbon interface state in the user's settings YAML.
 

@@ -122,7 +122,7 @@ gui:
   show_macro_edit: true
   qt_style: auto
   style_sheet: dark_blue_flat.qss
-  mol_viewer: pymol # 3D molecule viewer backend: pymol (default) or chimol
+  mol_viewer: chimol # 3D molecule viewer backend: chimol (default) or pymol
   memory_widget_update_interval_ms: 5000 # Memory usage widget update interval in milliseconds
   start_jupyter_on_startup: true
   # mcp_autostart removed — server is always auto-started on a dynamic port
@@ -216,6 +216,8 @@ mfdb:
   default_user_id: user_default
   save_login: true
   autologin: false
+  object_store:
+    root: ~/.chisurf/objects
   last_server: 127.0.0.1
   server_history:
     - 127.0.0.1

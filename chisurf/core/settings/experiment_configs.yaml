@@ -57,6 +57,8 @@ tcspc:
     - chisurf.gui.widgets.models.tcspc.LifetimeMixtureModelWidget
     - chisurf.gui.widgets.models.tcspc.EtModelFreeWidget
     - chisurf.gui.widgets.models.tcspc.FRETStructureWidget
+    - chisurf.gui.widgets.models.tcspc.MaxEntLifetimeModelWidget
+    - chisurf.gui.widgets.models.tcspc.MaxEntFRETModelWidget
 
 
 stopped_flow:
