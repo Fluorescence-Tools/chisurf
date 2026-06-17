@@ -18,21 +18,21 @@ def add_fit(dataset_indices: typing.List[int], model_name: typing.Optional[str] 
 
 @action("fit.load")
 def load_fit(filename: str):
-    """Load a fit project from a JSON file."""
+    """Load a ChiSurf project from a ``.csp`` file."""
     from chisurf.macros import core_fit
     return core_fit.load_fit_project(filename)
 
 
 @action("fit.save")
 def save_fit(target_path: str):
-    """Save the current fit project."""
+    """Save the current ChiSurf project."""
     from chisurf.macros import core_fit
     return core_fit.save_fit(target_path=target_path)
 
 
 @action("fit.save_all")
 def save_all_fits(target_path: str):
-    """Save all fit projects to a directory."""
+    """Save all ChiSurf projects to a directory."""
     from chisurf.macros import core_fit
     return core_fit.save_fits(target_path=target_path)
 
