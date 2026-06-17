@@ -1,0 +1,104 @@
+{
+  "id": "pch",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:PCH",
+  "description": "Photon Counting Histogram (PCH) analysis for single-molecule fluorescence data. Compute PCH histograms from TTTR files and fit multi-species models to extract molecular brightness and occupancy.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "icon": "icon.png",
+  "state_namespace": "pch",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.pch.gui.tool:PCHApp",
+    "cli": "pch=chisurf.plugins.pch.cli:cli",
+    "services": "chisurf.plugins.pch.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "pch.load_tttr",
+      "summary": "Load a TTTR file and return its metadata (routing channels, photon count, resolutions).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {"type": "string"},
+          "channels": {"type": "array", "items": {"type": "integer"}}
+        },
+        "required": ["filename"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {"type": "string"},
+          "n_photons": {"type": "integer"},
+          "routing_channels": {"type": "array", "items": {"type": "integer"}},
+          "macro_time_resolution": {"type": "number"},
+          "micro_time_range": {"type": "array", "items": {"type": "integer"}},
+          "has_micro_times": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "pch.compute",
+      "summary": "Compute a PCH histogram from a loaded TTTR file.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {"type": "string"},
+          "channels": {"type": "array", "items": {"type": "integer"}},
+          "bin_time_us": {"type": "number"},
+          "micro_time_min": {"type": "integer"},
+          "micro_time_max": {"type": "integer"}
+        },
+        "required": ["filename"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "k_vals": {"type": "array"},
+          "p_exp": {"type": "array"},
+          "hist_counts": {"type": "array"},
+          "total_bins": {"type": "integer"},
+          "trace_t": {"type": "array"},
+          "trace_counts": {"type": "array"},
+          "settings": {"type": "object"}
+        }
+      }
+    },
+    {
+      "name": "pch.fit",
+      "summary": "Fit a multi-species PCH model to experimental data.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "k_vals": {"type": "array"},
+          "p_exp": {"type": "array"},
+          "n_components": {"type": "integer"},
+          "initial_epsilons": {"type": "array", "items": {"type": "number"}},
+          "initial_Ns": {"type": "array", "items": {"type": "number"}},
+          "fit_low": {"type": "integer"},
+          "fit_high": {"type": "integer"}
+        },
+        "required": ["k_vals", "p_exp"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "epsilons": {"type": "array"},
+          "avg_Ns": {"type": "array"},
+          "fractions": {"type": "array"},
+          "chi2": {"type": "number"},
+          "reduced_chi2": {"type": "number"},
+          "dof": {"type": "integer"},
+          "p_fit": {"type": "array"},
+          "n_components": {"type": "integer"}
+        }
+      }
+    }
+  ]
+}

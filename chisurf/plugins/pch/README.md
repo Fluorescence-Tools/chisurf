@@ -1,73 +1,54 @@
 # Photon Counting Histogram (PCH) Analysis Plugin
 
-This plugin provides tools for analyzing the distribution of photon counts in fluorescence time traces.
+Analyze the distribution of photon counts in fluorescence time traces to extract molecular brightness and occupancy.
 
-## Features
+## Architecture
 
-- Loading and processing of TTTR files
-- Calculation of photon count histograms
-- Fitting of theoretical models to experimental data
-- Support for single or multiple species analysis
-- Visualization of results with interactive plots
-- Statistical analysis of fit quality
-
-## Overview
-
-PCH analysis can reveal information about:
-- Molecular brightness (ε)
-- Number of molecules in the detection volume (⟨N⟩)
-- Presence of multiple species with different brightness values
-
-The plugin implements the theoretical framework for PCH analysis, which uses the statistical fluctuations in 
-fluorescence intensity to extract information about the concentration and brightness of fluorescent molecules.
-
-## Requirements
-
-- Python packages:
-  - PyQt5
-  - numpy
-  - scipy
-  - pyqtgraph
-  - tttrlib (for TTTR file handling)
-  - numba (for accelerated calculations)
+```
+pch/
+├── manifest.json           # Plugin manifest (entrypoints, RPC methods, metadata)
+├── __init__.py             # Bootstrap — loads manifest, exports PCHApp
+├── api/
+│   ├── models.py           # PchSettings, PchResult, FitResult dataclasses
+│   └── algorithms.py       # Pure PCH math (numba-accelerated)
+├── backend/
+│   └── services.py         # RPC handlers: pch.load_tttr, pch.compute, pch.fit
+├── gui/
+│   ├── client.py           # PCHClient wrapping InProcessClient
+│   └── tool.py             # PCHApp QMainWindow (toolbar, splitter layout)
+├── cli/
+│   └── main.py             # click CLI: pch analyze, pch refit
+└── tests/
+    ├── test_algorithms.py
+    ├── test_manifest.py
+    └── test_services.py
+```
 
 ## Usage
 
-1. Launch the plugin from the ChiSurf menu: Single-Molecule > Photon Counting Histogram
-2. Load a TTTR file containing photon data
-3. Configure data settings:
-   - Select routing channels
-   - Set bin time
-   - Define microtime range
-4. Compute the intensity trace and photon count histogram
-5. Define the number of species and their initial parameters:
-   - Molecular brightness (ε)
-   - Average number of molecules (⟨N⟩)
-6. Fit the histogram using the PCH model
-7. View and save the results
+1. From the ChiSurf menu: **Plugins > Spectroscopy > Single-Molecule > PCH**
+2. Click **Load TTTR** to select a file
+3. Adjust channels, bin time, micro-time range in the Data Settings panel
+4. Click **Compute PCH** (toolbar) to build the histogram
+5. Set number of species and initial guesses in Model Fit
+6. Click **Fit Model** (toolbar) to fit
+7. Drag the region selector on the histogram to recompute χ² for a sub-range
+8. Click **Save Results** (toolbar) to export NPZ/CSV/PNG/TXT
 
-## Theory
+### CLI
 
-PCH analysis is based on the statistical analysis of fluorescence intensity fluctuations. The method accounts for the 
-spatial profile of the detection volume and the Poisson statistics of photon detection.
+```bash
+python -m chisurf pch analyze data.ptu --components 2 --bin-time 50
+python -m chisurf pch refit results.npz --components 3 --json
+```
 
-The theoretical model describes the probability distribution of photon counts based on:
-- The spatial distribution of the excitation profile
-- The molecular brightness of the fluorophores
-- The number of molecules in the detection volume
+## Dependencies
 
-## Applications
-
-- Determining molecular brightness and concentration
-- Distinguishing between species with different brightness values
-- Studying molecular interactions and complex formation
-- Analyzing heterogeneous samples
-- Investigating molecular aggregation
-
-## License
-
-This plugin is part of the ChiSurf package and is distributed under the same license.
+- ttrolib (TTTR file I/O)
+- numpy, scipy, numba (computation)
+- qtpy, pyqtgraph (GUI)
+- click (CLI)
 
 ## Author
 
-This plugin was created as part of the ChiSurf project.
+Thomas-Otavio Peulen — thomas.peulen@tu-dortmund.de
