@@ -8,16 +8,15 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import (
-    FluorescenceDatabase,
-    import_structure_file,
-)
+from chisurf import logging
 from chisurf.core.mfdb.database_resolver import (
     backup_database,
     resolve_database_path,
     source_database_path,
     user_database_path,
 )
+from chisurf.core.mfdb.importer import import_structure_file
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.core.mfdb_admin.backend.auth_services import (
     register_services as register_auth_services,
 )
@@ -107,7 +106,7 @@ def register_services(dispatcher_or_context: Any) -> None:
         def _make_v1_handler(h):
             def _v1_handler(params):
                 auth = params.pop("auth", None) if isinstance(params, dict) else None
-                with FluorescenceDatabase(resolve_database_path()) as db:
+                with MFDatabase(resolve_database_path()) as db:
                     _require_auth(auth, db.conn)
                 return h(**params, auth=auth)
             return _v1_handler
@@ -173,6 +172,12 @@ def register_services(dispatcher_or_context: Any) -> None:
         "setups.save": save_setup_handler,
         "setups.delete": delete_setup_handler,
         "setups.validate": validate_setup_handler,
+        "objects.put": put_object_handler,
+        "objects.put_bytes": put_object_bytes_handler,
+        "objects.get": get_object_handler,
+        "objects.get_info": get_object_info_handler,
+        "objects.delete": delete_object_handler,
+        "objects.list": list_objects_handler,
     }.items():
         dispatcher.register(f"mfdb.{name}", lambda params, _handler=handler: _handler(**params))
 
@@ -225,7 +230,7 @@ def _validate_fdb_methods_in_manifest(manifest_path: str | Path | None = None) -
 
 
 def status_handler(auth: dict[str, Any] | None = None, **_: Any) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         return {
             "source_database": str(source_database_path()),
             "user_database": str(user_database_path()),
@@ -235,14 +240,14 @@ def status_handler(auth: dict[str, Any] | None = None, **_: Any) -> dict[str, An
 
 
 def list_samples_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         rows = db.list_samples()
         filtered = _require_or_acl_filter(auth, db.conn, "sample", rows, id_key="sample_id")
         return {"samples": [_json_row(row) for row in filtered]}
 
 
 def search_samples_handler(query: str | None = None, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         all_samples = db.list_samples()
         filtered = _require_or_acl_filter(auth, db.conn, "sample", all_samples, id_key="sample_id")
         if not query:
@@ -260,14 +265,14 @@ def search_samples_handler(query: str | None = None, auth: dict[str, Any] | None
 
 
 def get_sample_handler(sample_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_or_acl_access(auth, db.conn, "sample", sample_id)
         sample = db.get_sample_full(sample_id)
         return {"sample": sample}
 
 
 def get_sample_condition_handler(condition_id: str) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         return {"condition": _get_sample_condition_row(db, condition_id)}
 
 
@@ -275,25 +280,25 @@ def save_sample_condition_handler(condition: dict[str, Any], auth: dict[str, Any
     condition_id = str(condition.get("condition_id") or "").strip()
     if not condition_id:
         raise ValueError("condition_id is required")
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         row = _save_sample_condition_row(db, condition)
     return {"condition": _json_row(row)}
 
 
 def get_probe_handler(probe_id: int) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         row = db.get_probe(probe_id)
         return {"probe": _json_row(row) if row else {}}
 
 
 def get_probe_optical_properties_handler(probe_id: int) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         return {"optical_properties": [_json_row(row) for row in db.get_optical_properties(probe_id)]}
 
 
 def list_probes_handler() -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         probes = []
         for row in db.get_probes():
             item = _json_row(row)
@@ -305,7 +310,7 @@ def list_probes_handler() -> dict[str, Any]:
 def save_sample_key_values_handler(
     sample_id: str, key_values: list[dict[str, Any]], auth: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.clear_sample_key_values(sample_id)
         for item in key_values:
@@ -323,7 +328,7 @@ def _list_users_internal(db: Any = None) -> dict[str, Any]:
     """Internal list users — no auth check. Used by save/delete handlers as response."""
     close_db = False
     if db is None:
-        db = FluorescenceDatabase(resolve_database_path())
+        db = MFDatabase(resolve_database_path())
         close_db = True
     try:
         users = []
@@ -346,10 +351,12 @@ def save_user_handler(user: dict[str, Any], auth: dict[str, Any] | None = None) 
     user_id = str(user.get("user_id") or "").strip()
     if not user_id:
         raise ValueError("user_id is required")
+    user_uuid_input = str(user.get("user_uuid") or "").strip()
+    old_user_id_input = str(user.get("old_user_id") or "").strip()
 
     password = user.get("password")
 
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         requester_is_admin = requester is not None and requester.is_admin
         requester_id = requester.user_id if requester else None
@@ -358,19 +365,33 @@ def save_user_handler(user: dict[str, Any], auth: dict[str, Any] | None = None) 
         has_admin_res = db.conn.execute("SELECT 1 FROM flr_sample_users WHERE is_admin = 1 LIMIT 1").fetchone()
         has_admins = (has_admin_res is not None)
 
-        # Load existing user properties to preserve if not updating
-        row = db.conn.execute("SELECT * FROM flr_sample_users WHERE user_id = ?", (user_id,)).fetchone()
+        # User UUID is the stable backend identity. user_id is the mutable
+        # human-readable username/login name.
+        if user_uuid_input:
+            row = db.conn.execute("SELECT * FROM flr_sample_users WHERE user_uuid = ?", (user_uuid_input,)).fetchone()
+        elif old_user_id_input:
+            row = db.conn.execute("SELECT * FROM flr_sample_users WHERE user_id = ?", (old_user_id_input,)).fetchone()
+        else:
+            row = db.conn.execute("SELECT * FROM flr_sample_users WHERE user_id = ?", (user_id,)).fetchone()
         if row:
             existing = dict(row)
         else:
             existing = {}
+        old_user_id = existing.get("user_id") or old_user_id_input or user_id
+        is_rename = bool(existing) and old_user_id != user_id
+
+        if is_rename:
+            if old_user_id in ("user_default", "guest"):
+                raise ValueError(f"Built-in user '{old_user_id}' cannot be renamed")
+            if db.conn.execute("SELECT 1 FROM flr_sample_users WHERE user_id = ?", (user_id,)).fetchone():
+                raise ValueError(f"User ID '{user_id}' already exists")
 
         # Check permissions if admins exist
         if has_admins:
             if requester is None:
                 raise ValueError("Unauthorized: authentication required")
             if not requester_is_admin:
-                if requester_id != user_id:
+                if requester_id != old_user_id:
                     raise ValueError("Unauthorized: Non-admin users can only edit their own profile")
                 if "is_admin" in user and int(user["is_admin"]) == 1 and existing.get("is_admin", 0) != 1:
                     raise ValueError("Unauthorized: Non-admin users cannot grant admin privileges")
@@ -430,6 +451,9 @@ def save_user_handler(user: dict[str, Any], auth: dict[str, Any] | None = None) 
         else:
             final_password_hash = existing_password_hash
 
+        if is_rename:
+            _rename_user_id_references(db.conn, old_user_id, user_id)
+
         db.add_user(
             user_id=user_id,
             display_name=display_name,
@@ -450,12 +474,87 @@ def save_user_handler(user: dict[str, Any], auth: dict[str, Any] | None = None) 
     return result
 
 
+def _rename_user_id_references(conn: Any, old_user_id: str, new_user_id: str) -> None:
+    """Rename a user ID and all username-based MFDB references.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection.
+    old_user_id : str
+        Existing username.
+    new_user_id : str
+        New username.
+    """
+    logging.info("MFDB users: renaming user_id '%s' to '%s'", old_user_id, new_user_id)
+    table_columns = (
+        ("flr_sample", "measured_by_user_id"),
+        ("flr_experiment", "measured_by_user_id"),
+        ("fdb_processing_run", "operator_user_id"),
+        ("fdb_audit_log", "operator_user_id"),
+        ("fdb_operation", "operator_user_id"),
+        ("mfdb_operation", "operator_user_id"),
+        ("mfdb_audit_log", "operator_user_id"),
+        ("mfdb_branch", "created_by_user_id"),
+        ("mfdb_group", "created_by_user_id"),
+        ("mfdb_group_member", "user_id"),
+        ("mfdb_group_member", "created_by_user_id"),
+        ("mfdb_object_acl", "owner_user_id"),
+        ("mfdb_acl_entry", "created_by_user_id"),
+        ("mfdb_session", "user_id"),
+        ("mfdb_auth_attempt", "user_id"),
+    )
+    foreign_keys_enabled = bool(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    if foreign_keys_enabled:
+        conn.execute("PRAGMA foreign_keys = OFF")
+    try:
+        with conn:
+            conn.execute("UPDATE flr_sample_users SET user_id = ? WHERE user_id = ?", (new_user_id, old_user_id))
+            for table, column in table_columns:
+                if not _table_has_column(conn, table, column):
+                    continue
+                conn.execute(f"UPDATE {table} SET {column} = ? WHERE {column} = ?", (new_user_id, old_user_id))
+            if _table_has_column(conn, "mfdb_acl_entry", "subject_id"):
+                conn.execute(
+                    "UPDATE mfdb_acl_entry SET subject_id = ? WHERE subject_type = 'user' AND subject_id = ?",
+                    (new_user_id, old_user_id),
+                )
+    finally:
+        if foreign_keys_enabled:
+            conn.execute("PRAGMA foreign_keys = ON")
+    violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        raise ValueError(f"User rename left foreign-key violations: {violations}")
+
+
+def _table_has_column(conn: Any, table: str, column: str) -> bool:
+    """Return whether *table* exists and contains *column*.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection.
+    table : str
+        Table name.
+    column : str
+        Column name.
+
+    Returns
+    -------
+    bool
+        ``True`` when the table and column exist.
+    """
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)).fetchone():
+        return False
+    return any(row[1] == column for row in conn.execute(f"PRAGMA table_info({table})").fetchall())
+
+
 def delete_user_handler(user_id: str, force: bool = False, requester_id: str = None, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     if user_id in ("user_default", "guest"):
         raise ValueError(f"The built-in user ('{user_id}') cannot be deleted.")
 
     import sqlite3
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         requester_is_admin = requester is not None and requester.is_admin
         requester_id = requester.user_id if requester else None
@@ -498,7 +597,7 @@ def delete_user_handler(user_id: str, force: bool = False, requester_id: str = N
 
 
 def list_devices_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         return {"devices": [_json_row(row) for row in db.get_devices()]}
 
@@ -507,7 +606,7 @@ def save_device_handler(device: dict[str, Any], auth: dict[str, Any] | None = No
     device_id = str(device.get("device_id") or "").strip()
     if not device_id:
         raise ValueError("device_id is required")
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.add_device(
             device_id,
@@ -523,14 +622,14 @@ def save_device_handler(device: dict[str, Any], auth: dict[str, Any] | None = No
 
 
 def delete_device_handler(device_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.delete_device(device_id)
     return list_devices_handler(auth=auth)
 
 
 def list_experiment_types_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         return {"experiment_types": [_json_row(row) for row in db.get_experiment_types()]}
 
@@ -539,7 +638,7 @@ def save_experiment_type_handler(experiment_type: dict[str, Any], auth: dict[str
     name = str(experiment_type.get("name") or "").strip()
     if not name:
         raise ValueError("experiment type name is required")
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.add_experiment_type(
             name,
@@ -551,7 +650,7 @@ def save_experiment_type_handler(experiment_type: dict[str, Any], auth: dict[str
 
 
 def delete_experiment_type_handler(type_id: int, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.delete_experiment_type(int(type_id))
     return list_experiment_types_handler(auth=auth)
@@ -563,14 +662,14 @@ def list_experiments_handler(
     type_id: int | None = None,
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         rows = db.get_experiments(sample_id=sample_id, project_id=project_id, type_id=type_id)
         return {"experiments": [_experiment_row_dict(row) for row in rows]}
 
 
 def get_experiment_handler(experiment_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         row = db.get_experiment(experiment_id)
         if row is None:
@@ -585,7 +684,7 @@ def save_experiment_handler(experiment: dict[str, Any], auth: dict[str, Any] | N
     experiment_id = str(experiment.get("experiment_id") or "").strip()
     if not experiment_id:
         raise ValueError("experiment_id is required")
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.add_experiment(
             experiment_id,
@@ -613,7 +712,7 @@ def save_experiment_handler(experiment: dict[str, Any], auth: dict[str, Any] | N
 
 
 def delete_experiment_handler(experiment_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
             db.conn.execute("DELETE FROM flr_experiment WHERE experiment_id = ?", (experiment_id,))
@@ -623,7 +722,7 @@ def delete_experiment_handler(experiment_id: str, auth: dict[str, Any] | None = 
 def save_experiment_key_values_handler(
     experiment_id: str, key_values: list[dict[str, Any]], auth: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.clear_experiment_key_values(experiment_id)
         for item in key_values:
@@ -646,7 +745,7 @@ def save_experiment_data_handler(data: dict[str, Any], auth: dict[str, Any] | No
     if not data_type:
         raise ValueError("data_type is required")
     storage_mode = str(data.get("storage_mode") or "link").strip()
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         if data.get("data_id"):
             db.update_experiment_data(
@@ -686,7 +785,7 @@ def save_experiment_data_handler(data: dict[str, Any], auth: dict[str, Any] | No
 
 
 def delete_experiment_data_handler(data_id: int, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         row = db.conn.execute(
             "SELECT experiment_id FROM flr_experiment_data WHERE data_id = ?", (int(data_id),)
@@ -700,7 +799,7 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
     sample_id = str(sample.get("sample_id") or "").strip()
     if not sample_id:
         raise ValueError("sample_id is required")
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         owner_user_id = requester.user_id if requester else "user_default"
         with db.conn:
@@ -771,14 +870,14 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
 
 
 def delete_sample_handler(sample_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         db.delete_sample(sample_id)
     return {"ok": True, "sample_id": sample_id}
 
 
 def import_file_handler(path: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         summary = import_structure_file(db, path)
     return {"summary": summary}
@@ -790,7 +889,7 @@ def export_sample_handler(
     analysis_id: str | None = None,
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         if analysis_id is None:
             row = db.conn.execute(
@@ -807,7 +906,7 @@ def export_sample_handler(
 
 def export_table_handler(output_path: str, sample_id: str | None = None) -> dict[str, Any]:
     path = Path(output_path)
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         rows = _sample_table_rows(db, sample_id)
     _write_table(path, rows)
     return {"output_path": str(path)}
@@ -846,14 +945,14 @@ def get_setup_handler(setup_id: str) -> dict[str, Any]:
 
 def save_setup_handler(setup: dict[str, Any], auth: dict[str, Any] | None = None) -> dict[str, Any]:
     from chisurf.core.mfdb.api import save_setup as _save_setup
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
     return _save_setup(setup)
 
 
 def delete_setup_handler(setup_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     from chisurf.core.mfdb.api import delete_setup as _delete_setup
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
     return _delete_setup(setup_id)
 
@@ -864,7 +963,7 @@ def validate_setup_handler(setup_id: str) -> dict[str, Any]:
 
 
 def _sample_table_rows(
-    db: FluorescenceDatabase, sample_id: str | None = None
+    db: MFDatabase, sample_id: str | None = None
 ) -> list[dict[str, Any]]:
     params: tuple[Any, ...] = ()
     where = ""
@@ -940,7 +1039,7 @@ def _json_row(row: Any) -> dict[str, Any]:
     return {key: row[key] for key in row.keys()}
 
 
-def _get_sample_condition_row(db: FluorescenceDatabase, condition_id: str) -> dict[str, Any]:
+def _get_sample_condition_row(db: MFDatabase, condition_id: str) -> dict[str, Any]:
     row = db.conn.execute(
         "SELECT * FROM flr_sample_condition WHERE condition_id = ?",
         (condition_id,),
@@ -949,7 +1048,7 @@ def _get_sample_condition_row(db: FluorescenceDatabase, condition_id: str) -> di
 
 
 def _save_sample_condition_row(
-    db: FluorescenceDatabase,
+    db: MFDatabase,
     condition: dict[str, Any],
 ) -> Any:
     condition_id = str(condition.get("condition_id") or "").strip()
@@ -986,14 +1085,14 @@ def _experiment_row_dict(row: Any) -> dict[str, Any]:
     return {key: row[key] for key in row.keys()}
 
 
-def _experiment_data_rows(db: FluorescenceDatabase, experiment_id: str) -> list[dict[str, Any]]:
+def _experiment_data_rows(db: MFDatabase, experiment_id: str) -> list[dict[str, Any]]:
     return [
         {key: r[key] for key in r.keys()}
         for r in db.get_experiment_data(experiment_id)
     ]
 
 
-def _experiment_key_values(db: FluorescenceDatabase, experiment_id: str) -> list[dict[str, Any]]:
+def _experiment_key_values(db: MFDatabase, experiment_id: str) -> list[dict[str, Any]]:
     try:
         rows = db.get_experiment_key_values(experiment_id)
         return [{key: r[key] for key in r.keys()} for r in rows]
@@ -1022,8 +1121,13 @@ def _require_auth(auth: dict[str, Any] | None, conn: Any) -> Any:
     """
     row = conn.execute("SELECT 1 FROM flr_sample_users WHERE is_admin = 1 LIMIT 1").fetchone()
     if not row:
+        logging.info("MFDB auth: allowing bootstrap write because no admin users exist")
         return None  # Bootstrap: no admin exists yet, allow seed writes
     principal = principal_from_rpc_auth(conn, auth)
+    if not auth or not auth.get("token"):
+        logging.warning("MFDB auth: rejecting write without session token")
+    elif isinstance(principal, AnonymousPrincipal):
+        logging.warning("MFDB auth: rejecting write with invalid, expired, or revoked session token")
     require_authenticated(principal)
     return principal
 
@@ -1082,3 +1186,145 @@ def _bytes_or_none(value: Any) -> bytes | None:
     if isinstance(value, str):
         return value.encode("utf-8")
     return bytes(value)
+
+
+def put_object_handler(
+    path: str | None = None,
+    data: str | None = None,
+    filename: str | None = None,
+    mime_type: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Store a file or bytes in the object store.
+
+    Parameters
+    ----------
+    path : str, optional
+        Path to the file to store (server reads from disk).
+    data : str, optional
+        Base64-encoded binary data to store.
+    filename : str, optional
+        Original filename to record.
+    mime_type : str, optional
+        MIME type of the content.
+    metadata : dict, optional
+        Additional metadata.
+    auth : dict, optional
+        Authentication token.
+
+    Returns
+    -------
+    dict
+        Object reference with uuid, md5, size, deduplicated flag.
+    """
+    import base64
+    principal = None
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        principal = principal_from_rpc_auth(db.conn, auth)
+
+    data_bytes = None
+    if data is not None:
+        data_bytes = base64.b64decode(data)
+
+    with MFDatabase(resolve_database_path()) as db:
+        result = db.put_object(
+            path=path,
+            data=data_bytes,
+            filename=filename,
+            mime_type=mime_type,
+            metadata=metadata,
+            created_by_user_uuid=getattr(principal, "user_id", None),
+        )
+    return {"ok": True, "object": result}
+
+
+def put_object_bytes_handler(
+    data: str,
+    filename: str,
+    mime_type: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Store base64-encoded bytes in the object store."""
+    import base64
+    principal = None
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        principal = principal_from_rpc_auth(db.conn, auth)
+
+    data_bytes = base64.b64decode(data)
+    with MFDatabase(resolve_database_path()) as db:
+        result = db.put_object(
+            data=data_bytes,
+            filename=filename,
+            mime_type=mime_type,
+            metadata=metadata,
+            created_by_user_uuid=getattr(principal, "user_id", None),
+        )
+    return {"ok": True, "object": result}
+
+
+def get_object_handler(
+    object_uuid: str,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Retrieve blob content by object UUID.
+
+    Returns base64-encoded data.
+    """
+    import base64
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        data = db.get_object(object_uuid)
+    return {"ok": True, "data": base64.b64encode(data).decode("ascii")}
+
+
+def get_object_info_handler(
+    object_uuid: str,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Retrieve object metadata by UUID."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        info = db.get_object_info(object_uuid)
+    if info is None:
+        return {"ok": False, "error": "Object not found"}
+    return {"ok": True, "object": _json_row(info)}
+
+
+def delete_object_handler(
+    object_uuid: str,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """Delete an object or decrement its refcount."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        result = db.delete_object(object_uuid)
+    return {"ok": True, **result}
+
+
+def list_objects_handler(
+    filename: str | None = None,
+    user_uuid: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    auth: dict[str, Any] | None = None,
+    **_: Any,
+) -> dict[str, Any]:
+    """List objects with optional filtering."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        objects = db.list_objects(
+            filename=filename,
+            user_uuid=user_uuid,
+            limit=limit,
+            offset=offset,
+        )
+    return {"ok": True, "objects": [_json_row(o) for o in objects]}

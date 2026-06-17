@@ -5,7 +5,8 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import FluorescenceDatabase, resolve_database_path
+from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.server.services import NOT_FOUND, OPERATION_FAILED, service_error
 
 
@@ -98,7 +99,7 @@ def save_setup_handler(setup: dict[str, Any]) -> dict[str, Any]:
         config = setup.get("configuration") or {}
         validation = validate_setup_config(config)
 
-        with FluorescenceDatabase(resolve_database_path()) as db:
+        with MFDatabase(resolve_database_path()) as db:
             db.add_setup_definition(
                 setup_id=setup_id,
                 name=name,
@@ -133,7 +134,7 @@ def get_setup_handler(setup_id: str) -> dict[str, Any]:
     dict
         JSON-RPC result.
     """
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         row = db.get_setup_definition(setup_id)
         if row is None:
             return service_error(f"setup not found: {setup_id}", error_code=NOT_FOUND)
@@ -150,7 +151,7 @@ def list_setups_handler() -> dict[str, Any]:
     dict
         JSON-RPC result.
     """
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         rows = db.list_setup_definitions()
         setups = []
         for row in rows:
@@ -173,7 +174,7 @@ def delete_setup_handler(setup_id: str) -> dict[str, Any]:
     dict
         JSON-RPC result.
     """
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         db.delete_setup_definition(setup_id)
     return {"ok": True, "setup_id": setup_id}
 

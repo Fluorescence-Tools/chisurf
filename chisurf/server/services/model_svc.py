@@ -55,22 +55,40 @@ def model_component_add(
     if model is None:
         return service_error("fit has no model", error_code=INVALID_STATE)
     try:
-        # Try common component-add methods generically
-        # Model families may define add_lifetime, add_component, add_species, etc.
+        # Mirror the local action handler (model_macros.add_component):
+        # 1. Try model.add_{type}() — e.g. add_rotation on AnisotropyModel
+        # 2. Try model.{type}.append() — e.g. model.lifetimes.append()
+        # 3. Try model.add_component() fallback
+        added = False
         method_name = f"add_{component_type}"
         add_method = getattr(model, method_name, None)
         if callable(add_method):
             add_method(**kwargs)
-        else:
-            # Fallback: try generic add_component
+            added = True
+        if not added:
+            target = getattr(model, component_type, None)
+            if target is not None:
+                append = getattr(target, "append", None)
+                if callable(append):
+                    try:
+                        append(**kwargs)
+                    except TypeError:
+                        append()
+                    added = True
+        if not added:
             add_generic = getattr(model, "add_component", None)
             if callable(add_generic):
                 add_generic(component_type, **kwargs)
-            else:
-                return service_error(
-                    f"model has no method to add component '{component_type}'",
-                    error_code=OPERATION_FAILED,
-                )
+                added = True
+        if not added:
+            return service_error(
+                f"model has no method to add component '{component_type}'",
+                error_code=OPERATION_FAILED,
+            )
+        # Re-discover parameters so newly added components appear in
+        # parameters_all_dict (needed by parameter.set_value, etc.)
+        if callable(getattr(model, "find_parameters", None)):
+            model.find_parameters()
         if event_bus is not None:
             event_bus.publish("model.component.added", {
                 "fit_uid": str(getattr(fit, "unique_identifier", "") or ""),
@@ -106,24 +124,38 @@ def model_component_remove(
     if model is None:
         return service_error("fit has no model", error_code=INVALID_STATE)
     try:
-        # Try common component-remove methods generically
-        method_name = "remove_component"
-        remove_method = getattr(model, method_name, None)
+        # Mirror the local action handler (model_macros.remove_component):
+        # 1. Try model.remove_component(index)
+        # 2. Try model.{type}.pop() — e.g. model.lifetimes.pop()
+        removed = False
+        remove_method = getattr(model, "remove_component", None)
         if callable(remove_method):
             remove_method(component_index)
-        else:
-            # Fallback: try remove_lifetime, etc.
-            for candidate in ("remove_lifetime", "remove_species", "remove_rotation",
-                              "remove_distance", "remove_gaussian"):
-                rm = getattr(model, candidate, None)
-                if callable(rm):
-                    rm(component_index)
+            removed = True
+        if not removed:
+            # Try sub-component pop — the action handler removes the last component
+            for candidate in ("lifetimes", "species", "rotations",
+                              "distances", "gaussians", component_type):
+                target = getattr(model, candidate, None)
+                if target is None:
+                    continue
+                pop = getattr(target, "pop", None)
+                if callable(pop):
+                    try:
+                        pop()
+                    except Exception:
+                        continue
+                    removed = True
                     break
-            else:
-                return service_error(
-                    f"model has no method to remove component at index {component_index}",
-                    error_code=OPERATION_FAILED,
-                )
+        if not removed:
+            return service_error(
+                f"model has no method to remove component at index {component_index}",
+                error_code=OPERATION_FAILED,
+            )
+        # Re-discover parameters so removed components disappear from
+        # parameters_all_dict
+        if callable(getattr(model, "find_parameters", None)):
+            model.find_parameters()
         if event_bus is not None:
             event_bus.publish("model.component.removed", {
                 "fit_uid": str(getattr(fit, "unique_identifier", "") or ""),

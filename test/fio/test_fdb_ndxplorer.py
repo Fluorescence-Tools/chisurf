@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.ndxplorer_services import (
     load_burst_product_handler,
     record_analysis_handler,
@@ -35,7 +35,7 @@ def test_ndxplorer_load_and_record(tmp_path: pathlib.Path) -> None:
         encoding="utf-8",
     )
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         db.add_sample("sample_1")
         db.add_experiment("exp_1", sample_id="sample_1", status="complete")
         
@@ -124,7 +124,7 @@ def test_ndxplorer_load_and_record(tmp_path: pathlib.Path) -> None:
         assert mask_prod["storage_mode"] == "embedded_json"
         
         # Verify provenance in the database
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             # Check input_to edge: original burst product -> input_to -> ndxplorer run
             input_edges = db.get_provenance_edges(
                 source_node_type="processed_data",

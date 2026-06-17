@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
     database_backup_handler,
     export_provenance_graph_handler,
@@ -18,7 +18,7 @@ def temp_db_setup(tmp_path):
     """Fixture to setup a temporary database with sample, raw, processed, and analysis run data."""
     db_path = tmp_path / "archive_test.db"
     
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         # 1. Add sample
         db.add_sample("sample_1")
         
@@ -146,7 +146,7 @@ def test_database_backup(temp_db_setup, tmp_path):
         assert backup_path.exists()
         
         # Verify we can open the backup and read data
-        with FluorophoreDatabase(backup_path) as db:
+        with MFDatabase(backup_path) as db:
             samples = db.conn.execute("SELECT sample_id FROM flr_sample").fetchall()
             assert len(samples) == 1
             assert samples[0][0] == "sample_1"

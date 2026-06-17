@@ -6,8 +6,8 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
-from chisurf.core.fio.mmcif.db import database_resolver, schema
-from chisurf.core.fio.mmcif.db.database_resolver import backup_database_before_migration
+from chisurf.core.mfdb import database_resolver, schema
+from chisurf.core.mfdb.database_resolver import backup_database_before_migration
 
 
 def test_backup_before_migration_copies_existing_database():

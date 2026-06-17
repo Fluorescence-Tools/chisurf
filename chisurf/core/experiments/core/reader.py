@@ -212,6 +212,22 @@ class ExperimentReader(chisurf.core.base.Base):
         self._stamp_data(data, source_uuids, derived_uuids, op_id)
         return data
 
+    def _ensure_sample_exists(self, sample_id: str) -> None:
+        """Create a selected sample in MFDB if it does not exist yet.
+
+        Parameters
+        ----------
+        sample_id : str
+            Sample ID to ensure exists.
+        """
+        if not self.db or not sample_id:
+            return
+        try:
+            if self.db.get_sample(sample_id) is None:
+                self.db.add_sample(sample_id, details="")
+        except Exception as e:
+            logger.warning("Failed to ensure sample %s exists: %s", sample_id, e)
+
     def _prompt_for_sample_batch(self, pending):
         """Prompt the user to assign a sample for each newly loaded file."""
         for filename, content_md5, object_uuid in pending:
@@ -265,6 +281,7 @@ class ExperimentReader(chisurf.core.base.Base):
                 elif self.sample_id:
                     sample_id = self.sample_id
                 if sample_id:
+                    self._ensure_sample_exists(sample_id)
                     self.db.set_object_sample_id(obj_uuid, sample_id)
                 else:
                     pending.append((str(p), content_md5 or "", obj_uuid))

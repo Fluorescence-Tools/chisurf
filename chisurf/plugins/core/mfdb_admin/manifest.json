@@ -342,6 +342,89 @@
     },
     {
       "name": "mfdb.permissions.revoke"
+    },
+    {
+      "name": "mfdb.objects.put",
+      "summary": "Store a file or bytes in the object store (deduplicates by MD5).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string", "description": "Server-side file path to store."},
+          "data": {"type": "string", "description": "Base64-encoded binary data."},
+          "filename": {"type": "string", "description": "Original filename."},
+          "mime_type": {"type": "string", "description": "MIME type."},
+          "metadata": {"type": "object", "description": "Additional metadata."}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "object_uuid": {"type": "string"},
+          "content_md5": {"type": "string"},
+          "size_bytes": {"type": "integer"},
+          "deduplicated": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "mfdb.objects.put_bytes",
+      "summary": "Store base64-encoded bytes in the object store.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "data": {"type": "string", "description": "Base64-encoded binary data."},
+          "filename": {"type": "string", "description": "Original filename."},
+          "mime_type": {"type": "string", "description": "MIME type."},
+          "metadata": {"type": "object", "description": "Additional metadata."}
+        },
+        "required": ["data", "filename"]
+      }
+    },
+    {
+      "name": "mfdb.objects.get",
+      "summary": "Retrieve blob content by object UUID (returns base64-encoded data).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "object_uuid": {"type": "string"}
+        },
+        "required": ["object_uuid"]
+      }
+    },
+    {
+      "name": "mfdb.objects.get_info",
+      "summary": "Retrieve object metadata by UUID.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "object_uuid": {"type": "string"}
+        },
+        "required": ["object_uuid"]
+      }
+    },
+    {
+      "name": "mfdb.objects.delete",
+      "summary": "Delete an object or decrement its refcount.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "object_uuid": {"type": "string"}
+        },
+        "required": ["object_uuid"]
+      }
+    },
+    {
+      "name": "mfdb.objects.list",
+      "summary": "List objects with optional filtering.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {"type": "string", "description": "Substring filter on original filename."},
+          "user_uuid": {"type": "string", "description": "Filter by creator user UUID."},
+          "limit": {"type": "integer", "default": 100},
+          "offset": {"type": "integer", "default": 0}
+        }
+      }
     }
   ]
 }

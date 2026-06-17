@@ -5,14 +5,15 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, seed_curated_database
+from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.seed_data import seed_curated_database
 
 
 def test_seed_curated_database_contains_samples():
     with tempfile.TemporaryDirectory() as tmp:
         db_path = Path(tmp) / "sample_management.db"
         seed_curated_database(db_path)
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             assert db._get_schema_version() >= 11
             assert len(db.list_samples()) >= 3
             assert len(db.get_probes()) >= 7

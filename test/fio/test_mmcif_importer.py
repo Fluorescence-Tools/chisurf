@@ -5,7 +5,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, import_structure_file
+from chisurf.core.mfdb.importer import import_structure_file
+from chisurf.core.mfdb.repository import MFDatabase
 
 
 def test_import_flr_cif_extension_categories():
@@ -47,7 +48,7 @@ def test_import_flr_cif_extension_categories():
             "_chisurf_probe_spectrum.intensity_unit normalized\n"
             "_chisurf_probe_spectrum.details spectrum\n"
         )
-        db = FluorophoreDatabase(":memory:")
+        db = MFDatabase(":memory:")
         try:
             summary = import_structure_file(db, path)
             assert summary["samples"]

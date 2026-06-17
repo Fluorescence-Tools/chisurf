@@ -6,7 +6,8 @@ import pathlib
 import sqlite3
 from unittest.mock import patch
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, schema
+from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
     archive_project_handler,
     delete_analysis_run_handler,
@@ -33,7 +34,7 @@ def test_v14_database_migrates_to_v15(tmp_path: pathlib.Path) -> None:
     finally:
         conn.close()
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         assert db._get_schema_version() == schema.SCHEMA_VERSION
 
         # Verify analysis and parameter tables exist
@@ -70,7 +71,7 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
 
     try:
         # 1. Setup sample, experiment, and raw/processed data
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_1")
             db.add_experiment("exp_1", sample_id="sample_1", status="complete")
 
@@ -208,7 +209,7 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
         assert del_res.get("ok") is True
 
         # Verify soft-delete: record still accessible but has deleted_at set
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             run = db.get_analysis_run("local_fit_uuid")
             assert run is not None
             assert run["deleted_at"] is not None
@@ -235,7 +236,7 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
 
     try:
         # Initialize basic DB schema
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_proj")
             db.add_experiment("exp_proj", sample_id="sample_proj", status="complete")
 
@@ -351,10 +352,20 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
         "chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path",
         return_value=db_path,
     )
+    project_browser_patcher = patch(
+        "chisurf.plugins.core.project_browser.backend.services.resolve_database_path",
+        return_value=db_path,
+    )
+    database_resolver_patcher = patch(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        return_value=db_path,
+    )
     patcher.start()
+    project_browser_patcher.start()
+    database_resolver_patcher.start()
 
     try:
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_proj")
             db.add_experiment("exp_proj", sample_id="sample_proj", status="complete")
 
@@ -393,6 +404,21 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
             )
             assert archive_res.get("ok") is True
             assert archive_res["project_id"] == "act_proj_123"
+            with MFDatabase(db_path) as db:
+                project_operations = db.conn.execute(
+                    "SELECT COUNT(*) FROM mfdb_operation WHERE operation_type = 'project' AND deleted_at IS NULL"
+                ).fetchone()[0]
+                legacy_table = db.conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('mfdb_analysis_run', 'fdb_analysis_run')"
+                ).fetchone()
+                legacy_runs = 0
+                if legacy_table:
+                    legacy_runs = db.conn.execute(
+                        f"SELECT COUNT(*) FROM {legacy_table[0]} WHERE analysis_type = 'project'"
+                    ).fetchone()[0]
+
+            assert project_operations == 1
+            assert legacy_runs == 0
 
             restore_res = dispatch(
                 "project.restore",
@@ -409,4 +435,310 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
 
     finally:
         patcher.stop()
+        project_browser_patcher.stop()
+        database_resolver_patcher.stop()
+
+
+# ── Project Archiver Tests ──────────────────────────────────────────────
+
+
+def test_archive_project_creates_artifacts(tmp_path: pathlib.Path) -> None:
+    """Verify archive_project_to_mfdb creates proper artifacts for datasets."""
+    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+
+    db_path = tmp_path / "test_archiver.db"
+
+    project_payload = {
+        "meta": {"name": "Test Project", "description": "A test"},
+        "datasets": {
+            "ds000": {
+                "name": "VV Decay",
+                "filename": "",
+                "x": [1.0, 2.0, 3.0],
+                "y": [10.0, 20.0, 30.0],
+                "ex": [0.1, 0.1, 0.1],
+                "ey": [1.0, 1.4, 1.7],
+                "data_reader": {"module": "test", "class": "TestReader", "state": {}},
+                "experiment_name": "TCSPC",
+            },
+        },
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        result = archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_test_001",
+            project_id="proj_test_001",
+            version_number=1,
+            user_id="user_default",
+        )
+
+        assert result["operation_id"] == "ver_test_001"
+        assert len(result["dataset_artifacts"]) == 1
+        assert result["dataset_artifacts"][0] == "dataset:ver_test_001:ds000"
+
+        # Verify operation exists
+        op = db.get_operation("ver_test_001")
+        assert op is not None
+        assert op["operation_type"] == "project"
+
+        # Verify dataset artifact exists
+        artifacts = db.get_operation_artifacts("ver_test_001", direction="output")
+        assert len(artifacts) >= 1
+        dataset_art = [a for a in artifacts if a["artifact_kind"] == "processed_data"]
+        assert len(dataset_art) == 1
+
+        # Verify project_contains edge exists
+        edges = db.conn.execute(
+            """SELECT * FROM mfdb_edge
+               WHERE source_node_id = 'ver_test_001'
+                 AND relationship_type = 'project_contains'
+                 AND deleted_at IS NULL""",
+        ).fetchall()
+        assert len(edges) >= 1
+
+
+def test_archive_project_creates_source_objects(tmp_path: pathlib.Path) -> None:
+    """Verify archive_project_to_mfdb stores source files in object store."""
+    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+
+    db_path = tmp_path / "test_source_objects.db"
+
+    # Create a temporary source file
+    source_file = tmp_path / "sample.txt"
+    source_file.write_text("test measurement data\n")
+
+    project_payload = {
+        "meta": {"name": "Source Test"},
+        "datasets": {
+            "ds000": {
+                "name": "Test Data",
+                "filename": str(source_file),
+                "x": [1.0, 2.0],
+                "y": [10.0, 20.0],
+                "ex": [0.1, 0.1],
+                "ey": [1.0, 1.4],
+                "data_reader": {},
+                "experiment_name": "TCSPC",
+            },
+        },
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        result = archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_src_001",
+            project_id="proj_src_001",
+            version_number=1,
+        )
+
+        # Should have source artifact (input) + dataset artifact (output)
+        input_arts = db.get_operation_artifacts("ver_src_001", direction="input")
+        output_arts = db.get_operation_artifacts("ver_src_001", direction="output")
+
+        source_arts = [a for a in input_arts if a["artifact_kind"] in ("raw_measurement", "raw_data")]
+        assert len(source_arts) == 1
+        assert source_arts[0]["object_uuid"] is not None
+
+        # Verify object exists in store
+        obj_info = db.get_object_info(source_arts[0]["object_uuid"])
+        assert obj_info is not None
+        assert obj_info["original_filename"].endswith("sample.txt")
+
+        # Verify derived_from edge
+        edges = db.conn.execute(
+            """SELECT * FROM mfdb_edge
+               WHERE relationship_type = 'derived_from' AND deleted_at IS NULL""",
+        ).fetchall()
+        assert len(edges) >= 1
+
+
+def test_archive_project_version_lineage(tmp_path: pathlib.Path) -> None:
+    """Verify archive_project_to_mfdb creates supersedes edges for version lineage."""
+    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+
+    db_path = tmp_path / "test_lineage.db"
+
+    project_payload = {
+        "meta": {"name": "Lineage Test"},
+        "datasets": {},
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        # Create first version
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_v1",
+            project_id="proj_lineage",
+            version_number=1,
+        )
+
+        # Create second version superseding first
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_v2",
+            project_id="proj_lineage",
+            version_number=2,
+            parent_version_id="ver_v1",
+        )
+
+        # Verify supersedes edge
+        edges = db.conn.execute(
+            """SELECT * FROM mfdb_edge
+               WHERE relationship_type = 'supersedes' AND deleted_at IS NULL""",
+        ).fetchall()
+        assert len(edges) == 1
+        edge = dict(edges[0]) if not isinstance(edges[0], dict) else edges[0]
+        assert edge["source_node_id"] == "ver_v2"
+        assert edge["target_node_id"] == "ver_v1"
+
+
+def test_restore_project_from_artifacts(tmp_path: pathlib.Path) -> None:
+    """Verify restore_project_from_artifacts reconstructs from individual artifacts."""
+    from chisurf.core.mfdb.project_archiver import (
+        archive_project_to_mfdb,
+        restore_project_from_artifacts,
+    )
+
+    db_path = tmp_path / "test_restore.db"
+
+    project_payload = {
+        "meta": {"name": "Restore Test"},
+        "datasets": {
+            "ds000": {
+                "name": "Test Curve",
+                "filename": "",
+                "x": [1.0, 2.0, 3.0],
+                "y": [10.0, 20.0, 30.0],
+                "ex": [0.1, 0.1, 0.1],
+                "ey": [1.0, 1.4, 1.7],
+                "data_reader": {},
+                "experiment_name": "TCSPC",
+            },
+        },
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_restore",
+            project_id="proj_restore",
+            version_number=1,
+        )
+
+        restored = restore_project_from_artifacts(db, "ver_restore")
+        assert restored is not None
+        assert "ds000" in restored["datasets"]
+        ds_data = restored["datasets"]["ds000"]
+        assert ds_data["curves"][0]["name"] == "Test Curve"
+
+
+def test_archive_project_deduplicates_objects(tmp_path: pathlib.Path) -> None:
+    """Verify same source file produces one object with refcount > 1."""
+    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+
+    db_path = tmp_path / "test_dedup.db"
+
+    # Create a source file
+    source_file = tmp_path / "shared.txt"
+    source_file.write_text("shared measurement data\n")
+
+    project_payload = {
+        "meta": {"name": "Dedup Test"},
+        "datasets": {
+            "ds000": {
+                "name": "Curve 1",
+                "filename": str(source_file),
+                "x": [1.0], "y": [10.0], "ex": [0.1], "ey": [1.0],
+                "data_reader": {}, "experiment_name": "TCSPC",
+            },
+            "ds001": {
+                "name": "Curve 2",
+                "filename": str(source_file),
+                "x": [2.0], "y": [20.0], "ex": [0.1], "ey": [1.4],
+                "data_reader": {}, "experiment_name": "TCSPC",
+            },
+        },
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_dedup",
+            project_id="proj_dedup",
+            version_number=1,
+        )
+
+        # Check that source file is stored once (deduplicated)
+        objects = db.conn.execute(
+            "SELECT refcount FROM mfdb_object WHERE original_filename LIKE '%shared.txt'"
+        ).fetchall()
+        assert len(objects) == 1
+        assert objects[0][0] >= 2  # refcount >= 2 (two put_object calls)
+
+
+def test_version_branching(tmp_path: pathlib.Path) -> None:
+    """Verify branching creates correct supersedes edges forming a DAG."""
+    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+
+    db_path = tmp_path / "test_branching.db"
+
+    project_payload = {
+        "meta": {"name": "Branch Test"},
+        "datasets": {},
+        "fits": [],
+    }
+
+    with MFDatabase(db_path) as db:
+        # Create root version
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_root",
+            project_id="proj_branch",
+            version_number=1,
+        )
+
+        # Create branch A from root
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_branch_a",
+            project_id="proj_branch",
+            version_number=2,
+            parent_version_id="ver_root",
+            branch_uuid="branch_a",
+        )
+
+        # Create branch B from root (fork)
+        archive_project_to_mfdb(
+            db=db,
+            project_payload=project_payload,
+            version_id="ver_branch_b",
+            project_id="proj_branch",
+            version_number=2,
+            parent_version_id="ver_root",
+            branch_uuid="branch_b",
+        )
+
+        # Verify two supersedes edges (DAG with fork)
+        edges = db.conn.execute(
+            """SELECT source_node_id, target_node_id FROM mfdb_edge
+               WHERE relationship_type = 'supersedes' AND deleted_at IS NULL
+               ORDER BY source_node_id""",
+        ).fetchall()
+        assert len(edges) == 2
+        assert (edges[0][0], edges[0][1]) == ("ver_branch_a", "ver_root")
+        assert (edges[1][0], edges[1][1]) == ("ver_branch_b", "ver_root")
 

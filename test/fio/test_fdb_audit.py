@@ -1,7 +1,7 @@
 import pathlib
 from unittest.mock import patch
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
     archive_project_handler,
     database_backup_handler,
@@ -14,7 +14,7 @@ def test_automatic_repository_audit_logging(tmp_path: pathlib.Path) -> None:
     """Verify that core repository operations automatically write audit log entries."""
     db_path = tmp_path / "audit_test.db"
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         # Initial logs must be empty
         assert len(db.get_audit_logs()) == 0
 
@@ -120,7 +120,7 @@ def test_service_level_audit_logging(tmp_path: pathlib.Path) -> None:
 
     try:
         # Init db tables
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_1")
             db.add_experiment("exp_1", sample_id="sample_1", status="complete")
 
@@ -129,7 +129,7 @@ def test_service_level_audit_logging(tmp_path: pathlib.Path) -> None:
         res = database_backup_handler(target_path=backup_path)
         assert res["ok"] is True
 
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             logs = db.get_audit_logs(action="backup")
             assert len(logs) == 1
             assert logs[0]["target_type"] == "database"
@@ -145,7 +145,7 @@ def test_service_level_audit_logging(tmp_path: pathlib.Path) -> None:
         )
         assert res["ok"] is True
 
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             logs = db.get_audit_logs(action="archive", target_type="project")
             assert len(logs) == 1
             assert logs[0]["target_id"] == "proj_1"
@@ -155,7 +155,7 @@ def test_service_level_audit_logging(tmp_path: pathlib.Path) -> None:
         res = restore_project_handler(project_id="proj_1")
         assert res["ok"] is True
 
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             logs = db.get_audit_logs(action="restore", target_type="project")
             assert len(logs) == 1
             assert logs[0]["target_id"] == "proj_1"
@@ -179,7 +179,7 @@ def test_client_list_audit_logs(tmp_path: pathlib.Path) -> None:
 
     try:
         # Create some logs
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_1")
             db.add_experiment("exp_1", sample_id="sample_1", status="complete")
             db.add_raw_data_reference(

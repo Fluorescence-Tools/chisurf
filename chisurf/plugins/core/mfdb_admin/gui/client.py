@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from chisurf import logging
 from chisurf.core.plugin.client import InProcessClient
 
 
@@ -47,6 +48,9 @@ class MFDBClient:
         )
 
     def _make_inprocess_client(self) -> InProcessClient:
+        from chisurf.plugins.core.project_browser.backend.services import (
+            register_services as register_project_browser_services,
+        )
         from chisurf.server.dispatcher import ServiceDispatcher
         from chisurf.server.session import SessionState
 
@@ -54,6 +58,7 @@ class MFDBClient:
 
         dispatcher = ServiceDispatcher(SessionState())
         register_services(dispatcher)
+        register_project_browser_services(dispatcher)
         return InProcessClient(dispatcher)
 
     def status(self) -> dict[str, Any]:
@@ -235,30 +240,75 @@ class MFDBClient:
         project_id: str,
         project_name: str,
         project_payload: dict[str, Any],
+        project_archive_data: str | None = None,
+        project_archive_filename: str | None = None,
         experiment_id: str | None = None,
         input_processed_data_ids: list[str] | None = None,
         notes: str | None = None,
+        visibility: str = "private",
     ) -> dict[str, Any]:
-        return self._call(
-            "project.archive",
-            {
-                "project_id": project_id,
-                "project_name": project_name,
-                "project_payload": project_payload,
-                "experiment_id": experiment_id,
-                "input_processed_data_ids": input_processed_data_ids,
-                "notes": notes,
-            },
+        from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+
+        client = ProjectBrowserClient(mfdb_client=self)
+        return client.save_project(
+            project_name=project_name,
+            project_payload=project_payload,
+            project_id=project_id,
+            notes=notes,
+            visibility=visibility,
         )
 
     def restore_project(self, project_id: str) -> dict[str, Any]:
-        return self._call("project.restore", {"project_id": project_id})
+        from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+
+        client = ProjectBrowserClient(mfdb_client=self)
+        if project_id.startswith("ver_"):
+            return client.restore_project(version_id=project_id)
+
+        for project in client.list_projects(show_public=True):
+            versions = project.get("versions", [])
+            if project.get("project_id") == project_id:
+                latest = versions[0] if versions else None
+                if latest:
+                    return client.restore_project(version_id=latest["version_id"])
+            for version in versions:
+                if version.get("version_id") == project_id:
+                    return client.restore_project(version_id=version["version_id"])
+        return client.restore_project(version_id=project_id)
 
     def list_projects(self) -> list[dict[str, Any]]:
-        return self._call("analysis.run.list", {"analysis_type": "project"}).get("analysis_runs", [])
+        from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+
+        client = ProjectBrowserClient(mfdb_client=self)
+        grouped = client.list_projects(show_public=True)
+        rows: list[dict[str, Any]] = []
+        for project in grouped:
+            versions = project.get("versions", []) or []
+            latest = versions[0] if versions else project
+            row = dict(project)
+            row.update({
+                "analysis_id": latest.get("version_id") or project.get("latest_version_id"),
+                "analysis_run_id": latest.get("version_id") or project.get("latest_version_id"),
+                "analysis_type": "project",
+                "model_name": latest.get("project_name") or project.get("project_name", ""),
+                "project_name": project.get("project_name", ""),
+                "project_id": project.get("project_id", ""),
+                "version_id": latest.get("version_id", ""),
+                "version_number": latest.get("version_number", 1),
+                "experiment_id": "",
+                "created_at": latest.get("created_at") or project.get("created_at", ""),
+                "updated_at": project.get("updated_at", latest.get("created_at", "")),
+                "notes": latest.get("notes") or project.get("notes", ""),
+                "owner_user_id": latest.get("owner_user_id") or project.get("owner_user_id", ""),
+                "visibility": project.get("visibility", latest.get("visibility", "private")),
+            })
+            rows.append(row)
+        return rows
 
     def delete_project(self, project_id: str) -> dict[str, Any]:
-        return self._call("analysis.run.delete", {"analysis_id": project_id})
+        from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+
+        return ProjectBrowserClient(mfdb_client=self).delete_version(version_id=project_id)
 
     def list_raw_data(self, experiment_id: str | None = None, data_type: str | None = None) -> list[dict[str, Any]]:
         return self._call("raw_data.list", {"experiment_id": experiment_id, "data_type": data_type}).get("raw_data", [])
@@ -531,6 +581,160 @@ class MFDBClient:
     def permissions_revoke(self, entry_id: int) -> dict[str, Any]:
         return self._call("mfdb.permissions.revoke", {"entry_id": entry_id})
 
+    # ---- Object Store ----
+
+    def put_object(
+        self,
+        path: str | None = None,
+        data: str | None = None,
+        filename: str | None = None,
+        mime_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Store a file or base64-encoded bytes in the object store.
+
+        Parameters
+        ----------
+        path : str, optional
+            Server-side file path to store.
+        data : str, optional
+            Base64-encoded binary data to store.
+        filename : str, optional
+            Original filename to record.
+        mime_type : str, optional
+            MIME type of the content.
+        metadata : dict, optional
+            Additional metadata.
+
+        Returns
+        -------
+        dict
+            Object reference with uuid, md5, size, deduplicated flag.
+        """
+        params: dict[str, Any] = {}
+        if path is not None:
+            params["path"] = path
+        if data is not None:
+            params["data"] = data
+        if filename is not None:
+            params["filename"] = filename
+        if mime_type is not None:
+            params["mime_type"] = mime_type
+        if metadata is not None:
+            params["metadata"] = metadata
+        return self._call("mfdb.objects.put", params)
+
+    def put_object_bytes(
+        self,
+        data: str,
+        filename: str,
+        mime_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Store base64-encoded bytes in the object store.
+
+        Parameters
+        ----------
+        data : str
+            Base64-encoded binary data.
+        filename : str
+            Original filename to record.
+        mime_type : str, optional
+            MIME type of the content.
+        metadata : dict, optional
+            Additional metadata.
+
+        Returns
+        -------
+        dict
+            Object reference with uuid, md5, size, deduplicated flag.
+        """
+        params: dict[str, Any] = {"data": data, "filename": filename}
+        if mime_type is not None:
+            params["mime_type"] = mime_type
+        if metadata is not None:
+            params["metadata"] = metadata
+        return self._call("mfdb.objects.put_bytes", params)
+
+    def get_object(self, object_uuid: str) -> dict[str, Any]:
+        """Retrieve blob content by object UUID.
+
+        Returns base64-encoded data.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        dict
+            Result with base64-encoded ``data`` field.
+        """
+        return self._call("mfdb.objects.get", {"object_uuid": object_uuid})
+
+    def get_object_info(self, object_uuid: str) -> dict[str, Any]:
+        """Retrieve object metadata by UUID.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        dict
+            Object metadata record.
+        """
+        return self._call("mfdb.objects.get_info", {"object_uuid": object_uuid})
+
+    def delete_object(self, object_uuid: str) -> dict[str, Any]:
+        """Delete an object or decrement its refcount.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        dict
+            Result with ``deleted`` (bool) and ``refcount`` (int).
+        """
+        return self._call("mfdb.objects.delete", {"object_uuid": object_uuid})
+
+    def list_objects(
+        self,
+        filename: str | None = None,
+        user_uuid: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """List objects with optional filtering.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Filter by original filename (substring match).
+        user_uuid : str, optional
+            Filter by creator user UUID.
+        limit : int
+            Maximum number of results.
+        offset : int
+            Offset for pagination.
+
+        Returns
+        -------
+        dict
+            Result with ``objects`` list.
+        """
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if filename is not None:
+            params["filename"] = filename
+        if user_uuid is not None:
+            params["user_uuid"] = user_uuid
+        return self._call("mfdb.objects.list", params)
+
     # ---- Internal ----
 
     def _call(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -542,5 +746,7 @@ class MFDBClient:
     def _call_raw(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         result = self._client.call(method, params or {})
         if not result.get("ok", True):
-            raise RuntimeError(result.get("error", method))
+            error = result.get("error", method)
+            logging.error("MFDB RPC failed: %s: %s", method, error)
+            raise RuntimeError(error)
         return result.get("result", result)

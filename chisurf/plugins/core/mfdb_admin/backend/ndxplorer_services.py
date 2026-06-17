@@ -8,7 +8,8 @@ import sys
 import uuid
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import FluorescenceDatabase, resolve_database_path
+from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.server.services import (
     INVALID_INPUT,
     NOT_FOUND,
@@ -67,7 +68,7 @@ def load_burst_product_handler(processed_data_id: str) -> dict[str, Any]:
         JSON-RPC result with parameter names and values.
     """
     try:
-        with FluorescenceDatabase(resolve_database_path()) as db:
+        with MFDatabase(resolve_database_path()) as db:
             row = db.get_processed_data(processed_data_id)
             if row is None:
                 return service_error(
@@ -174,7 +175,7 @@ def record_analysis_handler(
         run_id = f"proc_ndx_{uuid.uuid4()}"
         settings_hash = _json_hash(settings)
 
-        with FluorescenceDatabase(resolve_database_path()) as db:
+        with MFDatabase(resolve_database_path()) as db:
             db.add_processing_run(
                 experiment_id=experiment_id,
                 processing_type=f"ndxplorer_{analysis_type}",

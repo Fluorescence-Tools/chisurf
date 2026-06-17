@@ -6,7 +6,8 @@ import pathlib
 import sqlite3
 from unittest.mock import patch
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, schema
+from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.setup_services import (
     delete_setup_handler,
     get_setup_handler,
@@ -32,7 +33,7 @@ def test_v13_database_migrates_to_v14(tmp_path: pathlib.Path) -> None:
     finally:
         conn.close()
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         assert db._get_schema_version() == schema.SCHEMA_VERSION
 
         
@@ -53,10 +54,10 @@ def test_v13_database_migrates_to_v14(tmp_path: pathlib.Path) -> None:
 
 
 def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) -> None:
-    """Verify setup CRUD operations and linkage to experiments in FluorophoreDatabase."""
+    """Verify setup CRUD operations and linkage to experiments in MFDatabase."""
     db_path = tmp_path / "test_setups.db"
     
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         # 1. Test Add and Get
         db.add_setup_definition(
             setup_id="setup_mfd_1",

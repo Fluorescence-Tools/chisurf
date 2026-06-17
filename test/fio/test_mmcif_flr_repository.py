@@ -2,15 +2,15 @@ import pathlib
 import tempfile
 import numpy as np
 import pytest
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 
 
 @pytest.fixture
 def db():
-    return FluorophoreDatabase(":memory:", enforce_foreign_keys=False)
+    return MFDatabase(":memory:", enforce_foreign_keys=False)
 
 
-class TestFluorophoreDatabaseProbes:
+class TestMFDatabaseProbes:
     def test_add_probe_type(self, db):
         tid = db.add_probe_type("organic_dye", "Organic dye")
         assert isinstance(tid, int)
@@ -80,7 +80,7 @@ class TestFluorophoreDatabaseProbes:
         assert row["property_value"] == "0.92"
 
 
-class TestFluorophoreDatabaseAnalysis:
+class TestMFDatabaseAnalysis:
     def test_update_analysis_record(self, db):
         db.update_analysis_record("analysis_1", sample_id="sample_1", type="intensity-based")
         row = db.conn.execute(
@@ -120,7 +120,7 @@ class TestFluorophoreDatabaseAnalysis:
         assert meta["key"] == "new"
 
 
-class TestFluorophoreDatabaseExternalFiles:
+class TestMFDatabaseExternalFiles:
     def test_add_external_file(self, db):
         with tempfile.TemporaryDirectory() as d:
             fpath = pathlib.Path(d) / "test.ptu"
@@ -168,7 +168,7 @@ class TestFluorophoreDatabaseExternalFiles:
             assert len(streams) == 2
 
 
-class TestFluorophoreDatabaseExport:
+class TestMFDatabaseExport:
     def test_export_flr_cif_basic(self, db):
         with tempfile.TemporaryDirectory() as d:
             tid = db.add_probe_type("organic_dye", "Organic dye")
@@ -237,7 +237,7 @@ class TestFluorophoreDatabaseExport:
             assert "100 50 25 12.5" in text
 
 
-class TestFluorophoreDatabaseSamples:
+class TestMFDatabaseSamples:
     def test_sample_probe_mapping_crud(self, db):
         db.add_sample("sample_1", uuid="uuid-1")
         probe_id = db.add_probe(
@@ -298,7 +298,7 @@ class TestFluorophoreDatabaseSamples:
             assert "1 sample_export_mapping 1" in text
 
 
-class TestFluorophoreDatabaseExperiments:
+class TestMFDatabaseExperiments:
     def test_experiment_type_crud(self, db):
         type_id = db.add_experiment_type("tcspc", category="Time-resolved")
         assert isinstance(type_id, int)
@@ -347,7 +347,7 @@ class TestFluorophoreDatabaseExperiments:
     def test_experiment_id_column_repair(self):
         with tempfile.TemporaryDirectory() as d:
             db_path = pathlib.Path(d) / "repair.db"
-            db = FluorophoreDatabase(db_path)
+            db = MFDatabase(db_path)
             db.close()
             import sqlite3
 
@@ -356,13 +356,13 @@ class TestFluorophoreDatabaseExperiments:
             conn.execute("UPDATE _schema_version SET version=12")
             conn.commit()
             conn.close()
-            repaired = FluorophoreDatabase(db_path)
+            repaired = MFDatabase(db_path)
             cols = [row[1] for row in repaired.conn.execute("PRAGMA table_info(flr_experiment)")]
             assert "experiment_id" in cols
             repaired.close()
 
 
-class TestFluorophoreDatabaseMigration:
+class TestMFDatabaseMigration:
     def test_empty_db_schema(self, db):
         tables = db.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"

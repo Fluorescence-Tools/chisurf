@@ -773,6 +773,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             ("Raw data", self.raw_data_tab()),
             ("Processing runs", self.processing_runs_tab()),
             ("Processed products", self.processed_products_tab()),
+            ("Objects", self.objects_tab()),
             ("Analyses", self.analyses_tab()),
             ("Provenance", self.provenance_tab()),
             ("Provenance graph", self.provenance_graph_dock()),
@@ -2050,6 +2051,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         _safe("raw data", self.fill_raw_data_table)
         _safe("processing runs", self.fill_processing_runs_table)
         _safe("processed products", self.fill_processed_products_table)
+        _safe("objects", self.fill_object_table)
         _safe("analyses", self.fill_analyses_table)
         _safe("all items", self._populate_all_items)
         _safe("sample completer", self._refresh_sample_id_completer)
@@ -3215,7 +3217,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
         self.projects_table = QtWidgets.QTableWidget(0, 5)
         self.projects_table.setHorizontalHeaderLabels(
-            ["project id", "name", "experiment id", "created at", "notes"]
+            ["version id", "name", "project id", "created at", "notes"]
         )
         self.projects_table.horizontalHeader().setStretchLastSection(True)
         self.projects_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -3240,7 +3242,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.project_notes_edit.setReadOnly(True)
         self.project_notes_edit.setMinimumHeight(60)
 
-        form.addRow("Project ID", self.project_id_edit)
+        form.addRow("Version ID", self.project_id_edit)
         form.addRow("Name", self.project_name_edit)
         form.addRow("Notes", self.project_notes_edit)
         layout.addLayout(form)
@@ -3255,9 +3257,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.restore_selected_project,
         )
         delete_button = self._text_icon_button(
-            "🗑 Delete archived project",
+            "🗑 Delete archived version",
             QtWidgets.QStyle.SP_TrashIcon,
-            "Delete the archived project",
+            "Delete the archived project version",
             self.delete_selected_project,
         )
         buttons.addWidget(restore_button)
@@ -3279,10 +3281,10 @@ class MFDBWidget(QtWidgets.QMainWindow):
             row = self.projects_table.rowCount()
             self.projects_table.insertRow(row)
             values = [
-                item.get("analysis_id", ""),
-                item.get("model_name", ""),
-                item.get("experiment_id", ""),
-                item.get("created_at", ""),
+                item.get("analysis_id") or item.get("version_id") or item.get("project_id", ""),
+                item.get("model_name") or item.get("project_name") or "",
+                item.get("project_id", ""),
+                (item.get("created_at") or "")[:19].replace("T", " "),
                 item.get("notes", ""),
             ]
             for column, value in enumerate(values):
@@ -3316,8 +3318,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
 
         try:
+            import chisurf as cs
             from chisurf.core.actions import dispatch
-            dispatch("project.restore", {"project_id": project_id})
+            result = dispatch("project.restore", {"project_id": project_id})
+            if result.get("ok") and hasattr(cs, "cs") and cs.cs is not None:
+                cs.cs._current_project_id = result.get("project_id")
+                cs.cs._current_project_version_id = result.get("version_id")
+                cs.cs._current_project_name = result.get("project_name")
+                cs.cs._current_project_visibility = result.get("visibility", "private")
             QtWidgets.QMessageBox.information(
                 self,
                 "Project Restored",
@@ -3333,13 +3341,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
     def delete_selected_project(self) -> None:
         project_id = self.project_id_edit.text()
         if not project_id:
-            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project to delete.")
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project version to delete.")
             return
 
         confirm = QtWidgets.QMessageBox.question(
             self,
-            "Delete Project",
-            f"Are you sure you want to delete the archived project '{project_id}' from the database?",
+            "Delete Project Version",
+            f"Are you sure you want to delete the archived project version '{project_id}' from the database?",
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
             QtWidgets.QMessageBox.No
         )
@@ -3350,15 +3358,15 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.client.delete_project(project_id)
             QtWidgets.QMessageBox.information(
                 self,
-                "Project Deleted",
-                "Project successfully deleted from the database."
+                "Project Version Deleted",
+                "Project version successfully deleted from the database."
             )
             self.refresh()
         except Exception as exc:
             QtWidgets.QMessageBox.critical(
                 self,
                 "Delete Failed",
-                f"Failed to delete project: {exc}"
+                f"Failed to delete project version: {exc}"
             )
 
     def setups_tab(self) -> QtWidgets.QWidget:
@@ -4018,6 +4026,228 @@ class MFDBWidget(QtWidgets.QMainWindow):
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Failed to open in NDXplorer:\n{e}")
 
+    def objects_tab(self) -> QtWidgets.QWidget:
+        """Create the object store management tab."""
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        filter_layout = QtWidgets.QHBoxLayout()
+        filter_layout.addWidget(QtWidgets.QLabel("Filename filter:"))
+        self.object_filter_edit = QtWidgets.QLineEdit()
+        self.object_filter_edit.setPlaceholderText("Filter by original filename")
+        self.object_filter_edit.returnPressed.connect(self.fill_object_table)
+        filter_layout.addWidget(self.object_filter_edit)
+        self.object_limit_spin = QtWidgets.QSpinBox()
+        self.object_limit_spin.setRange(1, 1000)
+        self.object_limit_spin.setValue(100)
+        filter_layout.addWidget(QtWidgets.QLabel("Limit:"))
+        filter_layout.addWidget(self.object_limit_spin)
+        refresh_button = self._text_icon_button(
+            "🔄 Refresh",
+            QtWidgets.QStyle.SP_BrowserReload,
+            "Refresh object list",
+            self.fill_object_table,
+        )
+        filter_layout.addWidget(refresh_button)
+        filter_layout.addStretch()
+        layout.addLayout(filter_layout)
+
+        self.objects_table = QtWidgets.QTableWidget(0, 8)
+        self.objects_table.setHorizontalHeaderLabels(
+            [
+                "object uuid", "md5", "original filename", "size bytes",
+                "mime type", "refcount", "created at", "created by",
+            ]
+        )
+        self.objects_table.horizontalHeader().setStretchLastSection(True)
+        self.objects_table.itemSelectionChanged.connect(self.load_object)
+        layout.addWidget(self.objects_table, stretch=1)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.object_uuid_edit = QtWidgets.QLineEdit()
+        self.object_md5_edit = QtWidgets.QLineEdit()
+        self.object_filename_edit = QtWidgets.QLineEdit()
+        self.object_size_edit = QtWidgets.QLineEdit()
+        self.object_mime_edit = QtWidgets.QLineEdit()
+        self.object_refcount_edit = QtWidgets.QLineEdit()
+        self.object_created_edit = QtWidgets.QLineEdit()
+        self.object_storage_edit = QtWidgets.QLineEdit()
+        for w in (
+            self.object_uuid_edit,
+            self.object_md5_edit,
+            self.object_filename_edit,
+            self.object_size_edit,
+            self.object_mime_edit,
+            self.object_refcount_edit,
+            self.object_created_edit,
+            self.object_storage_edit,
+        ):
+            w.setReadOnly(True)
+
+        form.addRow("Object UUID", self.object_uuid_edit)
+        form.addRow("MD5", self.object_md5_edit)
+        form.addRow("Original Filename", self.object_filename_edit)
+        form.addRow("Size (bytes)", self.object_size_edit)
+        form.addRow("MIME Type", self.object_mime_edit)
+        form.addRow("Refcount", self.object_refcount_edit)
+        form.addRow("Created At", self.object_created_edit)
+        form.addRow("Storage Path", self.object_storage_edit)
+        layout.addLayout(form)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(2)
+
+        btn_delete = self._text_icon_button(
+            "🗑 Delete object",
+            QtWidgets.QStyle.SP_TrashIcon,
+            "Delete the selected object (or decrement refcount)",
+            self.delete_selected_object,
+        )
+        buttons.addWidget(btn_delete)
+
+        btn_copy = self._text_icon_button(
+            "📋 Copy UUID",
+            QtWidgets.QStyle.SP_FileIcon,
+            "Copy object UUID to clipboard",
+            self._on_object_copy_clicked,
+        )
+        buttons.addWidget(btn_copy)
+
+        btn_reveal = self._text_icon_button(
+            "📂 Reveal",
+            QtWidgets.QStyle.SP_DirOpenIcon,
+            "Reveal the object in the file manager",
+            self._on_object_reveal_clicked,
+        )
+        buttons.addWidget(btn_reveal)
+
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        return widget
+
+    def fill_object_table(self) -> None:
+        """Populate the object store table."""
+        if self._is_deleted() or self._is_widget_deleted(self.objects_table):
+            return
+        self.objects_table.setRowCount(0)
+        try:
+            filename = self.object_filter_edit.text().strip() or None
+            limit = int(self.object_limit_spin.value())
+            objects = self.client.list_objects(filename=filename, limit=limit).get("objects", [])
+        except Exception:
+            objects = []
+        for item in objects:
+            row = self.objects_table.rowCount()
+            self.objects_table.insertRow(row)
+            values = [
+                item.get("object_uuid", ""),
+                item.get("content_md5", ""),
+                item.get("original_filename", ""),
+                item.get("size_bytes", ""),
+                item.get("mime_type", ""),
+                item.get("refcount", ""),
+                item.get("created_at", ""),
+                item.get("created_by_user_uuid", ""),
+            ]
+            for column, value in enumerate(values):
+                self.objects_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_object(self) -> None:
+        """Load selected object details into the form."""
+        if self._is_deleted() or self._is_widget_deleted(self.objects_table):
+            return
+        selected = self.objects_table.selectedItems()
+        if not selected:
+            for w in (
+                self.object_uuid_edit,
+                self.object_md5_edit,
+                self.object_filename_edit,
+                self.object_size_edit,
+                self.object_mime_edit,
+                self.object_refcount_edit,
+                self.object_created_edit,
+                self.object_storage_edit,
+            ):
+                w.clear()
+            return
+        row = selected[0].row()
+        object_uuid = self.objects_table.item(row, 0).text()
+        try:
+            item = self.client.get_object_info(object_uuid).get("object", {})
+        except Exception:
+            item = {}
+        self.object_uuid_edit.setText(item.get("object_uuid", ""))
+        self.object_md5_edit.setText(item.get("content_md5", ""))
+        self.object_filename_edit.setText(item.get("original_filename", ""))
+        self.object_size_edit.setText(str(item.get("size_bytes", "")))
+        self.object_mime_edit.setText(item.get("mime_type", ""))
+        self.object_refcount_edit.setText(str(item.get("refcount", "")))
+        self.object_created_edit.setText(item.get("created_at", ""))
+        self.object_storage_edit.setText(item.get("storage_path", ""))
+
+    def delete_selected_object(self) -> None:
+        """Delete the selected object or decrement its refcount."""
+        selected = self.objects_table.selectedItems()
+        if not selected:
+            QtWidgets.QMessageBox.warning(self, "No object selected", "Select an object to delete.")
+            return
+        row = selected[0].row()
+        object_uuid = self.objects_table.item(row, 0).text()
+        info = self.client.get_object_info(object_uuid).get("object", {})
+        filename = info.get("original_filename", object_uuid)
+        refcount = info.get("refcount", 0)
+        msg = f"Delete object '{filename}'?\n\nRefcount: {refcount}"
+        if refcount > 1:
+            msg += "\n\nThis will only decrement the refcount; the blob will remain."
+        else:
+            msg += "\n\nThis will permanently delete the blob from disk."
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Delete object",
+            msg,
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+        if reply != QtWidgets.QMessageBox.Yes:
+            return
+        try:
+            result = self.client.delete_object(object_uuid)
+            self.status_label.setText(f"Object delete result: {result}")
+            self.fill_object_table()
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Delete failed", str(exc))
+
+    def _on_object_copy_clicked(self) -> None:
+        """Copy selected object UUID to clipboard."""
+        selected = self.objects_table.selectedItems()
+        if not selected:
+            return
+        row = selected[0].row()
+        object_uuid = self.objects_table.item(row, 0).text()
+        QtWidgets.QApplication.clipboard().setText(object_uuid)
+
+    def _on_object_reveal_clicked(self) -> None:
+        """Reveal the selected object in the file manager."""
+        selected = self.objects_table.selectedItems()
+        if not selected:
+            return
+        row = selected[0].row()
+        object_uuid = self.objects_table.item(row, 0).text()
+        try:
+            info = self.client.get_object_info(object_uuid).get("object", {})
+            storage_path = info.get("storage_path", "")
+            if not storage_path:
+                return
+            from chisurf.core.mfdb.database_resolver import object_store_root
+            path = object_store_root() / storage_path
+            QtGui.QDesktopServices.openUrl(_qurl_for_location(str(path)))
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Reveal failed", str(exc))
+
     def analyses_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(widget)
@@ -4273,7 +4503,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "Load Failed", f"Failed to load full graph:\n{e}")
 
     def _display_provenance_graph(self, graph: dict) -> None:
-        from chisurf.plugins.core.mfdb_admin.gui.provenance_graph import mfdb_graph_to_node_editor_graph
+        from chisurf.plugins.core.mfdb_admin.gui.provenance_graph import (
+            mfdb_graph_to_node_editor_graph,
+        )
         ne_graph = mfdb_graph_to_node_editor_graph(graph)
         self.prov_node_editor.load_graph_dict(ne_graph)
         self._show_provenance_graph_dock()

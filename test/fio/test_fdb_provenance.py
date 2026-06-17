@@ -5,7 +5,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, schema
+from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.repository import MFDatabase
 
 
 def test_v12_database_migrates_to_v13_without_losing_existing_rows(tmp_path: Path) -> None:
@@ -36,7 +37,7 @@ def test_v12_database_migrates_to_v13_without_losing_existing_rows(tmp_path: Pat
     finally:
         conn.close()
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         assert db._get_schema_version() == schema.SCHEMA_VERSION
 
         assert db.get_experiment("exp_1")["sample_id"] == "sample_1"
@@ -60,7 +61,7 @@ def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:
     bur_path = tmp_path / "output.bur"
     bur_path.write_text("n_ph\tduration\n10\t0.1\n", encoding="utf-8")
 
-    with FluorophoreDatabase(tmp_path / "test.db") as db:
+    with MFDatabase(tmp_path / "test.db") as db:
         db.add_sample("sample_1")
         db.add_experiment("exp_1", sample_id="sample_1", status="complete")
         raw_id = db.add_raw_data_reference(

@@ -495,6 +495,25 @@ def test_login_handler_creates_session(db, normal_user, patch_db):
     assert result["user"]["user_id"] == normal_user
 
 
+def test_login_handler_allows_passwordless_admin_flag(db, patch_db):
+    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+    from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
+
+    db.add_user(
+        "passwordless_admin",
+        display_name="Passwordless Admin",
+        is_admin=1,
+        password_hash=hash_password("correct_password"),
+        allow_passwordless_login=1,
+    )
+
+    result = login_handler(user_id="passwordless_admin")
+    assert result["ok"] is True
+    assert "token" in result
+    assert result["user"]["user_id"] == "passwordless_admin"
+    assert result["user"]["is_admin"] is True
+
+
 def test_login_handler_wrong_password_fails(db, normal_user, patch_db):
     from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
     from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler

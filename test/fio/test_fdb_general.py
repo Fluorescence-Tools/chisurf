@@ -5,7 +5,7 @@ from __future__ import annotations
 import pathlib
 from unittest.mock import patch
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
     get_downstream_dependencies_handler,
     get_upstream_dependencies_handler,
@@ -26,7 +26,7 @@ def test_dependency_trace_and_general_processing(tmp_path: pathlib.Path) -> None
 
     try:
         # 1. Setup sample and experiment
-        with FluorophoreDatabase(db_path) as db:
+        with MFDatabase(db_path) as db:
             db.add_sample("sample_1")
             db.add_experiment("exp_1", sample_id="sample_1", status="complete")
 

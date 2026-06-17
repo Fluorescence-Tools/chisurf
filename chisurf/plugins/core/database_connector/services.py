@@ -6,14 +6,14 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import (
-    FluorescenceDatabase,
+from chisurf.core.mfdb.database_resolver import (
     backup_database,
-    import_structure_file,
     resolve_database_path,
     source_database_path,
     user_database_path,
 )
+from chisurf.core.mfdb.importer import import_structure_file
+from chisurf.core.mfdb.repository import MFDatabase
 
 
 class DatabaseConnector:
@@ -21,7 +21,7 @@ class DatabaseConnector:
 
     def __init__(self) -> None:
         """Create an empty connector."""
-        self._db: FluorescenceDatabase | None = None
+        self._db: MFDatabase | None = None
 
     def open(self, database_path: str | None = None) -> dict[str, Any]:
         """Open the user database and return connector status.
@@ -40,7 +40,7 @@ class DatabaseConnector:
         path = Path(database_path) if database_path else resolve_database_path()
         if self._db is not None:
             self._db.close()
-        self._db = FluorescenceDatabase(path)
+        self._db = MFDatabase(path)
         return self.status()
 
     def close(self) -> dict[str, Any]:
@@ -66,7 +66,7 @@ class DatabaseConnector:
             Source/user paths, schema version, and table counts.
         """
         path = resolve_database_path()
-        with FluorescenceDatabase(path) as db:
+        with MFDatabase(path) as db:
             experiment_rows = db.get_experiments()
             return {
                 "source_database": str(source_database_path()),
@@ -131,7 +131,7 @@ class DatabaseConnector:
             Repository metadata.
         """
         path = resolve_database_path()
-        with FluorescenceDatabase(path) as db:
+        with MFDatabase(path) as db:
             data: dict[str, Any] = {
                 "database_path": str(path),
                 "schema_version": db._get_schema_version(),
@@ -166,7 +166,7 @@ class DatabaseConnector:
         dict
             Import summary.
         """
-        with FluorescenceDatabase(resolve_database_path()) as db:
+        with MFDatabase(resolve_database_path()) as db:
             summary = import_structure_file(db, path)
         return {"summary": summary}
 
@@ -192,7 +192,7 @@ class DatabaseConnector:
         dict
             Output path or CIF text.
         """
-        with FluorescenceDatabase(resolve_database_path()) as db:
+        with MFDatabase(resolve_database_path()) as db:
             if analysis_id is None:
                 row = db.conn.execute(
                     "SELECT analysis_id FROM flr_fret_analysis "

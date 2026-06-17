@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import FluorescenceDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.auth import (
     PERM_MANAGE,
     PERM_READ,
@@ -37,7 +37,7 @@ from chisurf.plugins.core.mfdb_admin.backend.password_services import (
 
 
 def _get_db():
-    return FluorescenceDatabase(resolve_database_path())
+    return MFDatabase(resolve_database_path())
 
 
 def _get_conn(db):
@@ -110,7 +110,7 @@ def login_handler(
             raise AuthError("Too many failed login attempts. Try again later.")
 
         row = conn.execute(
-            "SELECT display_name, is_admin, password_hash FROM flr_sample_users WHERE user_id = ?",
+            "SELECT display_name, is_admin, password_hash, allow_passwordless_login FROM flr_sample_users WHERE user_id = ?",
             (user_id,),
         ).fetchone()
 
@@ -118,9 +118,11 @@ def login_handler(
             record_auth_attempt(conn, user_id, False, reason="user_not_found")
             raise AuthError("Invalid credentials")
 
-        display_name, is_admin, password_hash = row
+        display_name, is_admin, password_hash, allow_passwordless_login = row
 
-        if password_hash:
+        if allow_passwordless_login == 1 and not password:
+            pass
+        elif password_hash:
             if not verify_password(password, password_hash):
                 record_auth_attempt(conn, user_id, False, reason="wrong_password")
                 raise AuthError("Invalid credentials")
@@ -613,8 +615,8 @@ def require_handler_auth(
 
     Returns ``(db, conn, principal)``. Caller must close ``db``.
     """
-    from chisurf.core.fio.mmcif.db import FluorescenceDatabase
-    db = FluorescenceDatabase(resolve_database_path())
+    from chisurf.core.mfdb.repository import MFDatabase
+    db = MFDatabase(resolve_database_path())
     conn = db.conn
     principal = principal_from_rpc_auth(conn, auth)
     require_authenticated(principal)

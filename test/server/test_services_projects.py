@@ -29,18 +29,18 @@ class TestProjectsService:
     @patch("chisurf.core.project.Project")
     def test_save_project(self, mock_project_cls):
         mock_project = MagicMock()
-        mock_project.save = MagicMock(return_value=pathlib.Path("/tmp/test/project.json"))
+        mock_project.save = MagicMock(return_value=pathlib.Path("/tmp/test/project.csp"))
         mock_project_cls.return_value = mock_project
 
         state = SessionState()
         with tempfile.TemporaryDirectory() as tmpdir:
             result = save_project(state, target_path=tmpdir)
             assert result["ok"]
-            assert "/project.json" in result.get("path", "")
+            assert ".csp" in result.get("path", "")
 
     def test_load_project_not_found(self):
         state = SessionState()
         with tempfile.TemporaryDirectory() as tmpdir:
             result = load_project(state, project_path=tmpdir)
             assert not result["ok"]
-            assert "not found" in result["error"]
+            assert "not found" in result["error"] or "not a valid ZIP" in result.get("error", "")

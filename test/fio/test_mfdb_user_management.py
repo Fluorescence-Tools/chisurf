@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -286,6 +287,83 @@ def test_mfdb_save_user_permissions(tmp_path: Path) -> None:
             )
 
 
+def test_mfdb_save_user_renames_username_and_references(tmp_path: Path) -> None:
+    db_path = tmp_path / "user_rename_test.db"
+
+    from unittest.mock import patch
+
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        list_users_handler,
+        save_user_handler,
+    )
+
+    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+        list_users_handler()
+        admin_auth = _default_auth(db_path)
+
+        created = save_user_handler(
+            user={
+                "user_id": "old_name",
+                "display_name": "Old Name",
+            },
+            auth=admin_auth,
+        )
+        user_uuid = next(u["user_uuid"] for u in created["users"] if u["user_id"] == "old_name")
+
+        db = MFDatabase(db_path)
+        try:
+            db.add_sample("rename_sample", measured_by_user_id="old_name")
+            db.add_experiment("rename_experiment", sample_id="rename_sample", measured_by_user_id="old_name")
+            session = create_session(db.conn, "old_name")
+            db.conn.execute(
+                "INSERT OR IGNORE INTO mfdb_group_member (group_id, user_id, role) VALUES ('users', ?, 'member')",
+                ("old_name",),
+            )
+            db.conn.execute(
+                "INSERT INTO mfdb_object_acl (object_type, object_id, owner_user_id) VALUES (?, ?, ?)",
+                ("sample", "rename_sample", "old_name"),
+            )
+            db.conn.commit()
+        finally:
+            db.close()
+
+        res = save_user_handler(
+            user={
+                "user_uuid": user_uuid,
+                "user_id": "new_name",
+                "display_name": "New Name",
+            },
+            auth=admin_auth,
+        )
+        user_ids = {u["user_id"] for u in res["users"]}
+        assert "old_name" not in user_ids
+        assert "new_name" in user_ids
+
+        db = MFDatabase(db_path)
+        try:
+            assert db.conn.execute(
+                "SELECT measured_by_user_id FROM flr_sample WHERE sample_id = 'rename_sample'"
+            ).fetchone()[0] == "new_name"
+            assert db.conn.execute(
+                "SELECT measured_by_user_id FROM flr_experiment WHERE experiment_id = 'rename_experiment'"
+            ).fetchone()[0] == "new_name"
+            assert db.conn.execute(
+                "SELECT user_id FROM mfdb_session WHERE session_id = ?",
+                (db.conn.execute(
+                    "SELECT session_id FROM mfdb_session WHERE token_hash = ?",
+                    (hashlib.sha256(session["token"].encode("utf-8")).hexdigest(),),
+                ).fetchone()[0],),
+            ).fetchone()[0] == "new_name"
+            assert db.conn.execute(
+                "SELECT user_id FROM mfdb_group_member WHERE user_id = 'new_name'"
+            ).fetchone()[0] == "new_name"
+            assert db.conn.execute(
+                "SELECT owner_user_id FROM mfdb_object_acl WHERE object_type = 'sample' AND object_id = 'rename_sample'"
+            ).fetchone()[0] == "new_name"
+        finally:
+            db.close()
+
+
 def test_mfdb_delete_user_admin_override(tmp_path: Path) -> None:
     db_path = tmp_path / "user_override_test.db"
 
@@ -339,36 +417,34 @@ def test_autologin_conditions() -> None:
     user_pw = {"user_id": "default", "has_password": True, "is_admin": False, "allow_passwordless_login": False}
     user_admin_no_pw = {"user_id": "default", "has_password": False, "is_admin": True, "allow_passwordless_login": False}
     user_passwdless = {"user_id": "default", "has_password": False, "is_admin": False, "allow_passwordless_login": True}
+    user_admin_pw = {"user_id": "default", "has_password": True, "is_admin": True, "allow_passwordless_login": False}
+    user_admin_passwdless = {"user_id": "default", "has_password": True, "is_admin": True, "allow_passwordless_login": True}
 
     # Helper simulating the logic:
-    def should_trigger_login(autologin, user_data):
+    def should_trigger_login(autologin, user_data, autologin_succeeded=False):
         if not autologin:
             return True
-        else:
-            if user_data:
-                if user_data.get("has_password") or user_data.get("is_admin"):
-                    return True
-                if not user_data.get("allow_passwordless_login"):
-                    return True
-            else:
-                return True
-        return False
+        if user_data is None:
+            return True
+        return not autologin_succeeded
 
     # 1. autologin is OFF: always triggers login
     assert should_trigger_login(autologin=False, user_data=user_no_pw) is True
     assert should_trigger_login(autologin=False, user_data=user_pw) is True
     assert should_trigger_login(autologin=False, user_data=user_admin_no_pw) is True
     assert should_trigger_login(autologin=False, user_data=user_passwdless) is True
+    assert should_trigger_login(autologin=False, user_data=user_admin_pw) is True
+    assert should_trigger_login(autologin=False, user_data=user_admin_passwdless) is True
 
     # 2. autologin is ON:
-    # - no password & not admin -> False (autologin bypasses screen)
-    assert should_trigger_login(autologin=True, user_data=user_no_pw) is True
-    # - password set -> True
-    assert should_trigger_login(autologin=True, user_data=user_pw) is True
-    # - admin -> True (admin always needs passwd/login screen)
-    assert should_trigger_login(autologin=True, user_data=user_admin_no_pw) is True
-    # - allow_passwordless_login & not admin -> False (autologin bypasses screen)
-    assert should_trigger_login(autologin=True, user_data=user_passwdless) is False
+    # - the login screen is skipped only after backend autologin succeeds.
+    assert should_trigger_login(autologin=True, user_data=user_no_pw, autologin_succeeded=True) is False
+    assert should_trigger_login(autologin=True, user_data=user_pw, autologin_succeeded=False) is True
+    assert should_trigger_login(autologin=True, user_data=user_admin_no_pw, autologin_succeeded=True) is False
+    assert should_trigger_login(autologin=True, user_data=user_admin_pw, autologin_succeeded=False) is True
+    assert should_trigger_login(autologin=True, user_data=user_passwdless, autologin_succeeded=True) is False
+    assert should_trigger_login(autologin=True, user_data=user_admin_passwdless, autologin_succeeded=True) is False
+    assert should_trigger_login(autologin=True, user_data=None) is True
 
 
 def test_admin_password_strength_enforcement(tmp_path: Path) -> None:
@@ -592,8 +668,44 @@ def test_allow_passwordless_login_flag(tmp_path: Path) -> None:
         assert res["authenticated"] is True
 
 
-def test_allow_passwordless_login_admin_still_requires_password(tmp_path: Path) -> None:
-    """Admin with allow_passwordless_login=1 still requires password."""
+def test_allow_passwordless_login_can_be_disabled(tmp_path: Path) -> None:
+    """Saving allow_passwordless_login=0 disables passwordless login."""
+    db_path = tmp_path / "passwdless_disable_test.db"
+
+    from unittest.mock import patch
+
+    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        list_users_handler,
+        save_user_handler,
+    )
+
+    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
+    ):
+        list_users_handler()
+        auth = _default_auth(db_path)
+
+        save_user_handler({
+            "user_id": "toggle_autologin_user",
+            "display_name": "Toggle Autologin User",
+            "password": "some_password",
+            "allow_passwordless_login": 1,
+        }, auth=auth)
+        assert login_handler("toggle_autologin_user")["authenticated"] is True
+
+        save_user_handler({
+            "user_id": "toggle_autologin_user",
+            "allow_passwordless_login": 0,
+        }, auth=auth)
+
+        res = login_handler("toggle_autologin_user")
+        assert res["authenticated"] is False
+        assert login_handler("toggle_autologin_user", "some_password")["authenticated"] is True
+
+
+def test_allow_passwordless_login_admin_can_login_without_password(tmp_path: Path) -> None:
+    """Admin with allow_passwordless_login=1 can log in without password."""
     db_path = tmp_path / "admin_passwdless_test.db"
 
     from unittest.mock import patch
@@ -619,9 +731,10 @@ def test_allow_passwordless_login_admin_still_requires_password(tmp_path: Path) 
             "allow_passwordless_login": 1,
         }, auth=auth)
 
-        # Admin with password should NOT be able to login without password
+        # Admins follow the same allow_passwordless_login rule as other users.
         res = login_handler("admin_passwdless")
-        assert res["authenticated"] is False
+        assert res["authenticated"] is True
+        assert res["user"]["is_admin"] is True
 
         # Admin with correct password should succeed
         res = login_handler("admin_passwdless", "StrongPassword123!")
@@ -680,4 +793,3 @@ def test_migration_repairs_legacy_schema_marked_without_deleted_at(tmp_path: Pat
         assert "deleted_at" in cols
     finally:
         db.close()
-

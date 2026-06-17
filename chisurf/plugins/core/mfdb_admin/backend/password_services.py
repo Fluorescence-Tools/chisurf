@@ -87,14 +87,12 @@ def login_handler(user_id: str, password: str = "") -> dict[str, Any]:
     Rules:
     - Guest user (``allow_passwordless_login = 1``, no password) logs in
       without password.
-    - Non-admin users with ``allow_passwordless_login = 1`` log in without
-      password.
-    - Admin users always require a password.
+    - Users with ``allow_passwordless_login = 1`` log in without password.
     """
-    from chisurf.core.fio.mmcif.db import FluorescenceDatabase
+    from chisurf.core.mfdb.repository import MFDatabase
     from chisurf.core.mfdb.database_resolver import resolve_database_path
 
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         row = db.conn.execute(
             "SELECT display_name, is_admin, password_hash, allow_passwordless_login FROM flr_sample_users WHERE user_id = ?",
             (user_id,),
@@ -104,8 +102,7 @@ def login_handler(user_id: str, password: str = "") -> dict[str, Any]:
         display_name, is_admin, password_hash, allow_passwordless = row
         is_admin_bool = is_admin == 1
 
-        # Passwordless login allowed if user has the flag and is not admin
-        if allow_passwordless == 1 and not is_admin_bool:
+        if allow_passwordless == 1:
             return {
                 "authenticated": True,
                 "user": {
@@ -146,10 +143,10 @@ def change_password_handler(
     """Change an MFDB user's password using MFDB authorization rules."""
     import sqlite3
 
-    from chisurf.core.fio.mmcif.db import FluorescenceDatabase
+    from chisurf.core.mfdb.repository import MFDatabase
     from chisurf.core.mfdb.database_resolver import resolve_database_path
 
-    with FluorescenceDatabase(resolve_database_path()) as db:
+    with MFDatabase(resolve_database_path()) as db:
         has_admin_res = db.conn.execute(
             "SELECT 1 FROM flr_sample_users WHERE is_admin = 1 LIMIT 1"
         ).fetchone()
