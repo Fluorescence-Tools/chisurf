@@ -7,16 +7,16 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np
-from .repository import FluorescenceDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 logger = logging.getLogger(__name__)
 
 
-def import_structure_file(db: FluorescenceDatabase, path: str | Path) -> Dict[str, Any]:
+def import_structure_file(db: MFDatabase, path: str | Path) -> Dict[str, Any]:
     """Import a PDBx/mmCIF, PDB-IHM CIF, or FLR CIF file into ``db``.
 
     Parameters
     ----------
-    db : FluorescenceDatabase
+    db : MFDatabase
         Target database.
     path : str or pathlib.Path
         Input CIF/mmCIF file.
@@ -59,7 +59,7 @@ def _read_ihm_systems(path: Path, summary: Dict[str, Any]) -> List[Any]:
         return []
 
 
-def _import_ihm_systems(db: FluorescenceDatabase, systems: Iterable[Any], summary: Dict[str, Any]) -> None:
+def _import_ihm_systems(db: MFDatabase, systems: Iterable[Any], summary: Dict[str, Any]) -> None:
     """Import FLR objects from ``ihm.System`` objects."""
     for system in systems:
         flr_data = getattr(system, "flr_data", None)
@@ -73,7 +73,7 @@ def _import_ihm_systems(db: FluorescenceDatabase, systems: Iterable[Any], summar
         _import_ihm_analyses(db, flr_data, summary)
 
 
-def _import_ihm_entities(db: FluorescenceDatabase, system: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_entities(db: MFDatabase, system: Any, summary: Dict[str, Any]) -> None:
     for entity in getattr(system, "entities", []):
         entity_id = str(getattr(entity, "id", None) or f"entity_{len(summary['entities']) + 1}")
         sequence = [str(res.mon_id) for res in getattr(entity, "sequence", [])]
@@ -88,7 +88,7 @@ def _import_ihm_entities(db: FluorescenceDatabase, system: Any, summary: Dict[st
         summary["entities"].append(entity_id)
 
 
-def _import_ihm_samples(db: FluorescenceDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_samples(db: MFDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
     for sample in getattr(flr_data, "_collection_flr_sample", {}).values():
         sample_id = _object_id(sample) or f"sample_{len(summary['samples']) + 1}"
         condition = getattr(sample, "condition", None)
@@ -111,7 +111,7 @@ def _import_ihm_samples(db: FluorescenceDatabase, flr_data: Any, summary: Dict[s
         summary["samples"].append(sample_id)
 
 
-def _import_ihm_probes(db: FluorescenceDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_probes(db: MFDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
     type_id = db.add_probe_type("imported", "Imported probe")
     for probe in getattr(flr_data, "_collection_flr_probe", {}).values():
         entry = getattr(probe, "probe_list_entry", None)
@@ -129,7 +129,7 @@ def _import_ihm_probes(db: FluorescenceDatabase, flr_data: Any, summary: Dict[st
             )
 
 
-def _import_ihm_positions(db: FluorescenceDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_positions(db: MFDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
     for position in getattr(flr_data, "_collection_flr_poly_probe_position", {}).values():
         resatom = getattr(position, "resatom", None)
         if resatom is None:
@@ -154,7 +154,7 @@ def _import_ihm_positions(db: FluorescenceDatabase, flr_data: Any, summary: Dict
         )
 
 
-def _import_ihm_sample_probes(db: FluorescenceDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_sample_probes(db: MFDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
     for spd in getattr(flr_data, "_collection_flr_sample_probe_details", {}).values():
         sample_id = _object_id(getattr(spd, "sample", None))
         probe = getattr(spd, "probe", None)
@@ -171,7 +171,7 @@ def _import_ihm_sample_probes(db: FluorescenceDatabase, flr_data: Any, summary: 
             )
 
 
-def _import_ihm_analyses(db: FluorescenceDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
+def _import_ihm_analyses(db: MFDatabase, flr_data: Any, summary: Dict[str, Any]) -> None:
     for analysis in getattr(flr_data, "_collection_flr_fret_analysis", {}).values():
         analysis_id = _object_id(analysis) or f"analysis_{len(summary['samples']) + 1}"
         sample_probe_1 = getattr(analysis, "sample_probe_1", None)
@@ -189,7 +189,7 @@ def _import_ihm_analyses(db: FluorescenceDatabase, flr_data: Any, summary: Dict[
         )
 
 
-def _import_chisurf_extensions(db: FluorescenceDatabase, path: Path, summary: Dict[str, Any]) -> None:
+def _import_chisurf_extensions(db: MFDatabase, path: Path, summary: Dict[str, Any]) -> None:
     """Import ChiSurf extension categories such as spectra and properties."""
     try:
         from pdbx.reader import PdbxReader
@@ -228,7 +228,7 @@ def _pdbx_category_rows(category: Any) -> List[Dict[str, Any]]:
     return rows
 
 
-def _import_probe_properties(db: FluorescenceDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+def _import_probe_properties(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
     for row in rows:
         probe_id = _int_or_none(row.get("probe_id"))
         if probe_id is None:
@@ -244,7 +244,7 @@ def _import_probe_properties(db: FluorescenceDatabase, rows: List[Dict[str, Any]
         )
 
 
-def _import_probe_spectra(db: FluorescenceDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+def _import_probe_spectra(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
     for row in rows:
         probe_id = _int_or_none(row.get("probe_id"))
         if probe_id is None:
@@ -267,7 +267,7 @@ def _import_probe_spectra(db: FluorescenceDatabase, rows: List[Dict[str, Any]], 
         )
 
 
-def _import_analysis_data(db: FluorescenceDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+def _import_analysis_data(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
     for row in rows:
         analysis_id = row.get("analysis_id")
         if not analysis_id:
@@ -296,12 +296,12 @@ def _object_id(obj: Any) -> Optional[str]:
     return None
 
 
-def _first_probe_id(db: FluorescenceDatabase) -> Optional[int]:
+def _first_probe_id(db: MFDatabase) -> Optional[int]:
     rows = db.get_probes()
     return int(rows[0]["probe_id"]) if rows else None
 
 
-def _probe_id_for(db: FluorescenceDatabase, probe: Any) -> Optional[int]:
+def _probe_id_for(db: MFDatabase, probe: Any) -> Optional[int]:
     entry = getattr(probe, "probe_list_entry", None)
     name = getattr(entry, "chromophore_name", None) or _object_id(probe)
     if not name:
@@ -312,7 +312,7 @@ def _probe_id_for(db: FluorescenceDatabase, probe: Any) -> Optional[int]:
     return int(db.add_probe(name, type_id, category="other"))
 
 
-def _position_id_for(db: FluorescenceDatabase, position: Any) -> Optional[int]:
+def _position_id_for(db: MFDatabase, position: Any) -> Optional[int]:
     if position is None:
         return None
     resatom = getattr(position, "resatom", None)
@@ -328,7 +328,7 @@ def _position_id_for(db: FluorescenceDatabase, position: Any) -> Optional[int]:
     return None
 
 
-def _sample_probe_id_for(db: FluorescenceDatabase, sample_probe: Any) -> Optional[int]:
+def _sample_probe_id_for(db: MFDatabase, sample_probe: Any) -> Optional[int]:
     if sample_probe is None:
         return None
     sample_id = _object_id(getattr(sample_probe, "sample", None))

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 26
+SCHEMA_VERSION = 28
 
 
 @dataclass
@@ -731,6 +731,18 @@ CREATE_TABLES_SQL = [
         deleted_at TEXT
     )""",
     # Canonical MFDB Tables (v18 target architecture)
+    """CREATE TABLE IF NOT EXISTS mfdb_object (
+        object_uuid TEXT PRIMARY KEY,
+        content_md5 TEXT NOT NULL UNIQUE,
+        original_filename TEXT,
+        size_bytes INTEGER,
+        mime_type TEXT,
+        storage_path TEXT NOT NULL,
+        refcount INTEGER DEFAULT 1,
+        metadata_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_by_user_uuid TEXT REFERENCES flr_sample_users(user_uuid)
+    )""",
     """CREATE TABLE IF NOT EXISTS mfdb_artifact (
         artifact_id TEXT PRIMARY KEY,
         artifact_kind TEXT NOT NULL,
@@ -750,6 +762,7 @@ CREATE_TABLES_SQL = [
         metadata_json TEXT,
         data_json TEXT,
         data_blob BLOB,
+        object_uuid TEXT REFERENCES mfdb_object(object_uuid),
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
@@ -978,6 +991,18 @@ CREATE_TABLES_SQL = [
 # CREATE_TABLES_SQL (without CHECK constraints) to avoid rejecting
 # legacy data during backfill.
 _CANONICAL_CHECK_SQL = [
+    """CREATE TABLE IF NOT EXISTS mfdb_object (
+        object_uuid TEXT PRIMARY KEY,
+        content_md5 TEXT NOT NULL UNIQUE,
+        original_filename TEXT,
+        size_bytes INTEGER,
+        mime_type TEXT,
+        storage_path TEXT NOT NULL,
+        refcount INTEGER DEFAULT 1,
+        metadata_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_by_user_uuid TEXT REFERENCES flr_sample_users(user_uuid)
+    )""",
     """CREATE TABLE IF NOT EXISTS mfdb_artifact (
         artifact_id TEXT PRIMARY KEY,
         artifact_kind TEXT NOT NULL,
@@ -1000,6 +1025,7 @@ _CANONICAL_CHECK_SQL = [
         metadata_json TEXT,
         data_json TEXT,
         data_blob BLOB,
+        object_uuid TEXT REFERENCES mfdb_object(object_uuid),
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
@@ -1197,6 +1223,10 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_session_user ON mfdb_session (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_auth_attempt_user ON mfdb_auth_attempt (user_id, attempted_at)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_auth_attempt_host ON mfdb_auth_attempt (client_host, attempted_at)",
+    # Object store indices (v27)
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_object_md5 ON mfdb_object (content_md5)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_object_filename ON mfdb_object (original_filename)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_artifact_object_uuid ON mfdb_artifact (object_uuid)",
 ]
 
 # Fresh-DB indices — same as CREATE_INDICES_SQL but without legacy fdb_* indices.
@@ -1229,6 +1259,63 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, definition
         return
     if column not in cols:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def _fix_operation_artifact_pk(conn: sqlite3.Connection) -> None:
+    """Recreate ``mfdb_operation_artifact`` with a 4-column composite PK.
+
+    Older databases were created with
+    ``PRIMARY KEY (operation_id, artifact_id, direction)`` but the code now
+    uses ``ON CONFLICT(operation_id, artifact_id, direction, role)`` which
+    requires *role* in the PK.  SQLite does not support ``ALTER TABLE … ADD
+    PRIMARY KEY`` so we recreate the table.
+    """
+    cur = conn.cursor()
+    pk_cols = {
+        r[1] for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
+    }
+    # If 'role' is already in the PK we have nothing to do
+    if not pk_cols:
+        return  # table doesn't exist yet, nothing to fix
+    cur.execute("PRAGMA table_info(mfdb_operation_artifact)")
+    existing_pk = {
+        r[5]  # pk flag
+        for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
+        if r[5]  # non-zero = part of PK
+    }
+    # Check if 'role' column is part of the PK already
+    role_in_pk = any(
+        r[1] == "role" and r[5] for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
+    )
+    if role_in_pk:
+        return
+    logger.info("Migrating mfdb_operation_artifact: adding 'role' to composite PK")
+    cur.execute("BEGIN")
+    try:
+        cur.execute("CREATE TABLE mfdb_operation_artifact_new ("
+                     "operation_id TEXT NOT NULL REFERENCES mfdb_operation(operation_id) ON DELETE CASCADE, "
+                     "artifact_id TEXT NOT NULL REFERENCES mfdb_artifact(artifact_id) ON DELETE CASCADE, "
+                     "direction TEXT NOT NULL, "
+                     "role TEXT NOT NULL DEFAULT 'generic', "
+                     "ordinal INTEGER DEFAULT 0, "
+                     "checksum_snapshot TEXT, "
+                     "metadata_json TEXT, "
+                     "created_at TEXT, updated_at TEXT, deleted_at TEXT, "
+                     "PRIMARY KEY (operation_id, artifact_id, direction, role))")
+        cur.execute("INSERT INTO mfdb_operation_artifact_new "
+                     "(operation_id, artifact_id, direction, role, ordinal, "
+                     "checksum_snapshot, metadata_json, created_at, updated_at, deleted_at) "
+                     "SELECT operation_id, artifact_id, direction, "
+                     "COALESCE(role, 'generic'), ordinal, "
+                     "checksum_snapshot, metadata_json, created_at, updated_at, deleted_at "
+                     "FROM mfdb_operation_artifact")
+        cur.execute("DROP TABLE mfdb_operation_artifact")
+        cur.execute("ALTER TABLE mfdb_operation_artifact_new RENAME TO mfdb_operation_artifact")
+        conn.commit()
+        logger.info("mfdb_operation_artifact PK migration complete")
+    except Exception:
+        conn.rollback()
+        logger.warning("mfdb_operation_artifact PK migration skipped (table may already be correct)")
 
 
 def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) -> None:
@@ -1500,6 +1587,9 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
             "tcspc_fitting", "model_fitting", "ndxplorer_selection",
             "ndxplorer_clustering", "project_snapshot", "project_restore",
             "archive_export",
+            "tcspc_histogram_computation", "pda_histogram_computation",
+            "pch_histogram_computation", "fcs_correlation_load",
+            "tcspc_curve_load",
             # Legacy/Custom
             "import", "burst_filtering", "gmm_fitting", "analysis",
             "fitting", "project_archive", "local_fit", "global_fit",
@@ -3056,6 +3146,51 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                     tables_added=[],
                 )
                 logger.info("Migration report:\n%s", report.summary)
+
+            if version < 27:
+                logger.info(
+                    "Migrating database schema to version 27 "
+                    "(add mfdb_object table and object_uuid to mfdb_artifact)..."
+                )
+                from_version = version
+
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS mfdb_object (
+                        object_uuid TEXT PRIMARY KEY,
+                        content_md5 TEXT NOT NULL UNIQUE,
+                        original_filename TEXT,
+                        size_bytes INTEGER,
+                        mime_type TEXT,
+                        storage_path TEXT NOT NULL,
+                        refcount INTEGER DEFAULT 1,
+                        metadata_json TEXT,
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        created_by_user_uuid TEXT REFERENCES flr_sample_users(user_uuid)
+                    )
+                """)
+
+                try:
+                    cursor.execute(
+                        "ALTER TABLE mfdb_artifact ADD COLUMN object_uuid TEXT REFERENCES mfdb_object(object_uuid)"
+                    )
+                except sqlite3.OperationalError:
+                    pass
+
+                set_schema_version(conn, 27)
+                version = 27
+                report = MigrationReport(
+                    from_version=from_version,
+                    to_version=27,
+                    tables_added=["mfdb_object"],
+                    backfill={},
+                )
+                logger.info("Migration report:\n%s", report.summary)
+
+            # --- v28: fix mfdb_operation_artifact PK to include role ---
+            if version < 28:
+                _fix_operation_artifact_pk(conn)
+                set_schema_version(conn, 28)
+                version = 28
 
             _ensure_lifecycle_columns(conn)
 

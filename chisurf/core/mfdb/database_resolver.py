@@ -1,14 +1,13 @@
-"""Resolve the canonical MFDB sample database path."""
+"""Resolve the canonical MFDB sample database path and object store root."""
 
 from __future__ import annotations
 
 import logging
+import os
 import shutil
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
-import sqlite3
 
 from chisurf.core.settings.path_utils import get_path
 
@@ -33,6 +32,32 @@ def source_database_path() -> Path:
 def user_database_path() -> Path:
     """Return the per-user editable sample database path."""
     return get_path("settings") / USER_DB_RELATIVE
+
+
+def object_store_root() -> Path:
+    """Return the shared object store root path.
+
+    The object store is shared across all users on the same machine.
+    By default it is located at ``{settings_dir}/objects/``. Configure
+    ``mfdb.object_store.root`` in ``settings_chisurf.yaml`` to override
+    it. Relative configured paths are resolved relative to the settings
+    directory.
+    """
+    settings_dir = get_path("settings")
+    try:
+        from chisurf.core.settings import cs_settings
+    except Exception:
+        cs_settings = {}
+
+    object_store = (cs_settings.get("mfdb") or {}).get("object_store") or {}
+    configured_root = object_store.get("root")
+    if not configured_root:
+        return settings_dir / "objects"
+
+    root = Path(os.path.expandvars(os.path.expanduser(str(configured_root))))
+    if not root.is_absolute():
+        root = settings_dir / root
+    return root
 
 
 def resolve_database_path() -> Path:
@@ -63,7 +88,7 @@ def backup_database(db_path: Path) -> Path:
     return backup_path
 
 
-def backup_database_before_migration(db_path: Path, target_version: int) -> Optional[Path]:
+def backup_database_before_migration(db_path: Path, target_version: int) -> Path | None:
     """Back up a database before schema migration if migration is needed."""
     db_path = Path(db_path)
     if str(db_path) == ":memory:":
@@ -111,7 +136,7 @@ def _create_empty_database(path: Path) -> None:
         conn.close()
 
 
-def _read_schema_version(conn: sqlite3.Connection) -> Optional[int]:
+def _read_schema_version(conn: sqlite3.Connection) -> int | None:
     try:
         row = conn.execute("SELECT version FROM _schema_version").fetchone()
     except sqlite3.OperationalError:

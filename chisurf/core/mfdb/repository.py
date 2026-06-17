@@ -762,7 +762,7 @@ class MFDatabase:
     def get_operation_artifacts(self, operation_id, direction=None):
         query = (
             "SELECT mfdb_artifact.*, mfdb_operation_artifact.role, "
-            "mfdb_operation_artifact.direction, mfdb_operation_artifact.artifact_note "
+            "mfdb_operation_artifact.direction "
             "FROM mfdb_operation_artifact "
             "JOIN mfdb_artifact ON mfdb_artifact.artifact_id = mfdb_operation_artifact.artifact_id "
             "WHERE mfdb_operation_artifact.operation_id = ?"
@@ -1145,7 +1145,9 @@ class MFDatabase:
             }
         except sqlite3.OperationalError:
             table_names = set()
-        if "fdb_processing_run" in table_names:
+        has_fdb_processing_run = "fdb_processing_run" in table_names
+        has_fdb_analysis_run = "fdb_analysis_run" in table_names
+        if has_fdb_processing_run:
             now = _utc_now()
             self.conn.execute(
                 """INSERT OR IGNORE INTO fdb_processing_run (
@@ -1166,7 +1168,7 @@ class MFDatabase:
                     now, now, None,
                 ),
             )
-        if "fdb_analysis_run" in table_names:
+        if has_fdb_analysis_run and has_fdb_processing_run:
             now = _utc_now()
             self.conn.execute(
                 """INSERT OR REPLACE INTO fdb_analysis_run (
@@ -1340,6 +1342,97 @@ class MFDatabase:
             "GROUP BY s.sample_id "
             "ORDER BY s.sample_id"
         ).fetchall()
+
+    def search_samples(self, query: str, limit: int = 50):
+        """Return samples whose ID or display fields contain ``query``.
+
+        Parameters
+        ----------
+        query : str
+            Search substring.
+        limit : int
+            Maximum number of rows to return.
+
+        Returns
+        -------
+        list of sqlite3.Row
+            Matching sample rows.
+        """
+        pattern = f"%{query}%" if query else "%"
+        return self.conn.execute(
+            "SELECT s.sample_id, s.sample_uuid, s.description, s.details, "
+            "s.num_of_probes, s.solvent_phase, s.sample_condition_id, "
+            "s.entity_assembly_id, s.project_id, s.measured_by_user_id, "
+            "s.measured_by_device_id, s.measured_at, "
+            "COUNT(sp.sample_probe_id) AS mapped_probe_count, "
+            "u.display_name AS measured_by_user, "
+            "d.name AS measured_by_device "
+            "FROM flr_sample AS s "
+            "LEFT JOIN flr_sample_probe AS sp ON sp.sample_id = s.sample_id "
+            "LEFT JOIN flr_sample_users AS u ON u.user_id = s.measured_by_user_id "
+            "LEFT JOIN flr_sample_devices AS d ON d.device_id = s.measured_by_device_id "
+            "WHERE s.deleted_at IS NULL "
+            "AND (s.sample_id LIKE ? OR s.description LIKE ? OR s.details LIKE ?) "
+            "GROUP BY s.sample_id "
+            "ORDER BY s.sample_id "
+            "LIMIT ?",
+            (pattern, pattern, pattern, limit),
+        ).fetchall()
+
+    def lookup_sample_by_md5(self, content_md5: str) -> str | None:
+        """Return the sample_id already linked to a file content MD5.
+
+        Parameters
+        ----------
+        content_md5 : str
+            MD5 hex digest of the file content.
+
+        Returns
+        -------
+        str or None
+            The sample_id associated with the file, or None if no sample was
+            linked yet.
+        """
+        row = self.conn.execute(
+            "SELECT metadata_json FROM mfdb_object WHERE content_md5 = ?",
+            (content_md5,),
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            return json.loads(row["metadata_json"] or "{}").get("sample_id")
+        except Exception:
+            return None
+
+    def set_object_sample_id(self, object_uuid: str, sample_id: str | None) -> None:
+        """Store or remove a sample_id on an object-store file reference.
+
+        Parameters
+        ----------
+        object_uuid : str
+            Object-store UUID of the file.
+        sample_id : str or None
+            Sample ID to link to the file, or None to remove the link.
+        """
+        row = self.conn.execute(
+            "SELECT metadata_json FROM mfdb_object WHERE object_uuid = ?",
+            (object_uuid,),
+        ).fetchone()
+        if not row:
+            return
+        try:
+            metadata = json.loads(row["metadata_json"] or "{}")
+        except Exception:
+            metadata = {}
+        if sample_id:
+            metadata["sample_id"] = sample_id
+        else:
+            metadata.pop("sample_id", None)
+        with self.conn:
+            self.conn.execute(
+                "UPDATE mfdb_object SET metadata_json = ? WHERE object_uuid = ?",
+                (_json_dumps(metadata), object_uuid),
+            )
 
     def get_sample(self, sample_id):
         return self.conn.execute(
@@ -2429,6 +2522,7 @@ class MFDatabase:
         data_blob: bytes | None = None,
         artifact_kind: str | None = None,
         data_format: str | None = None,
+        object_uuid: str | None = None,
     ) -> str:
         """Register or update an artifact in the canonical MFDB tables.
 
@@ -2492,8 +2586,9 @@ class MFDatabase:
                     artifact_id, artifact_kind, data_format, experiment_id, storage_mode,
                     file_path, url, folder_path, mime_type, size_bytes, checksum,
                     checksum_algorithm, row_count, validation_status, validation_message,
-                    metadata_json, data_json, data_blob, created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    metadata_json, data_json, data_blob, object_uuid,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(artifact_id) DO UPDATE SET
                     artifact_kind=excluded.artifact_kind,
                     data_format=excluded.data_format,
@@ -2512,6 +2607,7 @@ class MFDatabase:
                     metadata_json=excluded.metadata_json,
                     data_json=excluded.data_json,
                     data_blob=excluded.data_blob,
+                    object_uuid=excluded.object_uuid,
                     updated_at=excluded.updated_at,
                     deleted_at=excluded.deleted_at""",
                 (
@@ -2533,6 +2629,7 @@ class MFDatabase:
                     _json_dumps(metadata),
                     data_json,
                     data_blob,
+                    object_uuid,
                     now,
                     now,
                     None,
@@ -2545,6 +2642,260 @@ class MFDatabase:
                 details={"artifact_kind": kind, "storage_mode": storage_mode},
             )
         return artifact_id
+
+    def _get_object_store(self):
+        """Return the shared ObjectStore instance, creating it if needed."""
+        if not hasattr(self, "_object_store") or self._object_store is None:
+            from chisurf.core.mfdb.object_store import ObjectStore
+            from chisurf.core.mfdb.database_resolver import object_store_root
+            self._object_store = ObjectStore(object_store_root())
+        return self._object_store
+
+    def put_object(
+        self,
+        path: str | os.PathLike | None = None,
+        data: bytes | None = None,
+        filename: str | None = None,
+        mime_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        created_by_user_uuid: str | None = None,
+    ) -> dict[str, Any]:
+        """Store a file or bytes in the object store and register in mfdb_object.
+
+        Parameters
+        ----------
+        path : str or PathLike, optional
+            Path to the file to store. Mutually exclusive with ``data``.
+        data : bytes, optional
+            Binary content to store. Mutually exclusive with ``path``.
+        filename : str, optional
+            Original filename to record in metadata.
+        mime_type : str, optional
+            MIME type of the content.
+        metadata : dict, optional
+            Additional metadata to store as JSON.
+        created_by_user_uuid : str, optional
+            UUID of the user who created the object.
+
+        Returns
+        -------
+        dict
+            Object reference with keys: ``object_uuid``, ``content_md5``,
+            ``size_bytes``, ``original_filename``, ``deduplicated``, ``storage_path``.
+        """
+        store = self._get_object_store()
+        if path is not None and data is not None:
+            raise ValueError("Cannot specify both path and data")
+        if path is not None:
+            ref = store.put_from_path(Path(path), original_filename=filename)
+        elif data is not None:
+            ref = store.put_bytes(data, filename=filename or "unnamed")
+        else:
+            raise ValueError("Must specify either path or data")
+
+        now = _utc_now()
+        with self._transaction():
+            existing = self.conn.execute(
+                "SELECT object_uuid, refcount FROM mfdb_object WHERE content_md5 = ?",
+                (ref.md5,),
+            ).fetchone()
+            if existing:
+                self.conn.execute(
+                    "UPDATE mfdb_object SET refcount = refcount + 1 WHERE content_md5 = ?",
+                    (ref.md5,),
+                )
+                object_uuid = existing["object_uuid"]
+                refcount = existing["refcount"] + 1
+                deduplicated = True
+            else:
+                object_uuid = ref.uuid
+                refcount = 1
+                deduplicated = False
+                self.conn.execute(
+                    """INSERT INTO mfdb_object (
+                        object_uuid, content_md5, original_filename, size_bytes,
+                        mime_type, storage_path, refcount, metadata_json,
+                        created_at, created_by_user_uuid
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        object_uuid,
+                        ref.md5,
+                        ref.original_filename,
+                        ref.size,
+                        mime_type,
+                        ref.storage_path,
+                        refcount,
+                        _json_dumps(metadata),
+                        now,
+                        created_by_user_uuid,
+                    ),
+                )
+            self.add_audit_log(
+                action="create" if not deduplicated else "reference",
+                target_type="object",
+                target_id=object_uuid,
+                details={"content_md5": ref.md5, "deduplicated": deduplicated},
+            )
+        return {
+            "object_uuid": object_uuid,
+            "content_md5": ref.md5,
+            "size_bytes": ref.size,
+            "original_filename": ref.original_filename,
+            "deduplicated": deduplicated,
+            "storage_path": ref.storage_path,
+            "refcount": refcount,
+        }
+
+    def get_object(self, object_uuid: str) -> bytes:
+        """Retrieve blob content by object UUID.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        bytes
+            The stored content.
+        """
+        row = self.conn.execute(
+            "SELECT content_md5 FROM mfdb_object WHERE object_uuid = ?",
+            (object_uuid,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(f"Object not found: {object_uuid}")
+        store = self._get_object_store()
+        return store.get(row["content_md5"])
+
+    def get_object_info(self, object_uuid: str) -> dict[str, Any] | None:
+        """Retrieve object metadata by UUID.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        dict or None
+            Object metadata, or None if not found.
+        """
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_object WHERE object_uuid = ?",
+            (object_uuid,),
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def get_object_path(self, object_uuid: str) -> Path:
+        """Return the filesystem path for an object.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        Path
+            Path to the stored blob.
+        """
+        row = self.conn.execute(
+            "SELECT content_md5 FROM mfdb_object WHERE object_uuid = ?",
+            (object_uuid,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(f"Object not found: {object_uuid}")
+        store = self._get_object_store()
+        return store.get_path(row["content_md5"])
+
+    def delete_object(self, object_uuid: str) -> dict[str, Any]:
+        """Delete an object or decrement its refcount.
+
+        Parameters
+        ----------
+        object_uuid : str
+            The object UUID.
+
+        Returns
+        -------
+        dict
+            Result with keys: ``deleted`` (bool), ``refcount`` (int).
+        """
+        row = self.conn.execute(
+            "SELECT content_md5, refcount FROM mfdb_object WHERE object_uuid = ?",
+            (object_uuid,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(f"Object not found: {object_uuid}")
+
+        md5 = row["content_md5"]
+        refcount = row["refcount"]
+
+        with self._transaction():
+            if refcount <= 1:
+                self.conn.execute(
+                    "DELETE FROM mfdb_object WHERE object_uuid = ?",
+                    (object_uuid,),
+                )
+                store = self._get_object_store()
+                store.delete(md5)
+                self.add_audit_log(
+                    action="delete",
+                    target_type="object",
+                    target_id=object_uuid,
+                    details={"content_md5": md5, "blob_deleted": True},
+                )
+                return {"deleted": True, "refcount": 0}
+            else:
+                self.conn.execute(
+                    "UPDATE mfdb_object SET refcount = refcount - 1 WHERE object_uuid = ?",
+                    (object_uuid,),
+                )
+                self.add_audit_log(
+                    action="dereference",
+                    target_type="object",
+                    target_id=object_uuid,
+                    details={"content_md5": md5, "new_refcount": refcount - 1},
+                )
+                return {"deleted": False, "refcount": refcount - 1}
+
+    def list_objects(
+        self,
+        filename: str | None = None,
+        user_uuid: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """List objects with optional filtering.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Filter by original filename (substring match).
+        user_uuid : str, optional
+            Filter by creator user UUID.
+        limit : int
+            Maximum number of results.
+        offset : int
+            Offset for pagination.
+
+        Returns
+        -------
+        list of dict
+            List of object records.
+        """
+        query = "SELECT * FROM mfdb_object WHERE 1=1"
+        params: list[Any] = []
+        if filename is not None:
+            query += " AND original_filename LIKE ?"
+            params.append(f"%{filename}%")
+        if user_uuid is not None:
+            query += " AND created_by_user_uuid = ?"
+            params.append(user_uuid)
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
 
     def get_artifact(self, artifact_id: str) -> dict[str, Any] | None:
         row = self.conn.execute(
@@ -2589,6 +2940,7 @@ class MFDatabase:
         traceback_summary: str | None = None,
         metadata: dict[str, Any] | None = None,
         setup_version: int | None = None,
+        acl_owner_user_id: str | None = None,
     ) -> str:
         if operator_user_id is None:
             try:
@@ -2681,6 +3033,12 @@ class MFDatabase:
                 target_id=operation_id,
                 details={"operation_type": operation_type, "status": status},
             )
+            if acl_owner_user_id is not None:
+                from chisurf.core.mfdb.auth import create_default_acl_for_object
+                create_default_acl_for_object(
+                    self.conn, "mfdb_operation", operation_id,
+                    owner_user_id=acl_owner_user_id,
+                )
         return operation_id
 
     def get_operation(self, operation_id: str) -> dict[str, Any] | None:
@@ -4217,7 +4575,7 @@ class MFDatabase:
 
     def get_analysis_run(self, analysis_id: str) -> sqlite3.Row | dict[str, Any] | None:
         try:
-            return self.conn.execute(
+            row = self.conn.execute(
                 """SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
                           pr.software_package, pr.software_module, pr.software_version,
                           pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
@@ -4226,31 +4584,34 @@ class MFDatabase:
                    WHERE ar.analysis_id = ?""",
                 (analysis_id,),
             ).fetchone()
+            if row is not None:
+                return row
         except sqlite3.OperationalError:
-            row = self.conn.execute(
-                """SELECT operation_id AS analysis_id, operation_type AS analysis_type,
-                          experiment_id, software_package, software_module, software_version,
-                          settings_json AS optimizer_settings_json, status AS convergence_status,
-                          metadata_json, created_at, updated_at, deleted_at
-                   FROM mfdb_operation
-                   WHERE operation_id = ?""",
-                (analysis_id,),
-            ).fetchone()
-            if row:
-                d = dict(row)
-                m = _json_loads(d.pop("metadata_json", None)) or {}
-                d["model_name"] = m.get("model_name")
-                d["model_type"] = m.get("model_type")
-                d["model_version"] = m.get("model_version")
-                d["notes"] = m.get("notes")
-                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
-                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
-                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
-                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
-                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
-                d["metadata_json"] = _json_dumps(m)
-                return d
-            return None
+            pass
+        row = self.conn.execute(
+            """SELECT operation_id AS analysis_id, operation_type AS analysis_type,
+                      experiment_id, software_package, software_module, software_version,
+                      settings_json AS optimizer_settings_json, status AS convergence_status,
+                      metadata_json, created_at, updated_at, deleted_at
+               FROM mfdb_operation
+               WHERE operation_id = ?""",
+            (analysis_id,),
+        ).fetchone()
+        if row:
+            d = dict(row)
+            m = _json_loads(d.pop("metadata_json", None)) or {}
+            d["model_name"] = m.get("model_name")
+            d["model_type"] = m.get("model_type")
+            d["model_version"] = m.get("model_version")
+            d["notes"] = m.get("notes")
+            d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+            d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+            d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+            d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+            d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+            d["metadata_json"] = _json_dumps(m)
+            return d
+        return None
 
     def get_analysis_run_full(self, analysis_id: str) -> dict[str, Any] | None:
         run_row = self.get_analysis_run(analysis_id)

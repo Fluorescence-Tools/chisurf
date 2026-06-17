@@ -12,6 +12,7 @@ ARTIFACT_KINDS: tuple[str, ...] = (
     "fit_result", "parameter_table", "selection_mask",
     "project_snapshot", "archive_manifest", "archive_file",
     "visualization", "external_reference", "chinet_session", "chinet_node",
+    "project_dataset", "source_measurement",
     # Legacy values (accepted for backward compat)
     "raw_data", "bur", "ptu", "spc", "bh", "fcs",
     "tcspc", "decay", "irf", "pda", "model_curve", "residual",
@@ -34,6 +35,9 @@ OPERATION_TYPES: tuple[str, ...] = (
     "tcspc_fitting", "model_fitting", "ndxplorer_selection",
     "ndxplorer_clustering", "project_snapshot",
     "project_restore", "archive_export",
+    "tcspc_histogram_computation", "pda_histogram_computation",
+    "pch_histogram_computation", "fcs_correlation_load",
+    "tcspc_curve_load",
     # Legacy values
     "import", "burst_filtering", "gmm_fitting", "analysis",
     "fitting", "project_archive", "local_fit", "global_fit",
@@ -394,6 +398,22 @@ class MfdbVocabulary:
 # ── Canonical MFDB Models ─────────────────────────────────────────────
 
 @dataclass
+class MfdbObject:
+    """Content-addressed object in the deduplicated object store (``mfdb_object``)."""
+
+    object_uuid: str
+    content_md5: str
+    storage_path: str
+    original_filename: Optional[str] = None
+    size_bytes: Optional[int] = None
+    mime_type: Optional[str] = None
+    refcount: int = 1
+    metadata_json: Optional[str] = None
+    created_at: Optional[str] = None
+    created_by_user_uuid: Optional[str] = None
+
+
+@dataclass
 class MfdbArtifact:
     """A data object, file reference, folder reference, object snapshot,
     exported archive, figure, table, fit result, or manifest (``mfdb_artifact``)."""
@@ -416,6 +436,7 @@ class MfdbArtifact:
     metadata_json: Optional[str] = None
     data_json: Optional[str] = None
     data_blob: Optional[bytes] = None
+    object_uuid: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     deleted_at: Optional[str] = None
