@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Regularization utilities, including discrete L-curve corner detection.
 
 This module provides a lightweight implementation of a corner-finding
@@ -9,17 +7,277 @@ Per Christian Hansen's REGU toolbox for MATLAB, but implemented in a
 simplified form suitable for use inside ChiSurf.
 
 The main entry point is :func:`discrete_lcurve_corner`, which returns the
-index of the point with the largest geometric curvature in log–log space.
+index of the point with the largest geometric curvature in log-log space.
 """
 
+from __future__ import annotations
+
 import numpy as np
-from typing import Optional
+
+
+def csvd(A: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the compact singular value decomposition.
+
+    Parameters
+    ----------
+    A : array_like
+        Input matrix.
+
+    Returns
+    -------
+    U, s, V : numpy.ndarray
+        Compact left singular vectors, singular values, and right singular
+        vectors such that ``A == U @ diag(s) @ V.T``.
+    """
+    U, s, VT = np.linalg.svd(np.asarray(A, dtype=float), full_matrices=False)
+    return U, s, VT.T
+
+
+def tikhonov(
+    U: np.ndarray,
+    s: np.ndarray,
+    V: np.ndarray,
+    b: np.ndarray,
+    lam: float,
+) -> tuple[np.ndarray, float, float]:
+    """Solve a Tikhonov-regularized least-squares problem in SVD form.
+
+    Parameters
+    ----------
+    U, s, V : array_like
+        Compact SVD factors of the forward matrix.
+    b : array_like
+        Right-hand side vector.
+    lam : float
+        Regularization parameter.
+
+    Returns
+    -------
+    x : numpy.ndarray
+        Regularized solution.
+    rho : float
+        Residual norm ``||A x - b||``.
+    eta : float
+        Solution norm ``||x||``.
+    """
+    U = np.asarray(U, dtype=float)
+    s = np.asarray(s, dtype=float)
+    V = np.asarray(V, dtype=float)
+    b = np.asarray(b, dtype=float).ravel()
+    lam = float(lam)
+    filt = s / (s * s + lam * lam)
+    x = V @ (filt * (U.T @ b))
+    rho = float(np.linalg.norm((U @ (s * (V.T @ x))) - b))
+    eta = float(np.linalg.norm(x))
+    return x, rho, eta
+
+
+def tsvd(
+    U: np.ndarray,
+    s: np.ndarray,
+    V: np.ndarray,
+    b: np.ndarray,
+    k: int,
+) -> tuple[np.ndarray, float, float]:
+    """Solve a truncated-SVD regularized least-squares problem.
+
+    Parameters
+    ----------
+    U, s, V : array_like
+        Compact SVD factors of the forward matrix.
+    b : array_like
+        Right-hand side vector.
+    k : int
+        Number of singular components to keep.
+
+    Returns
+    -------
+    x : numpy.ndarray
+        Truncated-SVD solution.
+    rho : float
+        Residual norm ``||A x - b||``.
+    eta : float
+        Solution norm ``||x||``.
+    """
+    U = np.asarray(U, dtype=float)
+    s = np.asarray(s, dtype=float)
+    V = np.asarray(V, dtype=float)
+    b = np.asarray(b, dtype=float).ravel()
+    k = max(min(int(k), s.size), 0)
+    x = V[:, :k] @ ((U[:, :k].T @ b) / s[:k])
+    rho = float(np.linalg.norm((U @ (s * (V.T @ x))) - b))
+    eta = float(np.linalg.norm(x))
+    return x, rho, eta
+
+
+def gcv(
+    U: np.ndarray,
+    s: np.ndarray,
+    b: np.ndarray,
+    n_points: int = 100,
+) -> tuple[float, np.ndarray, np.ndarray]:
+    """Estimate a Tikhonov parameter using a simple GCV scan.
+
+    Parameters
+    ----------
+    U, s : array_like
+        Compact SVD left singular vectors and singular values.
+    b : array_like
+        Right-hand side vector.
+    n_points : int, optional
+        Number of log-spaced regularization parameters to scan.
+
+    Returns
+    -------
+    reg_min : float
+        Regularization parameter with the smallest scanned GCV score.
+    G : numpy.ndarray
+        GCV scores for the scanned parameters.
+    reg_param : numpy.ndarray
+        Scanned regularization parameters.
+    """
+    U = np.asarray(U, dtype=float)
+    s = np.asarray(s, dtype=float)
+    b = np.asarray(b, dtype=float).ravel()
+    n = max(int(n_points), 2)
+    s_pos = s[s > 0.0]
+    if s_pos.size == 0:
+        reg_param = np.array([1.0, 10.0], dtype=float)
+        return float(reg_param[0]), np.ones_like(reg_param), reg_param
+    lo = max(float(s_pos[0]) * 1.0e-6, np.finfo(float).tiny)
+    hi = max(float(s_pos[0]) * 1.0e2, lo * 10.0)
+    reg_param = np.logspace(np.log10(lo), np.log10(hi), n)
+    G = np.empty_like(reg_param)
+    for i, lam in enumerate(reg_param):
+        filt = s * s / (s * s + lam * lam)
+        resid_coef = 1.0 - filt
+        numer = float(np.sum((resid_coef * (U.T @ b)) ** 2))
+        denom = float(np.sum(resid_coef)) ** 2
+        G[i] = numer / denom if denom > 0.0 else np.inf
+    idx = int(np.nanargmin(G))
+    return float(reg_param[idx]), G, reg_param
+
+
+def l_curve(
+    U: np.ndarray,
+    s: np.ndarray,
+    b: np.ndarray,
+    n_points: int = 100,
+) -> tuple[np.ndarray, np.ndarray, int | None]:
+    """Compute a Tikhonov L-curve in residual/solution norm space.
+
+    Parameters
+    ----------
+    U, s : array_like
+        Compact SVD left singular vectors and singular values.
+    b : array_like
+        Right-hand side vector.
+    n_points : int, optional
+        Number of log-spaced regularization parameters.
+
+    Returns
+    -------
+    rho, eta : numpy.ndarray
+        Residual and solution norms for each regularization parameter.
+    corner : int or None
+        Detected L-curve corner index.
+    """
+    U = np.asarray(U, dtype=float)
+    s = np.asarray(s, dtype=float)
+    b = np.asarray(b, dtype=float).ravel()
+    n = max(int(n_points), 2)
+    s_pos = s[s > 0.0]
+    if s_pos.size == 0:
+        reg_param = np.array([1.0, 10.0], dtype=float)
+        return np.ones(2), np.ones(2), None
+    lo = max(float(s_pos[0]) * 1.0e-6, np.finfo(float).tiny)
+    hi = max(float(s_pos[0]) * 1.0e2, lo * 10.0)
+    reg_param = np.logspace(np.log10(lo), np.log10(hi), n)
+    rho = np.empty_like(reg_param)
+    eta = np.empty_like(reg_param)
+    UTb = U.T @ b
+    for i, lam in enumerate(reg_param):
+        filt = s * s / (s * s + lam * lam)
+        rho[i] = float(np.linalg.norm((1.0 - filt) * UTb))
+        eta[i] = float(np.linalg.norm(filt * UTb))
+    return rho, eta, discrete_lcurve_corner(rho, eta)
+
+
+def _clean_lcurve_points(
+    rho: np.ndarray,
+    eta: np.ndarray,
+    eps: float = 1.0e-300,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return finite log-log L-curve points with consecutive duplicates removed.
+
+    Parameters
+    ----------
+    rho, eta : array_like
+        Residual and solution norms.
+    eps : float, optional
+        Positive floor used for zero-valued norms before taking logs.
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        Original indices, log10(rho), and log10(eta) for the cleaned points.
+    """
+    rho = np.asarray(rho, dtype=float).ravel()
+    eta = np.asarray(eta, dtype=float).ravel()
+    if rho.size != eta.size:
+        return (
+            np.array([], dtype=int),
+            np.array([], dtype=float),
+            np.array([], dtype=float),
+        )
+
+    mask = np.isfinite(rho) & np.isfinite(eta)
+    idx_all = np.nonzero(mask)[0]
+    if idx_all.size == 0:
+        return (
+            np.array([], dtype=int),
+            np.array([], dtype=float),
+            np.array([], dtype=float),
+        )
+
+    rho = np.clip(rho[idx_all], eps, None)
+    eta = np.clip(eta[idx_all], eps, None)
+    lrho = np.log10(rho)
+    leta = np.log10(eta)
+
+    keep = [0]
+    for i in range(1, idx_all.size):
+        if lrho[i] != lrho[keep[-1]] or leta[i] != leta[keep[-1]]:
+            keep.append(i)
+
+    keep_arr = np.asarray(keep, dtype=int)
+    return idx_all[keep_arr], lrho[keep_arr], leta[keep_arr]
+
+
+def _normalized_score(values: np.ndarray) -> np.ndarray:
+    """Normalize a non-negative score to the range [0, 1].
+
+    Parameters
+    ----------
+    values : array_like
+        Score values.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized score array.
+    """
+    values = np.asarray(values, dtype=float)
+    max_value = np.nanmax(values)
+    if not np.isfinite(max_value) or max_value <= 0.0:
+        return np.zeros_like(values, dtype=float)
+    return values / max_value
 
 
 def discrete_lcurve_corner(
     rho: np.ndarray,
     eta: np.ndarray,
-) -> Optional[int]:
+) -> int | None:
     """Locate the corner of a discrete L-curve.
 
     Parameters
@@ -35,42 +293,32 @@ def discrete_lcurve_corner(
     -------
     int or None
         Index ``k`` such that ``(rho[k], eta[k])`` is the corner of the
-        L-curve in log–log space, or ``None`` if no reasonable corner can
+        L-curve in log-log space, or ``None`` if no reasonable corner can
         be determined.
 
     Notes
     -----
-    The algorithm works purely on the discrete polyline defined by the
-    L-curve in log–log space.  For each interior point it estimates a
-    curvature-like quantity based on three consecutive points and returns
-    the index with maximal curvature.  This mirrors the geometric spirit
-    of the REGU toolbox corner detectors while keeping the implementation
-    compact and dependency-free.
+    The algorithm works on the discrete polyline defined by the L-curve in
+    log-log space. Zero-valued norms are floored before taking logs so that
+    degenerate L-shapes with points on an axis can still be detected. For
+    each interior point it combines a normalized curvature estimate with a
+    normalized distance-to-chord score and returns the index with the largest
+    combined score.
     """
-
     rho = np.asarray(rho, dtype=float).ravel()
     eta = np.asarray(eta, dtype=float).ravel()
 
     if rho.size != eta.size or rho.size < 3:
         return None
 
-    # Remove non-finite or non-positive entries; L-curve is defined in log
-    # coordinates, so we require strictly positive values.
-    mask = np.isfinite(rho) & np.isfinite(eta) & (rho > 0.0) & (eta > 0.0)
-    idx_all = np.nonzero(mask)[0]
+    idx_all, lrho, leta = _clean_lcurve_points(rho, eta)
     if idx_all.size < 3:
         return None
 
-    lrho = np.log10(rho[idx_all])
-    leta = np.log10(eta[idx_all])
     P = np.vstack((lrho, leta)).T  # shape (n, 2)
-
     n = P.shape[0]
-    curv = np.zeros(n, dtype=float)
 
-    # Discrete curvature estimate based on three consecutive points in the
-    # polyline, using the area of the triangle spanned by the edge vectors
-    # as a proxy for curvature.
+    curv = np.zeros(n, dtype=float)
     for k in range(1, n - 1):
         p0 = P[k - 1]
         p1 = P[k]
@@ -86,13 +334,37 @@ def discrete_lcurve_corner(
             curv[k] = 0.0
             continue
 
-        # Twice the signed area of the triangle spanned by v1 and v2.
         area2 = abs(v1[0] * v2[1] - v1[1] * v2[0])
-        # Normalize by edge lengths to obtain a scale-invariant measure.
         curv[k] = area2 / (n1 * n2 * n3)
 
-    if not np.any(np.isfinite(curv)):
+    chord = P[-1] - P[0]
+    chord_norm = np.linalg.norm(chord)
+    if chord_norm <= 0.0:
         return int(idx_all[0])
+    dist = np.abs(np.cross(chord, P - P[0])) / chord_norm
 
-    k_local = int(np.nanargmax(curv))
+    score = 0.5 * _normalized_score(curv) + 0.5 * _normalized_score(dist)
+    if not np.any(np.isfinite(score)):
+        return None
+
+    k_local = int(np.nanargmax(score))
     return int(idx_all[k_local])
+
+
+def corner(
+    rho: np.ndarray,
+    eta: np.ndarray,
+) -> int | None:
+    """Locate the corner of a discrete L-curve.
+
+    Parameters
+    ----------
+    rho, eta : array_like
+        Residual and solution norms sampled along a regularization path.
+
+    Returns
+    -------
+    int or None
+        Index of the detected L-curve corner, or ``None``.
+    """
+    return discrete_lcurve_corner(rho, eta)

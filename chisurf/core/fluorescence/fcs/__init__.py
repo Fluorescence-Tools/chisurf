@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import numpy as np
 import chisurf.core.fluorescence.fcs.correlate
+from chisurf.core.fluorescence.fcs import normalization
 
 from chisurf import typing
 
 weightCalculations = ['Koppel', 'none']
 correlationMethods = ['tp']
+
+# Re-export normalization functions for convenient access
+resolve_total_mean_count_rate = normalization.resolve_total_mean_count_rate
+diffusion_reference_component = normalization.diffusion_reference_component
+fcs_diffusion_reference = normalization.fcs_diffusion_reference
+normalize_fcs_curve = normalization.normalize_fcs_curve
+compute_cpm = normalization.compute_cpm
+compute_cpm_all = normalization.compute_cpm_all
 
 
 def noise(

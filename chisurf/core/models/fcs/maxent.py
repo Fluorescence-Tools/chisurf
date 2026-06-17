@@ -1,8 +1,40 @@
 from __future__ import annotations
 
-import numpy as np
+from dataclasses import dataclass
+from typing import Any
+
 import matplotlib.pyplot as plt
+import numpy as np
 from numba import njit
+
+
+@dataclass
+class FCSMaxEntLCurveResult:
+    """Result of an FCS MaxEnt L-curve sweep.
+
+    Parameters
+    ----------
+    log10_reg : numpy.ndarray
+        Log10 regularization values used for the sweep.
+    reg : numpy.ndarray
+        Linear regularization values used for the sweep.
+    chi2r : numpy.ndarray
+        Reduced chi-squared value at each regularization point.
+    solution_norm : numpy.ndarray
+        Euclidean norm of the MaxEnt distribution at each point.
+    corner_index : int or None
+        Automatically detected L-curve corner index into the arrays.
+    results : tuple[dict, ...]
+        Per-point MaxEnt result dictionaries when ``return_results=True`` was
+        requested, otherwise an empty tuple.
+    """
+
+    log10_reg: np.ndarray
+    reg: np.ndarray
+    chi2r: np.ndarray
+    solution_norm: np.ndarray
+    corner_index: int | None
+    results: tuple[dict, ...] = ()
 
 
 def build_diffusion_kernel(
@@ -91,7 +123,6 @@ def _quickfit_mem_iteration_numba(
     F : np.ndarray
         Reconstructed data vector (Nd,).
     """
-    Nd = ydata.shape[0]
     N = Ured.shape[0]
     s = svals.shape[0]
 
@@ -180,7 +211,7 @@ def fcs_maxent(
         td_grid: np.ndarray | None = None,
         **kwargs,
 ) -> dict:
-    """Run a simple MaxEnt inversion on an FCS correlation curve.
+    r"""Run a simple MaxEnt inversion on an FCS correlation curve.
 
     Parameters
     ----------
@@ -445,7 +476,7 @@ def fcs_maxent_rh(
         prior: np.ndarray | None = None,
         **kwargs,
 ) -> dict:
-    """Run a MaxEnt inversion parameterized in hydrodynamic radius.
+    r"""Run a MaxEnt inversion parameterized in hydrodynamic radius.
 
     This convenience wrapper constructs a diffusion-time grid from a grid of
     hydrodynamic radii using the Einstein–Stokes relation and then calls
@@ -533,6 +564,655 @@ def fcs_maxent_rh(
 
     result["rh_grid"] = rh_grid
     return result
+
+
+def _lcurve_grid(
+        n_points: int,
+        log10_min: float,
+        log10_max: float,
+) -> np.ndarray:
+    """Build the log10 regularization grid for an FCS MaxEnt L-curve.
+
+    Parameters
+    ----------
+    n_points : int
+        Number of grid points. Values below two are clamped to two.
+    log10_min, log10_max : float
+        Inclusive log10 regularization range.
+
+    Returns
+    -------
+    numpy.ndarray
+        One-dimensional log10 regularization grid.
+    """
+    n = max(int(n_points), 2)
+    lo = float(log10_min)
+    hi = float(log10_max)
+    if lo > hi:
+        lo, hi = hi, lo
+    if lo == hi:
+        return np.array([lo, hi], dtype=float)
+    return np.linspace(lo, hi, n)
+
+
+def _valid_y_error(y_error: Any, size: int) -> np.ndarray:
+    """Return positive finite y errors for chi-squared evaluation.
+
+    Parameters
+    ----------
+    y_error : array_like or None
+        Experimental y standard deviations. ``None`` means unit weights.
+    size : int
+        Expected number of points.
+
+    Returns
+    -------
+    numpy.ndarray
+        Positive finite error array with length ``size``.
+    """
+    if y_error is None:
+        return np.ones(size, dtype=float)
+    errors = np.asarray(y_error, dtype=float).ravel()
+    if errors.size != size:
+        raise ValueError("y_error must have same length as g")
+    errors = np.where(np.isfinite(errors) & (errors > 0.0), errors, 1.0)
+    return errors
+
+
+def _chi2r_from_arrays(
+        g: np.ndarray,
+        g_fit: np.ndarray,
+        y_error: Any,
+        xmin: int = 0,
+        xmax: int | None = None,
+        mask: np.ndarray | None = None,
+        n_free: int = 0,
+) -> float:
+    """Compute reduced chi-squared from raw arrays.
+
+    Parameters
+    ----------
+    g, g_fit : array_like
+        Experimental and reconstructed FCS correlation curves.
+    y_error : array_like or None
+        Experimental y standard deviations.
+    xmin, xmax : int, optional
+        Fit-window index range.
+    mask : array_like or None
+        Boolean mask applied inside the fit window.
+    n_free : int, optional
+        Number of free parameters used to reduce chi-squared.
+
+    Returns
+    -------
+    float
+        Reduced chi-squared, or ``nan`` if the window is too small.
+    """
+    g = np.asarray(g, dtype=float).ravel()
+    g_fit = np.asarray(g_fit, dtype=float).ravel()
+    if g.size != g_fit.size:
+        raise ValueError("g and g_fit must have same length")
+    n = g.size
+    if n == 0:
+        return float("nan")
+    x0 = max(int(xmin or 0), 0)
+    if xmax is None:
+        x1 = n
+    else:
+        x1 = min(max(int(xmax), x0), n)
+    if x1 <= x0:
+        return float("nan")
+    idx = np.arange(x0, x1, dtype=int)
+    if mask is not None:
+        m = np.asarray(mask)
+        if m.size == n:
+            idx = idx[m[idx].astype(bool)]
+        elif m.size == x1 - x0:
+            idx = idx[m.astype(bool)]
+    if idx.size <= max(int(n_free) + 1, 1):
+        return float("nan")
+    errors = _valid_y_error(y_error, n)
+    wres = (g[idx] - g_fit[idx]) / errors[idx]
+    dof = float(idx.size - int(n_free) - 1.0)
+    if dof <= 0.0:
+        return float("nan")
+    return float(np.sum(wres * wres) / dof)
+
+
+def _solution_norm(result: dict) -> float:
+    """Return the Euclidean norm of an FCS MaxEnt distribution.
+
+    Parameters
+    ----------
+    result : dict
+        MaxEnt result dictionary containing a ``"p"`` distribution.
+
+    Returns
+    -------
+    float
+        Euclidean norm of ``result["p"]``.
+    """
+    p = np.asarray(result.get("p", []), dtype=float).ravel()
+    if p.size == 0:
+        return float("nan")
+    return float(np.linalg.norm(p))
+
+
+def _maxent_stdev_from_weights(
+        weights: np.ndarray | None,
+        size: int,
+) -> np.ndarray:
+    """Convert MaxEnt weights to normalized standard deviations.
+
+    Parameters
+    ----------
+    weights : array_like or None
+        Inverse standard deviations. ``None`` means unit weights.
+    size : int
+        Expected number of data points.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized standard deviations.
+    """
+    if weights is None:
+        stdev = np.ones(size, dtype=float)
+    else:
+        w = np.asarray(weights, dtype=float).ravel()
+        if w.size != size:
+            raise ValueError("weights must have same length as g")
+        stdev = np.empty_like(w)
+        tiny = 1e-12
+        for i in range(w.size):
+            val = w[i]
+            if np.isfinite(val) and abs(val) > tiny:
+                stdev[i] = 1.0 / val
+            else:
+                stdev[i] = 1.0
+    stdev = np.clip(np.abs(stdev), 1e-3, 1e3)
+    scale = stdev.size / np.sum(stdev)
+    return stdev * scale
+
+
+def _maxent_prior(prior: np.ndarray | None, size: int) -> np.ndarray:
+    """Return a positive MaxEnt prior distribution.
+
+    Parameters
+    ----------
+    prior : array_like or None
+        Prior distribution. ``None`` means a uniform prior.
+    size : int
+        Expected number of grid points.
+
+    Returns
+    -------
+    numpy.ndarray
+        Prior distribution with length ``size``.
+    """
+    if prior is None:
+        return np.ones(size, dtype=float)
+    m_prior = np.asarray(prior, dtype=float).ravel()
+    if m_prior.size != size:
+        raise ValueError("prior must have length n_td")
+    return m_prior
+
+
+def _maxent_svd_components(
+        A: np.ndarray,
+        stdev: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Build truncated SVD components used by the MaxEnt solver.
+
+    Parameters
+    ----------
+    A : numpy.ndarray
+        Forward operator matrix.
+    stdev : numpy.ndarray
+        Normalized data standard deviations.
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        ``Vred``, ``svals_red``, ``Ured``, and ``M``.
+    """
+    U_np, svals, VT = np.linalg.svd(A, full_matrices=False)
+    if svals.size == 0 or svals[0] <= 0.0:
+        raise RuntimeError("SVD of kernel failed or produced no singular values")
+    thresh = svals[0] / 100000.0
+    mask = svals >= thresh
+    if not np.any(mask):
+        mask[0] = True
+    s_count = int(mask.sum())
+    svals_red = svals[:s_count].astype(np.float64)
+    Vred = U_np[:, :s_count].astype(np.float64)
+    Ured = VT[:s_count, :].T.astype(np.float64)
+    inv_sigma2 = 1.0 / (stdev.astype(np.float64) ** 2)
+    VW = Vred * inv_sigma2[:, None]
+    M_pre = Vred.T @ VW
+    M = (svals_red[:, None] * M_pre) * svals_red[None, :]
+    return Vred, svals_red, Ured, M
+
+
+def _maxent_td_grid(
+        tau: np.ndarray,
+        td_min: float | None,
+        td_max: float | None,
+        n_td: int,
+) -> np.ndarray:
+    """Build the diffusion-time grid used by FCS MaxEnt.
+
+    Parameters
+    ----------
+    tau : numpy.ndarray
+        Lag-time array used for automatic grid estimation.
+    td_min, td_max : float or None
+        Diffusion-time bounds.
+    n_td : int
+        Number of grid points.
+
+    Returns
+    -------
+    numpy.ndarray
+        Log-spaced diffusion-time grid.
+    """
+    if td_min is None:
+        td_min = max(np.min(tau) * 1e-2, tau[0] * 1e-1 if tau[0] > 0 else 1e-6)
+    if td_max is None:
+        td_max = np.max(tau) * 1e2
+    return np.logspace(np.log10(td_min), np.log10(td_max), n_td)
+
+
+def _compute_fcs_maxent_l_curve(
+        tau: np.ndarray,
+        g: np.ndarray,
+        *,
+        y_error: Any = None,
+        log10_min: float = -3.0,
+        log10_max: float = 3.0,
+        n_points: int = 32,
+        xmin: int = 0,
+        xmax: int | None = None,
+        mask: np.ndarray | None = None,
+        n_free: int = 0,
+        solver: str = "td",
+        solver_kwargs: dict[str, Any] | None = None,
+        return_results: bool = False,
+        on_error: str = "nan",
+) -> FCSMaxEntLCurveResult:
+    """Run an FCS MaxEnt L-curve sweep in core code.
+
+    Parameters
+    ----------
+    tau, g : array_like
+        Experimental lag times and correlation amplitudes.
+    y_error : array_like or None, optional
+        Experimental y standard deviations. ``None`` means unit weights.
+    log10_min, log10_max : float, optional
+        Inclusive log10 regularization range.
+    n_points : int, optional
+        Number of regularization points.
+    xmin, xmax : int, optional
+        Fit-window index range used for chi-squared reduction.
+    mask : array_like or None, optional
+        Boolean mask applied inside the fit window.
+    n_free : int, optional
+        Number of free parameters used to reduce chi-squared.
+    solver : {"td", "rh"}, optional
+        Select diffusion-time or hydrodynamic-radius MaxEnt solver.
+    solver_kwargs : dict, optional
+        Keyword arguments forwarded to the selected MaxEnt solver.
+    return_results : bool, optional
+        If True, store each per-point MaxEnt result dictionary.
+    on_error : {"nan", "raise"}, optional
+        How to handle a failed MaxEnt point.
+
+    Returns
+    -------
+    FCSMaxEntLCurveResult
+        L-curve arrays and optional per-point results.
+    """
+    tau_arr = np.asarray(tau, dtype=float).ravel()
+    g_arr = np.asarray(g, dtype=float).ravel()
+    if tau_arr.size != g_arr.size:
+        raise ValueError("tau and g must have same length")
+    if tau_arr.size == 0:
+        return FCSMaxEntLCurveResult(
+            log10_reg=np.array([], dtype=float),
+            reg=np.array([], dtype=float),
+            chi2r=np.array([], dtype=float),
+            solution_norm=np.array([], dtype=float),
+            corner_index=None,
+            results=(),
+        )
+
+    grid = _lcurve_grid(n_points, log10_min, log10_max)
+    chi2_vals = np.empty_like(grid, dtype=float)
+    sol_vals = np.empty_like(grid, dtype=float)
+    results: list[dict] = [] if return_results else []
+    kwargs = dict(solver_kwargs or {})
+    if y_error is not None and "weights" not in kwargs:
+        kwargs["weights"] = 1.0 / _valid_y_error(y_error, tau_arr.size)
+
+    try:
+        if solver == "td":
+            td_min = kwargs.pop("td_min", None)
+            td_max = kwargs.pop("td_max", None)
+            n_td = int(kwargs.pop("n_td", 80))
+            s = float(kwargs.pop("s", 3.5))
+            baseline = float(kwargs.pop("baseline", 1.0))
+            prior = kwargs.pop("prior", None)
+            td_grid = kwargs.pop("td_grid", None)
+            if td_grid is None:
+                td_grid = _maxent_td_grid(tau_arr, td_min, td_max, n_td)
+            else:
+                td_grid = np.asarray(td_grid, dtype=float).ravel()
+            A = build_diffusion_kernel(tau_arr, td_grid, s=s)
+            stdev = _maxent_stdev_from_weights(kwargs.get("weights"), g_arr.size)
+            Vred, svals_red, Ured, M = _maxent_svd_components(A, stdev)
+            m_prior = _maxent_prior(prior, td_grid.size)
+            g_data = g_arr - baseline
+            for i, log10_reg in enumerate(grid):
+                alpha = 10.0 ** float(log10_reg)
+                num_iter = int(kwargs.get("num_iter", kwargs.get("max_iter", 200)))
+                p, g_fit_data = _quickfit_mem_iteration_numba(
+                    Vred,
+                    svals_red,
+                    Ured,
+                    M,
+                    stdev.astype(np.float64),
+                    g_data.astype(np.float64),
+                    m_prior.astype(np.float64),
+                    alpha,
+                    num_iter,
+                )
+                result = {
+                    "tau": tau_arr,
+                    "g": g_arr,
+                    "g_fit": g_fit_data + baseline,
+                    "td_grid": td_grid,
+                    "p": p,
+                }
+                chi2_vals[i] = _chi2r_from_arrays(
+                    g_arr,
+                    result["g_fit"],
+                    y_error=y_error,
+                    xmin=xmin,
+                    xmax=xmax,
+                    mask=mask,
+                    n_free=n_free,
+                )
+                sol_vals[i] = _solution_norm(result)
+                if return_results:
+                    results.append(result)
+        elif solver == "rh":
+            rh_min = float(kwargs.pop("rh_min", 0.5))
+            rh_max = float(kwargs.pop("rh_max", 50.0))
+            n_rh = int(kwargs.pop("n_rh", 64))
+            w0 = float(kwargs.pop("w0", 0.3))
+            s = float(kwargs.pop("s", 3.5))
+            baseline = float(kwargs.pop("baseline", 1.0))
+            temperature = float(kwargs.pop("temperature", 298.15))
+            viscosity = kwargs.pop("viscosity", None)
+            prior = kwargs.pop("prior", None)
+            rh_min_val = max(rh_min, 1.0e-3)
+            rh_max_val = max(rh_max, rh_min_val * 1.001)
+            n_rh_val = n_rh if n_rh > 2 else 3
+            rh_grid = np.logspace(np.log10(rh_min_val), np.log10(rh_max_val), n_rh_val)
+            eta = _water_viscosity_Pa_s(temperature) if viscosity is None else float(viscosity)
+            td_grid = _rh_grid_to_td_grid(
+                rh_grid,
+                w0_um=w0,
+                temperature=temperature,
+                viscosity=eta,
+            )
+            A = build_diffusion_kernel(tau_arr, td_grid, s=s)
+            stdev = _maxent_stdev_from_weights(kwargs.get("weights"), g_arr.size)
+            Vred, svals_red, Ured, M = _maxent_svd_components(A, stdev)
+            m_prior = _maxent_prior(prior, td_grid.size)
+            g_data = g_arr - baseline
+            for i, log10_reg in enumerate(grid):
+                alpha = 10.0 ** float(log10_reg)
+                num_iter = int(kwargs.get("num_iter", kwargs.get("max_iter", 200)))
+                p, g_fit_data = _quickfit_mem_iteration_numba(
+                    Vred,
+                    svals_red,
+                    Ured,
+                    M,
+                    stdev.astype(np.float64),
+                    g_data.astype(np.float64),
+                    m_prior.astype(np.float64),
+                    alpha,
+                    num_iter,
+                )
+                result = {
+                    "tau": tau_arr,
+                    "g": g_arr,
+                    "g_fit": g_fit_data + baseline,
+                    "td_grid": td_grid,
+                    "p": p,
+                    "rh_grid": rh_grid,
+                }
+                chi2_vals[i] = _chi2r_from_arrays(
+                    g_arr,
+                    result["g_fit"],
+                    y_error=y_error,
+                    xmin=xmin,
+                    xmax=xmax,
+                    mask=mask,
+                    n_free=n_free,
+                )
+                sol_vals[i] = _solution_norm(result)
+                if return_results:
+                    results.append(result)
+        else:
+            raise ValueError("solver must be 'td' or 'rh'")
+    except Exception:
+        if on_error == "raise":
+            raise
+        chi2_vals[:] = float("nan")
+        sol_vals[:] = float("nan")
+        if return_results:
+            results = [{} for _ in grid]
+
+    try:
+        from chisurf.core.math import regularization
+        corner = regularization.discrete_lcurve_corner(chi2_vals, sol_vals)
+    except Exception:
+        corner = None
+
+    return FCSMaxEntLCurveResult(
+        log10_reg=grid,
+        reg=10.0 ** grid,
+        chi2r=chi2_vals,
+        solution_norm=sol_vals,
+        corner_index=corner,
+        results=tuple(results),
+    )
+
+
+def compute_fcs_maxent_l_curve(
+        tau: np.ndarray,
+        g: np.ndarray,
+        *,
+        y_error: Any = None,
+        log10_min: float = -3.0,
+        log10_max: float = 3.0,
+        n_points: int = 32,
+        xmin: int = 0,
+        xmax: int | None = None,
+        mask: np.ndarray | None = None,
+        n_free: int = 0,
+        td_min: float | None = None,
+        td_max: float | None = None,
+        n_td: int = 80,
+        s: float = 3.5,
+        baseline: float = 1.0,
+        prior: np.ndarray | None = None,
+        td_grid: np.ndarray | None = None,
+        return_results: bool = False,
+        **solver_kwargs: Any,
+) -> FCSMaxEntLCurveResult:
+    """Compute an L-curve for diffusion-time MaxEnt FCS inversion.
+
+    Parameters
+    ----------
+    tau, g : array_like
+        Experimental lag times and correlation amplitudes.
+    y_error : array_like or None, optional
+        Experimental y standard deviations. ``None`` means unit weights.
+    log10_min, log10_max : float, optional
+        Inclusive log10 regularization range.
+    n_points : int, optional
+        Number of regularization points.
+    xmin, xmax : int, optional
+        Fit-window index range used for chi-squared reduction.
+    mask : array_like or None, optional
+        Boolean mask applied inside the fit window.
+    n_free : int, optional
+        Number of free parameters used to reduce chi-squared.
+    td_min, td_max : float, optional
+        Diffusion-time grid bounds.
+    n_td : int, optional
+        Number of diffusion-time grid points.
+    s : float, optional
+        Axial-to-radial waist ratio.
+    baseline : float, optional
+        Constant baseline subtracted before inversion and added to ``g_fit``.
+    prior, td_grid : array_like, optional
+        Forwarded to :func:`fcs_maxent`.
+    return_results : bool, optional
+        If True, store each per-point MaxEnt result dictionary.
+    **solver_kwargs
+        Additional keyword arguments forwarded to :func:`fcs_maxent`.
+
+    Returns
+    -------
+    FCSMaxEntLCurveResult
+        L-curve arrays and optional per-point results.
+    """
+    kwargs = dict(solver_kwargs)
+    kwargs.update(
+        td_min=td_min,
+        td_max=td_max,
+        n_td=n_td,
+        s=s,
+        baseline=baseline,
+        prior=prior,
+        td_grid=td_grid,
+    )
+    return _compute_fcs_maxent_l_curve(
+        tau,
+        g,
+        y_error=y_error,
+        log10_min=log10_min,
+        log10_max=log10_max,
+        n_points=n_points,
+        xmin=xmin,
+        xmax=xmax,
+        mask=mask,
+        n_free=n_free,
+        solver="td",
+        solver_kwargs=kwargs,
+        return_results=return_results,
+    )
+
+
+def compute_fcs_maxent_rh_l_curve(
+        tau: np.ndarray,
+        g: np.ndarray,
+        *,
+        y_error: Any = None,
+        log10_min: float = -3.0,
+        log10_max: float = 3.0,
+        n_points: int = 32,
+        xmin: int = 0,
+        xmax: int | None = None,
+        mask: np.ndarray | None = None,
+        n_free: int = 0,
+        rh_min: float = 0.5,
+        rh_max: float = 50.0,
+        n_rh: int = 64,
+        w0: float = 0.3,
+        s: float = 3.5,
+        baseline: float = 1.0,
+        temperature: float = 298.15,
+        viscosity: float | None = None,
+        prior: np.ndarray | None = None,
+        return_results: bool = False,
+        **solver_kwargs: Any,
+) -> FCSMaxEntLCurveResult:
+    """Compute an L-curve for hydrodynamic-radius MaxEnt FCS inversion.
+
+    Parameters
+    ----------
+    tau, g : array_like
+        Experimental lag times and correlation amplitudes.
+    y_error : array_like or None, optional
+        Experimental y standard deviations. ``None`` means unit weights.
+    log10_min, log10_max : float, optional
+        Inclusive log10 regularization range.
+    n_points : int, optional
+        Number of regularization points.
+    xmin, xmax : int, optional
+        Fit-window index range used for chi-squared reduction.
+    mask : array_like or None, optional
+        Boolean mask applied inside the fit window.
+    n_free : int, optional
+        Number of free parameters used to reduce chi-squared.
+    rh_min, rh_max : float, optional
+        Hydrodynamic-radius grid bounds in nanometers.
+    n_rh : int, optional
+        Number of hydrodynamic-radius grid points.
+    w0 : float, optional
+        Lateral beam waist in micrometers.
+    s : float, optional
+        Axial-to-radial waist ratio.
+    baseline : float, optional
+        Constant baseline subtracted before inversion and added to ``g_fit``.
+    temperature : float, optional
+        Temperature in Kelvin.
+    viscosity : float, optional
+        Dynamic viscosity in Pa·s.
+    prior : array_like, optional
+        Prior distribution on the hydrodynamic-radius grid.
+    return_results : bool, optional
+        If True, store each per-point MaxEnt result dictionary.
+    **solver_kwargs
+        Additional keyword arguments forwarded to :func:`fcs_maxent_rh`.
+
+    Returns
+    -------
+    FCSMaxEntLCurveResult
+        L-curve arrays and optional per-point results.
+    """
+    kwargs = dict(solver_kwargs)
+    kwargs.update(
+        rh_min=rh_min,
+        rh_max=rh_max,
+        n_rh=n_rh,
+        w0=w0,
+        s=s,
+        baseline=baseline,
+        temperature=temperature,
+        viscosity=viscosity,
+        prior=prior,
+    )
+    return _compute_fcs_maxent_l_curve(
+        tau,
+        g,
+        y_error=y_error,
+        log10_min=log10_min,
+        log10_max=log10_max,
+        n_points=n_points,
+        xmin=xmin,
+        xmax=xmax,
+        mask=mask,
+        n_free=n_free,
+        solver="rh",
+        solver_kwargs=kwargs,
+        return_results=return_results,
+    )
 
 
 def plot_fcs_maxent_result(

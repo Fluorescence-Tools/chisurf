@@ -467,6 +467,8 @@ class GoPotential(object):
         if not hasattr(self, 'epsilon'):
             return
         c = self.structure
+        if c is None:
+            return
         nnEFactor = getattr(self, 'nnEFactor', 0.7) if getattr(self, 'non_native_contact_on', True) else 0.0
         cutoff = getattr(self, 'cutoff', 6.5) if getattr(self, 'native_cutoff_on', True) else 1e6
         self.eMatrix, self.sMatrix = _go_init_kernel(

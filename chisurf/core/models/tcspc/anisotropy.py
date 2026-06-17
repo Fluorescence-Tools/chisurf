@@ -126,16 +126,42 @@ class Anisotropy(FittingParameterGroup):
 
     @polarization_type.setter
     def polarization_type(self, v: str):
-        """Current polarization type (vm, vv, vh, vv/vh)."""
-        self._polarization_type = v
+        """Set current polarization type."""
+        self._polarization_type = str(v).lower()
+        self._update_rotation_parameter_fixed_state()
+
+    @staticmethod
+    def _is_vm_polarization(polarization: str) -> bool:
+        """Return True when polarization is magic-angle VM."""
+        return str(polarization).lower() == 'vm'
+
+    def _rotation_parameters(self) -> list:
+        """Return rotation amplitude and correlation-time parameters."""
+        return list(self._bs) + list(self._rhos)
+
+    def _update_rotation_parameter_fixed_state(self) -> None:
+        """Keep rotation parameters fixed while VM polarization is selected."""
+        if not hasattr(self, '_vm_auto_fixed_parameters'):
+            self._vm_auto_fixed_parameters = set()
+        if self._is_vm_polarization(self._polarization_type):
+            for parameter in self._rotation_parameters():
+                if not parameter.fixed:
+                    self._vm_auto_fixed_parameters.add(id(parameter))
+                parameter.fixed = True
+        else:
+            for parameter in self._rotation_parameters():
+                parameter_id = id(parameter)
+                if parameter_id in self._vm_auto_fixed_parameters:
+                    parameter.fixed = False
+                    self._vm_auto_fixed_parameters.remove(parameter_id)
 
     def set_polarization_by_group_position(self, fit, model_instance):
         """
         Set the polarization type based on the position of a fit in a group.
-        
+
         This method unifies the polarization assignment logic that was previously
         duplicated in LifetimeModel.__init__ and LifetimeModelWidget.__init__.
-        
+
         When called, this method checks every fit in the group and updates their
         polarization types based on their position in the group. This ensures that
         all fits have the correct polarization type, even if they were added
@@ -186,7 +212,7 @@ class Anisotropy(FittingParameterGroup):
                             logging.info(f"Setting polarization to 'vv/vh' for stacked data at index {i}")
                             model.anisotropy.polarization_type = 'vv/vh'
                             continue
-                    
+
                     # Set polarization type based on index (even indices get 'vv', odd indices get 'vh')
                     if i % 2 == 0:
                         logging.info(f"Setting polarization to 'vv' for fit at index {i}")
@@ -255,6 +281,7 @@ class Anisotropy(FittingParameterGroup):
         )
         self._rhos.append(rho)
         self._bs.append(b)
+        self._update_rotation_parameter_fixed_state()
 
     # TODO: needs docstring
     def remove_rotation(self) -> None:
@@ -281,7 +308,7 @@ class Anisotropy(FittingParameterGroup):
 
         if polarization is None:
             polarization = chisurf.core.settings.cs_settings['tcspc']['polarization']
-        self._polarization_type = polarization
+        self._polarization_type = str(polarization).lower()
 
         self._r0 = chisurf.core.fitting.parameter.FittingParameter(
             name='r0',
