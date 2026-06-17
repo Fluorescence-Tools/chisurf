@@ -1,0 +1,30 @@
+{
+  "id": "tttr_lut_tools",
+  "version": "1.0.0",
+  "display_name": "TTTR:LUT Tools",
+  "description": "Compute TTTR microtime LUTs and create channel LUT settings in one dockable workspace.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["TTTR", "Microtime", "LUT"],
+  "state_namespace": "tttr_lut_tools",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "dock_layout": {"type": "object"},
+      "last_files": {"type": "array", "items": {"type": "string"}},
+      "settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.tttr.tttr_lut_tools.gui.tool:TTRLutToolsWidget"
+  },
+  "menu_hidden": false,
+  "deprecated": false
+}

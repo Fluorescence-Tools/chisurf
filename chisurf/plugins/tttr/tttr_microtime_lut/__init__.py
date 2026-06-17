@@ -52,6 +52,9 @@ except ImportError:
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Compute Microtime LUT"
+menu_hidden = True
+deprecated = True
+deprecation_message = "Use TTTR:LUT Tools instead. This legacy plugin is hidden from the menu."
 
 
 # -------------------------

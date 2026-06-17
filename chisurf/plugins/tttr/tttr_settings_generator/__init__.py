@@ -38,6 +38,9 @@ EPS = 1e-12  # for log10 plots
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Create LUT Settings"
+menu_hidden = True
+deprecated = True
+deprecation_message = "Use TTTR:LUT Tools instead. This legacy plugin is hidden from the menu."
 
 # Helper functions from original script
 def load_lut_file(path):
