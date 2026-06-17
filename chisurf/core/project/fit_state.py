@@ -330,15 +330,102 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
                         pass
 
 
-def apply_state_to_fit(fit: Fit, state: Dict[str, Any]) -> None:
+def apply_state_to_fit(
+    fit: Fit,
+    state: Dict[str, Any],
+    dependency_edges: list[dict[str, Any]] | None = None,
+    fit_record_id: str = "",
+) -> None:
     """Apply a previously captured state dictionary to a :class:`Fit`.
 
     This wrapper simply forwards to :func:`_apply_state_to_model` using
     ``fit.model`` and is kept for backwards-compatibility with existing
     callers that work at the :class:`Fit` level.
+
+    Parameters
+    ----------
+    fit : Fit
+        The fit to apply the state to.
+    state : Dict[str, Any]
+        The state dictionary from :func:`fit_to_state` or similar.
+    dependency_edges : list[dict], optional
+        MFDB-sourced dependency edges for parameter links. These are used
+        to re-establish parameter links in the correct order, handling
+        the case where the linked-to fit must exist before the linking fit.
+    fit_record_id : str, optional
+        The fit record ID from the archiver. Used to match against operation_id.
     """
 
     _apply_state_to_model(fit.model, state)
+
+    if dependency_edges:
+        _restore_parameter_links_from_edges(fit.model, dependency_edges, fit_record_id)
+
+
+def _restore_parameter_links_from_edges(
+    model: Any,
+    dependency_edges: list[dict[str, Any]],
+    fit_record_id: str = "",
+) -> None:
+    """Restore parameter links from MFDB dependency edges.
+
+    This function filters dependency_edges to those belonging to the current
+    fit's operation and uses them to establish parameter links in the correct
+    order. This ensures that linked-to fits exist before the linking fit is
+    processed.
+
+    Parameters
+    ----------
+    model : Any
+        The model instance whose parameters should have links restored.
+    dependency_edges : list[dict]
+        List of dependency edges from MFDB. Each edge should have:
+        - source_node_id: UID of the parameter being linked TO
+        - target_node_id: UID of the parameter that has the link
+        - operation_id: The operation ID for this fit
+    fit_record_id : str, optional
+        The fit record ID from the archiver. Used to match against operation_id.
+    """
+    # Filter edges to those belonging to this fit
+    # Operation IDs are in the format: fit_{version_id}:{fit_record_id}:{lf_id}
+    # The fit_record_id in the operation_id matches the archiver's fit record ID
+    edges_for_fit = []
+    for edge in dependency_edges:
+        op_id = edge.get("operation_id", "")
+        # Check if operation_id belongs to this version and fit
+        # The operation_id format is: fit_{version_id}:{fit_record_id}:{lf_id}
+        parts = op_id.split(":")
+        if len(parts) >= 3 and parts[0].startswith("fit_") and parts[1] == fit_record_id:
+            edges_for_fit.append(edge)
+
+    if not edges_for_fit:
+        return
+
+    # Build lookup dict by parameter UID
+    all_params = getattr(model, "parameters_all", []) or []
+    uid_to_param: dict[str, Any] = {
+        str(getattr(p, "unique_identifier", "")): p
+        for p in all_params
+    }
+
+    # Restore links from dependency edges
+    # Edge structure: source_node_id (target_uid) -> target_node_id (uid)
+    # This means uid links TO target_uid
+    for edge in edges_for_fit:
+        source_uid = edge.get("source_node_id")
+        target_uid = edge.get("target_node_id")
+
+        if not source_uid or not target_uid:
+            continue
+
+        source_param = uid_to_param.get(source_uid)
+        target_param = uid_to_param.get(target_uid)
+
+        if source_param and target_param:
+            try:
+                target_param.link = source_param
+            except Exception:
+                pass
 
 
 def make_fit_record(

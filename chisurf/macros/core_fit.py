@@ -2706,7 +2706,18 @@ def load_fit_project(project_path: str):
                     if callable(set_state):
                         set_state(state)
                     else:
-                        project_fit_state.apply_state_to_fit(new_fit, state)
+                        # Extract dependency_edges for this specific fit
+                        fit_record_id = key
+                        version_id = getattr(proj, "_version_id", "")
+                        if version_id and hasattr(proj, "dependency_edges"):
+                            pattern = f"fit_{version_id}:{fit_record_id}:"
+                            dependency_edges = [
+                                edge for edge in proj.dependency_edges
+                                if edge.get("operation_id", "").startswith(pattern)
+                            ]
+                        else:
+                            dependency_edges = []
+                        project_fit_state.apply_state_to_fit(new_fit, state, dependency_edges, fit_record_id)
                 except Exception as exc:
                     log.warning(
                         f"load_fit_project: could not restore state for local fit in {key}: {exc}"
@@ -3069,7 +3080,18 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
                     if callable(set_state):
                         set_state(state)
                     else:
-                        project_fit_state.apply_state_to_fit(new_fit, state)
+                        # Extract dependency_edges for this specific fit
+                        fit_record_id = key
+                        version_id = getattr(proj, "_version_id", "")
+                        if version_id and hasattr(proj, "dependency_edges"):
+                            pattern = f"fit_{version_id}:{fit_record_id}:"
+                            dependency_edges = [
+                                edge for edge in proj.dependency_edges
+                                if edge.get("operation_id", "").startswith(pattern)
+                            ]
+                        else:
+                            dependency_edges = []
+                        project_fit_state.apply_state_to_fit(new_fit, state, dependency_edges, fit_record_id)
                 except Exception as exc:
                     log.warning(
                         f"load_project: could not restore state for local fit in {key}: {exc}"

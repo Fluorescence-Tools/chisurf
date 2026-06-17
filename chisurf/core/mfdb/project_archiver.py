@@ -10,15 +10,18 @@ and dependency edges.  It follows the patterns established by
 
 from __future__ import annotations
 
-import json
+import logging
 import os
+import uuid
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from chisurf.core.mfdb.models import (
     RELATIONSHIP_TYPES,
     validate_vocabulary,
 )
-from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.repository import MFDatabase, _json_dumps, _json_loads
 
 # Re-use constants from chinet_adapter when available
 try:
@@ -27,19 +30,6 @@ try:
     )
 except ImportError:
     FIT_STATE_SCHEMA = "chisurf.fit_state.v1"
-    FIT_STATE_SCHEMA = "chisurf.fit_state.v1"
-
-
-def _json_dumps(value: Any) -> str:
-    """Deterministic JSON serialisation."""
-    return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-
-
-def _json_loads(text: str | None) -> Any:
-    """Safe JSON deserialisation."""
-    if not text:
-        return None
-    return json.loads(text)
 
 
 def _encode_curve_arrays(ds: dict[str, Any]) -> dict[str, Any]:
@@ -83,6 +73,7 @@ def archive_project_to_mfdb(
     branch_uuid: str | None = None,
     user_id: str = "user_default",
     notes: str = "",
+    project_name: str = "",
 ) -> dict[str, Any]:
     """Archive a ChiSurf project to MFDB with full artifact decomposition.
 
@@ -148,9 +139,13 @@ def archive_project_to_mfdb(
     ], "operation_type")
 
     meta = project_payload.get("meta") or {}
-    project_name = meta.get("name", "") or project_payload.get("name", "")
+    project_name = meta.get("name", "") or project_payload.get("name", "") or project_name
     datasets = project_payload.get("datasets") or {}
     fits = project_payload.get("fits") or []
+    project_format_version = project_payload.get("project_format_version", 4)
+    chisurf_version = meta.get("chisurf_version", "")
+    description = meta.get("description", "")
+    created = meta.get("created", "")
 
     dataset_artifacts: list[str] = []
     fit_artifacts: list[str] = []
@@ -175,6 +170,12 @@ def archive_project_to_mfdb(
                 "notes": notes,
                 "fit_count": len(fits),
                 "dataset_count": len(datasets),
+                "chisurf_version": chisurf_version,
+                "project_format_version": project_format_version,
+                "description": description,
+                "created": created,
+                "ui_state": project_payload.get("ui", {}),
+                "experiments": project_payload.get("experiments", {}),
             },
         )
 
@@ -291,13 +292,14 @@ def archive_project_to_mfdb(
             if not isinstance(fit_record, dict):
                 continue
             fit_uid = fit_record.get("id", "")
-            for local_fit in fit_record.get("local_fits", []):
+            for lf_idx, local_fit in enumerate(fit_record.get("local_fits", [])):
                 if not isinstance(local_fit, dict):
                     continue
                 dataset_ref_id = local_fit.get("dataset_id", "")
                 linked_dataset = ds_id_map.get(dataset_ref_id)
 
-                fit_op_id = f"fit_{version_id}:{fit_uid}"
+                lf_id = local_fit.get("id") or str(lf_idx)
+                fit_op_id = f"fit_{version_id}:{fit_uid}:{lf_id}"
                 # Ensure the fit operation record exists before any
                 # archiving attempt — the chinet path and the fallback
                 # both need it for FK constraints on operation links.
@@ -335,7 +337,11 @@ def archive_project_to_mfdb(
                         fit_state_payload
                     )
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Failed to build chinet session for fit %s",
+                        fit_uid,
+                        exc_info=True,
+                    )
 
                 # -- 3b. Store chinet session artifact --
                 session_artifact_id = None
@@ -413,19 +419,38 @@ def archive_project_to_mfdb(
                             )
                             chinet_artifacts.append(node_art_id)
                     except Exception:
+                        logger.warning(
+                            "Failed to store chinet artifacts for fit %s",
+                            fit_uid,
+                            exc_info=True,
+                        )
                         session_artifact_id = None
 
                 # -- 3c. Store fit result artifact --
-                fit_artifact_id = f"fit_result:{fit_uid}"
+                full_fit_data = {
+                    "id": fit_record.get("id", ""),
+                    "name": fit_record.get("name", ""),
+                    "model_name": fit_record.get("model_name", ""),
+                    "fit_range": fit_record.get("fit_range"),
+                    "plot_state": fit_record.get("plot_state"),
+                    "local_fit": local_fit,
+                    "fit_state": fit_state_payload,
+                }
+                fit_artifact_id = f"fit_result:{version_id}:{fit_uid}:{lf_id}"
                 db.register_artifact(
                     artifact_id=fit_artifact_id,
                     artifact_kind="fit_result",
                     storage_mode="embedded_json",
                     data_format="json",
-                    data_json=chinet_json(fit_state_payload),
+                    data_json=chinet_json(full_fit_data),
                     metadata={
                         "schema_name": FIT_STATE_SCHEMA,
                         "fit_id": fit_uid,
+                        "fit_name": fit_record.get("name", ""),
+                        "model_name": fit_record.get("model_name", ""),
+                        "fit_range": fit_record.get("fit_range"),
+                        "plot_state": fit_record.get("plot_state"),
+                        "local_fits_count": len(fit_record.get("local_fits", [])),
                         "model_module": fit_state_payload.get(
                             "model_module"
                         ),
@@ -459,7 +484,11 @@ def archive_project_to_mfdb(
                     )
                     _store_fit_state_links(db, fit_op_id, fit_state_payload)
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Failed to store parameters/links for fit %s",
+                        fit_uid,
+                        exc_info=True,
+                    )
 
                 # -- 3f. project_contains edges --
                 db.add_edge(
@@ -501,12 +530,17 @@ def archive_project_to_mfdb(
             try:
                 db.update_branch_head(branch_uuid, version_id)
             except Exception:
-                pass  # branch may not exist yet
+                logger.warning(
+                    "Failed to update branch head for %s",
+                    branch_uuid,
+                    exc_info=True,
+                )
 
     # Count actual parameters and edges created for this version
+    escaped = version_id.replace("_", "\\_")
     param_count = db.conn.execute(
-        "SELECT COUNT(*) FROM mfdb_parameter WHERE operation_id LIKE ?",
-        (f"%{version_id}%",),
+        "SELECT COUNT(*) FROM mfdb_parameter WHERE operation_id = ? OR operation_id LIKE ? ESCAPE '\\'",
+        (version_id, f"fit\\_{escaped}:%"),
     ).fetchone()[0]
     edge_count = db.conn.execute(
         "SELECT COUNT(*) FROM mfdb_edge WHERE operation_id = ?",
@@ -522,6 +556,14 @@ def archive_project_to_mfdb(
         "edge_count": edge_count,
         "object_count": object_count,
     }
+
+
+def _parse_ds_id(aid: str) -> str | None:
+    if aid.startswith("dataset:"):
+        parts = aid.split(":", 2)
+        if len(parts) == 3 and parts[2]:
+            return parts[2]
+    return None
 
 
 def restore_project_from_artifacts(
@@ -548,6 +590,7 @@ def restore_project_from_artifacts(
         Reconstructed project payload with ``datasets``, ``fits``, and
         ``chinet_sessions`` keys, or ``None`` if no artifacts exist.
     """
+    # Query for artifacts linked to the project operation
     artifacts = db.get_operation_artifacts(version_id, direction="output")
     if not artifacts:
         return None
@@ -555,6 +598,26 @@ def restore_project_from_artifacts(
     datasets: dict[str, Any] = {}
     fits: list[dict[str, Any]] = []
     chinet_sessions: list[dict[str, Any]] = []
+    fit_operation_ids: set[str] = set()
+    project_metadata: dict[str, Any] = {}
+
+    # Query for artifacts linked to fit operations scoped to this version
+    # Use LIKE to match: fit_{version_id}:* with parameterized query and ESCAPE
+    escaped_vid = version_id.replace("_", "\\_")
+    fit_artifacts = db.conn.execute(
+        """SELECT mfdb_artifact.*, mfdb_operation_artifact.role,
+                 mfdb_operation_artifact.direction, mfdb_operation.operation_id
+            FROM mfdb_operation_artifact
+            JOIN mfdb_artifact ON mfdb_artifact.artifact_id = mfdb_operation_artifact.artifact_id
+            JOIN mfdb_operation ON mfdb_operation.operation_id = mfdb_operation_artifact.operation_id
+            WHERE mfdb_operation.operation_type = 'local_fit'
+              AND mfdb_operation.operation_id LIKE ? ESCAPE '\\'
+              AND mfdb_operation_artifact.deleted_at IS NULL
+              AND mfdb_artifact.deleted_at IS NULL
+              AND mfdb_operation_artifact.direction = 'output'""",
+        (f"fit\\_{escaped_vid}:%",),
+    ).fetchall()
+    artifacts.extend(fit_artifacts)
 
     for art in artifacts:
         art = dict(art) if not isinstance(art, dict) else art
@@ -568,6 +631,11 @@ def restore_project_from_artifacts(
                 blob = db.get_object(art["object_uuid"])
                 data = _json_loads(blob.decode("utf-8"))
             except Exception:
+                logger.warning(
+                    "Failed to read object %s from store",
+                    art.get("object_uuid"),
+                    exc_info=True,
+                )
                 data = None
         else:
             data = None
@@ -578,14 +646,45 @@ def restore_project_from_artifacts(
         role = art.get("role", "")
 
         if kind == "processed_data" and role == "dataset":
-            ds_id = (art.get("metadata_json") or {})
-            if isinstance(ds_id, str):
-                ds_id = _json_loads(ds_id) or {}
-            ds_id = ds_id.get("ds_id", role)
+            meta = art.get("metadata_json") or {}
+            if isinstance(meta, str):
+                meta = _json_loads(meta) or {}
+            ds_id = (
+                meta.get("ds_id")
+                or meta.get("dataset_uid")
+                or _parse_ds_id(art.get("artifact_id", ""))
+                or art.get("artifact_id")
+                or str(uuid.uuid4())
+            )
             datasets[ds_id] = data
 
         elif kind == "fit_result":
-            fits.append(data)
+            fit_data_is_full_record = isinstance(data, dict) and "local_fit" in data
+            if fit_data_is_full_record:
+                fit_record = {
+                    "id": data.get("id", ""),
+                    "name": data.get("name", ""),
+                    "model_name": data.get("model_name", ""),
+                    "fit_range": data.get("fit_range"),
+                    "plot_state": data.get("plot_state"),
+                    "local_fits": [data.get("local_fit", {})],
+                }
+                fits.append(fit_record)
+            else:
+                meta = art.get("metadata_json") or {}
+                if isinstance(meta, str):
+                    meta = _json_loads(meta) or {}
+                fits.append({
+                    "id": meta.get("fit_id", str(uuid.uuid4())),
+                    "name": meta.get("fit_name", "Restored Fit"),
+                    "model_name": meta.get("model_name", ""),
+                    "fit_range": meta.get("fit_range"),
+                    "plot_state": meta.get("plot_state"),
+                    "local_fits": [data] if data else [],
+                })
+            fit_op_id = art.get("operation_id", "")
+            if fit_op_id:
+                fit_operation_ids.add(fit_op_id)
 
         elif kind == "chinet_session":
             chinet_sessions.append(data)
@@ -593,8 +692,42 @@ def restore_project_from_artifacts(
     if not datasets and not fits:
         return None
 
+    # Query the project operation metadata for ui_state and experiments
+    project_op = db.conn.execute(
+        "SELECT metadata_json FROM mfdb_operation WHERE operation_id = ?",
+        (version_id,),
+    ).fetchone()
+    if project_op:
+        project_op = dict(project_op)
+        op_meta = _json_loads(project_op.get("metadata_json")) or {}
+        project_metadata = op_meta
+
+    # Query parameters for each fit operation
+    all_parameters: dict[str, list[dict[str, Any]]] = {}
+    for fit_op_id in fit_operation_ids:
+        rows = db.conn.execute(
+            "SELECT * FROM mfdb_parameter WHERE operation_id = ?",
+            (fit_op_id,),
+        ).fetchall()
+        all_parameters[fit_op_id] = [dict(r) for r in rows]
+
+    # Query dependency edges scoped to this version's operations
+    dependency_edges: list[dict[str, Any]] = []
+    if fit_operation_ids:
+        placeholders = ",".join("?" for _ in fit_operation_ids)
+        rows = db.conn.execute(
+            f"SELECT * FROM mfdb_edge WHERE relationship_type = 'parameter_depends_on' "
+            f"AND operation_id IN ({placeholders})",
+            list(fit_operation_ids),
+        ).fetchall()
+        dependency_edges = [dict(r) for r in rows]
+
     return {
         "datasets": datasets,
         "fits": fits,
         "chinet_sessions": chinet_sessions,
+        "parameters": all_parameters,
+        "dependency_edges": dependency_edges,
+        "ui_state": project_metadata.get("ui_state", {}),
+        "experiments": project_metadata.get("experiments", {}),
     }
