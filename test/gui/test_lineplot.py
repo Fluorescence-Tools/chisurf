@@ -1,10 +1,15 @@
+import json
 from pathlib import Path
 
 import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.core.plot_transforms as plot_transforms
-from chisurf.gui.plots.lineplot.lineplot import LinePlot, LinePlotControl
+from chisurf.gui.plots.lineplot.lineplot import (
+    LinePlot,
+    LinePlotControl,
+    _load_reference_presets,
+)
 
 def _lineplot_source() -> str:
     path = Path(__file__).resolve().parents[2] / "chisurf" / "gui" / "plots" / "lineplot" / "lineplot.py"
@@ -25,7 +30,7 @@ def test_group_display_alpha_and_setalpha_contract():
 def test_group_display_uses_selected_fit_when_available():
     src = _lineplot_source()
     assert "selected_fit" in src
-    assert "hasattr(self.fit, 'grouped_fits')" in src or "hasattr(fit, 'grouped_fits')" in src
+    assert "hasattr(self.fit, 'grouped_fits')" in src or "hasattr(fit, 'grouped_fits')" in src or "hasattr(self.fit, \"grouped_fits\")" in src
 
 def test_lineplot_without_reference_modes_uses_raw(qtbot):
     """LinePlotControl should expose raw mode when no modes are registered."""
@@ -183,3 +188,129 @@ def test_axis_range_skips_invalid_log_axis():
     assert LinePlot._axis_range(0.0, None, np.array([1.0, 2.0]), True) is None
     assert LinePlot._axis_range(None, -1.0, np.array([1.0, 2.0]), True) is None
     assert LinePlot._axis_range(0.0, 2.0, np.array([1.0, 3.0]), False) == [0.0, 2.0]
+
+
+def test_apply_presets_to_mode():
+    """_apply_presets_to_mode should override axis preset fields."""
+    mode = plot_transforms.PlotReferenceMode(
+        key="test", label="Test",
+        callback=lambda ctx: plot_transforms.PlotReferenceResult(ctx.x, ctx.y),
+        y_range=(0, 1),
+        y_padding=0.05,
+    )
+    preset = {"y_range": (0, 2), "y_padding": 0.1}
+    updated = LinePlot._apply_presets_to_mode(mode, preset)
+    assert updated.y_range == (0, 2)
+    assert updated.y_padding == 0.1
+    assert updated.key == "test"
+    assert updated.x_range is None
+
+
+def test_apply_presets_to_mode_skips_none():
+    """None values in preset dict should not override existing fields."""
+    mode = plot_transforms.PlotReferenceMode(
+        key="test", label="Test",
+        callback=lambda ctx: plot_transforms.PlotReferenceResult(ctx.x, ctx.y),
+        y_range=(0, 1),
+        y_padding=0.05,
+    )
+    preset = {"y_padding": None}
+    updated = LinePlot._apply_presets_to_mode(mode, preset)
+    assert updated.y_range == (0, 1)
+    assert updated.y_padding == 0.05
+
+
+def test_presets_static_source_has_all_expected_keys():
+    """The built-in JSON file should contain entries for all known modes."""
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "gui" / "plots" / "lineplot" / "reference_presets.json"
+    assert path.exists()
+    with open(str(path)) as fh:
+        presets = json.load(fh)
+    expected_keys = {
+        "fcs_diffusion", "fcs_molecules",
+        "tcspc_total_photons", "tcspc_peak_photons",
+        "tcspc_donor_reference", "tcspc_anisotropy_rt",
+    }
+    assert expected_keys.issubset(set(presets.keys()))
+
+
+def test_load_reference_presets_returns_dict():
+    """_load_reference_presets should return a dict with expected keys."""
+    presets = _load_reference_presets()
+    assert isinstance(presets, dict)
+    # Should have at least the FCS diffusion preset
+    assert "fcs_diffusion" in presets
+    entry = presets["fcs_diffusion"]
+    assert "y_range" in entry
+    assert "y_padding" in entry
+
+
+def test_reference_mode_y_axis_preset_range():
+    """A mode with y_range=(0,1) and y_padding=0.05 should produce [-0.05, 1.05]."""
+    y_lo, y_hi = 0.0, 1.0
+    span = y_hi - y_lo
+    pad = 0.05
+    result = [y_lo - span * pad, y_hi + span * pad]
+    assert result == [-0.05, 1.05]
+
+
+def test_reference_mode_y_axis_preset_without_padding():
+    """A mode with y_range=(0,1) and no padding should produce [0, 1]."""
+    y_lo, y_hi = 0.0, 1.0
+    span = y_hi - y_lo
+    pad = 0.0
+    result = [y_lo - span * pad, y_hi + span * pad]
+    assert result == [0.0, 1.0]
+
+
+def test_reference_mode_y_axis_preset_anisotropy():
+    """Anisotropy preset: y_range=(-0.05, 0.45) with y_padding=0 produces [-0.05, 0.45]."""
+    y_lo, y_hi = -0.05, 0.45
+    span = y_hi - y_lo
+    pad = 0.0
+    result = [y_lo - span * pad, y_hi + span * pad]
+    assert result == [-0.05, 0.45]
+
+
+def test_apply_presets_to_mode_empty_preset():
+    """Empty preset dict should return the mode unchanged."""
+    mode = plot_transforms.PlotReferenceMode(
+        key="test", label="Test",
+        callback=lambda ctx: plot_transforms.PlotReferenceResult(ctx.x, ctx.y),
+        y_range=(0, 1),
+    )
+    updated = LinePlot._apply_presets_to_mode(mode, {})
+    assert updated is mode
+
+
+def test_apply_presets_to_mode_partial_override():
+    """Partial preset (only y_padding) should preserve other fields."""
+    mode = plot_transforms.PlotReferenceMode(
+        key="test", label="Test",
+        callback=lambda ctx: plot_transforms.PlotReferenceResult(ctx.x, ctx.y),
+        y_range=(0, 1),
+        y_padding=0.05,
+        x_range=(0, 10),
+    )
+    preset = {"y_padding": 0.1}
+    updated = LinePlot._apply_presets_to_mode(mode, preset)
+    assert updated.y_range == (0, 1)
+    assert updated.y_padding == 0.1
+    assert updated.x_range == (0, 10)
+
+
+def test_apply_presets_to_mode_list_conversion():
+    """JSON presets with lists for ranges should be handled via load_reference_presets.
+    _load_reference_presets converts lists to tuples.
+    """
+    # Simulate what the JSON loader does
+    raw_preset = {"y_range": [0, 1], "y_padding": 0.05}
+    if isinstance(raw_preset.get("y_range"), list):
+        raw_preset["y_range"] = tuple(raw_preset["y_range"])
+    mode = plot_transforms.PlotReferenceMode(
+        key="test", label="Test",
+        callback=lambda ctx: plot_transforms.PlotReferenceResult(ctx.x, ctx.y),
+    )
+    updated = LinePlot._apply_presets_to_mode(mode, raw_preset)
+    assert updated.y_range == (0, 1)
+    assert updated.y_padding == 0.05

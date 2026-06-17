@@ -1,7 +1,10 @@
 from __future__ import annotations
 import chisurf as cs
 
+import json
 from collections import OrderedDict
+from pathlib import Path
+
 import numpy as np
 
 from chisurf import typing
@@ -71,6 +74,52 @@ class DraggableTextItem(pg.TextItem):
             event.ignore()
 
 colors = cs.core.settings.gui['plot']['colors']
+
+_BUILTIN_PRESETS_PATH = Path(__file__).parent / 'reference_presets.json'
+
+
+def _load_reference_presets() -> dict:
+    """Load and merge built-in + user reference axis presets.
+
+    Returns a dict keyed by reference-mode key, each value being a dict
+    with optional keys ``y_range``, ``y_padding``, ``x_range``, ``x_padding``.
+    User settings in ``~/.chisurf/reference_presets.json`` override the
+    built-in defaults shipped with the package.
+    """
+    builtin: dict[str, dict] = {}
+    try:
+        with open(str(_BUILTIN_PRESETS_PATH)) as fh:
+            data = json.load(fh)
+            if isinstance(data, dict):
+                builtin = data
+    except Exception:
+        pass
+
+    user: dict[str, dict] = {}
+    try:
+        user_path = cs.core.settings.get_path('settings') / 'reference_presets.json'
+        if user_path.exists():
+            with open(str(user_path)) as fh:
+                data = json.load(fh)
+                if isinstance(data, dict):
+                    user = data
+    except Exception:
+        pass
+
+    # Merge: start with built-in, overlay user values per key
+    merged: dict[str, dict] = {}
+    all_keys = set(builtin) | set(user)
+    for key in all_keys:
+        entry: dict = {}
+        entry.update(builtin.get(key, {}))
+        entry.update(user.get(key, {}))
+        # Convert JSON lists back to tuples for range fields
+        for rkey in ('y_range', 'x_range'):
+            val = entry.get(rkey)
+            if isinstance(val, list):
+                entry[rkey] = tuple(val)
+        merged[key] = entry
+    return merged
 
 
 class LinePlotControl(QtWidgets.QWidget):
@@ -207,9 +256,15 @@ class LinePlotControl(QtWidgets.QWidget):
         ref_layout.addWidget(self.comboBox_reference, 1)
 
         self.toolButton_reference_reset = QtWidgets.QToolButton(ref_row)
-        self.toolButton_reference_reset.setText("Reset")
+        self.toolButton_reference_reset.setText("\U0001F504")
         self.toolButton_reference_reset.setToolTip("Reset reference-mode parameters")
         ref_layout.addWidget(self.toolButton_reference_reset)
+
+        self.toolButton_reference_save = QtWidgets.QToolButton(ref_row)
+        self.toolButton_reference_save.setText("\U0001F4BE")
+        self.toolButton_reference_save.setToolTip("Save current axis range as default preset for this reference mode")
+        self.toolButton_reference_save.clicked.connect(self._save_current_presets)
+        ref_layout.addWidget(self.toolButton_reference_save)
 
         self.gridLayout_2.addWidget(ref_row, 2, 1)
 
@@ -513,6 +568,48 @@ class LinePlotControl(QtWidgets.QWidget):
             if widget is not None:
                 self._set_reference_widget_value(widget, spec, spec.default)
         self.SetReference()
+
+    def _save_current_presets(self) -> None:
+        """Save current axis range as user preset for the active reference mode."""
+        mode = self.selected_reference_mode()
+        if mode is None:
+            return
+        # Gather current axis values
+        entry: dict = {}
+        if self.checkBox_7.isChecked():
+            entry['y_range'] = [self.doubleSpinBox_2.value(), self.doubleSpinBox_4.value() if self.checkBox_8.isChecked() else 1.0]
+        if self.checkBox_8.isChecked():
+            ymin = self.doubleSpinBox_2.value() if self.checkBox_7.isChecked() else 0.0
+            entry['y_range'] = [ymin, self.doubleSpinBox_4.value()]
+        if self.checkBox_4.isChecked():
+            entry['x_range'] = [self.doubleSpinBox.value(), self.doubleSpinBox_3.value() if self.checkBox_6.isChecked() else 1.0]
+        if self.checkBox_6.isChecked():
+            xmin = self.doubleSpinBox.value() if self.checkBox_4.isChecked() else 0.0
+            entry['x_range'] = [xmin, self.doubleSpinBox_3.value()]
+        # Load existing user presets, update this mode, save
+        user_path = cs.core.settings.get_path('settings') / 'reference_presets.json'
+        presets: dict = {}
+        try:
+            if user_path.exists():
+                with open(str(user_path)) as fh:
+                    raw = json.load(fh)
+                    if isinstance(raw, dict):
+                        presets = raw
+        except Exception:
+            pass
+        presets[str(mode.key)] = entry
+        try:
+            with open(str(user_path), 'w') as fh:
+                json.dump(presets, fh, indent=2)
+            # Invalidate cache so the new presets are picked up
+            self.parent.__class__._invalidate_presets_cache()
+            # Refresh the plot to apply new presets
+            try:
+                self.parent.update()
+            except Exception:
+                pass
+        except Exception as exc:
+            cs.logging.warning("Could not save reference presets: %s", exc)
 
     @property
     def plot_ftt(self) -> bool:
@@ -1075,11 +1172,13 @@ class LinePlot(plotbase.Plot):
         except Exception:
             pass
 
+    _MERGED_PRESETS: typing.ClassVar[dict | None] = None
+
     def _reference_modes_for_model(
             self,
             model
     ) -> typing.List[plot_transforms.PlotReferenceMode]:
-        """Return model-provided plot reference modes.
+        """Return model-provided plot reference modes, merged with JSON presets.
 
         Parameters
         ----------
@@ -1089,7 +1188,7 @@ class LinePlot(plotbase.Plot):
         Returns
         -------
         list
-            Valid reference modes.
+            Valid reference modes with axis presets applied.
         """
         getter = getattr(model, "get_plot_reference_modes", None)
         if not callable(getter):
@@ -1099,10 +1198,45 @@ class LinePlot(plotbase.Plot):
         except Exception as exc:
             cs.logging.warning("Could not query plot reference modes: %s", exc)
             return []
-        return [
+        modes = [
             mode for mode in modes or []
             if isinstance(mode, plot_transforms.PlotReferenceMode)
         ]
+        # Merge JSON presets into each mode
+        presets = self._get_merged_presets()
+        return [
+            self._apply_presets_to_mode(mode, presets.get(str(mode.key), {}))
+            for mode in modes
+        ]
+
+    @classmethod
+    def _get_merged_presets(cls) -> dict:
+        """Return cached merged presets (built-in + user)."""
+        if cls._MERGED_PRESETS is None:
+            cls._MERGED_PRESETS = _load_reference_presets()
+        return cls._MERGED_PRESETS
+
+    @classmethod
+    def _apply_presets_to_mode(
+            cls,
+            mode: plot_transforms.PlotReferenceMode,
+            preset: dict
+    ) -> plot_transforms.PlotReferenceMode:
+        """Apply JSON preset fields onto a PlotReferenceMode, skipping None."""
+        kwargs: dict = {}
+        for field_name in ('y_range', 'y_padding', 'x_range', 'x_padding'):
+            val = preset.get(field_name)
+            if val is not None:
+                kwargs[field_name] = val
+        if not kwargs:
+            return mode
+        from dataclasses import replace
+        return replace(mode, **kwargs)
+
+    @classmethod
+    def _invalidate_presets_cache(cls) -> None:
+        """Clear cached presets so they are reloaded on next access."""
+        cls._MERGED_PRESETS = None
 
     def _update_reference_modes(self, current_fit) -> None:
         """Refresh the reference-mode selector for the active model.
@@ -1296,6 +1430,27 @@ class LinePlot(plotbase.Plot):
             data.y,
             data_log_y,
         )
+        # Apply reference-mode axis presets if user hasn't manually overridden
+        try:
+            model = getattr(current_fit, "model", None)
+            ref_mode = self._selected_reference_mode_for_model(model)
+            if ref_mode is not None:
+                # Y-axis preset
+                if ref_mode.y_range is not None and not self.plot_controller.checkBox_7.isChecked() and not self.plot_controller.checkBox_8.isChecked():
+                    y_lo, y_hi = ref_mode.y_range
+                    span = y_hi - y_lo
+                    pad = ref_mode.y_padding or 0.0
+                    if span > 0:
+                        yRange = [y_lo - span * pad, y_hi + span * pad]
+                # X-axis preset
+                if ref_mode.x_range is not None and not self.plot_controller.checkBox_4.isChecked() and not self.plot_controller.checkBox_6.isChecked():
+                    x_lo, x_hi = ref_mode.x_range
+                    span = x_hi - x_lo
+                    pad = ref_mode.x_padding or 0.0
+                    if span > 0:
+                        xRange = [x_lo - span * pad, x_hi + span * pad]
+        except Exception:
+            pass
         if xRange is not None or yRange is not None:
             self.plots['main_plot'].setRange(xRange=xRange, yRange=yRange)
 

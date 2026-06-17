@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 
@@ -123,6 +124,15 @@ class PlotReferenceMode:
         of exact curve keys.
     y_label : str, optional
         Default y-axis label while this mode is active.
+    y_range : tuple, optional
+        (ymin, ymax) axis range applied when this mode is active.
+    y_padding : float, optional
+        Fractional padding added above/below y_range.
+        E.g. 0.05 adds 5% of the range span on each side.
+    x_range : tuple, optional
+        (xmin, xmax) axis range applied when this mode is active.
+    x_padding : float, optional
+        Fractional padding for x_range.
     """
 
     key: str
@@ -131,6 +141,10 @@ class PlotReferenceMode:
     parameters: tuple[PlotReferenceParameter, ...] = ()
     applies_to: typing.Any = None
     y_label: str | None = None
+    y_range: tuple[float, float] | None = None
+    y_padding: float | None = None
+    x_range: tuple[float, float] | None = None
+    x_padding: float | None = None
 
     def applies(self, context: PlotReferenceContext) -> bool:
         """Return whether this mode should be applied to ``context``.

@@ -718,6 +718,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 parameters=(fit_range_param,),
                 applies_to=("data", "model"),
                 y_label="counts / total photons",
+                y_range=(0, 1.0),
+                y_padding=0.05,
             ),
             plot_transforms.PlotReferenceMode(
                 key="tcspc_peak_photons",
@@ -726,6 +728,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 parameters=(fit_range_param,),
                 applies_to=("data", "model"),
                 y_label="counts / peak photons",
+                y_range=(0, 1.0),
+                y_padding=0.05,
             ),
         ]
         if hasattr(self, "_reference") or hasattr(type(self), "reference"):
@@ -749,6 +753,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                     ),
                     applies_to=("data", "model"),
                     y_label="counts / donor reference",
+                    y_range=(0, 1.0),
+                    y_padding=0.05,
                 )
             )
         if self._plot_anisotropy_widget() is not None:
@@ -775,6 +781,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                     ),
                     applies_to=("data", "model"),
                     y_label="r(t)",
+                    y_range=(-0.05, 0.45),
+                    y_padding=0.0,
                 )
             )
         return modes

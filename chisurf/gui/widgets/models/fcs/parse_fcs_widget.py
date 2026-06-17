@@ -133,6 +133,8 @@ class ParseFCSWidget(ParseModelWidget):
                 ),
                 applies_to=("data", "model"),
                 y_label="(G - b) / Gdiff",
+                y_range=(0, 1.0),
+                y_padding=0.05,
             ),
             plot_transforms.PlotReferenceMode(
                 key="fcs_molecules",
@@ -157,6 +159,8 @@ class ParseFCSWidget(ParseModelWidget):
                 ),
                 applies_to=("data", "model"),
                 y_label="N * (G - b)",
+                y_range=(0, 1.05),
+                y_padding=0.05,
             ),
         ]
 

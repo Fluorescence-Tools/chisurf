@@ -30,6 +30,7 @@
 !chisurf/**/manifest.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
+!chisurf/gui/plots/lineplot/reference_presets.json
 *.log
 *.pyc
 *.pyd
@@ -66,6 +67,7 @@ Thumbs.db
 /test_*
 _PROG
 __pycache__/
+.env
 act-output*.txt
 broken
 broken*

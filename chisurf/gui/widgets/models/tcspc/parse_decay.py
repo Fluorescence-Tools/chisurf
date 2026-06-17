@@ -155,6 +155,8 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
                 parameters=(fit_range_param,),
                 applies_to=("data", "model"),
                 y_label="counts / total photons",
+                y_range=(0, 1.0),
+                y_padding=0.05,
             ),
             plot_transforms.PlotReferenceMode(
                 key="tcspc_peak_photons",
@@ -163,6 +165,8 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
                 parameters=(fit_range_param,),
                 applies_to=("data", "model"),
                 y_label="counts / peak photons",
+                y_range=(0, 1.0),
+                y_padding=0.05,
             ),
         ]
 

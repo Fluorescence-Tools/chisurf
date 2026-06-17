@@ -1,0 +1,26 @@
+{
+    "fcs_diffusion": {
+        "y_range": [0, 1.0],
+        "y_padding": 0.05
+    },
+    "fcs_molecules": {
+        "y_range": [0, 1.05],
+        "y_padding": 0.05
+    },
+    "tcspc_total_photons": {
+        "y_range": [0, 1.0],
+        "y_padding": 0.05
+    },
+    "tcspc_peak_photons": {
+        "y_range": [0, 1.0],
+        "y_padding": 0.05
+    },
+    "tcspc_donor_reference": {
+        "y_range": [0, 1.0],
+        "y_padding": 0.05
+    },
+    "tcspc_anisotropy_rt": {
+        "y_range": [-0.05, 0.45],
+        "y_padding": 0.0
+    }
+}
