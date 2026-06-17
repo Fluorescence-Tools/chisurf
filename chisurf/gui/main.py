@@ -1001,7 +1001,10 @@ class Main(
         self._fit_idx = 0
         self._current_setup_idx = 0
         self._system_info_watermark = None
-        self._current_project_dir = None
+        self._current_project_path = None
+        self._current_project_id = None
+        self._current_project_version_id = None
+        self._current_project_name = None
 
         self.experiment_names = list()
         self.dataset_selector = _gw.experiments.ExperimentalDataSelector(
@@ -1459,10 +1462,6 @@ class Main(
         #      Record and run recorded macros                    #
         ##########################################################
         self.actionRecord.triggered.connect(cs.console.start_recording)
-        self.actionStop.triggered.connect(cs.console.save_macro)
-        self.actionRun.triggered.connect(
-            lambda: self.onRunMacro(filename=None, executor='console')
-        )
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
@@ -1494,10 +1493,10 @@ class Main(
         self.actionSave_Project.setEnabled(True)
 
         try:
-            action = QtWidgets.QAction("Save Project As...", self)
+            action = QtWidgets.QAction("Export Project...", self)
             action.setShortcut("Ctrl+Shift+S")
-            action.triggered.connect(self.onSaveProjectAs)
-            self.actionSave_Project_As = action
+            action.triggered.connect(self.onExportProject)
+            self.actionExport_Project = action
             try:
                 self.menuProject.insertAction(self.actionClose_Project, action)
             except Exception:
@@ -1506,9 +1505,9 @@ class Main(
             pass
 
         try:
-            action_from_db = QtWidgets.QAction("from DB", self)
-            action_from_db.triggered.connect(self.onRestoreProjectFromDb)
-            self.actionRestore_Project_From_Db = action_from_db
+            action_from_db = QtWidgets.QAction("Open Project...", self)
+            action_from_db.triggered.connect(self.onLoadProject)
+            self.actionProject_Browser = action_from_db
             try:
                 self.menuProject.insertAction(self.actionClose_Project, action_from_db)
             except Exception:
@@ -1517,18 +1516,16 @@ class Main(
             pass
 
         try:
-            action_to_db = QtWidgets.QAction("to DB", self)
-            action_to_db.triggered.connect(self.onArchiveProjectToDb)
-            self.actionArchive_Project_To_Db = action_to_db
+            action_import = QtWidgets.QAction("Import Project...", self)
+            action_import.triggered.connect(self.onImportProject)
+            self.actionImport_Project = action_import
             try:
-                self.menuProject.insertAction(self.actionClose_Project, action_to_db)
+                self.menuProject.insertAction(self.actionClose_Project, action_import)
             except Exception:
-                self.menuProject.addAction(action_to_db)
+                self.menuProject.addAction(action_import)
         except Exception:
             pass
 
-        self.actionOpen_Project.triggered.connect(self.onLoadProject)
-        self.actionOpen_Project.setEnabled(True)
         self.actionClose_Project.triggered.connect(self.onCloseProject)
         self.actionClose_Project.setEnabled(True)
         self.actionReinitialize.triggered.connect(self.reinitialize)

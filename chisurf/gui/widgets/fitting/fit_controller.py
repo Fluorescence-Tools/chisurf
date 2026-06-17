@@ -29,6 +29,16 @@ from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 
 class FittingControllerWidget(Controller):
 
+    @staticmethod
+    def _iter_fit_parameters_to_finalize(fit):
+        """Yield parameters owned by the current fit or fit group."""
+        local_fits = list(getattr(fit, "grouped_fits", []))
+        if not local_fits:
+            local_fits = [fit]
+        for local_fit in local_fits:
+            model = getattr(local_fit, "model", None)
+            yield from getattr(model, "parameters_all", [])
+
     def _collect_parameter_snapshot(self) -> typing.List[typing.Dict[str, typing.Any]]:
         snapshot: typing.List[typing.Dict[str, typing.Any]] = []
         try:
@@ -626,12 +636,15 @@ class FittingControllerWidget(Controller):
                     fc.model_finalize(
                         fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
                     )
-                for pa in cs.core.fitting.parameter.FittingParameter.get_instances():
+                for pa in self._iter_fit_parameters_to_finalize(self.fit):
+                    controller = getattr(pa, "controller", None)
+                    if controller is None:
+                        continue
                     try:
-                        pa.controller.finalize()
+                        controller.finalize()
                     except (AttributeError, RuntimeError, TypeError):
                         cs.logging.warning(
-                            f"Fitting parameter {pa.name} does not have a controller to update."
+                            f"Fitting parameter {pa.name} failed to update its controller."
                         )
                 cs.logging.info("Fitting finished!")
                 success = True

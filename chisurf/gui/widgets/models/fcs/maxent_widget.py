@@ -1,23 +1,27 @@
 from __future__ import annotations
 
 import numpy as np
-from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
+from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
 import chisurf.core.fitting
-from chisurf.gui.widgets.models.model_widget import ModelWidget
-from chisurf.core.models.model import ModelCurve
-from chisurf.core.fitting.parameter import FittingParameter
-from chisurf.core.models.fcs.maxent import fcs_maxent, fcs_maxent_rh
-from chisurf.gui import plots
-import chisurf.gui.widgets.fitting.widgets as fitting_widgets
 import chisurf.core.math.regularization
+import chisurf.gui.widgets.fitting.widgets as fitting_widgets
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.fcs.maxent import (
+    compute_fcs_maxent_l_curve,
+    compute_fcs_maxent_rh_l_curve,
+    fcs_maxent,
+    fcs_maxent_rh,
+)
+from chisurf.core.models.model import ModelCurve
+from chisurf.gui import plots
 from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+from chisurf.gui.widgets.models.model_widget import ModelWidget
 
 
 class MaxEntFCSModel(ModelCurve):
-
     """FCS model that reconstructs a correlation curve via MaxEnt.
 
     This model treats the regularization parameter of the MaxEnt inversion
@@ -107,6 +111,7 @@ class MaxEntFCSModel(ModelCurve):
         self._l_curve_log10_reg = None
         self._l_curve_chi2 = None
         self._l_curve_solution_norm = None
+        self._l_curve_corner_index = None
 
     @property
     def last_result(self) -> dict | None:
@@ -160,7 +165,7 @@ class MaxEntFCSModel(ModelCurve):
 
     @property
     def l_curve_chi2(self):
-        """L-curve chi-squared values per regularization point.
+        r"""L-curve chi-squared values per regularization point.
 
         Returns
         -------
@@ -192,8 +197,10 @@ class MaxEntFCSModel(ModelCurve):
     ) -> None:
         """Sweep the regularization parameter and build the L-curve.
 
-        For each grid point the model is updated and :math:`\\chi^2_r`
-        and the solution norm ``|p|`` are recorded.
+        The numerical sweep is performed by
+        :func:`chisurf.core.models.fcs.maxent.compute_fcs_maxent_l_curve`;
+        this method only adapts the current model parameters and fit-window
+        settings to the core helper.
 
         Parameters
         ----------
@@ -202,24 +209,22 @@ class MaxEntFCSModel(ModelCurve):
         log10_min, log10_max : float, optional
             log10(reg) range. Defaults to current value ± 2.
         """
-        print("MaxEntFCSModel.compute_l_curve: called")
         data = self.fit.data
         tau = np.asarray(data.x, dtype=float).ravel()
         g = np.asarray(data.y, dtype=float).ravel()
-        print(f"MaxEntFCSModel.compute_l_curve: tau.size={tau.size}, g.size={g.size}")
         if tau.size == 0 or g.size == 0:
             self._l_curve_log10_reg = np.array([], dtype=float)
             self._l_curve_chi2 = np.array([], dtype=float)
             self._l_curve_solution_norm = np.array([], dtype=float)
-            print("MaxEntFCSModel.compute_l_curve: empty data, clearing L-curve arrays")
+            self._l_curve_corner_index = None
             return
-        if n_points is None or n_points <= 1:
+
+        if n_points is None or int(n_points) <= 1:
             n_points = 2
         current_log10 = float(self._reg.value)
         try:
             lb, ub = [float(b) for b in self._reg.bounds]
-        except Exception as e:
-            print(f"MaxEntFCSModel.compute_l_curve: failed to read bounds from _reg: {e}")
+        except Exception:
             lb, ub = float("-inf"), float("inf")
         if log10_min is None:
             log10_min = max(lb, current_log10 - 2.0)
@@ -227,52 +232,30 @@ class MaxEntFCSModel(ModelCurve):
             log10_max = min(ub, current_log10 + 2.0)
         if log10_min > log10_max:
             log10_min, log10_max = log10_max, log10_min
-        grid = np.linspace(log10_min, log10_max, int(n_points))
-        print(f"MaxEntFCSModel.compute_l_curve: grid size={grid.size}, range=[{float(grid[0])}, {float(grid[-1])}]")
-        chi2_vals = np.empty_like(grid, dtype=float)
-        sol_vals = np.empty_like(grid, dtype=float)
-        old_log10 = current_log10
-        for i, v in enumerate(grid):
-            try:
-                fc = get_fitting_client()
-                if fc is not None:
-                    fc.set_parameter_value(
-                        parameter_name=str(self._reg.name),
-                        value=float(v),
-                        fit_index=getattr(self.fit, "fit_idx", None),
-                    )
-                self.update_model()
-                chi2_vals[i] = float(self.fit.chi2r)
-                result = self._result
-                if result is None:
-                    sol_vals[i] = np.nan
-                else:
-                    p = np.asarray(result.get("p", []), dtype=float).ravel()
-                    if p.size == 0:
-                        sol_vals[i] = np.nan
-                    else:
-                        sol_vals[i] = float(np.linalg.norm(p))
-            except Exception as e:
-                print(f"MaxEntFCSModel.compute_l_curve: exception at index {i}, v={float(v)}: {e}")
-                chi2_vals[i] = np.nan
-                sol_vals[i] = np.nan
-        self._l_curve_log10_reg = grid
-        self._l_curve_chi2 = chi2_vals
-        self._l_curve_solution_norm = sol_vals
-        finite_mask = np.isfinite(chi2_vals) & np.isfinite(sol_vals)
-        print(f"MaxEntFCSModel.compute_l_curve: done, n={grid.size}, n_finite={int(finite_mask.sum())}")
-        fc = get_fitting_client()
-        if fc is not None:
-            fc.set_parameter_value(
-                parameter_name=str(self._reg.name),
-                value=old_log10,
-                fit_index=getattr(self.fit, "fit_idx", None),
-            )
-        try:
-            self.update_model()
-        except Exception as e:
-            print(f"MaxEntFCSModel.compute_l_curve: final update_model() failed: {e}")
-            pass
+
+        result = compute_fcs_maxent_l_curve(
+            tau=tau,
+            g=g,
+            y_error=getattr(data, "ey", None),
+            log10_min=float(log10_min),
+            log10_max=float(log10_max),
+            n_points=int(n_points),
+            xmin=getattr(self.fit, "xmin", 0),
+            xmax=getattr(self.fit, "xmax", None),
+            mask=getattr(self.fit, "mask", None),
+            n_free=int(self.n_free),
+            td_min=float(self._td_min.value) if float(self._td_min.value) > 0.0 else None,
+            td_max=float(self._td_max.value) if float(self._td_max.value) > 0.0 else None,
+            n_td=int(self._n_td.value) if int(self._n_td.value) > 0 else 80,
+            s=float(self._s.value),
+            baseline=float(self._b.value),
+            num_iter=60,
+        )
+        self._l_curve_log10_reg = result.log10_reg
+        self._l_curve_chi2 = result.chi2r
+        self._l_curve_solution_norm = result.solution_norm
+        self._l_curve_corner_index = result.corner_index
+        self.update_model()
 
     def l_curve_corner_index(self) -> int | None:
         """Return index of the automatically detected L-curve corner.
@@ -282,11 +265,15 @@ class MaxEntFCSModel(ModelCurve):
         ``l_curve_solution_norm``).  ``None`` is returned if no suitable
         corner can be determined.
         """
+        if self._l_curve_corner_index is not None:
+            return int(self._l_curve_corner_index)
         rho = self.l_curve_chi2
         eta = self.l_curve_solution_norm
         if rho.size < 3 or eta.size < 3:
             return None
         idx = cs.core.math.regularization.discrete_lcurve_corner(rho, eta)
+        if idx is not None:
+            self._l_curve_corner_index = int(idx)
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
@@ -303,7 +290,7 @@ class MaxEntFCSModel(ModelCurve):
         if idx < 0 or idx >= vals.size:
             return
         new_log10 = float(vals[idx])
-        print(f"MaxEntFCSModel.set_reg_from_lcurve_index: idx={idx}, log10_reg={new_log10}")
+        self._reg.value = new_log10
         fc = get_fitting_client()
         if fc is not None:
             fc.set_parameter_value(
@@ -311,20 +298,20 @@ class MaxEntFCSModel(ModelCurve):
                 value=new_log10,
                 fit_index=getattr(self.fit, "fit_idx", None),
             )
-        # For plain model instances, just refresh the MaxEnt result; for
-        # widgets (ModelWidget subclasses) the GUI layer will call
-        # update_widgets and update_plots around this.
+        update = getattr(self, "update", None)
+        if callable(update):
+            try:
+                update()
+                return
+            except Exception:
+                pass
         try:
             self.update_model()
-        except Exception as e2:
-            print(f"MaxEntFCSModel.set_reg_from_lcurve_index: update_model() failed: {e2}")
+        except Exception:
+            pass
 
     def on_auto_fit_range_completed(self) -> None:
-        """Callback invoked after an auto-fit range sweep completes.
-
-        Runs an automatic L-curve sweep and sets the regularization
-        parameter to the detected corner.
-        """
+        """Run an automatic L-curve sweep after an auto-fit range sweep."""
         compute_l = getattr(self, "compute_l_curve", None)
         corner_fn = getattr(self, "l_curve_corner_index", None)
         set_from_idx = getattr(self, "set_reg_from_lcurve_index", None)
@@ -414,6 +401,7 @@ class MaxEntFCSModel(ModelCurve):
 
 
 class MaxEntFCSLCurveController(QtWidgets.QWidget):
+    """Controller widget for the FCS MaxEnt L-curve plot."""
 
     def __init__(self, parent_plot):
         """Initialize the L-curve controller widget.
@@ -433,8 +421,8 @@ class MaxEntFCSLCurveController(QtWidgets.QWidget):
         scale_layout = QtWidgets.QHBoxLayout()
         self._cb_logx = QtWidgets.QCheckBox("log Chi2r")
         self._cb_logy = QtWidgets.QCheckBox("log |p|")
-        self._cb_logx.setChecked(True)
-        self._cb_logy.setChecked(True)
+        self._cb_logx.setChecked(False)
+        self._cb_logy.setChecked(False)
         self._cb_logx.stateChanged.connect(self._on_scale_changed)
         self._cb_logy.stateChanged.connect(self._on_scale_changed)
         scale_layout.addWidget(self._cb_logx)
@@ -447,27 +435,27 @@ class MaxEntFCSLCurveController(QtWidgets.QWidget):
         range_layout.setSpacing(4)
 
         self._sb_logmin = QtWidgets.QDoubleSpinBox()
-        self._sb_logmin.setPrefix("log10 min = ")
         self._sb_logmin.setDecimals(2)
         self._sb_logmin.setSingleStep(0.5)
-        self._sb_logmin.setRange(-12.0, 12.0)
+        self._sb_logmin.setRange(-6.0, 6.0)
         self._sb_logmin.setValue(-3.0)
 
         self._sb_logmax = QtWidgets.QDoubleSpinBox()
-        self._sb_logmax.setPrefix("log10 max = ")
         self._sb_logmax.setDecimals(2)
         self._sb_logmax.setSingleStep(0.5)
-        self._sb_logmax.setRange(-12.0, 12.0)
-        self._sb_logmax.setValue(3.0)
+        self._sb_logmax.setRange(-6.0, 6.0)
+        self._sb_logmax.setValue(0.0)
 
         self._sb_npoints = QtWidgets.QSpinBox()
-        self._sb_npoints.setPrefix("N = ")
         self._sb_npoints.setRange(2, 256)
         self._sb_npoints.setSingleStep(2)
         self._sb_npoints.setValue(32)
 
+        range_layout.addWidget(QtWidgets.QLabel("min"))
         range_layout.addWidget(self._sb_logmin)
+        range_layout.addWidget(QtWidgets.QLabel("max"))
         range_layout.addWidget(self._sb_logmax)
+        range_layout.addWidget(QtWidgets.QLabel("N"))
         range_layout.addWidget(self._sb_npoints)
 
         self._btn_compute = QtWidgets.QPushButton("Compute L-Curve")
@@ -508,6 +496,7 @@ class MaxEntFCSLCurveController(QtWidgets.QWidget):
 
 
 class MaxEntFCSLCurvePlot(plots.Plot):
+    """Interactive L-curve plot for FCS MaxEnt regularization selection."""
 
     name = "L-Curve"
 
@@ -523,35 +512,70 @@ class MaxEntFCSLCurvePlot(plots.Plot):
         """
         super().__init__(fit=fit, **kwargs)
         self._plot_widget = pg.PlotWidget()
+        self._plot_widget.setMouseEnabled(x=True, y=True)
+        self._plot_widget.getPlotItem().setMouseEnabled(x=True, y=True)
         self.layout.addWidget(self._plot_widget)
-        # Main L-curve trace: misfit vs solution norm
-        self._curve = self._plot_widget.plot([], [], pen=None, symbol="o")
-        # Highlight for the currently selected regularization point
+
+        self._curve = self._plot_widget.plot(
+            [],
+            [],
+            pen=pg.mkPen("#2f80ed", width=2),
+            symbol="o",
+            symbolSize=8,
+            symbolBrush="#2f80ed",
+            symbolPen="w",
+        )
         self._selected_point = self._plot_widget.plot(
-            [], [],
+            [],
+            [],
             pen=None,
             symbol="o",
             symbolBrush="r",
             symbolPen="r",
-            symbolSize=14,
+            symbolSize=16,
         )
-        # Start with no selection visible
         try:
-            self._selected_point.hide()
+            self._selected_point.setExportHint(False)
         except Exception:
             pass
+        self._corner_point = self._plot_widget.plot(
+            [],
+            [],
+            pen=None,
+            symbol="x",
+            symbolBrush="#ffd166",
+            symbolPen="#ffd166",
+            symbolSize=14,
+        )
+        try:
+            self._corner_point.setExportHint(False)
+        except Exception:
+            pass
+        self._selected_point.hide()
+        self._corner_point.hide()
+
         self._plot_widget.setLabel("bottom", "Chi2r")
         self._plot_widget.setLabel("left", "|p|")
         self._plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self._logx = True
-        self._logy = True
+        self._logx = False
+        self._logy = False
         self._last_indices = np.array([], dtype=int)
+        self._selected_global_index: int | None = None
         self.set_log_mode(self._logx, self._logy)
         self.plot_controller = MaxEntFCSLCurveController(self)
+
         try:
             self._curve.sigPointsClicked.connect(self._on_points_clicked)
         except Exception:
             pass
+        try:
+            self._plot_widget.scene().sigMouseClicked.connect(self._on_scene_clicked)
+        except Exception:
+            pass
+
+    def update(self, *args, **kwargs) -> None:
+        """Refresh the L-curve plot from cached model data."""
+        self.refresh_from_model(auto_select=False)
 
     def set_log_mode(self, logx: bool, logy: bool) -> None:
         """Set log scale mode for the L-curve axes.
@@ -583,6 +607,79 @@ class MaxEntFCSLCurvePlot(plots.Plot):
             y_arr = np.clip(y_arr, eps, np.inf)
         self._curve.setData(x_arr, y_arr)
 
+    def _lcurve_arrays(self) -> tuple[np.ndarray, np.ndarray]:
+        """Return cached L-curve chi-squared and solution-norm arrays."""
+        model = self.fit.model
+        try:
+            chi2 = np.asarray(model.l_curve_chi2, dtype=float)
+            sol = np.asarray(model.l_curve_solution_norm, dtype=float)
+        except Exception:
+            chi2 = np.array([], dtype=float)
+            sol = np.array([], dtype=float)
+        return chi2, sol
+
+    def _clear_plot(self) -> None:
+        """Clear plotted L-curve data and selection markers."""
+        self._last_indices = np.array([], dtype=int)
+        self._selected_global_index = None
+        self._curve.setData([], [])
+        self._selected_point.setData([], [])
+        self._corner_point.setData([], [])
+        self._selected_point.hide()
+        self._corner_point.hide()
+
+    def refresh_from_model(self, auto_select: bool = False) -> None:
+        """Refresh the plot from cached L-curve arrays.
+
+        Parameters
+        ----------
+        auto_select : bool, optional
+            If True, auto-select the detected L-curve corner and update the
+            model regularization parameter to that value.
+        """
+        chi2, sol = self._lcurve_arrays()
+        if chi2.size == 0 or sol.size == 0:
+            self._clear_plot()
+            return
+        mask = np.isfinite(chi2) & np.isfinite(sol)
+        if not np.any(mask):
+            self._clear_plot()
+            return
+
+        self._last_indices = np.nonzero(mask)[0]
+        chi2_plot = chi2[mask]
+        sol_plot = sol[mask]
+        self._curve.setData(chi2_plot, sol_plot)
+        self.set_log_mode(self._logx, self._logy)
+        self._plot_widget.enableAutoRange()
+
+        model = self.fit.model
+        corner_idx = None
+        if auto_select:
+            try:
+                corner_idx = getattr(model, "l_curve_corner_index", lambda: None)()
+            except Exception:
+                corner_idx = None
+            if corner_idx is not None and int(corner_idx) in set(self._last_indices.tolist()):
+                self._selected_global_index = int(corner_idx)
+                setter = getattr(model, "set_reg_from_lcurve_index", None)
+                if callable(setter):
+                    try:
+                        setter(int(corner_idx))
+                    except Exception:
+                        pass
+                self._highlight_global_index(int(corner_idx))
+                return
+
+        if self._selected_global_index is not None and int(self._selected_global_index) in set(self._last_indices.tolist()):
+            self._highlight_global_index(int(self._selected_global_index))
+        else:
+            self._selected_point.hide()
+            if corner_idx is not None and int(corner_idx) in set(self._last_indices.tolist()):
+                self._highlight_corner(int(corner_idx))
+            else:
+                self._corner_point.hide()
+
     def update_all(self, *args, **kwargs) -> None:
         """Recompute the L-curve and refresh the plot.
 
@@ -593,9 +690,8 @@ class MaxEntFCSLCurvePlot(plots.Plot):
         **kwargs
             Ignored.
         """
-        print("MaxEntFCSLCurvePlot.update_all: called")
         model = self.fit.model
-        # Obtain L-curve range configuration from the controller, if present
+        self._selected_global_index = None
         ctrl = getattr(self, "plot_controller", None)
         log10_min = None
         log10_max = None
@@ -618,169 +714,113 @@ class MaxEntFCSLCurvePlot(plots.Plot):
                     )
                 else:
                     compute()
-            except Exception as e:
-                print(f"MaxEntFCSLCurvePlot.update_all: compute_l_curve raised {e}")
+            except Exception:
                 pass
-        try:
-            chi2 = np.asarray(model.l_curve_chi2, dtype=float)
-            sol = np.asarray(model.l_curve_solution_norm, dtype=float)
-            print(f"MaxEntFCSLCurvePlot.update_all: chi2.size={chi2.size}, sol.size={sol.size}")
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot.update_all: failed to read L-curve arrays: {e}")
-            chi2 = np.array([], dtype=float)
-            sol = np.array([], dtype=float)
-        if chi2.size == 0 or sol.size == 0:
-            print("MaxEntFCSLCurvePlot.update_all: empty chi2 or sol, clearing plot")
-            self._last_indices = np.array([], dtype=int)
-            self._curve.setData([], [])
+        self.refresh_from_model(auto_select=True)
+
+    def _highlight_global_index(self, idx: int) -> None:
+        """Highlight a global L-curve index."""
+        if idx not in set(self._last_indices.tolist()):
+            self._selected_point.hide()
             return
+        local_idx = int(np.nonzero(self._last_indices == int(idx))[0][0])
+        chi2, sol = self._lcurve_arrays()
+        if local_idx >= chi2.size or local_idx >= sol.size:
+            self._selected_point.hide()
+            return
+        self._selected_point.setData(
+            [float(chi2[local_idx])],
+            [float(sol[local_idx])],
+        )
+        self._selected_point.show()
+        corner_idx = None
+        try:
+            corner_idx = getattr(self.fit.model, "l_curve_corner_index", lambda: None)()
+        except Exception:
+            corner_idx = None
+        if corner_idx is not None and int(corner_idx) != int(idx):
+            self._highlight_corner(int(corner_idx))
+        else:
+            self._corner_point.hide()
+
+    def _highlight_corner(self, idx: int) -> None:
+        """Highlight the automatically detected L-curve corner."""
+        if idx not in set(self._last_indices.tolist()):
+            self._corner_point.hide()
+            return
+        local_idx = int(np.nonzero(self._last_indices == int(idx))[0][0])
+        chi2, sol = self._lcurve_arrays()
+        if local_idx >= chi2.size or local_idx >= sol.size:
+            self._corner_point.hide()
+            return
+        self._corner_point.setData(
+            [float(chi2[local_idx])],
+            [float(sol[local_idx])],
+        )
+        self._corner_point.show()
+
+    def _nearest_global_index(self, x: float, y: float) -> int | None:
+        """Return the global L-curve index closest to a plot position."""
+        model = self.fit.model
+        chi2 = np.asarray(model.l_curve_chi2, dtype=float)
+        sol = np.asarray(model.l_curve_solution_norm, dtype=float)
+        if chi2.size != sol.size or chi2.size == 0:
+            return None
         mask = np.isfinite(chi2) & np.isfinite(sol)
         if not np.any(mask):
-            print("MaxEntFCSLCurvePlot.update_all: no finite points in L-curve, clearing plot")
-            self._last_indices = np.array([], dtype=int)
-            self._curve.setData([], [])
-            return
-        self._last_indices = np.nonzero(mask)[0]
-        chi2_plot = chi2[mask]
-        sol_plot = sol[mask]
-        self._curve.setData(chi2_plot, sol_plot)
-        print(f"MaxEntFCSLCurvePlot.update_all: plotted {chi2_plot.size} points")
-        self._plot_widget.enableAutoRange()
-        # Hide any previous selection highlight; it will be re-applied on
-        # the next point click or auto-corner detection.
-        try:
-            self._selected_point.hide()
-        except Exception:
-            pass
-        # Auto-select a recommended regularization via L-curve corner
-        # detection, if available, and highlight it.  This preserves the
-        # full L-curve but starts the user at a sensible point.
-        try:
-            corner_idx_global = getattr(model, "l_curve_corner_index", lambda: None)()
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot.update_all: l_curve_corner_index failed: {e}")
-            corner_idx_global = None
-        if corner_idx_global is not None and self._last_indices.size > 0:
-            try:
-                # Map global index to local masked index, if present.
-                matches = np.nonzero(self._last_indices == int(corner_idx_global))[0]
-                if matches.size > 0:
-                    local_idx = int(matches[0])
-                    print(f"MaxEntFCSLCurvePlot.update_all: auto-selected corner at global {corner_idx_global}, local {local_idx}")
-                    # Update model reg and highlight via the same machinery
-                    # as a manual click.
-                    setter = getattr(model, "set_reg_from_lcurve_index", None)
-                    if callable(setter):
-                        try:
-                            setter(int(corner_idx_global))
-                        except Exception as e:
-                            print(f"MaxEntFCSLCurvePlot.update_all: set_reg_from_lcurve_index for corner raised {e}")
-                    # Visually highlight
-                    if 0 <= local_idx < chi2_plot.size:
-                        self._selected_point.setData(
-                            [float(chi2_plot[local_idx])],
-                            [float(sol_plot[local_idx])],
-                        )
-                        try:
-                            self._selected_point.show()
-                        except Exception:
-                            pass
-                else:
-                    print(f"MaxEntFCSLCurvePlot.update_all: corner index {corner_idx_global} not in finite mask")
-            except Exception as e:
-                print(f"MaxEntFCSLCurvePlot.update_all: failed to auto-highlight corner: {e}")
-        self.set_log_mode(self._logx, self._logy)
+            return None
+        idx = np.nonzero(mask)[0]
+        x_ref = np.asarray(x, dtype=float)
+        y_ref = np.asarray(y, dtype=float)
+        x_data = chi2[idx]
+        y_data = sol[idx]
+        if self._logx:
+            eps = np.finfo(float).tiny
+            x_ref = np.log10(max(float(x_ref), eps))
+            x_data = np.log10(np.clip(x_data, eps, np.inf))
+        if self._logy:
+            eps = np.finfo(float).tiny
+            y_ref = np.log10(max(float(y_ref), eps))
+            y_data = np.log10(np.clip(y_data, eps, np.inf))
+        d2 = (x_data - x_ref) ** 2 + (y_data - y_ref) ** 2
+        return int(idx[int(np.argmin(d2))])
 
-    def _on_points_clicked(self, item, points):
-        """Qt slot: handle click on an L-curve point.
-
-        Sets the regularization parameter to match the nearest L-curve
-        point and highlights the selection.
-
-        Parameters
-        ----------
-        item
-            The plot item clicked.
-        points
-            Sequence of clicked point objects.
-        """
-        print("MaxEntFCSLCurvePlot._on_points_clicked: called")
-        print(f"MaxEntFCSLCurvePlot._on_points_clicked: item={item}, type(points)={type(points)}")
-        # ``points`` may be a list-like or numpy array; avoid ambiguous
-        # truth-value checks and fall back gracefully if empty.
-        try:
-            n_points = len(points)
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: len(points) failed: {e}")
-            n_points = 0
-        if points is None or n_points == 0:
-            print("MaxEntFCSLCurvePlot._on_points_clicked: no points, returning")
-            return
-
-        # Determine the curve index whose (chi2, |p|) point is closest to the
-        # clicked position in the current plot coordinates.
-        try:
-            click_pos = points[0].pos()
-            click_x = float(click_pos.x())
-            click_y = float(click_pos.y())
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: failed to read click position: {e}")
-            return
-        try:
-            x_data, y_data = self._curve.getData()
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: getData failed: {e}")
-            return
-        if x_data is None or y_data is None:
-            print("MaxEntFCSLCurvePlot._on_points_clicked: no curve data, returning")
-            return
-        x_arr = np.asarray(x_data, dtype=float).ravel()
-        y_arr = np.asarray(y_data, dtype=float).ravel()
-        if x_arr.size == 0 or y_arr.size == 0:
-            print("MaxEntFCSLCurvePlot._on_points_clicked: empty curve data, returning")
-            return
-        try:
-            x_ref = click_x
-            y_ref = click_y
-            d2 = (x_arr - x_ref) ** 2 + (y_arr - y_ref) ** 2
-            local_idx = int(np.argmin(d2))
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: nearest local_idx={local_idx}")
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: distance-based index selection failed: {e}")
-            return
-        if local_idx < 0 or local_idx >= self._last_indices.size:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: local_idx {local_idx} out of range for _last_indices size {self._last_indices.size}")
-            return
-        global_idx = int(self._last_indices[local_idx])
-        print(f"MaxEntFCSLCurvePlot._on_points_clicked: mapped local_idx={local_idx} to global_idx={global_idx}")
+    def _select_global_index(self, idx: int) -> None:
+        """Select an L-curve index and update the model regularization."""
+        self._selected_global_index = int(idx)
         model = self.fit.model
         setter = getattr(model, "set_reg_from_lcurve_index", None)
         if callable(setter):
             try:
-                print("MaxEntFCSLCurvePlot._on_points_clicked: calling set_reg_from_lcurve_index")
-                setter(global_idx)
-            except Exception as e:
-                print(f"MaxEntFCSLCurvePlot._on_points_clicked: set_reg_from_lcurve_index raised {e}")
-        else:
-            print("MaxEntFCSLCurvePlot._on_points_clicked: model has no set_reg_from_lcurve_index")
-        # Visually highlight the selected point as a larger red circle
+                setter(int(idx))
+            except Exception:
+                pass
+        self._highlight_global_index(int(idx))
+
+    def _on_points_clicked(self, item, points):
+        """Qt slot: handle click on an L-curve point."""
         try:
-            x_data, y_data = self._curve.getData()
-            if x_data is not None and y_data is not None:
-                if 0 <= local_idx < len(x_data):
-                    sel_x = [float(x_data[local_idx])]
-                    sel_y = [float(y_data[local_idx])]
-                    self._selected_point.setData(sel_x, sel_y)
-                    try:
-                        self._selected_point.show()
-                    except Exception:
-                        pass
-        except Exception as e:
-            print(f"MaxEntFCSLCurvePlot._on_points_clicked: failed to update selected_point marker: {e}")
+            if points is None or len(points) == 0:
+                return
+            pos = points[0].pos()
+            self._select_global_index(self._nearest_global_index(float(pos.x()), float(pos.y())))
+        except Exception:
+            return
+
+    def _on_scene_clicked(self, event):
+        """Qt slot: handle click anywhere in the L-curve plot."""
+        try:
+            if event.button() != QtCore.Qt.LeftButton:
+                return
+            view_pos = self._plot_widget.getViewBox().mapSceneToView(event.scenePos())
+            idx = self._nearest_global_index(float(view_pos.x()), float(view_pos.y()))
+            if idx is not None:
+                self._select_global_index(idx)
+        except Exception:
+            return
 
 
 class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
-
     """GUI model widget for MaxEnt-based FCS analysis.
 
     This appears as a separate FCS model in the GUI and uses the MaxEnt
@@ -1001,6 +1041,7 @@ class MaxEntRHModel(ModelCurve):
         self._l_curve_log10_reg = None
         self._l_curve_chi2 = None
         self._l_curve_solution_norm = None
+        self._l_curve_corner_index = None
 
     @property
     def last_result(self) -> dict | None:
@@ -1049,7 +1090,7 @@ class MaxEntRHModel(ModelCurve):
 
     @property
     def l_curve_chi2(self):
-        """L-curve chi-squared values per regularization point.
+        r"""L-curve chi-squared values per regularization point.
 
         Returns
         -------
@@ -1081,6 +1122,11 @@ class MaxEntRHModel(ModelCurve):
     ) -> None:
         """Sweep the regularization parameter and build the L-curve.
 
+        The numerical sweep is performed by
+        :func:`chisurf.core.models.fcs.maxent.compute_fcs_maxent_rh_l_curve`;
+        this method only adapts the current model parameters and fit-window
+        settings to the core helper.
+
         Parameters
         ----------
         n_points : int, optional
@@ -1095,8 +1141,10 @@ class MaxEntRHModel(ModelCurve):
             self._l_curve_log10_reg = np.array([], dtype=float)
             self._l_curve_chi2 = np.array([], dtype=float)
             self._l_curve_solution_norm = np.array([], dtype=float)
+            self._l_curve_corner_index = None
             return
-        if n_points is None or n_points <= 1:
+
+        if n_points is None or int(n_points) <= 1:
             n_points = 2
         current_log10 = float(self._reg.value)
         try:
@@ -1109,47 +1157,33 @@ class MaxEntRHModel(ModelCurve):
             log10_max = min(ub, current_log10 + 2.0)
         if log10_min > log10_max:
             log10_min, log10_max = log10_max, log10_min
-        grid = np.linspace(log10_min, log10_max, int(n_points))
-        chi2_vals = np.empty_like(grid, dtype=float)
-        sol_vals = np.empty_like(grid, dtype=float)
-        old_log10 = current_log10
-        fc = get_fitting_client()
-        fit_index = getattr(self.fit, "fit_idx", None)
-        for i, v in enumerate(grid):
-            try:
-                if fc is not None:
-                    fc.set_parameter_value(
-                        parameter_name=str(self._reg.name),
-                        value=float(v),
-                        fit_index=fit_index,
-                    )
-                self.update_model()
-                chi2_vals[i] = float(self.fit.chi2r)
-                result = self._result
-                if result is None:
-                    sol_vals[i] = np.nan
-                else:
-                    p = np.asarray(result.get("p", []), dtype=float).ravel()
-                    if p.size == 0:
-                        sol_vals[i] = np.nan
-                    else:
-                        sol_vals[i] = float(np.linalg.norm(p))
-            except Exception:
-                chi2_vals[i] = np.nan
-                sol_vals[i] = np.nan
-        self._l_curve_log10_reg = grid
-        self._l_curve_chi2 = chi2_vals
-        self._l_curve_solution_norm = sol_vals
-        if fc is not None:
-            fc.set_parameter_value(
-                parameter_name=str(self._reg.name),
-                value=old_log10,
-                fit_index=fit_index,
-            )
-        try:
-            self.update_model()
-        except Exception:
-            pass
+
+        temp_c = float(self._temp.value)
+        result = compute_fcs_maxent_rh_l_curve(
+            tau=tau,
+            g=g,
+            y_error=getattr(data, "ey", None),
+            log10_min=float(log10_min),
+            log10_max=float(log10_max),
+            n_points=int(n_points),
+            xmin=getattr(self.fit, "xmin", 0),
+            xmax=getattr(self.fit, "xmax", None),
+            mask=getattr(self.fit, "mask", None),
+            n_free=int(self.n_free),
+            rh_min=float(self._rh_min.value),
+            rh_max=float(self._rh_max.value),
+            n_rh=int(self._n_rh.value) if int(self._n_rh.value) > 0 else 80,
+            w0=float(self._w0.value) * 1.0e-3,
+            s=float(self._s.value),
+            baseline=float(self._b.value),
+            temperature=temp_c + 273.15,
+            num_iter=60,
+        )
+        self._l_curve_log10_reg = result.log10_reg
+        self._l_curve_chi2 = result.chi2r
+        self._l_curve_solution_norm = result.solution_norm
+        self._l_curve_corner_index = result.corner_index
+        self.update_model()
 
     def l_curve_corner_index(self) -> int | None:
         """Locate the L-curve corner index automatically.
@@ -1159,11 +1193,15 @@ class MaxEntRHModel(ModelCurve):
         int or None
             Global index into the L-curve arrays, or ``None``.
         """
+        if self._l_curve_corner_index is not None:
+            return int(self._l_curve_corner_index)
         rho = self.l_curve_chi2
         eta = self.l_curve_solution_norm
         if rho.size < 3 or eta.size < 3:
             return None
         idx = cs.core.math.regularization.discrete_lcurve_corner(rho, eta)
+        if idx is not None:
+            self._l_curve_corner_index = int(idx)
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
@@ -1180,6 +1218,7 @@ class MaxEntRHModel(ModelCurve):
         if idx < 0 or idx >= vals.size:
             return
         new_log10 = float(vals[idx])
+        self._reg.value = new_log10
         fc = get_fitting_client()
         if fc is not None:
             fc.set_parameter_value(
@@ -1187,14 +1226,17 @@ class MaxEntRHModel(ModelCurve):
                 value=new_log10,
                 fit_index=getattr(self.fit, "fit_idx", None),
             )
-        try:
-            if fc is not None:
-                fc.update_fit(fit_index=getattr(self.fit, "fit_idx", None))
-        except Exception:
+        update = getattr(self, "update", None)
+        if callable(update):
             try:
-                self.update_model()
+                update()
+                return
             except Exception:
                 pass
+        try:
+            self.update_model()
+        except Exception:
+            pass
 
     def update_model(self, **kwargs) -> None:
         """Run MaxEnt in rH-space on the current FCS dataset.
@@ -1263,6 +1305,7 @@ class MaxEntRHModel(ModelCurve):
 
 
 class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
+    """GUI model widget for hydrodynamic-radius MaxEnt FCS analysis."""
 
     name = "FCS MaxEnt rH"
 

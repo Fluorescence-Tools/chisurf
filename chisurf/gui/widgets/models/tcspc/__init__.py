@@ -73,6 +73,12 @@ from chisurf.gui.widgets.models.tcspc.fret_rate import FRETrateModelWidget
 from chisurf.gui.widgets.models.tcspc.worm_like_chain import WormLikeChainModelWidget
 from chisurf.gui.widgets.models.tcspc.parse_decay import ParseDecayModelWidget
 from chisurf.gui.widgets.models.tcspc.lifetime_mix import LifetimeMixModelWidget
-from chisurf.gui.widgets.models.tcspc.et import EtModelFreeWidget
+try:
+    from chisurf.gui.widgets.models.tcspc.et import EtModelFreeWidget
+except Exception:
+    EtModelFreeWidget = None
 from chisurf.gui.widgets.models.tcspc.fret_structure import FRETStructureWidget
-
+from chisurf.gui.widgets.models.tcspc.maxent import (
+    MaxEntLifetimeModelWidget,
+    MaxEntFRETModelWidget,
+)

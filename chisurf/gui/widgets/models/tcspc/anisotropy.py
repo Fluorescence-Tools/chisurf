@@ -1093,14 +1093,17 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
     @polarization_type.setter
     def polarization_type(self, v: str):
-        """Current polarization type (vm, vv, vh, vv/vh)."""
-        self._polarization_type = v.lower()
-        
+        """Set current polarization type."""
+        Anisotropy.polarization_type.fset(self, v)
+
+        if not all(hasattr(self, name) for name in ('radioButtonVM', 'radioButtonVV', 'radioButtonVH')):
+            return
+
         # Block signals to prevent unwanted signal emissions
         self.radioButtonVM.blockSignals(True)
         self.radioButtonVV.blockSignals(True)
         self.radioButtonVH.blockSignals(True)
-        
+
         # Update the radio buttons to reflect the current polarization type
         if self._polarization_type == 'vm':
             self.radioButtonVM.setChecked(True)
@@ -1108,12 +1111,12 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             self.radioButtonVV.setChecked(True)
         elif self._polarization_type == 'vh':
             self.radioButtonVH.setChecked(True)
-            
+
         # Unblock signals
         self.radioButtonVM.blockSignals(False)
         self.radioButtonVV.blockSignals(False)
         self.radioButtonVH.blockSignals(False)
-        
+
         # Show/hide rotation parameters based on the selected polarization type
         self.hide_roation_parameters()
 
@@ -1334,25 +1337,25 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
         self.lh.addLayout(output_grid)
         self.add_rotation()
-        
+
         # Initialize radio buttons based on current polarization_type
         # Block signals during initialization
         self.radioButtonVM.blockSignals(True)
         self.radioButtonVV.blockSignals(True)
         self.radioButtonVH.blockSignals(True)
-        
+
         if self._polarization_type.lower() == 'vv':
             self.radioButtonVV.setChecked(True)
         elif self._polarization_type.lower() == 'vh':
             self.radioButtonVH.setChecked(True)
         else:  # Default to VM
             self.radioButtonVM.setChecked(True)
-        
+
         # Unblock signals after initialization
         self.radioButtonVM.blockSignals(False)
         self.radioButtonVV.blockSignals(False)
         self.radioButtonVH.blockSignals(False)
-             
+
         self.hide_roation_parameters()
 
         try:
@@ -1379,20 +1382,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
     def set_polarization_type(self, pol_type: str):
         """
         Set the polarization type and update both the model and GUI.
-        
+
         Parameters
         ----------
         pol_type : str
             The polarization type ('vm', 'vv', or 'vh')
         """
         # Update the widget's property
-        self._polarization_type = pol_type.lower()
-        
+        Anisotropy.polarization_type.fset(self, pol_type)
+
         # Block signals to prevent unwanted signal emissions
         self.radioButtonVM.blockSignals(True)
         self.radioButtonVV.blockSignals(True)
         self.radioButtonVH.blockSignals(True)
-        
+
         # Explicitly set the active radiobox
         if self._polarization_type == 'vm':
             self.radioButtonVM.setChecked(True)
@@ -1400,15 +1403,14 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             self.radioButtonVV.setChecked(True)
         elif self._polarization_type == 'vh':
             self.radioButtonVH.setChecked(True)
-            
+
         # Unblock signals
         self.radioButtonVM.blockSignals(False)
         self.radioButtonVV.blockSignals(False)
         self.radioButtonVH.blockSignals(False)
-            
+
         # Show/hide rotation parameters based on the selected polarization type
         self.hide_roation_parameters()
-        
 
     # TODO: needs docstring
     def hide_roation_parameters(self):

@@ -85,6 +85,28 @@ class ProteinMCPlotControl(QtWidgets.QWidget):
                 except Exception:
                     pass
 
+    def get_state(self) -> dict:
+        """Return project-serializable trajectory plot controller state."""
+        return {
+            "show_rmsd": bool(self.show_rmsd.isChecked()),
+            "show_drmsd": bool(self.show_drmsd.isChecked()),
+            "show_energy": bool(self.show_energy_box.isChecked()),
+            "show_fret": bool(self.show_fret_box.isChecked()),
+        }
+
+    def set_state(self, state: dict) -> None:
+        """Restore trajectory plot controller state from a project."""
+        if not isinstance(state, dict):
+            return
+        for key, widget in (
+            ("show_rmsd", self.show_rmsd),
+            ("show_drmsd", self.show_drmsd),
+            ("show_energy", self.show_energy_box),
+            ("show_fret", self.show_fret_box),
+        ):
+            if key in state:
+                widget.setChecked(bool(state[key]))
+
 
 class ProteinMCPlot(Plot):
 
@@ -411,6 +433,37 @@ class ProteinMCStructureControl(QtWidgets.QWidget):
             self.frame_spin.blockSignals(False)
         self.frame_label.setText(f"/ {max(0, total - 1)}")
 
+    def get_state(self) -> dict:
+        """Return project-serializable structure plot controller state."""
+        return {
+            "frame": int(self.frame_spin.value()),
+            "step": int(self.step_spin.value()),
+            "representation": self.representation_combo.currentText(),
+            "playing": bool(self._play_timer.isActive()),
+        }
+
+    def set_state(self, state: dict) -> None:
+        """Restore structure plot controller state from a project."""
+        if not isinstance(state, dict):
+            return
+        if "step" in state:
+            try:
+                self.step_spin.setValue(max(1, int(state["step"])))
+            except Exception:
+                pass
+        representation = state.get("representation")
+        if isinstance(representation, str) and representation:
+            idx = self.representation_combo.findText(representation)
+            if idx >= 0:
+                self.representation_combo.setCurrentIndex(idx)
+        if "frame" in state:
+            try:
+                self.frame_spin.setValue(int(state["frame"]))
+            except Exception:
+                pass
+        if state.get("playing"):
+            self._play()
+
 
 class ProteinMCStructurePlot(Plot):
     """Chimol structure plot for live ProteinMC trajectories."""
@@ -732,6 +785,31 @@ class ProteinMCDistanceNetworkControl(QtWidgets.QWidget):
         finally:
             self.frame_spin.blockSignals(False)
         self.frame_label.setText(f"/ {maximum}")
+
+    def get_state(self) -> dict:
+        """Return project-serializable distance-network controller state."""
+        return {
+            "frame": int(self.frame_spin.value()),
+            "step": int(self.step_spin.value()),
+            "playing": bool(self._play_timer.isActive()),
+        }
+
+    def set_state(self, state: dict) -> None:
+        """Restore distance-network controller state from a project."""
+        if not isinstance(state, dict):
+            return
+        if "step" in state:
+            try:
+                self.step_spin.setValue(max(1, int(state["step"])))
+            except Exception:
+                pass
+        if "frame" in state:
+            try:
+                self.frame_spin.setValue(int(state["frame"]))
+            except Exception:
+                pass
+        if state.get("playing"):
+            self._play()
 
 
 def _load_labeling_payload(filename: str) -> dict:

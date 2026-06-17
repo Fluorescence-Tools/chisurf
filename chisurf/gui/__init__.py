@@ -1848,12 +1848,21 @@ class LoginDialog(QtWidgets.QDialog):
                                 QtWidgets.QMessageBox.critical(self, "Error", f"Failed to save password:\n{e}")
                 
                 import chisurf.core.settings as cs_settings
+                from chisurf.core.mfdb.credentials import (
+                    delete_session_token,
+                    store_runtime_session_token,
+                    store_session_token,
+                )
+                from chisurf.core.settings.settings_utils import set_mfdb_login_settings
+
                 if "mfdb" not in cs_settings.cs_settings:
                     cs_settings.cs_settings["mfdb"] = {}
-                if self.save_login_check.isChecked():
+                save_login = self.save_login_check.isChecked()
+                autologin = self.auto_login_check.isChecked()
+                if save_login or autologin:
                     cs_settings.cs_settings["mfdb"]["default_user_id"] = user_id
-                cs_settings.cs_settings["mfdb"]["save_login"] = self.save_login_check.isChecked()
-                cs_settings.cs_settings["mfdb"]["autologin"] = self.auto_login_check.isChecked()
+                cs_settings.cs_settings["mfdb"]["save_login"] = save_login
+                cs_settings.cs_settings["mfdb"]["autologin"] = autologin
                 # Save server host and update history
                 server_host = self.server_combo.currentText() or "127.0.0.1"
                 
@@ -1874,13 +1883,47 @@ class LoginDialog(QtWidgets.QDialog):
                 cs_settings.cs_settings["mfdb"]["last_port"] = self.port_spin.value()
                 
                 if hasattr(cs_settings, "mfdb"):
-                    if self.save_login_check.isChecked():
+                    if save_login or autologin:
                         cs_settings.mfdb["default_user_id"] = user_id
-                    cs_settings.mfdb["save_login"] = self.save_login_check.isChecked()
-                    cs_settings.mfdb["autologin"] = self.auto_login_check.isChecked()
+                    cs_settings.mfdb["save_login"] = save_login
+                    cs_settings.mfdb["autologin"] = autologin
                     cs_settings.mfdb["server_history"] = server_history
                     cs_settings.mfdb["last_server"] = server_host
                     cs_settings.mfdb["last_port"] = self.port_spin.value()
+
+                saved = set_mfdb_login_settings(cs_settings.cs_settings["mfdb"])
+                if not saved:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Settings Not Saved",
+                        "Login succeeded, but ChiSurf could not store the MFDB login settings.",
+                    )
+                token_saved = True
+                if autologin:
+                    token_saved = store_session_token(
+                        server_host,
+                        self.port_spin.value(),
+                        user_id,
+                        res.get("token", ""),
+                    )
+                else:
+                    delete_session_token(server_host, self.port_spin.value(), user_id)
+                store_runtime_session_token(
+                    server_host,
+                    self.port_spin.value(),
+                    user_id,
+                    res.get("token", ""),
+                )
+                if autologin and not token_saved:
+                    cs_settings.cs_settings["mfdb"]["autologin"] = False
+                    if hasattr(cs_settings, "mfdb"):
+                        cs_settings.mfdb["autologin"] = False
+                    set_mfdb_login_settings(cs_settings.cs_settings["mfdb"])
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Autologin Not Saved",
+                        "Login succeeded, but ChiSurf could not store the session token in the OS credential store.",
+                    )
                     
                 self.accept()
             else:
@@ -1903,6 +1946,12 @@ def get_app():
     
     try:
         from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from chisurf.core.mfdb.credentials import (
+            delete_session_token,
+            load_session_token,
+            store_runtime_session_token,
+            store_session_token,
+        )
         import chisurf.core.settings as cs_settings
 
         _ensure_chisurf_rpc_server()
@@ -1915,16 +1964,31 @@ def get_app():
         client = MFDBClient(host=server_host, cmd_port=server_port, pub_port=server_port + 1)
         users = client.list_users()
         user_data = next((u for u in users if u["user_id"] == default_user), None)
-        
-        trigger_login = False
-        if not autologin:
-            trigger_login = True
-        else:
-            if user_data:
-                if user_data.get("has_password") or user_data.get("is_admin"):
-                    trigger_login = True
-            else:
-                trigger_login = True
+
+        trigger_login = True
+        if autologin and user_data is not None:
+            token = load_session_token(server_host, server_port, default_user)
+            if token:
+                try:
+                    client.token = token
+                    result = client.me()
+                    current_user = result.get("user") or {}
+                    trigger_login = current_user.get("user_id") != default_user
+                    if not trigger_login:
+                        store_runtime_session_token(server_host, server_port, default_user, token)
+                except Exception as exc:
+                    logging.info(f"MFDB stored-token autologin declined for {default_user}: {exc}")
+                    delete_session_token(server_host, server_port, default_user)
+            if trigger_login:
+                try:
+                    result = client.login(user_id=default_user, password="")
+                    trigger_login = not (result.get("ok") or result.get("authenticated"))
+                    if not trigger_login:
+                        token = result.get("token", "")
+                        store_runtime_session_token(server_host, server_port, default_user, token)
+                        store_session_token(server_host, server_port, default_user, token)
+                except Exception as exc:
+                    logging.info(f"MFDB passwordless autologin declined for {default_user}: {exc}")
             
         if trigger_login:
             login_dialog = LoginDialog()

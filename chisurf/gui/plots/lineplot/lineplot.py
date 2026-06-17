@@ -25,6 +25,7 @@ import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.core.math
 import chisurf.core.fitting
+import chisurf.core.plot_transforms as plot_transforms
 import chisurf.core.settings
 import chisurf.core.math.statistics
 from chisurf.gui.plots import plotbase
@@ -79,7 +80,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'lw': 1.0,
             'color': colors['data'],
             'target': 'main_plot',
-            'allow_reference_curve': True,
+            'allow_reference_transform': True,
             'allow_shift': True,
             'allow_density': True,
             'plot_only_region': False,
@@ -89,7 +90,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'lw': 2.0,
             'color': colors['irf'],
             'target': 'main_plot',
-            'allow_reference_curve': False,
+            'allow_reference_transform': False,
             'allow_shift': True,
             'allow_density': True,
             'plot_only_region': False
@@ -98,7 +99,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'lw': 2.0,
             'target': 'main_plot',
             'color': colors['model'],
-            'allow_reference_curve': True,
+            'allow_reference_transform': True,
             'allow_shift': True,
             'allow_density': True,
             'plot_only_region': True
@@ -108,7 +109,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'target': 'top_left_plot',
             'label': 'w.res.',
             'color': colors['residuals'],
-            'allow_reference_curve': False,
+            'allow_reference_transform': False,
             'allow_shift': True,
             'allow_density': False,
             'plot_only_region': False,
@@ -119,7 +120,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'target': 'top_right_plot',
             'color': colors['auto_corr'],
             'label': 'a.cor.',
-            'allow_reference_curve': False,
+            'allow_reference_transform': False,
             'allow_shift': True,
             'allow_density': False,
             'plot_only_region': False,
@@ -129,7 +130,7 @@ class LinePlotControl(QtWidgets.QWidget):
             'lw': 2.0,
             'color': colors['data'],
             'target': 'main_plot',
-            'allow_reference_curve': False,
+            'allow_reference_transform': False,
             'allow_shift': True,
             'allow_density': False,
             'allow_clipping': False,
@@ -159,12 +160,16 @@ class LinePlotControl(QtWidgets.QWidget):
             scale_x: str = 'lin',
             d_scaley: str = 'log',
             r_scaley: str = 'lin',
-            reference_curve: bool = False,
             xmin: float = 0.0,
             ymin: float = 1.0
     ):
         self.parent = parent
-        self.use_reference = reference_curve
+        self._reference_modes: typing.OrderedDict[str, plot_transforms.PlotReferenceMode] = OrderedDict()
+        self._reference_parameter_widgets: typing.Dict[str, QtWidgets.QWidget] = {}
+        self._reference_parameter_specs: typing.Dict[str, plot_transforms.PlotReferenceParameter] = {}
+        self._pending_reference_mode: str | None = None
+        self._pending_reference_parameters: typing.Dict[str, typing.Any] = {}
+        self._install_reference_controls()
 
         self.data_logy = d_scaley
         self.scale_x = scale_x
@@ -177,19 +182,352 @@ class LinePlotControl(QtWidgets.QWidget):
         self.checkBox_2.stateChanged.connect(self.SetLog)
         self.checkBox_3.stateChanged.connect(self.SetDensity)
         self.checkBox_4.stateChanged.connect(self.SetLog)
-        self.checkBox_5.stateChanged.connect(self.SetReference)
+        self.comboBox_reference.currentIndexChanged.connect(self.SetReference)
+        self.toolButton_reference_reset.clicked.connect(self.reset_reference_parameters)
         self.checkBox_9.stateChanged.connect(self.SetDisplayGroup)
+
+    def _install_reference_controls(self) -> None:
+        """Install the reference-mode selector and dynamic parameter area."""
+        try:
+            placeholder = getattr(self, "referencePlaceholder", None)
+            if placeholder is not None:
+                self.gridLayout_2.removeWidget(placeholder)
+                placeholder.hide()
+        except Exception:
+            pass
+
+        ref_row = QtWidgets.QWidget(self)
+        ref_layout = QtWidgets.QHBoxLayout(ref_row)
+        ref_layout.setContentsMargins(0, 0, 0, 0)
+        ref_layout.setSpacing(2)
+        ref_layout.addWidget(QtWidgets.QLabel("Reference", ref_row))
+
+        self.comboBox_reference = QtWidgets.QComboBox(ref_row)
+        self.comboBox_reference.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        ref_layout.addWidget(self.comboBox_reference, 1)
+
+        self.toolButton_reference_reset = QtWidgets.QToolButton(ref_row)
+        self.toolButton_reference_reset.setText("Reset")
+        self.toolButton_reference_reset.setToolTip("Reset reference-mode parameters")
+        ref_layout.addWidget(self.toolButton_reference_reset)
+
+        self.gridLayout_2.addWidget(ref_row, 2, 1)
+
+        self.reference_parameter_widget = QtWidgets.QWidget(self)
+        self.reference_parameter_layout = QtWidgets.QGridLayout(self.reference_parameter_widget)
+        self.reference_parameter_layout.setContentsMargins(0, 0, 0, 0)
+        self.reference_parameter_layout.setHorizontalSpacing(4)
+        self.reference_parameter_layout.setVerticalSpacing(1)
+        self.reference_parameter_widget.hide()
+        self.verticalLayout.insertWidget(1, self.reference_parameter_widget)
+
+        self.set_reference_modes([])
+
+    @property
+    def reference_mode(self) -> str:
+        """Current reference mode key.
+
+        Returns
+        -------
+        str
+            Selected mode key or ``"raw"``.
+        """
+        data = self.comboBox_reference.currentData()
+        return str(data) if data else "raw"
+
+    @reference_mode.setter
+    def reference_mode(self, key: str) -> None:
+        """Select a reference mode by key.
+
+        Parameters
+        ----------
+        key : str
+            Mode key.
+        """
+        key = str(key or "raw")
+        idx = self.comboBox_reference.findData(key)
+        if idx < 0:
+            self._pending_reference_mode = key
+            idx = self.comboBox_reference.findData("raw")
+        if idx >= 0:
+            self.comboBox_reference.setCurrentIndex(idx)
+            self._rebuild_reference_parameter_controls(self._pending_reference_parameters)
+
+    @property
+    def reference_parameters(self) -> typing.Dict[str, typing.Any]:
+        """Return current reference-mode parameter values.
+
+        Returns
+        -------
+        dict
+            Parameter values keyed by parameter id.
+        """
+        values = {}
+        for key, widget in self._reference_parameter_widgets.items():
+            spec = self._reference_parameter_specs.get(key)
+            if spec is None:
+                continue
+            values[key] = self._reference_widget_value(widget, spec)
+        return values
+
+    @reference_parameters.setter
+    def reference_parameters(self, values: typing.Mapping[str, typing.Any]) -> None:
+        """Set reference parameter widgets from a mapping.
+
+        Parameters
+        ----------
+        values : mapping
+            Parameter values keyed by parameter id.
+        """
+        if not isinstance(values, dict):
+            return
+        if not self._reference_parameter_widgets:
+            self._pending_reference_parameters = dict(values)
+            return
+        for key, value in values.items():
+            widget = self._reference_parameter_widgets.get(key)
+            spec = self._reference_parameter_specs.get(key)
+            if widget is not None and spec is not None:
+                self._set_reference_widget_value(widget, spec, value)
+
+    def selected_reference_mode(self) -> plot_transforms.PlotReferenceMode | None:
+        """Return the selected reference mode object.
+
+        Returns
+        -------
+        PlotReferenceMode or None
+            Selected mode, or None for raw plotting.
+        """
+        key = self.reference_mode
+        return self._reference_modes.get(key)
+
+    def set_reference_modes(
+            self,
+            modes: typing.Iterable[plot_transforms.PlotReferenceMode]
+    ) -> None:
+        """Populate the reference-mode selector.
+
+        Parameters
+        ----------
+        modes : iterable
+            Available reference modes.
+        """
+        old_mode = self._pending_reference_mode or self.reference_mode
+        old_parameters = dict(self._pending_reference_parameters)
+        old_parameters.update(self.reference_parameters)
+
+        valid_modes = OrderedDict()
+        for mode in modes or []:
+            if isinstance(mode, plot_transforms.PlotReferenceMode):
+                valid_modes[str(mode.key)] = mode
+
+        signature = tuple(
+            (key, mode.label, tuple((p.key, p.label, p.kind, p.default) for p in mode.parameters))
+            for key, mode in valid_modes.items()
+        )
+        if getattr(self, "_reference_mode_signature", None) == signature:
+            self._rebuild_reference_parameter_controls(old_parameters)
+            return
+
+        self._reference_mode_signature = signature
+        self._reference_modes = valid_modes
+
+        self.comboBox_reference.blockSignals(True)
+        try:
+            self.comboBox_reference.clear()
+            self.comboBox_reference.addItem("Raw", "raw")
+            for key, mode in valid_modes.items():
+                self.comboBox_reference.addItem(str(mode.label), key)
+            idx = self.comboBox_reference.findData(old_mode)
+            if idx < 0:
+                idx = self.comboBox_reference.findData("raw")
+            self.comboBox_reference.setCurrentIndex(max(0, idx))
+        finally:
+            self.comboBox_reference.blockSignals(False)
+
+        self._rebuild_reference_parameter_controls(old_parameters)
+
+    def _clear_reference_parameter_controls(self) -> None:
+        """Remove all dynamic reference parameter controls."""
+        while self.reference_parameter_layout.count():
+            item = self.reference_parameter_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._reference_parameter_widgets = {}
+        self._reference_parameter_specs = {}
+
+    def _rebuild_reference_parameter_controls(
+            self,
+            values: typing.Mapping[str, typing.Any] | None = None
+    ) -> None:
+        """Recreate controls for the selected mode's parameter specs.
+
+        Parameters
+        ----------
+        values : mapping, optional
+            Values to preserve where possible.
+        """
+        values = dict(values or {})
+        self._clear_reference_parameter_controls()
+        mode = self.selected_reference_mode()
+        if mode is None or not mode.parameters:
+            self.reference_parameter_widget.hide()
+            return
+
+        for row, spec in enumerate(mode.parameters):
+            label = QtWidgets.QLabel(str(spec.label), self.reference_parameter_widget)
+            widget = self._make_reference_parameter_widget(spec)
+            self.reference_parameter_layout.addWidget(label, row, 0)
+            self.reference_parameter_layout.addWidget(widget, row, 1)
+            self._reference_parameter_widgets[spec.key] = widget
+            self._reference_parameter_specs[spec.key] = spec
+            self._set_reference_widget_value(widget, spec, values.get(spec.key, spec.default))
+
+        self.reference_parameter_widget.show()
+        self._pending_reference_mode = None
+        self._pending_reference_parameters = {}
+
+    def _make_reference_parameter_widget(
+            self,
+            spec: plot_transforms.PlotReferenceParameter
+    ) -> QtWidgets.QWidget:
+        """Create a Qt widget for a reference parameter.
+
+        Parameters
+        ----------
+        spec : PlotReferenceParameter
+            Parameter declaration.
+
+        Returns
+        -------
+        QWidget
+            New editor widget.
+        """
+        kind = str(spec.kind).lower()
+        if kind == "bool":
+            widget = QtWidgets.QCheckBox(self.reference_parameter_widget)
+            widget.stateChanged.connect(self.SetReference)
+            return widget
+        if kind == "int":
+            widget = QtWidgets.QSpinBox(self.reference_parameter_widget)
+            widget.setRange(
+                int(spec.minimum if spec.minimum is not None else -999999999),
+                int(spec.maximum if spec.maximum is not None else 999999999),
+            )
+            widget.setSingleStep(int(spec.step if spec.step is not None else 1))
+            widget.valueChanged.connect(self.SetReference)
+            return widget
+        if kind == "choice":
+            widget = QtWidgets.QComboBox(self.reference_parameter_widget)
+            for choice in spec.choices:
+                if isinstance(choice, (tuple, list)) and len(choice) >= 2:
+                    widget.addItem(str(choice[1]), choice[0])
+                else:
+                    widget.addItem(str(choice), choice)
+            widget.currentIndexChanged.connect(self.SetReference)
+            return widget
+
+        widget = QtWidgets.QDoubleSpinBox(self.reference_parameter_widget)
+        widget.setRange(
+            float(spec.minimum if spec.minimum is not None else -999999999.0),
+            float(spec.maximum if spec.maximum is not None else 999999999.0),
+        )
+        widget.setDecimals(6)
+        widget.setSingleStep(float(spec.step if spec.step is not None else 0.1))
+        widget.valueChanged.connect(self.SetReference)
+        return widget
+
+    def _reference_widget_value(
+            self,
+            widget: QtWidgets.QWidget,
+            spec: plot_transforms.PlotReferenceParameter
+    ) -> typing.Any:
+        """Return a reference parameter value from a widget.
+
+        Parameters
+        ----------
+        widget : QWidget
+            Editor widget.
+        spec : PlotReferenceParameter
+            Parameter declaration.
+
+        Returns
+        -------
+        object
+            Current widget value.
+        """
+        kind = str(spec.kind).lower()
+        if kind == "bool":
+            return bool(widget.isChecked())
+        if kind == "choice":
+            return widget.currentData()
+        if kind == "int":
+            return int(widget.value())
+        return float(widget.value())
+
+    def _set_reference_widget_value(
+            self,
+            widget: QtWidgets.QWidget,
+            spec: plot_transforms.PlotReferenceParameter,
+            value: typing.Any
+    ) -> None:
+        """Set a reference parameter widget value.
+
+        Parameters
+        ----------
+        widget : QWidget
+            Editor widget.
+        spec : PlotReferenceParameter
+            Parameter declaration.
+        value : object
+            New value.
+        """
+        widget.blockSignals(True)
+        try:
+            kind = str(spec.kind).lower()
+            if kind == "bool":
+                widget.setChecked(bool(value))
+            elif kind == "choice":
+                idx = widget.findData(value)
+                if idx < 0:
+                    idx = widget.findText(str(value))
+                if idx >= 0:
+                    widget.setCurrentIndex(idx)
+            elif kind == "int":
+                widget.setValue(int(value))
+            else:
+                widget.setValue(float(value))
+        except Exception:
+            pass
+        finally:
+            widget.blockSignals(False)
+
+    def reset_reference_parameters(self) -> None:
+        """Reset selected reference-mode parameters to their defaults."""
+        mode = self.selected_reference_mode()
+        if mode is None:
+            return
+        for spec in mode.parameters:
+            widget = self._reference_parameter_widgets.get(spec.key)
+            if widget is not None:
+                self._set_reference_widget_value(widget, spec, spec.default)
+        self.SetReference()
 
     @property
     def plot_ftt(self) -> bool:
-        return bool(self.checkBox_plot_ftt.isChecked())
+        widget = getattr(self, "checkBox_plot_ftt", None)
+        return bool(widget.isChecked()) if widget is not None else False
 
     @plot_ftt.setter
     def plot_ftt(self, v: bool) -> None:
+        widget = getattr(self, "checkBox_plot_ftt", None)
+        if widget is None:
+            return
         if v:
-            self.checkBox_plot_ftt.setCheckState(2)
+            widget.setCheckState(2)
         else:
-            self.checkBox_plot_ftt.setCheckState(0)
+            widget.setCheckState(0)
 
     @property
     def data_logy(self) -> str:
@@ -223,20 +561,6 @@ class LinePlotControl(QtWidgets.QWidget):
     @property
     def data_is_log_y(self) -> bool:
         return self.data_logy == 'log'
-
-    @property
-    def use_reference(self) -> bool:
-        """
-        If true use a reference curve for plotting
-        """
-        return bool(self.checkBox_5.isChecked())
-
-    @use_reference.setter
-    def use_reference(self, v: bool):
-        if v is True:
-            self.checkBox_5.setCheckState(2)
-        else:
-            self.checkBox_5.setCheckState(0)
 
     @property
     def ymin(self) -> float:
@@ -323,6 +647,103 @@ class LinePlotControl(QtWidgets.QWidget):
         else:
             self.checkBox_9.setCheckState(0)
 
+    def get_state(self) -> dict:
+        """Return project-serializable line plot controller state.
+
+        Returns
+        -------
+        dict
+            State of the visible plot controls and curve checkboxes.
+        """
+        curve_visibility = {}
+        for i in range(self.treeWidget.topLevelItemCount()):
+            item = self.treeWidget.topLevelItem(i)
+            curve_visibility[item.text(2)] = bool(item.checkState(1))
+        return {
+            "data_logy": self.data_logy,
+            "scale_x": self.scale_x,
+            "res_logy": self.res_logy,
+            "reference_mode": self.reference_mode,
+            "reference_parameters": self.reference_parameters,
+            "is_density": self.is_density,
+            "display_group": self.display_group,
+            "plot_ftt": self.plot_ftt,
+            "xmin_enabled": bool(self.checkBox_4.isChecked()),
+            "xmax_enabled": bool(self.checkBox_6.isChecked()),
+            "ymin_enabled": bool(self.checkBox_7.isChecked()),
+            "ymax_enabled": bool(self.checkBox_8.isChecked()),
+            "xmin": float(self.doubleSpinBox.value()),
+            "xmax": float(self.doubleSpinBox_3.value()),
+            "ymin": float(self.doubleSpinBox_2.value()),
+            "ymax": float(self.doubleSpinBox_4.value()),
+            "x_shift": float(self.x_shift),
+            "y_shift": float(self.y_shift),
+            "curve_visibility": curve_visibility,
+        }
+
+    def set_state(self, state: dict) -> None:
+        """Restore line plot controller state from a project.
+
+        Parameters
+        ----------
+        state : dict
+            State produced by :meth:`get_state`.
+        """
+        if not isinstance(state, dict):
+            return
+        self.treeWidget.blockSignals(True)
+        try:
+            if "data_logy" in state:
+                self.data_logy = str(state["data_logy"])
+            if "scale_x" in state:
+                self.scale_x = str(state["scale_x"])
+            if "res_logy" in state:
+                self.res_logy = str(state["res_logy"])
+            for key, widget in (
+                ("xmin_enabled", self.checkBox_4),
+                ("xmax_enabled", self.checkBox_6),
+                ("ymin_enabled", self.checkBox_7),
+                ("ymax_enabled", self.checkBox_8),
+            ):
+                if key in state:
+                    widget.setChecked(bool(state[key]))
+            for key, widget in (
+                ("xmin", self.doubleSpinBox),
+                ("xmax", self.doubleSpinBox_3),
+                ("ymin", self.doubleSpinBox_2),
+                ("ymax", self.doubleSpinBox_4),
+                ("x_shift", self.doubleSpinBox_6),
+                ("y_shift", self.doubleSpinBox_5),
+            ):
+                if key in state:
+                    try:
+                        widget.setValue(float(state[key]))
+                    except Exception:
+                        pass
+            if "reference_mode" in state:
+                self.reference_mode = str(state["reference_mode"])
+            if "reference_parameters" in state:
+                self.reference_parameters = state.get("reference_parameters", {})
+            if "is_density" in state:
+                self.is_density = bool(state["is_density"])
+            if "display_group" in state:
+                self.display_group = bool(state["display_group"])
+            if "plot_ftt" in state:
+                self.plot_ftt = bool(state["plot_ftt"])
+            visibility = state.get("curve_visibility")
+            if isinstance(visibility, dict):
+                for i in range(self.treeWidget.topLevelItemCount()):
+                    item = self.treeWidget.topLevelItem(i)
+                    key = item.text(2)
+                    if key in visibility:
+                        item.setCheckState(1, QtCore.Qt.Checked if visibility[key] else QtCore.Qt.Unchecked)
+        finally:
+            self.treeWidget.blockSignals(False)
+        try:
+            self.parent.update()
+        except Exception:
+            pass
+
     def SetReference(self):
         self.parent.update()
 
@@ -369,7 +790,6 @@ class LinePlot(plotbase.Plot):
             scale_x: str = 'lin',
             d_scaley: str = 'lin',
             r_scaley: str = 'lin',
-            reference_curve: bool = False,
             x_label: str = 'x',
             y_label: str = 'y',
             curve_styles: typing.Dict | None = None,
@@ -380,6 +800,7 @@ class LinePlot(plotbase.Plot):
         self.ub_i: int = 0
 
         self.curve_styles = curve_styles or {}
+        self._base_y_label = y_label
 
         kwargs['fit'] = fit
         super().__init__(**kwargs)
@@ -387,8 +808,7 @@ class LinePlot(plotbase.Plot):
                 parent=self,
                 scale_x=scale_x,
                 d_scaley=d_scaley,
-                r_scaley=r_scaley,
-                reference_curve=reference_curve
+                r_scaley=r_scaley
         )
 
         # If the plot is associated with a FitGroup containing multiple local fits,
@@ -402,8 +822,8 @@ class LinePlot(plotbase.Plot):
         p1 = pg.PlotWidget()
         p2 = pg.PlotWidget()
         p3 = pg.PlotWidget()
-        p1.setXLink(p3)
-        p2.setXLink(p3)
+        p1.getViewBox().setXLink(p3.getViewBox())
+        p2.getViewBox().setXLink(p3.getViewBox())
 
         plots = {
             'top_left_plot': p1.getPlotItem(),
@@ -655,24 +1075,46 @@ class LinePlot(plotbase.Plot):
         except Exception:
             pass
 
-    def _update_reference_checkbox(self):
+    def _reference_modes_for_model(
+            self,
+            model
+    ) -> typing.List[plot_transforms.PlotReferenceMode]:
+        """Return model-provided plot reference modes.
+
+        Parameters
+        ----------
+        model : object
+            Model object to query.
+
+        Returns
+        -------
+        list
+            Valid reference modes.
         """
-        Check if the model has a reference attribute and update the checkbox state accordingly.
-        If the model doesn't have a reference attribute, disable the checkbox.
-        """
-        has_reference = False
+        getter = getattr(model, "get_plot_reference_modes", None)
+        if not callable(getter):
+            return []
         try:
-            # Check if model has reference attribute
-            if hasattr(self.fit.model, 'reference'):
-                has_reference = True
-        except Exception:
-            pass
-            
-        # Update the checkbox state
-        self.plot_controller.checkBox_5.setEnabled(has_reference)
-        if not has_reference and self.plot_controller.use_reference:
-            # If reference is not available but checkbox is checked, uncheck it
-            self.plot_controller.use_reference = False
+            modes = getter()
+        except Exception as exc:
+            cs.logging.warning("Could not query plot reference modes: %s", exc)
+            return []
+        return [
+            mode for mode in modes or []
+            if isinstance(mode, plot_transforms.PlotReferenceMode)
+        ]
+
+    def _update_reference_modes(self, current_fit) -> None:
+        """Refresh the reference-mode selector for the active model.
+
+        Parameters
+        ----------
+        current_fit : cs.core.fitting.fit.Fit
+            Fit whose model controls the available modes.
+        """
+        model = getattr(current_fit, "model", None)
+        modes = self._reference_modes_for_model(model)
+        self.plot_controller.set_reference_modes(modes)
 
     def _metrics_text_alive(self) -> bool:
         """Return True when the overlay TextItem and backing Qt objects are alive."""
@@ -735,7 +1177,35 @@ class LinePlot(plotbase.Plot):
             f"chi2r={_fmt_float(getattr(current_fit, 'chi2r', None), nd=4)}",
             f"DW={_fmt_float(getattr(current_fit, 'durbin_watson', None), nd=4)}",
         ])
-            
+
+    @staticmethod
+    def _axis_range(min_value, max_value, values, log_mode: bool = False):
+        """Return a finite pyqtgraph axis range, or ``None`` if invalid."""
+        if min_value is None and max_value is None:
+            return None
+
+        try:
+            values = np.asarray(values)
+            if values.size == 0:
+                return None
+            a_min = values[0] if min_value is None else min_value
+            a_max = values[-1] if max_value is None else max_value
+            a_min = float(a_min)
+            a_max = float(a_max)
+        except (TypeError, ValueError, IndexError):
+            return None
+
+        if not np.isfinite(a_min) or not np.isfinite(a_max):
+            return None
+        if log_mode:
+            if a_min <= 0.0 or a_max <= 0.0:
+                return None
+            a_min = np.log10(a_min)
+            a_max = np.log10(a_max)
+        if a_min > a_max:
+            return None
+        return [a_min, a_max]
+
     def update(self, only_fit_range: bool = False, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
 
@@ -750,9 +1220,6 @@ class LinePlot(plotbase.Plot):
         data_log_y = self.plot_controller.data_is_log_y
         data_log_x = self.plot_controller.data_is_log_x
         director = self.plot_controller.director
-        
-        # Check if model has reference attribute and update checkbox state
-        self._update_reference_checkbox()
 
         curves = fit.get_curves()
         data = curves['data']
@@ -770,9 +1237,15 @@ class LinePlot(plotbase.Plot):
         else:
             current_fit = self.fit
             current_data = data
+
+        self._reference_y_label_override = None
+        self._update_reference_modes(current_fit)
             
+        x_last = max(0, len(current_data.x) - 1)
+        xmin_i = int(np.clip(getattr(current_fit, "xmin", 0), 0, x_last))
+        xmax_i = int(np.clip(getattr(current_fit, "xmax", x_last), 0, x_last))
         lb_min, ub_max = current_data.x[0], current_data.x[-1]
-        lb, ub = current_data.x[current_fit.xmin], current_data.x[current_fit.xmax]
+        lb, ub = current_data.x[xmin_i], current_data.x[xmax_i]
 
         lb_min += x_shift
         ub_max += x_shift
@@ -805,33 +1278,25 @@ class LinePlot(plotbase.Plot):
         self.plots['main_plot'].setLogMode(x=data_log_x, y=data_log_y)
         self.plots['top_left_plot'].setLogMode(x=data_log_x)
         self.plots['top_right_plot'].setLogMode(x=data_log_x)
+        self.plots['main_plot'].setLabel(
+            'left',
+            self._reference_y_label_override or self._base_y_label
+        )
 
         # Set manual scale
-        xRange, yRange = None, None
-        a_min = self.plot_controller.xmin
-        a_max = self.plot_controller.xmax
-        c = data.x
-        lm = data_log_x
-        if a_min or a_max:
-            a_min = c[0] if not a_min else a_min
-            a_max = c[-1] if not a_max else a_max
-            if lm:
-                a_min = np.log10(a_min)
-                a_max = np.log10(a_max)
-            xRange = [a_min, a_max]
-
-        a_min = self.plot_controller.ymin
-        a_max = self.plot_controller.ymax
-        c = data.y
-        lm = data_log_y
-        if a_min or a_max:
-            a_min = c[0] if not a_min else a_min
-            a_max = c[-1] if not a_max else a_max
-            if lm:
-                a_min = np.log10(a_min)
-                a_max = np.log10(a_max)
-            yRange = [a_min, a_max]
-        if xRange or yRange:
+        xRange = self._axis_range(
+            self.plot_controller.xmin,
+            self.plot_controller.xmax,
+            data.x,
+            data_log_x,
+        )
+        yRange = self._axis_range(
+            self.plot_controller.ymin,
+            self.plot_controller.ymax,
+            data.y,
+            data_log_y,
+        )
+        if xRange is not None or yRange is not None:
             self.plots['main_plot'].setRange(xRange=xRange, yRange=yRange)
 
         if self._metrics_text_alive() and not bool(getattr(cs, "_suspend_plot_metrics_overlay", False)):
@@ -915,6 +1380,117 @@ class LinePlot(plotbase.Plot):
             "</span></div>"
         )
 
+    def _selected_reference_mode_for_model(
+            self,
+            model
+    ) -> plot_transforms.PlotReferenceMode | None:
+        """Return the selected reference mode for ``model``.
+
+        Parameters
+        ----------
+        model : object
+            Model that may provide reference modes.
+
+        Returns
+        -------
+        PlotReferenceMode or None
+            Selected mode for this model, or None for raw plotting.
+        """
+        key = self.plot_controller.reference_mode
+        if key == "raw":
+            return None
+        for mode in self._reference_modes_for_model(model):
+            if mode.key == key:
+                return mode
+        return None
+
+    def _apply_reference_mode_to_curve(
+            self,
+            fit,
+            model,
+            curve_key: str,
+            x: np.ndarray,
+            y: np.ndarray,
+            curves: typing.Mapping[str, typing.Any],
+            group_fits: typing.Sequence | None = None,
+            group_index: int | None = None,
+            selected_group_index: int | None = None
+    ) -> plot_transforms.PlotReferenceResult:
+        """Apply the selected reference mode to one curve.
+
+        Parameters
+        ----------
+        fit : object
+            Fit owning the curve.
+        model : object
+            Model attached to ``fit``.
+        curve_key : str
+            Curve name being plotted.
+        x : numpy.ndarray
+            Curve x-values.
+        y : numpy.ndarray
+            Curve y-values.
+        curves : mapping
+            Curves available for ``fit``.
+        group_fits : sequence, optional
+            Grouped fits.
+        group_index : int, optional
+            Index of ``fit`` in ``group_fits``.
+        selected_group_index : int, optional
+            Active grouped fit index.
+
+        Returns
+        -------
+        PlotReferenceResult
+            Transformed curve result.
+        """
+        mode = self._selected_reference_mode_for_model(model)
+        if mode is None:
+            return plot_transforms.PlotReferenceResult(x=x, y=y)
+
+        context = plot_transforms.PlotReferenceContext(
+            fit=fit,
+            model=model,
+            curve_key=curve_key,
+            x=x,
+            y=y,
+            curves=curves,
+            group_fits=tuple(group_fits or ()),
+            group_index=group_index,
+            selected_group_index=selected_group_index,
+            parameters=self.plot_controller.reference_parameters,
+        )
+        if not mode.applies(context):
+            return plot_transforms.PlotReferenceResult(x=x, y=y)
+
+        try:
+            result = mode.callback(context)
+        except Exception as exc:
+            cs.logging.warning("Plot reference mode '%s' failed for %s: %s", mode.key, curve_key, exc)
+            return plot_transforms.PlotReferenceResult(x=x, y=y)
+
+        if result is None:
+            return plot_transforms.PlotReferenceResult(x=x, y=y)
+        if isinstance(result, plot_transforms.PlotReferenceResult):
+            self._reference_y_label_override = result.y_label or mode.y_label or self._reference_y_label_override
+            return result
+        if isinstance(result, tuple) and len(result) >= 2:
+            transformed = plot_transforms.PlotReferenceResult(
+                x=np.asarray(result[0], dtype=float),
+                y=np.asarray(result[1], dtype=float),
+            )
+        else:
+            try:
+                transformed = plot_transforms.PlotReferenceResult(
+                    x=x,
+                    y=np.asarray(result, dtype=float),
+                )
+            except Exception:
+                transformed = plot_transforms.PlotReferenceResult(x=x, y=y)
+        if mode.y_label:
+            self._reference_y_label_override = mode.y_label
+        return transformed
+
     def _plot_single_fit_curves(self, fit, curves, data_log_x, data_log_y, director, x_shift, y_shift):
         """Plot curves for a single fit (original behavior)"""
         curves_keys = list(curves.keys())[::-1]
@@ -925,27 +1501,33 @@ class LinePlot(plotbase.Plot):
             y = np.copy(curve.y)
             x = np.copy(curve.x)
 
+            line: pg.PlotDataItem = self.lines[curve_key]
+
+            if curve_settings.get('allow_reference_transform', False):
+                result = self._apply_reference_mode_to_curve(
+                    fit=fit,
+                    model=getattr(fit, "model", None),
+                    curve_key=curve_key,
+                    x=x,
+                    y=y,
+                    curves=curves,
+                )
+                if not result.visible:
+                    line.setData(x=[], y=[])
+                    line.hide()
+                    continue
+                x = np.asarray(result.x, dtype=float)
+                y = np.asarray(result.y, dtype=float)
+
             if curve_settings['allow_shift']:
                 y += y_shift
                 x += x_shift
 
-            # Reference-function
-            if self.plot_controller.use_reference and curve_settings['allow_reference_curve']:
-                try:
-                    reference = fit.model.reference
-                    if reference is None:
-                        reference = np.ones_like(y)
-                        cs.logging.warning("No reference curve provided by the model.")
-                    y /= reference
-                except AttributeError:
-                    cs.logging.warning("Model does not have a reference attribute.")
-
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)
 
-            line: pg.PlotDataItem = self.lines[curve_key]
             # Base data for plotting: either full curve or fit-range only
-            if curve_settings['plot_only_region']:
+            if curve_settings['plot_only_region'] and len(x) == len(curve.x):
                 x_plot = x[fit.xmin:fit.xmax]
                 y_plot = y[fit.xmin:fit.xmax]
             else:
@@ -994,20 +1576,29 @@ class LinePlot(plotbase.Plot):
             y = np.copy(curve.y)
             x = np.copy(curve.x)
 
+            if curve_settings.get('allow_reference_transform', False):
+                result = self._apply_reference_mode_to_curve(
+                    fit=group_fit,
+                    model=getattr(group_fit, "model", None),
+                    curve_key=curve_key,
+                    x=x,
+                    y=y,
+                    curves=group_curves,
+                    group_fits=grouped_fits,
+                    group_index=grouped_fits.index(group_fit),
+                    selected_group_index=current_fit_index,
+                )
+                if not result.visible:
+                    if line_name in self.lines:
+                        self.lines[line_name].setData(x=[], y=[])
+                        self.lines[line_name].hide()
+                    continue
+                x = np.asarray(result.x, dtype=float)
+                y = np.asarray(result.y, dtype=float)
+
             if curve_settings['allow_shift']:
                 y += y_shift
                 x += x_shift
-
-            # Reference-function
-            if self.plot_controller.use_reference and curve_settings['allow_reference_curve']:
-                try:
-                    reference = group_fit.model.reference
-                    if reference is None:
-                        reference = np.ones_like(y)
-                        cs.logging.warning("No reference curve provided by the model.")
-                    y /= reference
-                except AttributeError:
-                    cs.logging.warning("Model does not have a reference attribute.")
 
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)
@@ -1054,7 +1645,7 @@ class LinePlot(plotbase.Plot):
                 line = self.lines[line_name]
 
             # Base data for plotting: either full curve or fit-range only
-            if curve_settings['plot_only_region']:
+            if curve_settings['plot_only_region'] and len(x) == len(curve.x):
                 x_plot = x[group_fit.xmin:group_fit.xmax]
                 y_plot = y[group_fit.xmin:group_fit.xmax]
             else:

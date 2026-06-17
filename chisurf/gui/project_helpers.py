@@ -116,23 +116,50 @@ def clear_recent_projects(window) -> None:
     refresh_recent_projects_menu(window)
 
 
-def open_recent_project(window, project_dir: str) -> None:
+def open_recent_project(window, project_path: str) -> None:
     try:
-        path = pathlib.Path(project_dir)
+        path = pathlib.Path(project_path)
     except Exception:
         return
 
     try:
-        project_file = path / "project.json"
-        if not project_file.exists():
+        if path.is_dir():
+            csp_path = path / "project.csp"
+            if not csp_path.is_file():
+                QtWidgets.QMessageBox.warning(
+                    window,
+                    "Invalid Project",
+                    "The selected folder does not contain a project archive (project.csp).",
+                )
+                try:
+                    current = list(getattr(window, "_recent_projects", []) or [])
+                    current = [p for p in current if os.path.normpath(p) != os.path.normpath(project_path)]
+                    set_recent_projects(window, current)
+                    store_recent_projects(current)
+                    refresh_recent_projects_menu(window)
+                except Exception:
+                    pass
+                return
+            path = csp_path
+        elif path.suffix.lower() != ".csp":
             QtWidgets.QMessageBox.warning(
                 window,
                 "Invalid Project",
-                "The selected folder does not contain a valid project file (project.json).",
+                "Please select a ChiSurf project archive (*.csp).",
             )
             try:
                 current = list(getattr(window, "_recent_projects", []) or [])
-                current = [p for p in current if os.path.normpath(p) != os.path.normpath(project_dir)]
+                current = [p for p in current if os.path.normpath(p) != os.path.normpath(project_path)]
+                set_recent_projects(window, current)
+                store_recent_projects(current)
+                refresh_recent_projects_menu(window)
+            except Exception:
+                pass
+            return
+        if not path.is_file():
+            try:
+                current = list(getattr(window, "_recent_projects", []) or [])
+                current = [p for p in current if os.path.normpath(p) != os.path.normpath(project_path)]
                 set_recent_projects(window, current)
                 store_recent_projects(current)
                 refresh_recent_projects_menu(window)
@@ -143,7 +170,7 @@ def open_recent_project(window, project_dir: str) -> None:
         return
 
     try:
-        cs.working_path = path
+        cs.working_path = path.parent
     except Exception:
         pass
 
@@ -160,7 +187,7 @@ def open_recent_project(window, project_dir: str) -> None:
         return
 
     try:
-        window._current_project_dir = path
+        window._current_project_path = path
     except Exception:
         pass
 

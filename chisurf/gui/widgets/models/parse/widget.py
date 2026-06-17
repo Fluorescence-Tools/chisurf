@@ -1,29 +1,34 @@
 from __future__ import annotations
 
+import importlib
+import io as python_io
+import os
 import pathlib
 import re
-import os
 import tempfile
-import io as python_io
-import importlib
-from chisurf import typing
 
-import yaml
 import matplotlib.pyplot as plt
+import yaml
 from matplotlib import rcParams
-from qtpy import QtWidgets, QtCore, QtGui
-
+from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
-import chisurf.macros.model_parse as model_parse
 import chisurf.core.decorators
 import chisurf.core.fio as io
 import chisurf.core.fitting
-import chisurf.gui.decorators
 import chisurf.core.models
 import chisurf.core.settings
+import chisurf.gui.decorators
 import chisurf.gui.widgets
-from chisurf.gui.widgets.models.parse.latex import convert_python_expression_to_latex
+import chisurf.macros.model_parse as model_parse
+from chisurf import typing
+from chisurf.core.models.parse import ParseModel
+from chisurf.gui.widgets.models.model_widget import ModelWidget
+from chisurf.gui.widgets.models.parse.latex import (
+    convert_python_expression_to_latex,
+    sanitize_latex_for_mathtext,
+)
+
 
 class EquationDialog(QtWidgets.QDialog):
     """A dialog that displays a formatted equation."""
@@ -69,9 +74,6 @@ class EquationDialog(QtWidgets.QDialog):
         # Adjust the size of the dialog to fit the content
         # This ensures that the dialog is properly sized when it's first shown
         self.adjustSize()
-
-from chisurf.gui.widgets.models.model_widget import ModelWidget
-from chisurf.core.models.parse import ParseModel
 
 
 class ParseFormulaWidget(QtWidgets.QWidget):
@@ -362,6 +364,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # be in TeX format from the AST-based converter
 
         # Create a formatted equation
+        equation = sanitize_latex_for_mathtext(equation)
         math_equation = f"${equation}$"
 
         # Set up matplotlib to use built-in mathtext instead of full LaTeX
@@ -384,7 +387,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         fig.patch.set_alpha(1.0)
 
         # Add the equation as text with black color
-        plt.text(0.5, 0.5, math_equation, 
+        plt.text(0.5, 0.5, math_equation,
                  fontsize=24 if large else 12,  # Larger font size for the dialog
                  horizontalalignment='center', verticalalignment='center',
                  color='black')  # Explicitly set text color to black
@@ -532,7 +535,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             self.equationDialog.close()
 
     def _on_dialog_closed(self):
-        """Called when the equation dialog is closed."""
+        """Set the dialog reference to ``None`` when the dialog is closed."""
         # Set the dialog to None so it can be garbage collected
         self.equationDialog = None
 
@@ -940,6 +943,10 @@ class ParseModelWidget(ParseModel, ModelWidget):
         ----------
         fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
+        *args
+            Positional arguments forwarded to ``ParseModel``.
+        **kwargs
+            Keyword arguments forwarded to ``ParseModel``.
         """
         QtWidgets.QWidget.__init__(self)
         ParseModel.__init__(self, fit, *args, **kwargs)

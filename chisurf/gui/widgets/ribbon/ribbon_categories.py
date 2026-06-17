@@ -625,4 +625,11 @@ class CategoryMethodsMixin:
                 pass
             panel.addMediumButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
 
+        menu_tools = getattr(self.main_window, 'menuTools', None)
+        if menu_tools is not None:
+            for action in menu_tools.actions():
+                if action is None or action.isSeparator() or not action.isEnabled():
+                    continue
+                panel.addMediumButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
+
         return category

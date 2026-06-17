@@ -3,11 +3,13 @@ from __future__ import annotations
 import pathlib
 from typing import TYPE_CHECKING
 
+import numpy as np
 import chisurf as cs
 from chisurf import typing
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.plots
 import chisurf.core.curve
+import chisurf.core.plot_transforms as plot_transforms
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.models.tcspc.parse.tcspc_parse import ParseDecayModel
@@ -49,6 +51,120 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         d = super().get_curves(copy_curves)
         d['IRF'] = self.convolve.irf
         return d
+
+    def _tcspc_reference_window(
+            self,
+            context: plot_transforms.PlotReferenceContext
+    ) -> np.ndarray:
+        """Return the y-window used for photon normalization.
+
+        Parameters
+        ----------
+        context : PlotReferenceContext
+            Current plot-transform context.
+
+        Returns
+        -------
+        numpy.ndarray
+            Finite y-values used for the denominator.
+        """
+        y = np.asarray(context.y, dtype=float)
+        if bool(context.parameters.get("fit_range_only", False)):
+            try:
+                data_x = np.asarray(getattr(getattr(context.fit, "data", None), "x", []), dtype=float)
+                if y.size == data_x.size:
+                    xmin = int(getattr(context.fit, "xmin", 0))
+                    xmax = int(getattr(context.fit, "xmax", y.size))
+                    y = y[max(0, xmin):min(y.size, xmax)]
+            except Exception:
+                pass
+        return y[np.isfinite(y)]
+
+    def _tcspc_total_photons_mode(
+            self,
+            context: plot_transforms.PlotReferenceContext
+    ) -> plot_transforms.PlotReferenceResult:
+        """Normalize TCSPC counts by total photons.
+
+        Parameters
+        ----------
+        context : PlotReferenceContext
+            Current plot-transform context.
+
+        Returns
+        -------
+        PlotReferenceResult
+            Photon-normalized curve.
+        """
+        denominator = float(np.nansum(self._tcspc_reference_window(context)))
+        if not np.isfinite(denominator) or denominator == 0.0:
+            raise ValueError("total photon count is zero")
+        return plot_transforms.PlotReferenceResult(
+            x=context.x,
+            y=np.asarray(context.y, dtype=float) / denominator,
+            y_label="counts / total photons",
+        )
+
+    def _tcspc_peak_photons_mode(
+            self,
+            context: plot_transforms.PlotReferenceContext
+    ) -> plot_transforms.PlotReferenceResult:
+        """Normalize TCSPC counts by peak photons.
+
+        Parameters
+        ----------
+        context : PlotReferenceContext
+            Current plot-transform context.
+
+        Returns
+        -------
+        PlotReferenceResult
+            Peak-normalized curve.
+        """
+        window = self._tcspc_reference_window(context)
+        if window.size == 0:
+            raise ValueError("peak photon count is unavailable")
+        denominator = float(np.nanmax(window))
+        if not np.isfinite(denominator) or denominator == 0.0:
+            raise ValueError("peak photon count is zero")
+        return plot_transforms.PlotReferenceResult(
+            x=context.x,
+            y=np.asarray(context.y, dtype=float) / denominator,
+            y_label="counts / peak photons",
+        )
+
+    def get_plot_reference_modes(self) -> typing.List[plot_transforms.PlotReferenceMode]:
+        """Return TCSPC parse-decay reference modes.
+
+        Returns
+        -------
+        list
+            Plot reference modes.
+        """
+        fit_range_param = plot_transforms.PlotReferenceParameter(
+            key="fit_range_only",
+            label="fit range",
+            kind="bool",
+            default=False,
+        )
+        return [
+            plot_transforms.PlotReferenceMode(
+                key="tcspc_total_photons",
+                label="Total photons",
+                callback=self._tcspc_total_photons_mode,
+                parameters=(fit_range_param,),
+                applies_to=("data", "model"),
+                y_label="counts / total photons",
+            ),
+            plot_transforms.PlotReferenceMode(
+                key="tcspc_peak_photons",
+                label="Peak photons",
+                callback=self._tcspc_peak_photons_mode,
+                parameters=(fit_range_param,),
+                applies_to=("data", "model"),
+                y_label="counts / peak photons",
+            ),
+        ]
 
     # TODO: needs docstring
     def __init__(

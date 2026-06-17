@@ -32,8 +32,8 @@ class ProjectMixin:
     def _clear_recent_projects(self: Main) -> None:
         project_helpers.clear_recent_projects(self)
 
-    def _open_recent_project(self: Main, project_dir: str) -> None:
-        project_helpers.open_recent_project(self, project_dir)
+    def _open_recent_project(self: Main, project_path: str) -> None:
+        project_helpers.open_recent_project(self, project_path)
 
     def _refresh_recent_projects_menu(self: Main) -> None:
         project_helpers.refresh_recent_projects_menu(self)
@@ -41,139 +41,215 @@ class ProjectMixin:
     def _init_recent_projects_menu(self: Main) -> None:
         project_helpers.init_recent_projects_menu(self)
 
-    def onSaveProject(self: Main, event: QtCore.QEvent = None):
-        current_dir = getattr(self, "_current_project_dir", None)
-        if isinstance(current_dir, pathlib.Path) and current_dir.is_dir():
-            try:
-                cs.working_path = current_dir.parent
-            except Exception:
-                pass
+    def onOpenProject(self: Main, event: QtCore.QEvent = None):
+        """Open a project archive selected from disk."""
+        from chisurf.gui import project_helpers
 
-            try:
-                cs.core.actions.dispatch(
-                    name="project.save",
-                    payload={
-                        "target_path": current_dir.parent.as_posix(),
-                        "project_name": current_dir.name,
-                    },
-                )
-            except Exception:
-                return
-
-            try:
-                if (current_dir / "project.json").exists():
-                    self.add_recent_project(current_dir)
-            except Exception:
-                pass
-            return
-
-        self.onSaveProjectAs(event=event)
-
-    def onSaveProjectAs(self: Main, event: QtCore.QEvent = None):
-        path, _ = _gw.get_directory()
-        if not path:
-            return
-
-        project_name, ok = QtWidgets.QInputDialog.getText(
-            self,
-            "Save Project As",
-            "Project name:",
-            QtWidgets.QLineEdit.Normal,
-            "chisurf_project"
+        working_path = pathlib.Path(cs.working_path) if getattr(cs, "working_path", None) else pathlib.Path.home()
+        path_str, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Open Project", working_path.as_posix(), "ChiSurf Project (*.csp)"
         )
-        if not ok or not project_name:
+        if not path_str:
+            return
+        project_helpers.open_recent_project(self, path_str)
+
+    @staticmethod
+    def _project_counts_from_payload(payload: typing.Any) -> tuple[int, int]:
+        data = payload.to_dict() if hasattr(payload, "to_dict") else payload
+        if not isinstance(data, dict):
+            return 0, 0
+        datasets = data.get("datasets", {})
+        fits = data.get("fits", [])
+        dataset_count = len(datasets) if hasattr(datasets, "__len__") else 0
+        fit_count = len(fits) if hasattr(fits, "__len__") else 0
+        return fit_count, dataset_count
+
+    def onSaveProject(self: Main, event: QtCore.QEvent = None):
+        """Save the current project to the MFDB database with versioning."""
+        from chisurf.plugins.core.project_browser.gui.tool import SaveProjectDialog
+
+        current_project_id = getattr(self, "_current_project_id", None)
+        current_version_id = getattr(self, "_current_project_version_id", None)
+        already_saved = bool(current_project_id or current_version_id)
+        dlg = SaveProjectDialog(
+            current_name=getattr(self, "_current_project_name", ""),
+            parent=self,
+            allow_name_edit=not already_saved,
+            title="Save New Version" if already_saved else "Save Project",
+        )
+        if dlg.exec() != QtWidgets.QDialog.Accepted:
+            return
+        project_name = dlg.project_name
+        visibility = dlg.visibility
+        notes = dlg.notes
+        if not project_name:
             return
 
-        project_dir = path / project_name
         try:
-            needs_confirm = False
-            if project_dir.exists():
-                needs_confirm = True
-            if (project_dir / "project.json").exists():
-                needs_confirm = True
-        except Exception:
-            needs_confirm = False
+            from chisurf.macros.core_fit import get_project_payload
+            from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
 
-        if needs_confirm:
-            try:
-                result = QtWidgets.QMessageBox.question(
-                    self,
-                    "Overwrite Project?",
-                    f"The project folder already exists:\n\n{project_dir}\n\nOverwrite it?",
-                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                    QtWidgets.QMessageBox.No,
-                )
-            except Exception:
-                result = QtWidgets.QMessageBox.No
+            payload = get_project_payload(project_name)
+            payload_data = payload.to_dict() if hasattr(payload, "to_dict") else payload
+            fit_count, dataset_count = self._project_counts_from_payload(payload_data)
+            datasets = getattr(cs, "imported_datasets", {}) or {}
+            if not dataset_count and isinstance(datasets, dict):
+                dataset_count = len(datasets)
+            client = ProjectBrowserClient(inprocess=True)
+
+            current_project_id = getattr(self, "_current_project_id", None)
+            current_version_id = getattr(self, "_current_project_version_id", None)
+
+            result = client.save_project(
+                project_name=project_name,
+                project_payload=payload_data,
+                project_id=current_project_id,
+                parent_version_id=current_version_id,
+                notes=notes,
+                visibility=visibility,
+                fit_count=fit_count,
+                dataset_count=dataset_count,
+            )
+            self._current_project_id = result.get("project_id")
+            self._current_project_version_id = result.get("version_id")
+            self._current_project_name = project_name
+            self._current_project_visibility = result.get("visibility", visibility)
+            self._current_project_path = None
+            cs.logging.info(
+                "Project saved to MFDB: %s v%s (id=%s, ver=%s)",
+                project_name, result.get("version_number"),
+                result.get("project_id"), result.get("version_id"),
+            )
+        except Exception as exc:
+            cs.logging.exception("Failed to save project to MFDB")
+            QtWidgets.QMessageBox.warning(self, "Save Failed", str(exc))
+
+    def onExportProject(self: Main, event: QtCore.QEvent = None):
+        """Export the current project as a .csp archive file."""
+        version_id = getattr(self, "_current_project_version_id", None)
+        if version_id:
+            result = QtWidgets.QMessageBox.question(
+                self, "Export Project",
+                "Export the current project version as .csp?\n\n"
+                "This creates a portable archive file that can be imported on another system.",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.Yes,
+            )
             if result != QtWidgets.QMessageBox.Yes:
                 return
+            working = cs.working_path if getattr(cs, "working_path", None) else pathlib.Path.home()
+            default_name = f"{getattr(self, '_current_project_name', 'project')}_v{getattr(self, '_current_project_version', 1)}.csp"
+            path_str, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Export Project as .csp",
+                (working / default_name).as_posix(),
+                "ChiSurf Project (*.csp)",
+            )
+            if not path_str:
+                return
+            try:
+                from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+                client = ProjectBrowserClient(inprocess=True)
+                client.export_csp(version_id=version_id, target_path=path_str)
+                self.add_recent_project(pathlib.Path(path_str))
+            except Exception as exc:
+                cs.logging.exception("Export failed")
+                QtWidgets.QMessageBox.warning(self, "Export Failed", str(exc))
+            return
 
+        working = cs.working_path if getattr(cs, "working_path", None) else pathlib.Path.home()
+        default_path = working / "chisurf_project.csp"
+        path_str, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export Project", default_path.as_posix(), "ChiSurf Project (*.csp)",
+        )
+        if not path_str:
+            return
+        project_path = pathlib.Path(path_str)
+        if project_path.suffix.lower() != ".csp":
+            project_path = project_path.with_suffix(".csp")
+        if project_path.exists():
+            result = QtWidgets.QMessageBox.question(
+                self, "Overwrite?",
+                f"Overwrite existing file?\n{project_path}",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No,
+            )
+            if result != QtWidgets.QMessageBox.Yes:
+                return
         try:
-            cs.working_path = path
+            cs.working_path = project_path.parent
         except Exception:
             pass
-
         try:
             cs.core.actions.dispatch(
                 name="project.save",
                 payload={
-                    "target_path": path.as_posix(),
-                    "project_name": project_name,
+                    "target_path": project_path.as_posix(),
+                    "project_name": project_path.stem,
                 },
             )
         except Exception:
             return
-        try:
-            if (project_dir / "project.json").exists():
-                self._current_project_dir = project_dir
-        except Exception:
-            pass
-
-        try:
-            self.add_recent_project(project_dir)
-        except Exception:
-            pass
+        self._current_project_path = project_path
+        self.add_recent_project(project_path)
 
     def onLoadProject(self: Main, event: QtCore.QEvent = None):
-        path, _ = _gw.get_directory(
-            caption="Select Project Folder"
+        """Open a project from the MFDB project browser."""
+        try:
+            self.load_and_show_plugin("chisurf.plugins.core.project_browser")
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(
+                self, "Open Project Failed",
+                f"Could not open projects from MFDB:\n{exc}"
+            )
+
+    def onImportProject(self: Main, event: QtCore.QEvent = None):
+        """Import a project archive file into the MFDB database."""
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Import Project", "", "ChiSurf Project (*.csp)",
         )
-        if not path:
+        if not file_path:
             return
-
-        project_file = path / "project.json"
-        if not project_file.exists():
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Invalid Project",
-                f"The selected folder does not contain a valid project file (project.json)."
-            )
-            return
-
-        cs.working_path = path
         try:
-            cs.core.actions.dispatch(
-                name="project.load",
-                payload={
-                    "project_path": path.as_posix(),
-                },
-            )
-        except Exception:
-            try:
-                cs.logging.exception(f"Project load failed: {path}")
-            except Exception:
-                pass
-            return
+            from chisurf.plugins.core.project_browser.gui.client import ProjectBrowserClient
+            client = ProjectBrowserClient(inprocess=True)
 
-        try:
-            self._current_project_dir = path
-        except Exception:
-            pass
+            preview = client.import_preview(file_path=file_path)
+            if not preview.get("ok", True):
+                QtWidgets.QMessageBox.warning(self, "Import Failed", preview.get("error", "Unknown error"))
+                return
+            collisions = preview.get("collisions", {})
+            has_collisions = any(v for v in collisions.values())
 
-        try:
-            self.add_recent_project(path)
-        except Exception:
-            pass
+            if has_collisions:
+                from chisurf.plugins.core.project_browser.gui.tool import CollisionDialog
+                dlg = CollisionDialog(collisions, preview.get("origin", {}), self)
+                if dlg.exec() != QtWidgets.QDialog.Accepted:
+                    return
+            else:
+                ok = QtWidgets.QMessageBox.question(
+                    self, "Confirm Import",
+                    f"No collisions detected.\n"
+                    f"Original: {preview.get('origin', {}).get('project_id', '?')}\n"
+                    f"Proceed?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                )
+                if ok != QtWidgets.QMessageBox.Yes:
+                    return
+
+            result = client.import_csp(file_path=file_path, resolve_collisions=has_collisions)
+            if result.get("ok"):
+                self._current_project_id = result.get("project_id")
+                self._current_project_version_id = result.get("version_id")
+                QtWidgets.QMessageBox.information(
+                    self, "Import Complete",
+                    f"Project imported.\n"
+                    f"ID: {result.get('project_id', '?')} v{result.get('version_number', '?')}",
+                )
+            else:
+                QtWidgets.QMessageBox.warning(self, "Import Failed", result.get("error", "Unknown error"))
+        except Exception as exc:
+            cs.logging.exception("Import failed")
+            QtWidgets.QMessageBox.warning(self, "Import Failed", str(exc))
 
     def onCloseProject(self: Main, event: QtCore.QEvent = None):
         try:
@@ -181,21 +257,17 @@ class ProjectMixin:
                 name="project.close",
                 payload={
                     "main_window": self,
-                    "current_project_dir": str(getattr(self, "_current_project_dir", "") or ""),
+                    "current_project_path": str(getattr(self, "_current_project_path", "") or ""),
                 },
             )
         except Exception:
             pass
+        self._current_project_id = None
+        self._current_project_version_id = None
+        self._current_project_name = None
 
     def onRestoreProjectFromDb(self: Main, event: QtCore.QEvent = None):
-        try:
-            self.load_and_show_plugin("chisurf.plugins.core.mfdb_admin")
-        except Exception as exc:
-            QtWidgets.QMessageBox.critical(
-                self,
-                "Restore Failed",
-                f"Failed to open database manager: {exc}"
-            )
+        self.onLoadProject(event)
 
     def onArchiveProjectToDb(self: Main, event: QtCore.QEvent = None):
         import uuid
@@ -205,7 +277,7 @@ class ProjectMixin:
             "Archive Project to Database",
             "Project name:",
             QtWidgets.QLineEdit.Normal,
-            self._current_project_dir.name if getattr(self, "_current_project_dir", None) else "chisurf_project"
+            self._current_project_path.stem if getattr(self, "_current_project_path", None) else "chisurf_project"
         )
         if not ok1 or not project_name:
             return
@@ -250,11 +322,22 @@ class ProjectMixin:
                     "notes": notes,
                 },
             )
-            QtWidgets.QMessageBox.information(
-                self,
-                "Project Archived",
-                f"Project successfully archived to database.\nProject ID: {project_id}"
-            )
+            if res.get("ok"):
+                self._current_project_id = res.get("project_id")
+                self._current_project_version_id = res.get("version_id")
+                self._current_project_name = project_name
+                self._current_project_visibility = res.get("visibility", "private")
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Project Archived",
+                    f"Project successfully archived to database.\nProject ID: {res.get('project_id', project_id)}"
+                )
+            else:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Archive Failed",
+                    res.get("error", "Failed to archive project to database."),
+                )
         except Exception as exc:
             QtWidgets.QMessageBox.critical(
                 self,
@@ -752,24 +835,37 @@ class SetupMixin:
                 f"Failed to check chimol display config update: {e}"
             )
 
-    def reinitialize(self: Main):
-        """Reinitialize ChiSurf application with user confirmation and feedback"""
-        reply = QtWidgets.QMessageBox.question(
-            self,
-            "Confirm Reinitialization",
-            "This will completely reset ChiSurf and clear all data:\n\n"
-            "• All loaded datasets will be removed\n"
-            "• All fits and results will be deleted\n"
-            "• All open windows will be closed\n"
-            "• Memory will be cleaned up\n\n"
-            "This action cannot be undone. Continue?",
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No
-        )
-        
-        if reply != QtWidgets.QMessageBox.Yes:
-            return
-        
+    def reinitialize(
+        self: Main,
+        show_confirmation: bool = True,
+        show_success: bool = True,
+    ):
+        """Reinitialize ChiSurf application.
+
+        Parameters
+        ----------
+        show_confirmation : bool, optional
+            Whether to ask for confirmation before clearing data.
+        show_success : bool, optional
+            Whether to show a completion message after reinitialization.
+        """
+        if show_confirmation:
+            reply = QtWidgets.QMessageBox.question(
+                self,
+                "Confirm Reinitialization",
+                "This will completely reset ChiSurf and clear all data:\n\n"
+                "• All loaded datasets will be removed\n"
+                "• All fits and results will be deleted\n"
+                "• All open windows will be closed\n"
+                "• Memory will be cleaned up\n\n"
+                "This action cannot be undone. Continue?",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No
+            )
+
+            if reply != QtWidgets.QMessageBox.Yes:
+                return
+
         progress_dialog = QtWidgets.QProgressDialog(
             "Reinitializing ChiSurf...", "Cancel", 0, 10, self
         )
@@ -784,18 +880,18 @@ class SetupMixin:
             QtWidgets.QApplication.processEvents()
 
         try:
-            import chisurf.macros
             cs.macros.reinitialize_application(
                 main_window=self,
                 progress_callback=progress_callback
             )
 
             progress_dialog.close()
-            QtWidgets.QMessageBox.information(
-                self,
-                "Reinitialization Complete",
-                "ChiSurf has been successfully reinitialized.\nAll data has been cleared, memory freed, and the application reset to initial state."
-            )
+            if show_success:
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Reinitialization Complete",
+                    "ChiSurf has been successfully reinitialized.\nAll data has been cleared, memory freed, and the application reset to initial state."
+                )
         except Exception as e:
             progress_dialog.close()
             QtWidgets.QMessageBox.critical(

@@ -27,7 +27,7 @@ class FileCategoryMixin:
         # Always add a dedicated Recent Projects panel.
         # This displays the most recent projects as small buttons.
         # Wrapped in try/except so that any failure here can never prevent the
-        # other panels (Project, Data, Fits, Application) from being created.
+        # other panels (Project, Fits, Application) from being created.
         try:
             self._panel_recent = category.addPanel("Recent", showPanelOptionButton=False)
             # Populate from the persisted user file
@@ -41,14 +41,11 @@ class FileCategoryMixin:
         # Define action groups with their standard icons
         action_groups = {
             "Project": [
-                ("actionOpen_Project", QStyle.SP_DialogOpenButton),
-                ("actionRestore_Project_From_Db", QStyle.SP_DialogOpenButton),
+                ("actionProject_Browser", QStyle.SP_DialogOpenButton),
                 ("actionSave_Project", QStyle.SP_DialogSaveButton),
-                ("actionArchive_Project_To_Db", QStyle.SP_DriveHDIcon),
+                ("actionExport_Project", QStyle.SP_DriveHDIcon),
+                ("actionImport_Project", QStyle.SP_FileDialogListView),
                 ("actionClose_Project", QStyle.SP_DialogCloseButton),
-            ],
-            "Data": [
-                ("actionLoad_Data", QStyle.SP_DialogOpenButton),
             ],
             "Fits": [
                 ("actionLoad_Fit", QStyle.SP_DialogOpenButton),

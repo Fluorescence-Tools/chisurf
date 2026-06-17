@@ -14,7 +14,6 @@ class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
             **kwargs
     ):
         QtWidgets.QWidget.__init__(self, parent=kwargs.get('parent'))
-        GoPotential.__init__(self, structure=structure)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -50,26 +49,48 @@ class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
         layout.addLayout(grid)
 
+        GoPotential.__init__(self, structure=structure)
+
         self.lineEdit.textChanged.connect(self.setGo)
         self.lineEdit_2.textChanged.connect(self.setGo)
         self.lineEdit_3.textChanged.connect(self.setGo)
 
     @property
-    def native_cutoff_on(self):
-        return bool(self.checkBox.isChecked())
-
-    @property
-    def non_native_contact_on(self):
-        return bool(self.checkBox_2.isChecked())
-
-    @property
     def epsilon(self):
         return float(self.lineEdit.text())
+
+    @epsilon.setter
+    def epsilon(self, value: float) -> None:
+        self.lineEdit.setText(str(value))
 
     @property
     def nnEFactor(self):
         return float(self.lineEdit_2.text())
 
+    @nnEFactor.setter
+    def nnEFactor(self, value: float) -> None:
+        self.lineEdit_2.setText(str(value))
+
     @property
     def cutoff(self):
         return float(self.lineEdit_3.text())
+
+    @cutoff.setter
+    def cutoff(self, value: float) -> None:
+        self.lineEdit_3.setText(str(value))
+
+    @property
+    def native_cutoff_on(self):
+        return bool(self.checkBox.isChecked())
+
+    @native_cutoff_on.setter
+    def native_cutoff_on(self, value: bool) -> None:
+        self.checkBox.setChecked(bool(value))
+
+    @property
+    def non_native_contact_on(self):
+        return bool(self.checkBox_2.isChecked())
+
+    @non_native_contact_on.setter
+    def non_native_contact_on(self, value: bool) -> None:
+        self.checkBox_2.setChecked(bool(value))

@@ -5,73 +5,160 @@ import numpy as np
 from qtpy import QtGui, QtWidgets
 
 import chisurf as cs
+from chisurf import typing
 import chisurf.core.fitting
+import chisurf.core.plot_transforms as plot_transforms
 from chisurf.gui import plots
 from chisurf.gui.widgets.models.parse.widget import ParseModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
 from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
-from chisurf.core.fluorescence.fcs import background_factor_ac
+from chisurf.core.fluorescence.fcs import (
+    background_factor_ac,
+    resolve_total_mean_count_rate,
+    diffusion_reference_component,
+    fcs_diffusion_reference,
+    normalize_fcs_curve,
+    compute_cpm,
+    compute_cpm_all,
+)
 
 
 class ParseFCSWidget(ParseModelWidget):
 
-    @staticmethod
-    def _to_float_or_none(value):
-        """Convert *value* to float, returning ``None`` on failure.
+    def _parameter_value(self, name, default=None):
+        """Return a finite fitted parameter value when available.
 
         Parameters
         ----------
-        value : any
-            Value to convert.
+        name : str
+            Parameter name.
+        default : float, optional
+            Value returned when the parameter is missing or non-finite.
 
         Returns
         -------
         float or None
-            Numeric value, or ``None`` if conversion fails or is non-finite.
+            Finite parameter value, or ``default``.
         """
+        parameters = getattr(self, "parameters_all_dict", {}) or {}
+        parameter = parameters.get(name)
         try:
-            v = float(value)
+            value = float(parameter.value)
         except Exception:
-            return None
-        if not np.isfinite(v):
-            return None
-        return v
+            return default
+        if not np.isfinite(value):
+            return default
+        return value
 
-    def _resolve_total_mean_count_rate(self, meta):
-        """Extract the total mean count rate from metadata.
-
-        Handles both ``mean_count_rate_total`` and
-        ``mean_count_rate`` with a ``per_detector`` semantic.
+    def _fcs_diffusion_reference_mode(
+            self,
+            context: plot_transforms.PlotReferenceContext
+    ) -> plot_transforms.PlotReferenceResult:
+        """Normalize an FCS curve by the fitted diffusion component.
 
         Parameters
         ----------
-        meta : dict
-            Data metadata dictionary.
+        context : PlotReferenceContext
+            Current plot-transform context.
 
         Returns
         -------
-        float or None
-            Total mean count rate in kHz, or ``None`` if not available.
+        PlotReferenceResult
+            Normalized curve.
         """
-        if not isinstance(meta, dict):
-            return None
+        b = float(context.parameters.get("b", self._parameter_value("b", 1.0) or 1.0))
+        params = {
+            "b": b,
+            "N": self._parameter_value("N"),
+            "td": self._parameter_value("td"),
+            "s": self._parameter_value("s"),
+        }
+        reference = fcs_diffusion_reference(context.x, params)
+        if reference is None:
+            raise ValueError("FCS diffusion reference is unavailable")
+        return plot_transforms.PlotReferenceResult(
+            x=context.x,
+            y=normalize_fcs_curve(context.y, reference, b),
+            y_label="(G - b) / Gdiff",
+        )
 
-        total = self._to_float_or_none(meta.get("mean_count_rate_total"))
-        if total is not None:
-            return total
+    def _fcs_molecule_reference_mode(
+            self,
+            context: plot_transforms.PlotReferenceContext
+    ) -> plot_transforms.PlotReferenceResult:
+        """Normalize an FCS curve by fitted molecule number.
 
-        mean_cr = self._to_float_or_none(meta.get("mean_count_rate"))
-        if mean_cr is None:
-            return None
+        Parameters
+        ----------
+        context : PlotReferenceContext
+            Current plot-transform context.
 
-        semantics = str(meta.get("mean_count_rate_semantics", "")).strip().lower()
-        if "per_detector" in semantics:
-            detector_count = self._to_float_or_none(meta.get("detector_count"))
-            if detector_count is not None and detector_count > 1.0:
-                return mean_cr * detector_count
+        Returns
+        -------
+        PlotReferenceResult
+            Molecule-normalized curve.
+        """
+        b = float(context.parameters.get("b", self._parameter_value("b", 1.0) or 1.0))
+        n = float(context.parameters.get("N", self._parameter_value("N", 1.0) or 1.0))
+        return plot_transforms.PlotReferenceResult(
+            x=context.x,
+            y=n * (np.asarray(context.y, dtype=float) - b),
+            y_label="N * (G - b)",
+        )
 
-        return mean_cr
+    def get_plot_reference_modes(self) -> typing.List[plot_transforms.PlotReferenceMode]:
+        """Return FCS reference modes for the line plot.
+
+        Returns
+        -------
+        list
+            Plot reference modes.
+        """
+        b = self._parameter_value("b", 1.0)
+        n = self._parameter_value("N", 1.0)
+        return [
+            plot_transforms.PlotReferenceMode(
+                key="fcs_diffusion",
+                label="FCS diffusion",
+                callback=self._fcs_diffusion_reference_mode,
+                parameters=(
+                    plot_transforms.PlotReferenceParameter(
+                        key="b",
+                        label="b",
+                        kind="float",
+                        default=float(b if b is not None else 1.0),
+                        step=0.01,
+                    ),
+                ),
+                applies_to=("data", "model"),
+                y_label="(G - b) / Gdiff",
+            ),
+            plot_transforms.PlotReferenceMode(
+                key="fcs_molecules",
+                label="FCS molecules",
+                callback=self._fcs_molecule_reference_mode,
+                parameters=(
+                    plot_transforms.PlotReferenceParameter(
+                        key="N",
+                        label="N",
+                        kind="float",
+                        default=float(n if n is not None else 1.0),
+                        minimum=1e-12,
+                        step=0.1,
+                    ),
+                    plot_transforms.PlotReferenceParameter(
+                        key="b",
+                        label="b",
+                        kind="float",
+                        default=float(b if b is not None else 1.0),
+                        step=0.01,
+                    ),
+                ),
+                applies_to=("data", "model"),
+                y_label="N * (G - b)",
+            ),
+        ]
 
     try:
         plot_classes = [
@@ -278,7 +365,7 @@ class ParseFCSWidget(ParseModelWidget):
             return
 
         meta = getattr(data, "meta_data", {}) or {}
-        mean_cr_total = self._resolve_total_mean_count_rate(meta)
+        mean_cr_total = resolve_total_mean_count_rate(meta)
 
         if mean_cr_total is not None:
             try:
@@ -314,7 +401,7 @@ class ParseFCSWidget(ParseModelWidget):
         if not (N > 0.0):
             return
 
-        cpm = cr / N
+        cpm = compute_cpm(cr, N)
 
         try:
             fc = get_fitting_client()
@@ -332,48 +419,36 @@ class ParseFCSWidget(ParseModelWidget):
         except Exception:
             pass
 
-        try:
-            bunch_sum = 0.0
-            for name, p in self.parameters_all_dict.items():
-                if not name.startswith("ba"):
-                    continue
+        # Extract bunching parameters for cpm_all
+        bunch_params = {}
+        for name, p in self.parameters_all_dict.items():
+            if name.startswith("ba"):
                 try:
                     v = float(p.value)
                 except Exception:
                     continue
                 if not np.isfinite(v):
                     continue
-                v = abs(v)
-                if v < 0.0:
-                    v = 0.0
-                if v > 1.0:
-                    v = 1.0
-                bunch_sum += v
+                bunch_params[name] = v
 
-            bright_fraction = 1.0 - bunch_sum
-            if bright_fraction <= 0.0 or not np.isfinite(bright_fraction):
-                return
+        cpm_all = compute_cpm_all(cr, N, bunch_params)
 
-            N_all = N / bright_fraction
-            if not (N_all > 0.0 and np.isfinite(N_all)):
-                return
-
-            cpm_all = cr / N_all
-
-            fc = get_fitting_client()
-            if fc is not None:
-                fc.set_parameter_value(
-                    parameter_name=str(self._cpm_all.name),
-                    value=cpm_all,
-                    fit_index=getattr(self.fit, "fit_idx", None),
-                )
-                fc.set_parameter_fixed(
-                    parameter_name=str(self._cpm_all.name),
-                    fixed=True,
-                    fit_index=getattr(self.fit, "fit_idx", None),
-                )
-        except Exception:
-            pass
+        if cpm_all is not None:
+            try:
+                fc = get_fitting_client()
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(self._cpm_all.name),
+                        value=cpm_all,
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
+                    fc.set_parameter_fixed(
+                        parameter_name=str(self._cpm_all.name),
+                        fixed=True,
+                        fit_index=getattr(self.fit, "fit_idx", None),
+                    )
+            except Exception:
+                pass
 
     def _on_bg_correction_toggled(self, checked: bool) -> None:
         """Qt slot: toggle model-based background correction on/off."""

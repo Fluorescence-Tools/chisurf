@@ -3,9 +3,96 @@
 from __future__ import annotations
 
 import ast
+import re
 
 from latexify import ast_utils
 from latexify.codegen import ExpressionCodegen
+
+
+def sanitize_latex_for_mathtext(latex: str) -> str:
+    """Return LaTeX that Matplotlib's mathtext parser can render.
+
+    Parameters
+    ----------
+    latex : str
+        LaTeX expression produced by a converter.
+
+    Returns
+    -------
+    str
+        LaTeX expression with commands unsupported by Matplotlib mathtext
+        rewritten or removed.
+    """
+    if not latex:
+        return latex
+
+    result = re.sub(r"\\mathopen\s*\{\}", "", latex)
+    result = re.sub(r"\\mathclose\s*\{\}", "", result)
+    return _replace_vfrac(result)
+
+
+def _replace_vfrac(latex: str) -> str:
+    """Replace latexify's vertical fraction command with a normal fraction."""
+    result: list[str] = []
+    index = 0
+
+    while index < len(latex):
+        if not latex.startswith("\\vfrac", index):
+            result.append(latex[index])
+            index += 1
+            continue
+
+        index += len("\\vfrac")
+        first_group, index = _parse_latex_group(latex, index)
+        numerator, index = _parse_latex_group(latex, index)
+        denominator, index = _parse_latex_group(latex, index)
+
+        if first_group is None or numerator is None or denominator is None:
+            result.append("\\vfrac")
+            continue
+
+        result.append(f"\\frac{{{numerator}}}{{{denominator}}}")
+
+    return "".join(result)
+
+
+def _parse_latex_group(latex: str, start: int) -> tuple[str | None, int]:
+    """Parse the next braced LaTeX group.
+
+    Parameters
+    ----------
+    latex : str
+        LaTeX expression.
+    start : int
+        Index where the group search should begin.
+
+    Returns
+    -------
+    tuple[str | None, int]
+        Parsed group content without the surrounding braces and the index after
+        the group, or ``(None, start)`` if no group is present.
+    """
+    index = start
+    while index < len(latex) and latex[index].isspace():
+        index += 1
+
+    if index >= len(latex) or latex[index] != "{":
+        return None, start
+
+    depth = 0
+    while index < len(latex):
+        if latex[index] == "\\":
+            index += 2
+            continue
+        if latex[index] == "{":
+            depth += 1
+        elif latex[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return latex[start + 1 : index], index + 1
+        index += 1
+
+    return None, start
 
 
 def convert_python_expression_to_latex(expression: str) -> str:
