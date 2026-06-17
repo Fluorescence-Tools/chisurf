@@ -11,7 +11,7 @@ _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:
     name = _manifest.display_name
 else:
-    name = "Structure:Chimol (protein viewer)"
+    name = "Structure:Structure:ChiMOL"
 
 __version__ = "0.2.0"
 

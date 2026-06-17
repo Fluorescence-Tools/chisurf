@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, List, Optional
+import tempfile
 import time
 
 import numpy as np
@@ -145,7 +146,7 @@ class ExportMixin(BaseCmd):
         if output_path:
             out_path = Path(output_path).expanduser()
         else:
-            out_path = Path(f"chimol_ray_{timestamp}.png")
+            out_path = Path(tempfile.gettempdir()) / f"chimol_ray_{timestamp}.png"
         if out_path.suffix.lower() != ".png":
             out_path = out_path.with_suffix(".png")
 

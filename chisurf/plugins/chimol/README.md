@@ -19,7 +19,7 @@ standalone Qt application.
 
 ## Quickstart (ChiSurf)
 
-1. Launch ChiSurf and open **Plugins → Structure:Chimol (protein viewer)**.
+1. Launch ChiSurf and open **Plugins → Structure → Structure → ChiMOL**.
 2. Click **Open** and choose a PDB/mmCIF/trajectory.
 3. Toggle representations (Cartoon/Atoms/Sticks/Trace/Dots/Surface) from the toolbar.
 4. Color by secondary structure or sequence gradient using the color buttons.
