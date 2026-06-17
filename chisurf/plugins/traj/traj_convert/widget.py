@@ -2,8 +2,9 @@ import glob
 import os
 
 import mdtraj as md
-from mdtraj.scripts import mdconvert as mdconvert
-from chisurf.gui import QtWidgets
+from mdtraj.scripts import mdconvert
+from qtpy import QtCore, QtGui, QtWidgets
+
 
 import chisurf.core.decorators
 import chisurf.gui.decorators
@@ -37,6 +38,43 @@ class MDConverter(
         self.pushButton_3.clicked.connect(self.onConvert)
         self.actionOpen_Topology.triggered.connect(self.onOpenTopology)
         self.verbose = kwargs.get('verbose', chisurf.core.settings.cs_settings['verbose'])
+        self._setup_layout()
+
+    def _empty_icon(self):
+        pixmap = QtGui.QPixmap(16, 16)
+        pixmap.fill(QtCore.Qt.transparent)
+        return QtGui.QIcon(pixmap)
+
+    def _setup_layout(self) -> None:
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
+        self.setMaximumSize(16777215, 16777215)
+        self.groupBox.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum
+        )
+        self.groupBox_2.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum
+        )
+        self._log = QtWidgets.QPlainTextEdit(self)
+        self._log.setReadOnly(True)
+        self._log.setPlaceholderText("Log")
+        self._log.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
+        self.verticalLayout.addWidget(self._log, 1)
+        self.pushButton_3.setIcon(self._empty_icon())
+        self.toolButton.setIcon(self._empty_icon())
+        self.toolButton_2.setIcon(self._empty_icon())
+        self.toolButton_3.setIcon(self._empty_icon())
+
+    def _append_log(self, message: str) -> None:
+        timestamp = QtCore.QTime.currentTime().toString("HH:mm:ss")
+        self._log.appendPlainText(f"[{timestamp}] {message}")
 
     def onOpenTopology(self):
         #self.topology_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open PDB-File', '.', 'PDB-File (*.pdb)'))
@@ -58,6 +96,7 @@ class MDConverter(
         verbose = kwargs.get('verbose', self.verbose)
         if verbose:
             print("Converting trajectory")
+        self._append_log("Starting trajectory conversion")
         args = Object()
         args.topology = self.topology_file
         args.input = [self.trajectory] if not self.use_folder else glob.glob(os.path.join(self.trajectory, '*.pdb'))
@@ -72,6 +111,7 @@ class MDConverter(
 
         args.force = True
         args.atom_indices = None
+        self._append_log(f"Input frames: {self.first_frame}:{self.last_frame} stride={self.stride}")
 
         if self.split:
             i = 0
@@ -88,17 +128,20 @@ class MDConverter(
                         )
                         if verbose:
                             print(fn)
+                        self._append_log(f"Saving frame {i}: {fn}")
                         s.save(fn)
-                    except:
-                        pass
+                    except Exception as exc:
+                        self._append_log(f"Frame {i} failed: {exc}")
                     i += 1
         else:
             args.output = os.path.join(
                 self.target_directory,
                 self.filename + self.ending
             )
+            self._append_log(f"Output: {args.output}")
             mdconvert.main(args)
         chisurf.gui.widgets.general.MyMessageBox('Conversion done!')
+        self._append_log("Conversion done")
 
     @property
     def first_frame(self):

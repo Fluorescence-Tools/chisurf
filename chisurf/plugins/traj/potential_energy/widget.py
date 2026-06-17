@@ -51,6 +51,34 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.comboBox_2.addItems(
             list(chisurf.gui.widgets.structure.potentialDict)
         )
+        self._stretch_potential_layout()
+
+    def _stretch_potential_layout(self) -> None:
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
+        self.groupBox_3.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
+        self.groupBox_8.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Fixed
+        )
+        self.groupBox_8.setMaximumHeight(160)
+        self.tableWidget.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
+        self.tableWidget.setMinimumHeight(120)
+        self.verticalLayout_4.setStretch(0, 0)
+        self.verticalLayout_2.setStretch(0, 0)
+        self.gridLayout.setRowStretch(1, 1)
+        self.gridLayout_3.setRowStretch(2, 0)
+        self.gridLayout_3.setRowStretch(4, 1)
+        self.gridLayout_3.setColumnStretch(0, 1)
+        self.gridLayout_3.setColumnStretch(3, 1)
 
     @property
     def potential_number(self) -> int:
@@ -105,6 +133,11 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         )
 
         layout.addWidget(self.potential)
+        self.potential.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Fixed
+        )
+        self.potential.setMaximumHeight(160)
 
     def onAddPotential(self) -> None:
         print("onAddPotential")

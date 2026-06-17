@@ -1,0 +1,20 @@
+{
+  "id": "traj_rotate_translate",
+  "version": "1.0.0",
+  "display_name": "Structure:Trajectory:Rotate/Translate",
+  "description": "Apply rigid-body rotation and translation to trajectories.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Trajectory"],
+  "state_namespace": "traj_rotate_translate",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.traj_rotate_translate.widget:RotateTranslateTrajectoryWidget"
+  },
+  "menu_hidden": true
+}

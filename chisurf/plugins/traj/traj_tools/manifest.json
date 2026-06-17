@@ -1,0 +1,28 @@
+{
+  "id": "traj_tools",
+  "version": "1.0.0",
+  "display_name": "Structure:Structure:Traj Tools",
+  "description": "Combined dockable workspace for trajectory alignment, conversion, energy calculation, FRET, joining, clash removal, rotation/translation, topology saving, and trajectory energy tools.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Structure", "Tools"],
+  "state_namespace": "traj_tools",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "active_tool": {"type": "string"},
+      "open_tools": {"type": "array", "items": {"type": "string"}}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.traj_tools.gui.tool:TrajectoryToolsTool"
+  },
+  "menu_hidden": false
+}

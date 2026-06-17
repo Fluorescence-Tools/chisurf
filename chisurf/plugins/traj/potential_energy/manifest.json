@@ -1,0 +1,20 @@
+{
+  "id": "traj_energy_calculator",
+  "version": "1.0.0",
+  "display_name": "Structure:Trajectory:Energy Calculator",
+  "description": "Calculate potential energy components for structures and trajectories.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Trajectory"],
+  "state_namespace": "potential_energy",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.potential_energy.widget:PotentialEnergyWidget"
+  },
+  "menu_hidden": true
+}

@@ -3,7 +3,7 @@ from chisurf import typing
 
 import numpy as np
 import tables
-from qtpy import QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 import mdtraj
 
 import chisurf.core.decorators
@@ -81,12 +81,62 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     ):
         self.lineEdit.setText(str(v))
 
+    def _empty_icon(self):
+        pixmap = QtGui.QPixmap(16, 16)
+        pixmap.fill(QtCore.Qt.transparent)
+        return QtGui.QIcon(pixmap)
+
+    def _stretch_layout(self) -> None:
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
+        self.groupBox.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum
+        )
+        self.groupBox_2.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum
+        )
+        for name in (
+            "lineEdit_3", "lineEdit_4", "lineEdit_5", "lineEdit_6",
+            "lineEdit_7", "lineEdit_8", "lineEdit_9", "lineEdit_10",
+            "lineEdit_11", "lineEdit_12", "lineEdit_13", "lineEdit_14",
+        ):
+            widget = getattr(self, name)
+            widget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+        self.gridLayout_3.setRowStretch(1, 0)
+        self.gridLayout_3.setColumnStretch(0, 1)
+        self.gridLayout_3.setColumnStretch(4, 0)
+        self.gridLayout.setColumnStretch(0, 1)
+        self.gridLayout.setColumnStretch(1, 1)
+        self.gridLayout.setColumnStretch(2, 1)
+        self.gridLayout_2.setColumnStretch(0, 1)
+        self.pushButton_2.setIcon(self._empty_icon())
+        self.toolButton.setIcon(self._empty_icon())
+
+    def _append_log(self, message: str) -> None:
+        timestamp = QtCore.QTime.currentTime().toString("HH:mm:ss")
+        self._log.appendPlainText(f"[{timestamp}] {message}")
+
     @chisurf.gui.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', chisurf.core.settings.cs_settings['verbose'])
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
+        self._stretch_layout()
+        self._log = QtWidgets.QPlainTextEdit(self)
+        self._log.setReadOnly(True)
+        self._log.setPlaceholderText("Log")
+        self._log.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
+        self.gridLayout_3.addWidget(self._log, 3, 0, 1, 5)
+        self.gridLayout_3.setRowStretch(3, 1)
+        self._append_log("Ready")
 
     def onOpenTrajectory(self, filename=None):
         print("onOpenTrajectory")
@@ -95,36 +145,48 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
         self.trajectory_filename = filename
 
     def onSaveTrajectory(self, target_filename=None):
-        if target_filename is None:
-            target_filename = str(QtWidgets.QFileDialog.getSaveFileName(None, 'Save H5-Model file', '', 'H5-files (*.h5)'))[0]
+        if not target_filename:
+            self._append_log("Save cancelled")
+            return
 
-        translation_vector = self.translation_vector
-        rotation_matrix = self.rotation_matrix
-        stride = self.stride
+        try:
+            self._append_log(f"Saving rotated/translated trajectory: {target_filename}")
+            translation_vector = self.translation_vector
+            rotation_matrix = self.rotation_matrix
+            stride = self.stride
 
-        if self.verbose:
-            print("Stride: %s" % stride)
-            print("\nRotation Matrix")
-            print(rotation_matrix)
-            print("\nTranslation vector")
-            print(translation_vector)
+            if self.verbose:
+                print("Stride: %s" % stride)
+                print("\nRotation Matrix")
+                print(rotation_matrix)
+                print("\nTranslation vector")
+                print(translation_vector)
 
-        first_frame = mdtraj.load_frame(self.trajectory_filename, 0)
-        traj_new = mdtraj.Trajectory(xyz=np.empty((1, first_frame.n_atoms, 3)), topology=first_frame.topology)
-        traj_new.save(target_filename)
+            first_frame = mdtraj.load_frame(self.trajectory_filename, 0)
+            self._append_log(f"Loaded first frame with {first_frame.n_atoms} atoms")
+            traj_new = mdtraj.Trajectory(xyz=np.empty((1, first_frame.n_atoms, 3)), topology=first_frame.topology)
+            traj_new.save(target_filename)
 
-        chunk_size = 1000
-        table = tables.open_file(target_filename, 'a')
-        for i, chunk in enumerate(
-                mdtraj.iterload(
-                    self.trajectory_filename,
-                    chunk=chunk_size,
-                    stride=stride
-                )
-        ):
-            xyz = chunk.xyz.copy()
-            rotate(xyz, rotation_matrix)
-            translate(xyz, translation_vector)
-            table.root.xyz.append(xyz)
-            table.root.time.append(np.arange(i * chunk_size, i * chunk_size + xyz.shape[0], dtype=np.float32))
-        table.close()
+            chunk_size = 1000
+            table = tables.open_file(target_filename, 'a')
+            try:
+                for i, chunk in enumerate(
+                        mdtraj.iterload(
+                            self.trajectory_filename,
+                            chunk=chunk_size,
+                            stride=stride
+                        )
+                ):
+                    xyz = chunk.xyz.copy()
+                    rotate(xyz, rotation_matrix)
+                    translate(xyz, translation_vector)
+                    table.root.xyz.append(xyz)
+                    table.root.time.append(np.arange(i * chunk_size, i * chunk_size + xyz.shape[0], dtype=np.float32))
+                    if (i + 1) % 10 == 0:
+                        self._append_log(f"Processed {i + 1} chunks")
+            finally:
+                table.close()
+            self._append_log("Save complete")
+        except Exception as exc:
+            self._append_log(f"Save failed: {exc}")
+            raise

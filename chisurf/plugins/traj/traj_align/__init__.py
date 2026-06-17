@@ -1,32 +1,20 @@
-"""
-Trajectory Alignment Tool
+"""Trajectory alignment tool."""
 
-This plugin provides tools for aligning molecular dynamics trajectories to
-reference structures or to specific frames within the trajectory.
+from __future__ import annotations
 
-Features:
-- Load trajectories in various formats (PDB, XTC, DCD, etc.)
-- Select specific atoms or residues for alignment
-- Align to a reference structure or to a specific frame
-- Apply RMSD-based alignment algorithms
-- Visualize alignment quality through RMSD plots
-- Save aligned trajectories for further analysis
+from pathlib import Path
 
-Proper alignment is essential for analyzing conformational changes,
-calculating order parameters, and comparing different simulations.
-"""
-
-import sys
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.traj.traj_align.widget import AlignTrajectoryWidget
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory:Align"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:Trajectory:Align"
 
+__all__ = ["AlignTrajectoryWidget"]
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
 if __name__ == "plugin":
-    # Create an instance of the AlignTrajectoryWidget class
     window = AlignTrajectoryWidget()
-    # Show the window
     window.show()

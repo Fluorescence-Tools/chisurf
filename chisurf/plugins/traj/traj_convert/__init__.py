@@ -1,28 +1,20 @@
-"""
-Trajectory Converter for Molecular Dynamics Data
+"""Trajectory converter tool."""
 
-This plugin provides tools for converting molecular dynamics trajectory files
-between different formats. Features include:
-- Support for multiple input formats (PDB, XTC, DCD, TRR, etc.)
-- Support for multiple output formats
-- Options to select specific frames or time ranges
-- Ability to filter atoms or residues
-- Support for topology conversion
+from __future__ import annotations
 
-The converter is essential for working with trajectories from different
-simulation packages or for preparing data for specific analysis tools.
-"""
-import sys
+from pathlib import Path
+
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.traj.traj_convert.widget import MDConverter
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory:Convert"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:Trajectory:Convert"
 
+__all__ = ["MDConverter"]
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
 if __name__ == "plugin":
-    # Create an instance of the MDConverter class
     window = MDConverter()
-    # Show the window
     window.show()

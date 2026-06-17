@@ -1,0 +1,20 @@
+{
+  "id": "traj_fret",
+  "version": "1.0.0",
+  "display_name": "Structure:Trajectory:FRET",
+  "description": "Calculate FRET observables from molecular dynamics trajectories.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Trajectory", "FRET"],
+  "state_namespace": "fret_trajectory",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.fret_trajectory.gui:Structure2Transfer"
+  },
+  "menu_hidden": true
+}

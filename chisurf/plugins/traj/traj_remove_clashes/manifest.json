@@ -1,0 +1,20 @@
+{
+  "id": "traj_remove_clashes",
+  "version": "1.0.0",
+  "display_name": "Structure:Trajectory:Remove Clashed",
+  "description": "Remove frames containing steric clashes from trajectories.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Trajectory"],
+  "state_namespace": "traj_remove_clashes",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.traj_remove_clashes.widget:RemoveClashedFrames"
+  },
+  "menu_hidden": true
+}

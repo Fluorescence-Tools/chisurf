@@ -1,32 +1,20 @@
-"""
-FRET Analysis from Molecular Dynamics Trajectories
+"""FRET analysis from molecular dynamics trajectories."""
 
-This plugin calculates FRET efficiency values from molecular dynamics (MD)
-trajectories by analyzing the distances between specified residues over time.
+from __future__ import annotations
 
-Features:
-- Load and analyze MD trajectories in various formats
-- Select donor and acceptor positions for FRET calculations
-- Calculate inter-residue distances and corresponding FRET efficiencies
-- Apply accessible volume (AV) models to account for dye flexibility
-- Generate FRET efficiency histograms and time traces
-- Export results for further analysis
+from pathlib import Path
 
-Ideal for comparing experimental FRET data with structural models from
-molecular dynamics simulations.
-"""
-
-import sys
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.traj.fret_trajectory.gui import Structure2Transfer
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory:FRET"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:Trajectory:FRET"
 
+__all__ = ["Structure2Transfer"]
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
 if __name__ == "plugin":
-    # Create an instance of the Structure2Transfer class
     window = Structure2Transfer()
-    # Show the window
     window.show()

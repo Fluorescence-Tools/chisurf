@@ -1,30 +1,20 @@
-"""
-Potential Energy Calculator
+"""Potential energy calculator plugin."""
 
-This plugin provides a graphical interface for calculating potential energy
-components in molecular structures. Features include:
+from __future__ import annotations
 
-- Calculation of various energy terms (bond, angle, dihedral, non-bonded)
-- Support for different force fields and energy functions
-- Analysis of energy contributions from specific residues or atoms
-- Visualization of energy distributions
-- Export of energy data for further analysis
+from pathlib import Path
 
-The potential energy calculator is useful for assessing the stability of
-molecular structures and identifying strained or unfavorable conformations.
-"""
-
-import sys
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.traj.potential_energy.widget import PotentialEnergyWidget
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory:Energy Calculator"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:Trajectory:Energy Calculator"
 
+__all__ = ["PotentialEnergyWidget"]
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
 if __name__ == "plugin":
-    # Create an instance of the PotentialEnergyWidget class
     window = PotentialEnergyWidget()
-    # Show the window
     window.show()

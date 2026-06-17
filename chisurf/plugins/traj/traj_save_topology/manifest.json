@@ -1,0 +1,20 @@
+{
+  "id": "traj_save_topology",
+  "version": "1.0.0",
+  "display_name": "Structure:Trajectory:Save Topol",
+  "description": "Save topology or first-frame structure files from trajectories.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Trajectory"],
+  "state_namespace": "traj_save_topology",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.traj.traj_save_topology.widget:SaveTopology"
+  },
+  "menu_hidden": true
+}
