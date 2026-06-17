@@ -1,0 +1,30 @@
+{
+  "id": "plugin_check",
+  "version": "2.1.0",
+  "display_name": "Tools:Miscellaneous:Plugin-Check",
+  "description": "Tests all ChiSurf plugins for startup errors and reports successes, failures, and skipped checks.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Miscellaneous"],
+  "icon": "🧪",
+  "state_namespace": "plugin_check",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "blacklisted_plugins": {"type": "array", "items": {"type": "string"}},
+      "last_test_count": {"type": ["integer", "null"]},
+      "last_delay_seconds": {"type": ["number", "null"]},
+      "skip_blacklisted": {"type": "boolean"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "plugin_check_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.plugin_check.gui.tool:PluginCheckTool"
+  }
+}

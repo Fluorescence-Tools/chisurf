@@ -1,9 +1,10 @@
-import os
-import sys
-import pathlib
-import ctypes
-import pkgutil
 import ast
+import ctypes
+import os
+import pathlib
+import sys
+
+from chisurf.core.plugin.manifest import load_manifest
 
 # Helper to set hidden attribute on Windows
 
@@ -53,9 +54,9 @@ if (
     setattr(sys.modules.get(__name__), _def_done_flag, True)
     try:
         # Import QtSvg lazily to avoid hard dependency if GUI isn't used
-        from qtpy.QtSvg import QSvgRenderer  # type: ignore
-        from qtpy.QtGui import QImage, QPainter  # type: ignore
         from qtpy.QtCore import QSize  # type: ignore
+        from qtpy.QtGui import QImage, QPainter  # type: ignore
+        from qtpy.QtSvg import QSvgRenderer  # type: ignore
 
         def _rasterize_svg_to_png(
             svg_path: pathlib.Path, png_path: pathlib.Path, size: QSize = None
@@ -152,6 +153,33 @@ def _read_plugin_metadata(init_py: pathlib.Path):
     return plugin_name, description, cli_entrypoint, cli_only, menu_hidden
 
 
+def _read_manifest_metadata(plugin_dir: pathlib.Path):
+    """Read plugin metadata from ``manifest.json`` when present."""
+    manifest = load_manifest(plugin_dir / "manifest.json")
+    if manifest is None:
+        return None
+
+    (
+        _legacy_name,
+        legacy_description,
+        legacy_cli_entrypoint,
+        _legacy_cli_only,
+        _legacy_menu_hidden,
+    ) = _read_plugin_metadata(plugin_dir / "__init__.py")
+    cli_entrypoint = manifest.entrypoints.cli or legacy_cli_entrypoint
+
+    return {
+        "plugin_name": manifest.display_name or manifest.id,
+        "description": manifest.description or legacy_description or "No description available.",
+        "cli_entrypoint": cli_entrypoint,
+        "cli_only": bool(not manifest.entrypoints.gui),
+        "menu_hidden": bool(manifest.menu_hidden),
+        "manifest_id": manifest.id,
+        "manifest_version": manifest.version,
+        "state_namespace": manifest.state_namespace,
+    }
+
+
 def iter_plugins():
     base_prefix = __name__ + "."
     try:
@@ -198,7 +226,27 @@ def iter_plugins():
                 init_py = package_dir.joinpath("__init__.py")
                 if not init_py.exists():
                     continue
-                plugin_name, description, cli_entrypoint, cli_only, menu_hidden = _read_plugin_metadata(init_py)
+                manifest_metadata = _read_manifest_metadata(package_dir)
+                if manifest_metadata is not None:
+                    plugin_name = manifest_metadata["plugin_name"]
+                    description = manifest_metadata["description"]
+                    cli_entrypoint = manifest_metadata["cli_entrypoint"]
+                    cli_only = manifest_metadata["cli_only"]
+                    menu_hidden = manifest_metadata["menu_hidden"]
+                    manifest_id = manifest_metadata["manifest_id"]
+                    manifest_version = manifest_metadata["manifest_version"]
+                    state_namespace = manifest_metadata["state_namespace"]
+                else:
+                    (
+                        plugin_name,
+                        description,
+                        cli_entrypoint,
+                        cli_only,
+                        menu_hidden,
+                    ) = _read_plugin_metadata(init_py)
+                    manifest_id = None
+                    manifest_version = None
+                    state_namespace = None
                 if not plugin_name:
                     continue
                 module_path = base_prefix + ".".join(parts)
@@ -228,6 +276,9 @@ def iter_plugins():
                     "cli_entrypoint": cli_entrypoint,
                     "cli_only": bool(cli_only),
                     "menu_hidden": bool(menu_hidden),
+                    "manifest_id": manifest_id,
+                    "manifest_version": manifest_version,
+                    "state_namespace": state_namespace,
                 }
             except Exception:
                 continue
@@ -263,7 +314,7 @@ class DevPluginFinder:
                     return None
             except Exception:
                 pass
-            
+
             from importlib.machinery import ModuleSpec
             return ModuleSpec(fullname, self)
         return None
@@ -275,5 +326,4 @@ class DevPluginFinder:
         pass
 
 # Register the virtual plugin finder
-import sys
 sys.meta_path.append(DevPluginFinder())

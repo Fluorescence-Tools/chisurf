@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 import chisurf.gui as chisurf_gui
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.plugin.manifest import load_manifest
 from chisurf.plugins.core.mfdb_admin.backend import measurement_services, services
 from chisurf.plugins.core.mfdb_admin.backend.services import register_services
@@ -228,7 +228,7 @@ def test_mfdb_widget_helper_unwraps_export_response():
 def test_mfdb_sample_condition_and_probe_services(tmp_path, monkeypatch):
     """Condition and probe services are available through the MFDB client boundary."""
     db_path = tmp_path / "services.db"
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         db.add_probe(7, name="ATTO 488", category="standard")
         db.add_optical_property(7, "abs_max", 495.0, unit="nm")
         db.add_optical_property(7, "em_max", 519.0, unit="nm")
@@ -336,7 +336,7 @@ def test_measurement_provenance_services_roundtrip(tmp_path, monkeypatch):
     bur_path = tmp_path / "output.bur"
     bur_path.write_text("n_ph\tduration\n10\t0.1\n", encoding="utf-8")
 
-    with FluorophoreDatabase(db_path) as db:
+    with MFDatabase(db_path) as db:
         db.add_sample("sample_1")
         db.add_experiment("exp_1", sample_id="sample_1")
 

@@ -1,0 +1,93 @@
+{
+  "id": "globalview",
+  "version": "2.0.0",
+  "display_name": "Main:Tools:Global View",
+  "description": "Interactive network graph for visualizing and managing parameter relationships across fits in global analysis.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Main", "Tools"],
+  "icon": "icon.png",
+  "state_namespace": "globalview",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "plugin_globalview"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.globalview.gui:GraphWizard",
+    "cli": null,
+    "services": "chisurf.plugins.core.globalview.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "globalview.graph.build",
+      "summary": "Build a parameter relationship graph from fit objects.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "fit_indices": {"type": "array", "items": {"type": "integer"}},
+          "fit_uids": {"type": "array", "items": {"type": "string"}},
+          "include_fixed": {"type": "boolean"},
+          "connect_fits": {"type": "boolean"}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "graph": {"type": "object"},
+          "error": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "globalview.parameters.list",
+      "summary": "List all parameters across fits with their values, bounds, and link status.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "fit_indices": {"type": "array", "items": {"type": "integer"}},
+          "fit_uids": {"type": "array", "items": {"type": "string"}},
+          "include_fixed": {"type": "boolean"}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "parameters": {"type": "array"},
+          "error": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "globalview.parameters.link",
+      "summary": "Link two parameters by name across fits.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "source_parameter_name": {"type": "string"},
+          "target_parameter_name": {"type": "string"},
+          "source_fit_index": {"type": "integer"},
+          "target_fit_index": {"type": "integer"}
+        }
+      }
+    },
+    {
+      "name": "globalview.parameters.unlink",
+      "summary": "Unlink a parameter.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "parameter_name": {"type": "string"},
+          "fit_index": {"type": "integer"}
+        }
+      }
+    }
+  ],
+  "events": [
+    {"topic": "globalview.graph.*", "description": "Graph lifecycle events"},
+    {"topic": "globalview.parameters.*", "description": "Parameter mutation events"}
+  ]
+}

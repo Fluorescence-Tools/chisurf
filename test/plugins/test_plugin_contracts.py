@@ -3,8 +3,12 @@
 
 # --- FROM test_plugin_ui_paths_contract.py ---
 import ast
+import json
 import pathlib
 import re
+
+import chisurf.plugins
+from chisurf.core.plugin.manifest import validate_manifest
 
 
 def _extract_string_constant(node):
@@ -103,6 +107,43 @@ def test_plugin_direct_loadui_string_targets_exist():
                     missing.append((str(py_file), ui_name, str(ui_path)))
 
     assert not missing, f"Missing plugin .ui files in direct loadUi calls: {missing}"
+
+
+def test_trajectory_manifests_drive_plugin_discovery():
+    """Verify trajectory manifests are discovered and hidden as intended."""
+    repo_root = pathlib.Path(__file__).resolve().parents[2]
+    traj_root = repo_root / "chisurf" / "plugins" / "traj"
+
+    expected = {
+        "traj_tools": "Structure:Structure:Traj Tools",
+        "traj_align": "Structure:Trajectory:Align",
+        "traj_convert": "Structure:Trajectory:Convert",
+        "traj_energy_calculator": "Structure:Trajectory:Energy Calculator",
+        "traj_energy": "Structure:Trajectory:Trajectory Energy",
+        "traj_fret": "Structure:Trajectory:FRET",
+        "traj_join": "Structure:Trajectory:Join",
+        "traj_remove_clashes": "Structure:Trajectory:Remove Clashed",
+        "traj_rotate_translate": "Structure:Trajectory:Rotate/Translate",
+        "traj_save_topology": "Structure:Trajectory:Save Topol",
+    }
+    infos = {
+        info.get("manifest_id"): info
+        for info in chisurf.plugins.iter_plugins()
+        if info.get("manifest_id") in expected
+    }
+
+    assert set(infos) == set(expected)
+    for manifest_id, display_name in expected.items():
+        info = infos[manifest_id]
+        assert info["plugin_name"] == display_name
+        assert info["menu_hidden"] == (manifest_id != "traj_tools")
+        assert not info["cli_only"]
+        assert info["module_path"].startswith("chisurf.plugins.traj.")
+
+    for manifest_path in traj_root.glob("*/manifest.json"):
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert validate_manifest(data) == [], manifest_path
+
 
 # --- FROM test_plugins_list_format.py ---
 """

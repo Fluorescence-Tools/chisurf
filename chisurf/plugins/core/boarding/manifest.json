@@ -1,0 +1,19 @@
+{
+  "id": "boarding",
+  "version": "1.0.0",
+  "display_name": "Help:Boarding Wizard",
+  "description": "Startup onboarding wizard for first-run ChiSurf configuration.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Help"],
+  "state_namespace": "boarding",
+  "statefulness": {
+    "enabled": false,
+    "window": {
+      "enabled": false
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.boarding.wizard:WelcomeToChiSurfWizard"
+  },
+  "menu_hidden": true
+}

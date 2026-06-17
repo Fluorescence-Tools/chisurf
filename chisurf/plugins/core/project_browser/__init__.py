@@ -1,4 +1,4 @@
-"""Boarding wizard plugin for first-run ChiSurf setup."""
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -8,11 +8,9 @@ _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:
     name = _manifest.display_name
 else:
-    name = "Help:Boarding Wizard"
-
+    name = "Tools:Open Project"
 
 if __name__ == "plugin":
-    from .wizard import show_onboarding
-
-    show_onboarding()
-
+    from chisurf.plugins.core.project_browser.gui.tool import ProjectBrowserTool
+    window = ProjectBrowserTool()
+    window.show()

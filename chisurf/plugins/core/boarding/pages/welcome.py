@@ -18,7 +18,8 @@ class WelcomePage(QtWidgets.QWizardPage):
             "1) Check whether your settings files exist and look sane.\n"
             "2) Create or restore defaults if something is missing or broken.\n"
             "3) Configure TTTR detector setups and (optionally) FCS channel presets.\n\n"
-            "You can run this wizard any time from <b>Plugins → Dev → Onboarding:Welcome to ChiSurf</b>."
+            "You can run this wizard any time from the Plugin Manager "
+            "(it is hidden from the default ribbon/menu)."
         )
         text.setWordWrap(True)
 

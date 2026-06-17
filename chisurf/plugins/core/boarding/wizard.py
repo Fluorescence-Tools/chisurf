@@ -1,16 +1,19 @@
 from qtpy import QtCore, QtWidgets
 
 import chisurf as cs
-from .pages.welcome import WelcomePage
-from .pages.settings_status import SettingsStatusPage
-from .pages.repair import RepairPage
+
 from .pages.dependencies import DependenciesPage
 from .pages.detector_setups import DetectorSetupsPage
 from .pages.fcs_channels import FCSChannelsPage
 from .pages.finish import FinishPage
+from .pages.repair import RepairPage
+from .pages.settings_status import SettingsStatusPage
+from .pages.welcome import WelcomePage
 
 
 class WelcomeToChiSurfWizard(QtWidgets.QWizard):
+    """Wizard dialog for first-run ChiSurf onboarding."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -32,6 +35,7 @@ class WelcomeToChiSurfWizard(QtWidgets.QWizard):
 
 
 def show_onboarding(parent=None):
+    """Create, show, and retain the onboarding wizard."""
     wiz = WelcomeToChiSurfWizard(parent=parent)
     wiz.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
     try:
@@ -49,6 +53,7 @@ def show_onboarding(parent=None):
 
 
 def _main():
+    """Run the onboarding wizard when executed as a legacy plugin script."""
     try:
         parent = getattr(cs, 'cs', None)
     except Exception:
