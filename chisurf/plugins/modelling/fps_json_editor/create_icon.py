@@ -1,5 +1,6 @@
-from PIL import Image, ImageDraw, ImageFont
 import os
+
+from PIL import Image, ImageDraw
 
 # Create a 64x64 image with a transparent background
 icon = Image.new('RGBA', (64, 64), (0, 0, 0, 0))

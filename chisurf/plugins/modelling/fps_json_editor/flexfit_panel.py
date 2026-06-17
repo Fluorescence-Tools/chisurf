@@ -1,10 +1,10 @@
-"""Panel for editing FlexFit residue and bond constraints.
-"""
+"""Panel for editing FlexFit residue and bond constraints."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-from qtpy import QtCore, QtWidgets, QtGui
+from typing import Any
+
+from qtpy import QtCore, QtWidgets
 
 _FLEXFIT_KEYS = {"Flexible residues", "Bonds"}
 
@@ -27,10 +27,10 @@ class FlexFitPanel(QtWidgets.QWidget):
 
     flexfit_changed = QtCore.Signal()
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         """Initialize the FlexFitPanel with layout and table widgets."""
         super().__init__(parent)
-        self._extra_sections: Dict[str, Any] = {}
+        self._extra_sections: dict[str, Any] = {}
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -104,7 +104,7 @@ class FlexFitPanel(QtWidgets.QWidget):
 
         layout.addStretch()
 
-    def update_flexfit(self, extra_sections: Dict[str, Any]) -> None:
+    def update_flexfit(self, extra_sections: dict[str, Any]) -> None:
         """Repopulate the UI controls from extra_sections.
 
         Parameters
@@ -134,7 +134,7 @@ class FlexFitPanel(QtWidgets.QWidget):
         self.flexfit_remove_set_btn.setEnabled(enabled)
         self._show_flexfit_set()
 
-    def flush_flexfit(self, extra_sections: Dict[str, Any]) -> None:
+    def flush_flexfit(self, extra_sections: dict[str, Any]) -> None:
         """Flush current tables back to extra_sections.
 
         Parameters

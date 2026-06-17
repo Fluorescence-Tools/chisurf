@@ -1,16 +1,15 @@
-"""Panel for managing experimental FRET distances and score sets.
-"""
+"""Panel for managing experimental FRET distances and score sets."""
 
 from __future__ import annotations
 
 import logging
-import traceback
-from typing import Any, Dict, List, Optional
-from qtpy import QtCore, QtWidgets, QtGui
+from typing import Any
 
+from qtpy import QtCore, QtWidgets
+
+import chisurf.core.fio
 import chisurf.gui.widgets
 import chisurf.gui.widgets.general
-import chisurf.core.fio
 
 logger = logging.getLogger("chisurf.plugins.modelling.fret")
 
@@ -52,7 +51,7 @@ class DistancePanel(QtWidgets.QWidget):
         if win and hasattr(win, "statusBar") and win.statusBar() is not None:
             win.statusBar().showMessage(msg, 5000)
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         """Initialize the DistancePanel layout and widgets."""
         super().__init__(parent)
         self._populating = False
@@ -155,7 +154,7 @@ class DistancePanel(QtWidgets.QWidget):
         layout.addWidget(self.distances_table)
 
     def onScoreSetSelectionChanged(self, text: str) -> None:
-        """Callback when scoring group filter combobox changes."""
+        """Handle scoring group filter combobox change."""
         self.distance_modified.emit("", "", 0.0)  # Simply trigger parent refresh
 
     def onAddScoreSet(self) -> None:
@@ -287,14 +286,14 @@ class DistancePanel(QtWidgets.QWidget):
             if reply == QtWidgets.QMessageBox.Yes:
                 self.distance_removed.emit(dist_name)
 
-    def update_labels(self, label_names: List[str]) -> None:
+    def update_labels(self, label_names: list[str]) -> None:
         """Update label selection combo boxes with active label list."""
         self.label1_combo.clear()
         self.label2_combo.clear()
         self.label1_combo.addItems(label_names)
         self.label2_combo.addItems(label_names)
 
-    def update_score_sets(self, score_set_names: List[str]) -> None:
+    def update_score_sets(self, score_set_names: list[str]) -> None:
         """Update scoring group filter combo box."""
         self.score_set_combo.blockSignals(True)
         old_selection = self.score_set_combo.currentText()
@@ -310,8 +309,8 @@ class DistancePanel(QtWidgets.QWidget):
 
     def update_distances_table(
         self,
-        distances: Dict[str, Dict[str, Any]],
-        score_sets: Dict[str, Dict[str, Any]]
+        distances: dict[str, dict[str, Any]],
+        score_sets: dict[str, dict[str, Any]]
     ) -> None:
         """Repopulate the table with filtered restraints based on active score set.
 
@@ -351,7 +350,7 @@ class DistancePanel(QtWidgets.QWidget):
 
             # d, err-, err+, R0 (Editable for non-pRDA)
             is_prda = d.get("distance_type") == "pRDA"
-            
+
             d_val = "N/A" if is_prda else f"{d.get('distance', 0.0):.1f}"
             err_neg_val = "N/A" if is_prda else f"{d.get('error_neg', 0.0):.1f}"
             err_pos_val = "N/A" if is_prda else f"{d.get('error_pos', 0.0):.1f}"

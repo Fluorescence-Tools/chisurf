@@ -1,27 +1,30 @@
-"""A slim coordinator widget for the fps.json editor.
-"""
+"""A slim coordinator widget for the fps.json editor."""
 
 from __future__ import annotations
 
-import sys
 import json
+import sys
 import traceback
-from typing import Any, Dict, Optional
-from qtpy import QtCore, QtWidgets
+from typing import Any
+
+from qtpy import QtWidgets
 
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.gui.widgets.general
 from chisurf.plugins.core.code_editor import SimpleCodeEditor
-from .model import FpsJsonModel
-from .position_panel import PositionPanel
+
 from .distance_panel import DistancePanel
 from .flexfit_panel import FlexFitPanel
+from .model import FpsJsonModel
+from .position_panel import PositionPanel
 
 try:
     from chisurf.gui.misc_helpers import persist_plugin_state
 except ImportError:
-    persist_plugin_state = lambda n: lambda c: c
+
+    def persist_plugin_state(n):  # noqa: D103
+        return lambda c: c
 
 
 
@@ -36,12 +39,13 @@ class LabelStructure(QtWidgets.QWidget):
     name = "LabelStructure"
 
     @chisurf.gui.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, client: Any | None = None, **kwargs) -> None:
         """Initialize the editor by nesting sub-panels inside the tab widget."""
+        self._client = client or self._make_default_client()
         self._model = FpsJsonModel()
 
         # Instantiate sub-panels
-        self.position_panel = PositionPanel()
+        self.position_panel = PositionPanel(client=self._client)
         self.distance_panel = DistancePanel()
         self.flexfit_panel = FlexFitPanel()
 
@@ -49,10 +53,10 @@ class LabelStructure(QtWidgets.QWidget):
         self.json_tab_widget = QtWidgets.QWidget()
         json_layout = QtWidgets.QVBoxLayout(self.json_tab_widget)
         json_layout.setContentsMargins(4, 4, 4, 4)
-        
+
         self.json_editor = SimpleCodeEditor(language='JSON')
         json_layout.addWidget(self.json_editor)
-        
+
         self.json_update_btn = QtWidgets.QPushButton("Update from Editor Text")
         self.json_update_btn.clicked.connect(self.onReadTextEdit)
         json_layout.addWidget(self.json_update_btn)
@@ -72,16 +76,22 @@ class LabelStructure(QtWidgets.QWidget):
         # Connect sub-panel signals
         self.position_panel.position_added.connect(self._on_position_added)
         self.position_panel.position_removed.connect(self._on_position_removed)
-        
+
         self.distance_panel.distance_added.connect(self._on_distance_added)
         self.distance_panel.distance_removed.connect(self._on_distance_removed)
         self.distance_panel.distance_modified.connect(self._on_distance_modified)
         self.distance_panel.score_set_added.connect(self._on_score_set_added)
         self.distance_panel.score_set_removed.connect(self._on_score_set_removed)
-        
+
         self.flexfit_panel.flexfit_changed.connect(self._on_flexfit_changed)
 
         self._refresh_ui()
+
+    @staticmethod
+    def _make_default_client():
+        """Create a default FpsJsonEditorClient with local in-process services."""
+        from .gui.communication import FpsJsonEditorClient
+        return FpsJsonEditorClient()
 
     @property
     def fps_json_payload(self) -> dict:
@@ -95,22 +105,22 @@ class LabelStructure(QtWidgets.QWidget):
         self._refresh_ui()
 
     @property
-    def positions(self) -> Dict[str, Dict[str, Any]]:
+    def positions(self) -> dict[str, dict[str, Any]]:
         """Backwards compatible getter for positions dict."""
         return self._model.positions
 
     @property
-    def distances(self) -> Dict[str, Dict[str, Any]]:
+    def distances(self) -> dict[str, dict[str, Any]]:
         """Backwards compatible getter for distances dict."""
         return self._model.distances
 
     @property
-    def score_sets(self) -> Dict[str, Dict[str, Any]]:
+    def score_sets(self) -> dict[str, dict[str, Any]]:
         """Backwards compatible getter for score sets."""
         return self._model.score_sets
 
     @property
-    def extra_sections(self) -> Dict[str, Any]:
+    def extra_sections(self) -> dict[str, Any]:
         """Backwards compatible getter for extra sections."""
         return self._model.extra_sections
 
@@ -151,12 +161,12 @@ class LabelStructure(QtWidgets.QWidget):
 
     def _refresh_ui(self) -> None:
         self.position_panel.update_positions(self._model.positions)
-        
+
         label_names = list(self._model.positions.keys())
         self.distance_panel.update_labels(label_names)
         self.distance_panel.update_score_sets(list(self._model.score_sets.keys()))
         self.distance_panel.update_distances_table(self._model.distances, self._model.score_sets)
-        
+
         self.flexfit_panel.update_flexfit(self._model.extra_sections)
         self._refresh_json_tab()
 
@@ -177,7 +187,7 @@ class LabelStructure(QtWidgets.QWidget):
                 details=traceback.format_exc()
             )
 
-    def onLoadJSON(self, filename: Optional[str] = None) -> None:
+    def onLoadJSON(self, filename: str | None = None) -> None:
         """Load JSON configuration file."""
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(

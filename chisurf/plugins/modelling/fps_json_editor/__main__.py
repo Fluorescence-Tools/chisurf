@@ -1,12 +1,13 @@
 import sys
 
 from chisurf.gui import QtWidgets
-from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
+from chisurf.plugins.modelling.fps_json_editor.gui.tool import FpsJsonEditorTool
 
 
 def main():
+    """Launch the FPS JSON Editor window."""
     app = QtWidgets.QApplication(sys.argv)
-    win = LabelStructure()
+    win = FpsJsonEditorTool()
     win.show()
     sys.exit(app.exec_())
 

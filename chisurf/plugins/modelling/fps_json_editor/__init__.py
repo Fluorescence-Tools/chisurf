@@ -1,33 +1,31 @@
-"""
-FPS JSON Editor for Accessible Volume Calculations
+"""FPS JSON Editor for Accessible Volume Calculations."""
 
-This plugin provides a graphical interface for creating and editing FPS (Fast
-Positioning and Screening) JSON files used in accessible volume (AV) calculations
-for fluorescent labels.
+from __future__ import annotations
 
-Features:
-- Load and visualize PDB structures
-- Define labeling positions on proteins
-- Configure AV simulation parameters
-- Specify experimental FRET distances between labels
-- Save and load FPS JSON configuration files
+from pathlib import Path
 
-The editor is essential for preparing input files for FRET-based structural modeling
-and accessible volume simulations.
-"""
-
-import sys
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
 from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:FRET:FPS JSON Editor"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+    cli_entrypoint = _manifest.entrypoints.cli or ""
+else:
+    name = "Structure:FRET:FPS JSON Editor"
+    cli_entrypoint = ""
+
+__all__ = ["LabelStructure", "name", "cli_entrypoint"]
 
 
-
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
 if __name__ == "plugin":
-    # Create an instance of the LabelStructure class
     window = LabelStructure()
-    # Show the window
+    if _manifest is not None:
+        apply_manifest_statefulness(window, _manifest)
     window.show()
+    try:
+        window.raise_()
+        window.activateWindow()
+    except Exception:
+        pass

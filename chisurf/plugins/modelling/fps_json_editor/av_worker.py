@@ -1,11 +1,10 @@
-"""Worker thread for non-blocking Accessible Volume calculations.
-"""
+"""Worker thread for non-blocking Accessible Volume calculations."""
 
 from __future__ import annotations
 
-from qtpy import QtCore
 import numpy as np
-from typing import Tuple, Optional, Dict
+from qtpy import QtCore
+
 from chisurf.plugins.modelling.fret import av
 
 
@@ -28,11 +27,11 @@ class AVWorker(QtCore.QThread):
         source_xyz: np.ndarray,
         linker_length: float,
         linker_width: float,
-        radii: Tuple[float, float, float],
+        radii: tuple[float, float, float],
         disc_step: float = 1.5,
-        pdb_path: Optional[str] = None,
-        source_info: Optional[Dict] = None,
-        parent: Optional[QtCore.QObject] = None,
+        pdb_path: str | None = None,
+        source_info: dict | None = None,
+        parent: QtCore.QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self.atoms_xyzr = atoms_xyzr
@@ -45,7 +44,7 @@ class AVWorker(QtCore.QThread):
         self.source_info = source_info
 
     def run(self) -> None:
-        """Called by QThread.start(). Runs av.compute_av() and emits signal."""
+        """Run AV computation and emit result or error signal."""
         try:
             accessible_volume = av.compute_av(
                 atoms=self.atoms_xyzr,

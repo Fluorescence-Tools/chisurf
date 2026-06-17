@@ -9,7 +9,6 @@ from typing import Any
 import numpy as np
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers that mirror the LabelStructure payload logic so we can test without
 # a Qt application running.
@@ -262,7 +261,6 @@ class TestDirectLabelingPotentialScoreSet:
     """The model's DirectLabelingPotential must respect score_set."""
 
     def test_all_distances_when_empty_score_set(self, tmp_json, payload_with_score_sets):
-        from chisurf.plugins.modelling.proteinmc.model import DirectLabelingPotential
         # Cannot fully instantiate (needs pdb2pqr), but we can test the filtering
         # by checking the payload-processing logic directly.
         filtered = filter_distances_by_score_set(payload_with_score_sets, "")

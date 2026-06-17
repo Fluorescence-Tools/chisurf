@@ -1,21 +1,21 @@
-"""Panel for configuring labeling positions and viewing Accessible Volumes in 3D.
-"""
+"""Panel for configuring labeling positions and viewing Accessible Volumes in 3D."""
 
 from __future__ import annotations
 
 import logging
-import traceback
-from typing import Any, Dict, Optional, Tuple
-import numpy as np
-from qtpy import QtCore, QtWidgets, QtGui
+from typing import Any
 
-import chisurf.gui.widgets.pdb
-import chisurf.gui.widgets.fluorescence.av
-import chisurf.gui.widgets
-import chisurf.gui.widgets.general
+import numpy as np
+from qtpy import QtCore, QtWidgets
+
 import chisurf.core.structure
+import chisurf.gui.widgets
+import chisurf.gui.widgets.fluorescence.av
+import chisurf.gui.widgets.general
+import chisurf.gui.widgets.pdb
 from chisurf.plugins.chimol.chimol.renderer.view import MolView
 from chisurf.plugins.modelling.fret import av
+
 from .av_worker import AVWorker
 
 logger = logging.getLogger("chisurf.plugins.modelling.fret")
@@ -49,16 +49,21 @@ class PositionPanel(QtWidgets.QWidget):
         if win and hasattr(win, "statusBar") and win.statusBar() is not None:
             win.statusBar().showMessage(msg, 5000)
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None = None,
+        client: Any | None = None,
+    ) -> None:
         """Initialize the PositionPanel with layout and sub-widgets."""
         super().__init__(parent)
-        self._structure: Optional[chisurf.core.structure.Structure] = None
-        self._pdb_path: Optional[str] = None
-        self._av_cache: Dict[str, Tuple[np.ndarray, np.ndarray]] = {}
+        self._client = client or self._make_default_client()
+        self._structure: chisurf.core.structure.Structure | None = None
+        self._pdb_path: str | None = None
+        self._av_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
 
-        self._last_av_points: Optional[np.ndarray] = None
-        self._last_mean_xyz: Optional[np.ndarray] = None
-        self._last_pos_name: Optional[str] = None
+        self._last_av_points: np.ndarray | None = None
+        self._last_mean_xyz: np.ndarray | None = None
+        self._last_pos_name: str | None = None
 
         self._init_ui()
 
@@ -77,12 +82,23 @@ class PositionPanel(QtWidgets.QWidget):
         pdb_layout.addWidget(QtWidgets.QLabel("Reference PDB:"))
         self.pdb_filename_edit = QtWidgets.QLineEdit()
         self.pdb_filename_edit.setReadOnly(True)
-        pdb_layout.addWidget(self.pdb_filename_edit)
+        pdb_layout.addWidget(self.pdb_filename_edit, stretch=1)
         self.load_pdb_btn = QtWidgets.QPushButton("...")
         self.load_pdb_btn.setFixedWidth(30)
         self.load_pdb_btn.clicked.connect(self.onLoadReferencePDB)
         pdb_layout.addWidget(self.load_pdb_btn)
         left_layout.addLayout(pdb_layout)
+
+        fetch_layout = QtWidgets.QHBoxLayout()
+        fetch_layout.addWidget(QtWidgets.QLabel("PDB ID:"))
+        self.pdb_id_edit = QtWidgets.QLineEdit()
+        self.pdb_id_edit.setPlaceholderText("e.g. 148L")
+        self.pdb_id_edit.returnPressed.connect(self.onFetchPDBById)
+        fetch_layout.addWidget(self.pdb_id_edit, stretch=1)
+        self.fetch_pdb_btn = QtWidgets.QPushButton("Fetch PDB")
+        self.fetch_pdb_btn.clicked.connect(self.onFetchPDBById)
+        fetch_layout.addWidget(self.fetch_pdb_btn)
+        left_layout.addLayout(fetch_layout)
 
         # Position name and Body ID row
         pos_name_layout = QtWidgets.QGridLayout()
@@ -97,6 +113,16 @@ class PositionPanel(QtWidgets.QWidget):
         self.body_id_spin.setToolTip("Body index for multi-body docking.")
         pos_name_layout.addWidget(self.body_id_spin, 1, 1)
         left_layout.addLayout(pos_name_layout)
+
+        optional_layout = QtWidgets.QHBoxLayout()
+        optional_layout.addWidget(QtWidgets.QLabel("Optional field:"))
+        self.optional_field_edit = QtWidgets.QLineEdit()
+        self.optional_field_edit.setPlaceholderText("key=value, e.g. dye_name=ATTO647N")
+        self.optional_field_edit.setToolTip(
+            "Optional position metadata. Leave empty to keep the existing fps.json schema."
+        )
+        optional_layout.addWidget(self.optional_field_edit, stretch=1)
+        left_layout.addLayout(optional_layout)
 
         # PDB Atom Selector
         self.atom_select = chisurf.gui.widgets.pdb.PDBSelector()
@@ -159,7 +185,13 @@ class PositionPanel(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(self.splitter)
 
-        self._av_worker: Optional[AVWorker] = None
+        self._av_worker: AVWorker | None = None
+
+    @staticmethod
+    def _make_default_client():
+        """Create a default FpsJsonEditorClient with local in-process services."""
+        from .gui.communication import FpsJsonEditorClient
+        return FpsJsonEditorClient()
 
     def onSimulationTypeChanged(self, text: str) -> None:
         """Handle changes to the simulation type dropdown."""
@@ -173,6 +205,28 @@ class PositionPanel(QtWidgets.QWidget):
         )
         if filename:
             self.load_structure(filename)
+
+    def onFetchPDBById(self) -> None:
+        """Fetch a reference PDB structure from RCSB by four-character ID."""
+        pdb_id = self.pdb_id_edit.text().strip()
+        if not pdb_id:
+            self._show_status("Please enter a four-character PDB ID.", "warning")
+            return
+
+        self.fetch_pdb_btn.setEnabled(False)
+        self.pdb_id_edit.setEnabled(False)
+        self._show_status(f"Fetching PDB structure '{pdb_id}'...", "info")
+        try:
+            result = self._client.fetch_pdb(pdb_id) if self._client is not None else None
+            if result is None:
+                raise RuntimeError("PDB fetch client is not configured")
+            self.load_structure(result["path"])
+            self._show_status(f"Fetched PDB structure '{pdb_id}'.", "info")
+        except Exception as exc:
+            self._show_status(f"Failed to fetch PDB structure '{pdb_id}': {exc}", "error")
+        finally:
+            self.fetch_pdb_btn.setEnabled(True)
+            self.pdb_id_edit.setEnabled(True)
 
     def load_structure(self, path: str) -> None:
         """Load a structure from path into the panel and selectors.
@@ -278,7 +332,7 @@ class PositionPanel(QtWidgets.QWidget):
     def onAVComputationFinished(
         self, n_points: int, volume: float, mx: float, my: float, mz: float, coords: np.ndarray
     ) -> None:
-        """Callback for when background AV computation succeeds."""
+        """Handle background AV computation success."""
         self.av_progress_bar.setVisible(False)
         self.preview_av_btn.setEnabled(True)
         self.show_3d_btn.setEnabled(True)
@@ -298,7 +352,7 @@ class PositionPanel(QtWidgets.QWidget):
         self.onShowIn3D()
 
     def onAVComputationError(self, err_msg: str) -> None:
-        """Callback for when background AV computation fails."""
+        """Handle background AV computation failure."""
         self.av_progress_bar.setVisible(False)
         self.preview_av_btn.setEnabled(True)
         self.av_preview_label.setText("AV: Calculation failed.")
@@ -335,6 +389,20 @@ class PositionPanel(QtWidgets.QWidget):
             key="mean_position"
         )
 
+    def _optional_field(self) -> tuple[str, str] | None:
+        """Return an optional key/value metadata field from the UI."""
+        text = self.optional_field_edit.text().strip()
+        if not text:
+            return None
+        if "=" not in text:
+            raise ValueError("Optional field must use key=value syntax")
+        key, value = text.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise ValueError("Optional field key must not be empty")
+        return key, value
+
     def onAddPosition(self) -> None:
         """Extract configurations and emit position_added signal."""
         name = self.position_name_edit.text().strip()
@@ -366,6 +434,10 @@ class PositionPanel(QtWidgets.QWidget):
                 "strip_mask": "",
                 "body_id": self.body_id_spin.value()
             }
+            optional_field = self._optional_field()
+            if optional_field is not None:
+                key, value = optional_field
+                params[key] = value
             self.position_added.emit(name, params)
         except Exception as e:
             self._show_status(f"Failed to add position: {str(e)}", "error")
@@ -407,7 +479,7 @@ class PositionPanel(QtWidgets.QWidget):
             self.show_3d_btn.setEnabled(False)
             self.mol_view_3d.clear_point_overlays()
 
-    def update_positions(self, positions: Dict[str, Dict[str, Any]]) -> None:
+    def update_positions(self, positions: dict[str, dict[str, Any]]) -> None:
         """Update the QListWidget with current positions.
 
         Parameters
