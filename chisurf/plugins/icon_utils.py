@@ -1,5 +1,6 @@
 """Enhanced icon utilities for ChiSurf plugins supporting image, emoji, and text icons."""
 import pathlib
+import platform
 
 from qtpy import QtCore
 from qtpy.QtCore import Qt
@@ -93,6 +94,16 @@ def create_text_icon(
     return QIcon(pm)
 
 
+def _emoji_font_family():
+    """Return a platform-appropriate emoji font family."""
+    system = platform.system().lower()
+    if system == "darwin":
+        return "Apple Color Emoji"
+    if system == "windows":
+        return "Segoe UI Emoji"
+    return "Noto Color Emoji"
+
+
 def create_emoji_icon(emoji: str, size: int = 64, bg_color: str | None = None) -> QIcon:
     """
     Create an icon from an emoji character.
@@ -116,9 +127,9 @@ def create_emoji_icon(emoji: str, size: int = 64, bg_color: str | None = None) -
         size=size,
         bg_color=bg_color,
         text_color="#000000",  # Emojis are typically colored already
-        font_size=int(size * 0.7),
-        font_family="Segoe UI Emoji",  # Good emoji font on Windows
-        shape="circle"
+        font_size=int(size * 0.65),
+        font_family=_emoji_font_family(),
+        shape="square"
     )
 
 
@@ -160,8 +171,19 @@ def resolve_plugin_icon(
         return icon_value
 
     if isinstance(icon_value, str):
-        # Check if it's an emoji (contains Unicode emoji characters)
-        if any(ord(char) > 0x1F000 for char in icon_value):
+        # Check if it's an emoji or symbol character
+        def _is_emoji_codepoint(c):
+            cp = ord(c)
+            if cp > 0xFFFF:
+                return True
+            if 0x2100 <= cp <= 0x27BF:
+                return True
+            if 0x2B00 <= cp <= 0x2BFF:
+                return True
+            if 0x1F000 <= cp <= 0x1FFFF:
+                return True
+            return False
+        if any(_is_emoji_codepoint(char) for char in icon_value):
             return create_emoji_icon(icon_value, size=size)
 
         # Check if it's a file path

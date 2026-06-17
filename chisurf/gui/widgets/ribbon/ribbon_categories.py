@@ -449,11 +449,22 @@ class CategoryMethodsMixin:
 
                     # Check for icon
                     icon = None
-                    for _icon_name in ("icon.png", "icon.svg"):
-                        icon_path = plugin_dir / _icon_name
-                        if icon_path.exists():
-                            icon = QIcon(str(icon_path))
-                            break
+                    try:
+                        import importlib as _importlib
+                        from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
+
+                        plugin_module = _importlib.import_module(module_path or module_name)
+                        icon = create_plugin_icon_with_fallback(plugin_module, package_dir, size=16)
+                        if icon.isNull():
+                            icon = None
+                    except Exception:
+                        icon = None
+                    if icon is None:
+                        for _icon_name in ("icon.png", "icon.svg"):
+                            icon_path = plugin_dir / _icon_name
+                            if icon_path.exists():
+                                icon = QIcon(str(icon_path))
+                                break
 
                     # Get description
                     description = info.get('description') or "No description available."

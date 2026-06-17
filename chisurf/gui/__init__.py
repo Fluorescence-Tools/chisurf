@@ -867,13 +867,26 @@ def setup_gui(
                     globals={'__name__': 'plugin'}
                 )
 
-                # Check for icon
+                # Check for icon (emoji/text fallback via icon_utils, then icon.png)
                 icon = None
-                for _icon_name in ("icon.png", "icon.svg"):
-                    icon_path = plugin_dir / _icon_name
-                    if icon_path.exists():
-                        icon = QtGui.QIcon(str(icon_path))
-                        break
+                try:
+                    from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
+                    try:
+                        mod = importlib.import_module(module_path or module_name)
+                    except Exception:
+                        mod = None
+                    if mod is not None:
+                        icon = create_plugin_icon_with_fallback(mod, plugin_dir, size=16)
+                        if icon.isNull():
+                            icon = None
+                except Exception:
+                    icon = None
+                if icon is None:
+                    for _icon_name in ("icon.png", "icon.svg"):
+                        icon_path = plugin_dir / _icon_name
+                        if icon_path.exists():
+                            icon = QtGui.QIcon(str(icon_path))
+                            break
 
                 # Get plugin description from iter_plugins metadata or fallback to docstring
                 description = info.get('description') or "No description available."
