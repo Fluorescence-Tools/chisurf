@@ -1,5 +1,6 @@
 import os
 import json
+import pathlib
 import numpy as np
 import pytest
 import chisurf as cs
@@ -7,7 +8,7 @@ from chisurf.core.data import DataCurve
 from chisurf.core.fitting.fit import Fit
 from chisurf.core.models.model import ModelCurve
 from chisurf.core.fitting.parameter import FittingParameter
-from chisurf.core.project import Project, save_project, load_project as project_load_json
+from chisurf.core.project import Project, save_project
 from chisurf.macros.core_fit import add_fit, save_project as macro_save_project, load_project as macro_load_project
 
 # Mock cs global state for tests
@@ -35,7 +36,6 @@ class E2ELinearModel(ModelCurve):
 def test_e2e_with_real_file_headless(tmp_path):
     # Setup
     val_p0 = 7.5
-    project_dir = tmp_path / "e2e_headless"
     csv_file = tmp_path / "data.csv"
     with open(csv_file, "w") as f:
         f.write("x,y\n0,1\n1,2\n2,3\n")
@@ -73,11 +73,11 @@ def test_e2e_with_real_file_headless(tmp_path):
         fit.model.p0.value = val_p0
         
         print("--- Phase 4: Save project ---")
-        # Save
-        # macro_save_project(target_path, project_name)
-        # created dir: target_path/project_name
-        macro_save_project(str(tmp_path), "e2e_headless")
-        assert (project_dir / "project.json").exists()
+        saved_path = macro_save_project(str(tmp_path), "e2e_headless")
+        assert saved_path is not None, "save_project returned None"
+        assert saved_path.is_file()
+        assert saved_path.suffix == ".csp"
+        # The archive is at tmp_path/e2e_headless.csp (not inside a directory)
         
         print("--- Phase 5: Reload ---")
         # Restart simulation
@@ -85,8 +85,8 @@ def test_e2e_with_real_file_headless(tmp_path):
         cs.fits = []
         cs.cs = None
         
-        # Reload
-        macro_load_project(str(project_dir))
+        # Reload from the .csp archive path returned by save
+        macro_load_project(str(saved_path))
         
         print("--- Phase 6: Verify ---")
         # Verify

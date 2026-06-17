@@ -82,12 +82,13 @@ def test_project_fits_roundtrip_with_single_fit(tmp_path):
     fit_record["uid"] = "fit-uid-1"
     p.fits.append(fit_record)
 
-    project_json_path = save_project(p, project_dir)
-    assert project_json_path.is_file()
+    archive_path = save_project(p, project_dir)
+    assert archive_path.is_file()
 
     # Inspect raw JSON to ensure fits structure is present
-    with project_json_path.open("r", encoding="utf-8") as f:
-        raw = json.load(f)
+    import zipfile
+    with zipfile.ZipFile(archive_path, "r") as zf:
+        raw = json.loads(zf.read("project.json"))
 
     assert "fits" in raw
     assert len(raw["fits"]) == 1

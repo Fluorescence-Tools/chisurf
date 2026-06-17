@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -49,16 +50,30 @@ def test_cs_gui_is_module():
     assert cs.gui.widgets.__name__ == "chisurf.gui.widgets"
 
 
+def _is_csp_project(path):
+    """Check if path is a .csp archive or a directory containing project.csp."""
+    if os.path.isfile(path) and path.endswith(".csp"):
+        return True
+    if os.path.isdir(path) and os.path.isfile(os.path.join(path, "project.csp")):
+        return True
+    return False
+
+
 def test_t4l_chimol_project_loads():
     """The t4l_chimol example project should load without errors."""
     project_path = os.path.join(EXAMPLES_DIR, "t4l_chimol")
-    if not os.path.isdir(project_path):
+    csp_path = project_path + ".csp"
+    if _is_csp_project(csp_path):
+        load_path = csp_path
+    elif _is_csp_project(project_path):
+        load_path = project_path
+    elif os.path.isdir(project_path):
+        pytest.skip(f"Example project {project_path} has not been converted to .csp format yet")
+    else:
         pytest.skip(f"Example project not found: {project_path}")
 
     _reset_state()
-    # The project itself has 0 fits; load_project_data still restores
-    # metadata for the file-backed datasets.
-    fit_uids = load_project_data(project_path)
+    fit_uids = load_project_data(load_path)
     assert isinstance(fit_uids, list)
     # 0 fits by design
     assert len(cs.fits) == 0
@@ -76,11 +91,18 @@ def test_t4l_proteinmc_project_loads():
     history) is restored without errors.
     """
     project_path = os.path.join(EXAMPLES_DIR, "t4l_proteinmc")
-    if not os.path.isdir(project_path):
+    csp_path = project_path + ".csp"
+    if _is_csp_project(csp_path):
+        load_path = csp_path
+    elif _is_csp_project(project_path):
+        load_path = project_path
+    elif os.path.isdir(project_path):
+        pytest.skip(f"Example project {project_path} has not been converted to .csp format yet")
+    else:
         pytest.skip(f"Example project not found: {project_path}")
 
     _reset_state()
-    fit_uids = load_project_data(project_path)
+    fit_uids = load_project_data(load_path)
     assert isinstance(fit_uids, list)
     # In headless mode the ProteinMC model is not created, so fits is 0.
     # In GUI mode the fit would be added. We only assert no crash here.
@@ -88,6 +110,33 @@ def test_t4l_proteinmc_project_loads():
     assert len(cs.imported_datasets) >= 1
     # Loading must not have corrupted `cs.gui`.
     assert cs.gui.__name__ == "chisurf.gui"
+
+
+def test_load_project_payload_reinitializes_gui_without_messages():
+    """Project loading should not show confirmation or completion dialogs."""
+    from chisurf.core.project import Project
+    from chisurf.macros.core_fit import load_project_payload
+
+    calls = []
+
+    class FakeGui:
+        def reinitialize(self, show_confirmation=True, show_success=True):
+            calls.append((show_confirmation, show_success))
+
+        def update(self):
+            pass
+
+        dataset_selector = SimpleNamespace(update=lambda: None)
+        fit_selector = SimpleNamespace(update=lambda: None)
+
+    saved_cs_cs = getattr(cs, "cs", None)
+    try:
+        cs.cs = FakeGui()
+        load_project_payload(Project(name="test"), project_path=None)
+    finally:
+        cs.cs = saved_cs_cs
+
+    assert calls == [(False, False)]
 
 
 def test_reinitialize_application_does_not_overwrite_cs_gui():
@@ -104,11 +153,16 @@ def test_reinitialize_application_does_not_overwrite_cs_gui():
         def onCloseAllFits(self):
             pass
 
-    # Run the full reinitialize sequence. Internal steps that need
-    # a real Main window log a warning instead of crashing.
-    reinitialize_application(main_window=_MockMain())
+    # Save and restore cs.cs to avoid polluting subsequent tests
+    saved_cs_cs = getattr(cs, "cs", None)
+    try:
+        # Run the full reinitialize sequence. Internal steps that need
+        # a real Main window log a warning instead of crashing.
+        reinitialize_application(main_window=_MockMain())
 
-    # The critical assertion: cs.gui is still the module.
-    assert cs.gui.__name__ == "chisurf.gui"
-    assert cs.gui.widgets.__name__ == "chisurf.gui.widgets"
+        # The critical assertion: cs.gui is still the module.
+        assert cs.gui.__name__ == "chisurf.gui"
+        assert cs.gui.widgets.__name__ == "chisurf.gui.widgets"
+    finally:
+        cs.cs = saved_cs_cs
 
