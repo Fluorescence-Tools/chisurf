@@ -191,7 +191,7 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         boost-cpp ^
         "mdtraj<1.10" ^
         ipython ^
-        notebook ^
+        "notebook<7" ^
         emcee ^
         pyopengl ^
         pytables ^
@@ -430,6 +430,14 @@ if exist "%APP_PATH%\conda-meta"          rmdir /s /q "%APP_PATH%\conda-meta"
 :: Remove Python bytecode (safe), but keep tests/examples as some packages import them
 echo Removing Python bytecode ...
 powershell -Command "Get-ChildItem -Path '%APP_PATH%' -Filter '__pycache__' -Recurse | Remove-Item -Force -Recurse"
+
+:: Remove build-only tools from the staged app environment. The source install
+:: above may need them, but the shipped runtime does not.
+echo Removing build-only tools ...
+call "%BASE_CONDA_EXE%" remove -y -p "%APP_PATH%" cmake ninja cython pythran swig vs2022_win-64
+if errorlevel 1 (
+    echo WARNING: Failed to remove one or more build-only conda packages
+)
 
 :: Remove pip, wheel (keep setuptools as pkg_resources depends on it)
 echo Removing pip, wheel ...

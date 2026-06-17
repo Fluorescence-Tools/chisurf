@@ -205,6 +205,11 @@ ignore = [
     "D414",  # non-empty docstring should have description (fine)
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D102", "D103"]
+"**/test/**" = ["D102", "D103"]
+"**/tests/**" = ["D102", "D103"]
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true

@@ -4,16 +4,9 @@ channels:
 dependencies:
   - python=3.12.*
   - pip
-  - setuptools>=61
-  - wheel
-  - cython>=0.29,<3
-  - pythran>=0.9.14,<1
   - numpy<2.0
-  - swig<4.3.0
   - boost-cpp
   - pyqt
-  - pybind11
-  - eigen
   - typing-extensions>=4.14
   - pytools>=2024.0
   - pyyaml
@@ -30,7 +23,7 @@ dependencies:
   - numba
   - mdtraj
   - ipython
-  - notebook
+  - notebook<7
   - emcee
   - pyopengl
   - pytables
@@ -43,8 +36,4 @@ dependencies:
   - pygments
   - pyarrow
   - boost-histogram
-  - pyqtwebengine
   - hdf5
-  - cmake<4
-  - ninja
-  - doxygen

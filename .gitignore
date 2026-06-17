@@ -58,6 +58,7 @@ Thumbs.db
 /llm-wiki
 /overhaul
 /thirdparty
+/scratch*
 /build_tools/osx/resources/
 /modules/*/.git/
 /modules/*/b2/

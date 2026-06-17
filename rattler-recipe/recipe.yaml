@@ -96,7 +96,7 @@ requirements:
     - boost-cpp
     - mdtraj
     - ipython
-    - notebook
+    - notebook <7
     - emcee
     - pyopengl
     - pytables
@@ -111,7 +111,6 @@ requirements:
     - pygments
     - pyarrow
     - boost-histogram
-    - pyqtwebengine
     - ${{ "hdf5" if win }}
 
 tests:

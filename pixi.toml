@@ -7,14 +7,15 @@ channels = ["conda-forge", "bioconda"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [environments]
-default = ["build"]
-docs = ["build", "docs"]
+default = []
+build = ["build"]
+test = ["build", "test"]
+dev = ["build", "test", "dev"]
+docs = ["docs"]
 
 [dependencies]
 python = "3.12.*"
 numpy = "*"
-cmake = "<4"
-ninja = "*"
 typing-extensions = ">=4.14"
 pytools = ">=2024.0"
 pyyaml = "*"
@@ -23,7 +24,6 @@ click = "*"
 click-didyoumean = "*"
 qtpy = "<2.0"
 pyqt = "*"
-pyqtwebengine = "*"
 pyqtgraph = "0.13.*"
 matplotlib = "*"
 scikit-image = "*"
@@ -35,7 +35,7 @@ boost-cpp = "*"
 mdtraj = "*"
 pdb2pqr = "*"
 ipython = "*"
-notebook = "*"
+notebook = "<7"
 emcee = "*"
 pyopengl = "*"
 pytables = "*"
@@ -48,17 +48,6 @@ latexify-py = "*"
 pygments = "*"
 pyarrow = "*"
 boost-histogram = "*"
-setuptools = ">=82.0.1,<83"
-pytest = "*"
-pytest-cov = "*"
-pytest-qt = "*"
-ruff = "*"
-mypy = "*"
-python-lsp-server = ">=1.14"
-pip = "*"
-eigen = ">=5.0.1,<6"
-pybind11 = ">=3.0.3,<4"
-cmake-build-extension = ">=0.6.1,<0.7"
 
 [pypi-dependencies]
 
@@ -77,6 +66,19 @@ rattler-index = "*"
 jinja2 = "*"
 tomli = "*"
 micromamba = "*"
+eigen = ">=5.0.1,<6"
+pybind11 = ">=3.0.3,<4"
+cmake-build-extension = ">=0.6.1,<0.7"
+
+[feature.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+pytest-qt = "*"
+
+[feature.dev.dependencies]
+ruff = "*"
+mypy = "*"
+python-lsp-server = ">=1.14"
 
 [feature.build.tasks]
 build-pkg = { cmd = "python build_tools/run_rattler_build.py", depends-on = ["build-extensions"] }
@@ -115,7 +117,7 @@ tttrlib = "*"
  [tasks]
  build-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh" }
  test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
- build-ndxplorer = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/include/eigen3\" && pip install -e modules/ndxplorer --no-deps", inputs = [
+ build-ndxplorer = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$CONDA_PREFIX/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$CONDA_PREFIX/include/eigen3\" && pip install -e modules/ndxplorer --no-deps", inputs = [
      "modules/ndxplorer/CMakeLists.txt",
      "modules/ndxplorer/setup.py",
  ] }
