@@ -107,10 +107,8 @@ class _MaxentRunMixin:
                     raise RuntimeError("L-curve computation cancelled")
                 try:
                     if is_fret:
-                # TODO: route via MaxEntClient for ZMQ support
-                period_arg = self._get_period_arg(use_periodic)
-
-                res = solve_fret_mem(
+                        period_arg = self._get_period_arg(use_periodic)
+                        res = solve_fret_mem(
                             decay=decay,
                             lamp=lamp,
                             dt=dt,

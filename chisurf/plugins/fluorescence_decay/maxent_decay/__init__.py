@@ -18,4 +18,8 @@ def load():
     return MaxentDecayWidget()
 
 
+if __name__ == "plugin":
+    widget = load()
+    widget.show()
+
 __all__ = ["name", "cli_entrypoint", "load"]
