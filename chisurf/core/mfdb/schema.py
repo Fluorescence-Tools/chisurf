@@ -247,6 +247,10 @@ CREATE_TABLES_SQL = [
         asym_id TEXT DEFAULT 'A',
         residue_number INTEGER NOT NULL,
         residue_name TEXT,
+        atom_id TEXT,
+        mutation_flag TEXT DEFAULT 'no',
+        modification_flag TEXT DEFAULT 'no',
+        auth_name TEXT,
         description TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1129,8 +1133,6 @@ FRESH_DB_TABLES_SQL = []
 for sql in CREATE_TABLES_SQL:
     if "CREATE TABLE IF NOT EXISTS fdb_" in sql:
         continue
-    if any(sql.lstrip().startswith(f"CREATE TABLE IF NOT EXISTS {name} ") for name in ("mfdb_sample", "mfdb_experiment")):
-        continue
     for mfdb_name, replacement in _CANONICAL_TABLE_MAP.items():
         prefix = f"CREATE TABLE IF NOT EXISTS {mfdb_name} "
         if prefix in sql:
@@ -1232,7 +1234,7 @@ CREATE_INDICES_SQL = [
 # Fresh-DB indices — same as CREATE_INDICES_SQL but without legacy fdb_* indices.
 FRESH_DB_INDICES_SQL = [
     sql for sql in CREATE_INDICES_SQL
-    if " ON fdb_" not in sql and "idx_mfdb_sample" not in sql and "idx_mfdb_experiment" not in sql
+    if " ON fdb_" not in sql
 ]
 
 
@@ -1277,15 +1279,10 @@ def _fix_operation_artifact_pk(conn: sqlite3.Connection) -> None:
     # If 'role' is already in the PK we have nothing to do
     if not pk_cols:
         return  # table doesn't exist yet, nothing to fix
-    cur.execute("PRAGMA table_info(mfdb_operation_artifact)")
-    existing_pk = {
-        r[5]  # pk flag
-        for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
-        if r[5]  # non-zero = part of PK
-    }
     # Check if 'role' column is part of the PK already
     role_in_pk = any(
-        r[1] == "role" and r[5] for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
+        r[1] == "role" and r[5]
+        for r in cur.execute("PRAGMA table_info(mfdb_operation_artifact)").fetchall()
     )
     if role_in_pk:
         return
@@ -1601,8 +1598,34 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
         "relationship_type": [
             "included_in", "contains", "derived_from", "supersedes",
             "uses_external_reference", "parameter_depends_on", "parameter_of", "linked_to",
-            "project_contains", "grouped_in"
-        ]
+            "project_contains", "grouped_in", "measured_sample"
+        ],
+        # Sample-related vocabularies (PRD-02 Task 6)
+        "entity_type": [
+            "protein", "dna", "rna", "polymer", "non-polymer",
+            "water", "macromolecule", "oligosaccharide", "ligand", "solvent"
+        ],
+        "fluorophore_type": [
+            "donor", "acceptor", "unspecified"
+        ],
+        "solvent_phase": [
+            "liquid", "solid", "gas", "vitrified"
+        ],
+        "sample_type": [
+            "protein", "dna", "rna", "physical_sample"
+        ],
+        "probe_origin": [
+            "extrinsic", "intrinsic"
+        ],
+        "probe_link_type": [
+            "covalent", "non-covalent", "genetic"
+        ],
+        "reactive_probe_flag": [
+            "yes", "no"
+        ],
+        "ambiguous_stoichiometry": [
+            "yes", "no"
+        ],
     }
     with conn:
         for field_name, values in vocab.items():

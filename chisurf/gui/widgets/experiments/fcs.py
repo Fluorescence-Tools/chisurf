@@ -1,19 +1,41 @@
 from __future__ import annotations
-import chisurf as cs
 
 import pathlib
 
 from qtpy import QtWidgets
 
+import chisurf as cs
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
 from chisurf.core.experiments.core import reader
+from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 
 
 class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
     def get_filename(self) -> pathlib.Path:
-        return cs.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
+        """Return an FCS filename after optionally assigning a sample."""
+        path = cs.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
+        if path:
+            self._set_reader_sample_id(show_sample_picker_dialog(db=self._db(), parent=self))
+        return path
+
+    def _db(self):
+        """Return the MFDB connection from the current reader when available."""
+        try:
+            return self.db
+        except Exception:
+            return None
+
+    def _set_reader_sample_id(self, sample_id: str | None) -> None:
+        """Store the selected sample ID on the underlying FCS reader."""
+        reader_obj = getattr(self, "experiment_reader", None)
+        if reader_obj is None:
+            return
+        try:
+            reader_obj.sample_id = sample_id
+        except Exception:
+            pass
 
     def __init__(
             self,

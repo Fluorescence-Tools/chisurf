@@ -326,6 +326,42 @@ class MFDatabase:
         # Fallback to chromophore_name if uuid column doesn't exist
         return self.conn.execute("SELECT * FROM probes WHERE chromophore_name = ?", (uuid_str,)).fetchone()
 
+    def find_or_add_probe(self, name: str, category: str = "other", description: str | None = None) -> int:
+        """Find an existing probe by name or create a new one.
+
+        Parameters
+        ----------
+        name : str
+            Probe/fluorophore name.
+        category : str, optional
+            Probe category. Default is "other".
+        description : str, optional
+            Probe description.
+
+        Returns
+        -------
+        int
+            Probe identifier.
+
+        """
+        # Try to find existing probe
+        existing = self.conn.execute(
+            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
+            (name,)
+        ).fetchone()
+        if existing:
+            return existing["probe_id"]
+
+        # Create new probe
+        now = _utc_now()
+        with self.conn:
+            cursor = self.conn.execute(
+                "INSERT INTO probes (chromophore_name, category, description, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (name, category, description, now, now, None)
+            )
+            return cursor.lastrowid
+
     def get_probes(self, category=None, probe_type_id=None, include_inactive=False):
         query = "SELECT * FROM probes WHERE 1=1 AND deleted_at IS NULL"
         params = []
@@ -533,15 +569,43 @@ class MFDatabase:
             now = _utc_now()
             self.conn.execute(
                 "INSERT OR REPLACE INTO entities "
-                "(entity_id, name, sequence, entity_type, organism, entity_source, details, "
-                "created_at, updated_at, deleted_at) "
+                "(entity_id, type, description, formula_weight, src_method, "
+                "number_of_molecules, common_name, created_at, updated_at, deleted_at) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (entity_id, name, sequence, entity_type, organism, entity_source, details,
+                (entity_id, entity_type or "polymer", details or name, None, None, 1, name,
                  now, now, None)
             )
+            # Note: sequence is stored in entity_poly_seq table, not in entities
 
     def get_entity_by_name(self, name):
-        return self.conn.execute("SELECT * FROM entities WHERE name = ?", (name,)).fetchone()
+        return self.conn.execute("SELECT * FROM entities WHERE common_name = ?", (name,)).fetchone()
+
+    def set_sequence(self, entity_id, sequence):
+        """Set the sequence for an entity.
+
+        Parameters
+        ----------
+        entity_id : str
+            Entity identifier.
+        sequence : list of str
+            List of residue names (mon_id values).
+
+        """
+        if not isinstance(sequence, (list, tuple)):
+            sequence = list(sequence)
+        with self.conn:
+            now = _utc_now()
+            # Delete existing sequence for this entity
+            self.conn.execute(
+                "DELETE FROM entity_poly_seq WHERE entity_id = ?", (entity_id,)
+            )
+            # Insert new sequence
+            for idx, mon_id in enumerate(sequence, start=1):
+                self.conn.execute(
+                    "INSERT INTO entity_poly_seq (entity_id, num, mon_id, created_at, updated_at, deleted_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (entity_id, idx, str(mon_id), now, now, None)
+                )
 
     # -- mfdb operation management --
 
@@ -1503,6 +1567,147 @@ class MFDatabase:
             "DELETE FROM flr_sample_key_value WHERE sample_id = ?",
             (sample_id,),
         )
+
+    def add_sample_condition(self, condition_id, ph=None, temperature=None, ionic_strength=None,
+                              buffer_composition=None, details=None):
+        """Add a sample condition record.
+
+        Parameters
+        ----------
+        condition_id : str
+            Unique condition identifier.
+        ph : float, optional
+            pH value.
+        temperature : float, optional
+            Temperature in Kelvin.
+        ionic_strength : float, optional
+            Ionic strength in M.
+        buffer_composition : str, optional
+            Buffer composition description.
+        details : str, optional
+            Additional details.
+
+        """
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample_condition "
+                "(condition_id, ph, temperature, ionic_strength, buffer_composition, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (condition_id, ph, temperature, ionic_strength, buffer_composition, details,
+                 now, now, None)
+            )
+
+    def add_entity_assembly(self, assembly_id, description=None, details=None):
+        """Add an entity assembly record.
+
+        Parameters
+        ----------
+        assembly_id : str
+            Unique assembly identifier.
+        description : str, optional
+            Assembly description.
+        details : str, optional
+            Additional details.
+
+        """
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_entity_assembly "
+                "(assembly_id, description, details, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (assembly_id, description, details, now, now, None)
+            )
+
+    def add_poly_probe_position(self, probe_id, entity_id, residue_number, asym_id="A",
+                                  residue_name=None, description=None,
+                                  atom_id=None, mutation_flag="no", modification_flag="no",
+                                  auth_name=None):
+        """Add a probe position on a polymer entity.
+
+        Parameters
+        ----------
+        probe_id : int
+            Probe identifier.
+        entity_id : str
+            Entity identifier.
+        residue_number : int
+            Residue sequence number.
+        asym_id : str, optional
+            Chain/asymmetry identifier. Default is "A".
+        residue_name : str, optional
+            Residue name (mon_id).
+        description : str, optional
+            Position description.
+        atom_id : str, optional
+            Attachment atom identifier (e.g. "CB", "C5").
+        mutation_flag : str, optional
+            Mutation flag: "yes" if residue was mutated for labeling. Default "no".
+        modification_flag : str, optional
+            Modification flag: "yes" if residue is chemically modified. Default "no".
+        auth_name : str, optional
+            Author-provided position name (e.g. "S131C").
+
+        """
+        with self.conn:
+            now = _utc_now()
+            cursor = self.conn.execute(
+                "INSERT INTO flr_poly_probe_position "
+                "(probe_id, entity_id, residue_number, asym_id, residue_name, description, "
+                "atom_id, mutation_flag, modification_flag, auth_name, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id, entity_id, residue_number, asym_id, residue_name, description,
+                 atom_id, mutation_flag, modification_flag, auth_name,
+                 now, now, None)
+            )
+            return cursor.lastrowid
+
+    def add_fret_forster_radius(self, forster_radius_id, sample_id, probe_id_1, probe_id_2,
+                                  forster_radius, kappa_squared=None, refractive_index=None,
+                                  details=None):
+        """Add a Förster radius calculation for a FRET pair.
+
+        Parameters
+        ----------
+        forster_radius_id : str
+            Unique Förster radius identifier (stored as id in the table).
+        sample_id : str
+            Sample identifier (currently not stored in table, kept for compatibility).
+        probe_id_1 : int
+            First probe identifier (donor, stored as donor_probe_id).
+        probe_id_2 : int
+            Second probe identifier (acceptor, stored as acceptor_probe_id).
+        forster_radius : float
+            Förster radius in nanometers.
+        kappa_squared : float, optional
+            Orientation factor κ². Default is 2/3.
+        refractive_index : float, optional
+            Refractive index of the medium. Default is 1.4 (stored as index_of_refraction).
+        details : str, optional
+            Additional details.
+
+        """
+        if kappa_squared is None:
+            kappa_squared = 2.0 / 3.0
+        if refractive_index is None:
+            refractive_index = 1.4
+        with self.conn:
+            now = _utc_now()
+            cursor = self.conn.execute(
+                "INSERT INTO flr_fret_forster_radius "
+                "(donor_probe_id, acceptor_probe_id, forster_radius, "
+                "reduced_forster_radius, kappa_squared, index_of_refraction, overlap_integral, "
+                "details, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id_1, probe_id_2, forster_radius,
+                 None,  # reduced_forster_radius
+                 kappa_squared, refractive_index, None,  # overlap_integral
+                 details, now, now, None)
+            )
+            return cursor.lastrowid
 
     def get_sample_key_values(self, sample_id: str) -> list[dict[str, Any]]:
         rows = self.conn.execute(

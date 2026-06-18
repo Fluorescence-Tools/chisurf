@@ -24,9 +24,22 @@ except ImportError:
     def create_plugin_icon_with_fallback(module, package_dir, size=64):
         """Fallback icon creation using existing system"""
         from pathlib import Path
+        from qtpy.QtGui import QColor, QFont, QPainter, QPixmap
         package_dir = Path(package_dir)
-        if hasattr(module, 'icon') and isinstance(module.icon, QIcon):
-            return module.icon
+        if hasattr(module, 'icon'):
+            if isinstance(module.icon, QIcon):
+                return module.icon
+            if isinstance(module.icon, str):
+                pm = QPixmap(size, size)
+                pm.fill(Qt.transparent)
+                painter = QPainter(pm)
+                painter.setRenderHint(QPainter.Antialiasing, True)
+                painter.setRenderHint(QPainter.TextAntialiasing, True)
+                font = QFont("Segoe UI Emoji", int(size * 0.5))
+                painter.setFont(font)
+                painter.drawText(pm.rect(), Qt.AlignCenter, module.icon)
+                painter.end()
+                return QIcon(pm)
         icon_path = package_dir / 'icon.png'
         if icon_path.exists():
             return QIcon(str(icon_path))
@@ -660,7 +673,10 @@ class PluginMethodsMixin:
             chisurf_notebooks_dir = home_dir / "notebooks"
             
             # Add "Jupyter Home" button
-            root_adr = f"{cs.__jupyter_address__}/tree"
+            jupyter_address = getattr(cs, "__jupyter_address__", None)
+            if not jupyter_address:
+                jupyter_address = ""
+            root_adr = f"{jupyter_address}/tree/"
             try:
                 # Try to find a nice icon for Jupyter
                 icon = QIcon.fromTheme('home')
@@ -679,8 +695,11 @@ class PluginMethodsMixin:
                 count = 0
                 for nb_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
                     try:
-                        nb_path_str = nb_file.relative_to(home_dir).as_posix()
-                        adr = f"{cs.__jupyter_address__}/notebooks/{nb_path_str}"
+                        try:
+                            nb_path_str = nb_file.resolve().relative_to(home_dir).as_posix()
+                        except ValueError:
+                            nb_path_str = nb_file.name
+                        adr = f"{jupyter_address}/notebooks/{nb_path_str}"
                         
                         btn = panel.addSmallButton(
                             nb_file.stem,

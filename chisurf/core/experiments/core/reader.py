@@ -12,7 +12,6 @@ derived data in the object store and records provenance in MFDB.
 from __future__ import annotations
 
 import abc
-import hashlib
 import logging
 import pathlib
 import uuid
@@ -86,6 +85,7 @@ class ExperimentReader(chisurf.core.base.Base):
             db=None,
             object_store=None,
             record_provenance: bool = True,
+            sample_id: str | None = None,
             **kwargs
     ):
         """Initialize the experiment reader.
@@ -100,13 +100,15 @@ class ExperimentReader(chisurf.core.base.Base):
             Object store for content-addressed storage.
         record_provenance : bool
             Whether to record provenance when ``get_data()`` is called.
+        sample_id : str, optional
+            Sample ID to attach to loaded datasets and provenance metadata.
         """
         super().__init__(*args, **kwargs)
         self.controller = controller
         self.db = db
         self.object_store = object_store
         self.record_provenance = record_provenance
-        self.sample_id: str | None = None
+        self.sample_id = sample_id
         self._last_operation_id: str | None = None
         self._source_md5s: dict[str, str] = {}
         self._source_object_uuids: list[str] = []
@@ -236,7 +238,9 @@ class ExperimentReader(chisurf.core.base.Base):
     def _prompt_for_sample(self, filename, content_md5, object_uuid):
         """Prompt the user to assign a sample if the file is new to MFDB."""
         try:
-            from chisurf.gui.widgets.experiments.sample_selector_widget import show_sample_lookup_dialog
+            from chisurf.gui.widgets.experiments.sample_selector_widget import (
+                show_sample_lookup_dialog,
+            )
             show_sample_lookup_dialog(
                 self.controller,
                 str(filename),
@@ -421,17 +425,26 @@ class ExperimentReader(chisurf.core.base.Base):
         op_id : str or None
             Operation ID.
         """
+        curves = self._extract_curves(data)
         if not source_uuids and not derived_uuids and op_id is None:
+            if self.sample_id:
+                for curve in curves:
+                    if not hasattr(curve, "meta_data") or curve.meta_data is None:
+                        curve.meta_data = {}
+                    curve.meta_data["sample_id"] = self.sample_id
             return
         provenance = {
             "source_object_uuids": source_uuids,
             "derived_object_uuids": derived_uuids,
             "operation_id": op_id,
         }
-        curves = self._extract_curves(data)
+        if self.sample_id:
+            provenance["sample_id"] = self.sample_id
         for i, curve in enumerate(curves):
             if not hasattr(curve, "meta_data") or curve.meta_data is None:
                 curve.meta_data = {}
+            if self.sample_id:
+                curve.meta_data["sample_id"] = self.sample_id
             curve.meta_data["mfdb"] = {
                 **provenance,
                 "derived_object_uuid": derived_uuids[i] if i < len(derived_uuids) else None,

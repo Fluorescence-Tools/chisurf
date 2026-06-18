@@ -1,13 +1,14 @@
 from __future__ import annotations
-import chisurf as cs
 
 import pathlib
 
-from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
+from qtpy import QtGui, QtWidgets
 
+import chisurf as cs
 import chisurf.gui.widgets
 from chisurf.core.experiments.core import reader
+from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
 
@@ -716,6 +717,36 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         except Exception:
             pass
 
+    def _db(self):
+        """Return the MFDB connection from the current reader when available."""
+        try:
+            return self.db
+        except Exception:
+            return None
+
+    def _reader_for_current_setup(self):
+        """Return the current setup reader/controller when available."""
+        try:
+            return cs.cs.current_setup
+        except Exception:
+            return None
+
+    def _set_reader_sample_id(self, sample_id: str | None) -> None:
+        """Store the selected sample ID on the current setup reader."""
+        reader_obj = self._reader_for_current_setup()
+        if reader_obj is None:
+            return
+        try:
+            reader_obj.sample_id = sample_id
+        except Exception:
+            pass
+        experiment_reader = getattr(reader_obj, "experiment_reader", None)
+        if experiment_reader is not None:
+            try:
+                experiment_reader.sample_id = sample_id
+            except Exception:
+                pass
+
     def _on_add_pch_clicked(self) -> None:
         import pathlib as _pathlib
 
@@ -761,6 +792,13 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         except Exception:
             pass
 
+        # Show sample picker once for the entire batch, not per file
+        sample_id = show_sample_picker_dialog(db=self._db(), parent=self)
+        if not sample_id:
+            return  # User cancelled
+        reader_obj = self._reader_for_current_setup()
+        self._set_reader_sample_id(sample_id)
+
         for p in path_list:
             try:
                 s = p.as_posix().replace("\\", "/")
@@ -768,7 +806,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
                 continue
             cs.core.actions.dispatch(
                 name="dataset.add",
-                payload={"filename": s, "experiment_reader": None},
+                payload={"filename": s, "experiment_reader": reader_obj},
             )
 
 
