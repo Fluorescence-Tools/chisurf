@@ -74,15 +74,42 @@
         </item>
        </layout>
       </item>
-      <item row="0" column="8">
-       <widget class="QCheckBox" name="checkBox">
-        <property name="text">
-         <string>Fine</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
+      <item row="1" column="1" colspan="4">
+       <layout class="QHBoxLayout" name="horizontalLayout_fine">
+        <item>
+         <widget class="QCheckBox" name="checkBox">
+          <property name="text">
+           <string>Fine</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_micro_binning">
+          <property name="text">
+           <string>bin.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBox_micro_binning"/>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
       <item row="2" column="5" colspan="4">
        <layout class="QHBoxLayout" name="horizontalLayout_4">

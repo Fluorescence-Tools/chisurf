@@ -68,6 +68,16 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         return bool(self.checkBox_2.isChecked())
 
     @property
+    def microtime_binning(self) -> int:
+        return int(self.comboBox_micro_binning.currentText())
+
+    @microtime_binning.setter
+    def microtime_binning(self, value: int):
+        idx = self.comboBox_micro_binning.findText(str(value))
+        if idx >= 0:
+            self.comboBox_micro_binning.setCurrentIndex(idx)
+
+    @property
     def correlation_nsplits(self) -> int:
         return int(self.spinBox.value())
 
@@ -179,6 +189,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     def update_parameter(self):
         cs.logging.log(0, "WizardTTTRCorrelator::update_parameter")
         self.settings['correlation']['is_fine'] = self.correlation_is_fine
+        self.settings['correlation']['microtime_binning'] = self.microtime_binning
         self.settings['correlation']['ncasc'] = self.correlation_ncasc
         self.settings['correlation']['nbins'] = self.correlation_nbins
         self.settings['correlation']['nsplits'] = self.correlation_nsplits
@@ -294,6 +305,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         correlation_settings = self.get_correlation_settings()
         self.correlations.clear()
+        self.plot_item_fcs.clear()
 
         # Create a progress dialog
         progress = QtWidgets.QProgressDialog("Computing correlations...", "Cancel", 0, n_chunks, self)
@@ -370,12 +382,18 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 correlator = tttrlib.Correlator(**correlation_settings)
                 correlator.set_macrotimes(t, t)
                 correlator.set_weights(w1, w2)
-                x = correlator.x_axis * dT
                 if self.correlation_is_fine:
+                    b = self.microtime_binning
                     n_microtime_channels = tttr.get_number_of_micro_time_channels()
                     mt = tttr.micro_times
+                    if b > 1:
+                        mt = mt // b
+                        n_microtime_channels = (n_microtime_channels + b - 1) // b
                     correlator.set_microtimes(mt, mt, n_microtime_channels)
-                    x /= (tttr.header.micro_time_resolution / 1000.0)
+                    dt = tttr.header.micro_time_resolution * b * 1000.0
+                else:
+                    dt = dT
+                x = correlator.x_axis * dt
                 print(f"Chunk {i}: sw1={sw1}, sw2={sw2}, dur_ms={dur}, dur_s={dur/1000.0}, dT={dT}")
                 d = {
                     'x': x.tolist(),
@@ -716,6 +734,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             nbins: int = None,
             nsplits: int = None,
             is_fine: bool = None,
+            microtime_binning: int = None,
             channel_a: str = "",
             channel_b: str = "",
             filter_file: str = "",
@@ -743,6 +762,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         is_fine : bool, optional
             Whether to use fine correlation. If None, the value is taken from 
             cs_settings['correlator']['fine'] at runtime.
+        microtime_binning : int, optional
+            Micro-time binning factor used with fine correlation. If None, the
+            value is taken from cs_settings['correlator']['microtime_binning'].
         channel_a : str, optional
             Comma-separated list of channels for detector A, default is "" (empty).
         channel_b : str, optional
@@ -790,7 +812,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         # Apply UI modifications from arguments
         self._apply_initial_parameters(
-            ncasc, nbins, nsplits, is_fine, channel_a, channel_b,
+            ncasc, nbins, nsplits, is_fine, microtime_binning, channel_a, channel_b,
             filter_file, analysis_folder, output_path, microtime_range_a, microtime_range_b
         )
 
@@ -881,6 +903,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 self.spinBox_3.setValue(int(corr['n_casc']))
             if 'make_fine' in corr:
                 self.checkBox_2.setChecked(bool(corr['make_fine']))
+            if 'microtime_binning' in corr:
+                self.microtime_binning = int(corr['microtime_binning'])
         except Exception:
             pass
         try:
@@ -890,7 +914,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             pass
 
     def _apply_initial_parameters(
-            self, ncasc, nbins, nsplits, is_fine, channel_a, channel_b,
+            self, ncasc, nbins, nsplits, is_fine, microtime_binning, channel_a, channel_b,
             filter_file, analysis_folder, output_path, microtime_range_a, microtime_range_b
     ):
         """
@@ -908,6 +932,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         settings_nbins = cs.core.settings.cs_settings['correlator']['B']
         settings_nsplits = cs.core.settings.cs_settings['correlator']['split']
         settings_is_fine = bool(cs.core.settings.cs_settings['correlator']['fine'])
+        settings_microtime_binning = int(
+            cs.core.settings.cs_settings['correlator'].get('microtime_binning', 1)
+        )
 
         # Use provided parameters if not None, otherwise use settings
         if ncasc is None:
@@ -918,6 +945,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             nsplits = settings_nsplits
         if is_fine is None:
             is_fine = settings_is_fine
+        if microtime_binning is None:
+            microtime_binning = settings_microtime_binning
 
         # Map each parameter to its corresponding UI widget
         ui_elements = {
@@ -942,6 +971,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 widget.setChecked(bool(value))
             elif isinstance(widget, QtWidgets.QLineEdit):  # Text inputs
                 widget.setText(str(value))
+
+        self.microtime_binning = int(microtime_binning)
 
         # Reset correlation flag since parameters were modified
         self.is_correlated = False

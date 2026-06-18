@@ -141,6 +141,7 @@ class Correlator(QtCore.QThread):
         photons = self.p.photon_source.photons
 
         if use_tttrlib:
+            self._results = list()
             n_photons = len(photons)
             n_groups = self.p.split
             n_photons_per_groups = n_photons // n_groups
@@ -156,15 +157,26 @@ class Correlator(QtCore.QThread):
 
                 correlator = tttrlib.Correlator()
                 correlator.set_n_bins(self.p.B)
+                correlator.set_n_casc(self.p.number_of_cascades)
                 t1 = p.macro_times
                 t2 = p.macro_times
-                correlator.set_n_casc(self.p.number_of_cascades)
-                correlator.set_events(
-                    t1, wi1,
-                    t2, wi2
-                )
+                correlator.set_macrotimes(t1, t2)
+                correlator.set_weights(wi1, wi2)
+                if self.p.fine:
+                    mt1 = p.micro_times
+                    mt2 = p.micro_times
+                    b = self.p.microtime_binning
+                    if b > 1:
+                        mt1 = mt1 // b
+                        mt2 = mt2 // b
+                    correlator.set_microtimes(
+                        mt1, mt2,
+                        self.p.effective_n_tac
+                    )
                 correlator.run()
                 tau = correlator.get_x_axis_normalized()
+                tau = tau.astype(np.float64)
+                tau *= self.p.dt
                 corr = correlator.get_corr_normalized()
                 dur = t1[-1]
                 cr = float(np.mean(w1 + w2))
@@ -329,8 +341,12 @@ class CorrelatorWidget(QtWidgets.QWidget):
         # fill widgets
         self.comboBox_3.addItems(cs.core.fluorescence.fcs.weightCalculations)
         self.comboBox_2.addItems(cs.core.fluorescence.fcs.correlationMethods)
-        self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
+        self.comboBox_micro_binning.addItems(['1', '2', '4', '8', '16'])
+        self.comboBox_micro_binning.setEnabled(False)
+        self.checkBox.toggled.connect(
+            self.comboBox_micro_binning.setEnabled
+        )
         self.progressBar.setValue(0)
 
         # connect widgets
@@ -345,11 +361,26 @@ class CorrelatorWidget(QtWidgets.QWidget):
         return self.correlator_thread.data
 
     @property
+    def effective_n_tac(self) -> int:
+        b = self.microtime_binning
+        return (self.photon_source.photons.n_tac + b - 1) // b
+
+    @property
     def dt(self):
         dt = self.photon_source.photons.mt_clk
         if self.fine:
-            dt /= self.photon_source.photons.n_tac
+            dt /= self.effective_n_tac
         return dt
+
+    @property
+    def microtime_binning(self) -> int:
+        return int(self.comboBox_micro_binning.currentText())
+
+    @microtime_binning.setter
+    def microtime_binning(self, v: int):
+        idx = self.comboBox_micro_binning.findText(str(v))
+        if idx >= 0:
+            self.comboBox_micro_binning.setCurrentIndex(idx)
 
     @property
     def weighting(self) -> int:
@@ -585,7 +616,7 @@ class CorrelateTTTR(
             )
 
     def add_curve(self):
-        self._curves.append(self.correlator.data)
+        self._curves = [self.correlator.data]
         self.cs.update()
         self.plot_curves()
 

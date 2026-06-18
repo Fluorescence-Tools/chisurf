@@ -34,6 +34,11 @@ def setup_ui(page):
     page.toolButton_3.clicked.connect(page.correlate_data)
     page.toolButton_4.clicked.connect(page.onClearFiles)
 
+    if hasattr(page, 'comboBox_micro_binning'):
+        page.comboBox_micro_binning.addItems(['1', '2', '4', '8', '16'])
+        page.comboBox_micro_binning.setEnabled(False)
+        page.checkBox_2.toggled.connect(page.comboBox_micro_binning.setEnabled)
+
     page._channel_defs = {}
     try:
         if hasattr(page, 'comboBox'):

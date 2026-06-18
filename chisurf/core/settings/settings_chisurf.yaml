@@ -3,6 +3,7 @@ correlator:
   count_rate_filter: false
   fine: 0
   max_count_rate: 120
+  microtime_binning: 1
   number_of_cascades: 20
   split: 6
   time_window: 500
