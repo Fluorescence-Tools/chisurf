@@ -584,6 +584,7 @@ def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[in
     """Insert all probe records and return their IDs.
     
     Uses repository.find_or_add_probe() for proper deduplication and audit fields.
+    Persists all chemical fields from ProbeDefinition to canonical probe tables (R14-4).
 
     Parameters
     ----------
@@ -605,12 +606,22 @@ def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[in
             continue
         
         # Use repository method for proper deduplication and audit fields
+        # Pass all chemical fields from ProbeDefinition
         try:
             probe_id = db.find_or_add_probe(
                 name=probe.name,
                 category="other",
                 description=probe.name,  # Use name as description if no better option
+                reactive_probe_flag=probe.reactive_probe_flag,
+                reactive_probe_name=probe.reactive_probe_name or None,
+                probe_origin=probe.probe_origin,
+                probe_link_type=probe.probe_link_type,
+                chromophore_center_atom=probe.chromophore_center_atom or None,
             )
+            
+            # TODO: R14-4 - Also persist SMILES/InChI to chem_descriptors table
+            # For now, we persist the basic chemical fields that are columns in probes table
+            
             probe_ids.append(probe_id)
         except Exception:
             # Fallback: try to find existing probe
@@ -1534,14 +1545,11 @@ def _get_fret_pairs_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]
     if not sample_probe_ids:
         return []
     
-    # Query FRET pairs where either donor or acceptor probe is in the sample
-    # Use placeholder expansion for the IN clause
-    placeholders = ",".join("?" * len(sample_probe_ids))
+    # Query FRET pairs for this specific sample
     rows = db.conn.execute(
-        f"""SELECT * FROM flr_fret_forster_radius 
-           WHERE (donor_probe_id IN ({placeholders}) OR acceptor_probe_id IN ({placeholders}))
-           AND deleted_at IS NULL""",
-        sample_probe_ids * 2,  # Repeat for both IN clauses
+        """SELECT * FROM flr_fret_forster_radius 
+           WHERE sample_id = ? AND deleted_at IS NULL""",
+        (sample_id,)
     ).fetchall()
     
     fret_pairs = []

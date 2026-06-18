@@ -8,6 +8,7 @@ GUI dialogs, ensuring type safety and consistent validation.
 from __future__ import annotations
 
 import dataclasses
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -141,28 +142,32 @@ class SampleCreateRequest:
                 )
 
         # Validate probe names from legacy fields
+        # Per PRD-02: unknown probe names should WARN (not reject), since custom
+        # dyes are valid. Only entity_type should hard-reject.
+        logger = logging.getLogger(__name__)
         if self.donor_probe_name:
-            validate_vocabulary(
-                self.donor_probe_name,
-                COMMON_PROBE_NAMES,
-                "donor_probe_name"
-            )
+            if self.donor_probe_name not in COMMON_PROBE_NAMES:
+                logger.warning(
+                    f"donor_probe_name '{self.donor_probe_name}' not in COMMON_PROBE_NAMES. "
+                    f"Consider using a standard probe name."
+                )
 
         if self.acceptor_probe_name:
-            validate_vocabulary(
-                self.acceptor_probe_name,
-                COMMON_PROBE_NAMES,
-                "acceptor_probe_name"
-            )
+            if self.acceptor_probe_name not in COMMON_PROBE_NAMES:
+                logger.warning(
+                    f"acceptor_probe_name '{self.acceptor_probe_name}' not in COMMON_PROBE_NAMES. "
+                    f"Consider using a standard probe name."
+                )
         
         # Validate probe names from new probes list
+        # Per PRD-02: unknown probe names should WARN (not reject)
         for i, probe in enumerate(self.probes):
             if probe.name:
-                validate_vocabulary(
-                    probe.name,
-                    COMMON_PROBE_NAMES,
-                    f"probes[{i}].name"
-                )
+                if probe.name not in COMMON_PROBE_NAMES:
+                    logger.warning(
+                        f"probes[{i}].name '{probe.name}' not in COMMON_PROBE_NAMES. "
+                        f"Consider using a standard probe name."
+                    )
 
     def to_sample_definition(self) -> SampleDefinition:
         """Convert this request to a ``SampleDefinition``.
@@ -311,29 +316,33 @@ class SampleUpdateRequest:
                     )
 
         # Validate probe names from legacy fields
+        # Per PRD-02: unknown probe names should WARN (not reject), since custom
+        # dyes are valid. Only entity_type should hard-reject.
+        logger = logging.getLogger(__name__)
         if self.donor_probe_name:
-            validate_vocabulary(
-                self.donor_probe_name,
-                COMMON_PROBE_NAMES,
-                "donor_probe_name"
-            )
+            if self.donor_probe_name not in COMMON_PROBE_NAMES:
+                logger.warning(
+                    f"donor_probe_name '{self.donor_probe_name}' not in COMMON_PROBE_NAMES. "
+                    f"Consider using a standard probe name."
+                )
 
         if self.acceptor_probe_name:
-            validate_vocabulary(
-                self.acceptor_probe_name,
-                COMMON_PROBE_NAMES,
-                "acceptor_probe_name"
-            )
+            if self.acceptor_probe_name not in COMMON_PROBE_NAMES:
+                logger.warning(
+                    f"acceptor_probe_name '{self.acceptor_probe_name}' not in COMMON_PROBE_NAMES. "
+                    f"Consider using a standard probe name."
+                )
         
         # Validate probe names from new probes list
+        # Per PRD-02: unknown probe names should WARN (not reject)
         if self.probes:
             for i, probe in enumerate(self.probes):
                 if probe.name:
-                    validate_vocabulary(
-                        probe.name,
-                        COMMON_PROBE_NAMES,
-                        f"probes[{i}].name"
-                    )
+                    if probe.name not in COMMON_PROBE_NAMES:
+                        logger.warning(
+                            f"probes[{i}].name '{probe.name}' not in COMMON_PROBE_NAMES. "
+                            f"Consider using a standard probe name."
+                        )
 
 
 @dataclass
@@ -382,12 +391,15 @@ class SampleQueryRequest:
                 "entity_type"
             )
 
+        # Per PRD-02: unknown probe names should WARN (not reject), since custom
+        # dyes are valid. Only entity_type should hard-reject.
+        logger = logging.getLogger(__name__)
         if self.probe_name:
-            validate_vocabulary(
-                self.probe_name,
-                COMMON_PROBE_NAMES,
-                "probe_name"
-            )
+            if self.probe_name not in COMMON_PROBE_NAMES:
+                logger.warning(
+                    f"probe_name '{self.probe_name}' not in COMMON_PROBE_NAMES. "
+                    f"Consider using a standard probe name."
+                )
 
         if self.limit < 1:
             raise ValueError("limit must be at least 1")

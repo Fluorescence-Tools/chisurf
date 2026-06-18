@@ -326,7 +326,10 @@ class MFDatabase:
         # Fallback to chromophore_name if uuid column doesn't exist
         return self.conn.execute("SELECT * FROM probes WHERE chromophore_name = ?", (uuid_str,)).fetchone()
 
-    def find_or_add_probe(self, name: str, category: str = "other", description: str | None = None) -> int:
+    def find_or_add_probe(self, name: str, category: str = "other", description: str | None = None,
+                          reactive_probe_flag: str = "no", reactive_probe_name: str | None = None,
+                          probe_origin: str = "extrinsic", probe_link_type: str = "covalent",
+                          chromophore_center_atom: str | None = None) -> int:
         """Find an existing probe by name or create a new one.
 
         Parameters
@@ -337,6 +340,16 @@ class MFDatabase:
             Probe category. Default is "other".
         description : str, optional
             Probe description.
+        reactive_probe_flag : str, optional
+            "yes" if reactive form differs from chromophore. Default "no".
+        reactive_probe_name : str, optional
+            Name of reactive form, e.g. "Cy3B-maleimide".
+        probe_origin : str, optional
+            "extrinsic" or "intrinsic" (e.g. Trp). Default "extrinsic".
+        probe_link_type : str, optional
+            How probe attaches to biomolecule. Default "covalent".
+        chromophore_center_atom : str, optional
+            Atom name for AV simulation center.
 
         Returns
         -------
@@ -350,15 +363,38 @@ class MFDatabase:
             (name,)
         ).fetchone()
         if existing:
+            # Update existing probe with new chemical fields if they differ
+            existing_probe = self.conn.execute(
+                "SELECT * FROM probes WHERE probe_id = ?",
+                (existing["probe_id"],)
+            ).fetchone()
+            if (existing_probe and 
+                (existing_probe.get("reactive_probe_flag") != reactive_probe_flag or
+                 existing_probe.get("reactive_probe_name") != reactive_probe_name or
+                 existing_probe.get("probe_origin") != probe_origin or
+                 existing_probe.get("probe_link_type") != probe_link_type or
+                 existing_probe.get("chromophore_center_atom") != chromophore_center_atom)):
+                now = _utc_now()
+                with self.conn:
+                    self.conn.execute(
+                        """UPDATE probes SET reactive_probe_flag = ?, reactive_probe_name = ?,
+                           probe_origin = ?, probe_link_type = ?, chromophore_center_atom = ?,
+                           category = ?, description = ?, updated_at = ? WHERE probe_id = ?""",
+                        (reactive_probe_flag, reactive_probe_name, probe_origin, probe_link_type,
+                         chromophore_center_atom, category, description, now, existing["probe_id"])
+                    )
             return existing["probe_id"]
 
-        # Create new probe
+        # Create new probe with all chemical fields
         now = _utc_now()
         with self.conn:
             cursor = self.conn.execute(
-                "INSERT INTO probes (chromophore_name, category, description, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (name, category, description, now, now, None)
+                """INSERT INTO probes (chromophore_name, category, description, 
+                   reactive_probe_flag, reactive_probe_name, probe_origin, probe_link_type,
+                   chromophore_center_atom, created_at, updated_at, deleted_at) """
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (name, category, description, reactive_probe_flag, reactive_probe_name,
+                 probe_origin, probe_link_type, chromophore_center_atom, now, now, None)
             )
             return cursor.lastrowid
 
@@ -1675,7 +1711,7 @@ class MFDatabase:
         forster_radius_id : str
             Unique Förster radius identifier (stored as id in the table).
         sample_id : str
-            Sample identifier (currently not stored in table, kept for compatibility).
+            Sample identifier (stored in sample_id column).
         probe_id_1 : int
             First probe identifier (donor, stored as donor_probe_id).
         probe_id_2 : int
@@ -1698,11 +1734,11 @@ class MFDatabase:
             now = _utc_now()
             cursor = self.conn.execute(
                 "INSERT INTO flr_fret_forster_radius "
-                "(donor_probe_id, acceptor_probe_id, forster_radius, "
+                "(sample_id, donor_probe_id, acceptor_probe_id, forster_radius, "
                 "reduced_forster_radius, kappa_squared, index_of_refraction, overlap_integral, "
                 "details, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (probe_id_1, probe_id_2, forster_radius,
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (sample_id, probe_id_1, probe_id_2, forster_radius,
                  None,  # reduced_forster_radius
                  kappa_squared, refractive_index, None,  # overlap_integral
                  details, now, now, None)
@@ -1972,7 +2008,8 @@ class MFDatabase:
         forster = [
             dict(row)
             for row in self.conn.execute(
-                "SELECT * FROM flr_fret_forster_radius WHERE deleted_at IS NULL ORDER BY id"
+                "SELECT * FROM flr_fret_forster_radius WHERE sample_id = ? AND deleted_at IS NULL ORDER BY id",
+                (sample_id,)
             ).fetchall()
         ]
         metadata = self.get_analysis_metadata(analysis_id)

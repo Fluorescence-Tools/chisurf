@@ -343,6 +343,7 @@ CREATE_TABLES_SQL = [
     )""",
     """CREATE TABLE IF NOT EXISTS flr_fret_forster_radius (
         id INTEGER PRIMARY KEY,
+        sample_id INTEGER NOT NULL REFERENCES mfdb_sample(sample_id),
         donor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
         acceptor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
         forster_radius REAL NOT NULL,
@@ -354,7 +355,7 @@ CREATE_TABLES_SQL = [
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT,
-        UNIQUE (donor_probe_id, acceptor_probe_id)
+        UNIQUE (sample_id, donor_probe_id, acceptor_probe_id)
     )""",
     """CREATE TABLE IF NOT EXISTS flr_fret_distance_restraint (
         id INTEGER PRIMARY KEY,
