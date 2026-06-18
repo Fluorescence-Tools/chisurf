@@ -488,29 +488,27 @@ class SampleSearchRequest:
         if self.vocabulary_field:
             valid_fields = set()
             
-            if self.use_pdbx:
+            if self.use_pdbx or self.use_flrcif:
                 try:
                     from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
                     dic = MmcifDictionary.load_bundled()
                     # Get all category.field keys from the dictionary
+                    # Include both with and without leading underscore (e.g., "flr_sample.id" and "_flr_sample.id")
                     for category_name, category in dic._categories.items():
                         if hasattr(category, 'items') and category.items:
-                            for field_name in category.items.keys():
-                                valid_fields.add(f"{category_name}.{field_name}")
+                            # Only include flr_* categories if use_flrcif, all categories if use_pdbx
+                            if self.use_pdbx or (self.use_flrcif and category_name.startswith("flr_")):
+                                for attr_name, item in category.items.items():
+                                    # Add both forms: category.attribute and _category.attribute
+                                    valid_fields.add(f"{category_name}.{attr_name}")
+                                    valid_fields.add(f"_{category_name}.{attr_name}")
+                                
+                                # Also add using the full item name (which includes category prefix)
+                                for attr_name, item in category.items.items():
+                                    if item.name:
+                                        valid_fields.add(item.name)
                 except Exception:
-                    pass  # Dictionary not available, skip PDBx validation
-            
-            if self.use_flrcif:
-                try:
-                    from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
-                    dic = MmcifDictionary.load_bundled()
-                    # flrCIF uses the same dictionary, so include all flr_* categories
-                    for category_name, category in dic._categories.items():
-                        if category_name.startswith("flr_") and hasattr(category, 'items') and category.items:
-                            for field_name in category.items.keys():
-                                valid_fields.add(f"{category_name}.{field_name}")
-                except Exception:
-                    pass  # Dictionary not available, skip flrCIF validation
+                    pass  # Dictionary not available, skip validation
             
             # Check if the field is valid
             if valid_fields:

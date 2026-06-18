@@ -17,6 +17,7 @@ from chisurf.core.mfdb.sample_manager import (
     get_artifacts_for_sample,
     get_sample,
     get_sample_for_artifact,
+    get_sample_full_description,
     link_artifact_to_sample,
     list_samples,
 )
@@ -69,6 +70,64 @@ def test_create_sample_idempotent(db):
     second = create_sample(db, definition)
 
     assert first == second
+
+
+def test_create_sample_delegates_to_orm_adapter(db, monkeypatch):
+    """Public sample creation goes through the SQLAlchemy graph adapter."""
+    calls = []
+
+    def fake_create_sample_graph(db_arg, definition_arg, **kwargs):
+        calls.append((db_arg, definition_arg, kwargs))
+        return kwargs["sample_id"]
+
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.orm.sample_repository.create_sample_graph",
+        fake_create_sample_graph,
+    )
+
+    definition = SampleDefinition(name="Adapter Sample")
+    sample_id = create_sample(db, definition)
+
+    assert sample_id == "adapter_sample"
+    assert len(calls) == 1
+    db_arg, definition_arg, kwargs = calls[0]
+    assert db_arg is db
+    assert definition_arg is definition
+    assert kwargs["sample_id"] == "adapter_sample"
+    assert kwargs["display_name"] == "Adapter Sample"
+    assert kwargs["metadata_json"]
+
+
+def test_get_sample_full_description_uses_orm_graph(db, monkeypatch):
+    """Public full-description reads use the SQLAlchemy graph adapter."""
+    calls = []
+
+    def fake_get_sample_graph(db_arg, sample_id):
+        calls.append((db_arg, sample_id))
+        return {
+            "sample": {
+                "sample_id": sample_id,
+                "description": "from orm graph",
+                "solvent_phase": "liquid",
+            },
+            "entities": [],
+            "probes": [],
+            "condition": None,
+            "fret_pairs": [],
+            "key_values": [],
+        }
+
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.orm.sample_repository.get_sample_graph",
+        fake_get_sample_graph,
+    )
+
+    description = get_sample_full_description(db, "sample_1")
+
+    assert description is not None
+    assert description["description"] == "from orm graph"
+    assert description["sample_id"] == "sample_1"
+    assert calls == [(db, "sample_1")]
 
 
 def test_create_sample_with_optional_none(db):
@@ -211,10 +270,10 @@ def test_sample_definition_valid_vocabulary(db):
 def test_sample_definition_invalid_entity_type_raises():
     """SampleDefinition with invalid entity_type raises ValueError."""
     from chisurf.core.mfdb.models import ENTITY_TYPES
-    
+
     invalid_type = "invalid_entity_type_12345"
     assert invalid_type not in ENTITY_TYPES
-    
+
     with pytest.raises(ValueError, match="Invalid entity_type"):
         SampleDefinition(
             name="invalid_sample",
@@ -225,16 +284,16 @@ def test_sample_definition_invalid_entity_type_raises():
 
 def test_sample_definition_invalid_probe_name_warns(caplog):
     """SampleDefinition with invalid probe name logs warning but does not raise.
-    
+
     Per PRD-02: unknown probe names should WARN (not reject), since custom
     dyes are valid. Only entity_type should hard-reject.
     """
     from chisurf.core.mfdb.models import COMMON_PROBE_NAMES
     import logging
-    
+
     invalid_probe = "invalid_probe_xyz"
     assert invalid_probe not in COMMON_PROBE_NAMES
-    
+
     # Should not raise - only logs a warning
     with caplog.at_level(logging.WARNING):
         definition = SampleDefinition(
@@ -263,7 +322,7 @@ def test_sample_definition_validation_disabled():
 def test_sample_create_request_to_definition():
     """SampleCreateRequest can be converted to SampleDefinition."""
     from chisurf.core.mfdb.sample_requests import SampleCreateRequest
-    
+
     request = SampleCreateRequest(
         name="request_sample",
         description="A sample from request",
@@ -271,9 +330,9 @@ def test_sample_create_request_to_definition():
         donor_probe_name="Cy3B",
         ph=7.4,
     )
-    
+
     definition = request.to_sample_definition()
-    
+
     assert definition.name == "request_sample"
     assert definition.description == "A sample from request"
     assert definition.entity_type == "dna"
@@ -284,7 +343,7 @@ def test_sample_create_request_to_definition():
 def test_sample_create_request_validates_vocabulary():
     """SampleCreateRequest validates vocabulary by default."""
     from chisurf.core.mfdb.sample_requests import SampleCreateRequest
-    
+
     with pytest.raises(ValueError, match="Invalid entity_type"):
         SampleCreateRequest(
             name="invalid",
@@ -296,10 +355,10 @@ def test_sample_create_request_validates_vocabulary():
 def test_sample_create_request_requires_name():
     """SampleCreateRequest requires a name."""
     from chisurf.core.mfdb.sample_requests import SampleCreateRequest
-    
+
     with pytest.raises(ValueError, match="sample name is required"):
         SampleCreateRequest(name="")
-    
+
     with pytest.raises(ValueError, match="sample name is required"):
         SampleCreateRequest(name="   ")
 
@@ -307,7 +366,7 @@ def test_sample_create_request_requires_name():
 def test_sample_update_request_requires_sample_id():
     """SampleUpdateRequest requires a sample_id."""
     from chisurf.core.mfdb.sample_requests import SampleUpdateRequest
-    
+
     with pytest.raises(ValueError, match="sample_id is required"):
         SampleUpdateRequest(sample_id="")
 
@@ -315,10 +374,10 @@ def test_sample_update_request_requires_sample_id():
 def test_sample_link_request_validates_fields():
     """SampleLinkRequest validates required fields."""
     from chisurf.core.mfdb.sample_requests import SampleLinkRequest
-    
+
     with pytest.raises(ValueError, match="artifact_id is required"):
         SampleLinkRequest(artifact_id="", sample_id="sample_1")
-    
+
     with pytest.raises(ValueError, match="sample_id is required"):
         SampleLinkRequest(artifact_id="art_1", sample_id="")
 
@@ -326,12 +385,99 @@ def test_sample_link_request_validates_fields():
 def test_sample_query_request_validates_limits():
     """SampleQueryRequest validates limit and offset."""
     from chisurf.core.mfdb.sample_requests import SampleQueryRequest
-    
+
     with pytest.raises(ValueError, match="limit must be at least 1"):
         SampleQueryRequest(limit=0)
-    
+
     with pytest.raises(ValueError, match="limit must be at least 1"):
         SampleQueryRequest(limit=-1)
-    
+
     with pytest.raises(ValueError, match="offset must be non-negative"):
         SampleQueryRequest(offset=-1)
+
+
+def test_create_sample_with_fret_pairs_and_positions(db):
+    """Regression test for R16-1: structured sample with FretPairDefinition.
+
+    Creates a sample with multiple probes and FRET pairs, verifies that:
+    1. Sample creation succeeds without SQL errors
+    2. All FRET pair data is persisted
+    3. Full description includes forster_radius_id, sample_id, and scoped FRET pairs
+    """
+    from chisurf.core.mfdb.models import (
+        EntityDefinition,
+        FretPairDefinition,
+        ProbeDefinition,
+    )
+    from chisurf.core.mfdb.sample_manager import get_sample_full_description
+
+    # Create a 3-color FRET sample with explicit entities, probes, and FRET pairs
+    definition = SampleDefinition(
+        name="3color_fret_sample",
+        description="3-color FRET sample for testing",
+        entities=[
+            EntityDefinition(
+                name="T4 Lysozyme",
+                entity_type="protein",
+                sequence=list("MNGTELK")  # truncated for test
+            ),
+        ],
+        probes=[
+            ProbeDefinition(name="Cy3B", seq_id=1, asym_id="A", entity_index=0),
+            ProbeDefinition(name="ATTO550", seq_id=10, asym_id="A", entity_index=0),
+            ProbeDefinition(name="ATTO647N", seq_id=20, asym_id="A", entity_index=0),
+        ],
+        fret_pairs=[
+            FretPairDefinition(
+                probe_1_index=0,
+                probe_2_index=1,
+                forster_radius_nm=5.4,
+                kappa_squared=2.0/3.0,
+                refractive_index=1.4,
+            ),
+            FretPairDefinition(
+                probe_1_index=1,
+                probe_2_index=2,
+                forster_radius_nm=6.2,
+                kappa_squared=2.0/3.0,
+                refractive_index=1.4,
+            ),
+        ],
+        buffer_description="PBS pH 7.4",
+        ph=7.4,
+        temperature_k=298.15,
+    )
+
+    # This should not raise sqlite3.OperationalError: 12 values for 13 columns
+    sample_id = create_sample(db, definition)
+
+    # Verify sample was created
+    assert sample_id is not None
+    assert sample_id == "3color_fret_sample"
+
+    # Get full description and verify FRET pairs are persisted
+    full_desc = get_sample_full_description(db, sample_id)
+    assert full_desc is not None
+
+    # Verify FRET pairs exist
+    assert "fret_pairs" in full_desc
+    fret_pairs = full_desc["fret_pairs"]
+    assert len(fret_pairs) == 2
+
+    # Verify each FRET pair has the expected data
+    for pair in fret_pairs:
+        assert "forster_radius_id" in pair
+        assert pair["forster_radius_id"] is not None
+        assert "forster_radius_nm" in pair
+        assert pair["forster_radius_nm"] in [5.4, 6.2]
+        assert "donor_probe" in pair
+        assert "acceptor_probe" in pair
+        assert "sample_id" in pair or pair.get("id") is not None
+
+    # Verify probes are present
+    assert "probes" in full_desc
+    assert len(full_desc["probes"]) == 3
+
+    # Verify entities are present
+    assert "entities" in full_desc
+    assert len(full_desc["entities"]) == 1

@@ -81,97 +81,17 @@ def create_sample(db: MFDatabase, definition: SampleDefinition) -> str:
         return existing["sample_id"]
 
     sample_id = _unique_sample_id(db, _slugify(definition.name) or str(uuid.uuid4())[:8])
-    now = _utc_now(db)
 
-    with db._transaction():
-        # 1. Create mfdb_sample record (lightweight index)
-        metadata = _metadata_from_definition(definition)
-        db.conn.execute(
-            """INSERT INTO mfdb_sample
-               (sample_id, display_name, sample_type, metadata_json, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (sample_id, definition.name.strip(), _sample_type(definition), _json_dumps(metadata), now, now),
-        )
+    from chisurf.core.mfdb.orm.sample_repository import create_sample_graph
 
-        # 2. Create entities (supports multi-entity samples per PRD-02)
-        entity_ids = _insert_entity(db, sample_id, definition)
-
-        # 3. Insert all probes and get their IDs
-        # Combine probes from new list format and legacy fields
-        all_probes = _collect_all_probes(definition)
-        probe_ids = _insert_all_probes(db, all_probes)
-        
-        # Create mapping from probe name/position to probe_id
-        # This is used to link positions to probes
-        probe_index_to_id = {i: pid for i, pid in enumerate(probe_ids)}
-        
-        # 4. Create probe positions
-        # For multi-entity samples, each probe references its entity via entity_index
-        position_ids = []
-        if entity_ids:
-            position_ids = _insert_all_probe_positions(
-                db, entity_ids, all_probes, probe_ids
-            )
-
-        # 5. Create sample condition
-        condition_id = _insert_condition(db, sample_id, definition)
-
-        # 6. Create entity assembly
-        assembly_id = None
-        if entity_ids and probe_ids:
-            assembly_id = f"{sample_id}_assembly"
-            db.add_entity_assembly(
-                assembly_id,
-                description=f"Assembly for {definition.name}",
-                details=None,
-            )
-
-        # 7. Create flr_sample record (canonical sample)
-        num_probes = len(probe_ids)
-        db.add_sample(
-            sample_id,
-            description=definition.description,
-            details=definition.description,
-            num_of_probes=num_probes if num_probes > 0 else None,
-            solvent_phase=definition.solvent_phase,
-            sample_condition_id=condition_id,
-            entity_assembly_id=assembly_id,
-        )
-
-        # 8. Create sample-probe mappings with derived fluorophore_type
-        # Determine fluorophore_type from FRET pair context
-        fluorophore_types = _derive_fluorophore_types(definition, len(all_probes))
-        
-        for i, probe_id in enumerate(probe_ids):
-            if i < len(fluorophore_types):
-                probe_type = fluorophore_types[i]
-            else:
-                probe_type = "unspecified"
-            
-            position_id = position_ids[i] if i < len(position_ids) else None
-            probe = all_probes[i] if i < len(all_probes) else None
-            description = _get_probe_description(probe, i, definition)
-            
-            db.add_sample_probe(
-                sample_id,
-                probe_id,
-                fluorophore_type=probe_type,
-                description=description,
-                poly_probe_position_id=position_id,
-            )
-
-        # 9. Add optical properties for all probes
-        for i, probe in enumerate(all_probes):
-            if i < len(probe_ids):
-                _insert_optical_properties(db, probe_ids[i], probe)
-                # Also insert spectra if provided
-                _insert_spectra(db, probe_ids[i], probe)
-
-        # 10. Create Förster radius records for FRET pairs
-        _insert_fret_pairs(db, sample_id, definition, probe_ids)
-
-        # 11. Add PDBx key-value metadata
-        _insert_sample_key_values(db, sample_id, definition)
+    create_sample_graph(
+        db,
+        definition,
+        sample_id=sample_id,
+        display_name=definition.name.strip(),
+        sample_type=_sample_type(definition),
+        metadata_json=_json_dumps(_metadata_from_definition(definition)),
+    )
 
     return sample_id
 
@@ -382,10 +302,10 @@ def _metadata_from_definition(definition: SampleDefinition) -> dict[str, Any]:
 
     """
     import dataclasses
-    
+
     # Collect all probes
     all_probes = _collect_all_probes(definition)
-    
+
     metadata = {
         # New structured fields (PRD-02)
         "entities": [dataclasses.asdict(e) for e in definition.entities],
@@ -534,32 +454,32 @@ def _sample_exists(db: MFDatabase, sample_id: str) -> bool:
 
 def _collect_all_probes(definition: SampleDefinition) -> list[ProbeDefinition]:
     """Collect all probes from both new list format and legacy fields.
-    
+
     Parameters
     ----------
     definition : SampleDefinition
         Sample definition.
-    
+
     Returns
     -------
     list of ProbeDefinition
         All probes in order: new probes list first, then legacy donor/acceptor.
     """
     probes = list(definition.probes)
-    
+
     # Add legacy structured fields if they exist
     if definition.donor is not None and definition.donor.name:
         # Check if donor is already in probes list
-        if not any(p.name == definition.donor.name and p.position == definition.donor.position 
+        if not any(p.name == definition.donor.name and p.position == definition.donor.position
                    for p in probes):
             probes.append(definition.donor)
-    
+
     if definition.acceptor is not None and definition.acceptor.name:
         # Check if acceptor is already in probes list
-        if not any(p.name == definition.acceptor.name and p.position == definition.acceptor.position 
+        if not any(p.name == definition.acceptor.name and p.position == definition.acceptor.position
                    for p in probes):
             probes.append(definition.acceptor)
-    
+
     # Add legacy flat fields if they exist and aren't already covered
     if definition.donor_probe_name and definition.donor_position is not None:
         if not any(p.name == definition.donor_probe_name for p in probes):
@@ -568,7 +488,7 @@ def _collect_all_probes(definition: SampleDefinition) -> list[ProbeDefinition]:
                 position=definition.donor_position,
                 position_label=definition.donor_position_label,
             ))
-    
+
     if definition.acceptor_probe_name and definition.acceptor_position is not None:
         if not any(p.name == definition.acceptor_probe_name for p in probes):
             probes.append(ProbeDefinition(
@@ -576,13 +496,13 @@ def _collect_all_probes(definition: SampleDefinition) -> list[ProbeDefinition]:
                 position=definition.acceptor_position,
                 position_label=definition.acceptor_position_label,
             ))
-    
+
     return probes
 
 
 def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[int]:
     """Insert all probe records and return their IDs.
-    
+
     Uses repository.find_or_add_probe() for proper deduplication and audit fields.
     Persists all chemical fields from ProbeDefinition to canonical probe tables (R14-4).
 
@@ -592,19 +512,19 @@ def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[in
         Active MFDB connection.
     probes : list of ProbeDefinition
         List of probes to insert.
-    
+
     Returns
     -------
     list of int
         List of probe_ids in the same order as input probes.
     """
     probe_ids = []
-    
+
     for probe in probes:
         if not probe.name:
             probe_ids.append(0)  # Invalid probe
             continue
-        
+
         # Use repository method for proper deduplication and audit fields
         # Pass all chemical fields from ProbeDefinition
         try:
@@ -618,10 +538,10 @@ def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[in
                 probe_link_type=probe.probe_link_type,
                 chromophore_center_atom=probe.chromophore_center_atom or None,
             )
-            
+
             # TODO: R14-4 - Also persist SMILES/InChI to chem_descriptors table
             # For now, we persist the basic chemical fields that are columns in probes table
-            
+
             probe_ids.append(probe_id)
         except Exception:
             # Fallback: try to find existing probe
@@ -633,13 +553,13 @@ def _insert_all_probes(db: MFDatabase, probes: list[ProbeDefinition]) -> list[in
                 probe_ids.append(existing["probe_id"])
             else:
                 probe_ids.append(0)
-    
+
     return probe_ids
 
 
 def _insert_entity(db: MFDatabase, sample_id: str, definition: SampleDefinition) -> list[str]:
     """Insert entity metadata and return list of entity IDs.
-    
+
     Supports both the new entities list (PRD-02) and legacy flat fields
     for backward compatibility.
 
@@ -660,7 +580,7 @@ def _insert_entity(db: MFDatabase, sample_id: str, definition: SampleDefinition)
 
     """
     entity_ids = []
-    
+
     # Use new entities list if available (PRD-02)
     if definition.entities:
         for i, entity in enumerate(definition.entities):
@@ -684,7 +604,7 @@ def _insert_entity(db: MFDatabase, sample_id: str, definition: SampleDefinition)
             details=definition.description or None,
         )
         entity_ids.append(entity_id)
-    
+
     return entity_ids
 
 
@@ -692,7 +612,7 @@ def _insert_all_probe_positions(
     db: MFDatabase, entity_ids: list[str], probes: list[ProbeDefinition], probe_ids: list[int]
 ) -> list[int]:
     """Insert probe positions for all probes with valid positions.
-    
+
     Supports multi-entity samples where each probe references its entity
     via entity_index (PRD-02).
 
@@ -706,7 +626,7 @@ def _insert_all_probe_positions(
         List of probes.
     probe_ids : list of int
         List of probe IDs corresponding to probes.
-    
+
     Returns
     -------
     list of int
@@ -714,26 +634,26 @@ def _insert_all_probe_positions(
         0 for probes without valid positions or invalid entity_index.
     """
     position_ids = []
-    
+
     for i, (probe, probe_id) in enumerate(zip(probes, probe_ids)):
         if probe_id == 0:  # Invalid probe
             position_ids.append(0)
             continue
-        
+
         # Get the entity_id for this probe based on entity_index
         # If entity_index is out of range or entity_ids is empty, skip
         if not entity_ids or probe.entity_index < 0 or probe.entity_index >= len(entity_ids):
             position_ids.append(0)
             continue
-        
+
         entity_id = entity_ids[probe.entity_index]
-        
+
         # Use new flrCIF position fields (PRD-02)
         # seq_id is the residue number
         if probe.seq_id is None:
             position_ids.append(0)  # No position
             continue
-        
+
         # Check if position already exists for this probe and entity
         existing = db.conn.execute(
             """SELECT id FROM flr_poly_probe_position
@@ -741,11 +661,11 @@ def _insert_all_probe_positions(
                AND asym_id = ? AND deleted_at IS NULL""",
             (probe_id, entity_id, probe.seq_id, probe.asym_id or "A"),
         ).fetchone()
-        
+
         if existing:
             position_ids.append(existing["id"])
             continue
-        
+
         # Insert new position with all flrCIF fields
         now = _utc_now(db)
         cursor = db.conn.execute(
@@ -771,7 +691,7 @@ def _insert_all_probe_positions(
             ),
         )
         position_ids.append(cursor.lastrowid)
-    
+
     return position_ids
 
 
@@ -779,7 +699,7 @@ def _derive_fluorophore_types(
     definition: SampleDefinition, num_probes: int
 ) -> list[str]:
     """Derive fluorophore_type for each probe based on FRET pair context.
-    
+
     A probe that appears as donor in one pair and acceptor in another (relay dye)
     gets type="unspecified".
 
@@ -789,7 +709,7 @@ def _derive_fluorophore_types(
         Sample definition.
     num_probes : int
         Total number of probes.
-    
+
     Returns
     -------
     list of str
@@ -797,7 +717,7 @@ def _derive_fluorophore_types(
     """
     # Initialize all as unspecified
     types = ["unspecified"] * num_probes
-    
+
     # Process FRET pairs from new format
     for pair in definition.fret_pairs:
         if pair.probe_1_index < num_probes:
@@ -812,14 +732,14 @@ def _derive_fluorophore_types(
                 types[pair.probe_2_index] = "unspecified"
             else:
                 types[pair.probe_2_index] = "acceptor"
-    
+
     # Legacy support: if we have exactly 2 probes and no explicit fret_pairs,
     # assume they form a single FRET pair
-    if (num_probes == 2 and not definition.fret_pairs and 
+    if (num_probes == 2 and not definition.fret_pairs and
         not definition.probes and (definition.donor or definition.acceptor)):
         types[0] = "donor"
         types[1] = "acceptor"
-    
+
     return types
 
 
@@ -827,7 +747,7 @@ def _get_probe_description(
     probe: ProbeDefinition | None, index: int, definition: SampleDefinition
 ) -> str | None:
     """Get a description for a probe.
-    
+
     Parameters
     ----------
     probe : ProbeDefinition or None
@@ -836,7 +756,7 @@ def _get_probe_description(
         Probe index.
     definition : SampleDefinition
         Sample definition.
-    
+
     Returns
     -------
     str or None
@@ -853,24 +773,24 @@ def _get_probe_description(
         if probe.residue_name:
             parts.append(probe.residue_name)
         return ", ".join(parts) if parts else None
-    
+
     # Try legacy fields
     if index == 0 and definition.donor_probe_name:
         return definition.donor_probe_name
     if index == 1 and definition.acceptor_probe_name:
         return definition.acceptor_probe_name
-    
+
     return None
 
 
 def _insert_fret_pairs(
-    db: MFDatabase, 
-    sample_id: str, 
-    definition: SampleDefinition, 
+    db: MFDatabase,
+    sample_id: str,
+    definition: SampleDefinition,
     probe_ids: list[int]
 ) -> None:
     """Insert Förster radius records for all FRET pairs.
-    
+
     Parameters
     ----------
     db : MFDatabase
@@ -887,21 +807,21 @@ def _insert_fret_pairs(
         if pair.probe_1_index >= len(probe_ids) or pair.probe_2_index >= len(probe_ids):
             logger.warning(f"FRET pair {i}: invalid probe indices")
             continue
-        
+
         if probe_ids[pair.probe_1_index] == 0 or probe_ids[pair.probe_2_index] == 0:
             logger.warning(f"FRET pair {i}: invalid probe IDs")
             continue
-        
+
         forster_id = f"{sample_id}_forster_{i}"
-        
+
         # Try to compute Förster radius from spectra if not provided
         forster_radius = pair.forster_radius_nm
         overlap_integral = pair.overlap_integral
-        
+
         if forster_radius is None and pair.probe_1_index < len(definition.probes):
             donor_probe = definition.probes[pair.probe_1_index]
             acceptor_probe = definition.probes[pair.probe_2_index]
-            
+
             if (donor_probe.emission_spectrum and acceptor_probe.absorption_spectrum and
                 donor_probe.quantum_yield is not None):
                 try:
@@ -915,7 +835,7 @@ def _insert_fret_pairs(
                     )
                 except Exception as e:
                     logger.warning(f"Failed to compute Förster radius: {e}")
-        
+
         db.add_fret_forster_radius(
             forster_id,
             sample_id,
@@ -926,13 +846,13 @@ def _insert_fret_pairs(
             refractive_index=pair.refractive_index,
             details=f"Förster radius for {definition.name} pair {i}",
         )
-    
+
     # Legacy support: if we have old-style forster_radius_nm but no fret_pairs
     # Note: This checks for the old legacy field which may not exist in new definitions
     old_forster = getattr(definition, 'forster_radius_nm', None)
     old_kappa = getattr(definition, 'kappa_squared', 2.0/3.0)
     old_refractive = getattr(definition, 'refractive_index', 1.4)
-    
+
     if (old_forster is not None and not definition.fret_pairs and
         len(probe_ids) >= 2):
         forster_id = f"{sample_id}_forster_legacy"
@@ -952,7 +872,7 @@ def _insert_optical_properties(
     db: MFDatabase, probe_id: int, probe: ProbeDefinition | None
 ) -> None:
     """Insert optical properties for a probe.
-    
+
     Parameters
     ----------
     db : MFDatabase
@@ -964,9 +884,9 @@ def _insert_optical_properties(
     """
     if probe is None or probe_id == 0:
         return
-    
+
     now = _utc_now(db)
-    
+
     # Map of property names to (value, unit)
     properties = [
         ("absorption_wavelength", probe.absorption_wavelength_nm, "nm"),
@@ -974,21 +894,21 @@ def _insert_optical_properties(
         ("quantum_yield", probe.quantum_yield, None),
         ("extinction_coefficient", probe.extinction_coefficient, "M-1cm-1"),
     ]
-    
+
     for prop_name, value, unit in properties:
         if value is None:
             continue
-        
+
         # Check if property already exists
         existing = db.conn.execute(
-            """SELECT 1 FROM optical_properties 
+            """SELECT 1 FROM optical_properties
                WHERE probe_id = ? AND property_name = ? AND deleted_at IS NULL""",
             (probe_id, prop_name),
         ).fetchone()
-        
+
         if existing:
             continue
-        
+
         db.conn.execute(
             """INSERT INTO optical_properties
                (probe_id, property_name, property_value, unit, created_at, updated_at)
@@ -999,7 +919,7 @@ def _insert_optical_properties(
 
 def _insert_spectra(db: MFDatabase, probe_id: int, probe: ProbeDefinition | None) -> None:
     """Insert spectral data for a probe.
-    
+
     Parameters
     ----------
     db : MFDatabase
@@ -1011,18 +931,18 @@ def _insert_spectra(db: MFDatabase, probe_id: int, probe: ProbeDefinition | None
     """
     if probe is None or probe_id == 0:
         return
-    
+
     now = _utc_now(db)
-    
+
     if probe.absorption_spectrum:
         wls, ints = probe.absorption_spectrum
         # Check if spectrum already exists
         existing = db.conn.execute(
-            """SELECT 1 FROM spectra 
+            """SELECT 1 FROM spectra
                WHERE probe_id = ? AND spectrum_type = 'absorption' AND deleted_at IS NULL""",
             (probe_id,),
         ).fetchone()
-        
+
         if not existing:
             db.conn.execute(
                 """INSERT INTO spectra
@@ -1031,15 +951,15 @@ def _insert_spectra(db: MFDatabase, probe_id: int, probe: ProbeDefinition | None
                    VALUES (?, 'absorption', ?, ?, 'nm', 'normalized', ?, ?)""",
                 (probe_id, json.dumps(wls), json.dumps(ints), now, now),
             )
-    
+
     if probe.emission_spectrum:
         wls, ints = probe.emission_spectrum
         existing = db.conn.execute(
-            """SELECT 1 FROM spectra 
+            """SELECT 1 FROM spectra
                WHERE probe_id = ? AND spectrum_type = 'emission' AND deleted_at IS NULL""",
             (probe_id,),
         ).fetchone()
-        
+
         if not existing:
             db.conn.execute(
                 """INSERT INTO spectra
@@ -1078,7 +998,7 @@ def _insert_condition(db: MFDatabase, sample_id: str, definition: SampleDefiniti
     )
     if not has_condition:
         return None
-    
+
     condition_id = f"{sample_id}_condition"
     now = _utc_now(db)
     db.conn.execute(
@@ -1199,7 +1119,7 @@ def _utc_now(db: MFDatabase) -> str:
 
 def _insert_sample_key_values(db: MFDatabase, sample_id: str, definition: SampleDefinition) -> None:
     """Insert PDBx/flrCIF key-value metadata for a sample.
-    
+
     Parameters
     ----------
     db : MFDatabase
@@ -1210,27 +1130,27 @@ def _insert_sample_key_values(db: MFDatabase, sample_id: str, definition: Sample
         Sample definition.
     """
     now = _utc_now(db)
-    
+
     # Auto-populate standard key-values
     key_values = []
-    
+
     # flr.solvent_phase
     if definition.solvent_phase:
         key_values.append(("flr.solvent_phase", definition.solvent_phase, None))
-    
+
     # flr.num_of_probes
     all_probes = _collect_all_probes(definition)
     num_probes = len(all_probes)
     if num_probes > 0:
         key_values.append(("flr.num_of_probes", str(num_probes), None))
-    
+
     # pdbx.entity_type
     if definition.entity_type:
         key_values.append(("pdbx.entity_type", definition.entity_type, None))
-    
+
     # chisurf.sample_origin
     key_values.append(("chisurf.sample_origin", "user_created", None))
-    
+
     # Insert all key-values
     for key, value, details in key_values:
         db.conn.execute(
@@ -1258,7 +1178,7 @@ def set_sample_metadata(db: MFDatabase, sample_id: str, key: str, value: str, de
         Additional details.
     """
     now = _utc_now(db)
-    
+
     # Validate against dictionary if available
     try:
         dic = MmcifDictionary.load_bundled()
@@ -1270,7 +1190,7 @@ def set_sample_metadata(db: MFDatabase, sample_id: str, key: str, value: str, de
                 logger.warning(f"Metadata validation warning: {err}")
     except Exception:
         pass  # Dictionary not available, skip validation
-    
+
     db.conn.execute(
         """INSERT OR REPLACE INTO flr_sample_key_value
            (sample_id, key, value, details, created_at, updated_at)
@@ -1294,7 +1214,7 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
     -------
     dict or None
         Complete sample description as a nested dictionary, or None if not found.
-    
+
     The returned dictionary has the structure:
     {
         "sample_id": "...",
@@ -1306,6 +1226,15 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
             "common_name": "...",
             "sequence": "...",
         },
+        "entities": [  # For multi-entity samples (PRD-02)
+            {
+                "entity_id": "...",
+                "type": "protein",
+                "common_name": "...",
+                "sequence": "...",
+            },
+            ...
+        ],
         "condition": {
             "ph": 7.4,
             "temperature_k": 298.15,
@@ -1334,11 +1263,24 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
         "key_values": [{"key": "pdbx.sample_type", "value": "protein"}, ...],
     }
     """
+    try:
+        from chisurf.core.mfdb.orm.sample_repository import get_sample_graph
+
+        graph = get_sample_graph(db, sample_id)
+        if graph is not None:
+            return _full_description_from_sample_graph(db, sample_id, graph)
+    except Exception as exc:
+        logger.warning(
+            "Falling back to raw SQL sample description for %s: %s",
+            sample_id,
+            exc,
+        )
+
     # Get basic sample info
     sample = get_sample(db, sample_id)
     if sample is None:
         return None
-    
+
     result = {
         "sample_id": sample_id,
         "display_name": sample.get("display_name", ""),
@@ -1346,124 +1288,243 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
         "sample_type": sample.get("sample_type", ""),
         "metadata": sample.get("metadata_json", {}),
     }
-    
-    # Get entity info
-    entity = _get_entity_info(db, sample_id)
-    if entity:
-        result["entity"] = entity
-    
+
+    # Get entity info (list for multi-entity samples)
+    entities = _get_entity_info(db, sample_id)
+    if entities:
+        result["entities"] = entities
+        # Backward compatibility: also provide first entity as "entity"
+        result["entity"] = entities[0] if entities else None
+
     # Get condition info
     condition = _get_condition_info(db, sample_id)
     if condition:
         result["condition"] = condition
-    
+
     # Get probe info with positions and properties
     probes = _get_probe_info(db, sample_id)
     result["probes"] = probes
-    
+
     # Get FRET pairs
     fret_pairs = _get_fret_pairs_info(db, sample_id)
     result["fret_pairs"] = fret_pairs
-    
+
     # Get key-values
     key_values = db.get_sample_key_values(sample_id)
     result["key_values"] = key_values
-    
+
     return result
 
 
-def _get_entity_info(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
+def _full_description_from_sample_graph(
+    db: MFDatabase, sample_id: str, graph: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Convert ORM sample graph output to the public full-description shape."""
+    sample_index = get_sample(db, sample_id) or {}
+    sample = graph.get("sample", {})
+    if not sample:
+        return None
+
+    result: dict[str, Any] = {
+        "sample_id": sample_id,
+        "display_name": sample_index.get("display_name") or sample_id,
+        "description": sample.get("description") or "",
+        "sample_type": sample_index.get("sample_type") or "",
+        "metadata": sample_index.get("metadata_json", {}),
+    }
+
+    entities = []
+    for entity in graph.get("entities", []):
+        sequence = "".join(
+            seq.get("mon_id", "") for seq in entity.get("sequences", [])
+        )
+        entity_info = {
+            "entity_id": entity.get("entity_id", ""),
+            "type": entity.get("type", ""),
+            "common_name": entity.get("common_name", ""),
+            "description": entity.get("description", ""),
+        }
+        if sequence:
+            entity_info["sequence"] = sequence
+        entities.append(entity_info)
+    if entities:
+        result["entities"] = entities
+        result["entity"] = entities[0]
+
+    condition = graph.get("condition")
+    if condition:
+        result["condition"] = {
+            "condition_id": condition.get("condition_id"),
+            "ph": condition.get("ph"),
+            "temperature_k": condition.get("temperature"),
+            "ionic_strength": condition.get("ionic_strength"),
+            "salt_concentration_m": condition.get("ionic_strength"),
+            "buffer_composition": condition.get("buffer_composition"),
+            "details": condition.get("details"),
+        }
+
+    probes = []
+    for probe in graph.get("probes", []):
+        probe_info: dict[str, Any] = {
+            "probe_name": probe.get("name", ""),
+            "fluorophore_type": probe.get("fluorophore_type", "unspecified"),
+            "description": probe.get("description"),
+        }
+        position = probe.get("position")
+        if position:
+            probe_info["position"] = {
+                "residue_number": position.get("residue_number"),
+                "chain_id": position.get("asym_id"),
+                "residue_name": position.get("residue_name"),
+                "description": None,
+                "entity_index": None,
+                "seq_id": position.get("residue_number"),
+                "comp_id": position.get("residue_name"),
+                "asym_id": position.get("asym_id"),
+                "atom_id": position.get("atom_id"),
+                "mutation_flag": position.get("mutation_flag"),
+                "modification_flag": position.get("modification_flag"),
+                "auth_name": position.get("auth_name"),
+                "entity_id": position.get("entity_id"),
+            }
+        if probe.get("optical_properties"):
+            probe_info["properties"] = {
+                prop.get("property_name"): {
+                    "value": prop.get("property_value"),
+                    "unit": prop.get("unit"),
+                }
+                for prop in probe.get("optical_properties", [])
+                if prop.get("property_name")
+            }
+        probes.append(probe_info)
+    result["probes"] = probes
+
+    result["fret_pairs"] = [
+        {
+            "forster_radius_id": pair.get("forster_radius_id"),
+            "sample_id": pair.get("sample_id"),
+            "donor_probe": pair.get("donor_probe", ""),
+            "acceptor_probe": pair.get("acceptor_probe", ""),
+            "forster_radius_nm": pair.get("forster_radius"),
+            "kappa_squared": pair.get("kappa_squared"),
+            "refractive_index": pair.get("index_of_refraction"),
+            "overlap_integral": pair.get("overlap_integral"),
+            "details": pair.get("details"),
+        }
+        for pair in graph.get("fret_pairs", [])
+    ]
+
+    result["key_values"] = graph.get("key_values", [])
+    return result
+
+
+def _get_entity_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
     """Get entity information for a sample.
-    
+
     Retrieves entity information by tracing the relationship:
     sample -> flr_sample_probe -> flr_poly_probe_position -> entity_id -> entities
-    
+
+    For multi-entity samples (PRD-02), returns all entities associated with the sample.
     Falls back to pattern matching on entities table if no probe positions exist.
+
+    Returns
+    -------
+    list of dict
+        List of entity information dictionaries, each with keys:
+        entity_id, type, common_name, description, sequence (if available).
     """
-    # Try to get entity_id via probe positions first (most reliable)
-    entity_id = None
-    
-    # Get a probe position for this sample
-    probe_pos_row = db.conn.execute(
-        """SELECT ppp.entity_id 
+    entities = []
+
+    # Get all probe positions for this sample to find all unique entity_ids
+    probe_pos_rows = db.conn.execute(
+        """SELECT DISTINCT ppp.entity_id
            FROM flr_sample_probe AS sp
            JOIN flr_poly_probe_position AS ppp ON sp.poly_probe_position_id = ppp.id
-           WHERE sp.sample_id = ? AND sp.deleted_at IS NULL AND ppp.deleted_at IS NULL
-           LIMIT 1""",
+           WHERE sp.sample_id = ? AND sp.deleted_at IS NULL AND ppp.deleted_at IS NULL""",
         (sample_id,),
-    ).fetchone()
-    
-    if probe_pos_row:
-        entity_id = dict(probe_pos_row)["entity_id"]
-    else:
-        # Fallback: Try to find entity via flr_sample's entity_assembly_id
-        # The assembly_id is typically constructed as f"{sample_id}_assembly"
-        # But we still need to find the entity_id
-        # Try pattern matching on entities table
-        entity_row = db.conn.execute(
-            """SELECT entity_id 
-               FROM entities WHERE entity_id LIKE ? AND deleted_at IS NULL
-               LIMIT 1""",
-            (f"%{sample_id}%",),
-        ).fetchone()
-        
-        if entity_row:
-            entity_id = dict(entity_row)["entity_id"]
-    
-    if not entity_id:
-        return None
-    
-    # Get entity details
-    entity_row = db.conn.execute(
-        """SELECT type, common_name, description 
-           FROM entities WHERE entity_id = ? AND deleted_at IS NULL
-           LIMIT 1""",
-        (entity_id,),
-    ).fetchone()
-    
-    if not entity_row:
-        return None
-    
-    entity_info = {
-        "entity_id": entity_id,
-        "type": dict(entity_row)["type"],
-        "common_name": dict(entity_row)["common_name"] or "",
-        "description": dict(entity_row)["description"] or "",
-    }
-    
-    # Get sequence
-    seq_rows = db.conn.execute(
-        """SELECT mon_id FROM entity_poly_seq 
-           WHERE entity_id = ? AND deleted_at IS NULL 
-           ORDER BY num""",
-        (entity_id,),
     ).fetchall()
-    
-    if seq_rows:
-        sequence = "".join(dict(r)["mon_id"] for r in seq_rows)
-        entity_info["sequence"] = sequence
-    
-    return entity_info
+
+    entity_ids = [dict(r)["entity_id"] for r in probe_pos_rows if dict(r).get("entity_id")]
+
+    # If no entities found via probe positions, try fallback
+    if not entity_ids:
+        # Try pattern matching on entities table - entity_ids for this sample
+        # are typically f"{sample_id}_entity" or f"{sample_id}_entity_{i}"
+        # Use exact prefix match to avoid substring matching issues
+        entity_rows = db.conn.execute(
+            """SELECT entity_id
+               FROM entities WHERE entity_id LIKE ? AND deleted_at IS NULL""",
+            (f"{sample_id}_entity%",),
+        ).fetchall()
+        entity_ids = [dict(r)["entity_id"] for r in entity_rows if dict(r).get("entity_id")]
+
+        # Also try the slugified entity name pattern
+        if not entity_ids:
+            entity_rows = db.conn.execute(
+                """SELECT entity_id
+                   FROM entities WHERE entity_id = ? AND deleted_at IS NULL""",
+                (f"{sample_id}_entity",),
+            ).fetchall()
+            entity_ids = [dict(r)["entity_id"] for r in entity_rows if dict(r).get("entity_id")]
+
+    # Get details for each entity
+    for entity_id in entity_ids:
+        # Get entity details
+        entity_row = db.conn.execute(
+            """SELECT type, common_name, description
+               FROM entities WHERE entity_id = ? AND deleted_at IS NULL
+               LIMIT 1""",
+            (entity_id,),
+        ).fetchone()
+
+        if not entity_row:
+            continue
+
+        entity_info = {
+            "entity_id": entity_id,
+            "type": dict(entity_row)["type"],
+            "common_name": dict(entity_row)["common_name"] or "",
+            "description": dict(entity_row)["description"] or "",
+        }
+
+        # Get sequence
+        seq_rows = db.conn.execute(
+            """SELECT mon_id FROM entity_poly_seq
+               WHERE entity_id = ? AND deleted_at IS NULL
+               ORDER BY num""",
+            (entity_id,),
+        ).fetchall()
+
+        if seq_rows:
+            sequence = "".join(dict(r)["mon_id"] for r in seq_rows)
+            entity_info["sequence"] = sequence
+
+        entities.append(entity_info)
+
+    return entities
 
 
 def _get_condition_info(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
     """Get condition information for a sample."""
+    # Condition IDs are constructed as f"{sample_id}_condition"
+    condition_id = f"{sample_id}_condition"
     row = db.conn.execute(
-        """SELECT * FROM flr_sample_condition 
-           WHERE condition_id LIKE ? AND deleted_at IS NULL
+        """SELECT * FROM flr_sample_condition
+           WHERE condition_id = ? AND deleted_at IS NULL
            LIMIT 1""",
-        (f"%{sample_id}%",),
+        (condition_id,),
     ).fetchone()
-    
+
     if not row:
         return None
-    
+
     row_dict = dict(row)
     return {
         "condition_id": row_dict.get("condition_id"),
         "ph": row_dict.get("ph"),
         "temperature_k": row_dict.get("temperature"),
         "ionic_strength": row_dict.get("ionic_strength"),
+        "salt_concentration_m": row_dict.get("ionic_strength"),  # alias for ionic_strength
         "buffer_composition": row_dict.get("buffer_composition"),
         "details": row_dict.get("details"),
     }
@@ -1473,38 +1534,48 @@ def _get_probe_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
     """Get probe information for a sample including positions and properties."""
     probe_mappings = db.get_sample_probe_mappings(sample_id)
     probes = []
-    
+
     for mapping in probe_mappings:
         probe_info = {
             "probe_name": mapping.get("chromophore_name", ""),
             "fluorophore_type": mapping.get("fluorophore_type", "unspecified"),
             "description": mapping.get("description"),
         }
-        
+
         # Get position info
         position_id = mapping.get("poly_probe_position_id")
         if position_id:
             pos_row = db.conn.execute(
-                """SELECT * FROM flr_poly_probe_position 
+                """SELECT * FROM flr_poly_probe_position
                    WHERE id = ? AND deleted_at IS NULL""",
                 (position_id,),
             ).fetchone()
             if pos_row:
                 pos_dict = dict(pos_row)
                 probe_info["position"] = {
+                    # Legacy fields (kept for backward compatibility)
                     "residue_number": pos_dict.get("residue_number"),
                     "chain_id": pos_dict.get("asym_id"),
                     "residue_name": pos_dict.get("residue_name"),
                     "description": pos_dict.get("description"),
+                    # New flrCIF fields (PRD-02)
+                    "entity_index": pos_dict.get("entity_index"),
+                    "seq_id": pos_dict.get("seq_id"),
+                    "comp_id": pos_dict.get("comp_id"),
+                    "asym_id": pos_dict.get("asym_id"),
+                    "atom_id": pos_dict.get("atom_id"),
+                    "mutation_flag": pos_dict.get("mutation_flag"),
+                    "modification_flag": pos_dict.get("modification_flag"),
+                    "auth_name": pos_dict.get("auth_name"),
                 }
-        
+
         # Get optical properties
         props_rows = db.conn.execute(
-            """SELECT property_name, property_value, unit FROM optical_properties 
+            """SELECT property_name, property_value, unit FROM optical_properties
                WHERE probe_id = ? AND deleted_at IS NULL""",
             (mapping.get("probe_id"),),
         ).fetchall()
-        
+
         if props_rows:
             probe_info["properties"] = {
                 prop["property_name"]: {
@@ -1513,15 +1584,15 @@ def _get_probe_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
                 }
                 for prop in [dict(r) for r in props_rows]
             }
-        
+
         # Get spectra
         spectra_rows = db.conn.execute(
-            """SELECT spectrum_type, wavelengths, intensity_values 
-               FROM spectra 
+            """SELECT spectrum_type, wavelengths, intensity_values
+               FROM spectra
                WHERE probe_id = ? AND deleted_at IS NULL""",
             (mapping.get("probe_id"),),
         ).fetchall()
-        
+
         if spectra_rows:
             probe_info["spectra"] = {
                 row["spectrum_type"]: {
@@ -1530,9 +1601,9 @@ def _get_probe_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
                 }
                 for row in [dict(r) for r in spectra_rows]
             }
-        
+
         probes.append(probe_info)
-    
+
     return probes
 
 
@@ -1541,36 +1612,37 @@ def _get_fret_pairs_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]
     # First, get all probe_ids for this sample
     probe_mappings = db.get_sample_probe_mappings(sample_id)
     sample_probe_ids = [m.get("probe_id") for m in probe_mappings if m.get("probe_id")]
-    
+
     if not sample_probe_ids:
         return []
-    
+
     # Query FRET pairs for this specific sample
     rows = db.conn.execute(
-        """SELECT * FROM flr_fret_forster_radius 
+        """SELECT * FROM flr_fret_forster_radius
            WHERE sample_id = ? AND deleted_at IS NULL""",
         (sample_id,)
     ).fetchall()
-    
+
     fret_pairs = []
     for row in rows:
         row_dict = dict(row)
-        
+
         # Get probe names for donor and acceptor using correct column names
         donor_name = _get_probe_name_by_id(db, row_dict.get("donor_probe_id"))
         acceptor_name = _get_probe_name_by_id(db, row_dict.get("acceptor_probe_id"))
-        
+
         fret_pairs.append({
-            "id": row_dict.get("id"),  # Use 'id' instead of 'forster_radius_id'
+            "id": row_dict.get("id"),
+            "forster_radius_id": row_dict.get("forster_radius_id"),
             "donor_probe": donor_name,
             "acceptor_probe": acceptor_name,
             "forster_radius_nm": row_dict.get("forster_radius"),
             "kappa_squared": row_dict.get("kappa_squared"),
-            "refractive_index": row_dict.get("index_of_refraction"),  # Note: column is index_of_refraction
+            "refractive_index": row_dict.get("index_of_refraction"),
             "overlap_integral": row_dict.get("overlap_integral"),
             "details": row_dict.get("details"),
         })
-    
+
     return fret_pairs
 
 
@@ -1578,13 +1650,13 @@ def _get_probe_name_by_id(db: MFDatabase, probe_id: int | None) -> str:
     """Get probe name by probe_id."""
     if probe_id is None:
         return ""
-    
+
     row = db.conn.execute(
-        """SELECT chromophore_name FROM probes 
+        """SELECT chromophore_name FROM probes
            WHERE probe_id = ? AND deleted_at IS NULL""",
         (probe_id,),
     ).fetchone()
-    
+
     if row:
         return dict(row)["chromophore_name"]
     return ""
@@ -1606,16 +1678,16 @@ def validate_sample_for_export(db: MFDatabase, sample_id: str) -> list[str]:
         List of warnings/missing fields. Empty list = export-ready.
     """
     warnings = []
-    
+
     # Get full description
     desc = get_sample_full_description(db, sample_id)
     if desc is None:
         return [f"Sample {sample_id} not found"]
-    
+
     # Check for entity
     if "entity" not in desc or not desc["entity"].get("entity_id"):
         warnings.append("Missing entity information")
-    
+
     # Check for at least one probe with position
     probes_with_positions = [
         p for p in desc.get("probes", [])
@@ -1623,43 +1695,59 @@ def validate_sample_for_export(db: MFDatabase, sample_id: str) -> list[str]:
     ]
     if len(probes_with_positions) < 1:
         warnings.append("Missing probe positions")
-    
+
     # Check for sample-probe mappings with fluorophore_type
+    # Only warn about unspecified probes that are NOT in any FRET pair
+    # (relay dyes correctly have unspecified type)
     probes = desc.get("probes", [])
-    unspecified_count = sum(1 for p in probes if p.get("fluorophore_type") == "unspecified")
-    if unspecified_count > 0 and len(probes) >= 2:
-        warnings.append(f"{unspecified_count} probes have unspecified fluorophore_type")
-    
+    fret_pairs = desc.get("fret_pairs", [])
+
+    # Get all probe names that appear in FRET pairs
+    probes_in_fret_pairs = set()
+    for pair in fret_pairs:
+        if pair.get("donor_probe"):
+            probes_in_fret_pairs.add(pair["donor_probe"])
+        if pair.get("acceptor_probe"):
+            probes_in_fret_pairs.add(pair["acceptor_probe"])
+
+    # Count unspecified probes that are not in any FRET pair
+    unspecified_orphan_count = sum(
+        1 for p in probes
+        if p.get("fluorophore_type") == "unspecified" and p.get("probe_name") not in probes_in_fret_pairs
+    )
+    if unspecified_orphan_count > 0:
+        warnings.append(f"{unspecified_orphan_count} probes have unspecified fluorophore_type and are not in any FRET pair")
+
     # Check for sample condition
     condition = desc.get("condition", {})
     if condition.get("ph") is None:
         warnings.append("Missing pH in sample condition")
     if condition.get("temperature_k") is None:
         warnings.append("Missing temperature in sample condition")
-    
+
     # Recommended fields
     if not desc.get("entity", {}).get("sequence"):
         warnings.append("Recommended: entity sequence not provided")
-    
+
     for probe in probes:
         if "properties" not in probe or not probe["properties"]:
             warnings.append(f"Recommended: optical properties missing for probe {probe.get('probe_name')}")
             break  # Only warn once
-    
+
     if not desc.get("fret_pairs"):
         warnings.append("Recommended: no FRET pairs defined")
-    
+
     return warnings
 
 
 def suggest_pdbx_keys(prefix: str = "") -> list[tuple[str, str]]:
     """Return (key, description) pairs from PDBx dictionary matching prefix.
-    
+
     Parameters
     ----------
     prefix : str, optional
         Filter keys by this prefix.
-    
+
     Returns
     -------
     list of tuple

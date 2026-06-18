@@ -1,0 +1,590 @@
+"""SQLAlchemy-backed sample repository adapter.
+
+This module provides a SQLAlchemy-backed adapter for sample/probe/FRET operations,
+serving as a canonical persistence path for the bounded MFDB slice. This adapter can
+initially be called only from tests. Once verified, sample_manager.create_sample()
+and get_sample_full_description() can delegate to it.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from chisurf.core.mfdb.models import (
+    EntityDefinition,
+    FretPairDefinition,
+    ProbeDefinition,
+    SampleDefinition,
+)
+from chisurf.core.mfdb.repository import MFDatabase
+
+from .base import session_scope
+from .models import (
+    MfdbSampleIndex,
+    Entity,
+    EntityPolySeq,
+    FlrFretForsterRadius,
+    FlrPolyProbePosition,
+    FlrSample,
+    FlrSampleCondition,
+    FlrSampleKeyValue,
+    FlrSampleProbe,
+    Probe,
+    OpticalProperty,
+    Spectrum,
+    ChemDescriptor,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def create_sample_graph(
+    db: MFDatabase,
+    definition: SampleDefinition,
+    *,
+    sample_id: str | None = None,
+    display_name: str | None = None,
+    sample_type: str | None = None,
+    metadata_json: str | None = None,
+) -> str:
+    """Persist a full sample graph and return sample_id.
+
+    This function creates a complete sample with all its associated data
+    (entities, probes, positions, FRET pairs, conditions, metadata) in a
+    single transaction.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        The MFDatabase instance to use for persistence.
+    definition : SampleDefinition
+        The sample definition to persist.
+
+    Returns
+    -------
+    str
+        The sample_id of the created sample.
+
+    Notes
+    -----
+    This function uses the SQLAlchemy ORM to persist the sample graph,
+    ensuring that all relationships are properly maintained. It operates
+    within a transaction scope to ensure atomicity.
+    """
+    db_path = db.db_path
+
+    with session_scope(db_path) as session:
+        return _create_sample_graph_in_session(
+            session,
+            definition,
+            sample_id=sample_id,
+            display_name=display_name,
+            sample_type=sample_type,
+            metadata_json=metadata_json,
+        )
+
+
+def _create_sample_graph_in_session(
+    session: Session,
+    definition: SampleDefinition,
+    *,
+    sample_id: str | None = None,
+    display_name: str | None = None,
+    sample_type: str | None = None,
+    metadata_json: str | None = None,
+) -> str:
+    """Create sample graph within a SQLAlchemy session.
+
+    Parameters
+    ----------
+    session : Session
+        Active SQLAlchemy session.
+    definition : SampleDefinition
+        The sample definition to persist.
+
+    Returns
+    -------
+    str
+        The sample_id of the created sample.
+    """
+    sample_id = sample_id or definition.name
+    display_name = display_name or definition.name
+
+    sample_index = MfdbSampleIndex(
+        sample_id=sample_id,
+        display_name=display_name,
+        sample_type=sample_type or "physical_sample",
+        metadata_json=metadata_json,
+    )
+    session.add(sample_index)
+
+    # Create the main sample record
+    # Note: SampleDefinition doesn't have separate 'details' or 'project_id' fields
+    # 'details' in FlrSample maps to definition.description for backward compat
+    # 'project_id' is not exposed in SampleDefinition
+    sample = FlrSample(
+        sample_id=sample_id,
+        description=definition.description,
+        details=definition.description,
+        num_of_probes=len(definition.probes) if definition.probes else None,
+        solvent_phase=definition.solvent_phase,
+        project_id=None,
+        sample_uuid=f"{sample_id}_uuid",  # Will be replaced with proper UUID generation
+    )
+    session.add(sample)
+    session.flush()
+
+    # Create entities and their sequences
+    entity_map = {}  # entity_id -> Entity
+    for entity_def in definition.entities:
+        entity = Entity(
+            entity_id=entity_def.name,
+            type=entity_def.entity_type,
+            description=entity_def.details,
+            common_name=entity_def.name,
+        )
+        session.add(entity)
+        entity_map[entity_def.name] = entity
+
+        # Create sequence if provided
+        if entity_def.sequence:
+            for i, residue in enumerate(entity_def.sequence):
+                seq_record = EntityPolySeq(
+                    entity_id=entity_def.name,
+                    num=i + 1,
+                    mon_id=str(residue),
+                )
+                session.add(seq_record)
+
+    session.flush()
+
+    # Create probes
+    probe_map = {}  # probe name -> Probe
+    for probe_def in definition.probes:
+        # Check if probe already exists
+        existing_probe = session.execute(
+            select(Probe).where(Probe.chromophore_name == probe_def.name)
+        ).scalar_one_or_none()
+
+        if existing_probe:
+            probe = existing_probe
+        else:
+            probe = Probe(
+                chromophore_name=probe_def.name,
+                probe_origin=probe_def.probe_origin or "extrinsic",
+                probe_link_type=probe_def.probe_link_type or "covalent",
+                fluorophore_type="unspecified",
+                reactive_probe_flag=probe_def.reactive_probe_flag or "no",
+                reactive_probe_name=probe_def.reactive_probe_name or None,
+                chromophore_center_atom=probe_def.chromophore_center_atom,
+                description=None,
+                category="other",
+            )
+            session.add(probe)
+            session.flush()
+
+        probe_map[probe_def.name] = probe
+
+    # Create positions for each probe
+    position_map = {}  # (probe_id, entity_id, residue_info) -> FlrPolyProbePosition
+    for probe_def in definition.probes:
+        if probe_def.entity_index is not None and probe_def.entity_index < len(definition.entities):
+            entity_def = definition.entities[probe_def.entity_index]
+            entity_id = entity_def.name
+
+            position = FlrPolyProbePosition(
+                probe_id=probe_map[probe_def.name].probe_id,
+                entity_id=entity_id,
+                asym_id=probe_def.asym_id or "A",
+                residue_number=probe_def.seq_id or 1,
+                residue_name=probe_def.comp_id,
+                atom_id=probe_def.atom_id,
+                mutation_flag=probe_def.mutation_flag or "no",
+                modification_flag=probe_def.modification_flag or "no",
+                auth_name=probe_def.auth_name,
+                description=None,
+            )
+            session.add(position)
+            session.flush()
+
+            position_map[(probe_def.name, entity_id)] = position
+
+    # Create sample_probes (association between samples and probes)
+    fluorophore_types = _derive_fluorophore_types(definition)
+    for i, probe_def in enumerate(definition.probes):
+        probe = probe_map[probe_def.name]
+        position = None
+
+        # Find the position for this probe if it exists
+        if probe_def.entity_index is not None and probe_def.entity_index < len(definition.entities):
+            entity_def = definition.entities[probe_def.entity_index]
+            position = position_map.get((probe_def.name, entity_def.name))
+
+        sample_probe = FlrSampleProbe(
+            sample_id=sample_id,
+            probe_id=probe.probe_id,
+            poly_probe_position_id=position.id if position else None,
+            fluorophore_type=fluorophore_types[i] if i < len(fluorophore_types) else "unspecified",
+            description=None,
+        )
+        session.add(sample_probe)
+
+    # Create FRET pairs
+    for fret_pair in definition.fret_pairs:
+        # FretPairDefinition uses probe_1_index and probe_2_index, not probe objects
+        donor_probe_def = definition.probes[fret_pair.probe_1_index] if fret_pair.probe_1_index < len(definition.probes) else None
+        acceptor_probe_def = definition.probes[fret_pair.probe_2_index] if fret_pair.probe_2_index < len(definition.probes) else None
+
+        donor_probe = probe_map.get(donor_probe_def.name) if donor_probe_def else None
+        acceptor_probe = probe_map.get(acceptor_probe_def.name) if acceptor_probe_def else None
+
+        if donor_probe and acceptor_probe:
+            fret_record = FlrFretForsterRadius(
+                forster_radius_id=f"{sample_id}_forster_{fret_pair.probe_1_index}_{fret_pair.probe_2_index}",
+                sample_id=sample_id,
+                donor_probe_id=donor_probe.probe_id,
+                acceptor_probe_id=acceptor_probe.probe_id,
+                forster_radius=fret_pair.forster_radius_nm or 5.0,  # Default R0
+                reduced_forster_radius=fret_pair.reduced_forster_radius_nm,
+                kappa_squared=fret_pair.kappa_squared,
+                index_of_refraction=fret_pair.refractive_index,
+                overlap_integral=fret_pair.overlap_integral,
+                details=None,
+            )
+            session.add(fret_record)
+
+    # Create condition from SampleDefinition fields
+    # SampleDefinition has individual condition fields, not a condition dict
+    has_condition = any([
+        definition.ph is not None,
+        definition.temperature_k is not None,
+        definition.salt_concentration_m is not None,
+        definition.buffer_description is not None,
+        definition.solvent_phase is not None,
+    ])
+
+    if has_condition:
+        condition_id = f"{sample_id}_condition"
+        condition = FlrSampleCondition(
+            condition_id=condition_id,
+            ph=definition.ph,
+            temperature=definition.temperature_k,
+            ionic_strength=definition.salt_concentration_m,
+            buffer_composition=definition.buffer_description,
+            details=None,
+        )
+        session.add(condition)
+        sample.sample_condition_id = condition_id
+
+    # Create key-value metadata from extra dict
+    for key, value in definition.extra.items():
+        kv = FlrSampleKeyValue(
+            sample_id=sample_id,
+            key=key,
+            value=str(value),
+            details=None,
+        )
+        session.add(kv)
+
+    # Update sample with condition reference
+    if has_condition:
+        sample.sample_condition_id = condition_id
+
+    session.flush()
+
+    return sample_id
+
+
+def get_sample_graph(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
+    """Return sample, entities, probes, positions, condition, and FRET pairs.
+
+    This function retrieves a complete sample graph from the database using
+    SQLAlchemy ORM, returning all associated data in a nested dictionary.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        The MFDatabase instance to use for retrieval.
+    sample_id : str
+        The sample_id to retrieve.
+
+    Returns
+    -------
+    Dict[str, Any] or None
+        A dictionary containing the full sample graph, or None if not found.
+        The dictionary includes keys: 'sample', 'entities', 'probes', 'positions',
+        'condition', 'fret_pairs', and 'key_values'.
+    """
+    db_path = db.db_path
+
+    with session_scope(db_path) as session:
+        return _get_sample_graph_in_session(session, sample_id)
+
+
+def _get_sample_graph_in_session(
+    session: Session, sample_id: str
+) -> dict[str, Any] | None:
+    """Get sample graph within a SQLAlchemy session.
+
+    Parameters
+    ----------
+    session : Session
+        Active SQLAlchemy session.
+    sample_id : str
+        The sample_id to retrieve.
+
+    Returns
+    -------
+    Dict[str, Any] or None
+        The full sample graph as a dictionary, or None if not found.
+    """
+    # Get the main sample
+    sample = session.get(FlrSample, sample_id)
+    if not sample:
+        return None
+
+    result = {
+        "sample": {
+            "sample_id": sample.sample_id,
+            "description": sample.description,
+            "details": sample.details,
+            "num_of_probes": sample.num_of_probes,
+            "solvent_phase": sample.solvent_phase,
+            "project_id": sample.project_id,
+            "sample_uuid": sample.sample_uuid,
+            "created_at": sample.created_at,
+            "updated_at": sample.updated_at,
+        },
+        "entities": [],
+        "probes": [],
+        "positions": [],
+        "condition": None,
+        "fret_pairs": [],
+        "key_values": [],
+    }
+
+    # Get entities for this sample (via sample_probes -> positions -> entities)
+    entities_seen = set()
+    for sample_probe in sample.sample_probes:
+        if sample_probe.position and sample_probe.position.entity:
+            entity = sample_probe.position.entity
+            if entity.entity_id not in entities_seen:
+                entities_seen.add(entity.entity_id)
+                entity_data = {
+                    "entity_id": entity.entity_id,
+                    "type": entity.type,
+                    "description": entity.description,
+                    "common_name": entity.common_name,
+                    "formula_weight": entity.formula_weight,
+                    "src_method": entity.src_method,
+                    "number_of_molecules": entity.number_of_molecules,
+                    "sequences": [
+                        {"num": seq.num, "mon_id": seq.mon_id, "hetero": seq.hetero}
+                        for seq in entity.sequences
+                    ],
+                }
+                result["entities"].append(entity_data)
+
+    # Get probes for this sample
+    for sample_probe in sample.sample_probes:
+        if sample_probe.probe:
+            probe_data = {
+                "probe_id": sample_probe.probe.probe_id,
+                "name": sample_probe.probe.chromophore_name,
+                "fluorophore_type": sample_probe.fluorophore_type,
+                "probe_origin": sample_probe.probe.probe_origin,
+                "probe_link_type": sample_probe.probe.probe_link_type,
+                "reactive_probe_flag": sample_probe.probe.reactive_probe_flag,
+                "chromophore_center_atom": sample_probe.probe.chromophore_center_atom,
+                "description": sample_probe.description,
+                "optical_properties": [
+                    {
+                        "property_name": prop.property_name,
+                        "property_value": prop.property_value,
+                        "unit": prop.unit,
+                    }
+                    for prop in sample_probe.probe.optical_properties
+                ],
+                "spectra": [
+                    {
+                        "spectrum_type": spec.spectrum_type,
+                        "wavelength_unit": spec.wavelength_unit,
+                        "intensity_unit": spec.intensity_unit,
+                    }
+                    for spec in sample_probe.probe.spectra
+                ],
+            }
+
+            # Add position information
+            if sample_probe.position:
+                probe_data["position"] = {
+                    "asym_id": sample_probe.position.asym_id,
+                    "residue_number": sample_probe.position.residue_number,
+                    "residue_name": sample_probe.position.residue_name,
+                    "atom_id": sample_probe.position.atom_id,
+                    "mutation_flag": sample_probe.position.mutation_flag,
+                    "modification_flag": sample_probe.position.modification_flag,
+                    "auth_name": sample_probe.position.auth_name,
+                    "entity_id": sample_probe.position.entity_id,
+                }
+
+            result["probes"].append(probe_data)
+
+    # Get condition
+    if sample.condition:
+        result["condition"] = {
+            "condition_id": sample.condition.condition_id,
+            "ph": sample.condition.ph,
+            "temperature": sample.condition.temperature,
+            "ionic_strength": sample.condition.ionic_strength,
+            "buffer_composition": sample.condition.buffer_composition,
+            "details": sample.condition.details,
+        }
+
+    # Get FRET pairs
+    for fret_pair in sample.fret_pairs:
+        result["fret_pairs"].append({
+            "forster_radius_id": fret_pair.forster_radius_id,
+            "sample_id": fret_pair.sample_id,
+            "donor_probe_id": fret_pair.donor_probe_id,
+            "acceptor_probe_id": fret_pair.acceptor_probe_id,
+            "donor_probe": fret_pair.donor_probe.chromophore_name if fret_pair.donor_probe else "",
+            "acceptor_probe": fret_pair.acceptor_probe.chromophore_name if fret_pair.acceptor_probe else "",
+            "forster_radius": fret_pair.forster_radius,
+            "reduced_forster_radius": fret_pair.reduced_forster_radius,
+            "kappa_squared": fret_pair.kappa_squared,
+            "index_of_refraction": fret_pair.index_of_refraction,
+            "overlap_integral": fret_pair.overlap_integral,
+            "details": fret_pair.details,
+        })
+
+    # Get key-value metadata
+    for kv in sample.key_values:
+        result["key_values"].append({
+            "key": kv.key,
+            "value": kv.value,
+            "details": kv.details,
+        })
+
+    return result
+
+
+def upsert_probe(db: MFDatabase, probe: ProbeDefinition) -> int:
+    """Persist probe identity plus chemical descriptors and return probe_id.
+
+    This function inserts or updates a probe record along with its chemical
+    descriptors (SMILES, InChI, etc.) and returns the probe_id.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        The MFDatabase instance to use for persistence.
+    probe : ProbeDefinition
+        The probe definition to persist.
+
+    Returns
+    -------
+    int
+        The probe_id of the persisted probe.
+    """
+    db_path = db.db_path
+
+    with session_scope(db_path) as session:
+        return _upsert_probe_in_session(session, probe)
+
+
+def _upsert_probe_in_session(session: Session, probe: ProbeDefinition) -> int:
+    """Upsert probe within a SQLAlchemy session.
+
+    Parameters
+    ----------
+    session : Session
+        Active SQLAlchemy session.
+    probe : ProbeDefinition
+        The probe definition to persist.
+
+    Returns
+    -------
+    int
+        The probe_id of the persisted probe.
+    """
+    # Check if probe already exists
+    existing_probe = session.execute(
+        select(Probe).where(Probe.chromophore_name == probe.name)
+    ).scalar_one_or_none()
+
+    if existing_probe:
+        # Update existing probe
+        existing_probe.chromophore_name = probe.name
+        existing_probe.probe_origin = probe.probe_origin
+        existing_probe.probe_link_type = probe.probe_link_type
+        existing_probe.fluorophore_type = probe.fluorophore_type
+        existing_probe.reactive_probe_flag = probe.reactive_probe_flag or "no"
+        existing_probe.reactive_probe_name = probe.reactive_probe_name
+        existing_probe.chromophore_center_atom = probe.chromophore_center_atom
+        existing_probe.description = probe.description
+        existing_probe.category = probe.category
+        probe_id = existing_probe.probe_id
+    else:
+        # Create new probe
+        new_probe = Probe(
+            chromophore_name=probe.name,
+            probe_origin=probe.probe_origin,
+            probe_link_type=probe.probe_link_type,
+            fluorophore_type=probe.fluorophore_type,
+            reactive_probe_flag=probe.reactive_probe_flag or "no",
+            reactive_probe_name=probe.reactive_probe_name,
+            chromophore_center_atom=probe.chromophore_center_atom,
+            description=probe.description,
+            category=probe.category,
+        )
+        session.add(new_probe)
+        session.flush()
+        probe_id = new_probe.probe_id
+
+        # Create chemical descriptors if provided
+        if probe.chromophore_smiles:
+            chem_desc = ChemDescriptor(
+                descriptor_type="SMILES",
+                descriptor=probe.chromophore_smiles,
+                program="ChiSurf",
+            )
+            session.add(chem_desc)
+            session.flush()
+            new_probe.chromophore_chem_descriptor_id = chem_desc.id
+
+        if probe.chromophore_inchi:
+            chem_desc = ChemDescriptor(
+                descriptor_type="InChI",
+                descriptor=probe.chromophore_inchi,
+                program="ChiSurf",
+            )
+            session.add(chem_desc)
+            session.flush()
+            new_probe.reactive_probe_chem_descriptor_id = chem_desc.id
+
+    session.flush()
+    return probe_id
+
+
+def _derive_fluorophore_types(definition: SampleDefinition) -> list[str]:
+    """Derive sample-probe fluorophore roles from FRET pair indices."""
+    types = ["unspecified"] * len(definition.probes)
+    for pair in definition.fret_pairs:
+        if 0 <= pair.probe_1_index < len(types):
+            types[pair.probe_1_index] = (
+                "unspecified"
+                if types[pair.probe_1_index] == "acceptor"
+                else "donor"
+            )
+        if 0 <= pair.probe_2_index < len(types):
+            types[pair.probe_2_index] = (
+                "unspecified"
+                if types[pair.probe_2_index] == "donor"
+                else "acceptor"
+            )
+    return types
