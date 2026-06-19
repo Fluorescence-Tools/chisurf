@@ -50,6 +50,9 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Qt, QEvent, QSize, QTimer, Signal
 from qtpy.QtGui import QPainter, QColor, QFont
 
+from chisurf.core.plugin import load_manifest
+from chisurf.plugins.tttr.trace_browser.gui.client import TraceBrowserClient
+
 # Logging
 from chisurf import logging
 
@@ -65,7 +68,8 @@ except ImportError:
 
 # Import TTTR Time Window plugin
 try:
-    from chisurf.plugins.tttr.tttr_time_windows.wizard import TTTRTimeWindowWizard, compute_bids_from_tttr
+    from chisurf.plugins.tttr.tttr_time_windows.api.selection import compute_bids_from_tttr
+    from chisurf.plugins.tttr.tttr_time_windows.gui.tool import TTTRTimeWindowTool as TTTRTimeWindowWizard
 except Exception:
     TTTRTimeWindowWizard = None
     compute_bids_from_tttr = None
@@ -95,7 +99,13 @@ except Exception:
     Document = None
     Inches = None
 
-name = "Spectroscopy:Single-Molecule:Trace Browser"
+_manifest = load_manifest(pathlib.Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+    cli_entrypoint = _manifest.entrypoints.cli or ""
+else:
+    name = "Spectroscopy:Single-Molecule:Trace Browser"
+    cli_entrypoint = ""
 
 META_FILENAME = ".trace_browser_meta.json"
 # Determine supported extensions strictly via tttrlib.get_supported_filetypes()
@@ -373,8 +383,8 @@ class NoHoverSelectTable(QTableWidget):
 
 @persist_plugin_state("trace_browser")
 class TraceBrowser(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Trace Browser")
         # Set default window size
         try:
@@ -390,6 +400,7 @@ class TraceBrowser(QWidget):
         self._is_loading: bool = False
         # Debounced metadata saving to keep UI snappy on rating changes
         self._meta_save_timer: Optional[QTimer] = None
+        self._client = TraceBrowserClient()
         try:
             self._meta_save_timer = QTimer(self)
             self._meta_save_timer.setSingleShot(True)
@@ -413,10 +424,25 @@ class TraceBrowser(QWidget):
         self.detector_page = DetectorWizardPage(show_help=False, show_setups_file=True,
                                                 show_setup_selection=True, show_tttr_reading=True,
                                                 show_tables=True, show_add_inputs=True)
-        p0_layout.addWidget(self.detector_page)
-        self.btn_continue = QPushButton("Use setup and continue →", self.page0)
+        self.btn_continue = QPushButton("Continue", self.page0)
+        self.btn_continue.setToolTip("Accept detector setup and open trace browser")
         self.btn_continue.clicked.connect(self._on_continue)
-        p0_layout.addWidget(self.btn_continue)
+        try:
+            self.btn_continue.setMaximumHeight(26)
+            self.btn_continue.setStyleSheet("QPushButton{padding:2px 8px; background-color:#2e7d32; color:white; font-weight:bold;} QPushButton:hover{background-color:#388e3c;}")
+        except Exception:
+            pass
+        p0_top = QWidget(self.page0)
+        p0_top_layout = QHBoxLayout(p0_top)
+        try:
+            p0_top_layout.setContentsMargins(0, 0, 0, 0)
+            p0_top_layout.setSpacing(4)
+        except Exception:
+            pass
+        p0_top_layout.addWidget(self.btn_continue)
+        p0_top_layout.addStretch(1)
+        p0_layout.addWidget(p0_top)
+        p0_layout.addWidget(self.detector_page)
 
         # Page 1: Trace browser
         self.page1 = QWidget(self)
@@ -446,14 +472,6 @@ class TraceBrowser(QWidget):
             pass
         ctrl_row.addWidget(self.btn_back)
         
-        self.btn_pick_folder = QPushButton("Pick folder", self.page1)
-        self.btn_pick_folder.clicked.connect(self._on_pick_folder)
-        try:
-            self.btn_pick_folder.setMaximumHeight(26)
-            self.btn_pick_folder.setStyleSheet("QPushButton{padding:2px 6px;}")
-        except Exception:
-            pass
-
         # Include subfolder option (renamed from "Process subfolders")
         self.chk_subfolders = QCheckBox("Include subfolders", self.page1)
         self.chk_subfolders.setChecked(False)
@@ -496,8 +514,6 @@ class TraceBrowser(QWidget):
             pass
 
         ctrl_row.addWidget(self.folder_label)
-        ctrl_row.addWidget(self.btn_pick_folder)
-        ctrl_row.addWidget(self.chk_subfolders)
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
 
@@ -567,6 +583,7 @@ class TraceBrowser(QWidget):
 
         self.btn_export = QToolButton(self.page1)
         self.btn_export.setText("Export selected…")
+        self.btn_export.setToolTip("Export selected raw trace files")
         self.btn_export.clicked.connect(self._on_export)
         try:
             self.btn_export.setAutoRaise(True)
@@ -586,6 +603,7 @@ class TraceBrowser(QWidget):
 
         self.btn_export_docx = QToolButton(self.page1)
         self.btn_export_docx.setText("Export DOCX…")
+        self.btn_export_docx.setToolTip("Export selected traces and annotations as a DOCX report")
         self.btn_export_docx.clicked.connect(self._on_export_docx)
         try:
             self.btn_export_docx.setAutoRaise(True)
@@ -646,6 +664,20 @@ class TraceBrowser(QWidget):
         tools_row.addWidget(self.btn_clear)
         tools_row.addWidget(self.btn_clear_caches)
         tools_row.addStretch(1)
+        for tool_btn in (
+            self.btn_transfer_to_analysis,
+            self.btn_transfer_to_tw,
+            self.btn_ndx_oneclick,
+            self.btn_export,
+            self.btn_export_csv,
+            self.btn_export_docx,
+            self.btn_clear,
+            self.btn_clear_caches,
+        ):
+            try:
+                tool_btn.setVisible(False)
+            except Exception:
+                pass
 
         # Wrap the two top rows in a fixed-height container so they don't scale in fullscreen
         top_bar = QWidget(self.page1)
@@ -829,7 +861,7 @@ class TraceBrowser(QWidget):
             self.current_folder = folder
             self.folder_label.setText(str(folder))
             logging.info(f"TraceBrowser: Opened folder {folder}")
-            self.meta = _load_meta(folder)
+            self.meta = self._client.get_metadata(str(folder)) or _load_meta(folder)
             self._scan_and_fill()
         except Exception as e:
             logging.exception(f"TraceBrowser: Failed to open folder {folder}: {e}")
@@ -862,12 +894,11 @@ class TraceBrowser(QWidget):
         key = self._rel_key(path)
         self.meta[key] = rec
         # Optionally remove old name-only key to avoid duplicates
-        try:
-            name_key = pathlib.Path(path).name
-            if name_key != key and name_key in self.meta:
-                del self.meta[name_key]
-        except Exception:
-            pass
+        if self.current_folder is not None:
+            try:
+                self._client.set_metadata(str(self.current_folder), dict(self.meta))
+            except Exception:
+                pass
 
     def _scan_and_fill(self):
         if not self.current_folder:
@@ -1555,9 +1586,19 @@ class TraceBrowser(QWidget):
             return
         try:
             window_ms = self.window_ms_spin.value()
-            # Use cached precomputed results if available
-            time_axis, padded, labels = self._compute_trace_cached(path, window_ms)
-            # Plot
+            trace = self._client.load_trace(
+                str(path),
+                time_window_ms=window_ms,
+                setup_settings=self.setup_settings,
+                selected_channels=self.selected_channels,
+                cache_folder=str(self.current_folder) if self.current_folder is not None else None,
+            )
+            if trace is not None:
+                time_axis = np.asarray(trace.get("time_axis", []), dtype=float)
+                padded = np.asarray(trace.get("counts", []), dtype=float)
+                labels = [str(label) for label in trace.get("labels", [])]
+            else:
+                time_axis, padded, labels = self._compute_trace_cached(path, window_ms)
             self.plot.plot_trace_and_histogram(time_axis, padded, labels,
                                                 bin_count=100,
                                                 time_window_ms=window_ms,
@@ -1893,6 +1934,20 @@ class TraceBrowser(QWidget):
         out = pathlib.Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
         window_ms = int(self.window_ms_spin.value()) if hasattr(self, 'window_ms_spin') else 10
+        try:
+            exported_paths = self._client.export_csv(
+                [str(path) for path in paths],
+                str(out),
+                time_window_ms=window_ms,
+                setup_settings=self.setup_settings,
+                selected_channels=self.selected_channels,
+            )
+            if exported_paths:
+                logging.info(f"TraceBrowser: CSV exported through RPC for {len(exported_paths)}/{len(paths)} files to: {out}")
+                QMessageBox.information(self, "CSV Export", f"Exported {len(exported_paths)}/{len(paths)} CSV files to: {out}")
+                return
+        except Exception:
+            logging.debug("TraceBrowser: RPC CSV export failed; falling back to local export")
         exported = 0
         skipped = 0
         for p in paths:
@@ -2439,4 +2494,8 @@ if __name__ == "__main__":
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed by the Plugin Manager
 if __name__ == "plugin":
-    window = TraceBrowser()
+    from chisurf.plugins.tttr.trace_browser.gui.tool import TraceBrowserTool
+    window = TraceBrowserTool()
+    window.show()
+    window.raise_()
+    window.activateWindow()

@@ -1,0 +1,97 @@
+{
+  "id": "trace_browser",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:Trace Browser",
+  "description": "Browse PTU/TTTR intensity traces from a folder, rate and annotate files, preview traces, and export selected traces.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "icon": "icon.png",
+  "state_namespace": "trace_browser",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "selected_files": {"type": "array", "items": {"type": "string"}},
+      "current_folder": {"type": ["string", "null"]},
+      "setup_settings": {"type": ["object", "null"]},
+      "selected_channels": {"type": ["array", "null"], "items": {"type": "integer"}}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.tttr.trace_browser.gui.tool:TraceBrowserTool",
+    "cli": "trace-browser=chisurf.plugins.tttr.trace_browser.cli:cli",
+    "services": "chisurf.plugins.tttr.trace_browser.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "trace_browser.files.list",
+      "summary": "List TTTR trace files and metadata for a folder.",
+      "params_schema": {
+        "type": "object",
+        "required": ["folder"],
+        "properties": {
+          "folder": {"type": "string"},
+          "recursive": {"type": "boolean"},
+          "setup_settings": {"type": ["object", "null"]},
+          "selected_channels": {"type": ["array", "null"], "items": {"type": "integer"}}
+        }
+      },
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "trace_browser.metadata.get",
+      "summary": "Load Trace Browser ratings and annotations.",
+      "params_schema": {"type": "object", "required": ["folder"], "properties": {"folder": {"type": "string"}}},
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "trace_browser.metadata.set",
+      "summary": "Save Trace Browser ratings and annotations.",
+      "params_schema": {"type": "object", "required": ["folder", "metadata"], "properties": {"folder": {"type": "string"}, "metadata": {"type": "object"}}},
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "trace_browser.traces.load",
+      "summary": "Load binned trace data for preview.",
+      "params_schema": {"type": "object", "required": ["path", "time_window_ms"], "properties": {"path": {"type": "string"}, "time_window_ms": {"type": "number"}, "setup_settings": {"type": ["object", "null"]}, "selected_channels": {"type": ["array", "null"], "items": {"type": "integer"}}}},
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "trace_browser.export.csv",
+      "summary": "Export selected traces as CSV files.",
+      "params_schema": {"type": "object", "required": ["paths", "output_dir"], "properties": {"paths": {"type": "array", "items": {"type": "string"}}, "output_dir": {"type": "string"}, "time_window_ms": {"type": "number"}, "setup_settings": {"type": ["object", "null"]}, "selected_channels": {"type": ["array", "null"], "items": {"type": "integer"}}}},
+      "result_schema": {"type": "object"},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "trace_browser.contract.describe",
+      "summary": "Return the Trace Browser RPC contract.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "trace_browser.state.*",
+      "description": "State patch events for trace browser plugin"
+    }
+  ]
+}
