@@ -1,0 +1,32 @@
+{
+  "id": "burst_bva",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:BVA",
+  "description": "Burst Variance Analysis for single-molecule FRET experiments.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "state_namespace": "burst_bva",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_bva.gui.tool:BVATool",
+    "cli": "chisurf.plugins.burst.burst_bva.cli.main:cli",
+    "services": "chisurf.plugins.burst.burst_bva.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "burst_bva.jobs.compute",
+      "summary": "Run Burst Variance Analysis over burst data.",
+      "long_running": true
+    },
+    {
+      "name": "burst_bva.contract.describe",
+      "summary": "Return the BVA workflow contract."
+    }
+  ]
+}
