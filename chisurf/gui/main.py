@@ -364,6 +364,17 @@ class Main(
         except Exception:
             pass
 
+        # Close all plugin-created top-level windows so they can clean up
+        # (save geometry, stop services, unsubscribe from events, etc.).
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            for widget in list(app.topLevelWidgets()):
+                if widget is not self and widget.isWindow():
+                    try:
+                        widget.close()
+                    except Exception:
+                        pass
+
         event.accept()
 
 
@@ -823,12 +834,22 @@ class Main(
                 # Create an action for the plugin with empty text (icon only)
                 action = QtWidgets.QAction("", self)
 
-                # Set icon if available
-                icon_path = package_dir / 'icon.png'
-                if icon_path.exists():
-                    action.setIcon(QtGui.QIcon(str(icon_path)))
-                else:
-                    action.setText(clean_name)
+                # Set icon using emoji/text fallback
+                try:
+                    import importlib as _il
+                    plugin_module = _il.import_module(module_path)
+                    from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
+                    icon = create_plugin_icon_with_fallback(plugin_module, package_dir, size=32)
+                    if not icon.isNull():
+                        action.setIcon(icon)
+                    else:
+                        action.setText(clean_name)
+                except Exception:
+                    icon_path = package_dir / 'icon.png'
+                    if icon_path.exists():
+                        action.setIcon(QtGui.QIcon(str(icon_path)))
+                    else:
+                        action.setText(clean_name)
 
                 # Get plugin description from metadata or docstring
                 description = info.get('description')

@@ -430,6 +430,7 @@ def persist_plugin_state(plugin_name: str):
             self._persist_plugin_name = plugin_name
             self._persist_state_restored = False
             orig_init(self, *args, **kwargs)
+            self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         def _new_showEvent(self, event):
             if not self._persist_state_restored:

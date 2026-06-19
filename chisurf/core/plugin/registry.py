@@ -308,6 +308,13 @@ def _apply_manifest_statefulness(widget: Any, manifest: PluginManifest) -> None:
         or manifest.state_namespace
         or manifest.id
     )
+
+    try:
+        from PyQt5.QtCore import Qt as _Qt
+        widget.setAttribute(_Qt.WA_DeleteOnClose)
+    except Exception:
+        pass
+
     try:
         from chisurf.gui.misc_helpers import (
             restore_plugin_window_state,
