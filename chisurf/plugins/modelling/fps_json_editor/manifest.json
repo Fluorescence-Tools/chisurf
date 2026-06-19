@@ -26,7 +26,7 @@
   "entrypoints": {
     "gui": "chisurf.plugins.modelling.fps_json_editor.gui.tool:FpsJsonEditorTool",
     "cli": "fps-json-editor=chisurf.plugins.modelling.fps_json_editor.cli.cli:cli",
-    "services": "chisurf.plugins.modelling.fps_json_editor.backend.services:register_services"
+    "services": "chisurf.plugins.modelling.fps_json_editor.rpc.services:register_services"
   },
   "rpc_methods": [
     {
@@ -42,6 +42,38 @@
       "summary": "Return the FPS JSON Editor workflow contract.",
       "params_schema": {},
       "result_schema": "api.contract",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fps_json_editor.payload.validate",
+      "summary": "Validate an fps.json payload and return errors, warnings, and a summary.",
+      "params_schema": "api.contract#/inputs/Payload",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fps_json_editor.payload.summarize",
+      "summary": "Summarize positions, distances, score sets, and unresolved references.",
+      "params_schema": "api.contract#/inputs/Payload",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fps_json_editor.payload.normalize",
+      "summary": "Normalize an fps.json payload through the core data model.",
+      "params_schema": "api.contract#/inputs/Payload",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "fps_json_editor.av.mrc.save",
+      "summary": "Save AV points as an IMP-backed MRC density map.",
+      "params_schema": "api.contract#/inputs/SaveAvMrc",
+      "result_schema": "api.contract#/outputs/ServiceResult",
       "long_running": false,
       "cancelable": false
     }

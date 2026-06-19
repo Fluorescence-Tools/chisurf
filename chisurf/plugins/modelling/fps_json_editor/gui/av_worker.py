@@ -1,8 +1,6 @@
 """Worker thread for non-blocking Accessible Volume calculations."""
 
 from __future__ import annotations
-
-import numpy as np
 from qtpy import QtCore
 
 from chisurf.plugins.modelling.fret import av
@@ -16,15 +14,16 @@ class AVWorker(QtCore.QThread):
     """
 
     # Signals:
-    # - result_ready: n_points, volume_A3, mean_x, mean_y, mean_z, coords (N, 4)
+    # - result_ready: n_points, volume_A3, mean_x, mean_y, mean_z, coords (N, 4), grid_step
     # - error: error message string
-    result_ready = QtCore.Signal(int, float, float, float, float, object)
+    result_ready = QtCore.Signal(int, float, float, float, float, object, float)
     error = QtCore.Signal(str)
 
     def __init__(
         self,
-        atoms_xyzr: np.ndarray,
-        source_xyz: np.ndarray,
+        chain: str,
+        res_id: int,
+        atom: str,
         linker_length: float,
         linker_width: float,
         radii: tuple[float, float, float],
@@ -34,8 +33,9 @@ class AVWorker(QtCore.QThread):
         parent: QtCore.QObject | None = None,
     ) -> None:
         super().__init__(parent)
-        self.atoms_xyzr = atoms_xyzr
-        self.source_xyz = source_xyz
+        self.chain = chain
+        self.res_id = res_id
+        self.atom = atom
         self.linker_length = linker_length
         self.linker_width = linker_width
         self.radii = radii
@@ -46,9 +46,41 @@ class AVWorker(QtCore.QThread):
     def run(self) -> None:
         """Run AV computation and emit result or error signal."""
         try:
+            import chisurf.core.fio as fio
+            
+            if not self.pdb_path:
+                raise ValueError("PDB path is required")
+                
+            atoms_xyzr = av.load_structure_with_vdw(self.pdb_path)
+            
+            source_xyz = av._find_attachment_point(
+                atoms_xyzr,
+                self.chain,
+                self.res_id,
+                self.atom,
+                pdb_path=self.pdb_path,
+            )
+            
+            if source_xyz is None:
+                struct = fio.structure.coordinates.PdbCoordinates(self.pdb_path)
+                atom_idx = fio.structure.coordinates.get_atom_index(
+                    struct.atoms, self.chain, self.res_id, self.atom, None
+                )
+                if atom_idx >= 0:
+                    source_xyz = atoms_xyzr[atom_idx, :3]
+                else:
+                    raise ValueError(f"Attachment point '{self.chain}:{self.res_id}:{self.atom}' not found")
+                    
+            clean_atoms_xyzr = av._strip_residue_atoms(
+                atoms_xyzr,
+                self.chain,
+                self.res_id,
+                pdb_path=self.pdb_path,
+            )
+
             accessible_volume = av.compute_av(
-                atoms=self.atoms_xyzr,
-                source_xyz=self.source_xyz,
+                atoms=clean_atoms_xyzr,
+                source_xyz=source_xyz,
                 linker_length=self.linker_length,
                 linker_width=self.linker_width,
                 radii=self.radii,
@@ -66,7 +98,8 @@ class AVWorker(QtCore.QThread):
                 float(mean_xyz[0]),
                 float(mean_xyz[1]),
                 float(mean_xyz[2]),
-                coords
+                coords,
+                float(accessible_volume.grid_step),
             )
         except Exception as e:
             import traceback

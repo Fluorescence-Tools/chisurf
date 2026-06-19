@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
-import platform
+import sys
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -31,18 +32,44 @@ try:
     import IMP.core
     import IMP.em
 
-    _HAS_IMP_BFF = True
+    _HAS_IMP_BFF = bool(
+        hasattr(IMP.bff, "AV")
+        and hasattr(IMP.bff, "PM_TILE_ACCESSIBLE_DENSITY")
+    )
 except ImportError:
     pass
 
-# Prefer labellib when available (simpler standalone API, works on all platforms).
-# Fall back to IMP.bff when labellib is unavailable.
-if _HAS_LABELLIB:
-    _LABELLIB_BACKEND = True
-elif _HAS_IMP_BFF:
-    _LABELLIB_BACKEND = False
-else:
-    _LABELLIB_BACKEND = True  # will fail at runtime
+def _auto_uses_labellib() -> bool:
+    """Return whether automatic backend selection should use LabelLib.
+
+    Returns
+    -------
+    bool
+        ``True`` for LabelLib, ``False`` for IMP.bff. Windows keeps LabelLib
+        as the preferred backend; other platforms prefer IMP.bff when it is
+        available and use LabelLib as the fallback.
+    """
+    if sys.platform.startswith("win") and _HAS_LABELLIB:
+        return True
+    if _HAS_IMP_BFF:
+        return False
+    if _HAS_LABELLIB:
+        return True
+    return True  # will fail at runtime
+
+
+_LABELLIB_BACKEND = _auto_uses_labellib()
+
+
+def _active_backend_name() -> str:
+    """Return the active backend name for diagnostics.
+
+    Returns
+    -------
+    str
+        ``"labellib"`` when LabelLib is active, otherwise ``"imp-bff"``.
+    """
+    return "labellib" if _LABELLIB_BACKEND else "imp-bff"
 
 
 # ---------------------------------------------------------------------------
@@ -235,12 +262,9 @@ def select_backend(name: str) -> None:
     """
     global _LABELLIB_BACKEND
     if name == "auto":
-        if _HAS_LABELLIB:
-            _LABELLIB_BACKEND = True
-        elif _HAS_IMP_BFF:
-            _LABELLIB_BACKEND = False
-        else:
+        if not _HAS_LABELLIB and not _HAS_IMP_BFF:
             raise RuntimeError("No AV backend is available on this system.")
+        _LABELLIB_BACKEND = _auto_uses_labellib()
     elif name == "labellib":
         if not _HAS_LABELLIB:
             raise RuntimeError("LabelLib backend is requested but not available.")
@@ -285,14 +309,34 @@ def compute_av(
             radii,
             disc_step,
         )
-    else:
-        if not _HAS_IMP_BFF:
-            raise RuntimeError("IMP.bff is not available")
-        if pdb_path is None or source_info is None:
-            raise ValueError("IMP.bff backend requires pdb_path and source_info")
+    if not _HAS_IMP_BFF:
+        if _HAS_LABELLIB:
+            return _av_labellib(
+                atoms[:, :4].astype(np.float64),
+                source_xyz.astype(np.float64),
+                linker_length,
+                linker_width,
+                radii,
+                disc_step,
+            )
+        raise RuntimeError("IMP.bff is not available")
+    if pdb_path is None or source_info is None:
+        raise ValueError("IMP.bff backend requires pdb_path and source_info")
+    try:
         return _av_imp_bff(
             pdb_path,
             source_info,
+            linker_length,
+            linker_width,
+            radii,
+            disc_step,
+        )
+    except Exception:
+        if not _HAS_LABELLIB:
+            raise
+        return _av_labellib(
+            atoms[:, :4].astype(np.float64),
+            source_xyz.astype(np.float64),
             linker_length,
             linker_width,
             radii,
@@ -303,7 +347,7 @@ def compute_av(
 def compute_avs_for_structure(
     atoms: np.ndarray,
     positions: Dict,
-    pdb_path: Optional[str | List[str]] = None,
+    pdb_path: str | list[str] | None = None,
     disc_step: Optional[float] = None,
 ) -> Dict[str, AccessibleVolume]:
     """Compute AVs for all positions in an fps.json ``Positions`` dict.
@@ -387,13 +431,170 @@ VDW_RADII = {
     17: 1.75, 19: 2.27, 20: 1.97, 26: 1.56, 30: 1.39,
 }
 _DEFAULT_VDW = 1.70
+_ELEMENT_NUMBERS = {
+    "H": 1,
+    "HE": 2,
+    "LI": 3,
+    "BE": 4,
+    "B": 5,
+    "C": 6,
+    "N": 7,
+    "O": 8,
+    "F": 9,
+    "MG": 12,
+    "SI": 14,
+    "P": 15,
+    "S": 16,
+    "CL": 17,
+    "K": 19,
+    "CA": 20,
+    "FE": 26,
+    "ZN": 30,
+}
+
+
+def _element_symbol_from_pdb_line(line: str) -> str:
+    """Return an element symbol parsed from a PDB ATOM/HETATM line.
+
+    Parameters
+    ----------
+    line : str
+        PDB ATOM or HETATM record.
+
+    Returns
+    -------
+    str
+        Uppercase element symbol, or an empty string when it cannot be parsed.
+    """
+    symbol = line[76:78].strip().upper() if len(line) >= 78 else ""
+    if symbol:
+        return symbol
+
+    atom_name = line[12:16].strip().upper()
+    letters = "".join(ch for ch in atom_name if ch.isalpha())
+    if not letters:
+        return ""
+    if len(letters) >= 2 and letters[:2] in _ELEMENT_NUMBERS:
+        return letters[:2]
+    return letters[:1]
+
+
+def _pdb_cache_token(pdb_path: str) -> tuple[str, int, int]:
+    """Return a cache token that changes when a PDB file changes.
+
+    Parameters
+    ----------
+    pdb_path : str
+        Path to a PDB file.
+
+    Returns
+    -------
+    tuple
+        Absolute path, modification time in ns, and file size.
+    """
+    path = os.path.abspath(pdb_path)
+    stat = os.stat(path)
+    return path, stat.st_mtime_ns, stat.st_size
+
+
+@lru_cache(maxsize=32)
+def _load_pdb_records_cached(
+    pdb_path: str,
+    mtime_ns: int,
+    size: int,
+) -> tuple[tuple[str, int, str, float, float, float, float], ...]:
+    """Load ATOM/HETATM records from a PDB file.
+
+    Parameters
+    ----------
+    pdb_path : str
+        Absolute path to a PDB file.
+    mtime_ns : int
+        File modification timestamp used as part of the cache key.
+    size : int
+        File size used as part of the cache key.
+
+    Returns
+    -------
+    tuple
+        Records containing chain, residue number, atom name, xyz, and vdW radius.
+    """
+    del mtime_ns, size
+    rows = []
+    with open(pdb_path) as f:
+        for line in f:
+            if not line.startswith(("ATOM  ", "HETATM")):
+                continue
+            try:
+                xyz = (float(line[30:38]), float(line[38:46]), float(line[46:54]))
+                resseq = int(line[22:26].strip())
+            except ValueError:
+                continue
+            chain = line[21].strip()
+            atom_name = line[12:16].strip()
+            element = _element_symbol_from_pdb_line(line)
+            atomic_number = _ELEMENT_NUMBERS.get(element, 0)
+            rows.append((
+                chain,
+                resseq,
+                atom_name,
+                xyz[0],
+                xyz[1],
+                xyz[2],
+                VDW_RADII.get(atomic_number, _DEFAULT_VDW),
+            ))
+    if not rows:
+        raise ValueError(f"No ATOM/HETATM coordinates found in '{pdb_path}'")
+    return tuple(rows)
+
+
+def _cached_pdb_records(pdb_path: str) -> tuple[tuple[str, int, str, float, float, float, float], ...]:
+    """Return cached PDB records for a path.
+
+    Parameters
+    ----------
+    pdb_path : str
+        Path to a PDB file.
+
+    Returns
+    -------
+    tuple
+        Cached ATOM/HETATM records.
+    """
+    return _load_pdb_records_cached(*_pdb_cache_token(pdb_path))
+
+
+def _load_pdb_xyzr_direct(pdb_path: str) -> np.ndarray:
+    """Load PDB ATOM/HETATM coordinates and vdW radii without IMP.
+
+    Parameters
+    ----------
+    pdb_path : str
+        Path to a PDB file.
+
+    Returns
+    -------
+    numpy.ndarray
+        ``(N, 4)`` array with ``x, y, z, vdw_radius`` columns.
+    """
+    records = _cached_pdb_records(pdb_path)
+    return np.asarray(
+        [(x, y, z, radius) for _, _, _, x, y, z, radius in records],
+        dtype=np.float64,
+    )
 
 
 def load_structure_with_vdw(pdb_path: str) -> np.ndarray:
     """Load a PDB and return (N, 4) array: x, y, z, vdw_radius.
 
-    Uses IMP.atom for loading, then assigns vdW radii by element.
+    Parses PDB records directly to avoid IMP/CHARMM warnings for unsupported
+    HETATM residues, then falls back to IMP.atom if direct parsing fails.
     """
+    try:
+        return _load_pdb_xyzr_direct(pdb_path)
+    except Exception:
+        pass
+
     coords, particles, _model, _hier = io.load_structure_with_particles(pdb_path)
     vdw = np.full(coords.shape[0], _DEFAULT_VDW, dtype=np.float64)
     for i, p in enumerate(particles):
@@ -439,25 +640,10 @@ def _find_attachment_point(
     """
     if pdb_path and os.path.exists(pdb_path):
         try:
-            with open(pdb_path, "r") as f:
-                for line in f:
-                    if line.startswith(("ATOM  ", "HETATM")):
-                        # Atom name is in columns 13-16 (0-indexed 12:16)
-                        # Chain ID is in column 22 (0-indexed 21)
-                        # Residue sequence number is in columns 23-26 (0-indexed 22:26)
-                        line_atom_name = line[12:16].strip()
-                        line_chain = line[21].strip()
-                        try:
-                            line_resseq = int(line[22:26].strip())
-                        except ValueError:
-                            continue
-
-                        if line_resseq == resseq and line_atom_name == atom_name:
-                            if not chain or line_chain == chain:
-                                x = float(line[30:38])
-                                y = float(line[38:46])
-                                z = float(line[46:54])
-                                return np.array([x, y, z], dtype=np.float64)
+            for line_chain, line_resseq, line_atom_name, x, y, z, _ in _cached_pdb_records(pdb_path):
+                if line_resseq == resseq and line_atom_name == atom_name:
+                    if not chain or line_chain == chain:
+                        return np.array([x, y, z], dtype=np.float64)
         except Exception:
             pass
 
@@ -491,33 +677,32 @@ def _strip_residue_atoms(
     if not pdb_path or not os.path.exists(pdb_path):
         return atoms
 
-    coords_to_exclude = []
     try:
-        with open(pdb_path, "r") as f:
-            for line in f:
-                if line.startswith(("ATOM  ", "HETATM")):
-                    line_chain = line[21].strip()
-                    try:
-                        line_resseq = int(line[22:26].strip())
-                    except ValueError:
-                        continue
-                    if line_resseq == resseq:
-                        if not chain or line_chain == chain:
-                            x = float(line[30:38])
-                            y = float(line[38:46])
-                            z = float(line[46:54])
-                            coords_to_exclude.append([x, y, z])
+        records = _cached_pdb_records(pdb_path)
     except Exception:
         return atoms
 
+    if len(records) == atoms.shape[0]:
+        keep_mask = np.asarray(
+            [
+                not (line_resseq == resseq and (not chain or line_chain == chain))
+                for line_chain, line_resseq, _, _, _, _, _ in records
+            ],
+            dtype=bool,
+        )
+        return atoms[keep_mask]
+
+    coords_to_exclude = [
+        [x, y, z]
+        for line_chain, line_resseq, _, x, y, z, _ in records
+        if line_resseq == resseq and (not chain or line_chain == chain)
+    ]
     if not coords_to_exclude:
         return atoms
 
-    mask = np.ones(atoms.shape[0], dtype=bool)
     coords_to_exclude_arr = np.array(coords_to_exclude, dtype=np.float64)
-    for i in range(atoms.shape[0]):
-        diffs = np.linalg.norm(coords_to_exclude_arr - atoms[i, :3], axis=1)
-        if np.any(diffs < 0.01):
-            mask[i] = False
-
-    return atoms[mask]
+    distances = np.linalg.norm(
+        atoms[:, None, :3] - coords_to_exclude_arr[None, :, :],
+        axis=2,
+    )
+    return atoms[~np.any(distances < 0.01, axis=1)]

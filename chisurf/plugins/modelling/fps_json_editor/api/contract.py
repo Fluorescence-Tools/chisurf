@@ -10,6 +10,10 @@ CONTRACT_VERSION = "2.0.0"
 
 METHOD_FETCH_PDB = "fps_json_editor.pdb.fetch"
 METHOD_DESCRIBE_CONTRACT = "fps_json_editor.contract.describe"
+METHOD_NORMALIZE_PAYLOAD = "fps_json_editor.payload.normalize"
+METHOD_SUMMARIZE_PAYLOAD = "fps_json_editor.payload.summarize"
+METHOD_VALIDATE_PAYLOAD = "fps_json_editor.payload.validate"
+METHOD_SAVE_AV_MRC = "fps_json_editor.av.mrc.save"
 
 _PDB_ID_RE = re.compile(r"^[0-9][a-z0-9]{3}$", re.IGNORECASE)
 
@@ -48,6 +52,29 @@ def contract_descriptor() -> dict[str, Any]:
                     "output_dir": {"type": ["string", "null"]},
                 },
             },
+            "Payload": {
+                "type": "object",
+                "required": ["payload"],
+                "properties": {
+                    "payload": {"type": "object"},
+                },
+            },
+            "SaveAvMrc": {
+                "type": "object",
+                "required": ["path", "points", "grid_step"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "points": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "minItems": 3,
+                        },
+                    },
+                    "grid_step": {"type": "number", "exclusiveMinimum": 0},
+                },
+            },
         },
         "outputs": {
             "ServiceResult": {
@@ -69,6 +96,13 @@ def contract_descriptor() -> dict[str, Any]:
                     "source": {"type": "string"},
                 },
             },
+            "PayloadSummary": {"type": "object"},
+            "PayloadValidation": {"type": "object"},
+            "SaveAvMrcResult": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {"path": {"type": "string"}},
+            },
         },
         "rpc_methods": {
             METHOD_FETCH_PDB: {
@@ -79,6 +113,26 @@ def contract_descriptor() -> dict[str, Any]:
             METHOD_DESCRIBE_CONTRACT: {
                 "input": "{}",
                 "output": "ServiceResult<Contract>",
+                "long_running": False,
+            },
+            METHOD_VALIDATE_PAYLOAD: {
+                "input": "Payload",
+                "output": "ServiceResult<PayloadValidation>",
+                "long_running": False,
+            },
+            METHOD_SUMMARIZE_PAYLOAD: {
+                "input": "Payload",
+                "output": "ServiceResult<PayloadSummary>",
+                "long_running": False,
+            },
+            METHOD_NORMALIZE_PAYLOAD: {
+                "input": "Payload",
+                "output": "ServiceResult<Payload>",
+                "long_running": False,
+            },
+            METHOD_SAVE_AV_MRC: {
+                "input": "SaveAvMrc",
+                "output": "ServiceResult<SaveAvMrcResult>",
                 "long_running": False,
             },
         },

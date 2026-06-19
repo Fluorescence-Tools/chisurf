@@ -3,14 +3,185 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pytest
 
+from chisurf.plugins.modelling.fps_json_editor.core.colors import (
+    DEFAULT_AV_COLOR,
+    normalize_rgba,
+    rgba_to_json,
+)
+from chisurf.plugins.modelling.fps_json_editor.core.model import FpsJsonModel
+from chisurf.plugins.modelling.fps_json_editor.core.naming import (
+    default_label_name,
+    unique_label_name,
+)
+from chisurf.plugins.modelling.fps_json_editor.core.payload import (
+    normalize_payload,
+    summarize_payload,
+    validate_payload,
+)
+
+
+class TestPackageBoundaries:
+    """Package imports should preserve api/core/rpc/cli/gui boundaries."""
+
+    def test_root_import_does_not_import_gui(self):
+        """Importing the plugin root should not import GUI modules."""
+        import chisurf.plugins.modelling.fps_json_editor as fps_json_editor
+
+        assert fps_json_editor.name
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.tool" not in sys.modules
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.editor" not in sys.modules
+
+    def test_cli_import_does_not_import_rpc(self):
+        """CLI uses core helpers directly and should not import RPC services."""
+        sys.modules.pop("chisurf.plugins.modelling.fps_json_editor.rpc.services", None)
+
+        from chisurf.plugins.modelling.fps_json_editor.cli import cli as cli_module
+
+        assert cli_module.cli.name == "cli"
+        assert "chisurf.plugins.modelling.fps_json_editor.rpc.services" not in sys.modules
+
+    def test_gui_communication_reexports_api_client(self):
+        """The old GUI communication import path should remain compatible."""
+        sys.modules.pop("chisurf.plugins.modelling.fps_json_editor.gui.editor", None)
+        sys.modules.pop("chisurf.plugins.modelling.fps_json_editor.gui.tool", None)
+
+        from chisurf.plugins.modelling.fps_json_editor.api.client import (
+            FpsJsonEditorClient as ApiClient,
+        )
+        from chisurf.plugins.modelling.fps_json_editor.gui.communication import (
+            FpsJsonEditorClient as GuiClient,
+        )
+
+        assert GuiClient is ApiClient
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.editor" not in sys.modules
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.tool" not in sys.modules
+
+    def test_gui_package_exposes_entrypoints_lazily(self):
+        """The GUI package should keep entrypoint imports lazy."""
+        import chisurf.plugins.modelling.fps_json_editor.gui as gui
+
+        assert sorted(gui.__all__) == ["FpsJsonEditor", "FpsJsonEditorTool"]
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.editor" not in sys.modules
+        assert "chisurf.plugins.modelling.fps_json_editor.gui.tool" not in sys.modules
+
+
+class TestMrcExport:
+    """AV MRC export should use IMP-readable density maps."""
+
+    def test_save_av_mrc_writes_imp_mrc(self, tmp_path):
+        """A small weighted point cloud is saved as a readable MRC map."""
+        import IMP.em
+
+        from chisurf.plugins.modelling.fps_json_editor.core.mrc import save_av_mrc
+
+        points = np.asarray(
+            [
+                [0.0, 0.0, 0.0, 1.0],
+                [1.0, 0.0, 0.0, 2.0],
+                [1.0, 1.0, 0.0, 3.0],
+            ],
+            dtype=np.float64,
+        )
+        out_path = save_av_mrc(tmp_path / "av_export", points, 1.0)
+
+        assert out_path.suffix == ".mrc"
+        assert out_path.exists()
+
+        density_map = IMP.em.read_map(str(out_path), IMP.em.MRCReaderWriter())
+        assert density_map.get_number_of_voxels() >= 3
+        assert density_map.get_max_value() >= 3.0
+
+
+class TestLabelNaming:
+    """Default labels should be available before users type a name."""
+
+    def test_default_label_name_uses_chain_and_residue(self):
+        """Chain and residue produce compact FPS labels."""
+        assert default_label_name("E", 5) == "E5"
+        assert default_label_name(" A ", "132") == "A132"
+
+    def test_unique_label_name_suffixes_duplicates(self):
+        """Duplicate generated names get stable numeric suffixes."""
+        assert unique_label_name("A132", {"A132", "A132_2"}) == "A132_3"
+        assert unique_label_name("E5", {"A132"}) == "E5"
+
+
+class TestPayloadServices:
+    """Core/RPC service helpers should expose useful fps.json operations."""
+
+    def test_payload_summary_reports_references(self):
+        """Payload summaries include used, unused, and missing references."""
+        payload = {
+            "Positions": {"A1": {}, "A2": {}},
+            "Distances": {
+                "ok": {"position1_name": "A1", "position2_name": "A2"},
+                "bad": {"position1_name": "A1", "position2_name": "missing"},
+            },
+            "χ²": {"set1": {"distances": ["ok", "ghost"]}},
+        }
+
+        summary = summarize_payload(payload)
+
+        assert summary["n_positions"] == 2
+        assert summary["used_positions"] == ["A1", "A2"]
+        assert summary["dangling_distances"] == [
+            {"distance": "bad", "missing_positions": ["missing"]}
+        ]
+        assert summary["missing_score_set_distances"] == [
+            {"score_set": "set1", "missing_distances": ["ghost"]}
+        ]
+
+    def test_payload_validation_and_normalization(self):
+        """Validation flags bad references and normalization adds core sections."""
+        payload = {
+            "Positions": {"A1": {}},
+            "Distances": {"bad": {"position1_name": "A1", "position2_name": "A2"}},
+        }
+
+        result = validate_payload(payload)
+        normalized = normalize_payload({"Positions": {"A1": {}}})
+
+        assert not result["valid"]
+        assert "missing position" in result["errors"][0]
+        assert normalized["Positions"] == {"A1": {}}
+        assert normalized["Distances"] == {}
+
+    def test_rpc_catalogue_and_handlers_offer_payload_services(self, tmp_path):
+        """RPC handlers expose payload and MRC services with service envelopes."""
+        from chisurf.plugins.modelling.fps_json_editor.rpc.services import (
+            list_methods,
+            normalize_payload_handler,
+            save_av_mrc_handler,
+            summarize_payload_handler,
+            validate_payload_handler,
+        )
+
+        methods = list_methods()
+        assert "fps_json_editor.payload.validate" in methods
+        assert "fps_json_editor.payload.summarize" in methods
+        assert "fps_json_editor.payload.normalize" in methods
+        assert "fps_json_editor.av.mrc.save" in methods
+
+        payload = {"Positions": {"A1": {}}, "Distances": {}}
+        assert validate_payload_handler(payload)["result"]["valid"]
+        assert summarize_payload_handler(payload)["result"]["n_positions"] == 1
+        assert normalize_payload_handler(payload)["result"]["payload"]["Positions"] == {"A1": {}}
+
+        points = [[0.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 2.0]]
+        mrc_result = save_av_mrc_handler(str(tmp_path / "service_av"), points, 1.0)
+        assert mrc_result["ok"]
+        assert Path(mrc_result["result"]["path"]).suffix == ".mrc"
+        assert Path(mrc_result["result"]["path"]).exists()
+
 # ---------------------------------------------------------------------------
-# Helpers that mirror the LabelStructure payload logic so we can test without
+# Helpers that mirror the FpsJsonEditor payload logic so we can test without
 # a Qt application running.
 # ---------------------------------------------------------------------------
 
@@ -18,7 +189,7 @@ _RESERVED = {"Distances", "Positions", "χ²"}
 
 
 def rebuild_from_payload(p: dict) -> dict[str, Any]:
-    """Mirror LabelStructure._rebuild_from_payload -> return editor state."""
+    """Mirror FpsJsonEditor._rebuild_from_payload -> return editor state."""
     return {
         "positions": dict(p.get("Positions", {}) or {}),
         "distances": dict(p.get("Distances", {}) or {}),
@@ -28,7 +199,7 @@ def rebuild_from_payload(p: dict) -> dict[str, Any]:
 
 
 def build_full_payload(state: dict) -> dict:
-    """Mirror LabelStructure._build_full_payload."""
+    """Mirror FpsJsonEditor._build_full_payload."""
     p = dict(state.get("extra_sections", {}))
     p["Distances"] = state["distances"]
     p["Positions"] = state["positions"]
@@ -40,7 +211,7 @@ def build_full_payload(state: dict) -> dict:
 def cleanup_score_sets(
     score_sets: dict, distance_name: str
 ) -> None:
-    """Mirror LabelStructure._cleanup_score_sets."""
+    """Mirror FpsJsonEditor._cleanup_score_sets."""
     for group in score_sets.values():
         if isinstance(group, dict) and "distances" in group:
             group["distances"] = [
@@ -51,7 +222,7 @@ def cleanup_score_sets(
 def distances_referencing(
     distances: dict, position_name: str
 ) -> list[str]:
-    """Mirror LabelStructure._distances_referencing."""
+    """Mirror FpsJsonEditor._distances_referencing."""
     return [
         dn for dn, d in distances.items()
         if d.get("position1_name") == position_name
@@ -332,6 +503,40 @@ class TestUsedPositions:
 
 class TestJsonSerialization:
     """Verify that serializing/deserializing does not change the payload."""
+
+    def test_position_av_color_round_trip(self):
+        """Position av_color metadata survives model round-trip."""
+        payload = {
+            "Positions": {
+                "D1": {
+                    "chain_identifier": "A",
+                    "residue_seq_number": 18,
+                    "atom_name": "CB",
+                    "av_color": [0.2, 0.4, 0.8, 0.55],
+                },
+            },
+            "Distances": {},
+        }
+
+        model = FpsJsonModel()
+        model.fps_json_payload = payload
+
+        assert model.fps_json_payload["Positions"]["D1"]["av_color"] == [
+            0.2,
+            0.4,
+            0.8,
+            0.55,
+        ]
+
+    def test_position_av_color_helpers(self):
+        """Color helpers normalize JSON-safe RGBA values."""
+        assert normalize_rgba([51, 102, 204, 128]) == (
+            0.2,
+            0.4,
+            0.8,
+            128 / 255.0,
+        )
+        assert rgba_to_json([0.2, 0.4, 0.8]) == [0.2, 0.4, 0.8, DEFAULT_AV_COLOR[3]]
 
     def test_hgbp1_round_trip(self):
         """Round-trip similar to the hGBP1.fps.json structure."""

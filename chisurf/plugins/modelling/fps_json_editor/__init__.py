@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from chisurf.core.plugin import load_manifest
-from chisurf.core.plugin.registry import apply_manifest_statefulness
-from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
 
 _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:
@@ -16,11 +14,14 @@ else:
     name = "Structure:FRET:FPS JSON Editor"
     cli_entrypoint = ""
 
-__all__ = ["LabelStructure", "name", "cli_entrypoint"]
+__all__ = ["cli_entrypoint", "name"]
 
 
 if __name__ == "plugin":
-    window = LabelStructure()
+    from chisurf.core.plugin.registry import apply_manifest_statefulness
+    from chisurf.plugins.modelling.fps_json_editor.gui.tool import FpsJsonEditorTool
+
+    window = FpsJsonEditorTool()
     if _manifest is not None:
         apply_manifest_statefulness(window, _manifest)
     window.show()

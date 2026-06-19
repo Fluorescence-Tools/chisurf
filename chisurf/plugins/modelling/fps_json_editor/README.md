@@ -20,6 +20,16 @@ The FPS JSON Editor plugin simplifies the process of creating input files for th
 
 The editor is essential for preparing input files for FRET-based structural modeling and accessible volume simulations, bridging the gap between experimental FRET measurements and structural interpretation.
 
+## Package Boundaries
+
+- `core/`: Pure data model, color helpers, and local PDB file/cache helpers. This layer must not import GUI, CLI, or RPC modules.
+- `api/`: Stable contract constants, schemas, validation helpers, and client wrapper. GUI and external integrations should call through this layer instead of importing RPC handlers directly.
+- `rpc/`: `ServiceDispatcher` registration and JSON-serializable service handlers. RPC delegates reusable file/model work to `core/`.
+- `cli/`: Click commands for support workflows. CLI uses `api` for contracts/validation and `core` for local operations; it should not import GUI or RPC modules.
+- `gui/`: Qt widgets, dock panels, and the plugin window. GUI code uses `api.client.FpsJsonEditorClient` for service calls.
+
+The package root (`chisurf.plugins.modelling.fps_json_editor`) stays lightweight and exposes only plugin metadata during normal imports. GUI classes are imported lazily by the manifest entrypoint or plugin loader.
+
 ## Requirements
 
 - Python packages:
