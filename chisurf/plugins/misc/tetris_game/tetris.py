@@ -9,20 +9,31 @@ try:
 except ImportError:
     persist_plugin_state = lambda n: lambda c: c
 
-# Dimensions
+try:
+    from chisurf.plugins.misc.tetris_game.sound import SoundManager
+except ImportError:
+    class SoundManager:
+        def __init__(self): self._muted = True
+        @property
+        def muted(self): return self._muted
+        @muted.setter
+        def muted(self, value): pass
+        def toggle(self): pass
+        def play(self, name): pass
+        def ensure_sounds(self): pass
+
 BoardWidth = 10
 BoardHeight = 22
 
-# Define the shapes and their rotations
 class Tetromino:
     shapes = [
-        [[0, -1], [0, 0], [0, 1], [0, 2]],     # I
-        [[-1, -1], [-1, 0], [0, 0], [1, 0]],   # J
-        [[1, -1], [-1, 0], [0, 0], [1, 0]],    # L
-        [[0, -1], [1, -1], [0, 0], [1, 0]],    # O
-        [[0, -1], [1, -1], [-1, 0], [0, 0]],   # S
-        [[-1, -1], [0, -1], [1, -1], [0, 0]],  # T
-        [[-1, -1], [0, -1], [0, 0], [1, 0]],   # Z
+        [[0, -1], [0, 0], [0, 1], [0, 2]],
+        [[-1, -1], [-1, 0], [0, 0], [1, 0]],
+        [[1, -1], [-1, 0], [0, 0], [1, 0]],
+        [[0, -1], [1, -1], [0, 0], [1, 0]],
+        [[0, -1], [1, -1], [-1, 0], [0, 0]],
+        [[-1, -1], [0, -1], [1, -1], [0, 0]],
+        [[-1, -1], [0, -1], [0, 0], [1, 0]],
     ]
     colors = [
         QColor(0, 255, 255),
@@ -39,7 +50,7 @@ class Tetromino:
         self.coords = [QPoint(x, y) for x, y in Tetromino.shapes[self.shape]]
 
     def rotate(self):
-        if self.shape == 3:  # O-piece doesn't rotate
+        if self.shape == 3:
             return self
         rotated = Tetromino(self.shape)
         rotated.coords = [QPoint(-pt.y(), pt.x()) for pt in self.coords]
@@ -51,6 +62,7 @@ class Board(QFrame):
         self.timer = QBasicTimer()
         self.isStarted = False
         self.isPaused = False
+        self.sound = SoundManager()
         self.clearBoard()
         self.currentPiece = None
         self.curX = 0
@@ -64,6 +76,7 @@ class Board(QFrame):
         if self.isPaused:
             return
         self.isStarted = True
+        self.sound.ensure_sounds()
         self.clearBoard()
         self.newPiece()
         self.timer.start(self.speed, self)
@@ -89,7 +102,6 @@ class Board(QFrame):
         rect = self.contentsRect()
         boardTop = rect.bottom() - BoardHeight * self.squareHeight()
 
-        # Draw the fixed board
         for i in range(BoardHeight):
             for j in range(BoardWidth):
                 color = self.board[i][j]
@@ -101,11 +113,10 @@ class Board(QFrame):
                         color
                     )
 
-        # Draw the falling piece
         if self.currentPiece:
             for p in self.currentPiece.coords:
                 x = self.curX + p.x()
-                y = self.curY + p.y()  # positive Y goes down
+                y = self.curY + p.y()
                 self.drawSquare(
                     painter,
                     rect.left() + x * self.squareWidth(),
@@ -114,19 +125,14 @@ class Board(QFrame):
                 )
 
     def gameOver(self):
-        # Stop the timer and flag game as over
         self.timer.stop()
         self.isStarted = False
+        self.sound.play('game_over')
 
-        # Fill the entire board with "blocks"
-        # Here we choose a gray color for all cells;
-        # you could also pick random Tetromino.colors if you like.
         fill_color = QColor(128, 128, 128)
         for row in range(BoardHeight):
             for col in range(BoardWidth):
                 self.board[row][col] = fill_color
-
-        # Trigger a repaint so the full screen is covered
         self.update()
 
     def keyPressEvent(self, event):
@@ -139,9 +145,14 @@ class Board(QFrame):
             self.pause()
             return
         elif key == Qt.Key_R:
-            # Restart the game
             self.start()
-            self.parent().statusBar().showMessage('Press P to pause — Press R to restart')
+            self.parent().statusBar().showMessage(
+                'P pause | R restart | M sound')
+            return
+        elif key == Qt.Key_M:
+            self.sound.toggle()
+            status = 'ON' if not self.sound.muted else 'OFF'
+            self.parent().statusBar().showMessage(f'Sound: {status} — Press M to toggle')
             return
 
         if self.isPaused:
@@ -152,11 +163,10 @@ class Board(QFrame):
         elif key == Qt.Key_Right:
             self.tryMove(self.currentPiece, self.curX + 1, self.curY)
         elif key == Qt.Key_Down:
-            # Down now hard-drops
             self.dropDown()
         elif key == Qt.Key_Up:
-            # Up now rotates
-            self.tryMove(self.currentPiece.rotate(), self.curX, self.curY)
+            if self.tryMove(self.currentPiece.rotate(), self.curX, self.curY):
+                self.sound.play('rotate')
         else:
             super(Board, self).keyPressEvent(event)
 
@@ -169,7 +179,6 @@ class Board(QFrame):
             super(Board, self).timerEvent(event)
 
     def oneLineDown(self):
-        # Move the piece one row down (increase Y)
         if not self.tryMove(self.currentPiece, self.curX, self.curY + 1):
             self.pieceDropped()
 
@@ -180,11 +189,11 @@ class Board(QFrame):
         self.pieceDropped()
 
     def pieceDropped(self):
-        # Lock the piece into the board
         for p in self.currentPiece.coords:
             x = self.curX + p.x()
             y = self.curY + p.y()
             self.board[y][x] = Tetromino.colors[self.currentPiece.shape]
+        self.sound.play('drop')
         self.removeFullLines()
 
         if not self.isStarted:
@@ -203,13 +212,13 @@ class Board(QFrame):
             newBoard.insert(0, [QColor(0, 0, 0) for _ in range(BoardWidth)])
         if linesRemoved > 0:
             self.board = newBoard
+            self.sound.play('line_clear')
             self.update()
 
     def newPiece(self):
         self.currentPiece = self.nextPiece
         self.nextPiece = Tetromino()
         self.curX = BoardWidth // 2
-        # Spawn so that the highest block is at row 0
         self.curY = -min(p.y() for p in self.currentPiece.coords)
         if not self.tryMove(self.currentPiece, self.curX, self.curY):
             self.currentPiece = None
@@ -265,10 +274,16 @@ class Tetris(QMainWindow):
     def initUI(self):
         self.board = Board(self)
         self.setCentralWidget(self.board)
-        self.statusBar().showMessage('Press P to pause — Press R to restart')
+        self.statusBar().showMessage(
+            'P pause | R restart | M sound')
         self.setFixedSize(BoardWidth * 20, BoardHeight * 20)
         self.setWindowTitle('Tetris')
         self.show()
+
+    def closeEvent(self, event):
+        self.board.timer.stop()
+        event.accept()
+        self.deleteLater()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

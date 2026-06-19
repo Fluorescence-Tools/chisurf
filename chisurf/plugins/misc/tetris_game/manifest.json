@@ -1,0 +1,32 @@
+{
+  "id": "tetris_game",
+  "version": "2.0.0",
+  "display_name": "Tools:Miscellaneous:Tetris",
+  "description": "Classic Tetris game with line clearing, score tracking, and next-piece preview.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Miscellaneous"],
+  "icon": "icon.png",
+  "state_namespace": "tetris_game",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.misc.tetris_game.tetris:Tetris",
+    "cli": null,
+    "services": null
+  },
+  "rpc_methods": [],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}

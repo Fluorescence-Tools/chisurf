@@ -1,0 +1,32 @@
+{
+  "id": "pong_game",
+  "version": "2.0.0",
+  "display_name": "Tools:Miscellaneous:Pong",
+  "description": "Classic Pong game with CPU opponent, score tracking, and particle effects.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Miscellaneous"],
+  "icon": "icon.png",
+  "state_namespace": "pong_game",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.misc.pong_game.pong_game:Pong",
+    "cli": null,
+    "services": null
+  },
+  "rpc_methods": [],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}

@@ -1,0 +1,32 @@
+{
+  "id": "breakout_game",
+  "version": "2.0.0",
+  "display_name": "Tools:Miscellaneous:Breakout",
+  "description": "Classic Breakout game with progressive difficulty, multiple brick types, mouse/keyboard control, and particle effects.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Miscellaneous"],
+  "icon": "icon.png",
+  "state_namespace": "breakout_game",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.misc.breakout_game.breakout:Breakout",
+    "cli": null,
+    "services": null
+  },
+  "rpc_methods": [],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}

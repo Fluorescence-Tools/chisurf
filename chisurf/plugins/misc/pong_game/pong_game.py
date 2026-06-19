@@ -10,6 +10,19 @@ try:
 except ImportError:
     persist_plugin_state = lambda n: lambda c: c
 
+try:
+    from chisurf.plugins.misc.pong_game.sound import SoundManager
+except ImportError:
+    class SoundManager:
+        def __init__(self): self._muted = True
+        @property
+        def muted(self): return self._muted
+        @muted.setter
+        def muted(self, value): pass
+        def toggle(self): pass
+        def play(self, name): pass
+        def ensure_sounds(self): pass
+
 WindowWidth = 800
 WindowHeight = 600
 
@@ -57,6 +70,8 @@ class PongBoard(QFrame):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFixedSize(WindowWidth, WindowHeight)
 
+        self.sound = SoundManager()
+
         self.vsComputer = True
         self.upPressed = False
         self.downPressed = False
@@ -88,6 +103,7 @@ class PongBoard(QFrame):
         self.playerScore = 0
         self.cpuScore = 0
         self.rally_count = 0
+        self.sound.ensure_sounds()
         self.particles.clear()
         self.beginServe()
         self.timer.start(16, self)
@@ -136,6 +152,11 @@ class PongBoard(QFrame):
             self.parent().setWindowTitle(
                 'Pong vs CPU' if self.vsComputer else 'Pong - 2 Players'
             )
+            return
+        if k == Qt.Key_N:
+            self.sound.toggle()
+            status = 'ON' if not self.sound.muted else 'OFF'
+            self.parent().statusBar().showMessage(f'Sound: {status} — Press N to toggle')
             return
         if k == Qt.Key_Up:
             self.upPressed = True
@@ -210,9 +231,11 @@ class PongBoard(QFrame):
         if self.ballPos.y() <= 0:
             self.ballPos.setY(0)
             self.ballVel.setY(abs(self.ballVel.y()))
+            self.sound.play('wall_bounce')
         elif self.ballPos.y() + BallSize >= WindowHeight:
             self.ballPos.setY(WindowHeight - BallSize)
             self.ballVel.setY(-abs(self.ballVel.y()))
+            self.sound.play('wall_bounce')
 
         bx = self.ballPos.x()
         by = self.ballPos.y()
@@ -227,6 +250,7 @@ class PongBoard(QFrame):
             angle = offset * math.pi / 3
             self.ballVel = QPointF(abs(math.cos(angle) * speed), math.sin(angle) * speed)
             self.rally_count += 1
+            self.sound.play('paddle_hit')
             self.spawnParticles(10 + PaddleWidth, by + bs / 2, QColor(255, 255, 200), 8)
             self.flash_timer = 4
 
@@ -238,11 +262,13 @@ class PongBoard(QFrame):
             angle = offset * math.pi / 3
             self.ballVel = QPointF(-abs(math.cos(angle) * speed), math.sin(angle) * speed)
             self.rally_count += 1
+            self.sound.play('paddle_hit')
             self.spawnParticles(WindowWidth - 10 - PaddleWidth, by + bs / 2, QColor(255, 200, 255), 8)
             self.flash_timer = 4
 
         if bx < -BallSize:
             self.cpuScore += 1
+            self.sound.play('score')
             self.spawnParticles(0, by + bs / 2, QColor(255, 100, 100), 20)
             if self.cpuScore >= WIN_SCORE:
                 self.gameOver("CPU wins!")
@@ -250,6 +276,7 @@ class PongBoard(QFrame):
                 self.resetBall()
         elif bx > WindowWidth:
             self.playerScore += 1
+            self.sound.play('score')
             self.spawnParticles(WindowWidth, by + bs / 2, QColor(100, 255, 100), 20)
             if self.playerScore >= WIN_SCORE:
                 self.gameOver("You win!")
@@ -271,6 +298,7 @@ class PongBoard(QFrame):
     def gameOver(self, message):
         self.timer.stop()
         self.isStarted = False
+        self.sound.play('game_over')
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
         painter.setPen(QColor(255, 255, 255))
@@ -342,7 +370,7 @@ class PongBoard(QFrame):
         painter.drawText(WindowWidth // 4, 30, f"Player: {self.playerScore}")
         painter.drawText(WindowWidth * 3 // 4 - 60, 30, f"CPU: {self.cpuScore}")
 
-        info = f"Rally: {self.rally_count}  |  P: pause  R: restart  M: mode"
+        info = f"Rally: {self.rally_count}  |  P: pause  R: restart  M: mode  N: sound"
         painter.setFont(QFont('Arial', 10))
         painter.setPen(QColor(120, 120, 150))
         painter.drawText(WindowWidth // 2 - 150, WindowHeight - 10, info)
@@ -370,10 +398,15 @@ class Pong(QMainWindow):
         self.board = PongBoard(self)
         self.setCentralWidget(self.board)
         self.board.setFocus()
-        self.statusBar().showMessage('↑ ↓ to move | P pause | R restart | M 1p/2p')
+        self.statusBar().showMessage('↑ ↓ to move | P pause | R restart | M 1p/2p | N sound')
         self.setFixedSize(WindowWidth, WindowHeight)
         self.setWindowTitle('Pong vs CPU')
         self.show()
+
+    def closeEvent(self, event):
+        self.board.timer.stop()
+        event.accept()
+        self.deleteLater()
 
 
 if __name__ == '__main__':

@@ -10,6 +10,19 @@ try:
 except ImportError:
     persist_plugin_state = lambda n: lambda c: c
 
+try:
+    from chisurf.plugins.misc.breakout_game.sound import SoundManager
+except ImportError:
+    class SoundManager:
+        def __init__(self): self._muted = True
+        @property
+        def muted(self): return self._muted
+        @muted.setter
+        def muted(self, value): pass
+        def toggle(self): pass
+        def play(self, name): pass
+        def ensure_sounds(self): pass
+
 W = 800
 H = 650
 
@@ -105,6 +118,8 @@ class BreakoutBoard(QFrame):
         self.setMouseTracking(True)
         self.setFixedSize(W, H)
 
+        self.sound = SoundManager()
+
         self.paddleX = (W - PaddleW) / 2
         self.ballPos = QPointF(W / 2, PaddleY - BallSize)
         self.ballVel = QPointF(0, 0)
@@ -154,11 +169,13 @@ class BreakoutBoard(QFrame):
         )
         self.serve = False
         self.ball_stuck = False
+        self.sound.play('launch')
 
     def start(self):
         self.score = 0
         self.lives = Lives
         self.level = 1
+        self.sound.ensure_sounds()
         self.initLevel()
         self.timer.start(16, self)
         self.isStarted = True
@@ -167,6 +184,7 @@ class BreakoutBoard(QFrame):
     def gameOver(self, won=False):
         self.timer.stop()
         self.isStarted = False
+        self.sound.play('game_over')
         self.update()
 
     def spawnParticles(self, x, y, color, count=15):
@@ -187,6 +205,11 @@ class BreakoutBoard(QFrame):
             return
         if k == Qt.Key_R:
             self.start()
+            return
+        if k == Qt.Key_M:
+            self.sound.toggle()
+            status = 'ON' if not self.sound.muted else 'OFF'
+            self.parent().statusBar().showMessage(f'Sound: {status} — Press M to toggle')
             return
         self.keys_held.add(k)
         if k == Qt.Key_Space:
@@ -212,7 +235,6 @@ class BreakoutBoard(QFrame):
             return
         if not self.isStarted:
             return
-        # smooth keyboard movement
         move_step = 6
         if Qt.Key_Left in self.keys_held:
             self.paddleX = max(0, self.paddleX - move_step)
@@ -231,12 +253,15 @@ class BreakoutBoard(QFrame):
         if by <= 0:
             self.ballPos.setY(0)
             self.ballVel.setY(abs(bvy))
+            self.sound.play('wall_bounce')
         if bx <= 0:
             self.ballPos.setX(0)
             self.ballVel.setX(abs(bvx))
+            self.sound.play('wall_bounce')
         if bx + bs >= W:
             self.ballPos.setX(W - bs)
             self.ballVel.setX(-abs(bvx))
+            self.sound.play('wall_bounce')
 
         pr = QRectF(self.paddleX, PaddleY, PaddleW, PaddleH)
         br = QRectF(bx, by, bs, bs)
@@ -247,6 +272,7 @@ class BreakoutBoard(QFrame):
             angle = offset * math.pi / 2.5
             self.ballVel = QPointF(math.sin(angle) * speed, -abs(math.cos(angle) * speed))
             self.ballPos.setY(PaddleY - bs)
+            self.sound.play('paddle_hit')
             self.spawnParticles(bx + bs / 2, PaddleY, QColor(255, 255, 200), 6)
 
         hit_any = False
@@ -271,6 +297,7 @@ class BreakoutBoard(QFrame):
                         brick.rect.center().x(), brick.rect.center().y(),
                         brick.color, 12
                     )
+                    self.sound.play('brick_break')
                 else:
                     self.spawnParticles(
                         brick.rect.center().x(), brick.rect.center().y(),
@@ -295,6 +322,7 @@ class BreakoutBoard(QFrame):
         alive = sum(1 for b in self.bricks if b.alive)
         if alive == 0:
             self.level += 1
+            self.sound.play('level_up')
             self.initLevel()
 
         for p in self.particles[:]:
@@ -374,10 +402,16 @@ class Breakout(QMainWindow):
         self.board = BreakoutBoard(self)
         self.setCentralWidget(self.board)
         self.board.setFocus()
-        self.statusBar().showMessage('← → or mouse to move | SPACE launch | P pause | R restart')
+        self.statusBar().showMessage(
+            '← → mouse | SPACE launch | P pause | R restart | M sound')
         self.setFixedSize(W, H)
         self.setWindowTitle('Breakout')
         self.show()
+
+    def closeEvent(self, event):
+        self.board.timer.stop()
+        event.accept()
+        self.deleteLater()
 
 
 if __name__ == '__main__':

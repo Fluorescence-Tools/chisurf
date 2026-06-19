@@ -1,33 +1,20 @@
-"""
-Tetris Game Plugin
+"""Tetris Game Plugin
 
-This plugin provides a classic single-player Tetris game implemented using PyQt5.
-Shapes (Tetrominoes) fall from the top of the board and the player must rotate
-and position them to complete horizontal lines.
-
-Features:
-- Seven standard Tetromino shapes with rotation
-- Line clearing and score tracking
-- Keyboard controls:
-  • ← → : Move piece left/right
-  • ↑    : Rotate piece
-  • ↓    : Hard drop
-  • P    : Pause/resume game
-  • R    : Restart game
-- Adjustable drop speed
-- Next-piece preview
-- Clean and intuitive interface
-
-The game is both a challenging puzzle and a demonstration of using PyQt5 for
-creating responsive, event-driven graphical applications.
+Classic single-player Tetris game with line clearing and next-piece preview.
 """
 
-name = "Tools:Miscellaneous:Tetris"
+from __future__ import annotations
 
 import sys
+from pathlib import Path
+
 from qtpy.QtWidgets import QApplication
 
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.misc.tetris_game.tetris import Tetris
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+name = _manifest.display_name if _manifest is not None else "Tools:Miscellaneous:Tetris"
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

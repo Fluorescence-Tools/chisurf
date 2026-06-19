@@ -1,26 +1,20 @@
-"""
-Pong Game Plugin
+"""Pong Game Plugin
 
-This plugin provides a classic Pong game implemented using PyQt5.
-It's a simple two-player game where each player controls a paddle
-to hit a ball back and forth.
-
-Features:
-- Two-player gameplay with keyboard controls
-- Score tracking
-- Adjustable game speed
-- Simple and intuitive interface
-
-The game serves as both a fun diversion and a demonstration of
-using PyQt5 for creating interactive graphical applications.
+Classic Pong game with CPU opponent, score tracking, and particle effects.
 """
 
-name = "Tools:Miscellaneous:Pong"
+from __future__ import annotations
 
 import sys
+from pathlib import Path
+
 from qtpy.QtWidgets import QApplication
 
+from chisurf.core.plugin import load_manifest
 from chisurf.plugins.misc.pong_game.pong_game import Pong
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+name = _manifest.display_name if _manifest is not None else "Tools:Miscellaneous:Pong"
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
