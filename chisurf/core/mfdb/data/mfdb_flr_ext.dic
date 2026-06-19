@@ -1,0 +1,370 @@
+save_flr_fret_forster_radius
+   _category.id              flr_fret_forster_radius
+   _category.description
+;     ChiSurf extensions to the FLR_FRET_FORSTER_RADIUS category.
+;     These fields are used by ChiSurf but are not part of the standard flrCIF dictionary.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_fret_forster_radius.id"
+
+save__flr_fret_forster_radius.id
+   _item.name                "_flr_fret_forster_radius.id"
+   _item.category_id         flr_fret_forster_radius
+   _chisurf_schema.table_name  flr_fret_forster_radius
+   _chisurf_schema.column_name forster_radius_id
+
+save__flr_fret_forster_radius.sample_id
+   _item.name                "_flr_fret_forster_radius.sample_id"
+   _item.category_id         flr_fret_forster_radius
+   _chisurf_schema.table_name  flr_fret_forster_radius
+   _chisurf_schema.column_name sample_id
+
+save__flr_fret_forster_radius.kappa_squared
+   _item.name                "_flr_fret_forster_radius.kappa_squared"
+   _item.category_id         flr_fret_forster_radius
+   _item.mandatory_code      no
+   _item_type.code           float
+   _item_default.value       0.666667
+   _chisurf_schema.table_name  flr_fret_forster_radius
+   _chisurf_schema.column_name kappa_squared
+   _item_description.description
+;     Orientation factor kappa squared for FRET pair.
+;     Default is 2/3 (0.666667) for dynamic averaging.
+;
+
+save__flr_fret_forster_radius.index_of_refraction
+   _item.name                "_flr_fret_forster_radius.index_of_refraction"
+   _item.category_id         flr_fret_forster_radius
+   _item.mandatory_code      no
+   _item_type.code           float
+   _item_default.value       1.4
+   _chisurf_schema.table_name  flr_fret_forster_radius
+   _chisurf_schema.column_name index_of_refraction
+   _item_description.description
+;     Refractive index of the medium for FRET pair.
+;     Default is 1.4 for water.
+;
+
+save__flr_fret_forster_radius.forster_radius
+   _item.name                "_flr_fret_forster_radius.forster_radius"
+   _item.category_id         flr_fret_forster_radius
+   _item.mandatory_code      yes
+   _item_type.code           float
+   _item_default.value       5.0
+   _chisurf_schema.table_name  flr_fret_forster_radius
+   _chisurf_schema.column_name forster_radius
+
+save_flr_sample
+   _category.id              flr_sample
+   _category.description
+;     ChiSurf schema bindings for the FLR_SAMPLE category.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_sample.id"
+
+save__flr_sample.id
+   _item.name                "_flr_sample.id"
+   _item.category_id         flr_sample
+   _chisurf_schema.table_name  flr_sample
+   _chisurf_schema.column_name sample_id
+
+save__flr_sample.sample_description
+   _item.name                "_flr_sample.sample_description"
+   _item.category_id         flr_sample
+   _chisurf_schema.table_name  flr_sample
+   _chisurf_schema.column_name description
+
+save_flr_sample_condition
+   _category.id              flr_sample_condition
+   _category.description
+;     ChiSurf extensions to the FLR_SAMPLE_CONDITION category.
+;     These fields are used by ChiSurf but are not part of the standard flrCIF dictionary.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_sample_condition.condition_id"
+
+save__flr_sample_condition.ph
+   _item.name                "_flr_sample_condition.ph"
+   _item.category_id         flr_sample_condition
+   _item.mandatory_code      no
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_sample_condition
+   _chisurf_schema.column_name ph
+   _item_description.description
+;     pH value of the sample condition.
+;
+
+save__flr_sample_condition.temperature
+   _item.name                "_flr_sample_condition.temperature"
+   _item.category_id         flr_sample_condition
+   _item.mandatory_code      no
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_sample_condition
+   _chisurf_schema.column_name temperature
+   _item_description.description
+;     Temperature of the sample in Kelvin.
+;
+
+save__flr_sample_condition.id
+   _item.name                "_flr_sample_condition.id"
+   _item.category_id         flr_sample_condition
+   _chisurf_schema.table_name  flr_sample_condition
+   _chisurf_schema.column_name condition_id
+
+save_flr_poly_probe_position
+   _category.id              flr_poly_probe_position
+   _category.description
+;     ChiSurf schema bindings for the FLR_POLY_PROBE_POSITION category.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_poly_probe_position.id"
+
+save__flr_poly_probe_position.seq_id
+   _item.name                "_flr_poly_probe_position.seq_id"
+   _item.category_id         flr_poly_probe_position
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name residue_number
+
+save__flr_poly_probe_position.comp_id
+   _item.name                "_flr_poly_probe_position.comp_id"
+   _item.category_id         flr_poly_probe_position
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name residue_name
+
+save__flr_poly_probe_position.id
+   _item.name                "_flr_poly_probe_position.id"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name id
+
+save__flr_poly_probe_position.asym_id
+   _item.name                "_flr_poly_probe_position.asym_id"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           code
+   _item.mandatory_code      no
+   _item_default.value       A
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name asym_id
+
+save__flr_poly_probe_position.atom_id
+   _item.name                "_flr_poly_probe_position.atom_id"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name atom_id
+
+save__flr_poly_probe_position.mutation_flag
+   _item.name                "_flr_poly_probe_position.mutation_flag"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           ucode
+   _item.mandatory_code      yes
+   _item_default.value       no
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name mutation_flag
+   loop_
+   _item_enumeration.value
+     yes
+     no
+
+save__flr_poly_probe_position.modification_flag
+   _item.name                "_flr_poly_probe_position.modification_flag"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           ucode
+   _item.mandatory_code      yes
+   _item_default.value       no
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name modification_flag
+   loop_
+   _item_enumeration.value
+     yes
+     no
+
+save__flr_poly_probe_position.auth_name
+   _item.name                "_flr_poly_probe_position.auth_name"
+   _item.category_id         flr_poly_probe_position
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  flr_poly_probe_position
+   _chisurf_schema.column_name auth_name
+
+save_flr_probe_list
+   _category.id              flr_probe_list
+   _category.description
+;     ChiSurf schema bindings for fluorescence probe list fields stored in the
+      local probes table.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_probe_list.probe_id"
+
+save__flr_probe_list.probe_id
+   _item.name                "_flr_probe_list.probe_id"
+   _item.category_id         flr_probe_list
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name probe_id
+
+save__flr_probe_list.chromophore_name
+   _item.name                "_flr_probe_list.chromophore_name"
+   _item.category_id         flr_probe_list
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name chromophore_name
+
+save__flr_probe_list.reactive_probe_flag
+   _item.name                "_flr_probe_list.reactive_probe_flag"
+   _item.category_id         flr_probe_list
+   _item_type.code           ucode
+   _item.mandatory_code      no
+   _item_default.value       no
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name reactive_probe_flag
+   loop_
+   _item_enumeration.value
+     yes
+     no
+
+save__flr_probe_list.reactive_probe_name
+   _item.name                "_flr_probe_list.reactive_probe_name"
+   _item.category_id         flr_probe_list
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name reactive_probe_name
+
+save__flr_probe_list.probe_origin
+   _item.name                "_flr_probe_list.probe_origin"
+   _item.category_id         flr_probe_list
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _item_default.value       extrinsic
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name probe_origin
+   loop_
+   _item_enumeration.value
+   _item_enumeration.detail
+     intrinsic  "a probe which is an intrinsic part of the biomolecule"
+     extrinsic  "a probe that has been synthetically introduced"
+
+save__flr_probe_list.probe_link_type
+   _item.name                "_flr_probe_list.probe_link_type"
+   _item.category_id         flr_probe_list
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _item_default.value       covalent
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name probe_link_type
+   loop_
+   _item_enumeration.value
+   _item_enumeration.detail
+     covalent  "covalently linked probe"
+     ligand    "ligand probe"
+
+save_flr_probe_descriptor
+   _category.id              flr_probe_descriptor
+   _category.description
+;     ChiSurf schema bindings for probe descriptor columns stored in probes.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_probe_descriptor.probe_id"
+
+save__flr_probe_descriptor.chromophore_center_atom
+   _item.name                "_flr_probe_descriptor.chromophore_center_atom"
+   _item.category_id         flr_probe_descriptor
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name chromophore_center_atom
+
+save__flr_probe_descriptor.chromophore_chem_descriptor_id
+   _item.name                "_flr_probe_descriptor.chromophore_chem_descriptor_id"
+   _item.category_id         flr_probe_descriptor
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name chromophore_chem_descriptor_id
+
+save__flr_probe_descriptor.reactive_probe_chem_descriptor_id
+   _item.name                "_flr_probe_descriptor.reactive_probe_chem_descriptor_id"
+   _item.category_id         flr_probe_descriptor
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  probes
+   _chisurf_schema.column_name reactive_probe_chem_descriptor_id
+
+save_flr_sample_probe_details
+   _category.id              flr_sample_probe_details
+   _category.description
+;     ChiSurf schema bindings for sample/probe association fields stored in
+      flr_sample_probe.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_sample_probe_details.sample_probe_id"
+
+save__flr_sample_probe_details.sample_probe_id
+   _item.name                "_flr_sample_probe_details.sample_probe_id"
+   _item.category_id         flr_sample_probe_details
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  flr_sample_probe
+   _chisurf_schema.column_name sample_probe_id
+
+save__flr_sample_probe_details.sample_id
+   _item.name                "_flr_sample_probe_details.sample_id"
+   _item.category_id         flr_sample_probe_details
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  flr_sample_probe
+   _chisurf_schema.column_name sample_id
+
+save__flr_sample_probe_details.probe_id
+   _item.name                "_flr_sample_probe_details.probe_id"
+   _item.category_id         flr_sample_probe_details
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  flr_sample_probe
+   _chisurf_schema.column_name probe_id
+
+save__flr_sample_probe_details.poly_probe_position_id
+   _item.name                "_flr_sample_probe_details.poly_probe_position_id"
+   _item.category_id         flr_sample_probe_details
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  flr_sample_probe
+   _chisurf_schema.column_name poly_probe_position_id
+
+save__flr_sample_probe_details.fluorophore_type
+   _item.name                "_flr_sample_probe_details.fluorophore_type"
+   _item.category_id         flr_sample_probe_details
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _item_default.value       unspecified
+   _chisurf_schema.table_name  flr_sample_probe
+   _chisurf_schema.column_name fluorophore_type
+   loop_
+   _item_enumeration.value
+     donor
+     acceptor
+     unspecified
+
+save__ihm_chemical_component_descriptor.id
+   _item.name                "_ihm_chemical_component_descriptor.id"
+   _item.category_id         ihm_chemical_component_descriptor
+   _chisurf_schema.table_name  chem_descriptors
+   _chisurf_schema.column_name id
+
+save__ihm_chemical_component_descriptor.smiles
+   _item.name                "_ihm_chemical_component_descriptor.smiles"
+   _item.category_id         ihm_chemical_component_descriptor
+   _chisurf_schema.table_name  chem_descriptors
+   _chisurf_schema.column_name descriptor
+
+save__ihm_chemical_component_descriptor.inchi
+   _item.name                "_ihm_chemical_component_descriptor.inchi"
+   _item.category_id         ihm_chemical_component_descriptor
+   _chisurf_schema.table_name  chem_descriptors
+   _chisurf_schema.column_name descriptor

@@ -280,6 +280,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self._loading = False
         self._auth_login_user: str | None = None
         self._checkable_tables: list[QtWidgets.QTableWidget] = []
+        self._mock_data_click_count = 0
 
         self._verify_admin_access()
         self._ensure_authenticated()
@@ -750,6 +751,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
         header = QtWidgets.QLabel("<h2>mfdb-admin</h2>")
         header.setContentsMargins(4, 4, 4, 0)
+        header.setCursor(QtCore.Qt.PointingHandCursor)
+        header.mousePressEvent = self._on_header_label_clicked
         layout.addWidget(header)
 
         self.tabs = DockArea(self, stacked_tabs=True)
@@ -1296,6 +1299,39 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "mfdb-admin\n\nMultiparametric Fluorescence Database\n\nBrowse, edit, import, and export fluorescence measurements, samples, setups, and analysis runs.",
         )
 
+    def _on_header_label_clicked(self, event) -> None:
+        """Populate bundled mock data after ten clicks on the header label."""
+        if event.button() != QtCore.Qt.LeftButton:
+            return
+        self._mock_data_click_count += 1
+        if self._mock_data_click_count < 10:
+            return
+        self._mock_data_click_count = 0
+        answer = QtWidgets.QMessageBox.question(
+            self,
+            "Populate mock MFDB data",
+            "Populate the MFDB with bundled smFRET mock data from test fixtures?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
+        if answer == QtWidgets.QMessageBox.Yes:
+            self.populate_mock_data()
+
+    def populate_mock_data(self) -> None:
+        """Populate the active MFDB with bundled mock/demo data."""
+        try:
+            summary = self.client.populate_mock_data()
+        except Exception as exc:
+            self.status_label.setText(f"Mock data population failed: {exc}")
+            return
+        if hasattr(self, "preview_edit"):
+            self.preview_edit.setPlainText(json.dumps(summary, indent=2, default=str))
+        self.status_label.setText(
+            f"Mock data populated: {summary.get('sample_id', 'sample')} "
+            f"from {len(summary.get('used_test_files', []))} test file(s)"
+        )
+        self.refresh()
+
     def sample_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QFormLayout(widget)
@@ -1324,10 +1360,24 @@ class MFDBWidget(QtWidgets.QMainWindow):
         save_btn = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save sample", self.save_sample)
         delete_btn = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete sample", self.delete_sample)
         clear_btn = self._text_icon_button("🧹 Clear", QtWidgets.QStyle.SP_DialogResetButton, "Clear form", self.clear_form)
+        full_btn = self._text_icon_button(
+            "Full description",
+            QtWidgets.QStyle.SP_FileDialogDetailedView,
+            "Show PRD-02 nested sample description",
+            self.show_sample_full_description,
+        )
+        validate_btn = self._text_icon_button(
+            "Validate export",
+            QtWidgets.QStyle.SP_DialogApplyButton,
+            "Validate selected sample for FLR CIF export",
+            self.validate_selected_sample_export,
+        )
         btn_row.addWidget(new_btn)
         btn_row.addWidget(save_btn)
         btn_row.addWidget(delete_btn)
         btn_row.addWidget(clear_btn)
+        btn_row.addWidget(full_btn)
+        btn_row.addWidget(validate_btn)
         btn_row.addStretch()
 
         layout.addRow("Sample id", self.sample_id_edit)
@@ -3092,6 +3142,33 @@ class MFDBWidget(QtWidgets.QMainWindow):
         result = self.client.export_table(path)
         self.status_label.setText(f"Exported {result.get('output_path')}")
 
+    def show_sample_full_description(self) -> None:
+        """Show the nested PRD-02 sample description in the preview pane."""
+        sample_id = self._active_sample_id()
+        if not sample_id:
+            self.status_label.setText("Select or enter a sample id")
+            return
+        description = self.client.get_sample_full_description(sample_id)
+        if hasattr(self, "preview_edit"):
+            self.preview_edit.setPlainText(json.dumps(description, indent=2, default=str))
+        self.status_label.setText(f"Loaded full description for {sample_id}")
+
+    def validate_selected_sample_export(self) -> None:
+        """Run FLR CIF export validation for the selected sample."""
+        sample_id = self._active_sample_id()
+        if not sample_id:
+            self.status_label.setText("Select or enter a sample id")
+            return
+        result = self.client.validate_sample_export(sample_id)
+        if hasattr(self, "preview_edit"):
+            self.preview_edit.setPlainText(json.dumps(result, indent=2, default=str))
+        status = "valid" if result.get("valid") else "has warnings"
+        self.status_label.setText(f"Export validation for {sample_id}: {status}")
+
+    def _active_sample_id(self) -> str:
+        """Return the current sample id from selection or the sample form."""
+        return (self.current_sample_id or self.sample_id_edit.text()).strip()
+
     def showEvent(self, event) -> None:
         super().showEvent(event)
         self._restore_dock_layout()
@@ -3551,9 +3628,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.raw_data_table = QtWidgets.QTableWidget(0, 8)
+        self.raw_data_table = QtWidgets.QTableWidget(0, 9)
         self.raw_data_table.setHorizontalHeaderLabels(
-            ["raw data id", "experiment id", "data type", "storage mode", "path/url/folder", "validation", "checksum", "acquired at"]
+            ["raw data id", "experiment id", "data type", "storage mode", "path/url/folder", "validation", "checksum", "acquired at", "sample"]
         )
         self.raw_data_table.horizontalHeader().setStretchLastSection(True)
         self.raw_data_table.itemSelectionChanged.connect(self.load_raw_data)
@@ -3624,7 +3701,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("file_path") or item.get("url") or item.get("folder_path") or "",
                 item.get("validation_status", ""),
                 item.get("checksum", ""),
-                item.get("acquired_at", "")
+                item.get("acquired_at", ""),
+                item.get("sample_name", "")
             ]
             for column, value in enumerate(values):
                 self.raw_data_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
@@ -3813,9 +3891,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
-        self.processed_products_table = QtWidgets.QTableWidget(0, 8)
+        self.processed_products_table = QtWidgets.QTableWidget(0, 9)
         self.processed_products_table.setHorizontalHeaderLabels(
-            ["product id", "processing id", "product type", "storage mode", "path/url/folder", "validation", "checksum", "row count"]
+            ["product id", "processing id", "product type", "storage mode", "path/url/folder", "validation", "checksum", "row count", "sample"]
         )
         self.processed_products_table.horizontalHeader().setStretchLastSection(True)
         self.processed_products_table.itemSelectionChanged.connect(self.load_processed_product)
@@ -3907,7 +3985,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 _processed_location(item),
                 item.get("validation_status", ""),
                 item.get("checksum", ""),
-                _processed_row_count(item)
+                _processed_row_count(item),
+                item.get("sample_name", "")
             ]
             for column, value in enumerate(values):
                 self.processed_products_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))

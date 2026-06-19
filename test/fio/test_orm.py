@@ -188,6 +188,24 @@ class TestORMModels:
         # Entity should have sequence relationship
         assert hasattr(Entity, 'sequences')
 
+    def test_prd02_models_are_reflected_not_declared(self):
+        """PRD-02 ORM tables are reflected from schema, not hand-written classes."""
+        import inspect
+        import chisurf.core.mfdb.orm.models as models_module
+
+        source = inspect.getsource(models_module)
+        forbidden_declarations = [
+            "class FlrSample(",
+            "class FlrSampleCondition(",
+            "class FlrSampleProbe(",
+            "class FlrPolyProbePosition(",
+            "class Probe(",
+            "class FlrFretForsterRadius(",
+            "class ChemDescriptor(",
+        ]
+        for declaration in forbidden_declarations:
+            assert declaration not in source
+
     def test_orm_relationships(self):
         """Test that ORM models have proper relationships."""
         # FlrSample relationships
@@ -462,6 +480,31 @@ class TestSampleRepository:
         assert condition["ionic_strength"] == pytest.approx(0.15)
         assert condition["buffer_composition"] == "PBS buffer"
 
+        db.close()
+
+    def test_upsert_probe_reuses_existing_chemical_descriptor(self, temp_db_path):
+        """Repeated probe writes reuse descriptor identity rows."""
+        from chisurf.core.mfdb.models import ProbeDefinition
+        from chisurf.core.mfdb.orm.sample_repository import upsert_probe
+
+        db = MFDatabase(str(temp_db_path))
+        probe = ProbeDefinition(
+            name="DescriptorReuseProbe",
+            chromophore_smiles=" C1=CC=CC=C1 ",
+            reactive_probe_smiles="C1=CC=CC=C1",
+        )
+
+        first_probe_id = upsert_probe(db, probe)
+        second_probe_id = upsert_probe(db, probe)
+        assert first_probe_id == second_probe_id
+
+        rows = db.conn.execute(
+            "SELECT descriptor_type, descriptor, program, program_version "
+            "FROM chem_descriptors"
+        ).fetchall()
+        assert len(rows) == 1
+        assert rows[0]["descriptor_type"] == "SMILES"
+        assert rows[0]["descriptor"] == "C1=CC=CC=C1"
         db.close()
 
 

@@ -23,9 +23,7 @@ from chisurf.core.mfdb.repository import MFDatabase
 logger = logging.getLogger(__name__)
 
 SPC_DATA_DIR = (
-    Path(__file__).resolve().parent.parent.parent.parent
-    / "chisurf"
-    / "plugins"
+    Path(__file__).resolve().parents[2]
     / "burst"
     / "burst_selection"
     / "tests"
@@ -173,7 +171,11 @@ def _ensure_probe_types(db: MFDatabase) -> dict[str, int]:
                         ("amino_acid", "Amino acid fluorophore"),
                         ("nucleic_acid", "Nucleic acid fluorophore")]:
         if name not in existing:
-            db.add_probe_type(name, desc)
+            with db.conn:
+                db.conn.execute(
+                    "INSERT OR IGNORE INTO probe_types (type_name, display_name) VALUES (?, ?)",
+                    (name, desc),
+                )
             row = db.conn.execute(
                 "SELECT type_id FROM probe_types WHERE type_name=?", (name,)
             ).fetchone()
@@ -256,7 +258,7 @@ def _seed_flr_tables(db: MFDatabase) -> tuple[int, int, int, int]:
     return probe_a488, probe_a647, pos_a488, pos_a647
 
 
-def seed_example(db_path: str | Path | None = None) -> Path:
+def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
     """Populate the MFDB with example smFRET demo data.
 
     Parameters
@@ -267,25 +269,37 @@ def seed_example(db_path: str | Path | None = None) -> Path:
 
     Returns
     -------
-    pathlib.Path
-        Database path.
+    dict
+        Summary of seeded records and source test data.
     """
     path = Path(db_path) if db_path is not None else resolve_database_path()
     logging.basicConfig(level=logging.INFO)
     d = DEMO
+    summary: dict[str, object] = {
+        "database_path": str(path),
+        "sample_id": d["sample_id"],
+        "experiment_id": d["experiment_id"],
+        "processing_id": d["processing_id"],
+        "source_data_dir": str(SPC_DATA_DIR),
+        "raw_data_ids": [],
+        "processed_data_id": None,
+        "used_test_files": [],
+    }
 
     with MFDatabase(path) as db:
         _seed_flr_tables(db)
 
         if not SPC_DATA_DIR.is_dir():
             logger.warning("SPC test data not found at %s -- skipping MFDB seeding", SPC_DATA_DIR)
-            return path
+            summary["warning"] = f"SPC test data not found at {SPC_DATA_DIR}"
+            return summary
 
         raw_ids: list[str] = []
         for i in range(3):
             spc_path = _spc_path(i)
             if not spc_path.exists():
                 continue
+            summary["used_test_files"].append(str(spc_path))
             raw_id = f"raw_demo_sm_dna_{i:03d}"
             if db.conn.execute(
                 "SELECT 1 FROM mfdb_artifact WHERE artifact_id=?", (raw_id,)
@@ -307,7 +321,9 @@ def seed_example(db_path: str | Path | None = None) -> Path:
 
         if not raw_ids:
             logger.warning("No SPC files found at %s -- skipping processing run", SPC_DATA_DIR)
-            return path
+            summary["warning"] = f"No SPC files found at {SPC_DATA_DIR}"
+            return summary
+        summary["raw_data_ids"] = raw_ids
 
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -387,9 +403,10 @@ def seed_example(db_path: str | Path | None = None) -> Path:
                     details={"processing_id": d["processing_id"], "product_type": "bur"},
                 )
             logger.info("Created processed data %s", prod_id)
+        summary["processed_data_id"] = prod_id
 
     logger.info("Seeding complete at %s", path)
-    return path
+    return summary
 
 
 if __name__ == "__main__":

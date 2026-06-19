@@ -62,6 +62,11 @@ def test_build_dictionary_schema_map_returns_registry(mapper):
         ("_flr_fret_forster_radius.index_of_refraction", "flr_fret_forster_radius", "index_of_refraction", "dictionary"),
         ("_flr_poly_probe_position.seq_id", "flr_poly_probe_position", "residue_number", "dictionary"),
         ("_flr_poly_probe_position.comp_id", "flr_poly_probe_position", "residue_name", "dictionary"),
+        ("_flr_probe_list.probe_origin", "probes", "probe_origin", "dictionary"),
+        ("_flr_probe_list.probe_link_type", "probes", "probe_link_type", "dictionary"),
+        ("_flr_probe_list.reactive_probe_flag", "probes", "reactive_probe_flag", "dictionary"),
+        ("_flr_sample_probe_details.fluorophore_type", "flr_sample_probe", "fluorophore_type", "dictionary"),
+        ("_ihm_chemical_component_descriptor.smiles", "chem_descriptors", "descriptor", "dictionary"),
     ],
 )
 def test_dictionary_declares_schema_bindings(
@@ -81,6 +86,27 @@ def test_dictionary_declares_schema_bindings(
     )
     ok, message = mapper.validate_mapping(dictionary_item)
     assert ok, message
+
+
+@pytest.mark.parametrize(
+    ("dictionary_item", "default_value", "enum_values"),
+    [
+        ("_flr_probe_list.probe_origin", "extrinsic", {"intrinsic", "extrinsic"}),
+        ("_flr_probe_list.probe_link_type", "covalent", {"covalent", "ligand"}),
+        ("_flr_probe_list.reactive_probe_flag", "no", {"yes", "no"}),
+        ("_flr_sample_probe_details.fluorophore_type", "unspecified", {"donor", "acceptor", "unspecified"}),
+        ("_flr_poly_probe_position.mutation_flag", "no", {"yes", "no"}),
+        ("_flr_poly_probe_position.modification_flag", "no", {"yes", "no"}),
+    ],
+)
+def test_dictionary_declares_prd02_defaults_and_enums(
+    mapper, dictionary_item, default_value, enum_values
+):
+    """PRD-02 defaults and enums are dictionary metadata, not Python literals."""
+    item = mapper.dictionary.get_item(dictionary_item)
+    assert item is not None
+    assert item.default_value == default_value
+    assert enum_values.issubset(set(item.enumerations))
 
 
 def test_dictionary_item_lookup_accepts_non_underscored_form(mapper):

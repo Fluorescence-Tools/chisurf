@@ -22,6 +22,7 @@ from chisurf.core.mfdb.models import (
     validate_vocabulary,
 )
 from chisurf.core.mfdb.repository import MFDatabase, _json_dumps, _json_loads
+from chisurf.core.mfdb.sample_manager import link_artifact_to_sample
 
 # Re-use constants from chinet_adapter when available
 try:
@@ -46,6 +47,7 @@ def _encode_curve_arrays(ds: dict[str, Any]) -> dict[str, Any]:
     -------
     dict
         Same keys but with canonical ``{dtype, shape, data}`` dicts.
+
     """
     import numpy as np
 
@@ -61,6 +63,26 @@ def _encode_curve_arrays(ds: dict[str, Any]) -> dict[str, Any]:
         else:
             out[key] = encode_array(np.asarray(arr))
     return out
+
+
+def _dataset_sample_id(ds_payload: dict[str, Any]) -> str:
+    """Return the sample ID stored in a dataset payload, if any.
+
+    Parameters
+    ----------
+    ds_payload : dict
+        Serialized dataset payload.
+
+    Returns
+    -------
+    str
+        Sample ID, or an empty string.
+
+    """
+    metadata = ds_payload.get("meta_data") or {}
+    if isinstance(metadata, dict):
+        return str(metadata.get("sample_id") or "")
+    return ""
 
 
 def archive_project_to_mfdb(
@@ -123,6 +145,7 @@ def archive_project_to_mfdb(
         Summary with keys: ``operation_id``, ``dataset_artifacts``,
         ``fit_artifacts``, ``chinet_artifacts``, ``parameter_count``,
         ``edge_count``, ``object_count``.
+
     """
     validate_vocabulary("project", [
         "measurement_import", "validation", "burst_selection",
@@ -212,6 +235,9 @@ def archive_project_to_mfdb(
                     role="source_file",
                     ordinal=ds_idx,
                 )
+                sample_id = _dataset_sample_id(ds_payload)
+                if sample_id:
+                    link_artifact_to_sample(db, source_artifact_id, sample_id)
                 object_count += 1
 
             # 2b. Derived data → object store
@@ -252,6 +278,9 @@ def archive_project_to_mfdb(
                     "data_reader_class": reader_info.get("class", ""),
                 },
             )
+            sample_id = _dataset_sample_id(ds_payload)
+            if sample_id:
+                link_artifact_to_sample(db, dataset_artifact_id, sample_id)
             db.record_operation_link(
                 operation_id=version_id,
                 artifact_id=dataset_artifact_id,
@@ -589,6 +618,7 @@ def restore_project_from_artifacts(
     dict or None
         Reconstructed project payload with ``datasets``, ``fits``, and
         ``chinet_sessions`` keys, or ``None`` if no artifacts exist.
+
     """
     # Query for artifacts linked to the project operation
     artifacts = db.get_operation_artifacts(version_id, direction="output")

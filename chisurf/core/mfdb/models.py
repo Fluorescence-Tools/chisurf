@@ -125,7 +125,7 @@ SAMPLE_CONDITION_FIELDS: tuple[str, ...] = _load_vocabulary("sample_condition_fi
 
 def _load_default_spectra() -> dict[str, dict[str, Any]]:
     """Load default fluorophore spectra from JSON file.
-    
+
     Returns a dictionary mapping probe names to their default photophysical
     properties and spectra. Falls back to empty dict if file not available.
     """
@@ -299,7 +299,7 @@ class ProbeDefinition:
     entity_index: int = 0
     seq_id: Optional[int] = None
     comp_id: str = ""
-    asym_id: str = "A"
+    asym_id: str = ""
     atom_id: str = ""
     mutation_flag: str = "no"
     modification_flag: str = "no"
@@ -315,8 +315,8 @@ class ProbeDefinition:
     reactive_probe_smiles: str = ""
     reactive_probe_name: str = ""
     reactive_probe_flag: str = "no"
-    probe_origin: str = "extrinsic"
-    probe_link_type: str = "covalent"
+    probe_origin: str = ""
+    probe_link_type: str = ""
     chromophore_center_atom: str = ""
     linker_smiles: str = ""
     ambiguous_stoichiometry: str = "no"
@@ -332,9 +332,11 @@ class ProbeDefinition:
             self.comp_id = self.residue_name
         if not self.asym_id and self.chain_id:
             self.asym_id = self.chain_id
+        if not self.asym_id:
+            self.asym_id = "A"
         if not self.auth_name and self.position_label:
             self.auth_name = self.position_label
-        
+
         # Auto-populate from default spectra library if available
         if self.name in DEFAULT_FLUOROPHORE_SPECTRA:
             defaults = DEFAULT_FLUOROPHORE_SPECTRA[self.name]
@@ -369,7 +371,13 @@ class ProbeDefinition:
                 self.probe_origin = defaults["probe_origin"]
             if not self.probe_link_type and "probe_link_type" in defaults:
                 self.probe_link_type = defaults["probe_link_type"]
-        
+
+        # Apply defaults for fields that should never be empty
+        if not self.probe_origin:
+            self.probe_origin = "extrinsic"
+        if not self.probe_link_type:
+            self.probe_link_type = "covalent"
+
         # Validate probe physical constraints
         if self.quantum_yield is not None:
             if not (0.0 <= self.quantum_yield <= 1.0):
@@ -834,7 +842,7 @@ class SampleDefinition:
                     sequence=self.entity_sequence,
                 )
             ]
-        
+
         # Auto-create default entity for new-format samples (R13-1)
         # If probes are provided but entities is empty, create a single default entity
         # to avoid validation failure on entity_index=0
@@ -874,13 +882,13 @@ class SampleDefinition:
 
     def _validate_fret_pairs(self) -> None:
         """Validate that FRET pair indices are valid.
-        
+
         Per PRD-02: Validation should only count self.probes for FRET pair
         index validation. Legacy donor/acceptor fields are deprecated and
         should not be conflated with the new probes list.
         """
         num_probes = len(self.probes)
-        
+
         for i, pair in enumerate(self.fret_pairs):
             if pair.probe_1_index < 0 or pair.probe_1_index >= num_probes:
                 raise ValueError(
@@ -901,12 +909,12 @@ class SampleDefinition:
 
     def _validate_entity_indices(self) -> None:
         """Validate entity_index references for each probe (PRD-02 Task 6).
-        
+
         Ensures that each probe's entity_index points to a valid entity
         in the entities list.
         """
         num_entities = len(self.entities)
-        
+
         for i, probe in enumerate(self.probes):
             if probe.entity_index < 0 or probe.entity_index >= num_entities:
                 raise ValueError(
@@ -916,13 +924,13 @@ class SampleDefinition:
 
     def _validate_vocabulary(self) -> None:
         """Validate entity_type and probe names against known vocabularies.
-        
+
         Uses both the static vocabulary constants (ENTITY_TYPES, COMMON_PROBE_NAMES)
         and the MmcifDictionary for PDBx/pdbihm/flrCIF validation.
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         # Validate entity_type against ENTITY_TYPES vocabulary
         if self.entity_type:
             validate_vocabulary(
@@ -930,7 +938,7 @@ class SampleDefinition:
                 ENTITY_TYPES,
                 "entity_type"
             )
-            
+
             # Also validate against flrCIF/PDBx dictionary if available
             try:
                 from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
@@ -962,14 +970,14 @@ class SampleDefinition:
                         f"probe[{i}].name '{probe.name}' not in COMMON_PROBE_NAMES. "
                         f"Consider using a standard probe name."
                     )
-                
+
                 # Validate against flrCIF dictionary if available
                 try:
                     from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
                     dic = MmcifDictionary.load_bundled()
                     # Try to validate against flr_poly_probe.chromophore_name
                     err = dic.validate_value(
-                        "_flr_poly_probe.chromophore_name", 
+                        "_flr_poly_probe.chromophore_name",
                         probe.name
                     )
                     if err:
@@ -1034,7 +1042,7 @@ class SampleDefinition:
 
     def get_donor_probe_name(self) -> str:
         """Return donor probe name from either ProbeDefinition or legacy field.
-        
+
         Deprecated: Use probes list and fret_pairs instead.
         """
         if self.donor is not None:
@@ -1043,7 +1051,7 @@ class SampleDefinition:
 
     def get_acceptor_probe_name(self) -> str:
         """Return acceptor probe name from either ProbeDefinition or legacy field.
-        
+
         Deprecated: Use probes list and fret_pairs instead.
         """
         if self.acceptor is not None:
@@ -1052,7 +1060,7 @@ class SampleDefinition:
 
     def get_donor_position(self) -> Optional[int]:
         """Return donor position from either ProbeDefinition or legacy field.
-        
+
         Deprecated: Use probes list instead.
         """
         if self.donor is not None:
@@ -1061,7 +1069,7 @@ class SampleDefinition:
 
     def get_acceptor_position(self) -> Optional[int]:
         """Return acceptor position from either ProbeDefinition or legacy field.
-        
+
         Deprecated: Use probes list instead.
         """
         if self.acceptor is not None:
@@ -1117,42 +1125,42 @@ def compute_forster_radius(
     acceptor molar extinction coefficient spectrum.
     """
     import scipy.integrate
-    
+
     # Constants
     N_A = 6.02214076e23  # Avogadro's number (mol⁻¹)
     ln_10 = np.log(10.0)
-    
+
     # Unpack spectra
     donor_wl, donor_int = donor_emission
     acceptor_wl, acceptor_ext = acceptor_absorption
-    
+
     # Convert to numpy arrays if they aren't already
     donor_wl = np.asarray(donor_wl, dtype=float)
     donor_int = np.asarray(donor_int, dtype=float)
     acceptor_wl = np.asarray(acceptor_wl, dtype=float)
     acceptor_ext = np.asarray(acceptor_ext, dtype=float)
-    
+
     # Find overlapping wavelength range
     min_wl = max(np.min(donor_wl), np.min(acceptor_wl))
     max_wl = min(np.max(donor_wl), np.max(acceptor_wl))
-    
+
     if min_wl >= max_wl:
         # No spectral overlap
         return 0.0, 0.0
-    
+
     # Interpolate both spectra onto a common wavelength grid
     # Use a fine grid for accurate integration
     common_wl = np.linspace(min_wl, max_wl, 1000)
-    
+
     # Interpolate donor emission
     from scipy.interpolate import interp1d
     donor_interp = interp1d(donor_wl, donor_int, kind='linear', bounds_error=False, fill_value=0.0)
     donor_int_common = donor_interp(common_wl)
-    
+
     # Interpolate acceptor absorption
     acceptor_interp = interp1d(acceptor_wl, acceptor_ext, kind='linear', bounds_error=False, fill_value=0.0)
     acceptor_ext_common = acceptor_interp(common_wl)
-    
+
     # Compute spectral overlap integral J(λ)
     # J(λ) = ∫ F_donor(λ) ε_acceptor(λ) λ⁻⁴ dλ / ∫ F_donor(λ) dλ
     # Note: The standard formula uses λ⁴ in numerator, but there are different conventions
@@ -1161,24 +1169,24 @@ def compute_forster_radius(
         donor_int_common * acceptor_ext_common * common_wl**4, common_wl
     )
     denominator_integral = scipy.integrate.trapezoid(donor_int_common, common_wl)
-    
+
     if denominator_integral <= 0:
         return 0.0, 0.0
-    
+
     overlap_integral = numerator_integral / denominator_integral
-    
+
     # Compute Förster radius R₀ in nm
     # R₀⁶ = (9 ln10 κ² QD J) / (128 π⁵ n⁴ Nₐ) * 1e-51  (conversion factors for nm)
     # Simplified constant for units where λ is in nm and ε in M⁻¹cm⁻¹:
     # R₀⁶ (in nm⁶) = 8.785e-5 * κ² * QD * J / n⁴
     constant = 8.785e-5  # nm⁶ * M * cm⁻¹
     r6 = constant * kappa_squared * donor_quantum_yield * overlap_integral / (refractive_index**4)
-    
+
     if r6 <= 0:
         return 0.0, float(overlap_integral)
-    
+
     forster_radius_nm = r6 ** (1.0 / 6.0)
-    
+
     return float(forster_radius_nm), float(overlap_integral)
 
 

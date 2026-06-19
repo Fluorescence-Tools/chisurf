@@ -47,10 +47,28 @@
       "name": "mfdb.samples.key_values.save"
     },
     {
+      "name": "mfdb.samples.full_description"
+    },
+    {
+      "name": "mfdb.samples.validate_export"
+    },
+    {
+      "name": "mfdb.samples.create_structured"
+    },
+    {
       "name": "mfdb.sample_conditions.get"
     },
     {
       "name": "mfdb.sample_conditions.save"
+    },
+    {
+      "name": "mfdb.entities.list"
+    },
+    {
+      "name": "mfdb.entities.save"
+    },
+    {
+      "name": "mfdb.entities.delete"
     },
     {
       "name": "mfdb.probes.list"
@@ -59,7 +77,34 @@
       "name": "mfdb.probes.get"
     },
     {
+      "name": "mfdb.probes.save"
+    },
+    {
       "name": "mfdb.probes.optical_properties.get"
+    },
+    {
+      "name": "mfdb.probes.optical_properties.save"
+    },
+    {
+      "name": "mfdb.probes.positions.list"
+    },
+    {
+      "name": "mfdb.fret_pairs.list"
+    },
+    {
+      "name": "mfdb.fret_pairs.save"
+    },
+    {
+      "name": "mfdb.fret_pairs.delete"
+    },
+    {
+      "name": "mfdb.pdbx.suggest_keys"
+    },
+    {
+      "name": "mfdb.pdbx.validate_value"
+    },
+    {
+      "name": "mfdb.mock_data.populate"
     },
     {
       "name": "mfdb.users.list"

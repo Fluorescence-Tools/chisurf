@@ -48,6 +48,7 @@ latexify-py = "*"
 pygments = "*"
 pyarrow = "*"
 boost-histogram = "*"
+sqlalchemy = ">=2.0"
 
 [pypi-dependencies]
 

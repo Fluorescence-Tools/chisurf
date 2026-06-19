@@ -1,0 +1,134 @@
+{
+  "Cy3B": {
+    "absorption_wavelength_nm": 559.0,
+    "emission_wavelength_nm": 572.0,
+    "quantum_yield": 0.67,
+    "extinction_coefficient": 130000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [500, 520, 540, 559, 580, 600, 620],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.7, 0.3, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [540, 550, 560, 572, 580, 600, 620],
+      "intensities": [0.1, 0.5, 0.9, 1.0, 0.8, 0.4, 0.1]
+    },
+    "chromophore_smiles": "CC(C)(C1=CC=CC=C1C2=CC=CC=C2C3=CC=CC=C3C)C4=CC=CC=C4C",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "ATTO 647N": {
+    "absorption_wavelength_nm": 644.0,
+    "emission_wavelength_nm": 669.0,
+    "quantum_yield": 0.65,
+    "extinction_coefficient": 150000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [600, 620, 640, 644, 650, 670, 690],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.9, 0.5, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [640, 650, 660, 669, 675, 690, 710],
+      "intensities": [0.1, 0.4, 0.8, 1.0, 0.9, 0.5, 0.1]
+    },
+    "chromophore_smiles": "C1=CC=C(C=C1)C2=CC=CC=C2N3CCCCC3=CC4=CC=CC=C4C",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "Alexa Fluor 488": {
+    "absorption_wavelength_nm": 495.0,
+    "emission_wavelength_nm": 519.0,
+    "quantum_yield": 0.92,
+    "extinction_coefficient": 73000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [450, 470, 480, 495, 510, 520, 540],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.7, 0.4, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [490, 500, 510, 519, 530, 550, 570],
+      "intensities": [0.1, 0.4, 0.8, 1.0, 0.9, 0.5, 0.1]
+    },
+    "chromophore_smiles": "C1=CC=C(C=C1)C2=CC(=CC(=C2)C3=CC=C(C=C3)N4CCCCC4)C5=CC=CC=C5",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "Cy3": {
+    "absorption_wavelength_nm": 550.0,
+    "emission_wavelength_nm": 570.0,
+    "quantum_yield": 0.15,
+    "extinction_coefficient": 150000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [500, 520, 540, 550, 560, 580, 600],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.7, 0.4, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [530, 545, 560, 570, 580, 600, 620],
+      "intensities": [0.1, 0.5, 0.9, 1.0, 0.8, 0.4, 0.1]
+    },
+    "chromophore_smiles": "CC(C)(C1=CC=CC=C1C2=CC=CC=C2C3=CC=CC=C3)C",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "Cy5": {
+    "absorption_wavelength_nm": 649.0,
+    "emission_wavelength_nm": 670.0,
+    "quantum_yield": 0.27,
+    "extinction_coefficient": 250000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [600, 620, 640, 649, 660, 680, 700],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.9, 0.5, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [640, 655, 665, 670, 680, 700, 720],
+      "intensities": [0.1, 0.4, 0.8, 1.0, 0.9, 0.5, 0.1]
+    },
+    "chromophore_smiles": "CC(C)(C1=CC=CC=C1C2=CC=CC=C2C3=CC=CC=C3C4=CC=CC=C4)C",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "ATTO647N": {
+    "absorption_wavelength_nm": 644.0,
+    "emission_wavelength_nm": 669.0,
+    "quantum_yield": 0.65,
+    "extinction_coefficient": 150000.0,
+    "absorption_spectrum": {
+      "wavelengths_nm": [600, 620, 640, 644, 650, 670, 690],
+      "intensities": [0.1, 0.3, 0.7, 1.0, 0.9, 0.5, 0.1]
+    },
+    "emission_spectrum": {
+      "wavelengths_nm": [640, 650, 660, 669, 675, 690, 710],
+      "intensities": [0.1, 0.4, 0.8, 1.0, 0.9, 0.5, 0.1]
+    },
+    "chromophore_smiles": "C1=CC=C(C=C1)C2=CC=CC=C2N3CCCCC3=CC4=CC=CC=C4C",
+    "chromophore_inchi": null,
+    "probe_origin": "extrinsic",
+    "probe_link_type": "covalent"
+  },
+  "Trp": {
+    "absorption_wavelength_nm": 280.0,
+    "emission_wavelength_nm": 350.0,
+    "quantum_yield": 0.13,
+    "extinction_coefficient": null,
+    "absorption_spectrum": null,
+    "emission_spectrum": null,
+    "chromophore_smiles": "C1=CN(C2=C1)C3=CC=CC=C3",
+    "chromophore_inchi": null,
+    "probe_origin": "intrinsic",
+    "probe_link_type": "covalent"
+  },
+  "2-aminopurine": {
+    "absorption_wavelength_nm": 310.0,
+    "emission_wavelength_nm": 370.0,
+    "quantum_yield": 0.68,
+    "extinction_coefficient": 23000.0,
+    "absorption_spectrum": null,
+    "emission_spectrum": null,
+    "chromophore_smiles": "C1=NC=NC2=C1C=CN2",
+    "chromophore_inchi": null,
+    "probe_origin": "intrinsic",
+    "probe_link_type": "covalent"
+  }
+}

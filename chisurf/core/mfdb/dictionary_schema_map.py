@@ -72,8 +72,8 @@ class DictionarySchemaMap:
         self._build_mappings()
 
     def _build_mappings(self) -> None:
-        """Build mappings for all flrCIF dictionary items."""
-        for category_name in self.dictionary.flr_categories():
+        """Build mappings for flrCIF and explicitly bound ChiSurf dictionary items."""
+        for category_name in self._mapped_categories():
             category = self.dictionary.get_category(category_name)
             if category is None:
                 continue
@@ -106,6 +106,20 @@ class DictionarySchemaMap:
                     description=item.description,
                     source=source,
                 )
+
+    def _mapped_categories(self) -> list[str]:
+        """Return categories eligible for dictionary-to-schema mapping."""
+        categories = []
+        for category_name in self.dictionary.categories():
+            category = self.dictionary.get_category(category_name)
+            if category is None:
+                continue
+            if category_name.startswith("flr_") or any(
+                item.schema_table or item.schema_column
+                for item in category.items.values()
+            ):
+                categories.append(category_name)
+        return categories
 
     @staticmethod
     def _candidate_for_item(item: DictItem) -> tuple[str, str, str]:

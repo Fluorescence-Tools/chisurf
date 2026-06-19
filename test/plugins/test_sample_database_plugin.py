@@ -44,6 +44,10 @@ def test_mfdb_admin_manifest_is_valid():
     assert "mfdb.samples.list" in [method.name for method in manifest.rpc_methods]
     assert "mfdb.export_table" in [method.name for method in manifest.rpc_methods]
     assert "mfdb.samples.search" in [method.name for method in manifest.rpc_methods]
+    assert "mfdb.samples.create_structured" in [method.name for method in manifest.rpc_methods]
+    assert "mfdb.samples.full_description" in [method.name for method in manifest.rpc_methods]
+    assert "mfdb.fret_pairs.list" in [method.name for method in manifest.rpc_methods]
+    assert "mfdb.mock_data.populate" in [method.name for method in manifest.rpc_methods]
     assert "raw_data.register" in [method.name for method in manifest.rpc_methods]
     assert "archive.burst_processing_manifest.export" in [
         method.name for method in manifest.rpc_methods
@@ -61,6 +65,17 @@ def test_sample_database_services_register():
     assert "sample_database.setups.list" in methods
     assert "mfdb.samples.list" in methods
     assert "mfdb.samples.search" in methods
+    assert "mfdb.samples.create_structured" in methods
+    assert "mfdb.samples.full_description" in methods
+    assert "mfdb.samples.validate_export" in methods
+    assert "mfdb.entities.list" in methods
+    assert "mfdb.probes.positions.list" in methods
+    assert "mfdb.fret_pairs.list" in methods
+    assert "mfdb.pdbx.suggest_keys" in methods
+    assert "mfdb.mock_data.populate" in methods
+    assert "sample_database.samples.full_description" in methods
+    assert "sample_database.fret_pairs.list" in methods
+    assert "sample_database.mock_data.populate" in methods
     assert "mfdb.users.list" in methods
     assert "mfdb.auth.login" in methods
     assert "mfdb.auth.change_password" in methods
@@ -234,6 +249,7 @@ def test_mfdb_sample_condition_and_probe_services(tmp_path, monkeypatch):
         db.add_optical_property(7, "em_max", 519.0, unit="nm")
 
     monkeypatch.setattr(services, "resolve_database_path", lambda: db_path)
+    monkeypatch.setattr(services, "_require_auth", lambda auth, conn: None)
     dispatcher = ServiceDispatcher(SessionState())
     register_services(dispatcher)
 
@@ -261,6 +277,206 @@ def test_mfdb_sample_condition_and_probe_services(tmp_path, monkeypatch):
     probes = dispatcher.dispatch("mfdb.probes.list", {})["probes"]
     assert probes[0]["probe_id"] == 7
     assert {prop["property_name"] for prop in probes[0]["optical_properties"]} == {"abs_max", "em_max"}
+
+
+def test_mfdb_admin_prd02b_structured_sample_services(tmp_path, monkeypatch):
+    """PRD-02b admin RPCs expose structured sample/probe/FRET data."""
+    db_path = tmp_path / "structured.db"
+    MFDatabase(db_path).close()
+    monkeypatch.setattr(services, "resolve_database_path", lambda: db_path)
+    monkeypatch.setattr(services, "_require_auth", lambda auth, conn: None)
+    monkeypatch.setattr(services, "_require_or_acl_access", lambda auth, conn, object_type, object_id: None)
+
+    dispatcher = ServiceDispatcher(SessionState())
+    register_services(dispatcher)
+
+    result = dispatcher.dispatch(
+        "mfdb.samples.create_structured",
+        {
+            "sample_data": {
+                "name": "Admin Structured Sample",
+                "description": "created through admin RPC",
+                "entities": [
+                    {
+                        "entity_id": "entity_1",
+                        "common_name": "T4 Lysozyme",
+                        "type": "protein",
+                        "sequence": list("MNGT"),
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "Cy3B",
+                        "entity_index": 0,
+                        "seq_id": 1,
+                        "comp_id": "CYS",
+                        "asym_id": "A",
+                        "atom_id": "CB",
+                    },
+                    {
+                        "name": "ATTO647N",
+                        "entity_index": 0,
+                        "seq_id": 2,
+                        "comp_id": "CYS",
+                        "asym_id": "A",
+                        "atom_id": "CB",
+                    },
+                ],
+                "fret_pairs": [
+                    {
+                        "probe_1_index": 0,
+                        "probe_2_index": 1,
+                        "forster_radius_nm": 5.7,
+                        "kappa_squared": 2.0 / 3.0,
+                        "refractive_index": 1.4,
+                    }
+                ],
+                "condition": {
+                    "ph": 7.4,
+                    "temperature": 298.15,
+                    "ionic_strength": 0.15,
+                    "buffer_composition": "PBS",
+                },
+                "key_values": [
+                    {"key": "pdbx.test", "value": "value"},
+                ],
+            }
+        },
+    )
+
+    sample_id = result["sample_id"]
+    assert sample_id == "admin_structured_sample"
+    assert result["description"]["description"] == "created through admin RPC"
+
+    full = dispatcher.dispatch(
+        "mfdb.samples.full_description",
+        {"sample_id": sample_id},
+    )["description"]
+    assert full["sample_id"] == sample_id
+    assert len(full["probes"]) == 2
+    assert full["fret_pairs"][0]["donor_probe"] == "Cy3B"
+
+    validation = dispatcher.dispatch(
+        "mfdb.samples.validate_export",
+        {"sample_id": sample_id},
+    )
+    assert validation["valid"] is True
+
+    entities = dispatcher.dispatch(
+        "mfdb.entities.list",
+        {"sample_id": sample_id},
+    )["entities"]
+    assert entities[0]["entity_id"] == "T4 Lysozyme"
+    assert entities[0]["sequence"] == list("MNGT")
+
+    positions = dispatcher.dispatch(
+        "mfdb.probes.positions.list",
+        {"sample_id": sample_id},
+    )["positions"]
+    assert {position["atom_id"] for position in positions} == {"CB"}
+
+    fret_pairs = dispatcher.dispatch(
+        "mfdb.fret_pairs.list",
+        {"sample_id": sample_id},
+    )["fret_pairs"]
+    assert fret_pairs[0]["forster_radius_id"] == f"{sample_id}_forster_0_1"
+
+    keys = dispatcher.dispatch(
+        "mfdb.pdbx.suggest_keys",
+        {"prefix": "_flr_sample"},
+    )["keys"]
+    assert keys
+
+    value = dispatcher.dispatch(
+        "mfdb.pdbx.validate_value",
+        {"key": "_flr_sample.id", "value": sample_id},
+    )
+    assert value["valid"] is True
+
+
+def test_mfdb_client_prd02b_methods_call_expected_rpc():
+    """Client wrappers expose the PRD-02b admin RPC surface."""
+    calls = []
+
+    class Client:
+        def call(self, method, params):
+            calls.append((method, params))
+            return {
+                "description": {"sample_id": "sample_1"},
+                "warnings": [],
+                "valid": True,
+                "sample_id": "sample_1",
+                "entities": [{"entity_id": "entity_1"}],
+                "entity": {"entity_id": "entity_1"},
+                "probe": {"probe_id": 1},
+                "optical_properties": [{"property_name": "quantum_yield"}],
+                "positions": [{"id": 1}],
+                "fret_pairs": [{"forster_radius_id": "fr_1"}],
+                "fret_pair": {"forster_radius_id": "fr_1"},
+                "keys": [{"key": "_flr_sample.id", "description": ""}],
+                "summary": {"sample_id": "sample_1"},
+                "message": "",
+            }
+
+    client = MFDBClient(client=Client())
+
+    assert client.get_sample_full_description("sample_1")["sample_id"] == "sample_1"
+    assert client.validate_sample_export("sample_1")["valid"] is True
+    assert client.create_structured_sample({"name": "Sample"})["sample_id"] == "sample_1"
+    assert client.list_entities("sample_1")[0]["entity_id"] == "entity_1"
+    assert client.save_entity({"entity_id": "entity_1"})["entity_id"] == "entity_1"
+    assert client.delete_entity("entity_1")["message"] == ""
+    assert client.save_probe({"name": "Cy3B"})["probe_id"] == 1
+    assert client.save_probe_optical_properties(1, [])[0]["property_name"] == "quantum_yield"
+    assert client.list_probe_positions("sample_1")[0]["id"] == 1
+    assert client.list_fret_pairs("sample_1")[0]["forster_radius_id"] == "fr_1"
+    assert client.save_fret_pair({"sample_id": "sample_1"})["forster_radius_id"] == "fr_1"
+    assert client.delete_fret_pair("fr_1")["message"] == ""
+    assert client.suggest_pdbx_keys("_flr_sample")[0]["key"] == "_flr_sample.id"
+    assert client.validate_pdbx_value("_flr_sample.id", "sample_1")["message"] == ""
+    assert client.populate_mock_data()["sample_id"] == "sample_1"
+
+    methods = [method for method, _params in calls]
+    assert methods == [
+        "mfdb.samples.full_description",
+        "mfdb.samples.validate_export",
+        "mfdb.samples.create_structured",
+        "mfdb.entities.list",
+        "mfdb.entities.save",
+        "mfdb.entities.delete",
+        "mfdb.probes.save",
+        "mfdb.probes.optical_properties.save",
+        "mfdb.probes.positions.list",
+        "mfdb.fret_pairs.list",
+        "mfdb.fret_pairs.save",
+        "mfdb.fret_pairs.delete",
+        "mfdb.pdbx.suggest_keys",
+        "mfdb.pdbx.validate_value",
+        "mfdb.mock_data.populate",
+    ]
+
+
+def test_mfdb_admin_populates_mock_data_from_test_fixtures(tmp_path, monkeypatch):
+    """Mock data population uses bundled burst-selection test SPC files."""
+    db_path = tmp_path / "mock_data.db"
+    MFDatabase(db_path).close()
+    monkeypatch.setattr(services, "resolve_database_path", lambda: db_path)
+    monkeypatch.setattr(services, "_require_auth", lambda auth, conn: None)
+
+    dispatcher = ServiceDispatcher(SessionState())
+    register_services(dispatcher)
+
+    result = dispatcher.dispatch("mfdb.mock_data.populate", {})
+    summary = result["summary"]
+
+    assert summary["sample_id"] == "sm_dna_a488_a647_sample"
+    assert len(summary["used_test_files"]) == 3
+    assert all(Path(path).exists() for path in summary["used_test_files"])
+    assert len(summary["raw_data_ids"]) == 3
+
+    with MFDatabase(db_path) as db:
+        assert db.get_sample(summary["sample_id"]) is not None
+        assert db.get_experiment(summary["experiment_id"]) is not None
 
 
 

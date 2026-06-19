@@ -59,6 +59,7 @@ dependencies = [
     "pyzmq>=25.0",
     "pyarrow",
     "ruff>=0.4",
+    "sqlalchemy>=2.0",
 ]
 
 [project.optional-dependencies]

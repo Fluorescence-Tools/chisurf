@@ -39,6 +39,9 @@
 | R24 (dictionary/schema mapping directive) | — | Architecture directive: stop hand-coding fields | Design note, no tests |
 | R25 (dictionary/schema mapping implementation) | R22-3/R23 fixed; R24 implemented | R22-2/R22-4 still open | PDBx+mapping 60/60; sample-manager 19/19; ORM 33/33 |
 | R26 (R22-2 ORM public API integration) | Public sample create/read now route through ORM adapter | R22-4 still open | MFDB focused suite 114/114 with writable HOME |
+| R27 (R22-4 PRD-02b admin surface) | Admin backend/client/manifest and minimal GUI inspection hooks implemented | Full Sample tab redesign still future polish | PRD-02b focused 4/4; MFDB focused 114/114 |
+| R28 (mfdb-admin mock data seed) | Hidden 10-click mock-data population backed by test SPC fixtures | None in this scope | PRD-02b/mock focused 5/5; MFDB focused 114/114 |
+| R29 (dictionary-first cleanup) | Local extension renamed to `mfdb_flr_ext.dic`; ORM PRD-02 classes reflected; PRD-02 defaults/enums seeded from `.dic`; descriptors reuse identity rows | None in this scope | MFDB focused 127/127; PRD-02b/mock focused 5/5 |
 
 ## Phase 1 Status: COMPLETE — R8-1/R8-2/R8-3 fixed, R8-4 covered, 30/30 pass
 
@@ -2001,10 +2004,10 @@ all data is preserved through create/retrieve cycle.
 - Fixed `test_ihm_categories_present`: changed `ihm_structAssembly` → `ihm_struct_assembly`
   to match actual dictionary category name
 - Added ChiSurf-specific dictionary extension file
-  `chisurf/core/mfdb/data/chisurf_flr_ext.dic` with missing fields:
+  `chisurf/core/mfdb/data/mfdb_flr_ext.dic` with missing fields:
   - `_flr_fret_forster_radius.kappa_squared`
   - `_flr_fret_forster_radius.index_of_refraction`
-- Added `chisurf_flr_ext.dic` to `BUNDLED_DICTS` list
+- Added `mfdb_flr_ext.dic` to `BUNDLED_DICTS` list
 - Fixed `SampleSearchRequest` in `sample_requests.py` to accept both
   `category.attribute` and `_category.attribute` forms
 - Added `save_cache(cache_path)` method and `load_cache(cache_path)` classmethod
@@ -2042,7 +2045,7 @@ Resolved from R22-3:
   `ihm_struct_assembly` and passes.
 - `_flr_fret_forster_radius.kappa_squared` and
   `_flr_fret_forster_radius.index_of_refraction` now load through
-  `chisurf_flr_ext.dic`.
+  `mfdb_flr_ext.dic`.
 - `SampleSearchRequest` now accepts leading-underscore dictionary fields such as
   `_flr_sample.id`.
 - `MmcifDictionary.save_cache(cache_path)` and
@@ -2059,7 +2062,7 @@ Still failing:
 
 Files:
 - `test/fio/test_pdbx_metadata.py:401`
-- `chisurf/core/mfdb/data/chisurf_flr_ext.dic`
+- `chisurf/core/mfdb/data/mfdb_flr_ext.dic`
 - `chisurf/core/mfdb/pdbx_metadata.py:121`
 
 Verification:
@@ -2087,16 +2090,16 @@ flr categories 37
 
 Required fix: if ChiSurf-specific flrCIF extensions are the intended approach,
 add `_flr_sample_condition.ph` and `_flr_sample_condition.temperature` to
-`chisurf_flr_ext.dic` with appropriate type codes/descriptions, then rerun the
+`mfdb_flr_ext.dic` with appropriate type codes/descriptions, then rerun the
 full focused PDBx suite. Do not claim R22-3 complete until
 `test/fio/test_pdbx_metadata.py --no-cov` is fully green.
 
 ### R23-2 — HIGH: New dictionary file is untracked
 
 File:
-- `chisurf/core/mfdb/data/chisurf_flr_ext.dic`
+- `chisurf/core/mfdb/data/mfdb_flr_ext.dic`
 
-`pdbx_metadata.py` now references `chisurf_flr_ext.dic` in `BUNDLED_DICTS`, but
+`pdbx_metadata.py` now references `mfdb_flr_ext.dic` in `BUNDLED_DICTS`, but
 `git status` shows the file as untracked. If it is not added, a clean checkout
 will not contain the extension dictionary and the newly fixed lookups will
 regress.
@@ -2212,7 +2215,7 @@ programmatic. Remaining PRD-02X blockers are outside this scope:
 ### R25 implementation
 
 - Added ChiSurf schema binding metadata to
-  `chisurf/core/mfdb/data/chisurf_flr_ext.dic` using `_chisurf_schema.*`
+  `chisurf/core/mfdb/data/mfdb_flr_ext.dic` using `_chisurf_schema.*`
   tags. The `.dic` file now declares local fields and current schema bindings
   for required items such as:
   - `_flr_sample.id` -> `flr_sample.sample_id`
@@ -2311,6 +2314,156 @@ Future sample persistence changes should go into the ORM adapter and keep
 `.dic` metadata authoritative for field naming. Next implementation blocker is
 R22-4 / PRD-02b: implement the admin backend/client/manifest surface, then GUI
 polish.
+
+---
+
+## Round 27 findings — R22-4 PRD-02b admin surface (2026-06-18)
+
+Scope: implemented the PRD-02b admin backend/client/manifest surface and a
+small GUI inspection hook. This gives mfdb-admin a programmatic way to inspect,
+create, validate, and edit PRD-02 structured sample records without direct SQL
+sample graph writes.
+
+### R27 verdict
+
+**APPROVE R22-4 backend/client/manifest scope.** The blocking admin RPC surface
+exists and is covered by focused tests. Full Sample tab redesign remains future
+GUI polish, not a blocker for the backend/API verification gate.
+
+### R27 implementation
+
+- Added mfdb-admin RPC handlers for:
+  `mfdb.samples.full_description`, `mfdb.samples.validate_export`,
+  `mfdb.samples.create_structured`, entity list/save/delete, probe save,
+  probe optical-property save, probe-position list, FRET pair list/save/delete,
+  and PDBx key suggestion/value validation.
+- Registered the same handlers under backward-compatible
+  `sample_database.*` aliases.
+- Added `MFDBClient` wrappers for the new RPC methods.
+- Declared the new RPCs in `chisurf/plugins/core/mfdb_admin/manifest.json`.
+- Updated structured sample saves so PRD-02-shaped payloads route through
+  `create_sample()` instead of legacy raw SQL.
+- Fixed a legacy admin save bug where `save_sample_handler()` called
+  `db.add_entity()` with non-existent keyword arguments.
+- Added minimal GUI buttons on the Sample tab to show the nested PRD-02 full
+  description and export-validation result in the existing preview pane.
+- Fixed ORM adapter parity: `create_sample_graph()` now persists probe optical
+  properties and spectra from `ProbeDefinition`, so export validation no longer
+  warns on default-spectrum probes created through the ORM path.
+
+### R27 verification
+
+- `PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m py_compile chisurf/plugins/core/mfdb_admin/backend/services.py chisurf/plugins/core/mfdb_admin/gui/client.py chisurf/plugins/core/mfdb_admin/gui/tool.py chisurf/core/mfdb/orm/sample_repository.py`
+  -> **passed**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/plugins/test_sample_database_plugin.py::test_sample_database_services_register test/plugins/test_sample_database_plugin.py::test_mfdb_sample_condition_and_probe_services test/plugins/test_sample_database_plugin.py::test_mfdb_admin_prd02b_structured_sample_services test/plugins/test_sample_database_plugin.py::test_mfdb_client_prd02b_methods_call_expected_rpc -x --no-cov`
+  -> **4 passed, 2 warnings**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/fio/test_sample_manager.py test/fio/test_orm.py test/fio/test_pdbx_metadata.py test/fio/test_dictionary_schema_map.py --no-cov`
+  -> **114 passed, 3 warnings**.
+
+Broader plugin-file run:
+
+- `test/plugins/test_sample_database_plugin.py -k 'not test_mfdb_widget_refresh_handles_transport_errors'`
+  currently reports **17 passed, 4 failed, 1 deselected**. The failures are
+  outside the R27 PRD-02b surface:
+  - missing `chisurf.gui._mfdb_rpc_is_available` in
+    `test_gui_starts_embedded_mfdb_rpc_when_unavailable`;
+  - three real-client tests fail during schema migration with
+    `cannot start a transaction within a transaction`.
+
+### R27 coder handoff
+
+Do not add new PRD-02 admin paths that bypass `sample_manager` or the ORM sample
+graph adapter. The next sensible GUI task is polish, not another backend
+blocker: replace the flat Sample tab with a structured editor over the R27 RPCs
+and add dedicated FRET-pair/spectra panes.
+
+---
+
+## Round 28 findings — mfdb-admin mock-data population (2026-06-18)
+
+Scope: added an mfdb-admin option to populate the active MFDB with bundled
+mock/demo data after ten clicks on the `mfdb-admin` header label.
+
+### R28 verdict
+
+**APPROVE.** The feature is implemented through a backend RPC, not direct GUI
+database writes, and it uses the existing burst-selection test SPC fixtures as
+the source example data.
+
+### R28 implementation
+
+- Fixed `seed_example.py` to point at the real test fixture folder:
+  `chisurf/plugins/burst/burst_selection/tests/data/bh_spc132_sm_dna`.
+- Changed `seed_example()` to return a structured summary with sample,
+  experiment, processing, raw-data IDs, source fixture directory, and used test
+  files.
+- Added `mfdb.mock_data.populate` plus legacy
+  `sample_database.mock_data.populate` service registration.
+- Added `MFDBClient.populate_mock_data()` and manifest declaration.
+- Added a hidden GUI trigger: ten left-clicks on the `mfdb-admin` header label
+  prompts to populate bundled mock data, refreshes the UI, and writes the seed
+  summary to the preview pane.
+- Updated tests to assert the seed path uses existing test SPC files and creates
+  sample/experiment records.
+
+### R28 verification
+
+- `PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m py_compile chisurf/plugins/core/mfdb_admin/backend/services.py chisurf/plugins/core/mfdb_admin/gui/client.py chisurf/plugins/core/mfdb_admin/gui/tool.py chisurf/plugins/core/mfdb_admin/seed_example.py`
+  -> **passed**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/plugins/test_sample_database_plugin.py::test_sample_database_services_register test/plugins/test_sample_database_plugin.py::test_mfdb_sample_condition_and_probe_services test/plugins/test_sample_database_plugin.py::test_mfdb_admin_prd02b_structured_sample_services test/plugins/test_sample_database_plugin.py::test_mfdb_client_prd02b_methods_call_expected_rpc test/plugins/test_sample_database_plugin.py::test_mfdb_admin_populates_mock_data_from_test_fixtures -x --no-cov`
+  -> **5 passed, 2 warnings**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/fio/test_sample_manager.py test/fio/test_orm.py test/fio/test_pdbx_metadata.py test/fio/test_dictionary_schema_map.py --no-cov`
+  -> **114 passed, 3 warnings**.
+
+---
+
+## Round 29 findings — dictionary-first cleanup (2026-06-19)
+
+Scope: addressed the follow-up review that `orm.models` still looked
+hand-coded and that `.dic` files must be the single source of truth for
+PRD-02/flrCIF fields.
+
+### R29 verdict
+
+**APPROVE.** The PRD-02 ORM table classes are no longer hand-written. The local
+extension dictionary is now `mfdb_flr_ext.dic`, PRD-02/flrCIF defaults and enums
+are read from dictionary metadata, and chemical descriptor persistence is
+idempotent.
+
+### R29 implementation
+
+- Renamed `chisurf_flr_ext.dic` to `mfdb_flr_ext.dic` and updated bundled
+  dictionary loading plus review references.
+- Added `overhaul/DICTIONARY_PROGRAMMING_RULES.md` documenting the general rule:
+  add/update `.dic` definitions first, use `mfdb_flr_ext.dic` for local MFDB
+  extensions, and make identity rows idempotent.
+- Extended dictionary parsing to retain `_item_default.value`.
+- Added MFDB/local dictionary bindings for probe list, probe descriptors,
+  sample-probe details, probe positions, FRET defaults, and chemical descriptor
+  storage aliases.
+- Replaced the hand-written PRD-02 ORM classes with reflected SQLAlchemy
+  mappings generated from the canonical schema. Existing exported class names
+  remain available for compatibility.
+- Updated the sample repository to resolve PRD-02/flrCIF columns/defaults
+  through dictionary metadata and to reuse chemical descriptor rows by normalized
+  `(descriptor_type, descriptor, program, program_version)`.
+- Updated `bootstrap_vocabulary()` so PRD-02/flrCIF controlled vocabularies are
+  seeded from dictionary enumerations instead of Python lists.
+
+### R29 verification
+
+- `PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m py_compile chisurf/core/mfdb/schema.py chisurf/core/mfdb/pdbx_metadata.py chisurf/core/mfdb/dictionary_schema_map.py chisurf/core/mfdb/orm/models.py chisurf/core/mfdb/orm/sample_repository.py`
+  -> **passed**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/fio/test_sample_manager.py test/fio/test_orm.py test/fio/test_pdbx_metadata.py test/fio/test_dictionary_schema_map.py --no-cov`
+  -> **127 passed, 3 warnings**.
+- `HOME=/private/tmp/chisurf-test-home PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest -q test/plugins/test_sample_database_plugin.py::test_sample_database_services_register test/plugins/test_sample_database_plugin.py::test_mfdb_sample_condition_and_probe_services test/plugins/test_mfdb_admin_prd02b_structured_sample_services test/plugins/test_mfdb_client_prd02b_methods_call_expected_rpc test/plugins/test_sample_database_plugin.py::test_mfdb_admin_populates_mock_data_from_test_fixtures -x --no-cov`
+  -> **5 passed, 2 warnings**.
+
+### R29 coder handoff
+
+Future PRD-02/flrCIF changes must add dictionary definitions and schema bindings
+first. Do not reintroduce hand-written PRD-02 ORM table classes or Python enum
+lists for dictionary-owned fields.
 
 ---
 

@@ -12,6 +12,7 @@ from typing import Any
 
 from chisurf.core.mfdb.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.sample_manager import get_sample_for_artifact, get_sample_name
 from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
 
 
@@ -102,6 +103,62 @@ def register_raw_data_handler(
         return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
 
 
+def _decode_raw_data_row_with_sample(db: MFDatabase, row: Any) -> dict[str, Any] | None:
+    """Decode a raw-data row and attach linked sample metadata.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        Active MFDB connection.
+    row : Any
+        Raw database row.
+
+    Returns
+    -------
+    dict or None
+        Decoded raw-data row with sample fields when available.
+    """
+    item = db._decode_raw_data_row(row)
+    if item is None:
+        return None
+    artifact_id = item.get("artifact_id") or item.get("raw_data_id")
+    if not artifact_id:
+        return item
+    sample_id = get_sample_for_artifact(db, str(artifact_id))
+    if sample_id:
+        item["sample_id"] = sample_id
+        item["sample_name"] = get_sample_name(db, sample_id)
+    return item
+
+
+def _decode_processed_data_row_with_sample(db: MFDatabase, row: Any) -> dict[str, Any] | None:
+    """Decode a processed-data row and attach linked sample metadata.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        Active MFDB connection.
+    row : Any
+        Raw database row.
+
+    Returns
+    -------
+    dict or None
+        Decoded processed-data row with sample fields when available.
+    """
+    item = db._decode_processed_data_row(row)
+    if item is None:
+        return None
+    artifact_id = item.get("artifact_id") or item.get("processed_data_id")
+    if not artifact_id:
+        return item
+    sample_id = get_sample_for_artifact(db, str(artifact_id))
+    if sample_id:
+        item["sample_id"] = sample_id
+        item["sample_name"] = get_sample_name(db, sample_id)
+    return item
+
+
 def list_raw_data_handler(
     experiment_id: str | None = None,
     data_type: str | None = None,
@@ -123,7 +180,7 @@ def list_raw_data_handler(
     """
     with MFDatabase(resolve_database_path()) as db:
         rows = db.get_raw_data_references(experiment_id=experiment_id, data_type=data_type)
-        return {"ok": True, "raw_data": [db._decode_raw_data_row(row) for row in rows]}
+        return {"ok": True, "raw_data": [_decode_raw_data_row_with_sample(db, row) for row in rows]}
 
 
 def get_raw_data_handler(raw_data_id: str) -> dict[str, Any]:
@@ -144,7 +201,7 @@ def get_raw_data_handler(raw_data_id: str) -> dict[str, Any]:
         row = db.get_raw_data(raw_data_id)
         if row is None:
             return service_error(f"raw data not found: {raw_data_id}", error_code=NOT_FOUND)
-        return {"ok": True, "raw_data": db._decode_raw_data_row(row)}
+        return {"ok": True, "raw_data": _decode_raw_data_row_with_sample(db, row)}
 
 
 def record_burst_selection_handler(
@@ -478,7 +535,7 @@ def list_processed_data_handler(
             processing_id=processing_id,
             product_type=product_type,
         )
-        return {"ok": True, "processed_data": [db._decode_processed_data_row(row) for row in rows]}
+        return {"ok": True, "processed_data": [_decode_processed_data_row_with_sample(db, row) for row in rows]}
 
 
 def get_processed_data_handler(processed_data_id: str) -> dict[str, Any]:
@@ -502,7 +559,7 @@ def get_processed_data_handler(processed_data_id: str) -> dict[str, Any]:
                 f"processed data not found: {processed_data_id}",
                 error_code=NOT_FOUND,
             )
-        return {"ok": True, "processed_data": db._decode_processed_data_row(row)}
+        return {"ok": True, "processed_data": _decode_processed_data_row_with_sample(db, row)}
 
 
 def list_provenance_edges_handler(**filters: Any) -> dict[str, Any]:
@@ -1644,11 +1701,11 @@ def export_zip_archive_handler(
     base_path_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Package a full ZIP archive containing DB snapshot, graph, manifest and optionally data."""
-    import tempfile
-    import shutil
-    import os
-    import zipfile
     import json
+    import os
+    import shutil
+    import tempfile
+    import zipfile
     from datetime import datetime
 
     try:

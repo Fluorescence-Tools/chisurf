@@ -107,6 +107,101 @@ class MFDBClient:
             {"probe_id": probe_id},
         ).get("optical_properties", {})
 
+    def get_sample_full_description(self, sample_id: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.samples.full_description",
+            {"sample_id": sample_id},
+        ).get("description", {})
+
+    def validate_sample_export(self, sample_id: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.samples.validate_export",
+            {"sample_id": sample_id},
+        )
+
+    def create_structured_sample(self, sample_data: dict[str, Any]) -> dict[str, Any]:
+        return self._call(
+            "mfdb.samples.create_structured",
+            {"sample_data": sample_data},
+        )
+
+    def list_entities(self, sample_id: str | None = None) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.entities.list",
+            {"sample_id": sample_id},
+        ).get("entities", [])
+
+    def save_entity(self, entity: dict[str, Any]) -> dict[str, Any]:
+        return self._call(
+            "mfdb.entities.save",
+            {"entity": entity},
+        ).get("entity", {})
+
+    def delete_entity(self, entity_id: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.entities.delete",
+            {"entity_id": entity_id},
+        )
+
+    def save_probe(self, probe: dict[str, Any]) -> dict[str, Any]:
+        return self._call(
+            "mfdb.probes.save",
+            {"probe": probe},
+        ).get("probe", {})
+
+    def save_probe_optical_properties(
+        self,
+        probe_id: int,
+        properties: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.probes.optical_properties.save",
+            {"probe_id": probe_id, "properties": properties},
+        ).get("optical_properties", [])
+
+    def list_probe_positions(
+        self,
+        sample_id: str | None = None,
+        probe_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.probes.positions.list",
+            {"sample_id": sample_id, "probe_id": probe_id},
+        ).get("positions", [])
+
+    def list_fret_pairs(self, sample_id: str) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.fret_pairs.list",
+            {"sample_id": sample_id},
+        ).get("fret_pairs", [])
+
+    def save_fret_pair(self, pair: dict[str, Any]) -> dict[str, Any]:
+        return self._call(
+            "mfdb.fret_pairs.save",
+            {"pair": pair},
+        ).get("fret_pair", {})
+
+    def delete_fret_pair(self, forster_radius_id: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.fret_pairs.delete",
+            {"forster_radius_id": forster_radius_id},
+        )
+
+    def suggest_pdbx_keys(self, prefix: str) -> list[dict[str, str]]:
+        return self._call(
+            "mfdb.pdbx.suggest_keys",
+            {"prefix": prefix},
+        ).get("keys", [])
+
+    def validate_pdbx_value(self, key: str, value: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.pdbx.validate_value",
+            {"key": key, "value": value},
+        )
+
+    def populate_mock_data(self) -> dict[str, Any]:
+        return self._call("mfdb.mock_data.populate").get("summary", {})
+
     def list_users(self) -> list[dict[str, Any]]:
         return self._call("mfdb.users.list").get("users", [])
 

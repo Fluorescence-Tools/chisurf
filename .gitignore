@@ -28,6 +28,8 @@
 *.exe
 *.json
 !chisurf/**/manifest.json
+!chisurf/core/mfdb/data/*.json
+chisurf/core/mfdb/data/_dictionary_cache.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
 !chisurf/gui/plots/lineplot/reference_presets.json
@@ -57,7 +59,6 @@ Thumbs.db
 /htmlcov
 /AGENT
 /llm-wiki
-/overhaul
 /thirdparty
 /scratch*
 /build_tools/osx/resources/

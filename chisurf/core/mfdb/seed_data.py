@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -11,6 +12,8 @@ from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.database_resolver import source_database_path
 
 T4_LYSOZYME_SEQUENCE = "MSTLQEK"
+
+_DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
 def seed_curated_database(db_path: Optional[str | Path] = None) -> Path:
@@ -50,18 +53,68 @@ def _seed_probe_types(db: MFDatabase) -> None:
     db.add_probe_type("nucleic_acid", "Nucleic acid fluorophore")
 
 
+def _load_probe_properties() -> list[dict]:
+    """Load probe properties from JSON file, with fallback to hardcoded values."""
+    filepath = _DATA_DIR / "probe_properties.json"
+    if filepath.exists():
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass
+    # Fallback to hardcoded values
+    return [
+        {
+            "name": "Alexa488", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 495.0, "emission_max_nm": 519.0,
+            "quantum_yield": 0.92, "extinction_coefficient": 73000.0
+        },
+        {
+            "name": "Alexa594", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 590.0, "emission_max_nm": 617.0,
+            "quantum_yield": 0.66, "extinction_coefficient": 87000.0
+        },
+        {
+            "name": "Cy3", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 550.0, "emission_max_nm": 570.0,
+            "quantum_yield": 0.15, "extinction_coefficient": 150000.0
+        },
+        {
+            "name": "Cy5", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 649.0, "emission_max_nm": 670.0,
+            "quantum_yield": 0.27, "extinction_coefficient": 250000.0
+        },
+        {
+            "name": "ATTO647N", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 644.0, "emission_max_nm": 669.0,
+            "quantum_yield": 0.65, "extinction_coefficient": 150000.0
+        },
+        {
+            "name": "Trp", "type_name": "amino_acid", "category": "protein",
+            "absorption_max_nm": 280.0, "emission_max_nm": 350.0,
+            "quantum_yield": 0.13, "extinction_coefficient": None
+        },
+        {
+            "name": "2-aminopurine", "type_name": "nucleic_acid", "category": "other",
+            "absorption_max_nm": 310.0, "emission_max_nm": 370.0,
+            "quantum_yield": 0.68, "extinction_coefficient": 23000.0
+        },
+    ]
+
+
 def _seed_probes(db: MFDatabase) -> None:
     types = {row["type_name"]: row["type_id"] for row in db.get_probe_types()}
-    probes = [
-        ("Alexa488", "organic_dye", "organic_dye", 495.0, 519.0, 0.92, 73000.0),
-        ("Alexa594", "organic_dye", "organic_dye", 590.0, 617.0, 0.66, 87000.0),
-        ("Cy3", "organic_dye", "organic_dye", 550.0, 570.0, 0.15, 150000.0),
-        ("Cy5", "organic_dye", "organic_dye", 649.0, 670.0, 0.27, 250000.0),
-        ("ATTO647N", "organic_dye", "organic_dye", 644.0, 669.0, 0.65, 150000.0),
-        ("Trp", "amino_acid", "protein", 280.0, 350.0, 0.13, None),
-        ("2-aminopurine", "nucleic_acid", "other", 310.0, 370.0, 0.68, 23000.0),
-    ]
-    for name, type_name, category, abs_max, em_max, qy, ext_coeff in probes:
+    probes_data = _load_probe_properties()
+
+    for probe_data in probes_data:
+        name = probe_data["name"]
+        type_name = probe_data["type_name"]
+        category = probe_data["category"]
+        abs_max = probe_data["absorption_max_nm"]
+        em_max = probe_data["emission_max_nm"]
+        qy = probe_data["quantum_yield"]
+        ext_coeff = probe_data["extinction_coefficient"]
+
         probe_id = db.add_probe(name, types[type_name], category=category, is_curated=1)
         db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
         db.add_optical_property(probe_id, "em_max", em_max, unit="nm")

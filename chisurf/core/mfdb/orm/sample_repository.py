@@ -8,18 +8,21 @@ and get_sample_full_description() can delegate to it.
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
 from chisurf.core.mfdb.models import (
     EntityDefinition,
     FretPairDefinition,
     ProbeDefinition,
     SampleDefinition,
 )
+from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
 from chisurf.core.mfdb.repository import MFDatabase
 
 from .base import session_scope
@@ -40,6 +43,119 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+_DICTIONARY = MmcifDictionary.load_bundled()
+_SCHEMA_MAP = build_dictionary_schema_map(dictionary=_DICTIONARY)
+
+
+def _column(dictionary_item: str) -> str:
+    """Return the live DB column bound to a dictionary item."""
+    mapped = _SCHEMA_MAP.map_dictionary_item(dictionary_item)
+    if mapped is None:
+        raise KeyError(f"No schema binding for dictionary item {dictionary_item}")
+    return mapped.column_name
+
+
+def _default(dictionary_item: str, fallback: str = "") -> str:
+    """Return a dictionary default value with a fallback for unbound items."""
+    value = _DICTIONARY.get_default(dictionary_item)
+    if value in {"", ".", "?"}:
+        return fallback
+    return value
+
+
+def _default_float(dictionary_item: str, fallback: float) -> float:
+    """Return a dictionary float default value with a fallback."""
+    value = _default(dictionary_item)
+    if not value:
+        return fallback
+    return float(value)
+
+
+def _value_or_default(value: str | None, dictionary_item: str, fallback: str = "") -> str:
+    """Return an explicit value or the dictionary-defined default."""
+    return value if value else _default(dictionary_item, fallback)
+
+
+def _normalize_descriptor_value(value: str) -> str:
+    """Normalize descriptor text for idempotent descriptor lookup."""
+    return " ".join(str(value).strip().split())
+
+
+def _get_or_create_descriptor(
+    session: Session,
+    descriptor_type: str,
+    descriptor: str,
+    *,
+    program: str = "ChiSurf",
+    program_version: str | None = None,
+) -> int | None:
+    """Return an existing chemical descriptor ID or insert one.
+
+    Chemical descriptors are identity rows. The natural key is the normalized
+    ``(descriptor_type, descriptor, program, program_version)`` tuple; repeated
+    probe creation must reuse the same row instead of creating duplicates.
+    """
+    normalized_type = descriptor_type.strip().upper()
+    normalized_descriptor = _normalize_descriptor_value(descriptor)
+    if not normalized_type or not normalized_descriptor:
+        return None
+
+    existing = session.execute(
+        select(ChemDescriptor).where(
+            ChemDescriptor.descriptor_type == normalized_type,
+            ChemDescriptor.descriptor == normalized_descriptor,
+            ChemDescriptor.program == program,
+            ChemDescriptor.program_version.is_(program_version)
+            if program_version is None
+            else ChemDescriptor.program_version == program_version,
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        return existing.id
+
+    descriptor_row = ChemDescriptor(
+        descriptor_type=normalized_type,
+        descriptor=normalized_descriptor,
+        program=program,
+        program_version=program_version,
+    )
+    session.add(descriptor_row)
+    session.flush()
+    return descriptor_row.id
+
+
+def _apply_probe_descriptors(
+    session: Session,
+    probe_row: Probe,
+    definition: ProbeDefinition,
+) -> None:
+    """Attach existing or new chemical descriptor IDs to one probe row."""
+    chromophore_descriptor_id = None
+    if definition.chromophore_smiles:
+        chromophore_descriptor_id = _get_or_create_descriptor(
+            session,
+            "SMILES",
+            definition.chromophore_smiles,
+        )
+    elif definition.chromophore_inchi:
+        chromophore_descriptor_id = _get_or_create_descriptor(
+            session,
+            "InChI",
+            definition.chromophore_inchi,
+        )
+    if chromophore_descriptor_id is not None:
+        probe_row.chromophore_chem_descriptor_id = chromophore_descriptor_id
+
+    reactive_descriptor_id = None
+    if definition.reactive_probe_smiles:
+        reactive_descriptor_id = _get_or_create_descriptor(
+            session,
+            "SMILES",
+            definition.reactive_probe_smiles,
+        )
+    if reactive_descriptor_id is not None:
+        probe_row.reactive_probe_chem_descriptor_id = reactive_descriptor_id
 
 
 def create_sample_graph(
@@ -175,10 +291,23 @@ def _create_sample_graph_in_session(
         else:
             probe = Probe(
                 chromophore_name=probe_def.name,
-                probe_origin=probe_def.probe_origin or "extrinsic",
-                probe_link_type=probe_def.probe_link_type or "covalent",
-                fluorophore_type="unspecified",
-                reactive_probe_flag=probe_def.reactive_probe_flag or "no",
+                **{
+                    _column("_flr_probe_list.probe_origin"): _value_or_default(
+                        probe_def.probe_origin,
+                        "_flr_probe_list.probe_origin",
+                    ),
+                    _column("_flr_probe_list.probe_link_type"): _value_or_default(
+                        probe_def.probe_link_type,
+                        "_flr_probe_list.probe_link_type",
+                    ),
+                    "fluorophore_type": _default(
+                        "_flr_sample_probe_details.fluorophore_type"
+                    ),
+                    _column("_flr_probe_list.reactive_probe_flag"): _value_or_default(
+                        probe_def.reactive_probe_flag,
+                        "_flr_probe_list.reactive_probe_flag",
+                    ),
+                },
                 reactive_probe_name=probe_def.reactive_probe_name or None,
                 chromophore_center_atom=probe_def.chromophore_center_atom,
                 description=None,
@@ -186,8 +315,10 @@ def _create_sample_graph_in_session(
             )
             session.add(probe)
             session.flush()
+        _apply_probe_descriptors(session, probe, probe_def)
 
         probe_map[probe_def.name] = probe
+        _add_probe_optical_data(session, probe, probe_def)
 
     # Create positions for each probe
     position_map = {}  # (probe_id, entity_id, residue_info) -> FlrPolyProbePosition
@@ -199,13 +330,24 @@ def _create_sample_graph_in_session(
             position = FlrPolyProbePosition(
                 probe_id=probe_map[probe_def.name].probe_id,
                 entity_id=entity_id,
-                asym_id=probe_def.asym_id or "A",
-                residue_number=probe_def.seq_id or 1,
-                residue_name=probe_def.comp_id,
-                atom_id=probe_def.atom_id,
-                mutation_flag=probe_def.mutation_flag or "no",
-                modification_flag=probe_def.modification_flag or "no",
-                auth_name=probe_def.auth_name,
+                **{
+                    _column("_flr_poly_probe_position.asym_id"): _value_or_default(
+                        probe_def.asym_id,
+                        "_flr_poly_probe_position.asym_id",
+                    ),
+                    _column("_flr_poly_probe_position.seq_id"): probe_def.seq_id or 1,
+                    _column("_flr_poly_probe_position.comp_id"): probe_def.comp_id,
+                    _column("_flr_poly_probe_position.atom_id"): probe_def.atom_id,
+                    _column("_flr_poly_probe_position.mutation_flag"): _value_or_default(
+                        probe_def.mutation_flag,
+                        "_flr_poly_probe_position.mutation_flag",
+                    ),
+                    _column("_flr_poly_probe_position.modification_flag"): _value_or_default(
+                        probe_def.modification_flag,
+                        "_flr_poly_probe_position.modification_flag",
+                    ),
+                    _column("_flr_poly_probe_position.auth_name"): probe_def.auth_name,
+                },
                 description=None,
             )
             session.add(position)
@@ -228,7 +370,11 @@ def _create_sample_graph_in_session(
             sample_id=sample_id,
             probe_id=probe.probe_id,
             poly_probe_position_id=position.id if position else None,
-            fluorophore_type=fluorophore_types[i] if i < len(fluorophore_types) else "unspecified",
+            fluorophore_type=(
+                fluorophore_types[i]
+                if i < len(fluorophore_types)
+                else _default("_flr_sample_probe_details.fluorophore_type")
+            ),
             description=None,
         )
         session.add(sample_probe)
@@ -248,10 +394,21 @@ def _create_sample_graph_in_session(
                 sample_id=sample_id,
                 donor_probe_id=donor_probe.probe_id,
                 acceptor_probe_id=acceptor_probe.probe_id,
-                forster_radius=fret_pair.forster_radius_nm or 5.0,  # Default R0
+                forster_radius=(
+                    fret_pair.forster_radius_nm
+                    or _default_float("_flr_fret_forster_radius.forster_radius", 5.0)
+                ),
                 reduced_forster_radius=fret_pair.reduced_forster_radius_nm,
-                kappa_squared=fret_pair.kappa_squared,
-                index_of_refraction=fret_pair.refractive_index,
+                kappa_squared=(
+                    fret_pair.kappa_squared
+                    if fret_pair.kappa_squared is not None
+                    else _default_float("_flr_fret_forster_radius.kappa_squared", 0.666667)
+                ),
+                index_of_refraction=(
+                    fret_pair.refractive_index
+                    if fret_pair.refractive_index is not None
+                    else _default_float("_flr_fret_forster_radius.index_of_refraction", 1.4)
+                ),
                 overlap_integral=fret_pair.overlap_integral,
                 details=None,
             )
@@ -520,70 +677,138 @@ def _upsert_probe_in_session(session: Session, probe: ProbeDefinition) -> int:
     if existing_probe:
         # Update existing probe
         existing_probe.chromophore_name = probe.name
-        existing_probe.probe_origin = probe.probe_origin
-        existing_probe.probe_link_type = probe.probe_link_type
-        existing_probe.fluorophore_type = probe.fluorophore_type
-        existing_probe.reactive_probe_flag = probe.reactive_probe_flag or "no"
+        setattr(
+            existing_probe,
+            _column("_flr_probe_list.probe_origin"),
+            _value_or_default(probe.probe_origin, "_flr_probe_list.probe_origin"),
+        )
+        setattr(
+            existing_probe,
+            _column("_flr_probe_list.probe_link_type"),
+            _value_or_default(probe.probe_link_type, "_flr_probe_list.probe_link_type"),
+        )
+        existing_probe.fluorophore_type = getattr(
+            probe,
+            "fluorophore_type",
+            _default("_flr_sample_probe_details.fluorophore_type"),
+        )
+        setattr(
+            existing_probe,
+            _column("_flr_probe_list.reactive_probe_flag"),
+            _value_or_default(
+                probe.reactive_probe_flag,
+                "_flr_probe_list.reactive_probe_flag",
+            ),
+        )
         existing_probe.reactive_probe_name = probe.reactive_probe_name
         existing_probe.chromophore_center_atom = probe.chromophore_center_atom
-        existing_probe.description = probe.description
-        existing_probe.category = probe.category
+        existing_probe.description = getattr(probe, "description", None)
+        existing_probe.category = getattr(probe, "category", "other")
+        _apply_probe_descriptors(session, existing_probe, probe)
         probe_id = existing_probe.probe_id
     else:
         # Create new probe
         new_probe = Probe(
             chromophore_name=probe.name,
-            probe_origin=probe.probe_origin,
-            probe_link_type=probe.probe_link_type,
-            fluorophore_type=probe.fluorophore_type,
-            reactive_probe_flag=probe.reactive_probe_flag or "no",
+            **{
+                _column("_flr_probe_list.probe_origin"): _value_or_default(
+                    probe.probe_origin,
+                    "_flr_probe_list.probe_origin",
+                ),
+                _column("_flr_probe_list.probe_link_type"): _value_or_default(
+                    probe.probe_link_type,
+                    "_flr_probe_list.probe_link_type",
+                ),
+                _column("_flr_probe_list.reactive_probe_flag"): _value_or_default(
+                    probe.reactive_probe_flag,
+                    "_flr_probe_list.reactive_probe_flag",
+                ),
+            },
+            fluorophore_type=getattr(
+                probe,
+                "fluorophore_type",
+                _default("_flr_sample_probe_details.fluorophore_type"),
+            ),
             reactive_probe_name=probe.reactive_probe_name,
             chromophore_center_atom=probe.chromophore_center_atom,
-            description=probe.description,
-            category=probe.category,
+            description=getattr(probe, "description", None),
+            category=getattr(probe, "category", "other"),
         )
         session.add(new_probe)
         session.flush()
+        _apply_probe_descriptors(session, new_probe, probe)
         probe_id = new_probe.probe_id
-
-        # Create chemical descriptors if provided
-        if probe.chromophore_smiles:
-            chem_desc = ChemDescriptor(
-                descriptor_type="SMILES",
-                descriptor=probe.chromophore_smiles,
-                program="ChiSurf",
-            )
-            session.add(chem_desc)
-            session.flush()
-            new_probe.chromophore_chem_descriptor_id = chem_desc.id
-
-        if probe.chromophore_inchi:
-            chem_desc = ChemDescriptor(
-                descriptor_type="InChI",
-                descriptor=probe.chromophore_inchi,
-                program="ChiSurf",
-            )
-            session.add(chem_desc)
-            session.flush()
-            new_probe.reactive_probe_chem_descriptor_id = chem_desc.id
 
     session.flush()
     return probe_id
 
 
+def _add_probe_optical_data(
+    session: Session, probe: Probe, definition: ProbeDefinition
+) -> None:
+    """Persist optical properties and spectra declared by a probe definition."""
+    existing_properties = {
+        prop.property_name
+        for prop in probe.optical_properties
+        if prop.deleted_at is None
+    }
+    properties = [
+        ("absorption_wavelength", definition.absorption_wavelength_nm, "nm"),
+        ("emission_wavelength", definition.emission_wavelength_nm, "nm"),
+        ("quantum_yield", definition.quantum_yield, None),
+        ("extinction_coefficient", definition.extinction_coefficient, "M-1cm-1"),
+    ]
+    for name, value, unit in properties:
+        if value is None or name in existing_properties:
+            continue
+        session.add(
+            OpticalProperty(
+                probe_id=probe.probe_id,
+                property_name=name,
+                property_value=str(value),
+                unit=unit,
+            )
+        )
+
+    existing_spectra = {
+        spectrum.spectrum_type
+        for spectrum in probe.spectra
+        if spectrum.deleted_at is None
+    }
+    spectra = [
+        ("absorption", definition.absorption_spectrum),
+        ("emission", definition.emission_spectrum),
+    ]
+    for spectrum_type, values in spectra:
+        if not values or spectrum_type in existing_spectra:
+            continue
+        wavelengths, intensities = values
+        session.add(
+            Spectrum(
+                probe_id=probe.probe_id,
+                spectrum_type=spectrum_type,
+                wavelengths=json.dumps(wavelengths).encode("utf-8"),
+                intensity_values=json.dumps(intensities).encode("utf-8"),
+                wavelength_unit="nm",
+                intensity_unit="normalized",
+            )
+        )
+
+
 def _derive_fluorophore_types(definition: SampleDefinition) -> list[str]:
     """Derive sample-probe fluorophore roles from FRET pair indices."""
-    types = ["unspecified"] * len(definition.probes)
+    unspecified = _default("_flr_sample_probe_details.fluorophore_type")
+    types = [unspecified] * len(definition.probes)
     for pair in definition.fret_pairs:
         if 0 <= pair.probe_1_index < len(types):
             types[pair.probe_1_index] = (
-                "unspecified"
+                unspecified
                 if types[pair.probe_1_index] == "acceptor"
                 else "donor"
             )
         if 0 <= pair.probe_2_index < len(types):
             types[pair.probe_2_index] = (
-                "unspecified"
+                unspecified
                 if types[pair.probe_2_index] == "donor"
                 else "acceptor"
             )

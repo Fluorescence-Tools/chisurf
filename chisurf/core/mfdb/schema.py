@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 28
+SCHEMA_VERSION = 29
 
 
 @dataclass
@@ -343,7 +343,8 @@ CREATE_TABLES_SQL = [
     )""",
     """CREATE TABLE IF NOT EXISTS flr_fret_forster_radius (
         id INTEGER PRIMARY KEY,
-        sample_id INTEGER NOT NULL REFERENCES mfdb_sample(sample_id),
+        forster_radius_id TEXT UNIQUE,
+        sample_id TEXT NOT NULL REFERENCES flr_sample(sample_id),
         donor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
         acceptor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
         forster_radius REAL NOT NULL,
@@ -1316,6 +1317,187 @@ def _fix_operation_artifact_pk(conn: sqlite3.Connection) -> None:
         logger.warning("mfdb_operation_artifact PK migration skipped (table may already be correct)")
 
 
+def _fix_flr_fret_forster_radius_sample_id(conn: sqlite3.Connection) -> bool:
+    """Recreate ``flr_fret_forster_radius`` with sample_id column, forster_radius_id column, and scoped uniqueness.
+
+    R14 added a ``sample_id`` column to scope FRET pairs to specific samples,
+    but existing v28 databases were created without this column, causing
+    ``sqlite3.OperationalError: no such column: sample_id`` when the updated
+    code tries to insert/query it.
+
+    R15-6 added the ``forster_radius_id`` column to store deterministic IDs.
+
+    SQLite does not support adding columns with NOT NULL constraints or
+    changing UNIQUE constraints, so we recreate the table.
+
+    Returns
+    -------
+    bool
+        True if migration succeeded, False otherwise.
+    """
+    cur = conn.cursor()
+
+    # Initialize counters for logging
+    migrated_count = 0
+    ambiguous_count = 0
+
+    # Check if the table exists
+    table_info = cur.execute("PRAGMA table_info(flr_fret_forster_radius)").fetchall()
+    if not table_info:
+        # Table doesn't exist, nothing to migrate
+        return True
+
+    # Check if both sample_id and forster_radius_id columns exist
+    column_names = {r[1] for r in table_info}
+    has_sample_id = "sample_id" in column_names
+    has_forster_radius_id = "forster_radius_id" in column_names
+
+    if has_sample_id and has_forster_radius_id:
+        # Both columns exist, migration already done
+        return True
+
+    logger.info("Migrating flr_fret_forster_radius: adding sample_id, forster_radius_id columns and scoped UNIQUE constraint")
+    cur.execute("BEGIN")
+    try:
+        # Create new table with correct schema
+        cur.execute("""CREATE TABLE flr_fret_forster_radius_new (
+            id INTEGER PRIMARY KEY,
+            forster_radius_id TEXT UNIQUE,
+            sample_id TEXT NOT NULL REFERENCES flr_sample(sample_id),
+            donor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
+            acceptor_probe_id INTEGER NOT NULL REFERENCES probes(probe_id),
+            forster_radius REAL NOT NULL,
+            reduced_forster_radius REAL,
+            kappa_squared REAL DEFAULT 0.666667,
+            index_of_refraction REAL DEFAULT 1.4,
+            overlap_integral REAL,
+            details TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            deleted_at TEXT,
+            UNIQUE (sample_id, donor_probe_id, acceptor_probe_id)
+        )""")
+
+        # Try to copy existing data if possible
+        # If old table has sample_id, we can migrate directly
+        if has_sample_id:
+            old_rows = cur.execute(
+                "SELECT id, sample_id, donor_probe_id, acceptor_probe_id, "
+                "forster_radius, reduced_forster_radius, kappa_squared, "
+                "index_of_refraction, overlap_integral, details, created_at, "
+                "updated_at, deleted_at FROM flr_fret_forster_radius"
+            ).fetchall()
+
+            for old_row in old_rows:
+                # Generate a deterministic forster_radius_id
+                forster_radius_id = f"{old_row[1]}_forster_{old_row[0]}"  # sample_id_forster_id
+                cur.execute(
+                    "INSERT INTO flr_fret_forster_radius_new "
+                    "(id, forster_radius_id, sample_id, donor_probe_id, acceptor_probe_id, "
+                    "forster_radius, reduced_forster_radius, kappa_squared, "
+                    "index_of_refraction, overlap_integral, details, created_at, "
+                    "updated_at, deleted_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (old_row[0], forster_radius_id, old_row[1], old_row[2], old_row[3],
+                     old_row[4], old_row[5], old_row[6], old_row[7], old_row[8],
+                     old_row[9], old_row[10], old_row[11], old_row[12])
+                )
+        else:
+            # Old table doesn't have sample_id - try to backfill from flr_sample_probe
+            # For each FRET pair row, find the common sample_id that uses both probes
+            old_rows = cur.execute(
+                "SELECT id, donor_probe_id, acceptor_probe_id, "
+                "forster_radius, reduced_forster_radius, kappa_squared, "
+                "index_of_refraction, overlap_integral, details, created_at, "
+                "updated_at, deleted_at FROM flr_fret_forster_radius"
+            ).fetchall()
+
+            for old_row in old_rows:
+                donor_probe_id = old_row[1]
+                acceptor_probe_id = old_row[2]
+
+                # Find all samples that use the donor probe
+                donor_samples = cur.execute(
+                    "SELECT DISTINCT sample_id FROM flr_sample_probe "
+                    "WHERE probe_id = ? AND deleted_at IS NULL",
+                    (donor_probe_id,)
+                ).fetchall()
+
+                # Find all samples that use the acceptor probe
+                acceptor_samples = cur.execute(
+                    "SELECT DISTINCT sample_id FROM flr_sample_probe "
+                    "WHERE probe_id = ? AND deleted_at IS NULL",
+                    (acceptor_probe_id,)
+                ).fetchall()
+
+                donor_sample_ids = {r[0] for r in donor_samples}
+                acceptor_sample_ids = {r[0] for r in acceptor_samples}
+
+                # Find common samples
+                common_samples = donor_sample_ids & acceptor_sample_ids
+
+                if len(common_samples) == 1:
+                    # Unambiguous: both probes belong to exactly one common sample
+                    sample_id = list(common_samples)[0]
+                    forster_radius_id = f"{sample_id}_forster_{old_row[0]}"
+                    cur.execute(
+                        "INSERT INTO flr_fret_forster_radius_new "
+                        "(id, forster_radius_id, sample_id, donor_probe_id, acceptor_probe_id, "
+                        "forster_radius, reduced_forster_radius, kappa_squared, "
+                        "index_of_refraction, overlap_integral, details, created_at, "
+                        "updated_at, deleted_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (old_row[0], forster_radius_id, sample_id, old_row[1], old_row[2],
+                         old_row[3], old_row[4], old_row[5], old_row[6], old_row[7],
+                         old_row[8], old_row[9], old_row[10], old_row[11])
+                    )
+                    migrated_count += 1
+                elif len(common_samples) > 1:
+                    # Ambiguous: probes belong to multiple common samples
+                    # Log for manual repair
+                    ambiguous_count += 1
+                    logger.warning(
+                        f"Ambiguous FRET pair (id={old_row[0]}): donor_probe_id={donor_probe_id} "
+                        f"and acceptor_probe_id={acceptor_probe_id} found in multiple samples: "
+                        f"{common_samples}. This row was not migrated automatically."
+                    )
+                else:
+                    # No common sample found - probes not linked through flr_sample_probe
+                    # Try to find sample from flr_fret_analysis if it exists
+                    logger.warning(
+                        f"FRET pair (id={old_row[0]}): donor_probe_id={donor_probe_id} "
+                        f"and acceptor_probe_id={acceptor_probe_id} not linked to any common sample "
+                        f"via flr_sample_probe. This row was not migrated automatically."
+                    )
+
+            if migrated_count > 0:
+                logger.info(f"Migrated {migrated_count} unambiguous FRET pair(s)")
+            if ambiguous_count > 0:
+                logger.warning(f"{ambiguous_count} FRET pair(s) were ambiguous and require manual repair")
+
+        # Drop old table
+        cur.execute("DROP TABLE flr_fret_forster_radius")
+
+        # Rename new table
+        cur.execute("ALTER TABLE flr_fret_forster_radius_new RENAME TO flr_fret_forster_radius")
+
+        conn.commit()
+        if has_sample_id:
+            logger.info("flr_fret_forster_radius migration complete - existing data migrated")
+        else:
+            if migrated_count > 0 and ambiguous_count == 0:
+                logger.info(f"flr_fret_forster_radius migration complete - backfilled {migrated_count} unambiguous FRET pair(s)")
+            elif migrated_count > 0 and ambiguous_count > 0:
+                logger.info(f"flr_fret_forster_radius migration complete - backfilled {migrated_count} unambiguous FRET pair(s), {ambiguous_count} ambiguous pair(s) require manual repair")
+            else:
+                logger.info("flr_fret_forster_radius migration complete - no legacy FRET pair data to migrate")
+        return True
+    except Exception as e:
+        conn.rollback()
+        logger.warning("flr_fret_forster_radius migration failed: %s", e)
+        return False
+
+
 def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) -> None:
     """Repair lifecycle columns on legacy MFDB tables.
 
@@ -1557,6 +1739,12 @@ def bootstrap_auth_groups(conn: sqlite3.Connection) -> None:
 
 def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
     """Bootstrap built-in and legacy extensible vocabulary values in mfdb_vocabulary."""
+    def _dictionary_values(full_name: str) -> list[str]:
+        from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+
+        dic = MmcifDictionary.load_bundled()
+        return [value for value in dic.get_enumerations(full_name) if value not in {"#", ".", "?"}]
+
     # Extensible vocabulary values to seed
     vocab = {
         "artifact_kind": [
@@ -1601,33 +1789,27 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
             "uses_external_reference", "parameter_depends_on", "parameter_of", "linked_to",
             "project_contains", "grouped_in", "measured_sample"
         ],
-        # Sample-related vocabularies (PRD-02 Task 6)
-        "entity_type": [
-            "protein", "dna", "rna", "polymer", "non-polymer",
-            "water", "macromolecule", "oligosaccharide", "ligand", "solvent"
-        ],
-        "fluorophore_type": [
-            "donor", "acceptor", "unspecified"
-        ],
-        "solvent_phase": [
-            "liquid", "solid", "gas", "vitrified"
-        ],
         "sample_type": [
             "protein", "dna", "rna", "physical_sample"
         ],
-        "probe_origin": [
-            "extrinsic", "intrinsic"
-        ],
-        "probe_link_type": [
-            "covalent", "non-covalent", "genetic"
-        ],
-        "reactive_probe_flag": [
-            "yes", "no"
-        ],
-        "ambiguous_stoichiometry": [
-            "yes", "no"
-        ],
     }
+    vocab.update(
+        {
+            "entity_type": _dictionary_values("_entity.type"),
+            "fluorophore_type": _dictionary_values(
+                "_flr_sample_probe_details.fluorophore_type"
+            ),
+            "solvent_phase": _dictionary_values("_flr_sample.solvent_phase"),
+            "probe_origin": _dictionary_values("_flr_probe_list.probe_origin"),
+            "probe_link_type": _dictionary_values("_flr_probe_list.probe_link_type"),
+            "reactive_probe_flag": _dictionary_values(
+                "_flr_probe_list.reactive_probe_flag"
+            ),
+            "ambiguous_stoichiometry": _dictionary_values(
+                "_flr_poly_probe_position.mutation_flag"
+            ),
+        }
+    )
     with conn:
         for field_name, values in vocab.items():
             for val in values:
@@ -3215,6 +3397,15 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 _fix_operation_artifact_pk(conn)
                 set_schema_version(conn, 28)
                 version = 28
+
+            # --- v29: add sample_id to flr_fret_forster_radius ---
+            if version < 29:
+                migration_success = _fix_flr_fret_forster_radius_sample_id(conn)
+                if migration_success:
+                    set_schema_version(conn, 29)
+                    version = 29
+                else:
+                    logger.error("v29 migration failed - schema version not updated. Please fix migration issues.")
 
             _ensure_lifecycle_columns(conn)
 

@@ -612,6 +612,8 @@ class MFDatabase:
                  now, now, None)
             )
             # Note: sequence is stored in entity_poly_seq table, not in entities
+            if sequence is not None:
+                self.set_sequence(entity_id, sequence)
 
     def get_entity_by_name(self, name):
         return self.conn.execute("SELECT * FROM entities WHERE common_name = ?", (name,)).fetchone()
@@ -1709,7 +1711,7 @@ class MFDatabase:
         Parameters
         ----------
         forster_radius_id : str
-            Unique Förster radius identifier (stored as id in the table).
+            Unique Förster radius identifier (stored in forster_radius_id column).
         sample_id : str
             Sample identifier (stored in sample_id column).
         probe_id_1 : int
@@ -1734,11 +1736,11 @@ class MFDatabase:
             now = _utc_now()
             cursor = self.conn.execute(
                 "INSERT INTO flr_fret_forster_radius "
-                "(sample_id, donor_probe_id, acceptor_probe_id, forster_radius, "
+                "(forster_radius_id, sample_id, donor_probe_id, acceptor_probe_id, forster_radius, "
                 "reduced_forster_radius, kappa_squared, index_of_refraction, overlap_integral, "
                 "details, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (sample_id, probe_id_1, probe_id_2, forster_radius,
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (forster_radius_id, sample_id, probe_id_1, probe_id_2, forster_radius,
                  None,  # reduced_forster_radius
                  kappa_squared, refractive_index, None,  # overlap_integral
                  details, now, now, None)

@@ -39,6 +39,7 @@ class DictItem:
     mandatory: bool = False
     enumerations: List[str] = field(default_factory=list)
     enum_details: Dict[str, str] = field(default_factory=dict)
+    default_value: str = ""
     parent: Optional[str] = None
     child: Optional[str] = None
     schema_table: str = ""
@@ -56,6 +57,7 @@ class DictItem:
             "mandatory": self.mandatory,
             "enumerations": self.enumerations,
             "enum_details": self.enum_details,
+            "default_value": self.default_value,
             "parent": self.parent,
             "child": self.child,
             "schema_table": self.schema_table,
@@ -75,6 +77,7 @@ class DictItem:
             mandatory=data.get("mandatory", False),
             enumerations=data.get("enumerations", []),
             enum_details=data.get("enum_details", {}),
+            default_value=data.get("default_value", ""),
             parent=data.get("parent"),
             child=data.get("child"),
             schema_table=data.get("schema_table", ""),
@@ -126,7 +129,7 @@ class MmcifDictionary:
 
     DATA_DIR = Path(__file__).resolve().parent / "data"
     CACHE_PATH = DATA_DIR / "_dictionary_cache.json"
-    CACHE_VERSION = 2
+    CACHE_VERSION = 3
     
     BUNDLED_DICTS = [
         "mmcif_ddl.dic",
@@ -136,7 +139,7 @@ class MmcifDictionary:
         "mmcif_ma.dic",
         "mmcif_ihm_ext.dic",
         "mmcif_ihm_flr_ext.dic",
-        "chisurf_flr_ext.dic",  # ChiSurf-specific extensions
+        "mfdb_flr_ext.dic",  # MFDB/ChiSurf-specific extensions
     ]
 
     def __init__(self, *dic_paths: Path) -> None:
@@ -301,6 +304,8 @@ class MmcifDictionary:
                 elif stripped.startswith("_item.mandatory_code"):
                     val = self._extract_value(stripped)
                     current_item.mandatory = val.lower() == "yes"
+                elif stripped.startswith("_item_default.value"):
+                    current_item.default_value = self._extract_value(stripped)
                 elif stripped.startswith("_chisurf_schema.table_name"):
                     current_item.schema_table = self._extract_value(stripped)
                 elif stripped.startswith("_chisurf_schema.column_name"):
@@ -379,6 +384,7 @@ class MmcifDictionary:
             "type_code",
             "parent",
             "child",
+            "default_value",
             "schema_table",
             "schema_column",
             "schema_status",
@@ -530,6 +536,11 @@ class MmcifDictionary:
     def get_enumerations(self, full_name: str) -> List[str]:
         item = self.get_item(full_name)
         return item.enumerations if item else []
+
+    def get_default(self, full_name: str) -> str:
+        """Return the dictionary default for one item, if defined."""
+        item = self.get_item(full_name)
+        return item.default_value if item else ""
 
     def get_description(self, full_name: str) -> str:
         item = self.get_item(full_name)

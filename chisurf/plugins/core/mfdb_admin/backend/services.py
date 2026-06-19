@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import csv
+import dataclasses
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +18,20 @@ from chisurf.core.mfdb.database_resolver import (
     user_database_path,
 )
 from chisurf.core.mfdb.importer import import_structure_file
+from chisurf.core.mfdb.models import (
+    EntityDefinition,
+    FretPairDefinition,
+    ProbeDefinition,
+    SampleDefinition,
+)
+from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
 from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.sample_manager import (
+    create_sample,
+    get_sample_full_description,
+    suggest_pdbx_keys,
+    validate_sample_for_export,
+)
 from chisurf.plugins.core.mfdb_admin.backend.auth_services import (
     register_services as register_auth_services,
 )
@@ -89,6 +104,24 @@ VERSIONED_MFDB_METHODS = {
     "users.jump_to_operation": "jump_user_to_operation",
 }
 
+PRD02B_ADMIN_METHODS = {
+    "samples.full_description": "get_sample_full_description_handler",
+    "samples.validate_export": "validate_sample_export_handler",
+    "samples.create_structured": "create_structured_sample_handler",
+    "entities.list": "list_entities_handler",
+    "entities.save": "save_entity_handler",
+    "entities.delete": "delete_entity_handler",
+    "probes.save": "save_probe_handler",
+    "probes.optical_properties.save": "save_probe_optical_properties_handler",
+    "probes.positions.list": "list_probe_positions_handler",
+    "fret_pairs.list": "list_fret_pairs_handler",
+    "fret_pairs.save": "save_fret_pair_handler",
+    "fret_pairs.delete": "delete_fret_pair_handler",
+    "pdbx.suggest_keys": "suggest_pdbx_keys_handler",
+    "pdbx.validate_value": "validate_pdbx_value_handler",
+    "mock_data.populate": "populate_mock_data_handler",
+}
+
 
 def register_services(dispatcher_or_context: Any) -> None:
     """Register mfdb RPC handlers."""
@@ -120,6 +153,7 @@ def register_services(dispatcher_or_context: Any) -> None:
     for name in (
         "status", "samples.list", "samples.get", "samples.save", "samples.delete",
         "samples.search", "samples.key_values.save",
+        *PRD02B_ADMIN_METHODS,
         "users.list", "users.save", "users.delete",
         "devices.list", "devices.save", "devices.delete",
         "experiment_types.list", "experiment_types.save", "experiment_types.delete",
@@ -141,11 +175,26 @@ def register_services(dispatcher_or_context: Any) -> None:
         "samples.delete": delete_sample_handler,
         "samples.search": search_samples_handler,
         "samples.key_values.save": save_sample_key_values_handler,
+        "samples.full_description": get_sample_full_description_handler,
+        "samples.validate_export": validate_sample_export_handler,
+        "samples.create_structured": create_structured_sample_handler,
         "sample_conditions.get": get_sample_condition_handler,
         "sample_conditions.save": save_sample_condition_handler,
+        "entities.list": list_entities_handler,
+        "entities.save": save_entity_handler,
+        "entities.delete": delete_entity_handler,
         "probes.list": list_probes_handler,
         "probes.get": get_probe_handler,
+        "probes.save": save_probe_handler,
         "probes.optical_properties.get": get_probe_optical_properties_handler,
+        "probes.optical_properties.save": save_probe_optical_properties_handler,
+        "probes.positions.list": list_probe_positions_handler,
+        "fret_pairs.list": list_fret_pairs_handler,
+        "fret_pairs.save": save_fret_pair_handler,
+        "fret_pairs.delete": delete_fret_pair_handler,
+        "pdbx.suggest_keys": suggest_pdbx_keys_handler,
+        "pdbx.validate_value": validate_pdbx_value_handler,
+        "mock_data.populate": populate_mock_data_handler,
         "users.list": list_users_handler,
         "users.save": save_user_handler,
         "users.delete": delete_user_handler,
@@ -799,6 +848,10 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
     sample_id = str(sample.get("sample_id") or "").strip()
     if not sample_id:
         raise ValueError("sample_id is required")
+    if _is_structured_sample_payload(sample):
+        structured = dict(sample)
+        structured["name"] = sample_id
+        return create_structured_sample_handler(structured, auth=auth)
     with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         owner_user_id = requester.user_id if requester else "user_default"
@@ -819,16 +872,14 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
                 entity_id = str(entity.get("entity_id") or "").strip()
                 if not entity_id:
                     continue
+                sequence = entity.get("sequence")
                 db.add_entity(
                     entity_id,
-                    type=entity.get("type") or "polymer",
-                    description=entity.get("description"),
-                    common_name=entity.get("common_name"),
-                    formula_weight=_float_or_none(entity.get("formula_weight")),
+                    name=entity.get("common_name") or entity.get("name") or entity_id,
+                    sequence=[str(item) for item in sequence] if sequence else None,
+                    entity_type=entity.get("type") or entity.get("entity_type") or "polymer",
+                    details=entity.get("description") or entity.get("details"),
                 )
-                sequence = entity.get("sequence")
-                if sequence:
-                    db.set_sequence(entity_id, [str(item) for item in sequence])
             db.add_sample(
                 sample_id,
                 uuid=sample.get("sample_uuid"),
@@ -874,6 +925,305 @@ def delete_sample_handler(sample_id: str, auth: dict[str, Any] | None = None) ->
         _require_auth(auth, db.conn)
         db.delete_sample(sample_id)
     return {"ok": True, "sample_id": sample_id}
+
+
+def get_sample_full_description_handler(
+    sample_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return the PRD-02 nested public sample description."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_or_acl_access(auth, db.conn, "sample", sample_id)
+        description = get_sample_full_description(db, sample_id)
+    return {"description": description}
+
+
+def validate_sample_export_handler(
+    sample_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return export validation warnings for a sample."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_or_acl_access(auth, db.conn, "sample", sample_id)
+        warnings = validate_sample_for_export(db, sample_id)
+    return {"warnings": warnings, "valid": not warnings}
+
+
+def create_structured_sample_handler(
+    sample_data: dict[str, Any], auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Create a structured PRD-02 sample through sample_manager."""
+    definition = _sample_definition_from_dict(sample_data)
+    with MFDatabase(resolve_database_path()) as db:
+        requester = _require_auth(auth, db.conn)
+        owner_user_id = requester.user_id if requester else "user_default"
+        sample_id = create_sample(db, definition)
+        create_default_acl_for_object(
+            db.conn, "sample", sample_id, owner_user_id=owner_user_id,
+        )
+        description = get_sample_full_description(db, sample_id)
+    return {"sample_id": sample_id, "description": description}
+
+
+def list_entities_handler(
+    sample_id: str | None = None, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List entities globally or for one sample."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        if sample_id:
+            rows = db.conn.execute(
+                """
+                SELECT DISTINCT e.*
+                FROM entities AS e
+                JOIN flr_poly_probe_position AS ppp ON ppp.entity_id = e.entity_id
+                JOIN flr_sample_probe AS sp ON sp.poly_probe_position_id = ppp.id
+                WHERE sp.sample_id = ?
+                  AND e.deleted_at IS NULL
+                  AND ppp.deleted_at IS NULL
+                  AND sp.deleted_at IS NULL
+                ORDER BY e.entity_id
+                """,
+                (sample_id,),
+            ).fetchall()
+        else:
+            rows = db.get_entities()
+        entities = [_entity_row_with_sequence(db, row) for row in rows]
+    return {"entities": entities}
+
+
+def save_entity_handler(
+    entity: dict[str, Any], auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Create or update an entity and its sequence."""
+    entity_id = str(entity.get("entity_id") or entity.get("id") or "").strip()
+    if not entity_id:
+        raise ValueError("entity_id is required")
+    sequence = entity.get("sequence")
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        db.add_entity(
+            entity_id,
+            name=entity.get("common_name") or entity.get("name") or entity_id,
+            sequence=[str(item) for item in sequence] if sequence else None,
+            entity_type=entity.get("type") or entity.get("entity_type") or "polymer",
+            details=entity.get("description") or entity.get("details"),
+        )
+        row = db.conn.execute(
+            "SELECT * FROM entities WHERE entity_id = ? AND deleted_at IS NULL",
+            (entity_id,),
+        ).fetchone()
+        saved = _entity_row_with_sequence(db, row) if row else {}
+    return {"entity": saved}
+
+
+def delete_entity_handler(
+    entity_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Soft-delete an entity."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        with db.conn:
+            db.conn.execute(
+                "UPDATE entities SET deleted_at = ? WHERE entity_id = ?",
+                (_utc_now(), entity_id),
+            )
+    return {"ok": True, "entity_id": entity_id}
+
+
+def save_probe_handler(
+    probe: dict[str, Any], auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Create or update a probe identity row."""
+    name = str(probe.get("chromophore_name") or probe.get("name") or "").strip()
+    if not name:
+        raise ValueError("probe name is required")
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        probe_id = db.find_or_add_probe(
+            name,
+            category=probe.get("category") or "other",
+            description=probe.get("description"),
+            reactive_probe_flag=probe.get("reactive_probe_flag") or "no",
+            reactive_probe_name=probe.get("reactive_probe_name") or None,
+            probe_origin=probe.get("probe_origin") or "extrinsic",
+            probe_link_type=probe.get("probe_link_type") or "covalent",
+            chromophore_center_atom=probe.get("chromophore_center_atom") or None,
+        )
+        saved = _json_row(db.get_probe(probe_id))
+    return {"probe": saved}
+
+
+def save_probe_optical_properties_handler(
+    probe_id: int,
+    properties: list[dict[str, Any]],
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Replace editable optical properties for a probe."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        with db.conn:
+            db.conn.execute(
+                "UPDATE optical_properties SET deleted_at = ? WHERE probe_id = ?",
+                (_utc_now(), int(probe_id)),
+            )
+        for prop in properties:
+            name = str(prop.get("property_name") or prop.get("property_type") or "").strip()
+            if not name:
+                continue
+            db.add_optical_property(
+                int(probe_id),
+                name,
+                prop.get("property_value", prop.get("value")),
+                unit=prop.get("unit"),
+                method=prop.get("method"),
+                condition_json=prop.get("condition_json"),
+                details=prop.get("details"),
+            )
+        rows = db.get_optical_properties(int(probe_id))
+    return {"optical_properties": [_json_row(row) for row in rows]}
+
+
+def list_probe_positions_handler(
+    sample_id: str | None = None,
+    probe_id: int | None = None,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List probe positions by sample or probe."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        where = ["ppp.deleted_at IS NULL"]
+        params: list[Any] = []
+        if sample_id:
+            where.append("sp.sample_id = ?")
+            params.append(sample_id)
+        if probe_id is not None:
+            where.append("ppp.probe_id = ?")
+            params.append(int(probe_id))
+        rows = db.conn.execute(
+            f"""
+            SELECT
+                ppp.*,
+                sp.sample_id,
+                sp.sample_probe_id,
+                sp.fluorophore_type,
+                p.chromophore_name
+            FROM flr_poly_probe_position AS ppp
+            LEFT JOIN flr_sample_probe AS sp
+              ON sp.poly_probe_position_id = ppp.id AND sp.deleted_at IS NULL
+            LEFT JOIN probes AS p
+              ON p.probe_id = ppp.probe_id
+            WHERE {' AND '.join(where)}
+            ORDER BY ppp.id
+            """,
+            params,
+        ).fetchall()
+    return {"positions": [_json_row(row) for row in rows]}
+
+
+def list_fret_pairs_handler(
+    sample_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List FRET pair/Forster radius records for a sample."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_or_acl_access(auth, db.conn, "sample", sample_id)
+        rows = db.conn.execute(
+            """
+            SELECT
+                f.*,
+                donor.chromophore_name AS donor_probe,
+                acceptor.chromophore_name AS acceptor_probe
+            FROM flr_fret_forster_radius AS f
+            LEFT JOIN probes AS donor ON donor.probe_id = f.donor_probe_id
+            LEFT JOIN probes AS acceptor ON acceptor.probe_id = f.acceptor_probe_id
+            WHERE f.sample_id = ? AND f.deleted_at IS NULL
+            ORDER BY f.forster_radius_id
+            """,
+            (sample_id,),
+        ).fetchall()
+    return {"fret_pairs": [_json_row(row) for row in rows]}
+
+
+def save_fret_pair_handler(
+    pair: dict[str, Any], auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Create a FRET pair/Forster radius record."""
+    sample_id = str(pair.get("sample_id") or "").strip()
+    if not sample_id:
+        raise ValueError("sample_id is required")
+    donor_probe_id = _int_or_none(pair.get("donor_probe_id") or pair.get("probe_id_1"))
+    acceptor_probe_id = _int_or_none(pair.get("acceptor_probe_id") or pair.get("probe_id_2"))
+    if donor_probe_id is None or acceptor_probe_id is None:
+        raise ValueError("donor_probe_id and acceptor_probe_id are required")
+    forster_radius_id = (
+        str(pair.get("forster_radius_id") or "").strip()
+        or f"{sample_id}_forster_{donor_probe_id}_{acceptor_probe_id}"
+    )
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        with db.conn:
+            db.conn.execute(
+                "DELETE FROM flr_fret_forster_radius WHERE forster_radius_id = ?",
+                (forster_radius_id,),
+            )
+        db.add_fret_forster_radius(
+            forster_radius_id,
+            sample_id,
+            donor_probe_id,
+            acceptor_probe_id,
+            _float_or_none(pair.get("forster_radius") or pair.get("forster_radius_nm")) or 5.0,
+            kappa_squared=_float_or_none(pair.get("kappa_squared")),
+            refractive_index=_float_or_none(pair.get("index_of_refraction") or pair.get("refractive_index")),
+            details=pair.get("details"),
+        )
+    pairs = list_fret_pairs_handler(sample_id, auth=auth)["fret_pairs"]
+    saved = next((item for item in pairs if item.get("forster_radius_id") == forster_radius_id), {})
+    return {"fret_pair": saved}
+
+
+def delete_fret_pair_handler(
+    forster_radius_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Delete a FRET pair/Forster radius record."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        with db.conn:
+            db.conn.execute(
+                "DELETE FROM flr_fret_forster_radius WHERE forster_radius_id = ?",
+                (forster_radius_id,),
+            )
+    return {"ok": True, "forster_radius_id": forster_radius_id}
+
+
+def suggest_pdbx_keys_handler(
+    prefix: str = "", auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return matching PDBx/flrCIF dictionary keys."""
+    del auth
+    keys = [
+        {"key": key, "description": description}
+        for key, description in suggest_pdbx_keys(prefix)
+    ]
+    return {"keys": keys}
+
+
+def validate_pdbx_value_handler(
+    key: str, value: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Validate one PDBx/flrCIF key/value pair."""
+    del auth
+    full_name = key if key.startswith("_") else f"_{key}"
+    message = MmcifDictionary.load_bundled().validate_value(full_name, str(value))
+    return {"valid": message is None, "message": message or ""}
+
+
+def populate_mock_data_handler(
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Populate the MFDB with bundled demo data from plugin test fixtures."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+    from chisurf.plugins.core.mfdb_admin.seed_example import seed_example
+
+    return {"summary": seed_example(resolve_database_path())}
 
 
 def import_file_handler(path: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -1039,6 +1389,136 @@ def _json_row(row: Any) -> dict[str, Any]:
     return {key: row[key] for key in row.keys()}
 
 
+def _utc_now() -> str:
+    """Return an ISO UTC timestamp for service-layer soft deletes."""
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _is_structured_sample_payload(sample: dict[str, Any]) -> bool:
+    """Return whether a sample payload contains PRD-02 structured fields."""
+    return any(
+        isinstance(sample.get(key), list) and sample.get(key)
+        for key in ("probes", "fret_pairs")
+    ) or bool(sample.get("entities"))
+
+
+def _sample_definition_from_dict(sample_data: dict[str, Any]) -> SampleDefinition:
+    """Build a SampleDefinition from an RPC/GUI dictionary payload."""
+    condition = sample_data.get("condition") or {}
+    extra = dict(sample_data.get("extra") or sample_data.get("metadata") or {})
+    for item in sample_data.get("key_values", []) or []:
+        key = str(item.get("key") or "").strip()
+        if key:
+            extra[key] = item.get("value", "")
+
+    probes = [
+        ProbeDefinition(**_dataclass_kwargs(ProbeDefinition, _normalize_probe_payload(probe)))
+        for probe in sample_data.get("probes", []) or []
+    ]
+    entities = [
+        EntityDefinition(**_dataclass_kwargs(EntityDefinition, _normalize_entity_payload(entity)))
+        for entity in sample_data.get("entities", []) or []
+    ]
+    fret_pairs = [
+        FretPairDefinition(**_dataclass_kwargs(FretPairDefinition, pair))
+        for pair in _normalize_fret_pair_payloads(sample_data.get("fret_pairs", []) or [], probes)
+    ]
+
+    return SampleDefinition(
+        name=str(
+            sample_data.get("name")
+            or sample_data.get("display_name")
+            or sample_data.get("sample_id")
+            or ""
+        ),
+        description=sample_data.get("description") or sample_data.get("details") or "",
+        entities=entities,
+        probes=probes,
+        fret_pairs=fret_pairs,
+        buffer_description=(
+            sample_data.get("buffer_description")
+            or condition.get("buffer_composition")
+            or ""
+        ),
+        ph=_float_or_none(sample_data.get("ph", condition.get("ph"))),
+        temperature_k=_float_or_none(
+            sample_data.get("temperature_k", condition.get("temperature"))
+        ),
+        salt_concentration_m=_float_or_none(
+            sample_data.get("salt_concentration_m", condition.get("ionic_strength"))
+        ),
+        solvent_phase=sample_data.get("solvent_phase"),
+        extra=extra,
+        validate_vocabulary=bool(sample_data.get("validate_vocabulary", False)),
+    )
+
+
+def _dataclass_kwargs(cls: type, payload: dict[str, Any]) -> dict[str, Any]:
+    """Filter a dictionary to fields accepted by a dataclass."""
+    names = {field.name for field in dataclasses.fields(cls)}
+    return {key: value for key, value in payload.items() if key in names}
+
+
+def _normalize_entity_payload(entity: dict[str, Any]) -> dict[str, Any]:
+    """Normalize GUI/API entity aliases to EntityDefinition fields."""
+    return {
+        **entity,
+        "name": entity.get("name") or entity.get("common_name") or entity.get("entity_id") or "",
+        "entity_type": entity.get("entity_type") or entity.get("type") or "",
+        "details": entity.get("details") or entity.get("description") or "",
+    }
+
+
+def _normalize_probe_payload(probe: dict[str, Any]) -> dict[str, Any]:
+    """Normalize GUI/API probe aliases to ProbeDefinition fields."""
+    return {
+        **probe,
+        "name": probe.get("name") or probe.get("probe_name") or probe.get("chromophore_name") or "",
+        "position": probe.get("position") or probe.get("residue_number"),
+        "chain_id": probe.get("chain_id") or probe.get("asym_id") or "A",
+        "residue_name": probe.get("residue_name") or probe.get("comp_id") or "",
+        "seq_id": probe.get("seq_id") or probe.get("residue_number") or probe.get("position"),
+        "comp_id": probe.get("comp_id") or probe.get("residue_name") or "",
+        "asym_id": probe.get("asym_id") or probe.get("chain_id") or "A",
+    }
+
+
+def _normalize_fret_pair_payloads(
+    pairs: list[dict[str, Any]], probes: list[ProbeDefinition]
+) -> list[dict[str, Any]]:
+    """Normalize GUI/API FRET pair aliases to FretPairDefinition fields."""
+    probe_index = {probe.name: index for index, probe in enumerate(probes)}
+    normalized = []
+    for pair in pairs:
+        item = dict(pair)
+        if "probe_1_index" not in item and item.get("donor_probe") in probe_index:
+            item["probe_1_index"] = probe_index[item["donor_probe"]]
+        if "probe_2_index" not in item and item.get("acceptor_probe") in probe_index:
+            item["probe_2_index"] = probe_index[item["acceptor_probe"]]
+        if "forster_radius_nm" not in item and "forster_radius" in item:
+            item["forster_radius_nm"] = item["forster_radius"]
+        if "refractive_index" not in item and "index_of_refraction" in item:
+            item["refractive_index"] = item["index_of_refraction"]
+        normalized.append(item)
+    return normalized
+
+
+def _entity_row_with_sequence(db: MFDatabase, row: Any) -> dict[str, Any]:
+    """Return an entity row dictionary with sequence included."""
+    entity = _json_row(row)
+    seq_rows = db.conn.execute(
+        """
+        SELECT mon_id
+        FROM entity_poly_seq
+        WHERE entity_id = ? AND deleted_at IS NULL
+        ORDER BY num
+        """,
+        (entity["entity_id"],),
+    ).fetchall()
+    entity["sequence"] = [seq["mon_id"] for seq in seq_rows]
+    return entity
+
+
 def _get_sample_condition_row(db: MFDatabase, condition_id: str) -> dict[str, Any]:
     row = db.conn.execute(
         "SELECT * FROM flr_sample_condition WHERE condition_id = ?",
@@ -1139,6 +1619,8 @@ def _require_or_acl_access(
 
     Returns the principal (may be anonymous if ACL allows public read).
     """
+    if not conn.execute("SELECT 1 FROM flr_sample_users WHERE is_admin = 1 LIMIT 1").fetchone():
+        return None
     principal = principal_from_rpc_auth(conn, auth)
     row = conn.execute(
         "SELECT 1 FROM mfdb_object_acl WHERE object_type = ? AND object_id = ? AND deleted_at IS NULL",
@@ -1158,6 +1640,8 @@ def _require_or_acl_filter(
 
     Returns the filtered/checked rows.
     """
+    if not conn.execute("SELECT 1 FROM flr_sample_users WHERE is_admin = 1 LIMIT 1").fetchone():
+        return rows
     principal = principal_from_rpc_auth(conn, auth)
     if not rows:
         return rows
