@@ -29,6 +29,60 @@ try:
 except Exception:
     QtWidgets = QtCore = QtGui = None
 
+
+class HelpDialog(QtWidgets.QDialog):
+    """Help dialog with description and CLI reference."""
+
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About MaxEnt MEM")
+        self.resize(640, 520)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        text = QtWidgets.QTextEdit(self)
+        text.setReadOnly(True)
+
+        cli_text = ""
+        try:
+            from ..cli.cli import cli
+            from click.testing import CliRunner
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["--help"])
+            cli_text = "<pre>\n" + result.output + "</pre>"
+        except Exception as exc:
+            cli_text = f"<p>CLI help unavailable: {exc}</p>"
+
+        text.setHtml(
+            """
+            <h2>MaxEnt TCSPC lifetime/FRET MEM</h2>
+            <p>This plugin performs maximum entropy analysis of time-correlated single photon counting (TCSPC) data to recover fluorescence lifetime distributions.</p>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Load decay and IRF data</li>
+              <li>Configure analysis parameters (regularization, optimization method)</li>
+              <li>Optionally load priors or donor spectra for FRET analysis</li>
+              <li>Click <b>Run</b> to perform the MEM optimization</li>
+              <li>Optionally run sampling or analyze the L-curve</li>
+            </ol>
+
+            <h3>Output</h3>
+            <p>Results include the recovered lifetime distribution, goodness-of-fit statistics, and optional samples or prior distributions.</p>
+
+            <hr>
+            <h3>CLI Reference</h3>
+            """
+            + cli_text
+        )
+        layout.addWidget(text, 1)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok,
+        )
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
+
 try:
     import pyqtgraph as pg
 except Exception:
@@ -759,10 +813,10 @@ class MaxentDecayWidget(
         toolbar.addSeparator()
 
         self.btn_help = QtWidgets.QToolButton()
-        self.btn_help.setText("\u2753")
+        self.btn_help.setText("ℹ️ Help")
         self.btn_help.setObjectName("maxentBtnHelp")
         self.btn_help.setAutoRaise(True)
-        self.btn_help.setToolTip("Open MaxEnt README documentation")
+        self.btn_help.setToolTip("Show help and CLI reference")
         self.btn_help.clicked.connect(self._on_help_clicked)
         toolbar.addWidget(self.btn_help)
 
@@ -792,9 +846,14 @@ class MaxentDecayWidget(
         readme_action.triggered.connect(self._on_help_clicked)
         help_menu.addAction(readme_action)
 
-    # ------------------------------------------------------------------ #
-    #  Window / dock state persistence (burst selector pattern)           #
-    # ------------------------------------------------------------------ #
+    def _on_help_clicked(self) -> None:
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        dialog.exec_()
+
+        # ------------------------------------------------------------------ #
+        #  Window / dock state persistence (burst selector pattern)           #
+        # ------------------------------------------------------------------ #
 
     def _save_geometry(self) -> None:
         try:

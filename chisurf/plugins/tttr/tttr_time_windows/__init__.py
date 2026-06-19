@@ -1,17 +1,38 @@
-"""
-TTTR Time-Window Splitter
+"""TTTR Time-Window Splitter.
 
-A simple wizard plugin to split TTTR files into fixed-duration time windows (time windows, tws)
-and save them as BID files (start, stop photon indices). The wizard has three pages:
-
-1) Setup: choose the time-window length (ms) and the output folder.
-2) Files: drag-and-drop TTTR files (.ptu, .ht2, .ht3, .phu, .pt3, .t3r).
-3) Process: preview a single file's intensity trace with window boundaries and process all files.
-
-The resulting BID files are saved in the chosen output folder, one per TTTR input file.
+Split TTTR files into fixed-duration time windows and save them as
+BID files (start, stop photon indices).
 """
 
-name = "Tools:Converter:TTTR→Time-Window BIDs"
+from __future__ import annotations
 
-# Optional icon, if available later we can set it here
-icon = None
+from pathlib import Path
+
+from chisurf.core.plugin import load_manifest
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+    cli_entrypoint = _manifest.entrypoints.cli or ""
+else:
+    name = "Tools:Converter:TTTR→Time-Window BIDs"
+    cli_entrypoint = ""
+
+from .gui.tool import TTTRTimeWindowTool
+
+if __name__ == "plugin":
+    w = TTTRTimeWindowTool()
+    w.show()
+
+if __name__ == "__main__":
+    import sys
+
+    from qtpy import QtWidgets
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.aboutToQuit.connect(app.deleteLater)
+    w = TTTRTimeWindowTool()
+    w.show()
+    sys.exit(app.exec_())
+
+__all__ = ["TTTRTimeWindowTool"]

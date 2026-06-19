@@ -8,6 +8,7 @@ import pyqtgraph as pg
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QApplication,
+    QDialog,
     QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
@@ -18,6 +19,7 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QSplitter,
     QTextEdit,
@@ -30,6 +32,65 @@ from ..api.models import FitResult, PchResult
 from .client import PCHClient
 
 logger = logging.getLogger(__name__)
+
+
+class HelpDialog(QDialog):
+    """Help dialog with description and CLI reference."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About PCH Analysis")
+        self.resize(640, 520)
+        layout = QVBoxLayout(self)
+
+        text = QTextEdit(self)
+        text.setReadOnly(True)
+
+        cli_text = ""
+        try:
+            from click.testing import CliRunner
+            from ..cli.main import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["--help"])
+            cli_text = "<pre>\n" + result.output + "</pre>"
+        except Exception as exc:
+            cli_text = f"<p>CLI help unavailable: {exc}</p>"
+
+        text.setHtml(
+            """
+            <h2>Photon Counting Histogram (PCH) Analysis</h2>
+            <p>This plugin provides tools for analyzing the distribution of photon counts in
+            fluorescence time traces. PCH analysis can reveal information about:</p>
+            <ul>
+              <li>Molecular brightness (ε)</li>
+              <li>Number of molecules in the detection volume (⟨N⟩)</li>
+              <li>Presence of multiple species with different brightness values</li>
+            </ul>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Load TTTR file(s)</li>
+              <li>Select detection channels</li>
+              <li>Set bin time for histogram</li>
+              <li>Click <b>Compute PCH</b> to calculate the histogram</li>
+              <li>Click <b>Fit Model</b> to fit with theoretical model(s)</li>
+            </ol>
+
+            <h3>Output</h3>
+            <p>Results include fitted molecular brightness, molecule counts, fractions,
+            and goodness-of-fit statistics.</p>
+
+            <hr>
+            <h3>CLI Reference</h3>
+            """
+            + cli_text
+        )
+        layout.addWidget(text, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
 
 
 class PCHApp(QMainWindow):
@@ -75,6 +136,18 @@ class PCHApp(QMainWindow):
         self.action_save = tb.addAction("💾 Save Results")
         self.action_save.setEnabled(False)
         self.action_save.triggered.connect(self._on_save)
+
+        tb.addSeparator()
+
+        # Spacer to push Help button to the right
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        tb.addWidget(spacer)
+
+        # Help button (last, on the very right)
+        self.action_help = tb.addAction("ℹ️ Help")
+        self.action_help.setToolTip("Show help and CLI reference")
+        self.action_help.triggered.connect(self._show_help)
 
     # ── central layout ─────────────────────────────────────────────
 
@@ -451,6 +524,11 @@ class PCHApp(QMainWindow):
             f"χ² = {chi2:.2f}   red. χ² = {red_chi2:.3f}   dof = {dof}",
         ]
         self.results_edit.setPlainText("\n".join(lines))
+
+    def _show_help(self):
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        dialog.exec_()
 
     # ── file I/O ───────────────────────────────────────────────────
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import os
 import tempfile
@@ -14,6 +15,60 @@ from chisurf.gui.widgets.dock_area.dock_area import DockArea, DockSplitter
 
 from ..api.models import IRFEstimationSettings
 from ..core.estimation import estimate_irf as _estimate_irf
+
+
+class HelpDialog(QtWidgets.QDialog):
+    """Help dialog with description and CLI reference."""
+
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About IRF Estimation")
+        self.resize(640, 520)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        text = QtWidgets.QTextEdit(self)
+        text.setReadOnly(True)
+
+        cli_text = ""
+        try:
+            from click.testing import CliRunner
+
+            from ..cli import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["--help"])
+            cli_text = "<pre>" + html.escape(result.output) + "</pre>"
+        except Exception as exc:
+            cli_text = f"<p>CLI help unavailable: {html.escape(str(exc))}</p>"
+
+        text.setHtml(
+            """
+            <h2>IRF Estimation</h2>
+            <p>This plugin performs blind instrument response function (IRF) estimation from fluorescence decay data using truncated exponential fitting and Richardson-Lucy deconvolution.</p>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Load a Jordi decay file or ChiSurf dataset.</li>
+              <li>Configure filtering, deconvolution, and regularization parameters.</li>
+              <li>Click <b>Estimate IRF</b> to recover the IRF and fit parameters.</li>
+              <li>Save the estimated IRF or transfer it to ChiSurf for downstream analysis.</li>
+            </ol>
+
+            <h3>Output</h3>
+            <p>Results include the estimated IRF, lifetime, decay rate, amplitude, and offset.</p>
+
+            <hr>
+            <h3>CLI Reference</h3>
+            """
+            + cli_text
+        )
+        layout.addWidget(text, 1)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok,
+        )
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
 
 
 class IRFEstimatorTool(QtWidgets.QMainWindow):
@@ -385,6 +440,23 @@ class IRFEstimatorTool(QtWidgets.QMainWindow):
         self.data_info_label = QtWidgets.QLabel("No data loaded")
         self.data_info_label.setStyleSheet("color: #aaa; padding: 0 4px;")
         toolbar.addWidget(self.data_info_label)
+
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Preferred,
+        )
+        toolbar.addWidget(spacer)
+
+        help_action = QtWidgets.QAction("ℹ️ Help", self)
+        help_action.setToolTip("Show help and CLI reference")
+        help_action.triggered.connect(self._show_help)
+        toolbar.addAction(help_action)
+
+    def _show_help(self) -> None:
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        dialog.exec_()
 
     # ------------------------------------------------------------------
     # Dock context menu

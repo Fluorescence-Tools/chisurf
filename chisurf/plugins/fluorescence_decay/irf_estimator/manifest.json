@@ -1,0 +1,95 @@
+{
+  "id": "irf_estimator",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:IRF Estimation",
+  "description": "Blind IRF estimation from fluorescence decay data using truncated exponential fitting and Richardson-Lucy deconvolution.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence decay"],
+  "state_namespace": "irf_estimator",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "last_file": {"type": ["string", "null"]},
+      "settings": {"type": "object"},
+      "last_result": {"type": ["object", "null"]}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorescence_decay.irf_estimator.gui.tool:IRFEstimatorTool",
+    "cli": "irf-estimator=chisurf.plugins.fluorescence_decay.irf_estimator.cli:cli",
+    "services": "chisurf.plugins.fluorescence_decay.irf_estimator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "irf_estimator.jobs.estimate",
+      "summary": "Run IRF estimation on loaded decay data.",
+      "params_schema": "api.contract#/inputs/EstimateIRF",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": true,
+      "cancelable": false,
+      "events": [
+        "irf_estimator.jobs.progress",
+        "irf_estimator.jobs.completed",
+        "irf_estimator.jobs.failed"
+      ]
+    },
+    {
+      "name": "irf_estimator.data.load_decay",
+      "summary": "Load a Jordi format decay file.",
+      "params_schema": "api.contract#/inputs/LoadDecay",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "irf_estimator.data.load_dataset",
+      "summary": "Load decay data from a ChiSurf dataset.",
+      "params_schema": {},
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "irf_estimator.data.save_irf",
+      "summary": "Save estimated IRF to a Jordi file.",
+      "params_schema": "api.contract#/inputs/SaveIRF",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "irf_estimator.data.transfer_irf",
+      "summary": "Transfer estimated IRF to ChiSurf as a dataset.",
+      "params_schema": {},
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "irf_estimator.contract.describe",
+      "summary": "Return the IRF Estimator workflow contract.",
+      "params_schema": {},
+      "result_schema": "api.contract",
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "irf_estimator.state.*",
+      "description": "State patch events for IRF estimator plugin"
+    },
+    {
+      "topic": "irf_estimator.jobs.*",
+      "description": "Job lifecycle events"
+    }
+  ]
+}

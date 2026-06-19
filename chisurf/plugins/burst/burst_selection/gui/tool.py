@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -128,6 +129,60 @@ def histogram_data_from_frame(frame: pd.DataFrame, feature: str) -> np.ndarray:
             return data.dropna().to_numpy(dtype=float)
     data = pd.to_numeric(burst_rows_for_display(frame)[feature], errors="coerce").dropna()
     return data.to_numpy(dtype=float)
+
+
+class HelpDialog(QtWidgets.QDialog):
+    """Help dialog with description and CLI reference."""
+
+    def __init__(self, parent: BurstSelectionTool | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About Burst Selection")
+        self.resize(640, 520)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        text = QtWidgets.QTextEdit(self)
+        text.setReadOnly(True)
+
+        cli_text = ""
+        try:
+            from click.testing import CliRunner
+
+            from ..cli.main import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["--help"])
+            cli_text = "<pre>" + html.escape(result.output) + "</pre>"
+        except Exception as exc:
+            cli_text = f"<p>CLI help unavailable: {html.escape(str(exc))}</p>"
+
+        text.setHtml(
+            """
+            <h2>Burst Selection</h2>
+            <p>This plugin detects bursts in TTTR data, filters photons, exports burst tables, and computes diagnostic plots for burst analysis.</p>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Add one or more TTTR files or folders.</li>
+              <li>Choose detector setup, photon filters, and burst detection settings.</li>
+              <li>Click <b>Process</b> to run the analysis.</li>
+              <li>Inspect diagnostic plots, histograms, metadata, and exported burst tables.</li>
+            </ol>
+
+            <h3>Output</h3>
+            <p>Results include filtered burst lists, diagnostic plots, optional CSV/MFD-HDF exports, and analysis metadata.</p>
+
+            <hr>
+            <h3>CLI Reference</h3>
+            """
+            + cli_text
+        )
+        layout.addWidget(text, 1)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok,
+        )
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
 
 
 class MetadataDialog(QtWidgets.QDialog):
@@ -962,8 +1017,8 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         settings_menu.addAction(metadata_action)
 
         help_menu = self.menuBar().addMenu("Help")
-        about_action = QtWidgets.QAction("About", self)
-        about_action.triggered.connect(self._show_about)
+        about_action = QtWidgets.QAction("Help", self)
+        about_action.triggered.connect(self._show_help)
         help_menu.addAction(about_action)
 
         self._setup_toolbar()
@@ -2641,6 +2696,18 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         toolbar.addWidget(QtWidgets.QLabel("to"))
         toolbar.addWidget(self.plot_max_spin)
 
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Preferred,
+        )
+        toolbar.addWidget(spacer)
+
+        help_action = QtWidgets.QAction("ℹ️ Help", self)
+        help_action.setToolTip("Show help and CLI reference")
+        help_action.triggered.connect(self._show_help)
+        toolbar.addAction(help_action)
+
         # Apply object names so the toolbar stylesheet can color only the text.
         for widget in toolbar.children():
             if isinstance(widget, QtWidgets.QToolButton):
@@ -2658,17 +2725,9 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         self.setStatusBar(self._status_bar)
         self._status_bar.showMessage("Ready")
 
-    def _show_about(self) -> None:
-        """Show about dialog."""
-        dialog = QtWidgets.QDialog(self)
-        dialog.setWindowTitle("About Burst Selection")
-        layout = QtWidgets.QVBoxLayout(dialog)
-        layout.addWidget(QtWidgets.QLabel("Burst Selection Tool", dialog))
-        layout.addWidget(QtWidgets.QLabel("ChiSurf Plugin for burst analysis of TTTR data.", dialog))
-        layout.addStretch()
-        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok)
-        buttons.accepted.connect(dialog.accept)
-        layout.addWidget(buttons)
+    def _show_help(self) -> None:
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
         dialog.exec_()
 
     def _show_metadata_dialog(self) -> None:

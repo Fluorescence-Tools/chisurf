@@ -1,0 +1,80 @@
+{
+  "id": "tttr_time_windows",
+  "version": "2.0.0",
+  "display_name": "Tools:Converter:TTTR→Time-Window BIDs",
+  "description": "Split TTTR files into fixed-duration time-window BID (.bst) files.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Converter"],
+  "icon": null,
+  "state_namespace": "tttr_time_windows",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "selected_files": {"type": "array", "items": {"type": "string"}},
+      "time_window_ms": {"type": "number"},
+      "output_dir": {"type": ["string", "null"]},
+      "last_result_summary": {"type": ["object", "null"]}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.tttr.tttr_time_windows.gui.tool:TTTRTimeWindowTool",
+    "cli": "tttr-time-windows=chisurf.plugins.tttr.tttr_time_windows.cli:cli",
+    "services": "chisurf.plugins.tttr.tttr_time_windows.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "tttr_time_windows.jobs.analyze_files",
+      "summary": "Split TTTR files into fixed-duration time-window BIDs.",
+      "params_schema": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": {"type": "array", "items": {"type": "string"}},
+          "time_window_ms": {"type": "number", "default": 10.0},
+          "output_dir": {"type": ["string", "null"]}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "result": {"type": "object"},
+          "error": {"type": "string"}
+        }
+      },
+      "long_running": true,
+      "cancelable": false,
+      "events": [
+        "tttr_time_windows.jobs.progress",
+        "tttr_time_windows.jobs.completed",
+        "tttr_time_windows.jobs.failed"
+      ]
+    },
+    {
+      "name": "tttr_time_windows.contract.describe",
+      "summary": "Return the Time Window Bins workflow contract.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "tttr_time_windows.state.*",
+      "description": "State patch events for time window bins plugin"
+    },
+    {
+      "topic": "tttr_time_windows.jobs.*",
+      "description": "Job lifecycle events"
+    }
+  ]
+}

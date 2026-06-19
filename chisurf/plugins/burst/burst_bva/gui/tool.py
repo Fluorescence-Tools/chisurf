@@ -34,6 +34,60 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups impo
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
 
 
+class HelpDialog(QDialog):
+    """Help dialog with description and CLI reference."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About Burst Variance Analysis (BVA)")
+        self.resize(640, 520)
+        layout = QVBoxLayout(self)
+
+        text = QTextEdit(self)
+        text.setReadOnly(True)
+
+        cli_text = ""
+        try:
+            from click.testing import CliRunner
+            from ..cli.main import cli
+
+            runner = CliRunner()
+            result = runner.invoke(cli, ["--help"])
+            cli_text = "<pre>\n" + result.output + "</pre>"
+        except Exception as exc:
+            cli_text = f"<p>CLI help unavailable: {exc}</p>"
+
+        text.setHtml(
+            """
+            <h2>Burst Variance Analysis (BVA)</h2>
+            <p>This plugin implements Burst Variance Analysis for single-molecule FRET experiments.
+            BVA is a technique that analyzes the variance of FRET efficiency within individual
+            bursts to distinguish between static and dynamic heterogeneity in the sample.</p>
+
+            <h3>How it works</h3>
+            <ol>
+              <li>Select data folder containing TTTR files</li>
+              <li>Configure analysis parameters (window length, photons per slice)</li>
+              <li>Set up FRET pair assignment (donor/acceptor channels)</li>
+              <li>Click <b>Run</b> to process all files and generate BVA results</li>
+            </ol>
+
+            <h3>Output</h3>
+            <p>Results include burst statistics, FRET efficiency distributions, variance analysis,
+            and heterogeneity metrics.</p>
+
+            <hr>
+            <h3>CLI Reference</h3>
+            """
+            + cli_text
+        )
+        layout.addWidget(text, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
+
+
 _BTN_STYLES: dict[str, str] = {
     "folder": """
 QToolButton { background-color: #2a4a7a; border: 1px solid #4a7aba; }
@@ -62,10 +116,15 @@ QToolButton:hover { background-color: #8a3a3a; border-color: #ba5a5a; }
 QToolButton:pressed { background-color: #5a1a1a; }
 """,
     "settings": """
-QToolButton { background-color: #4a4a6a; border: 1px solid #6a6a9a; }
-QToolButton:hover { background-color: #5a5a8a; border-color: #8a8aba; }
-QToolButton:pressed { background-color: #3a3a5a; }
-""",
+    QToolButton { background-color: #4a4a6a; border: 1px solid #6a6a9a; }
+    QToolButton:hover { background-color: #5a5a8a; border-color: #8a8aba; }
+    QToolButton:pressed { background-color: #3a3a5a; }
+    """,
+    "help": """
+    QToolButton { background-color: #4a6a4a; border: 1px solid #6a8a6a; }
+    QToolButton:hover { background-color: #5a8a5a; border-color: #8aba7a; }
+    QToolButton:pressed { background-color: #3a5a3a; }
+    """,
 }
 
 _TOOLBAR_BUTTON_BASE = """
@@ -247,6 +306,10 @@ class BVATool(QMainWindow):
         self.toolbar.addWidget(self.btn_save)
         self.toolbar.addWidget(self.btn_clear)
         self.toolbar.addWidget(self.btn_save_settings)
+        self.toolbar.addSeparator()
+        self.btn_help = _tbtn("ℹ️ Help", "help")
+        self.toolbar.addWidget(self.btn_help)
+        self.btn_help.clicked.connect(self._show_help)
 
     def _build_settings_tab(self) -> QWidget:
         w = QWidget()
@@ -689,6 +752,11 @@ class BVATool(QMainWindow):
     def _status(self, msg: str):
         self._status_label.setText(msg)
         QCoreApplication.processEvents()
+
+    def _show_help(self):
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        dialog.exec_()
 
     def closeEvent(self, event):
         self._save_dock_layout()
