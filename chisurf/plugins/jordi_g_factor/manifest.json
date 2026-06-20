@@ -1,0 +1,40 @@
+{
+  "id": "jordi_g_factor",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:Jordi G-Factor Calculator",
+  "description": "Calculate detector G-factors using tail-matching on Jordi format files.",
+  "authors": ["Thomas-Otavio Peulen <thomas.peulen@tu-dortmund.de>"],
+  "categories": ["Spectroscopy", "Fluorescence decay"],
+  "icon": "icon.png",
+  "state_namespace": "jordi_g_factor",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.jordi_g_factor.gui.tool:JordiGFactorCalculator",
+    "cli": "jordi-g-factor=chisurf.plugins.jordi_g_factor.cli:cli",
+    "services": "chisurf.plugins.jordi_g_factor.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "jordi_g_factor.calculate",
+      "summary": "Calculate G-factor based on tail matching for Jordi decays."
+    },
+    {
+      "name": "jordi_g_factor.perrin_steady_state",
+      "summary": "Perrin steady-state anisotropy for a sphere."
+    },
+    {
+      "name": "jordi_g_factor.solve_linked_l",
+      "summary": "Solve for the linked l1=l2 mixing parameter."
+    },
+    {
+      "name": "jordi_g_factor.archive_g_factor",
+      "summary": "Register reference decay and archive G-factor calibration in MFDB."
+    }
+  ]
+}

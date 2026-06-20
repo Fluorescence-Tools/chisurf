@@ -32,7 +32,7 @@ def create_synthetic_jordi_data(filename, n_points=1000):
     jordi_data = np.concatenate([parallel, perpendicular])
     
     # Save to file using central Jordi writer
-    write_jordi(jordi_data, filename, fmt='%.6f')
+    write_jordi(filename=filename, data=jordi_data, fmt='%.6f')
     
     print(f"Created synthetic Jordi data file: {filename}")
     print(f"Expected g-factor: ~1.67")
