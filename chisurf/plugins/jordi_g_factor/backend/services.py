@@ -152,9 +152,12 @@ def archive_g_factor_handler(
             logger.warning("archive_g_factor_handler: no g_factor provided; cannot archive calibration")
             return {"ok": False, "error": "g_factor is required", "calibration_id": ""}
 
-        if r_inf is None and g_val is not None and region_min is not None and region_max is not None and os.path.exists(file_path):
+        # Compute the derived decays (background-corrected VV/VH and the
+        # anisotropy r(t)) so they can be archived alongside the raw reference
+        # decay, and refine r_inf when a region is given.
+        derived_decays = None
+        if os.path.exists(file_path):
             try:
-                # Load jordi file and compute r_inf
                 from chisurf.core.fio import read_jordi as _read_jordi
                 if _read_jordi is not None:
                     vv, vh = _read_jordi(file_path, split=True)
@@ -178,28 +181,36 @@ def archive_g_factor_handler(
                     bg_vv, bg_vh = compute_background_levels(
                         vv, vh, t, t + decay_shift, bg_region
                     )
-                
+
                 vv_corr = np.maximum(vv - bg_vv, 0.0)
                 vh_corr = np.maximum(vh - bg_vh, 0.0)
-                
+
                 from ..core.calculations import shift_interp_on_axis, compute_rt
                 vh_corr_shifted = shift_interp_on_axis(t, vh_corr, decay_shift)
                 r_corr = compute_rt(vv_corr, vh_corr_shifted, g_val, l1=l1, l2=l2)
 
-                rmin = max(float(t[0]), min(float(region_min), float(t[-1])))
-                rmax = max(float(t[0]), min(float(region_max), float(t[-1])))
-                if rmax < rmin:
-                    rmin, rmax = rmax, rmin
-                i0 = int(np.argmin(np.abs(t - rmin)))
-                i1 = int(np.argmin(np.abs(t - rmax)))
-                if i1 <= i0:
-                    i1 = min(len(t), i0 + 1)
-                r_region = r_corr[i0:i1]
-                r_region = r_region[np.isfinite(r_region)]
-                r_inf = float(np.nanmean(r_region)) if r_region.size > 0 else np.nan
+                derived_decays = {
+                    "time": t.tolist(),
+                    "vv_corrected": vv_corr.tolist(),
+                    "vh_corrected": vh_corr.tolist(),
+                    "anisotropy": r_corr.tolist(),
+                }
+
+                if r_inf is None and region_min is not None and region_max is not None:
+                    rmin = max(float(t[0]), min(float(region_min), float(t[-1])))
+                    rmax = max(float(t[0]), min(float(region_max), float(t[-1])))
+                    if rmax < rmin:
+                        rmin, rmax = rmax, rmin
+                    i0 = int(np.argmin(np.abs(t - rmin)))
+                    i1 = int(np.argmin(np.abs(t - rmax)))
+                    if i1 <= i0:
+                        i1 = min(len(t), i0 + 1)
+                    r_region = r_corr[i0:i1]
+                    r_region = r_region[np.isfinite(r_region)]
+                    r_inf = float(np.nanmean(r_region)) if r_region.size > 0 else np.nan
             except Exception as calc_err:
-                logger.warning("archive_g_factor_handler: failed to compute r_inf: %s", calc_err)
-                r_inf = None
+                logger.warning("archive_g_factor_handler: failed to compute derived decays: %s", calc_err)
+                derived_decays = None
 
         # Build reference decay metadata
         meta = {
@@ -220,6 +231,27 @@ def archive_g_factor_handler(
         )
         if not ref_decay_id:
             logger.warning("archive_g_factor_handler: register_raw_measurement returned empty ID")
+
+        # Register the derived decays (corrected VV/VH + anisotropy r(t)) as a
+        # processed_data artifact derived from the reference decay.
+        derived_decay_id = ""
+        if derived_decays is not None:
+            from chisurf.core.mfdb.result_registry import register_result
+            derived_decay_id = register_result(
+                kind="processed_data",
+                data=derived_decays,
+                parent_artifact_id=ref_decay_id or "",
+                operation_type="calibration",
+                metadata={
+                    "derived_from": "jordi_g_factor",
+                    "columns": ["time", "vv_corrected", "vh_corrected", "anisotropy"],
+                    "use_bg": 1 if use_bg else 0,
+                    "decay_shift": decay_shift,
+                    "flip": 1 if flip else 0,
+                },
+            )
+            if not derived_decay_id:
+                logger.warning("archive_g_factor_handler: derived-decay registration returned empty ID")
 
         # Prep calibration parameters
         calib_params = {
@@ -262,6 +294,7 @@ def archive_g_factor_handler(
             "ok": True,
             "calibration_id": calib_id,
             "reference_decay_id": ref_decay_id or "",
+            "derived_decay_id": derived_decay_id,
         }
 
     except Exception as exc:

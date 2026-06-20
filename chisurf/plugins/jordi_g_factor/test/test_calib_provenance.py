@@ -106,6 +106,24 @@ def test_archive_g_factor_provenance(tmp_path, monkeypatch):
         assert edge is not None, "calibration must be parented to the reference decay"
         assert edge[0] == "derived_from"
 
+        # The derived decays (corrected VV/VH + anisotropy) are stored as a
+        # processed_data artifact, also parented to the reference decay.
+        derived_id = res.get("derived_decay_id")
+        assert derived_id, "derived decays must be archived"
+        derived = db.get_artifact(derived_id)
+        assert derived is not None
+        assert derived["artifact_kind"] == "processed_data"
+        d_edge = db.conn.execute(
+            "SELECT relationship_type FROM mfdb_edge "
+            "WHERE source_node_id = ? AND target_node_id = ? AND deleted_at IS NULL",
+            (derived_id, ref_decay_id),
+        ).fetchone()
+        assert d_edge is not None and d_edge[0] == "derived_from"
+        d_payload = read_result(db, derived_id)
+        assert d_payload is not None
+        assert "anisotropy" in d_payload.data
+        assert "vv_corrected" in d_payload.data
+
 
 def test_archive_g_factor_graceful_failure(tmp_path, monkeypatch):
     """Verify that archive_g_factor fails gracefully without raising when database is missing."""

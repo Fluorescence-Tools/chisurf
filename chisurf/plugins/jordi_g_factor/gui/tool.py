@@ -20,7 +20,7 @@ from qtpy.QtWidgets import (
     QLabel, QPushButton, QListWidget, QListWidgetItem, QAbstractItemView,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog
 )
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QTimer
 import pyqtgraph as pg
 
 # Optional ChiSurf I/O import for Jordi reading
@@ -269,6 +269,14 @@ class JordiGFactorCalculator(QWidget):
         super().__init__()
         self.setWindowTitle("Jordi G-Factor Calculator")
 
+        # Debounce timer: coalesce rapid UI events (region/bg drags, shift
+        # spinbox) into a single G-factor calculation instead of one RPC
+        # round-trip per event.
+        self._calc_timer = QTimer(self)
+        self._calc_timer.setSingleShot(True)
+        self._calc_timer.setInterval(150)
+        self._calc_timer.timeout.connect(self.calculate_g_factor)
+
         # Data storage
         self.jordi_data = None
         self.time_axis = None
@@ -313,7 +321,7 @@ class JordiGFactorCalculator(QWidget):
         self.load_button.clicked.connect(self.load_jordi_file)
         self.batch_button.clicked.connect(self.open_batch_window)
         self.bg_correction_checkbox.stateChanged.connect(self.on_bg_correction_changed)
-        self.flip_checkbox.stateChanged.connect(lambda *_: (self.update_plot(), self.calculate_g_factor()))
+        self.flip_checkbox.stateChanged.connect(lambda *_: (self.update_plot(), self._schedule_calculate()))
         self.shift_spinbox.valueChanged.connect(self.on_shift_changed)
         self.fp_load_button.clicked.connect(self.load_fp_jordi_file)
         self.fp_rho_spinbox.valueChanged.connect(self.calculate_fp_mixing_estimate)
@@ -542,18 +550,22 @@ class JordiGFactorCalculator(QWidget):
 
         self.calculate_g_factor()
 
+    def _schedule_calculate(self):
+        """Debounced trigger for calculate_g_factor (coalesces rapid events)."""
+        self._calc_timer.start()
+
     def on_region_changed(self):
         self.region_bounds = self.region.getRegion()
-        self.calculate_g_factor()
+        self._schedule_calculate()
 
     def on_bg_region_changed(self):
         self.bg_region_bounds = self.bg_region.getRegion()
-        self.calculate_g_factor()
+        self._schedule_calculate()
 
     def on_shift_changed(self, value):
         self.decay_shift = value
         self.update_plot()
-        self.calculate_g_factor()
+        self._schedule_calculate()
 
     def calculate_g_factor(self):
         if self.parallel_data is None or self.perpendicular_data is None:
