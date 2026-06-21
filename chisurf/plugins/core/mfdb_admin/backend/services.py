@@ -234,6 +234,29 @@ def register_services(dispatcher_or_context: Any) -> None:
         dispatcher.register(f"mfdb.{name}", lambda params, _handler=handler: _handler(**params))
 
 
+def _default_user_id() -> str | None:
+    """Configured local default user (the one registration stamps ownership with)."""
+    try:
+        import chisurf.core.settings
+        return chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id") or None
+    except Exception:
+        return None
+
+
+def _resolve_owner_id(db: "MFDatabase", auth: dict[str, Any] | None) -> str | None:
+    """Resolve the acting user for MFDB dataset access.
+
+    Uses the authenticated principal when present; otherwise (e.g. the
+    in-process desktop client, which has no session) falls back to the
+    configured ``mfdb.default_user_id`` — the same identity registration stamps
+    — so reads and writes agree.
+    """
+    principal = principal_from_rpc_auth(db.conn, auth)
+    if isinstance(principal, AnonymousPrincipal):
+        return _default_user_id()
+    return principal.user_id
+
+
 def datasets_browse_handler(
     scope: str = "all",
     query: str | None = None,
@@ -271,20 +294,7 @@ def datasets_browse_handler(
         ``datasets``, ``total``, ``sample_counts``.
     """
     with MFDatabase(resolve_database_path()) as db:
-        principal = principal_from_rpc_auth(db.conn, auth)
-        if isinstance(principal, AnonymousPrincipal):
-            # No authenticated session (e.g. the in-process GUI client): fall
-            # back to the configured default user so "Mine"/own scope matches
-            # the owner that registration stamps via the same setting.
-            try:
-                import chisurf.core.settings
-                owner_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get(
-                    "default_user_id"
-                ) or None
-            except Exception:
-                owner_id = None
-        else:
-            owner_id = principal.user_id
+        owner_id = _resolve_owner_id(db, auth)
         return db.browse_datasets(
             scope=scope,
             query=query,
@@ -316,8 +326,11 @@ def datasets_open_handler(
         ``local_path`` (str) key.
     """
     with MFDatabase(resolve_database_path()) as db:
-        principal = principal_from_rpc_auth(db.conn, auth)
-        require_authenticated(principal)
+        # Allow the in-process/local client (anonymous) when a default user is
+        # configured, consistent with datasets.browse; otherwise require auth.
+        owner_id = _resolve_owner_id(db, auth)
+        if not owner_id:
+            require_authenticated(principal_from_rpc_auth(db.conn, auth))
         local_path = db.open_dataset(artifact_id)
         return {"local_path": local_path}
 

@@ -683,3 +683,26 @@ def test_real_mfdbclient_call_browses_datasets(tmp_path, monkeypatch):
     assert isinstance(res, dict)
     assert res.get("total") == 1
     assert len(res.get("datasets", [])) == 1
+
+
+def test_datasets_open_allows_anonymous_with_default_user(tmp_path, monkeypatch):
+    """Regression: datasets.open must not require an authenticated session when a
+    default user is configured (the in-process GUI client is anonymous). It
+    previously failed with 'Authentication required', breaking the load."""
+    import chisurf.core.settings
+    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.plugins.core.mfdb_admin.backend import services as svc
+
+    monkeypatch.setitem(
+        chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}
+    )
+    dbp = str(tmp_path / "open.db")
+    db = MFDatabase(dbp)
+    f = tmp_path / "m.ptu"
+    f.write_bytes(b"payload-bytes")
+    art = rr.register_raw_measurement(file_path=str(f), db=db)
+    db.close()
+    monkeypatch.setattr(svc, "resolve_database_path", lambda: dbp)
+
+    res = svc.datasets_open_handler(artifact_id=art, auth=None)  # anonymous
+    assert res.get("local_path"), "anonymous open must return a local path"
