@@ -40,7 +40,10 @@ from typing import Any, Dict, List
 from qtpy import QtWidgets, QtCore
 
 from chisurf.core.settings import cs_settings
-from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups, JsonEditorDialog
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_setup_utils import (
+    resolve_active_user_id,
+)
 from chisurf.core.fluorescence.fcs.channel_setups import (
     FCS_CHANNEL_SETUPS_FILE,
     load_fcs_channel_setups,
@@ -63,16 +66,24 @@ icon = "📡"
 class FCSChannelDialog(QtWidgets.QDialog):
     """Minimal editor for FCS channel-pair definitions per detector setup."""
 
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget | None = None, db_path: str | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("FCS Channel Definitions")
         self.resize(720, 460)
+        self._db_path = db_path
 
         self._detector_setups: Dict[str, Any] = {}
         self._fcs_cfg: Dict[str, Any] = {}
         self._channels_for_setup: Dict[str, List[Dict[str, Any]]] = {}
         self._current_setup: str | None = None
         self._channel_names: List[str] = []
+        self._public_checkbox = QtWidgets.QCheckBox("Public")
+        self._public_checkbox.setChecked(False)
+        self._public_checkbox.setToolTip(
+            "When checked, this setup is visible to all users in "
+            "the MFDB. Only the owner can change this setting."
+        )
+        self._public_checkbox.setEnabled(False)
 
         self._build_ui()
         self._load_state()
@@ -80,52 +91,20 @@ class FCSChannelDialog(QtWidgets.QDialog):
     # ---- UI ---------------------------------------------------------
     def _build_ui(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
+        layout.setSpacing(2)
+        layout.setContentsMargins(4, 4, 4, 4)
 
         top = QtWidgets.QHBoxLayout()
         top.addWidget(QtWidgets.QLabel("Detector setup:", self))
         self.setup_combo = QtWidgets.QComboBox(self)
         self.setup_combo.currentIndexChanged.connect(self._on_setup_changed)
         top.addWidget(self.setup_combo, 1)
-        self.btn_reload = QtWidgets.QPushButton("Reload", self)
+        self.btn_reload = QtWidgets.QToolButton(self)
+        self.btn_reload.setText("🔄 Reload")
         self.btn_reload.clicked.connect(self._reload_detector_setups)
         top.addWidget(self.btn_reload)
+        top.addWidget(self._public_checkbox)
         layout.addLayout(top)
-
-        info = QtWidgets.QLabel(
-            f"FCS channel definitions are stored in\n  {FCS_CHANNEL_SETUPS_FILE}",
-            self,
-        )
-        info.setWordWrap(True)
-        info_row = QtWidgets.QHBoxLayout()
-        info_row.addWidget(info, 1)
-        self.btn_edit_json = QtWidgets.QToolButton(self)
-        self.btn_edit_json.setText("Edit JSON")
-        self.btn_edit_json.setToolTip("Edit the raw fcs_channel_setups.json file")
-        self.btn_edit_json.clicked.connect(self._on_edit_json)
-        info_row.addWidget(self.btn_edit_json)
-        layout.addLayout(info_row)
-
-        # Correlator settings
-        corr_box = QtWidgets.QGroupBox("Correlator settings (tttrlib.Correlator)", self)
-        g = QtWidgets.QGridLayout(corr_box)
-        self.spin_bins = QtWidgets.QSpinBox(corr_box)
-        self.spin_bins.setRange(1, 512)
-        self.spin_bins.setValue(int(cs_settings["correlator"]["B"]))
-        self.spin_casc = QtWidgets.QSpinBox(corr_box)
-        self.spin_casc.setRange(1, 64)
-        self.spin_casc.setValue(int(cs_settings["correlator"]["number_of_cascades"]))
-        self.check_fine = QtWidgets.QCheckBox("Fine correlation (use microtimes)", corr_box)
-        self.check_fine.setChecked(bool(cs_settings["correlator"]["fine"]))
-
-        r = 0
-        g.addWidget(QtWidgets.QLabel("Bins per cascade (B)", corr_box), r, 0)
-        g.addWidget(self.spin_bins, r, 1)
-        r += 1
-        g.addWidget(QtWidgets.QLabel("Number of cascades", corr_box), r, 0)
-        g.addWidget(self.spin_casc, r, 1)
-        r += 1
-        g.addWidget(self.check_fine, r, 0, 1, 2)
-        layout.addWidget(corr_box)
 
         # Channel pairs table
         mid = QtWidgets.QHBoxLayout()
@@ -133,7 +112,7 @@ class FCSChannelDialog(QtWidgets.QDialog):
         right_box = QtWidgets.QGroupBox("Channel pairs", self)
         right_layout = QtWidgets.QVBoxLayout(right_box)
         self.table_pairs = QtWidgets.QTableWidget(right_box)
-        self.table_pairs.setColumnCount(6)
+        self.table_pairs.setColumnCount(7)
         self.table_pairs.setHorizontalHeaderLabels([
             "Name",
             "Channel A",
@@ -141,6 +120,7 @@ class FCSChannelDialog(QtWidgets.QDialog):
             "Bins",
             "Cascades",
             "Fine",
+            "",
         ])
         self.table_pairs.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         header = self.table_pairs.horizontalHeader()
@@ -148,6 +128,8 @@ class FCSChannelDialog(QtWidgets.QDialog):
             header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
             for col in range(1, 6):
                 header.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(6, QtWidgets.QHeaderView.Fixed)
+            header.resizeSection(6, 30)
         except Exception:
             pass
         self.table_pairs.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -163,7 +145,8 @@ class FCSChannelDialog(QtWidgets.QDialog):
         self.combo_b = QtWidgets.QComboBox(right_box)
         self.edit_name = QtWidgets.QLineEdit(right_box)
         self.edit_name.setPlaceholderText("Pair label (optional)")
-        self.btn_add = QtWidgets.QPushButton("Add", right_box)
+        self.btn_add = QtWidgets.QToolButton(right_box)
+        self.btn_add.setText("➕ Add")
 
         controls.addWidget(QtWidgets.QLabel("A:", right_box))
         controls.addWidget(self.combo_a)
@@ -181,8 +164,10 @@ class FCSChannelDialog(QtWidgets.QDialog):
 
         bottom = QtWidgets.QHBoxLayout()
         bottom.addStretch(1)
-        self.btn_save = QtWidgets.QPushButton("Save", self)
-        self.btn_close = QtWidgets.QPushButton("Close", self)
+        self.btn_save = QtWidgets.QToolButton(self)
+        self.btn_save.setText("💾 Save")
+        self.btn_close = QtWidgets.QToolButton(self)
+        self.btn_close.setText("❌ Close")
         self.btn_save.clicked.connect(self._on_save)
         self.btn_close.clicked.connect(self.close)
         bottom.addWidget(self.btn_save)
@@ -192,7 +177,7 @@ class FCSChannelDialog(QtWidgets.QDialog):
     # ---- Loading / saving -------------------------------------------
     def _load_state(self) -> None:
         self._reload_detector_setups()
-        self._fcs_cfg = load_fcs_channel_setups()
+        self._fcs_cfg = load_fcs_channel_setups(db_path=self._db_path, skip_migration=True)
         last = self._fcs_cfg.get("last_used_setup")
         if isinstance(last, str) and last:
             idx = self.setup_combo.findText(last)
@@ -200,7 +185,7 @@ class FCSChannelDialog(QtWidgets.QDialog):
                 self.setup_combo.setCurrentIndex(idx)
 
     def _reload_detector_setups(self) -> None:
-        data = load_detector_setups()
+        data = load_detector_setups(db_path=self._db_path, skip_migration=True)
         setups = data.get("setups", {}) if isinstance(data, dict) else {}
         self._detector_setups = setups
 
@@ -242,20 +227,6 @@ class FCSChannelDialog(QtWidgets.QDialog):
         cfg_all = self._fcs_cfg.get("setups", {}) if isinstance(self._fcs_cfg, dict) else {}
         cfg = cfg_all.get(self._current_setup, {}) if isinstance(cfg_all, dict) else {}
 
-        corr = cfg.get("correlator", {}) if isinstance(cfg, dict) else {}
-        try:
-            self.spin_bins.setValue(int(corr.get("n_bins", cs_settings["correlator"]["B"])))
-        except Exception:
-            pass
-        try:
-            self.spin_casc.setValue(int(corr.get("n_casc", cs_settings["correlator"]["number_of_cascades"])))
-        except Exception:
-            pass
-        try:
-            self.check_fine.setChecked(bool(corr.get("make_fine", cs_settings["correlator"]["fine"])))
-        except Exception:
-            pass
-
         pairs = cfg.get("pairs", []) if isinstance(cfg, dict) else []
         if not isinstance(pairs, list):
             pairs = []
@@ -264,7 +235,6 @@ class FCSChannelDialog(QtWidgets.QDialog):
                 name = str(p.get("name", ""))
                 cha = str(p.get("channel_a", ""))
                 chb = str(p.get("channel_b", ""))
-                pcorr = p.get("correlator", {}) if isinstance(p, dict) else {}
             except Exception:
                 continue
             row = self.table_pairs.rowCount()
@@ -288,41 +258,31 @@ class FCSChannelDialog(QtWidgets.QDialog):
                 combo_b.setCurrentIndex(idx_b)
             self.table_pairs.setCellWidget(row, 1, combo_a)
             self.table_pairs.setCellWidget(row, 2, combo_b)
-            b_txt = ""
-            nc_txt = ""
-            fine_txt = ""
-            try:
-                if isinstance(pcorr, dict) and "n_bins" in pcorr:
-                    b_txt = str(int(pcorr.get("n_bins")))
-            except Exception:
-                b_txt = ""
-            try:
-                if isinstance(pcorr, dict) and "n_casc" in pcorr:
-                    nc_txt = str(int(pcorr.get("n_casc")))
-            except Exception:
-                nc_txt = ""
-            try:
-                if isinstance(pcorr, dict) and "make_fine" in pcorr:
-                    fine_txt = "1" if bool(pcorr.get("make_fine")) else "0"
-            except Exception:
-                fine_txt = ""
-            self.table_pairs.setItem(row, 3, QtWidgets.QTableWidgetItem(b_txt))
-            self.table_pairs.setItem(row, 4, QtWidgets.QTableWidgetItem(nc_txt))
-            # Fine as checkbox
+            # Per-pair correlator values from structured columns
+            b_val = p.get("n_bins")
+            nc_val = p.get("n_casc")
+            fine_val = p.get("make_fine")
+            self.table_pairs.setItem(
+                row, 3,
+                QtWidgets.QTableWidgetItem(str(b_val) if b_val is not None else ""),
+            )
+            self.table_pairs.setItem(
+                row, 4,
+                QtWidgets.QTableWidgetItem(str(nc_val) if nc_val is not None else ""),
+            )
             chk = QtWidgets.QCheckBox(self.table_pairs)
-            try:
-                chk.setChecked(fine_txt in ("1", "true", "t", "yes", "y"))
-            except Exception:
-                chk.setChecked(False)
+            if fine_val is not None:
+                chk.setChecked(bool(fine_val))
             chk.setTristate(False)
             self.table_pairs.setCellWidget(row, 5, chk)
+            # Delete button per row
+            btn_del = QtWidgets.QToolButton(self.table_pairs)
+            btn_del.setText("✕")
+            btn_del.setToolTip("Remove this pair")
+            btn_del.clicked.connect(lambda checked, r=row: self._on_remove_row(r))
+            self.table_pairs.setCellWidget(row, 6, btn_del)
 
     def _collect_pairs_cfg(self) -> Dict[str, Any]:
-        corr = {
-            "n_bins": int(self.spin_bins.value()),
-            "n_casc": int(self.spin_casc.value()),
-            "make_fine": bool(self.check_fine.isChecked()),
-        }
         pairs: List[Dict[str, Any]] = []
         n_rows = self.table_pairs.rowCount()
         for r in range(n_rows):
@@ -388,23 +348,30 @@ class FCSChannelDialog(QtWidgets.QDialog):
                             fine_val = txt in ("1", "true", "t", "yes", "y")
             except Exception:
                 fine_val = None
-            if n_bins_val is not None or n_casc_val is not None or fine_val is not None:
-                pcorr: Dict[str, Any] = {}
-                if n_bins_val is not None:
-                    pcorr["n_bins"] = n_bins_val
-                if n_casc_val is not None:
-                    pcorr["n_casc"] = n_casc_val
-                if fine_val is not None:
-                    pcorr["make_fine"] = fine_val
-                pair["correlator"] = pcorr
+            if n_bins_val is not None:
+                pair["n_bins"] = n_bins_val
+            if n_casc_val is not None:
+                pair["n_casc"] = n_casc_val
+            if fine_val is not None:
+                pair["make_fine"] = fine_val
             pairs.append(pair)
-        return {"correlator": corr, "pairs": pairs}
+        return {"pairs": pairs}
 
     # ---- Slots ------------------------------------------------------
     def _on_setup_changed(self, _idx: int) -> None:
         self._current_setup = self.setup_combo.currentText().strip() or None
         self._populate_channels()
         self._populate_pairs()
+        # Update public checkbox from loaded setup metadata
+        cfg_all = self._fcs_cfg.get("setups", {}) if isinstance(self._fcs_cfg, dict) else {}
+        sd = cfg_all.get(self._current_setup, {}) if self._current_setup else {}
+        if isinstance(sd, dict):
+            is_pub = bool(sd.get("_is_public", False))
+            owner = sd.get("_owner")
+            active = resolve_active_user_id()
+            can_edit = (owner is None) or (owner == active)
+            self._public_checkbox.setChecked(is_pub)
+            self._public_checkbox.setEnabled(can_edit)
 
     def _on_add_pair(self) -> None:
         cha = self.combo_a.currentText().strip()
@@ -435,13 +402,31 @@ class FCSChannelDialog(QtWidgets.QDialog):
             combo_b.setCurrentIndex(idx_b)
         self.table_pairs.setCellWidget(row, 1, combo_a)
         self.table_pairs.setCellWidget(row, 2, combo_b)
-        # Initialize per-pair correlator settings from the current global settings
-        self.table_pairs.setItem(row, 3, QtWidgets.QTableWidgetItem(str(int(self.spin_bins.value()))))
-        self.table_pairs.setItem(row, 4, QtWidgets.QTableWidgetItem(str(int(self.spin_casc.value()))))
+        # Seed per-pair correlator from cs_settings defaults
+        try:
+            _def_bins = int(cs_settings["correlator"]["B"])
+        except Exception:
+            _def_bins = 2
+        try:
+            _def_casc = int(cs_settings["correlator"]["number_of_cascades"])
+        except Exception:
+            _def_casc = 25
+        try:
+            _def_fine = bool(cs_settings["correlator"]["fine"])
+        except Exception:
+            _def_fine = True
+        self.table_pairs.setItem(row, 3, QtWidgets.QTableWidgetItem(str(_def_bins)))
+        self.table_pairs.setItem(row, 4, QtWidgets.QTableWidgetItem(str(_def_casc)))
         chk = QtWidgets.QCheckBox(self.table_pairs)
-        chk.setChecked(self.check_fine.isChecked())
+        chk.setChecked(_def_fine)
         chk.setTristate(False)
         self.table_pairs.setCellWidget(row, 5, chk)
+        # Delete button
+        btn_del = QtWidgets.QToolButton(self.table_pairs)
+        btn_del.setText("✕")
+        btn_del.setToolTip("Remove this pair")
+        btn_del.clicked.connect(lambda checked, r=row: self._on_remove_row(r))
+        self.table_pairs.setCellWidget(row, 6, btn_del)
 
     def _on_pairs_context_menu(self, pos: QtCore.QPoint) -> None:
         menu = QtWidgets.QMenu(self.table_pairs)
@@ -458,24 +443,8 @@ class FCSChannelDialog(QtWidgets.QDialog):
         for r in rows:
             self.table_pairs.removeRow(r)
 
-    def _on_edit_json(self) -> None:
-        """Open a simple JSON editor for the FCS channel setups file."""
-        cfg = load_fcs_channel_setups()
-        dlg = JsonEditorDialog(cfg, self)
-        if dlg.exec_():
-            edited = dlg.get_edited_data()
-            if isinstance(edited, dict):
-                ok = save_fcs_channel_setups(edited)
-                if ok:
-                    self._fcs_cfg = edited
-                    # Refresh current setup view (pairs/correlator settings)
-                    self._populate_pairs()
-                else:
-                    QtWidgets.QMessageBox.critical(
-                        self,
-                        "Error",
-                        f"Could not save to:\n{FCS_CHANNEL_SETUPS_FILE}",
-                    )
+    def _on_remove_row(self, row: int) -> None:
+        self.table_pairs.removeRow(row)
 
     def _on_save(self) -> None:
         if not self._current_setup:
@@ -486,9 +455,11 @@ class FCSChannelDialog(QtWidgets.QDialog):
         if not isinstance(setups, dict):
             setups = {}
             cfg_all["setups"] = setups
-        setups[self._current_setup] = self._collect_pairs_cfg()
+        setup_data = self._collect_pairs_cfg()
+        setup_data["_is_public"] = self._public_checkbox.isChecked()
+        setups[self._current_setup] = setup_data
         cfg_all["last_used_setup"] = self._current_setup
-        ok = save_fcs_channel_setups(cfg_all)
+        ok = save_fcs_channel_setups(cfg_all, is_public=self._public_checkbox.isChecked())
         if ok:
             QtWidgets.QMessageBox.information(
                 self,

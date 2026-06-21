@@ -4260,19 +4260,30 @@ class MFDatabase(MFDBClientBase):
                         channel_a = pair_data.get("channel_a", "")
                         channel_b = pair_data.get("channel_b", "")
                         kind = pair_data.get("kind")
+                        pair_n_bins = pair_data.get("n_bins")
+                        pair_n_casc = pair_data.get("n_casc")
+                        pair_make_fine = pair_data.get("make_fine")
                     elif isinstance(pair_data, (list, tuple)) and len(pair_data) >= 2:
                         channel_a = str(pair_data[0]) if pair_data[0] else ""
                         channel_b = str(pair_data[1]) if pair_data[1] else ""
                         kind = str(pair_data[2]) if len(pair_data) > 2 and pair_data[2] else None
+                        pair_n_bins = pair_n_casc = pair_make_fine = None
                     else:
                         continue
                     if not channel_a or not channel_b:
                         continue
                     self.conn.execute(
                         """INSERT INTO mfdb_setup_fcs_pair
-                            (setup_id, name, channel_a, channel_b, kind, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        (setup_id, pair_name, channel_a, channel_b, kind, now, now)
+                            (setup_id, name, channel_a, channel_b, kind,
+                             n_bins, n_casc, make_fine,
+                             created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (
+                            setup_id, pair_name, channel_a, channel_b, kind,
+                            pair_n_bins, pair_n_casc,
+                            1 if pair_make_fine else 0 if pair_make_fine is not None else None,
+                            now, now,
+                        )
                     )
 
             self.add_audit_log(

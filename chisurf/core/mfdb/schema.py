@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 35
+SCHEMA_VERSION = 36
 
 
 @dataclass
@@ -3818,6 +3818,62 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                     "Schema upgraded to v35 (mfdb_setup_calibration table added, "
                     "%d/%d channels backfilled).",
                     _backfill_inserted, _backfill_source,
+                )
+
+            # --- v36: add per-pair correlator columns to mfdb_setup_fcs_pair ---
+            if version < 36:
+                logger.info(
+                    "Migrating database schema to version 36 "
+                    "(add n_bins, n_casc, make_fine to mfdb_setup_fcs_pair)..."
+                )
+                _ensure_column(conn, "mfdb_setup_fcs_pair", "n_bins", "INTEGER")
+                _ensure_column(conn, "mfdb_setup_fcs_pair", "n_casc", "INTEGER")
+                _ensure_column(conn, "mfdb_setup_fcs_pair", "make_fine", "INTEGER")
+
+                # Backfill: seed each existing fcs_pair row from its parent
+                # mfdb_setup defaults so no pair is left with NULL correlator values.
+                conn.row_factory = sqlite3.Row
+                _bf_source = 0
+                _bf_inserted = 0
+                try:
+                    pair_rows = conn.execute(
+                        "SELECT p.id, p.setup_id, "
+                        "s.n_bins AS setup_bins, s.n_casc AS setup_casc, "
+                        "s.make_fine AS setup_fine "
+                        "FROM mfdb_setup_fcs_pair p "
+                        "JOIN mfdb_setup s ON s.setup_id = p.setup_id "
+                        "WHERE p.deleted_at IS NULL "
+                        "AND s.deleted_at IS NULL"
+                    ).fetchall()
+                    _bf_source = len(pair_rows)
+                    for pr in pair_rows:
+                        try:
+                            conn.execute(
+                                "UPDATE mfdb_setup_fcs_pair SET "
+                                "n_bins=?, n_casc=?, make_fine=? "
+                                "WHERE id=?",
+                                (
+                                    pr["setup_bins"],
+                                    pr["setup_casc"],
+                                    1 if pr["setup_fine"] else 0,
+                                    pr["id"],
+                                ),
+                            )
+                            _bf_inserted += 1
+                        except Exception as exc:
+                            logger.warning(
+                                "v36 backfill skipped pair id=%s: %s",
+                                pr["id"], exc,
+                            )
+                except Exception as exc:
+                    logger.warning("v36 backfill enumeration failed: %s", exc)
+
+                set_schema_version(conn, 36)
+                version = 36
+                logger.info(
+                    "Schema upgraded to v36 (per-pair correlator columns added, "
+                    "%d/%d pairs backfilled).",
+                    _bf_inserted, _bf_source,
                 )
 
             _ensure_mfdb_setup_columns(conn)

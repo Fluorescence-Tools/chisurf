@@ -2698,6 +2698,42 @@ save__mfdb_setup_fcs_pair.kind
    _item_description.description
 ;     Optional kind/label for the pair (e.g. auto, cross).
 
+save__mfdb_setup_fcs_pair.n_bins
+   _item.name                "_mfdb_setup_fcs_pair.n_bins"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       2
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name n_bins
+   _item_description.description
+;     Correlator number of bins for this correlation pair.
+;     Overrides the setup-level default when set.
+
+save__mfdb_setup_fcs_pair.n_casc
+   _item.name                "_mfdb_setup_fcs_pair.n_casc"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       25
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name n_casc
+   _item_description.description
+;     Correlator number of cascades for this correlation pair.
+;     Overrides the setup-level default when set.
+
+save__mfdb_setup_fcs_pair.make_fine
+   _item.name                "_mfdb_setup_fcs_pair.make_fine"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       1
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name make_fine
+   _item_description.description
+;     Correlator make_fine flag for this correlation pair (0/1).
+;     Overrides the setup-level default when set.
+
 save_mfdb_setup_calibration
    _category.id              mfdb_setup_calibration
    _category.description
