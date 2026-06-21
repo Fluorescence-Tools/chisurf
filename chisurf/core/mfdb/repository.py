@@ -14,6 +14,7 @@ from typing import Any
 import numpy as np
 
 from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.base import MFDBClientBase
 from chisurf.core.mfdb.database_resolver import resolve_database_path
 from chisurf.core.mfdb.graph import map_legacy_node_type
 from chisurf.core.mfdb.models import (
@@ -80,7 +81,10 @@ def _exists(conn: sqlite3.Connection, table: str, column: str, value: Any) -> bo
     return row is not None
 
 
-class MFDatabase:
+_migrated_db_paths: set[str] = set()
+
+
+class MFDatabase(MFDBClientBase):
 
     _VALID_ENUMS = {
         "category": ["organic_dye", "protein", "nanoparticle", "quantum_dot", "other"],
@@ -113,9 +117,18 @@ class MFDatabase:
             self.readonly = readonly
         elif db_path is not None:
             self.connect()
-            self.migration_report = schema.migrate_schema(self.conn)
-            if not self.readonly and hasattr(schema, "_ensure_lifecycle_columns"):
-                schema._ensure_lifecycle_columns(self.conn)
+            db_key = self.db_path
+            if db_key == ":memory:" or db_key not in _migrated_db_paths:
+                self.migration_report = schema.migrate_schema(self.conn)
+                if not self.readonly and hasattr(schema, "_ensure_lifecycle_columns"):
+                    schema._ensure_lifecycle_columns(self.conn)
+                if db_key != ":memory:":
+                    _migrated_db_paths.add(db_key)
+            # Defensive column ensure — runs on every open so module
+            # reloads and reconnect both repair DBs that silently missed
+            # column additions (the old try/except OperationalError: pass).
+            if not self.readonly and hasattr(schema, "_ensure_mfdb_setup_columns"):
+                schema._ensure_mfdb_setup_columns(self.conn)
 
     @property
     def conn(self) -> sqlite3.Connection:
@@ -1184,6 +1197,203 @@ class MFDatabase:
         with self.conn:
             self.conn.execute("UPDATE mfdb_setup SET deleted_at = ? WHERE setup_id = ?", (_utc_now(), setup_id))
 
+    def list_detector_channels(self, setup_id: str) -> list[dict[str, Any]]:
+        """List detector channel definitions for a setup.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+
+        Returns
+        -------
+        list of dict
+            Detector channel rows.
+        """
+        rows = self.conn.execute(
+            "SELECT * FROM mfdb_setup_detector_channel "
+            "WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
+            (setup_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_pie_windows(self, setup_id: str) -> list[dict[str, Any]]:
+        """List PIE/micro-time window definitions for a setup.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+
+        Returns
+        -------
+        list of dict
+            PIE window rows.
+        """
+        rows = self.conn.execute(
+            "SELECT * FROM mfdb_setup_pie_window "
+            "WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
+            (setup_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # -- setup calibration --
+
+    def add_setup_calibration(
+        self,
+        setup_id: str,
+        channel_name: str,
+        g_factor: float | None = None,
+        l1: float | None = None,
+        l2: float | None = None,
+        g_factor_channels: list[int] | None = None,
+        g_factor_calibration_id: str | None = None,
+        calibrated_at: str | None = None,
+        method: str | None = "manual",
+        created_by_user_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Append a calibration snapshot for one detector channel.
+
+        This is an append-only insert — existing rows are never updated.
+        The corresponding ``mfdb_setup_detector_channel`` row is updated as
+        a cache of the latest snapshot so that legacy readers continue to work.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+        channel_name : str
+            Detector channel name.
+        g_factor : float or None, optional
+            G-factor value.
+        l1 : float or None, optional
+            Leakage parameter l1.
+        l2 : float or None, optional
+            Leakage parameter l2.
+        g_factor_channels : list of int or None, optional
+            Channel indices used for G-factor calculation.
+        g_factor_calibration_id : str or None, optional
+            Reference to the MFDB calibration artifact.
+        calibrated_at : str or None, optional
+            ISO-8601 timestamp. Defaults to current UTC time.
+        method : str or None, optional
+            Calibration method (e.g. ``manual``, ``migrated``,
+            ``jordi_g_factor``). Defaults to ``manual``.
+        created_by_user_id : str or None, optional
+            User creating this snapshot.
+
+        Returns
+        -------
+        dict
+            The inserted row as a dictionary.
+        """
+        now = calibrated_at or _utc_now()
+        with self._transaction():
+            cur = self.conn.execute(
+                """INSERT INTO mfdb_setup_calibration
+                    (setup_id, channel_name, g_factor, l1, l2,
+                     g_factor_channels, g_factor_calibration_id,
+                     calibrated_at, method, created_by_user_id,
+                     created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    setup_id, channel_name, g_factor, l1, l2,
+                    _json_dumps(g_factor_channels) if g_factor_channels is not None else None,
+                    g_factor_calibration_id,
+                    now, method, created_by_user_id,
+                    now, now,
+                ),
+            )
+            snapshot_id = cur.lastrowid
+
+            # Update the detector channel cache row
+            self.conn.execute(
+                """UPDATE mfdb_setup_detector_channel SET
+                    g_factor = ?, l1 = ?, l2 = ?,
+                    g_factor_channels = ?, g_factor_calibration_id = ?,
+                    updated_at = ?
+                WHERE setup_id = ? AND name = ? AND deleted_at IS NULL""",
+                (
+                    g_factor, l1, l2,
+                    _json_dumps(g_factor_channels) if g_factor_channels is not None else None,
+                    g_factor_calibration_id,
+                    now, setup_id, channel_name,
+                ),
+            )
+
+            return dict(
+                self.conn.execute(
+                    "SELECT * FROM mfdb_setup_calibration WHERE id = ?",
+                    (snapshot_id,),
+                ).fetchone()
+            )
+
+    def list_setup_calibration_dates(
+        self, setup_id: str
+    ) -> list[str]:
+        """Return distinct calibration timestamps for a setup, newest first.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+
+        Returns
+        -------
+        list of str
+            ISO-8601 timestamps.
+        """
+        rows = self.conn.execute(
+            "SELECT DISTINCT calibrated_at FROM mfdb_setup_calibration "
+            "WHERE setup_id = ? ORDER BY calibrated_at DESC",
+            (setup_id,),
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def get_setup_calibration(
+        self,
+        setup_id: str,
+        calibrated_at: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return calibration snapshots for a setup at a given timestamp.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+        calibrated_at : str or None, optional
+            ISO-8601 timestamp. If ``None``, returns the latest snapshot
+            per channel.
+
+        Returns
+        -------
+        list of dict
+            Calibration snapshot rows.
+        """
+        if calibrated_at:
+            rows = self.conn.execute(
+                "SELECT * FROM mfdb_setup_calibration "
+                "WHERE setup_id = ? AND calibrated_at = ? "
+                "ORDER BY channel_name",
+                (setup_id, calibrated_at),
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                """SELECT sc.* FROM mfdb_setup_calibration sc
+                    INNER JOIN (
+                        SELECT channel_name, MAX(calibrated_at) AS latest
+                        FROM mfdb_setup_calibration
+                        WHERE setup_id = ?
+                        GROUP BY channel_name
+                    ) latest
+                    ON sc.channel_name = latest.channel_name
+                    AND sc.calibrated_at = latest.latest
+                    WHERE sc.setup_id = ?
+                    ORDER BY sc.channel_name""",
+                (setup_id, setup_id),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
     # -- analysis runs --
 
     def add_analysis_run(
@@ -1506,6 +1716,67 @@ class MFDatabase:
         except Exception:
             return None
 
+    def sample_exists(self, sample_id: str) -> bool:
+        """Return whether an active canonical sample exists.
+
+        Parameters
+        ----------
+        sample_id : str
+            Sample identifier to check.
+
+        Returns
+        -------
+        bool
+            ``True`` when the sample exists in ``mfdb_sample`` and is active.
+
+        """
+        if not sample_id:
+            return False
+        row = self.conn.execute(
+            """SELECT 1 FROM mfdb_sample
+               WHERE sample_id = ? AND deleted_at IS NULL""",
+            (sample_id,),
+        ).fetchone()
+        return row is not None
+
+    def link_artifact_to_sample(self, artifact_id: str, sample_id: str) -> None:
+        """Create an idempotent measured-sample edge from artifact to sample.
+
+        Parameters
+        ----------
+        artifact_id : str
+            Artifact identifier to link.
+        sample_id : str
+            Canonical sample identifier.
+
+        Returns
+        -------
+        None
+            The edge is created when missing and left unchanged when present.
+
+        """
+        if not artifact_id or not sample_id:
+            return
+        existing = self.conn.execute(
+            """SELECT edge_id FROM mfdb_edge
+               WHERE source_node_type = 'artifact'
+                 AND source_node_id = ?
+                 AND target_node_type = 'sample'
+                 AND target_node_id = ?
+                 AND relationship_type = 'measured_sample'
+                 AND deleted_at IS NULL""",
+            (artifact_id, sample_id),
+        ).fetchone()
+        if existing:
+            return
+        self.add_edge(
+            source_node_type="artifact",
+            source_node_id=artifact_id,
+            target_node_type="sample",
+            target_node_id=sample_id,
+            relationship_type="measured_sample",
+        )
+
     def set_object_sample_id(self, object_uuid: str, sample_id: str | None) -> None:
         """Store or remove a sample_id on an object-store file reference.
 
@@ -1535,6 +1806,34 @@ class MFDatabase:
                 "UPDATE mfdb_object SET metadata_json = ? WHERE object_uuid = ?",
                 (_json_dumps(metadata), object_uuid),
             )
+
+    def find_raw_artifact_by_md5(self, content_md5: str) -> str:
+        """Return a raw-measurement artifact for object-store content MD5.
+
+        Parameters
+        ----------
+        content_md5 : str
+            MD5 hex digest of the raw file content.
+
+        Returns
+        -------
+        str
+            Existing raw-measurement artifact ID, or an empty string.
+
+        """
+        row = self.conn.execute(
+            """SELECT artifact.artifact_id
+               FROM mfdb_artifact artifact
+               JOIN mfdb_object object_ref
+                 ON object_ref.object_uuid = artifact.object_uuid
+               WHERE object_ref.content_md5 = ?
+                 AND artifact.artifact_kind = 'raw_measurement'
+                 AND artifact.deleted_at IS NULL
+               ORDER BY artifact.created_at DESC
+               LIMIT 1""",
+            (content_md5,),
+        ).fetchone()
+        return str(row["artifact_id"]) if row else ""
 
     def get_sample(self, sample_id):
         return self.conn.execute(
@@ -2890,8 +3189,8 @@ class MFDatabase:
     def _get_object_store(self):
         """Return the shared ObjectStore instance, creating it if needed."""
         if not hasattr(self, "_object_store") or self._object_store is None:
-            from chisurf.core.mfdb.object_store import ObjectStore
             from chisurf.core.mfdb.database_resolver import object_store_root
+            from chisurf.core.mfdb.object_store import ObjectStore
             self._object_store = ObjectStore(object_store_root())
         return self._object_store
 
@@ -3779,23 +4078,43 @@ class MFDatabase:
         description: str | None = None,
         configuration: dict[str, Any] | None = None,
         detectors: dict[str, Any] | None = None,
+        windows: dict[str, Any] | None = None,
         timing_calibration: dict[str, Any] | None = None,
         irf_definition: dict[str, Any] | None = None,
         dark_count: dict[str, Any] | None = None,
         timing_resolution: dict[str, Any] | None = None,
         burst_defaults: dict[str, Any] | None = None,
         fcs_calibration: dict[str, Any] | None = None,
+        created_by_user_id: str | None = None,
+        is_public: bool | int | None = None,
+        fcs_pairs: dict[str, Any] | None = None,
+        n_bins: int | None = None,
+        n_casc: int | None = None,
+        make_fine: bool | int | None = None,
     ) -> None:
         now = _utc_now()
+        # Extract typed timing columns from the timing_resolution dict.
+        # These are the dictionary-authoritative columns; timing_resolution_json
+        # remains for backward compatibility.
+        timing_dict = timing_resolution or {}
+        _macro_t = timing_dict.get("macro_time_resolution")
+        _micro_t = timing_dict.get("micro_time_resolution")
+        _micro_b = timing_dict.get("micro_time_binning")
+        # Normalize empty-string user_id to None so the FK constraint holds
+        _owner = created_by_user_id or None
         with self._transaction():
             self.conn.execute(
                 """INSERT INTO mfdb_setup (
                     setup_id, name, version, instrument_id, description,
                     configuration_json, detectors_json, timing_calibration_json,
                     irf_definition_json, dark_count_json, timing_resolution_json,
+                    macro_time_resolution, micro_time_resolution, micro_time_binning,
+                    n_bins, n_casc, make_fine,
                     burst_defaults_json, fcs_calibration_json,
+                    created_by_user_id,
+                    is_public,
                     created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(setup_id) DO UPDATE SET
                     name=excluded.name,
                     version=excluded.version,
@@ -3807,8 +4126,16 @@ class MFDatabase:
                     irf_definition_json=excluded.irf_definition_json,
                     dark_count_json=excluded.dark_count_json,
                     timing_resolution_json=excluded.timing_resolution_json,
+                    macro_time_resolution=excluded.macro_time_resolution,
+                    micro_time_resolution=excluded.micro_time_resolution,
+                    micro_time_binning=excluded.micro_time_binning,
+                    n_bins=excluded.n_bins,
+                    n_casc=excluded.n_casc,
+                    make_fine=excluded.make_fine,
                     burst_defaults_json=excluded.burst_defaults_json,
                     fcs_calibration_json=excluded.fcs_calibration_json,
+                    created_by_user_id=excluded.created_by_user_id,
+                    is_public=excluded.is_public,
                     updated_at=excluded.updated_at,
                     deleted_at=excluded.deleted_at""",
                 (
@@ -3823,13 +4150,131 @@ class MFDatabase:
                     _json_dumps(irf_definition),
                     _json_dumps(dark_count),
                     _json_dumps(timing_resolution),
+                    _macro_t,
+                    _micro_t,
+                    _micro_b,
+                    n_bins,
+                    n_casc,
+                    1 if make_fine else 0 if make_fine is not None else None,
                     _json_dumps(burst_defaults),
                     _json_dumps(fcs_calibration),
+                    _owner,
+                    1 if is_public is True else 0,
                     now,
                     now,
                     None,
                 ),
             )
+
+            # Write structured detector channel rows
+            if detectors:
+                self.conn.execute(
+                    "UPDATE mfdb_setup_detector_channel SET deleted_at = ? WHERE setup_id = ? AND deleted_at IS NULL",
+                    (now, setup_id)
+                )
+                for det_name, det_data in detectors.items():
+                    if not isinstance(det_data, dict):
+                        continue
+                    channels = det_data.get("channels") or det_data.get("chs")
+                    mtr = det_data.get("micro_time_ranges")
+                    g_factor = det_data.get("g_factor")
+                    l1 = det_data.get("l1")
+                    l2 = det_data.get("l2")
+                    gfc = det_data.get("g_factor_channels")
+                    gfc_id = det_data.get("g_factor_calibration_id")
+                    self.conn.execute(
+                        """INSERT INTO mfdb_setup_detector_channel
+                            (setup_id, name, channels, micro_time_ranges,
+                             g_factor, l1, l2, g_factor_channels, g_factor_calibration_id,
+                             created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (
+                            setup_id, det_name,
+                            _json_dumps(channels) if channels is not None else None,
+                            _json_dumps(mtr) if mtr is not None else None,
+                            g_factor, l1, l2,
+                            _json_dumps(gfc) if gfc is not None else None,
+                            gfc_id,
+                            now, now
+                        )
+                    )
+                    # Append a calibration snapshot only when calibration data is
+                    # present AND differs from the latest snapshot for this
+                    # channel. Plain structural re-saves must not create
+                    # duplicate-factor snapshots (which would pollute the
+                    # calibration-date history).
+                    has_cal = g_factor is not None or l1 is not None or l2 is not None
+                    latest = self.conn.execute(
+                        "SELECT g_factor, l1, l2, g_factor_calibration_id "
+                        "FROM mfdb_setup_calibration "
+                        "WHERE setup_id = ? AND channel_name = ? AND deleted_at IS NULL "
+                        "ORDER BY calibrated_at DESC LIMIT 1",
+                        (setup_id, det_name),
+                    ).fetchone()
+                    unchanged = latest is not None and (
+                        latest[0] == g_factor and latest[1] == l1
+                        and latest[2] == l2 and latest[3] == gfc_id
+                    )
+                    if has_cal and not unchanged:
+                        self.conn.execute(
+                            """INSERT INTO mfdb_setup_calibration
+                                (setup_id, channel_name, g_factor, l1, l2,
+                                 g_factor_channels, g_factor_calibration_id,
+                                 calibrated_at, method, created_by_user_id,
+                                 created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (
+                                setup_id, det_name, g_factor, l1, l2,
+                                _json_dumps(gfc) if gfc is not None else None,
+                                gfc_id,
+                                now, "manual", _owner,
+                                now, now,
+                            ),
+                        )
+
+            # Write structured PIE window rows
+            if windows:
+                self.conn.execute(
+                    "UPDATE mfdb_setup_pie_window SET deleted_at = ? WHERE setup_id = ? AND deleted_at IS NULL",
+                    (now, setup_id)
+                )
+                for win_name, bounds in windows.items():
+                    if not isinstance(bounds, (list, tuple)) or len(bounds) < 2:
+                        continue
+                    start_val, end_val = int(bounds[0]), int(bounds[1])
+                    self.conn.execute(
+                        """INSERT INTO mfdb_setup_pie_window
+                            (setup_id, name, start, end, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?)""",
+                        (setup_id, win_name, start_val, end_val, now, now)
+                    )
+
+            # Write structured FCS channel pair rows
+            if fcs_pairs:
+                self.conn.execute(
+                    "UPDATE mfdb_setup_fcs_pair SET deleted_at = ? WHERE setup_id = ? AND deleted_at IS NULL",
+                    (now, setup_id)
+                )
+                for pair_name, pair_data in fcs_pairs.items():
+                    if isinstance(pair_data, dict):
+                        channel_a = pair_data.get("channel_a", "")
+                        channel_b = pair_data.get("channel_b", "")
+                        kind = pair_data.get("kind")
+                    elif isinstance(pair_data, (list, tuple)) and len(pair_data) >= 2:
+                        channel_a = str(pair_data[0]) if pair_data[0] else ""
+                        channel_b = str(pair_data[1]) if pair_data[1] else ""
+                        kind = str(pair_data[2]) if len(pair_data) > 2 and pair_data[2] else None
+                    else:
+                        continue
+                    if not channel_a or not channel_b:
+                        continue
+                    self.conn.execute(
+                        """INSERT INTO mfdb_setup_fcs_pair
+                            (setup_id, name, channel_a, channel_b, kind, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                        (setup_id, pair_name, channel_a, channel_b, kind, now, now)
+                    )
+
             self.add_audit_log(
                 action="create",
                 target_type="setup",
@@ -3837,11 +4282,37 @@ class MFDatabase:
                 details={"name": name, "version": version},
             )
 
-    def get_setup(self, setup_id: str) -> dict[str, Any] | None:
+    def get_setup(
+        self,
+        setup_id: str,
+        calibrated_at: str | None = None,
+    ) -> dict[str, Any] | None:
         row = self.conn.execute(
             "SELECT * FROM mfdb_setup WHERE setup_id = ?", (setup_id,)
         ).fetchone()
-        return _row_to_dict(row)
+        result = _row_to_dict(row)
+        if result is not None:
+            result["detector_channels"] = [
+                dict(r) for r in self.conn.execute(
+                    "SELECT * FROM mfdb_setup_detector_channel WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
+                    (setup_id,)
+                ).fetchall()
+            ]
+            result["pie_windows"] = [
+                dict(r) for r in self.conn.execute(
+                    "SELECT * FROM mfdb_setup_pie_window WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
+                    (setup_id,)
+                ).fetchall()
+            ]
+            result["fcs_pairs"] = [
+                dict(r) for r in self.conn.execute(
+                    "SELECT * FROM mfdb_setup_fcs_pair WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
+                    (setup_id,)
+                ).fetchall()
+            ]
+            result["calibration_dates"] = self.list_setup_calibration_dates(setup_id)
+            result["calibration"] = self.get_setup_calibration(setup_id, calibrated_at=calibrated_at)
+        return result
 
     def list_setups(self) -> list[dict[str, Any]]:
         """List setup snapshots.
@@ -5303,5 +5774,3 @@ class MFDatabase:
             relationship_type="linked_to",
             processing_id=src["analysis_id"] if src else None,
         )
-
-

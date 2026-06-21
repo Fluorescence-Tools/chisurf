@@ -8,35 +8,47 @@
 # which can cause AttributeError if the widget names don't match between the
 # code and the UI file.
 
-import sys
 import json
 import pathlib
-import numpy as np
+import sys
+
+from qtpy import uic as _uic
+from qtpy.QtCore import Signal, Qt
 from qtpy.QtWidgets import (
-    QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
-    QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
-    QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton, QWidget,
-    QComboBox, QInputDialog, QDoubleSpinBox, QCheckBox
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+    QWizard,
+    QWizardPage,
 )
 
-from qtpy.QtCore import Signal, Qt
-from qtpy import QtWidgets as _QtWidgets
-from qtpy import QtCore as _QtCore
-from qtpy import uic as _uic
 
 def qtpy_loadUi(path, baseinstance=None):
     return _uic.loadUi(path, baseinstance)
 
-from .tttr_detector_setups import (
-    DETECTOR_SETUPS_FILE,
-    load_detector_setups,
-    save_detector_setups,
-)
 import tttrlib
+
 from .tttr_channel_definition_json_dialog import JsonEditorDialog
 from .tttr_channel_definition_tttr_io import (
-    read_from_tttr_file as _read_from_tttr_file,
     on_calc_g_factor as _on_calc_g_factor,
+)
+from .tttr_channel_definition_tttr_io import (
+    read_from_tttr_file as _read_from_tttr_file,
+)
+from .tttr_detector_setups import (
+    DETECTOR_SETUPS_FILE,
+    _resolve_active_user_id,
+    load_detector_setups,
+    save_detector_setups,
 )
 
 help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE) 
@@ -129,25 +141,48 @@ class DetectorWizardPage(QWizardPage):
         qtpy_loadUi(str(ui_file_path), self)
 
         # Set initial values
-        self.setups_file_le.setText(str(DETECTOR_SETUPS_FILE))
         
         # Connect signals
-        self.load_setups_file_button.clicked.connect(self._on_load_setups_file)
         self.setup_combo.currentIndexChanged.connect(self._on_setup_changed)
         self.save_setup_button.clicked.connect(self._on_save_setup)
         self.rename_setup_button.clicked.connect(self._on_rename_setup)
         self.delete_setup_button.clicked.connect(self._on_delete_setup)
-        self.help_button.toggled.connect(self._toggle_help)
+        self.help_button.clicked.connect(self._toggle_help)
+        # Public visibility checkbox — only the owner can toggle it
+        self.public_checkbox = QCheckBox("Public")
+        self.public_checkbox.setChecked(False)
+        self.public_checkbox.setToolTip(
+            "When checked, this setup is visible to all users in "
+            "the MFDB. Only the owner can change this setting."
+        )
+        # Disabled by default; enabled when an owned setup is selected
+        self.public_checkbox.setEnabled(False)
+        self.setup_layout.insertWidget(self.setup_layout.count() - 1, self.public_checkbox)
+
+        # Calibration date snapshot combobox
+        self.calibration_label = QLabel("Calibration:")
+        self.calibration_label.setVisible(self.show_setup_selection)
+        self.calibration_combo = QComboBox()
+        self.calibration_combo.setToolTip(
+            "Select a calibration date snapshot. "
+            "'Latest' uses the most recent calibration values."
+        )
+        self.calibration_combo.setVisible(self.show_setup_selection)
+        self.calibration_combo.addItem("Latest")
+        self.setup_layout.insertWidget(self.setup_layout.count() - 1, self.calibration_label)
+        self.setup_layout.insertWidget(self.setup_layout.count() - 1, self.calibration_combo)
+        self.calibration_combo.currentIndexChanged.connect(self._on_calibration_changed)
         self.read_tttr_button.clicked.connect(self._read_from_tttr_file)
         self.micro_time_le.textChanged.connect(self._update_effective_resolution)
         self.micro_binning_combo.currentTextChanged.connect(self._update_effective_resolution)
-        self.windows_form.itemDoubleClicked.connect(self._remove_window)
-        self.detectors_form.itemDoubleClicked.connect(self._remove_detector)
         self.add_window_button.clicked.connect(self._add_window)
         self.add_detector_button.clicked.connect(self._add_detector)
         self.edit_json_button.clicked.connect(self._edit_json)
         self.save_button.clicked.connect(self._on_save)
-        self.toolButton_calc_g_factor.clicked.connect(self._on_calc_g_factor)
+        try:
+            self.toolButton_calc_g_factor.setVisible(False)
+        except Exception:
+            pass
         
         # Set help text
         self.help_text.setText(help_text)
@@ -155,7 +190,6 @@ class DetectorWizardPage(QWizardPage):
         
         # Set visibility based on parameters
         # Use the helper method to hide/show widgets in layouts
-        self._hide_layout_widgets(self.setups_file_layout, self.show_setups_file)
         self._hide_layout_widgets(self.setup_layout, self.show_setup_selection)
         self._hide_layout_widgets(self.tttr_layout, self.show_tttr_reading)
         self._hide_layout_widgets(self.gridLayout_3, self.show_tables)
@@ -181,12 +215,13 @@ class DetectorWizardPage(QWizardPage):
         self.micro_binning_combo.setCurrentText(str(_initial_tttr_reading["micro_time_binning"]))
         
         # Set table headers
-        self.windows_form.setHorizontalHeaderLabels(["Window Name", "Start", "End"])
+        self.windows_form.setColumnCount(4)
+        self.windows_form.setHorizontalHeaderLabels(["Window Name", "Start", "End", ""])
         try:
-            self.detectors_form.setColumnCount(7)
+            self.detectors_form.setColumnCount(9)
         except Exception:
             pass
-        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2", "G-Factor Channels"])
+        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2", "G-Factor Channels", "", ""])
 
         # Improve table space usage: adaptive column widths and stretch
         try:
@@ -216,8 +251,9 @@ class DetectorWizardPage(QWizardPage):
             wh.setSectionResizeMode(0, QHeaderView.Stretch)
             wh.setSectionResizeMode(1, QHeaderView.ResizeToContents)
             wh.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            wh.setSectionResizeMode(3, QHeaderView.ResizeToContents)
 
-            # Detectors table: allocate space sensibly across 7 columns
+            # Detectors table: allocate space sensibly across 9 columns
             dh = self.detectors_form.horizontalHeader()
             # Name, Channels, Micro Time Ranges should stretch
             dh.setSectionResizeMode(0, QHeaderView.Stretch)  # Detector Name
@@ -228,9 +264,11 @@ class DetectorWizardPage(QWizardPage):
                 dh.setSectionResizeMode(col, QHeaderView.ResizeToContents)
             # G-Factor Channels: stretch (often a short range but can use leftover)
             dh.setSectionResizeMode(6, QHeaderView.Stretch)
+            dh.setSectionResizeMode(7, QHeaderView.ResizeToContents)
+            dh.setSectionResizeMode(8, QHeaderView.ResizeToContents)
 
             # Enable interactive resizing by the user
-            for col in range(0, 7):
+            for col in range(0, 9):
                 # Start with Interactive so user can drag; the above modes define initial behavior
                 dh.setSectionResizeMode(col, dh.sectionResizeMode(col))
             dh.setCascadingSectionResizes(True)
@@ -245,6 +283,11 @@ class DetectorWizardPage(QWizardPage):
             with open(json_file, "r") as f:
                 data = json.load(f)
             self._load_data(data)
+            if isinstance(data, dict):
+                self.public_checkbox.setChecked(bool(data.get("_is_public", False)))
+                setup_owner = data.get("_owner")
+                if setup_owner is None:
+                    self.public_checkbox.setEnabled(True)
         else:
             # If no file specified, try to load the last used setup or use defaults
             setups = load_detector_setups(self.current_setups_file)
@@ -299,9 +342,20 @@ class DetectorWizardPage(QWizardPage):
             if item.widget():
                 item.widget().setVisible(visible)
 
-    def _toggle_help(self, on):
-        self.help_text.setVisible(on)
-        self.help_button.setText("Hide Help" if on else "Show Help")
+    def _toggle_help(self):
+        from qtpy.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Help — Detector Setup")
+        dlg.resize(600, 400)
+        layout = QVBoxLayout(dlg)
+        text = QTextEdit(dlg)
+        text.setReadOnly(True)
+        text.setHtml(self.help_text.toHtml())
+        layout.addWidget(text)
+        btn = QPushButton("Close", dlg)
+        btn.clicked.connect(dlg.accept)
+        layout.addWidget(btn)
+        dlg.exec_()
 
     def _on_load_setups_file(self):
         """Open a file dialog to select a different detector setups file."""
@@ -414,7 +468,9 @@ class DetectorWizardPage(QWizardPage):
                     gf_channels_text = gfch
                 else:
                     gf_channels_text = ""
-                self._add_detector_row(name, chs, mtr, g_factor, l1, l2, gf_channels_text)
+                g_factor_decay_uuid = props.get("g_factor_decay_uuid", "")
+                g_factor_calibration_id = props.get("g_factor_calibration_id", "")
+                self._add_detector_row(name, chs, mtr, g_factor, l1, l2, gf_channels_text, g_factor_decay_uuid, g_factor_calibration_id)
         finally:
             self._allow_g_update = prev_allow
 
@@ -441,11 +497,29 @@ class DetectorWizardPage(QWizardPage):
         self.windows_form.setItem(row, 0, QTableWidgetItem(name))
         self.windows_form.setCellWidget(row, 1, QLineEdit(start))
         self.windows_form.setCellWidget(row, 2, QLineEdit(end))
+        
+        btn = QPushButton("🗑️")
+        btn.setMaximumWidth(30)
+        btn.setToolTip("Delete window")
+        btn.clicked.connect(lambda _, b=btn: self._remove_window_by_button(b))
+        self.windows_form.setCellWidget(row, 3, btn)
 
-    def _add_detector_row(self, name, ch_text, mtr_text, g_factor="1.00", l1="0.00", l2="0.00", gf_channels_text: str = ""):
+    def _remove_window_by_button(self, button):
+        for r in range(self.windows_form.rowCount()):
+            if self.windows_form.cellWidget(r, 3) == button:
+                self.windows_form.removeRow(r)
+                self.detectorsChanged.emit()
+                break
+
+    def _add_detector_row(self, name, ch_text, mtr_text, g_factor="1.00", l1="0.00", l2="0.00", gf_channels_text: str = "", g_factor_decay_uuid: str = "", g_factor_calibration_id: str = ""):
         row = self.detectors_form.rowCount()
         self.detectors_form.insertRow(row)
-        self.detectors_form.setItem(row, 0, QTableWidgetItem(name))
+        item = QTableWidgetItem(name)
+        if g_factor_decay_uuid:
+            item.setData(Qt.UserRole + 1, g_factor_decay_uuid)
+        if g_factor_calibration_id:
+            item.setData(Qt.UserRole + 2, g_factor_calibration_id)
+        self.detectors_form.setItem(row, 0, item)
         self.detectors_form.setCellWidget(row, 1, QLineEdit(ch_text))
         self.detectors_form.setCellWidget(row, 2, QLineEdit(mtr_text))
         g_le = QLineEdit(g_factor)
@@ -453,39 +527,62 @@ class DetectorWizardPage(QWizardPage):
         self._wire_g_factor_cell(row, g_le)
         self.detectors_form.setCellWidget(row, 4, QLineEdit(l1))
         self.detectors_form.setCellWidget(row, 5, QLineEdit(l2))
-        # New column: G-Factor Channels (selection range in Jordi domain)
         try:
             self.detectors_form.setCellWidget(row, 6, QLineEdit(gf_channels_text))
         except Exception:
             pass
 
+        # G-factor calculator button
+        gf_btn = QPushButton("🧮")
+        gf_btn.setMaximumWidth(30)
+        gf_btn.setToolTip("Calculate G-Factor for this detector")
+        gf_btn.clicked.connect(lambda _, b=gf_btn: self._on_calc_g_factor_for_row_button(b))
+        try:
+            self.detectors_form.setCellWidget(row, 7, gf_btn)
+        except Exception:
+            pass
+
+        # Delete button
+        btn = QPushButton("🗑️")
+        btn.setMaximumWidth(30)
+        btn.setToolTip("Delete detector")
+        btn.clicked.connect(lambda _, b=btn: self._remove_detector_by_button(b))
+        try:
+            self.detectors_form.setCellWidget(row, 8, btn)
+        except Exception:
+            pass
+
+    def _remove_detector_by_button(self, button):
+        for r in range(self.detectors_form.rowCount()):
+            if self.detectors_form.cellWidget(r, 8) == button:
+                self.detectors_form.removeRow(r)
+                self.detectorsChanged.emit()
+                break
+
+    def _on_calc_g_factor_for_row_button(self, button):
+        for r in range(self.detectors_form.rowCount()):
+            if self.detectors_form.cellWidget(r, 7) == button:
+                self._on_calc_g_factor_for_row(r)
+                break
+
     def _add_window(self):
-        name = self.new_window_le.text().strip() or f"PIE-Window {self.windows_form.rowCount()+1}"
-        if any(self.windows_form.item(r,0).text()==name for r in range(self.windows_form.rowCount())):
-            QMessageBox.warning(self, "Warning", "Window name exists.")
-            return
+        base_name = "New Window"
+        name = base_name
+        counter = 1
+        while any(self.windows_form.item(r,0).text() == name for r in range(self.windows_form.rowCount())):
+            name = f"{base_name} {counter}"
+            counter += 1
         self._add_window_row(name, "0", "2048")
-        self.new_window_le.clear()
         self.detectorsChanged.emit()
 
     def _add_detector(self):
-        name = self.new_detector_le.text().strip()
-        if not name:
-            QMessageBox.warning(self, "Warning", "Enter a detector name.")
-            return
-        if any(self.detectors_form.item(r,0).text()==name for r in range(self.detectors_form.rowCount())):
-            QMessageBox.warning(self, "Warning", "Detector name exists.")
-            return
+        base_name = "New Detector"
+        name = base_name
+        counter = 1
+        while any(self.detectors_form.item(r,0).text() == name for r in range(self.detectors_form.rowCount())):
+            name = f"{base_name} {counter}"
+            counter += 1
         self._add_detector_row(name, "0, 1", "0:2048", gf_channels_text="")
-        self.new_detector_le.clear()
-        self.detectorsChanged.emit()
-
-    def _remove_window(self, item):
-        self.windows_form.removeRow(item.row())
-        self.detectorsChanged.emit()
-
-    def _remove_detector(self, item):
-        self.detectors_form.removeRow(item.row())
         self.detectorsChanged.emit()
 
     def _edit_json(self):
@@ -593,6 +690,10 @@ class DetectorWizardPage(QWizardPage):
             except Exception:
                 gf_channels = None
 
+            item = self.detectors_form.item(r, 0)
+            g_factor_decay_uuid = item.data(Qt.UserRole + 1) if item else None
+            g_factor_calibration_id = item.data(Qt.UserRole + 2) if item else None
+
             det_entry = {
                 "chs": chs, 
                 "micro_time_ranges": mtr,
@@ -602,6 +703,10 @@ class DetectorWizardPage(QWizardPage):
             }
             if gf_channels is not None:
                 det_entry["g_factor_channels"] = gf_channels
+            if g_factor_decay_uuid:
+                det_entry["g_factor_decay_uuid"] = g_factor_decay_uuid
+            if g_factor_calibration_id:
+                det_entry["g_factor_calibration_id"] = g_factor_calibration_id
             dets[name] = det_entry
 
         # TTTR reading routine
@@ -825,6 +930,15 @@ class DetectorWizardPage(QWizardPage):
             index = self.setup_combo.findText(self.current_setup_name)
             if index >= 0:
                 self.setup_combo.setCurrentIndex(index)
+                # Update checkbox state from the loaded data
+                data = setups.get("setups", {}).get(self.current_setup_name, {})
+                if isinstance(data, dict):
+                    setup_public = bool(data.get("_is_public", False))
+                    setup_owner = data.get("_owner")
+                    active_user = _resolve_active_user_id()
+                    is_owner = (setup_owner is None) or (setup_owner == active_user)
+                    self.public_checkbox.setChecked(setup_public)
+                    self.public_checkbox.setEnabled(is_owner)
 
         self.setup_combo.blockSignals(False)
 
@@ -832,6 +946,12 @@ class DetectorWizardPage(QWizardPage):
         """Handle setup selection changes."""
         if index <= 0:  # Empty or custom setup
             self.current_setup_name = None
+            self.public_checkbox.setChecked(False)
+            self.public_checkbox.setEnabled(False)
+            self.calibration_combo.blockSignals(True)
+            self.calibration_combo.clear()
+            self.calibration_combo.addItem("Latest")
+            self.calibration_combo.blockSignals(False)
             return
 
         setup_name = self.setup_combo.currentText()
@@ -845,9 +965,116 @@ class DetectorWizardPage(QWizardPage):
             data = setups["setups"][setup_name]
             self._load_data(data)
 
+            # Reflect visibility & ownership for the checkbox
+            setup_public = bool(data.get("_is_public", False))
+            setup_owner = data.get("_owner")
+            active_user = _resolve_active_user_id()
+            is_owner = (setup_owner is None) or (setup_owner == active_user)
+            self.public_checkbox.setChecked(setup_public)
+            self.public_checkbox.setEnabled(is_owner)
+            if not is_owner:
+                self.public_checkbox.setToolTip(
+                    "Only the owner can change visibility for this setup."
+                )
+            else:
+                self.public_checkbox.setToolTip(
+                    "When checked, this setup is visible to all users."
+                )
+
             # Update last used setup
             setups["last_used"] = setup_name
             save_detector_setups(setups, self.current_setups_file)
+
+        # Populate calibration date combobox from MFDB
+        self._populate_calibration_combo(setup_name)
+
+    def _populate_calibration_combo(self, setup_name: str) -> None:
+        """Populate the calibration date combobox from MFDB calibration history.
+
+        Parameters
+        ----------
+        setup_name : str
+            The setup name to look up calibration snapshots for.
+        """
+        try:
+            from chisurf.core.mfdb.repository import MFDatabase
+            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from .tttr_setup_utils import setup_id_for_name
+
+            setup_id = setup_id_for_name(setup_name, _resolve_active_user_id())
+            self.calibration_combo.blockSignals(True)
+            self.calibration_combo.clear()
+            self.calibration_combo.addItem("Latest")
+            with MFDatabase(resolve_database_path()) as db:
+                dates = db.list_setup_calibration_dates(setup_id)
+                for dt in dates:
+                    self.calibration_combo.addItem(dt)
+            self.calibration_combo.blockSignals(False)
+        except Exception:
+            self.calibration_combo.blockSignals(True)
+            self.calibration_combo.clear()
+            self.calibration_combo.addItem("Latest")
+            self.calibration_combo.blockSignals(False)
+
+    def _on_calibration_changed(self, index: int) -> None:
+        """Handle calibration date selection changes.
+
+        Loads the selected calibration snapshot values into the detector
+        table's G-factor, l1, l2 fields.
+        """
+        if index < 0 or not self.current_setup_name:
+            return
+
+        selected = self.calibration_combo.currentText()
+        if not selected or selected == "Latest":
+            return
+
+        try:
+            from chisurf.core.mfdb.repository import MFDatabase
+            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from .tttr_setup_utils import setup_id_for_name
+
+            setup_id = setup_id_for_name(self.current_setup_name, _resolve_active_user_id())
+            with MFDatabase(resolve_database_path()) as db:
+                snapshots = db.get_setup_calibration(
+                    setup_id, calibrated_at=selected
+                )
+
+            cal_by_channel: dict[str, dict] = {}
+            for snap in snapshots:
+                ch_name = snap.get("channel_name", "")
+                cal_by_channel[ch_name] = snap
+
+            # Update the detector table rows
+            prev_allow = self._allow_g_update
+            self._allow_g_update = True
+            try:
+                for r in range(self.detectors_form.rowCount()):
+                    item = self.detectors_form.item(r, 0)
+                    if item is None:
+                        continue
+                    det_name = item.text().strip()
+                    snap = cal_by_channel.get(det_name)
+                    if snap is None:
+                        continue
+                    g_val = snap.get("g_factor")
+                    l1_val = snap.get("l1")
+                    l2_val = snap.get("l2")
+                    g_widget = self.detectors_form.cellWidget(r, 3)
+                    if g_widget and g_val is not None:
+                        g_widget.setText(str(g_val))
+                    l1_widget = self.detectors_form.cellWidget(r, 4)
+                    if l1_widget and l1_val is not None:
+                        l1_widget.setText(str(l1_val))
+                    l2_widget = self.detectors_form.cellWidget(r, 5)
+                    if l2_widget and l2_val is not None:
+                        l2_widget.setText(str(l2_val))
+            finally:
+                self._allow_g_update = prev_allow
+
+            self.detectorsChanged.emit()
+        except Exception:
+            pass
 
     def _on_save_setup(self):
         """Save the current settings as a setup."""
@@ -862,6 +1089,9 @@ class DetectorWizardPage(QWizardPage):
 
         if not ok or not setup_name:
             return
+
+        # Attach visibility flag from the checkbox
+        data["_is_public"] = self.public_checkbox.isChecked()
 
         # Save to the current setups file
         setups = load_detector_setups(self.current_setups_file)
@@ -995,6 +1225,9 @@ class DetectorWizardPage(QWizardPage):
 
     def _on_calc_g_factor(self):
         _on_calc_g_factor(self)
+
+    def _on_calc_g_factor_for_row(self, row: int):
+        _on_calc_g_factor(self, row)
     
     def load_data_into_tables(self, data):
         """
@@ -1068,8 +1301,8 @@ class DetectorWizardPage(QWizardPage):
         line_edit.editingFinished.connect(on_editing_finished)
         line_edit.textChanged.connect(on_text_changed)
 
-    def _set_g_factor_programmatically(self, row: int, value_text: str):
-        """Safely set a row's G-Factor from internal code (calculator/data load)."""
+    def _set_g_factor_programmatically(self, row: int, value_text: str, g_factor_decay_uuid: str = None, g_factor_calibration_id: str = None, l1: str = None, l2: str = None):
+        """Safely set a row's G-Factor, l1, and l2 from internal code (calculator/data load)."""
         le = self.detectors_form.cellWidget(row, 3)
         if not isinstance(le, QLineEdit):
             return
@@ -1078,6 +1311,22 @@ class DetectorWizardPage(QWizardPage):
         try:
             le.setText(value_text)
             self._g_last_valid[row] = value_text
+
+            if l1 is not None:
+                le_l1 = self.detectors_form.cellWidget(row, 4)
+                if isinstance(le_l1, QLineEdit):
+                    le_l1.setText(l1)
+            if l2 is not None:
+                le_l2 = self.detectors_form.cellWidget(row, 5)
+                if isinstance(le_l2, QLineEdit):
+                    le_l2.setText(l2)
+
+            item = self.detectors_form.item(row, 0)
+            if item:
+                if g_factor_decay_uuid:
+                    item.setData(Qt.UserRole + 1, g_factor_decay_uuid)
+                if g_factor_calibration_id:
+                    item.setData(Qt.UserRole + 2, g_factor_calibration_id)
         finally:
             self._allow_g_update = prev
 

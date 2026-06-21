@@ -45,6 +45,7 @@ class DictItem:
     schema_table: str = ""
     schema_column: str = ""
     schema_status: str = ""
+    schema_foreign_key: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -63,6 +64,7 @@ class DictItem:
             "schema_table": self.schema_table,
             "schema_column": self.schema_column,
             "schema_status": self.schema_status,
+            "schema_foreign_key": self.schema_foreign_key,
         }
 
     @classmethod
@@ -83,6 +85,7 @@ class DictItem:
             schema_table=data.get("schema_table", ""),
             schema_column=data.get("schema_column", ""),
             schema_status=data.get("schema_status", ""),
+            schema_foreign_key=data.get("schema_foreign_key", ""),
         )
 
 
@@ -129,7 +132,8 @@ class MmcifDictionary:
 
     DATA_DIR = Path(__file__).resolve().parent / "data"
     CACHE_PATH = DATA_DIR / "_dictionary_cache.json"
-    CACHE_VERSION = 3
+    CACHE_VERSION = 4
+    _cached_dict: Optional["MmcifDictionary"] = None
     
     BUNDLED_DICTS = [
         "mmcif_ddl.dic",
@@ -301,6 +305,10 @@ class MmcifDictionary:
                         pending_descriptions.append(stripped[1:].strip())
                 elif stripped.startswith("_item_type.code"):
                     current_item.type_code = self._extract_value(stripped)
+                elif stripped.startswith("_item_linked.parent_name"):
+                    current_item.parent = self._extract_value(stripped)
+                elif stripped.startswith("_item_linked.child_name"):
+                    current_item.child = self._extract_value(stripped)
                 elif stripped.startswith("_item.mandatory_code"):
                     val = self._extract_value(stripped)
                     current_item.mandatory = val.lower() == "yes"
@@ -312,6 +320,8 @@ class MmcifDictionary:
                     current_item.schema_column = self._extract_value(stripped)
                 elif stripped.startswith("_chisurf_schema.status"):
                     current_item.schema_status = self._extract_value(stripped)
+                elif stripped.startswith("_chisurf_schema.foreign_key"):
+                    current_item.schema_foreign_key = self._extract_value(stripped)
                 elif stripped.startswith("loop_"):
                     in_loop = True
                     loop_tags = []
@@ -388,6 +398,7 @@ class MmcifDictionary:
             "schema_table",
             "schema_column",
             "schema_status",
+            "schema_foreign_key",
         ):
             value = getattr(incoming, attr)
             if value:
@@ -408,12 +419,18 @@ class MmcifDictionary:
         
         enum_value_idx = None
         enum_detail_idx = None
+        linked_parent_idx = None
+        linked_child_idx = None
         
         for i, tag in enumerate(loop_tags):
             if "_item_enumeration.value" in tag:
                 enum_value_idx = i
             elif "_item_enumeration.detail" in tag:
                 enum_detail_idx = i
+            elif "_item_linked.parent_name" in tag:
+                linked_parent_idx = i
+            elif "_item_linked.child_name" in tag:
+                linked_child_idx = i
         
         if enum_value_idx is not None:
             for row in loop_data:
@@ -425,18 +442,34 @@ class MmcifDictionary:
                             detail = row[enum_detail_idx].strip().strip("'").strip('"')
                             current_item.enum_details[value] = detail
         
+        if linked_parent_idx is not None or linked_child_idx is not None:
+            for row in loop_data:
+                if linked_parent_idx is not None and linked_parent_idx < len(row):
+                    val = row[linked_parent_idx].strip().strip("'").strip('"')
+                    if val:
+                        current_item.parent = val
+                if linked_child_idx is not None and linked_child_idx < len(row):
+                    val = row[linked_child_idx].strip().strip("'").strip('"')
+                    if val:
+                        current_item.child = val
+        
         self._register_item(current_save, current_item)
 
     @classmethod
     def load_bundled(cls) -> "MmcifDictionary":
         """Load all bundled dictionary files."""
+        if cls._cached_dict is not None:
+            return cls._cached_dict
+        
         cached = cls._load_cache_if_valid()
         if cached is not None:
+            cls._cached_dict = cached
             return cached
         
         dic_paths = [cls.DATA_DIR / fname for fname in cls.BUNDLED_DICTS]
         dic = cls(*dic_paths)
         dic.save_cache()
+        cls._cached_dict = dic
         return dic
 
     @classmethod

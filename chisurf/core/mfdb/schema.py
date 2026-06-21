@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 35
 
 
 @dataclass
@@ -860,12 +860,26 @@ CREATE_TABLES_SQL = [
         irf_definition_json TEXT,
         dark_count_json TEXT,
         timing_resolution_json TEXT,
+        macro_time_resolution REAL,
+        micro_time_resolution REAL,
+        micro_time_binning INTEGER,
+        n_bins INTEGER DEFAULT 2,
+        n_casc INTEGER DEFAULT 25,
+        make_fine INTEGER DEFAULT 1,
         burst_defaults_json TEXT,
         fcs_calibration_json TEXT,
+        created_by_user_id TEXT REFERENCES flr_sample_users(user_id),
+        is_public INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
     )""",
+    # (mfdb_setup_detector_channel and mfdb_setup_pie_window are
+    # generated from the dictionary below — DO NOT hand-write)
+    """__DICT_DDL__mfdb_setup_detector_channel__""",
+    """__DICT_DDL__mfdb_setup_pie_window__""",
+    """__DICT_DDL__mfdb_setup_fcs_pair__""",
+    """__DICT_DDL__mfdb_setup_calibration__""",
     """CREATE TABLE IF NOT EXISTS mfdb_audit_log (
         log_id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1116,6 +1130,32 @@ _CANONICAL_CHECK_SQL = [
     )""",
 ]
 
+# ---------------------------------------------------------------------------
+# Replace placeholder entries with DDL generated from the dictionary
+# ---------------------------------------------------------------------------
+from chisurf.core.mfdb.schema_from_dictionary import generate_create_table_for_category
+from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+
+_DIC_FOR_DDL = MmcifDictionary.load_bundled()
+for _i, _sql in enumerate(CREATE_TABLES_SQL):
+    if "__DICT_DDL__mfdb_setup_detector_channel__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_setup_detector_channel"
+        )
+    elif "__DICT_DDL__mfdb_setup_pie_window__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_setup_pie_window"
+        )
+    elif "__DICT_DDL__mfdb_setup_fcs_pair__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_setup_fcs_pair"
+        )
+    elif "__DICT_DDL__mfdb_setup_calibration__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_setup_calibration"
+        )
+# ---------------------------------------------------------------------------
+
 # Fresh-DB tables — same as CREATE_TABLES_SQL but with CHECK-constrained
 # canonical table definitions for the mfdb_* canonical tables.
 _CANONICAL_TABLE_MAP: dict[str, str] = {}
@@ -1182,6 +1222,10 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_parameter_operation ON mfdb_parameter (operation_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_parameter_uuid ON mfdb_parameter (parameter_uuid)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_instrument ON mfdb_setup (instrument_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_detector_channel_setup ON mfdb_setup_detector_channel (setup_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_pie_window_setup ON mfdb_setup_pie_window (setup_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_fcs_pair_setup ON mfdb_setup_fcs_pair (setup_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup ON mfdb_setup_calibration (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_target ON mfdb_audit_log (target_type, target_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_timestamp ON mfdb_audit_log (timestamp)",
     # New MFDB table indices
@@ -1263,6 +1307,28 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, definition
         return
     if column not in cols:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def _ensure_mfdb_setup_columns(conn: sqlite3.Connection) -> None:
+    """Ensure all typed columns added by v31-v33 migrations exist on
+    ``mfdb_setup``.
+
+    This is a defensive repair for databases that were migrated to
+    v32/v33 but silently missed column additions due to the previous
+    ``try/except OperationalError: pass`` pattern in the migration code.
+    It is idempotent and safe to call on every connection open.
+    """
+    for col, col_type in [
+        ("macro_time_resolution", "REAL"),
+        ("micro_time_resolution", "REAL"),
+        ("micro_time_binning", "INTEGER"),
+        ("created_by_user_id", "TEXT REFERENCES flr_sample_users(user_id)"),
+        ("is_public", "INTEGER DEFAULT 0"),
+        ("n_bins", "INTEGER DEFAULT 2"),
+        ("n_casc", "INTEGER DEFAULT 25"),
+        ("make_fine", "INTEGER DEFAULT 1"),
+    ]:
+        _ensure_column(conn, "mfdb_setup", col, col_type)
 
 
 def _fix_operation_artifact_pk(conn: sqlite3.Connection) -> None:
@@ -1524,6 +1590,10 @@ def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) 
         ("mfdb_operation", True, True),
         ("mfdb_parameter", True, True),
         ("mfdb_setup", True, True),
+        ("mfdb_setup_detector_channel", True, True),
+        ("mfdb_setup_pie_window", True, True),
+        ("mfdb_setup_fcs_pair", True, True),
+        ("mfdb_setup_calibration", True, True),
         ("mfdb_sample", True, True),
         ("mfdb_experiment", True, True),
         ("mfdb_branch", True, True),
@@ -1753,6 +1823,8 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
             "project_snapshot", "archive_manifest", "archive_file",
             "visualization", "external_reference", "chinet_session",
             "chinet_node",
+            "trace_data", "image_data", "background_data", "calibration_data",
+            "burst_selection", "tttr_photon_stream",
             # Legacy
             "raw_data", "bur", "ptu", "spc", "bh", "fcs",
             "tcspc", "decay", "irf", "pda", "model_curve", "residual",
@@ -1765,7 +1837,7 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
         "data_format": [
             "ptu", "spc", "bh", "tttr", "photon_hdf5", "bur",
             "hdf5", "zip", "json", "csv", "tsv", "png", "svg",
-            "sqlite", "directory", "unknown"
+            "sqlite", "directory", "bin", "msgpack", "txt", "dat", "unknown"
         ],
         "operation_type": [
             "measurement_import", "validation", "burst_selection",
@@ -1776,6 +1848,8 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
             "tcspc_histogram_computation", "pda_histogram_computation",
             "pch_histogram_computation", "fcs_correlation_load",
             "tcspc_curve_load",
+            "histogram_construction", "background_correction",
+            "image_analysis", "population_selection", "calibration",
             # Legacy/Custom
             "import", "burst_filtering", "gmm_fitting", "analysis",
             "fitting", "project_archive", "local_fit", "global_fit",
@@ -3407,6 +3481,346 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 else:
                     logger.error("v29 migration failed - schema version not updated. Please fix migration issues.")
 
+            # --- v30: add mfdb_setup_detector_channel + mfdb_setup_pie_window child tables ---
+            if version < 30:
+                logger.info(
+                    "Migrating database schema to version 30 "
+                    "(add structured detector channel and PIE window tables)..."
+                )
+                from_version = version
+
+                # Create the child tables (generated from the dictionary)
+                _det_ddl = generate_create_table_for_category(
+                    _DIC_FOR_DDL, "mfdb_setup_detector_channel"
+                )
+                _win_ddl = generate_create_table_for_category(
+                    _DIC_FOR_DDL, "mfdb_setup_pie_window"
+                )
+                cursor.execute(_det_ddl)
+                cursor.execute(_win_ddl)
+
+                # Create indices
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_detector_channel_setup "
+                    "ON mfdb_setup_detector_channel (setup_id)"
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_pie_window_setup "
+                    "ON mfdb_setup_pie_window (setup_id)"
+                )
+
+                # Backfill existing tttr_detector_setup:* rows
+                conn.row_factory = sqlite3.Row
+                tttr_rows = conn.execute(
+                    "SELECT * FROM mfdb_setup "
+                    "WHERE setup_id LIKE 'tttr_detector_setup:%' AND deleted_at IS NULL"
+                ).fetchall()
+
+                backfill_source = len(tttr_rows)
+                backfill_inserted = 0
+                backfill_skipped = 0
+                backfill_warnings: list[str] = []
+
+                import json as _bf_json
+
+                for row in tttr_rows:
+                    setup_id = row["setup_id"]
+                    detectors_str = row["detectors_json"]
+                    timing_str = row["timing_resolution_json"]
+                    windows_str = None
+                    configuration_str = row["configuration_json"]
+                    if configuration_str:
+                        try:
+                            config = _bf_json.loads(configuration_str)
+                            setup_data = config.get("setup_data") or {}
+                            if isinstance(setup_data, dict):
+                                # Prefer setup_data.windows over top-level windows
+                                if "windows" in setup_data:
+                                    windows_str = _bf_json.dumps(setup_data["windows"])
+                                # detectors may also live in setup_data
+                                if "detectors" in setup_data and not detectors_str:
+                                    detectors_str = _bf_json.dumps(setup_data["detectors"])
+                        except Exception as exc:
+                            backfill_warnings.append(
+                                f"configuration_json parse error for {setup_id}: {exc}"
+                            )
+
+                    detectors: dict = {}
+                    if detectors_str:
+                        try:
+                            detectors = _bf_json.loads(detectors_str)
+                        except Exception as exc:
+                            backfill_warnings.append(
+                                f"detectors_json parse error for {setup_id}: {exc}"
+                            )
+
+                    windows: dict = {}
+                    if windows_str:
+                        try:
+                            windows = _bf_json.loads(windows_str)
+                        except Exception as exc:
+                            backfill_warnings.append(
+                                f"windows parse error for {setup_id}: {exc}"
+                            )
+
+                    now = _utc_now()
+
+                    # Backfill detector channels
+                    if detectors:
+                        for det_name, det_data in detectors.items():
+                            if not isinstance(det_data, dict):
+                                continue
+                            channels = det_data.get("channels")
+                            mtr = det_data.get("micro_time_ranges")
+                            g_factor = det_data.get("g_factor")
+                            l1 = det_data.get("l1")
+                            l2 = det_data.get("l2")
+                            gfc = det_data.get("g_factor_channels")
+                            existing_det = cursor.execute(
+                                "SELECT id FROM mfdb_setup_detector_channel "
+                                "WHERE setup_id = ? AND name = ? AND deleted_at IS NULL",
+                                (setup_id, det_name)
+                            ).fetchone()
+                            if existing_det:
+                                cursor.execute(
+                                    """UPDATE mfdb_setup_detector_channel SET
+                                        channels = ?, micro_time_ranges = ?,
+                                        g_factor = ?, l1 = ?, l2 = ?,
+                                        g_factor_channels = ?, updated_at = ?
+                                    WHERE id = ?""",
+                                    (
+                                        _bf_json.dumps(channels) if channels is not None else None,
+                                        _bf_json.dumps(mtr) if mtr is not None else None,
+                                        g_factor, l1, l2,
+                                        _bf_json.dumps(gfc) if gfc is not None else None,
+                                        now, existing_det["id"]
+                                    )
+                                )
+                            else:
+                                cursor.execute(
+                                    """INSERT INTO mfdb_setup_detector_channel
+                                        (setup_id, name, channels, micro_time_ranges,
+                                         g_factor, l1, l2, g_factor_channels,
+                                         created_at, updated_at)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                    (
+                                        setup_id, det_name,
+                                        _bf_json.dumps(channels) if channels is not None else None,
+                                        _bf_json.dumps(mtr) if mtr is not None else None,
+                                        g_factor, l1, l2,
+                                        _bf_json.dumps(gfc) if gfc is not None else None,
+                                        now, now
+                                    )
+                                )
+                            backfill_inserted += 1
+
+                    # Backfill PIE windows
+                    if windows:
+                        for win_name, bounds in windows.items():
+                            if not isinstance(bounds, (list, tuple)) or len(bounds) < 2:
+                                continue
+                            start_val, end_val = int(bounds[0]), int(bounds[1])
+                            existing_win = cursor.execute(
+                                "SELECT id FROM mfdb_setup_pie_window "
+                                "WHERE setup_id = ? AND name = ? AND deleted_at IS NULL",
+                                (setup_id, win_name)
+                            ).fetchone()
+                            if existing_win:
+                                cursor.execute(
+                                    """UPDATE mfdb_setup_pie_window SET
+                                        start = ?, end = ?, updated_at = ?
+                                    WHERE id = ?""",
+                                    (start_val, end_val, now, existing_win["id"])
+                                )
+                            else:
+                                cursor.execute(
+                                    """INSERT INTO mfdb_setup_pie_window
+                                        (setup_id, name, start, end, created_at, updated_at)
+                                    VALUES (?, ?, ?, ?, ?, ?)""",
+                                    (setup_id, win_name, start_val, end_val, now, now)
+                                )
+                            backfill_inserted += 1
+
+                set_schema_version(conn, 30)
+                version = 30
+                report = MigrationReport(
+                    from_version=from_version,
+                    to_version=30,
+                    tables_added=[
+                        "mfdb_setup_detector_channel",
+                        "mfdb_setup_pie_window",
+                    ],
+                    backfill={
+                        "mfdb_setup_detector_channel + mfdb_setup_pie_window": {
+                            "source": backfill_source,
+                            "inserted": backfill_inserted,
+                            "skipped": backfill_skipped,
+                            "warnings": backfill_warnings,
+                        },
+                    },
+                )
+                logger.info("Migration report:\n%s", report.summary)
+
+            # --- v31: add typed timing columns to mfdb_setup ---
+            if version < 31:
+                logger.info(
+                    "Migrating database schema to version 31 "
+                    "(add macro_time_resolution, micro_time_resolution, "
+                    "micro_time_binning columns)..."
+                )
+                import json as _v31_json
+                for col, col_type in [
+                    ("macro_time_resolution", "REAL"),
+                    ("micro_time_resolution", "REAL"),
+                    ("micro_time_binning", "INTEGER"),
+                ]:
+                    _ensure_column(conn, "mfdb_setup", col, col_type)
+                # Backfill from timing_resolution_json for existing rows
+                conn.row_factory = sqlite3.Row
+                for row in conn.execute(
+                    "SELECT setup_id, timing_resolution_json FROM mfdb_setup WHERE deleted_at IS NULL"
+                ).fetchall():
+                    timing_str = row["timing_resolution_json"]
+                    if not timing_str:
+                        continue
+                    try:
+                        tr = _v31_json.loads(timing_str)
+                    except Exception:
+                        continue
+                    mtr = tr.get("macro_time_resolution")
+                    mir = tr.get("micro_time_resolution")
+                    mib = tr.get("micro_time_binning")
+                    if any(v is not None for v in (mtr, mir, mib)):
+                        conn.execute(
+                            "UPDATE mfdb_setup SET macro_time_resolution=?, micro_time_resolution=?, "
+                            "micro_time_binning=? WHERE setup_id=?",
+                            (mtr, mir, mib, row["setup_id"]),
+                        )
+                set_schema_version(conn, 31)
+                version = 31
+                logger.info("Schema upgraded to v31 (timing columns backfilled).")
+
+            # --- v32: add created_by_user_id to mfdb_setup ---
+            if version < 32:
+                logger.info(
+                    "Migrating database schema to version 32 "
+                    "(add created_by_user_id, is_public columns)..."
+                )
+                _ensure_column(
+                    conn, "mfdb_setup", "created_by_user_id",
+                    "TEXT REFERENCES flr_sample_users(user_id)",
+                )
+                # New setups default to private; pre-existing rows are
+                # ownerless (created_by_user_id IS NULL) and the loader treats
+                # ownerless setups as shared regardless of is_public, so a
+                # private default does not hide previously-visible setups.
+                _ensure_column(
+                    conn, "mfdb_setup", "is_public", "INTEGER DEFAULT 0",
+                )
+                set_schema_version(conn, 32)
+                version = 32
+                logger.info("Schema upgraded to v32 (created_by_user_id, is_public columns added).")
+
+            # --- v33: add correlator columns + mfdb_setup_fcs_pair child table ---
+            if version < 33:
+                logger.info(
+                    "Migrating database schema to version 33 "
+                    "(add n_bins, n_casc, make_fine columns + FCS pair child table)..."
+                )
+                _ensure_column(conn, "mfdb_setup", "n_bins", "INTEGER DEFAULT 2")
+                _ensure_column(conn, "mfdb_setup", "n_casc", "INTEGER DEFAULT 25")
+                _ensure_column(conn, "mfdb_setup", "make_fine", "INTEGER DEFAULT 1")
+                _fcs_ddl = generate_create_table_for_category(
+                    _DIC_FOR_DDL, "mfdb_setup_fcs_pair"
+                )
+                cursor.execute(_fcs_ddl)
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_fcs_pair_setup "
+                    "ON mfdb_setup_fcs_pair (setup_id)"
+                )
+                set_schema_version(conn, 33)
+                version = 33
+                logger.info("Schema upgraded to v33 (correlator columns + FCS pair table).")
+
+            # --- v34: add g_factor_calibration_id to mfdb_setup_detector_channel ---
+            if version < 34:
+                logger.info(
+                    "Migrating database schema to version 34 "
+                    "(add g_factor_calibration_id to mfdb_setup_detector_channel)..."
+                )
+                _ensure_column(
+                    conn, "mfdb_setup_detector_channel", "g_factor_calibration_id", "TEXT"
+                )
+                set_schema_version(conn, 34)
+                version = 34
+                logger.info("Schema upgraded to v34 (g_factor_calibration_id column added).")
+
+            # --- v35: add mfdb_setup_calibration append-only calibration table ---
+            if version < 35:
+                logger.info(
+                    "Migrating database schema to version 35 "
+                    "(add mfdb_setup_calibration table)..."
+                )
+                _cal_ddl = generate_create_table_for_category(
+                    _DIC_FOR_DDL, "mfdb_setup_calibration"
+                )
+                cursor.execute(_cal_ddl)
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup "
+                    "ON mfdb_setup_calibration (setup_id)"
+                )
+
+                # Backfill: one snapshot per existing detector channel with
+                # non-null g_factor, l1, or l2 values
+                conn.row_factory = sqlite3.Row
+                _backfill_source = 0
+                _backfill_inserted = 0
+                try:
+                    ch_rows = conn.execute(
+                        "SELECT * FROM mfdb_setup_detector_channel "
+                        "WHERE deleted_at IS NULL "
+                        "AND (g_factor IS NOT NULL OR l1 IS NOT NULL OR l2 IS NOT NULL)"
+                    ).fetchall()
+                    _backfill_source = len(ch_rows)
+                    for ch_row in ch_rows:
+                        # Use the channel's updated_at as calibrated_at
+                        _cal_at = ch_row["updated_at"] or ch_row["created_at"] or _utc_now()
+                        _gfc = ch_row["g_factor_channels"]
+                        _gfc_id = ch_row["g_factor_calibration_id"]
+                        try:
+                            conn.execute(
+                                """INSERT INTO mfdb_setup_calibration
+                                    (setup_id, channel_name, g_factor, l1, l2,
+                                     g_factor_channels, g_factor_calibration_id,
+                                     calibrated_at, method, created_by_user_id,
+                                     created_at, updated_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                (
+                                    ch_row["setup_id"], ch_row["name"],
+                                    ch_row["g_factor"], ch_row["l1"], ch_row["l2"],
+                                    _gfc, _gfc_id,
+                                    _cal_at, "migrated", None,
+                                    _utc_now(), _utc_now(),
+                                ),
+                            )
+                            _backfill_inserted += 1
+                        except Exception as exc:
+                            logger.warning(
+                                "v35 backfill skipped channel '%s' in setup '%s': %s",
+                                ch_row["name"], ch_row["setup_id"], exc,
+                            )
+                except Exception as exc:
+                    logger.warning("v35 backfill enumeration failed: %s", exc)
+
+                set_schema_version(conn, 35)
+                version = 35
+                logger.info(
+                    "Schema upgraded to v35 (mfdb_setup_calibration table added, "
+                    "%d/%d channels backfilled).",
+                    _backfill_inserted, _backfill_source,
+                )
+
+            _ensure_mfdb_setup_columns(conn)
             _ensure_lifecycle_columns(conn)
 
         finally:
@@ -3414,11 +3828,8 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
     bootstrap_vocabulary(conn)
     # Ensure auth columns exist on flr_sample_users (for DBs that skipped v22 migration)
     for col, col_type in [("is_admin", "INTEGER DEFAULT 0"), ("password_hash", "TEXT"), ("allow_passwordless_login", "INTEGER DEFAULT 0")]:
-        try:
-            with conn:
-                conn.execute(f"ALTER TABLE flr_sample_users ADD COLUMN {col} {col_type}")
-        except sqlite3.OperationalError:
-            pass
+        with conn:
+            _ensure_column(conn, "flr_sample_users", col, col_type)
     bootstrap_default_user(conn)
     try:
         bootstrap_auth_groups(conn)

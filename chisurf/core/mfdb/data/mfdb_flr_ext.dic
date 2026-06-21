@@ -368,3 +368,2451 @@ save__ihm_chemical_component_descriptor.inchi
    _item.category_id         ihm_chemical_component_descriptor
    _chisurf_schema.table_name  chem_descriptors
    _chisurf_schema.column_name descriptor
+
+save_flr_chisurf_parameter
+   _category.id              flr_chisurf_parameter
+   _category.description
+;     ChiSurf-internal parameters mapped to flrCIF.
+      This category holds model/fit parameters that are used internally
+      by ChiSurf and exported to MFDB using standard flrCIF identifiers.
+      Each item corresponds to one entry in the ChiSurf parameter registry.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_flr_chisurf_parameter.id"
+
+save__flr_chisurf_parameter.AtB
+   _item.name                "_flr_chisurf_parameter.AtB"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name atb
+   _item_description.description
+;     Model parameter AtB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.BG
+   _item.name                "_flr_chisurf_parameter.BG"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bg
+   _item_description.description
+;     ChiSurf parameter BG.
+;
+save__flr_chisurf_parameter.BR
+   _item.name                "_flr_chisurf_parameter.BR"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name br
+   _item_description.description
+;     ChiSurf parameter BR.
+;
+save__flr_chisurf_parameter.BtA
+   _item.name                "_flr_chisurf_parameter.BtA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bta
+   _item_description.description
+;     Model parameter BtA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.D
+   _item.name                "_flr_chisurf_parameter.D"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name d
+   _item_description.description
+;     Model parameter D used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.E_FRET
+   _item.name                "_flr_chisurf_parameter.E_FRET"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name e_fret
+   _item_description.description
+;     Apparent FRET efficiency parameter E_FRET (0e00..1).
+;
+save__flr_chisurf_parameter.N
+   _item.name                "_flr_chisurf_parameter.N"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n
+   _item_description.description
+;     ChiSurf parameter N.
+;
+save__flr_chisurf_parameter.N1
+   _item.name                "_flr_chisurf_parameter.N1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n1
+   _item_description.description
+;     ChiSurf parameter N1.
+;
+save__flr_chisurf_parameter.N2
+   _item.name                "_flr_chisurf_parameter.N2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n2
+   _item_description.description
+;     ChiSurf parameter N2.
+;
+save__flr_chisurf_parameter.N3
+   _item.name                "_flr_chisurf_parameter.N3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n3
+   _item_description.description
+;     ChiSurf parameter N3.
+;
+save__flr_chisurf_parameter.QYA
+   _item.name                "_flr_chisurf_parameter.QYA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name qya
+   _item_description.description
+;     ChiSurf parameter QYA.
+;
+save__flr_chisurf_parameter.QYD
+   _item.name                "_flr_chisurf_parameter.QYD"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name qyd
+   _item_description.description
+;     ChiSurf parameter QYD.
+;
+save__flr_chisurf_parameter.R0
+   _item.name                "_flr_chisurf_parameter.R0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name r0
+   _item_description.description
+;     Frster radius R0 of the donor-acceptor pair.
+;
+save__flr_chisurf_parameter.aT
+   _item.name                "_flr_chisurf_parameter.aT"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name at
+   _item_description.description
+;     ChiSurf parameter aT.
+;
+save__flr_chisurf_parameter.alpha
+   _item.name                "_flr_chisurf_parameter.alpha"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name alpha
+   _item_description.description
+;     ChiSurf parameter alpha.
+;
+save__flr_chisurf_parameter.b
+   _item.name                "_flr_chisurf_parameter.b"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name b
+   _item_description.description
+;     ChiSurf parameter b.
+;
+save__flr_chisurf_parameter.ba
+   _item.name                "_flr_chisurf_parameter.ba"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name ba
+   _item_description.description
+;     ChiSurf parameter ba.
+;
+save__flr_chisurf_parameter.bg
+   _item.name                "_flr_chisurf_parameter.bg"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bg
+   _item_description.description
+;     Constant background level added to the time-resolved decay curve (counts per time channel).
+;
+save__flr_chisurf_parameter.bg0
+   _item.name                "_flr_chisurf_parameter.bg0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bg0
+   _item_description.description
+;     ChiSurf parameter bg0.
+;
+save__flr_chisurf_parameter.bg1
+   _item.name                "_flr_chisurf_parameter.bg1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bg1
+   _item_description.description
+;     ChiSurf parameter bg1.
+;
+save__flr_chisurf_parameter.bt
+   _item.name                "_flr_chisurf_parameter.bt"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name bt
+   _item_description.description
+;     ChiSurf parameter bt.
+;
+save__flr_chisurf_parameter.cont
+   _item.name                "_flr_chisurf_parameter.cont"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name cont
+   _item_description.description
+;     Model parameter cont used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.cpm
+   _item.name                "_flr_chisurf_parameter.cpm"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name cpm
+   _item_description.description
+;     ChiSurf parameter cpm.
+;
+save__flr_chisurf_parameter.cpm_all
+   _item.name                "_flr_chisurf_parameter.cpm_all"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name cpm_all
+   _item_description.description
+;     ChiSurf parameter cpm_all.
+;
+save__flr_chisurf_parameter.dt
+   _item.name                "_flr_chisurf_parameter.dt"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name dt
+   _item_description.description
+;     Time bin width of the TCSPC histogram (time per channel).
+;
+save__flr_chisurf_parameter.dtMT[ns]
+   _item.name                "_flr_chisurf_parameter.dtMT[ns]"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name dtmt[ns]
+   _item_description.description
+;     ChiSurf parameter dtMT[ns].
+;
+save__flr_chisurf_parameter.dtTAC[ns]
+   _item.name                "_flr_chisurf_parameter.dtTAC[ns]"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name dttac[ns]
+   _item_description.description
+;     ChiSurf parameter dtTAC[ns].
+;
+save__flr_chisurf_parameter.eps1
+   _item.name                "_flr_chisurf_parameter.eps1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name eps1
+   _item_description.description
+;     ChiSurf parameter eps1.
+;
+save__flr_chisurf_parameter.eps2
+   _item.name                "_flr_chisurf_parameter.eps2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name eps2
+   _item_description.description
+;     ChiSurf parameter eps2.
+;
+save__flr_chisurf_parameter.eps3
+   _item.name                "_flr_chisurf_parameter.eps3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name eps3
+   _item_description.description
+;     ChiSurf parameter eps3.
+;
+save__flr_chisurf_parameter.fcs_C
+   _item.name                "_flr_chisurf_parameter.fcs_C"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_c
+   _item_description.description
+;     Dimensionless factor C used in the rotational correlation / anisotropy term.
+;
+save__flr_chisurf_parameter.fcs_N
+   _item.name                "_flr_chisurf_parameter.fcs_N"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_n
+   _item_description.description
+;     Average number of fluorescent particles in the observation volume. In standard FCS models the correlation amplitude scales roughly as 1/N.
+;
+save__flr_chisurf_parameter.fcs_N3
+   _item.name                "_flr_chisurf_parameter.fcs_N3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_n3
+   _item_description.description
+;     Average number of fluorescent particles in the observation volume. In standard FCS models the correlation amplitude scales roughly as 1/N.
+;
+save__flr_chisurf_parameter.fcs_a
+   _item.name                "_flr_chisurf_parameter.fcs_a"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_a1
+   _item.name                "_flr_chisurf_parameter.fcs_a1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a1
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_a2
+   _item.name                "_flr_chisurf_parameter.fcs_a2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a2
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_a21
+   _item.name                "_flr_chisurf_parameter.fcs_a21"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a21
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_a22
+   _item.name                "_flr_chisurf_parameter.fcs_a22"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a22
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_a31
+   _item.name                "_flr_chisurf_parameter.fcs_a31"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_a31
+   _item_description.description
+;     Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).
+;
+save__flr_chisurf_parameter.fcs_aR
+   _item.name                "_flr_chisurf_parameter.fcs_aR"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ar
+   _item_description.description
+;     Amplitude of a relaxation or anticorrelation term (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aR1
+   _item.name                "_flr_chisurf_parameter.fcs_aR1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ar1
+   _item_description.description
+;     Amplitude of a relaxation or anticorrelation term (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aR2
+   _item.name                "_flr_chisurf_parameter.fcs_aR2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ar2
+   _item_description.description
+;     Amplitude of a relaxation or anticorrelation term (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aRa
+   _item.name                "_flr_chisurf_parameter.fcs_aRa"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ara
+   _item_description.description
+;     Amplitude of a relaxation or anticorrelation term (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aab
+   _item.name                "_flr_chisurf_parameter.fcs_aab"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aab
+   _item_description.description
+;     Amplitude of the photon antibunching term (very fast correlation component).
+;
+save__flr_chisurf_parameter.fcs_ab1
+   _item.name                "_flr_chisurf_parameter.fcs_ab1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ab1
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_ab2
+   _item.name                "_flr_chisurf_parameter.fcs_ab2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ab2
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_ab3
+   _item.name                "_flr_chisurf_parameter.fcs_ab3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ab3
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_ab4
+   _item.name                "_flr_chisurf_parameter.fcs_ab4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ab4
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aba
+   _item.name                "_flr_chisurf_parameter.fcs_aba"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aba
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aba1
+   _item.name                "_flr_chisurf_parameter.fcs_aba1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aba1
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aba2
+   _item.name                "_flr_chisurf_parameter.fcs_aba2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aba2
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aba3
+   _item.name                "_flr_chisurf_parameter.fcs_aba3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aba3
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_aba4
+   _item.name                "_flr_chisurf_parameter.fcs_aba4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aba4
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_abf
+   _item.name                "_flr_chisurf_parameter.fcs_abf"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abf
+   _item_description.description
+;     Total amplitude factor for a group of anticorrelation components.
+;
+save__flr_chisurf_parameter.fcs_abt
+   _item.name                "_flr_chisurf_parameter.fcs_abt"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt
+   _item_description.description
+;     Time constant of an antibunching or anticorrelation component.
+;
+save__flr_chisurf_parameter.fcs_abt1
+   _item.name                "_flr_chisurf_parameter.fcs_abt1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt1
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_abt2
+   _item.name                "_flr_chisurf_parameter.fcs_abt2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt2
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_abt3
+   _item.name                "_flr_chisurf_parameter.fcs_abt3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt3
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_abt4
+   _item.name                "_flr_chisurf_parameter.fcs_abt4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt4
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_abt5
+   _item.name                "_flr_chisurf_parameter.fcs_abt5"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_abt5
+   _item_description.description
+;     Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).
+;
+save__flr_chisurf_parameter.fcs_af
+   _item.name                "_flr_chisurf_parameter.fcs_af"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_af
+   _item_description.description
+;     Overall amplitude factor for a set of anticorrelation components.
+;
+save__flr_chisurf_parameter.fcs_aroc
+   _item.name                "_flr_chisurf_parameter.fcs_aroc"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_aroc
+   _item_description.description
+;     Amplitude of the rotational correlation (anisotropy) contribution.
+;
+save__flr_chisurf_parameter.fcs_b
+   _item.name                "_flr_chisurf_parameter.fcs_b"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_b
+   _item_description.description
+;     Additive baseline/offset of the correlation function.
+;
+save__flr_chisurf_parameter.fcs_ba
+   _item.name                "_flr_chisurf_parameter.fcs_ba"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba1
+   _item.name                "_flr_chisurf_parameter.fcs_ba1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba1
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba11
+   _item.name                "_flr_chisurf_parameter.fcs_ba11"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba11
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba12
+   _item.name                "_flr_chisurf_parameter.fcs_ba12"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba12
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba2
+   _item.name                "_flr_chisurf_parameter.fcs_ba2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba2
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba21
+   _item.name                "_flr_chisurf_parameter.fcs_ba21"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba21
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba22
+   _item.name                "_flr_chisurf_parameter.fcs_ba22"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba22
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba3
+   _item.name                "_flr_chisurf_parameter.fcs_ba3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba3
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba31
+   _item.name                "_flr_chisurf_parameter.fcs_ba31"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba31
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba32
+   _item.name                "_flr_chisurf_parameter.fcs_ba32"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba32
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba4
+   _item.name                "_flr_chisurf_parameter.fcs_ba4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba4
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba5
+   _item.name                "_flr_chisurf_parameter.fcs_ba5"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba5
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba6
+   _item.name                "_flr_chisurf_parameter.fcs_ba6"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba6
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_ba7
+   _item.name                "_flr_chisurf_parameter.fcs_ba7"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_ba7
+   _item_description.description
+;     Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.
+;
+save__flr_chisurf_parameter.fcs_bs2
+   _item.name                "_flr_chisurf_parameter.fcs_bs2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bs2
+   _item_description.description
+;     Stretching exponent for a stretched-exponential relaxation term.
+;
+save__flr_chisurf_parameter.fcs_bs21
+   _item.name                "_flr_chisurf_parameter.fcs_bs21"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bs21
+   _item_description.description
+;     Stretching exponent for a stretched-exponential relaxation term.
+;
+save__flr_chisurf_parameter.fcs_bs22
+   _item.name                "_flr_chisurf_parameter.fcs_bs22"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bs22
+   _item_description.description
+;     Stretching exponent for a stretched-exponential relaxation term.
+;
+save__flr_chisurf_parameter.fcs_bt
+   _item.name                "_flr_chisurf_parameter.fcs_bt"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt1
+   _item.name                "_flr_chisurf_parameter.fcs_bt1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt1
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt11
+   _item.name                "_flr_chisurf_parameter.fcs_bt11"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt11
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt12
+   _item.name                "_flr_chisurf_parameter.fcs_bt12"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt12
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt2
+   _item.name                "_flr_chisurf_parameter.fcs_bt2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt2
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt21
+   _item.name                "_flr_chisurf_parameter.fcs_bt21"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt21
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt22
+   _item.name                "_flr_chisurf_parameter.fcs_bt22"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt22
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt3
+   _item.name                "_flr_chisurf_parameter.fcs_bt3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt3
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt31
+   _item.name                "_flr_chisurf_parameter.fcs_bt31"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt31
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt32
+   _item.name                "_flr_chisurf_parameter.fcs_bt32"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt32
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt4
+   _item.name                "_flr_chisurf_parameter.fcs_bt4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt4
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt5
+   _item.name                "_flr_chisurf_parameter.fcs_bt5"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt5
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt6
+   _item.name                "_flr_chisurf_parameter.fcs_bt6"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt6
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_bt7
+   _item.name                "_flr_chisurf_parameter.fcs_bt7"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_bt7
+   _item_description.description
+;     Correlation/relaxation time constant of a dark or bunching state.
+;
+save__flr_chisurf_parameter.fcs_s
+   _item.name                "_flr_chisurf_parameter.fcs_s"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_s
+   _item_description.description
+;     Structure parameter s = z0 / w0 describing the axial-to-radial extent of the detection volume.
+;
+save__flr_chisurf_parameter.fcs_tR
+   _item.name                "_flr_chisurf_parameter.fcs_tR"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tr
+   _item_description.description
+;     Relaxation or anticorrelation time constant of a kinetic component.
+;
+save__flr_chisurf_parameter.fcs_tR1
+   _item.name                "_flr_chisurf_parameter.fcs_tR1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tr1
+   _item_description.description
+;     Relaxation or anticorrelation time constant of a kinetic component.
+;
+save__flr_chisurf_parameter.fcs_tR2
+   _item.name                "_flr_chisurf_parameter.fcs_tR2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tr2
+   _item_description.description
+;     Relaxation or anticorrelation time constant of a kinetic component.
+;
+save__flr_chisurf_parameter.fcs_tR3
+   _item.name                "_flr_chisurf_parameter.fcs_tR3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tr3
+   _item_description.description
+;     Relaxation or anticorrelation time constant of a kinetic component.
+;
+save__flr_chisurf_parameter.fcs_tRa
+   _item.name                "_flr_chisurf_parameter.fcs_tRa"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tra
+   _item_description.description
+;     Relaxation or anticorrelation time constant of a kinetic component.
+;
+save__flr_chisurf_parameter.fcs_tab
+   _item.name                "_flr_chisurf_parameter.fcs_tab"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tab
+   _item_description.description
+;     Correlation time of the photon antibunching term (fast time scale).
+;
+save__flr_chisurf_parameter.fcs_tb1
+   _item.name                "_flr_chisurf_parameter.fcs_tb1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tb1
+   _item_description.description
+;     ChiSurf parameter fcs.tb1.
+;
+save__flr_chisurf_parameter.fcs_tb2
+   _item.name                "_flr_chisurf_parameter.fcs_tb2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tb2
+   _item_description.description
+;     ChiSurf parameter fcs.tb2.
+;
+save__flr_chisurf_parameter.fcs_tb3
+   _item.name                "_flr_chisurf_parameter.fcs_tb3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tb3
+   _item_description.description
+;     ChiSurf parameter fcs.tb3.
+;
+save__flr_chisurf_parameter.fcs_tb4
+   _item.name                "_flr_chisurf_parameter.fcs_tb4"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_tb4
+   _item_description.description
+;     ChiSurf parameter fcs.tb4.
+;
+save__flr_chisurf_parameter.fcs_td
+   _item.name                "_flr_chisurf_parameter.fcs_td"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td1
+   _item.name                "_flr_chisurf_parameter.fcs_td1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td1
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td2
+   _item.name                "_flr_chisurf_parameter.fcs_td2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td2
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td21
+   _item.name                "_flr_chisurf_parameter.fcs_td21"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td21
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td22
+   _item.name                "_flr_chisurf_parameter.fcs_td22"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td22
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td3
+   _item.name                "_flr_chisurf_parameter.fcs_td3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td3
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td31
+   _item.name                "_flr_chisurf_parameter.fcs_td31"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td31
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_td32
+   _item.name                "_flr_chisurf_parameter.fcs_td32"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_td32
+   _item_description.description
+;     Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).
+;
+save__flr_chisurf_parameter.fcs_trc1
+   _item.name                "_flr_chisurf_parameter.fcs_trc1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_trc1
+   _item_description.description
+;     Rotational correlation time used in the anisotropy / rotational diffusion term.
+;
+save__flr_chisurf_parameter.fcs_trc2trc1
+   _item.name                "_flr_chisurf_parameter.fcs_trc2trc1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name fcs_trc2trc1
+   _item_description.description
+;     Rotational correlation time used in the anisotropy / rotational diffusion term.
+;
+save__flr_chisurf_parameter.g
+   _item.name                "_flr_chisurf_parameter.g"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name g
+   _item_description.description
+;     Model parameter g used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.gG
+   _item.name                "_flr_chisurf_parameter.gG"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name gg
+   _item_description.description
+;     ChiSurf parameter gG.
+;
+save__flr_chisurf_parameter.gR
+   _item.name                "_flr_chisurf_parameter.gR"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name gr
+   _item_description.description
+;     ChiSurf parameter gR.
+;
+save__flr_chisurf_parameter.ik
+   _item.name                "_flr_chisurf_parameter.ik"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name ik
+   _item_description.description
+;     Shape parameter of the synthetic IRF model.
+;
+save__flr_chisurf_parameter.irf_start
+   _item.name                "_flr_chisurf_parameter.irf_start"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name irf_start
+   _item_description.description
+;     Start index (or time) of the IRF region used for convolution.
+;
+save__flr_chisurf_parameter.irf_stop
+   _item.name                "_flr_chisurf_parameter.irf_stop"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name irf_stop
+   _item_description.description
+;     Stop index (or time) of the IRF region used for convolution.
+;
+save__flr_chisurf_parameter.iw
+   _item.name                "_flr_chisurf_parameter.iw"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name iw
+   _item_description.description
+;     Width parameter of the synthetic IRF model.
+;
+save__flr_chisurf_parameter.k2
+   _item.name                "_flr_chisurf_parameter.k2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name k2
+   _item_description.description
+;     Orientation factor  governing dipole-dipole coupling in FRET.
+;
+save__flr_chisurf_parameter.kQ
+   _item.name                "_flr_chisurf_parameter.kQ"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name kq
+   _item_description.description
+;     ChiSurf parameter kQ.
+;
+save__flr_chisurf_parameter.l
+   _item.name                "_flr_chisurf_parameter.l"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name l
+   _item_description.description
+;     Model parameter l used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.l1
+   _item.name                "_flr_chisurf_parameter.l1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name l1
+   _item_description.description
+;     Model parameter l1 used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.l2
+   _item.name                "_flr_chisurf_parameter.l2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name l2
+   _item_description.description
+;     Model parameter l2 used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.lb
+   _item.name                "_flr_chisurf_parameter.lb"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name lb
+   _item_description.description
+;     Lamp background level subtracted from the instrument response function.
+;
+save__flr_chisurf_parameter.line_dur
+   _item.name                "_flr_chisurf_parameter.line_dur"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name line_dur
+   _item_description.description
+;     ChiSurf parameter line_dur.
+;
+save__flr_chisurf_parameter.lp
+   _item.name                "_flr_chisurf_parameter.lp"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name lp
+   _item_description.description
+;     Model parameter lp used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.mA
+   _item.name                "_flr_chisurf_parameter.mA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name ma
+   _item_description.description
+;     Model parameter mA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.mB
+   _item.name                "_flr_chisurf_parameter.mB"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name mb
+   _item_description.description
+;     Model parameter mB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.n
+   _item.name                "_flr_chisurf_parameter.n"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n
+   _item_description.description
+;     ChiSurf parameter n.
+;
+save__flr_chisurf_parameter.n curves
+   _item.name                "_flr_chisurf_parameter.n curves"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n curves
+   _item_description.description
+;     ChiSurf parameter n curves.
+;
+save__flr_chisurf_parameter.n photons
+   _item.name                "_flr_chisurf_parameter.n photons"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n photons
+   _item_description.description
+;     ChiSurf parameter n photons.
+;
+save__flr_chisurf_parameter.n0
+   _item.name                "_flr_chisurf_parameter.n0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n0
+   _item_description.description
+;     Initial number of excited donor molecules used to scale the model decay to the experimental counts.
+;
+save__flr_chisurf_parameter.nPh_bg
+   _item.name                "_flr_chisurf_parameter.nPh_bg"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name nph_bg
+   _item_description.description
+;     Output: estimated number of background photons in the TCSPC trace based on background level and measurement timing settings.
+;
+save__flr_chisurf_parameter.nPh_fl
+   _item.name                "_flr_chisurf_parameter.nPh_fl"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name nph_fl
+   _item_description.description
+;     Output: estimated number of fluorescence photons (after background subtraction) in the TCSPC trace.
+;
+save__flr_chisurf_parameter.nPh_max
+   _item.name                "_flr_chisurf_parameter.nPh_max"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name nph_max
+   _item_description.description
+;     ChiSurf parameter nPh_max.
+;
+save__flr_chisurf_parameter.nPh_min
+   _item.name                "_flr_chisurf_parameter.nPh_min"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name nph_min
+   _item_description.description
+;     ChiSurf parameter nPh_min.
+;
+save__flr_chisurf_parameter.nTAC
+   _item.name                "_flr_chisurf_parameter.nTAC"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name ntac
+   _item_description.description
+;     ChiSurf parameter nTAC.
+;
+save__flr_chisurf_parameter.n_rh
+   _item.name                "_flr_chisurf_parameter.n_rh"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n_rh
+   _item_description.description
+;     ChiSurf parameter n_rh.
+;
+save__flr_chisurf_parameter.n_td
+   _item.name                "_flr_chisurf_parameter.n_td"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name n_td
+   _item_description.description
+;     ChiSurf parameter n_td.
+;
+save__flr_chisurf_parameter.offset
+   _item.name                "_flr_chisurf_parameter.offset"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name offset
+   _item_description.description
+;     ChiSurf parameter offset.
+;
+save__flr_chisurf_parameter.pureA
+   _item.name                "_flr_chisurf_parameter.pureA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name purea
+   _item_description.description
+;     Model parameter pureA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.pureB
+   _item.name                "_flr_chisurf_parameter.pureB"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name pureb
+   _item_description.description
+;     Model parameter pureB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.pxl_dur
+   _item.name                "_flr_chisurf_parameter.pxl_dur"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name pxl_dur
+   _item_description.description
+;     ChiSurf parameter pxl_dur.
+;
+save__flr_chisurf_parameter.pxl_size
+   _item.name                "_flr_chisurf_parameter.pxl_size"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name pxl_size
+   _item_description.description
+;     ChiSurf parameter pxl_size.
+;
+save__flr_chisurf_parameter.r0
+   _item.name                "_flr_chisurf_parameter.r0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name r0
+   _item_description.description
+;     Frster radius R0 of the donor-acceptor pair.
+;
+save__flr_chisurf_parameter.r_ss_i
+   _item.name                "_flr_chisurf_parameter.r_ss_i"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name r_ss_i
+   _item_description.description
+;     Intensity-domain steady-state anisotropy. For dual-channel data, ChiSurf background-corrects VV and VH (per-channel metadata when available), compensates objective mixing via l1/l2, and evaluates rS,I from channel sums using the ChiSurf convention r = (VV - VH) / (g*VV + 2*VH). For single-channel fallback, VM is reconstructed from the active anisotropy model before summation.
+;
+save__flr_chisurf_parameter.r_ss_l
+   _item.name                "_flr_chisurf_parameter.r_ss_l"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name r_ss_l
+   _item_description.description
+;     Lifetime-domain steady-state anisotropy derived from the model lifetime spectrum and rotational spectrum. This value is model-predicted (spectrum/integral domain) and does not depend on direct VV/VH channel integration.
+;
+save__flr_chisurf_parameter.rc_ele
+   _item.name                "_flr_chisurf_parameter.rc_ele"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rc_ele
+   _item_description.description
+;     Model parameter rc_ele used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.reg
+   _item.name                "_flr_chisurf_parameter.reg"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name reg
+   _item_description.description
+;     ChiSurf parameter reg.
+;
+save__flr_chisurf_parameter.rep
+   _item.name                "_flr_chisurf_parameter.rep"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rep
+   _item_description.description
+;     Laser repetition rate of the excitation source.
+;
+save__flr_chisurf_parameter.rh_max
+   _item.name                "_flr_chisurf_parameter.rh_max"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rh_max
+   _item_description.description
+;     ChiSurf parameter rh_max.
+;
+save__flr_chisurf_parameter.rh_min
+   _item.name                "_flr_chisurf_parameter.rh_min"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rh_min
+   _item_description.description
+;     ChiSurf parameter rh_min.
+;
+save__flr_chisurf_parameter.rics_D
+   _item.name                "_flr_chisurf_parameter.rics_D"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_d
+   _item_description.description
+;     Diffusion coefficient D in µm²/s.
+;
+save__flr_chisurf_parameter.rics_aT
+   _item.name                "_flr_chisurf_parameter.rics_aT"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_at
+   _item_description.description
+;     Triplet/blinking fraction a_T (0–1).
+;
+save__flr_chisurf_parameter.rics_line_dur
+   _item.name                "_flr_chisurf_parameter.rics_line_dur"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_line_dur
+   _item_description.description
+;     Time between successive scanned lines in milliseconds.
+;
+save__flr_chisurf_parameter.rics_n
+   _item.name                "_flr_chisurf_parameter.rics_n"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_n
+   _item_description.description
+;     Average number of fluorescent molecules in the observation volume N. RICS/ICS amplitude G(0) is proportional to 1/N.
+;
+save__flr_chisurf_parameter.rics_offset
+   _item.name                "_flr_chisurf_parameter.rics_offset"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_offset
+   _item_description.description
+;     Additive offset of the correlation function.
+;
+save__flr_chisurf_parameter.rics_pxl_dur
+   _item.name                "_flr_chisurf_parameter.rics_pxl_dur"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_pxl_dur
+   _item_description.description
+;     Pixel dwell time (line scan) in microseconds.
+;
+save__flr_chisurf_parameter.rics_pxl_size
+   _item.name                "_flr_chisurf_parameter.rics_pxl_size"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_pxl_size
+   _item_description.description
+;     Pixel size in the sample plane in nanometers.
+;
+save__flr_chisurf_parameter.rics_tauT
+   _item.name                "_flr_chisurf_parameter.rics_tauT"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_taut
+   _item_description.description
+;     Triplet/blinking correlation time τ_T in milliseconds.
+;
+save__flr_chisurf_parameter.rics_w_r
+   _item.name                "_flr_chisurf_parameter.rics_w_r"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_w_r
+   _item_description.description
+;     Radial waist of the detection PSF in µm.
+;
+save__flr_chisurf_parameter.rics_w_z
+   _item.name                "_flr_chisurf_parameter.rics_w_z"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name rics_w_z
+   _item_description.description
+;     Axial waist of the detection PSF in µm.
+;
+save__flr_chisurf_parameter.s
+   _item.name                "_flr_chisurf_parameter.s"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name s
+   _item_description.description
+;     ChiSurf parameter s.
+;
+save__flr_chisurf_parameter.sc
+   _item.name                "_flr_chisurf_parameter.sc"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name sc
+   _item_description.description
+;     Relative amplitude of a prompt scattering contribution that is added to the model decay.
+;
+save__flr_chisurf_parameter.slowf
+   _item.name                "_flr_chisurf_parameter.slowf"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name slowf
+   _item_description.description
+;     Model parameter slowf used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.start
+   _item.name                "_flr_chisurf_parameter.start"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name start
+   _item_description.description
+;     Start time (or channel) of the fit/convolution window.
+;
+save__flr_chisurf_parameter.stop
+   _item.name                "_flr_chisurf_parameter.stop"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name stop
+   _item_description.description
+;     Stop time (or channel) of the fit/convolution window.
+;
+save__flr_chisurf_parameter.t0
+   _item.name                "_flr_chisurf_parameter.t0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name t0
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tBg
+   _item.name                "_flr_chisurf_parameter.tBg"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tbg
+   _item_description.description
+;     Measurement time of the background acquisition.
+;
+save__flr_chisurf_parameter.tDead
+   _item.name                "_flr_chisurf_parameter.tDead"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tdead
+   _item_description.description
+;     Model parameter tDead used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.tMeas
+   _item.name                "_flr_chisurf_parameter.tMeas"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tmeas
+   _item_description.description
+;     Measurement time of the main TCSPC experiment.
+;
+save__flr_chisurf_parameter.tau0
+   _item.name                "_flr_chisurf_parameter.tau0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tau0
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tauD
+   _item.name                "_flr_chisurf_parameter.tauD"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name taud
+   _item_description.description
+;     ChiSurf parameter tauD.
+;
+save__flr_chisurf_parameter.tauT
+   _item.name                "_flr_chisurf_parameter.tauT"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name taut
+   _item_description.description
+;     ChiSurf parameter tauT.
+;
+save__flr_chisurf_parameter.tcspc_Ddye
+   _item.name                "_flr_chisurf_parameter.tcspc_Ddye"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_ddye
+   _item_description.description
+;     Translational diffusion coefficient of the fluorescent dye.
+;
+save__flr_chisurf_parameter.tcspc_Nq
+   _item.name                "_flr_chisurf_parameter.tcspc_Nq"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_nq
+   _item_description.description
+;     Effective number or concentration of quenchers in the interaction volume.
+;
+save__flr_chisurf_parameter.tcspc_Rdye
+   _item.name                "_flr_chisurf_parameter.tcspc_Rdye"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_rdye
+   _item_description.description
+;     Characteristic interaction radius or distance parameter for the dye3quencher system.
+;
+save__flr_chisurf_parameter.tcspc_Vav
+   _item.name                "_flr_chisurf_parameter.tcspc_Vav"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_vav
+   _item_description.description
+;     Effective averaging volume used in the transient-quenching model.
+;
+save__flr_chisurf_parameter.tcspc_a
+   _item.name                "_flr_chisurf_parameter.tcspc_a"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_a
+   _item_description.description
+;     Pre-exponential amplitude or population fraction of this decay component (dimensionless contribution to the overall time-resolved signal).
+;
+save__flr_chisurf_parameter.tcspc_a1
+   _item.name                "_flr_chisurf_parameter.tcspc_a1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_a1
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_a2
+   _item.name                "_flr_chisurf_parameter.tcspc_a2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_a2
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_a3
+   _item.name                "_flr_chisurf_parameter.tcspc_a3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_a3
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_aD
+   _item.name                "_flr_chisurf_parameter.tcspc_aD"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_ad
+   _item_description.description
+;     Fraction of donors subject to additional quenching or rate channels (dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_aDA
+   _item.name                "_flr_chisurf_parameter.tcspc_aDA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_ada
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_aDAA
+   _item.name                "_flr_chisurf_parameter.tcspc_aDAA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_adaa
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_aDO
+   _item.name                "_flr_chisurf_parameter.tcspc_aDO"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_ado
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_ad1
+   _item.name                "_flr_chisurf_parameter.tcspc_ad1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_ad1
+   _item_description.description
+;     Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).
+;
+save__flr_chisurf_parameter.tcspc_af1A
+   _item.name                "_flr_chisurf_parameter.tcspc_af1A"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_af1a
+   _item_description.description
+;     Pre-exponential amplitude or population fraction of this decay component (dimensionless contribution to the overall time-resolved signal).
+;
+save__flr_chisurf_parameter.tcspc_b
+   _item.name                "_flr_chisurf_parameter.tcspc_b"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_b
+   _item_description.description
+;     Empirical coefficient of the sqrt(time) term in the transient-quenching decay model; controls deviations from a pure single-exponential decay.
+;
+save__flr_chisurf_parameter.tcspc_kQ
+   _item.name                "_flr_chisurf_parameter.tcspc_kQ"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_kq
+   _item_description.description
+;     Quenching rate constant added to the inverse lifetime (1/tau + kQ).
+;
+save__flr_chisurf_parameter.tcspc_kf1A
+   _item.name                "_flr_chisurf_parameter.tcspc_kf1A"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_kf1a
+   _item_description.description
+;     Effective FRET or energy-transfer rate constant for this channel.
+;
+save__flr_chisurf_parameter.tcspc_kf1AA
+   _item.name                "_flr_chisurf_parameter.tcspc_kf1AA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_kf1aa
+   _item_description.description
+;     Effective FRET or energy-transfer rate constant for this channel.
+;
+save__flr_chisurf_parameter.tcspc_kf2A
+   _item.name                "_flr_chisurf_parameter.tcspc_kf2A"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_kf2a
+   _item_description.description
+;     Effective FRET or energy-transfer rate constant for this channel.
+;
+save__flr_chisurf_parameter.tcspc_p0
+   _item.name                "_flr_chisurf_parameter.tcspc_p0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_p0
+   _item_description.description
+;     Overall normalization or intensity at time zero of the decay curve.
+;
+save__flr_chisurf_parameter.tcspc_tau0
+   _item.name                "_flr_chisurf_parameter.tcspc_tau0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_tau0
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_tau1
+   _item.name                "_flr_chisurf_parameter.tcspc_tau1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_tau1
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_tau2
+   _item.name                "_flr_chisurf_parameter.tcspc_tau2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_tau2
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_tau3
+   _item.name                "_flr_chisurf_parameter.tcspc_tau3"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_tau3
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_td1
+   _item.name                "_flr_chisurf_parameter.tcspc_td1"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_td1
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_td2
+   _item.name                "_flr_chisurf_parameter.tcspc_td2"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_td2
+   _item_description.description
+;     Fluorescence lifetime or characteristic decay time of this component.
+;
+save__flr_chisurf_parameter.tcspc_xD
+   _item.name                "_flr_chisurf_parameter.tcspc_xD"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name tcspc_xd
+   _item_description.description
+;     Fraction of donors subject to additional quenching or rate channels (dimensionless).
+;
+save__flr_chisurf_parameter.td_max
+   _item.name                "_flr_chisurf_parameter.td_max"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name td_max
+   _item_description.description
+;     ChiSurf parameter td_max.
+;
+save__flr_chisurf_parameter.td_min
+   _item.name                "_flr_chisurf_parameter.td_min"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name td_min
+   _item_description.description
+;     ChiSurf parameter td_min.
+;
+save__flr_chisurf_parameter.temp
+   _item.name                "_flr_chisurf_parameter.temp"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name temp
+   _item_description.description
+;     ChiSurf parameter temp.
+;
+save__flr_chisurf_parameter.ts
+   _item.name                "_flr_chisurf_parameter.ts"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name ts
+   _item_description.description
+;     Additional temporal shift applied to align IRF and decay.
+;
+save__flr_chisurf_parameter.vh_bg_int
+   _item.name                "_flr_chisurf_parameter.vh_bg_int"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name vh_bg_int
+   _item_description.description
+;     Background-corrected summed VH intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.
+;
+save__flr_chisurf_parameter.vv_bg_int
+   _item.name                "_flr_chisurf_parameter.vv_bg_int"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name vv_bg_int
+   _item_description.description
+;     Background-corrected summed VV intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.
+;
+save__flr_chisurf_parameter.w
+   _item.name                "_flr_chisurf_parameter.w"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name w
+   _item_description.description
+;     Model parameter w used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.w0
+   _item.name                "_flr_chisurf_parameter.w0"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name w0
+   _item_description.description
+;     ChiSurf parameter w0.
+;
+save__flr_chisurf_parameter.w_r
+   _item.name                "_flr_chisurf_parameter.w_r"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name w_r
+   _item_description.description
+;     ChiSurf parameter w_r.
+;
+save__flr_chisurf_parameter.w_z
+   _item.name                "_flr_chisurf_parameter.w_z"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name w_z
+   _item_description.description
+;     ChiSurf parameter w_z.
+;
+save__flr_chisurf_parameter.win_size
+   _item.name                "_flr_chisurf_parameter.win_size"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name win_size
+   _item_description.description
+;     Model parameter win-size used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.xA
+   _item.name                "_flr_chisurf_parameter.xA"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name xa
+   _item_description.description
+;     Model parameter xA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.xB
+   _item.name                "_flr_chisurf_parameter.xB"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name xb
+   _item_description.description
+;     Model parameter xB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.
+;
+save__flr_chisurf_parameter.xDOnly
+   _item.name                "_flr_chisurf_parameter.xDOnly"
+   _item.category_id         flr_chisurf_parameter
+   _item_type.code           float
+   _chisurf_schema.table_name  flr_chisurf_parameter
+   _chisurf_schema.column_name xdonly
+   _item_description.description
+;     Fraction of donors subject to additional quenching or rate channels (dimensionless).
+;
+
+save_mfdb_setup
+   _category.id              mfdb_setup
+   _category.description
+;     Structured reading/processing setup record for TTTR detector setups.
+;     Each named setup corresponds to one mfdb_setup row addressed by the
+;     deterministic id from setup_id_for_name().
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_setup.setup_id"
+
+save__mfdb_setup.setup_id
+   _item.name                "_mfdb_setup.setup_id"
+   _item.category_id         mfdb_setup
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name setup_id
+
+save__mfdb_setup.name
+   _item.name                "_mfdb_setup.name"
+   _item.category_id         mfdb_setup
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name name
+
+save__mfdb_setup.version
+   _item.name                "_mfdb_setup.version"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       1
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name version
+
+save__mfdb_setup.macro_time_resolution
+   _item.name                "_mfdb_setup.macro_time_resolution"
+   _item.category_id         mfdb_setup
+   _item_type.code           float
+   _item.mandatory_code      no
+   _item_units.code          ns
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name macro_time_resolution
+
+save__mfdb_setup.micro_time_resolution
+   _item.name                "_mfdb_setup.micro_time_resolution"
+   _item.category_id         mfdb_setup
+   _item_type.code           float
+   _item.mandatory_code      no
+   _item_units.code          ps
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name micro_time_resolution
+
+save__mfdb_setup.micro_time_binning
+   _item.name                "_mfdb_setup.micro_time_binning"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name micro_time_binning
+   loop_
+   _item_enumeration.value
+     1
+     2
+     4
+     8
+
+save__mfdb_setup.n_bins
+   _item.name                "_mfdb_setup.n_bins"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name n_bins
+   _item_default.value       2
+   _item_description.description
+;     Correlator number of bins for FCS channel setups.
+
+save__mfdb_setup.n_casc
+   _item.name                "_mfdb_setup.n_casc"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name n_casc
+   _item_default.value       25
+   _item_description.description
+;     Correlator number of cascades for FCS channel setups.
+
+save__mfdb_setup.make_fine
+   _item.name                "_mfdb_setup.make_fine"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name make_fine
+   _item_default.value       1
+   _item_description.description
+;     Correlator make_fine flag for FCS channel setups.
+
+save__mfdb_setup.created_by_user_id
+   _item.name                "_mfdb_setup.created_by_user_id"
+   _item.category_id         mfdb_setup
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+   _item_description.description
+;     User who created this detector setup.  NULL for builtin/shared setups.
+
+save__mfdb_setup.is_public
+   _item.name                "_mfdb_setup.is_public"
+   _item.category_id         mfdb_setup
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       1
+   _chisurf_schema.table_name  mfdb_setup
+   _chisurf_schema.column_name is_public
+   _item_description.description
+;     GUI visibility flag. 1 (default) = visible to all users;
+;     0 = visible only to the owning user (created_by_user_id).
+
+save_mfdb_setup_detector_channel
+   _category.id              mfdb_setup_detector_channel
+   _category.description
+;     Detector channel definition within a reading/processing setup.
+;     Each row defines one detector channel with its routing, micro-time
+;     windows, G-factor, and leakage parameters.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_setup_detector_channel.id"
+
+save__mfdb_setup_detector_channel.id
+   _item.name                "_mfdb_setup_detector_channel.id"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name id
+
+save__mfdb_setup_detector_channel.setup_id
+   _item.name                "_mfdb_setup_detector_channel.setup_id"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name setup_id
+   _chisurf_schema.foreign_key  mfdb_setup(setup_id) ON DELETE CASCADE
+
+save__mfdb_setup_detector_channel.name
+   _item.name                "_mfdb_setup_detector_channel.name"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name name
+
+save__mfdb_setup_detector_channel.channels
+   _item.name                "_mfdb_setup_detector_channel.channels"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name channels
+   _item_description.description
+;     JSON array of TCSPC channel indices routed to this detector.
+
+save__mfdb_setup_detector_channel.micro_time_ranges
+   _item.name                "_mfdb_setup_detector_channel.micro_time_ranges"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name micro_time_ranges
+   _item_description.description
+;     JSON array of [start, end] micro-time window pairs.
+
+save__mfdb_setup_detector_channel.g_factor
+   _item.name                "_mfdb_setup_detector_channel.g_factor"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name g_factor
+
+save__mfdb_setup_detector_channel.l1
+   _item.name                "_mfdb_setup_detector_channel.l1"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name l1
+   _item_description.description
+;     Leakage parameter l1 (donor leakage into acceptor channel).
+
+save__mfdb_setup_detector_channel.l2
+   _item.name                "_mfdb_setup_detector_channel.l2"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name l2
+   _item_description.description
+;     Leakage parameter l2 (acceptor leakage into donor channel).
+
+save__mfdb_setup_detector_channel.g_factor_channels
+   _item.name                "_mfdb_setup_detector_channel.g_factor_channels"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name g_factor_channels
+   _item_description.description
+;     JSON array of channel indices used for G-factor calculation.
+
+save__mfdb_setup_detector_channel.g_factor_calibration_id
+   _item.name                "_mfdb_setup_detector_channel.g_factor_calibration_id"
+   _item.category_id         mfdb_setup_detector_channel
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_detector_channel
+   _chisurf_schema.column_name g_factor_calibration_id
+   _item_description.description
+;     The MFDB calibration artifact identifier for this G-factor.
+
+save_mfdb_setup_pie_window
+   _category.id              mfdb_setup_pie_window
+   _category.description
+;     PIE (Pulsed Interleaved Excitation) or micro-time window definition
+;     within a reading/processing setup.
+;     Each row defines one named window with its start and end micro-time bins.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_setup_pie_window.id"
+
+save__mfdb_setup_pie_window.id
+   _item.name                "_mfdb_setup_pie_window.id"
+   _item.category_id         mfdb_setup_pie_window
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_pie_window
+   _chisurf_schema.column_name id
+
+save__mfdb_setup_pie_window.setup_id
+   _item.name                "_mfdb_setup_pie_window.setup_id"
+   _item.category_id         mfdb_setup_pie_window
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_pie_window
+   _chisurf_schema.column_name setup_id
+   _chisurf_schema.foreign_key  mfdb_setup(setup_id) ON DELETE CASCADE
+
+save__mfdb_setup_pie_window.name
+   _item.name                "_mfdb_setup_pie_window.name"
+   _item.category_id         mfdb_setup_pie_window
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_pie_window
+   _chisurf_schema.column_name name
+
+save__mfdb_setup_pie_window.start
+   _item.name                "_mfdb_setup_pie_window.start"
+   _item.category_id         mfdb_setup_pie_window
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_pie_window
+   _chisurf_schema.column_name start
+   _item_description.description
+;     Start micro-time bin (inclusive).
+
+save__mfdb_setup_pie_window.end
+   _item.name                "_mfdb_setup_pie_window.end"
+   _item.category_id         mfdb_setup_pie_window
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_pie_window
+   _chisurf_schema.column_name end
+   _item_description.description
+;     End micro-time bin (inclusive).
+
+save_mfdb_setup_fcs_pair
+   _category.id              mfdb_setup_fcs_pair
+   _category.description
+;     FCS channel correlation pair within an FCS channel setup.
+;     Each row defines one pair of detector channels to correlate,
+;     with optional kind/label (e.g. auto, cross).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_setup_fcs_pair.id"
+
+save__mfdb_setup_fcs_pair.id
+   _item.name                "_mfdb_setup_fcs_pair.id"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name id
+
+save__mfdb_setup_fcs_pair.setup_id
+   _item.name                "_mfdb_setup_fcs_pair.setup_id"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name setup_id
+   _chisurf_schema.foreign_key  mfdb_setup(setup_id) ON DELETE CASCADE
+
+save__mfdb_setup_fcs_pair.name
+   _item.name                "_mfdb_setup_fcs_pair.name"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name name
+
+save__mfdb_setup_fcs_pair.channel_a
+   _item.name                "_mfdb_setup_fcs_pair.channel_a"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name channel_a
+   _item_description.description
+;     Name of the first detector channel in the correlation pair.
+
+save__mfdb_setup_fcs_pair.channel_b
+   _item.name                "_mfdb_setup_fcs_pair.channel_b"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name channel_b
+   _item_description.description
+;     Name of the second detector channel in the correlation pair.
+
+save__mfdb_setup_fcs_pair.kind
+   _item.name                "_mfdb_setup_fcs_pair.kind"
+   _item.category_id         mfdb_setup_fcs_pair
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_fcs_pair
+   _chisurf_schema.column_name kind
+   _item_description.description
+;     Optional kind/label for the pair (e.g. auto, cross).
+
+save_mfdb_setup_calibration
+   _category.id              mfdb_setup_calibration
+   _category.description
+;     Append-only calibration snapshot for a detector channel within a
+;     reading/processing setup.  Each row records the G-factor, l1, and l2
+;     values that were current at a specific point in time, together with
+;     the method used to determine them and an optional reference to the
+;     MFDB artifact that produced them.
+;
+;     Rows are never updated or deleted; a new row is INSERTed each time
+;     the calibration values are set, preserving the full history.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_setup_calibration.id"
+
+save__mfdb_setup_calibration.id
+   _item.name                "_mfdb_setup_calibration.id"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name id
+
+save__mfdb_setup_calibration.setup_id
+   _item.name                "_mfdb_setup_calibration.setup_id"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name setup_id
+   _chisurf_schema.foreign_key  mfdb_setup(setup_id) ON DELETE CASCADE
+
+save__mfdb_setup_calibration.channel_name
+   _item.name                "_mfdb_setup_calibration.channel_name"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name channel_name
+
+save__mfdb_setup_calibration.g_factor
+   _item.name                "_mfdb_setup_calibration.g_factor"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name g_factor
+
+save__mfdb_setup_calibration.l1
+   _item.name                "_mfdb_setup_calibration.l1"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name l1
+   _item_description.description
+;     Leakage parameter l1 (donor leakage into acceptor channel).
+
+save__mfdb_setup_calibration.l2
+   _item.name                "_mfdb_setup_calibration.l2"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name l2
+   _item_description.description
+;     Leakage parameter l2 (acceptor leakage into donor channel).
+
+save__mfdb_setup_calibration.g_factor_channels
+   _item.name                "_mfdb_setup_calibration.g_factor_channels"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name g_factor_channels
+   _item_description.description
+;     JSON array of channel indices used for G-factor calculation.
+
+save__mfdb_setup_calibration.g_factor_calibration_id
+   _item.name                "_mfdb_setup_calibration.g_factor_calibration_id"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name g_factor_calibration_id
+   _item_description.description
+;     The MFDB calibration artifact identifier for this G-factor.
+
+save__mfdb_setup_calibration.calibrated_at
+   _item.name                "_mfdb_setup_calibration.calibrated_at"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           datetime
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name calibrated_at
+
+save__mfdb_setup_calibration.method
+   _item.name                "_mfdb_setup_calibration.method"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name method
+   _item_default.value       manual
+   _item_description.description
+;     Method used to determine the calibration values
+;     (e.g. manual, migrated, jordi_g_factor).
+
+save__mfdb_setup_calibration.created_by_user_id
+   _item.name                "_mfdb_setup_calibration.created_by_user_id"
+   _item.category_id         mfdb_setup_calibration
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_setup_calibration
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+   _item_description.description
+;     User who created this calibration snapshot.  NULL for migrated defaults.
