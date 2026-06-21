@@ -39,7 +39,6 @@ from chisurf.core.mfdb.auth import (
     AuthError,
     PERM_READ,
     AnonymousPrincipal,
-    can_access,
     create_default_acl_for_object,
     filter_readable,
     principal_from_rpc_auth,
@@ -221,14 +220,106 @@ def register_services(dispatcher_or_context: Any) -> None:
         "setups.save": save_setup_handler,
         "setups.delete": delete_setup_handler,
         "setups.validate": validate_setup_handler,
+        "setups.detector_channels.list": list_detector_channels_handler,
+        "setups.pie_windows.list": list_pie_windows_handler,
         "objects.put": put_object_handler,
         "objects.put_bytes": put_object_bytes_handler,
         "objects.get": get_object_handler,
         "objects.get_info": get_object_info_handler,
         "objects.delete": delete_object_handler,
         "objects.list": list_objects_handler,
+        "datasets.browse": datasets_browse_handler,
+        "datasets.open": datasets_open_handler,
     }.items():
         dispatcher.register(f"mfdb.{name}", lambda params, _handler=handler: _handler(**params))
+
+
+def datasets_browse_handler(
+    scope: str = "all",
+    query: str | None = None,
+    kinds: list[str] | None = None,
+    formats: list[str] | None = None,
+    sample_id: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Browse datasets with scope-based access control and pagination.
+
+    Parameters
+    ----------
+    scope : str, default='all'
+        ``'own'``, ``'public'``, or ``'all'``.
+    query : str, optional
+        Free-text search.
+    kinds : list of str, optional
+        Artifact kind filter.
+    formats : list of str, optional
+        Data format filter.
+    sample_id : str, optional
+        Filter by linked sample.
+    limit : int, default=50
+        Max results per page.
+    offset : int, default=0
+        Pagination offset.
+    auth : dict, optional
+        Session auth dict.
+
+    Returns
+    -------
+    dict
+        ``datasets``, ``total``, ``sample_counts``.
+    """
+    with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        if isinstance(principal, AnonymousPrincipal):
+            # No authenticated session (e.g. the in-process GUI client): fall
+            # back to the configured default user so "Mine"/own scope matches
+            # the owner that registration stamps via the same setting.
+            try:
+                import chisurf.core.settings
+                owner_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get(
+                    "default_user_id"
+                ) or None
+            except Exception:
+                owner_id = None
+        else:
+            owner_id = principal.user_id
+        return db.browse_datasets(
+            scope=scope,
+            query=query,
+            kinds=kinds,
+            formats=formats,
+            sample_id=sample_id,
+            owner_id=owner_id,
+            limit=limit,
+            offset=offset,
+        )
+
+
+def datasets_open_handler(
+    artifact_id: str,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Open a dataset and return a local readable path.
+
+    Parameters
+    ----------
+    artifact_id : str
+        Artifact identifier.
+    auth : dict, optional
+        Session auth dict.
+
+    Returns
+    -------
+    dict
+        ``local_path`` (str) key.
+    """
+    with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        require_authenticated(principal)
+        local_path = db.open_dataset(artifact_id)
+        return {"local_path": local_path}
 
 
 def _delegate_mfdb(params: dict[str, Any], name: str) -> dict[str, Any]:
@@ -280,12 +371,33 @@ def _validate_fdb_methods_in_manifest(manifest_path: str | Path | None = None) -
 
 def status_handler(auth: dict[str, Any] | None = None, **_: Any) -> dict[str, Any]:
     with MFDatabase(resolve_database_path()) as db:
-        return {
+        res = {
             "source_database": str(source_database_path()),
             "user_database": str(user_database_path()),
             "schema_version": db._get_schema_version(),
-            "sample_count": len(db.list_samples()),
+            "sample_count": 0,
+            "experiment_count": 0,
+            "raw_data_count": 0,
+            "processed_run_count": 0,
+            "user_count": 0,
+            "device_count": 0,
+            "provenance_edge_count": 0,
         }
+        def get_count(table_name: str) -> int:
+            try:
+                row = db.conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
+                return row[0] if row else 0
+            except Exception:
+                return 0
+
+        res["sample_count"] = get_count("flr_sample")
+        res["experiment_count"] = get_count("flr_experiment")
+        res["raw_data_count"] = get_count("fdb_raw_data")
+        res["processed_run_count"] = get_count("fdb_processing_run")
+        res["user_count"] = get_count("flr_sample_users")
+        res["device_count"] = get_count("flr_sample_devices")
+        res["provenance_edge_count"] = get_count("fdb_provenance_edge")
+        return res
 
 
 def list_samples_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -606,7 +718,6 @@ def delete_user_handler(user_id: str, force: bool = False, requester_id: str = N
     with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         requester_is_admin = requester is not None and requester.is_admin
-        requester_id = requester.user_id if requester else None
 
         if force:
             if not requester_is_admin:
@@ -851,7 +962,8 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
     if _is_structured_sample_payload(sample):
         structured = dict(sample)
         structured["name"] = sample_id
-        return create_structured_sample_handler(structured, auth=auth)
+        create_structured_sample_handler(structured, auth=auth)
+        return get_sample_handler(sample_id, auth=auth)
     with MFDatabase(resolve_database_path()) as db:
         requester = _require_auth(auth, db.conn)
         owner_user_id = requester.user_id if requester else "user_default"
@@ -909,10 +1021,9 @@ def save_sample_handler(sample: dict[str, Any], auth: dict[str, Any] | None = No
                 db.add_sample_probe(
                     sample_id,
                     int(mapping["probe_id"]),
-                    _int_or_none(mapping.get("poly_probe_position_id")),
                     mapping.get("fluorophore_type") or "unspecified",
                     mapping.get("description") or "",
-                    _int_or_none(mapping.get("sample_probe_id")),
+                    _int_or_none(mapping.get("poly_probe_position_id")),
                 )
             create_default_acl_for_object(
                 db.conn, "sample", sample_id, owner_user_id=owner_user_id,
@@ -1117,6 +1228,42 @@ def list_probe_positions_handler(
             params,
         ).fetchall()
     return {"positions": [_json_row(row) for row in rows]}
+
+
+def list_detector_channels_handler(
+    setup_id: str | None = None,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List detector channel definitions."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        if setup_id:
+            rows = db.list_detector_channels(setup_id)
+        else:
+            rows = [
+                dict(r) for r in db.conn.execute(
+                    "SELECT * FROM mfdb_setup_detector_channel WHERE deleted_at IS NULL ORDER BY id"
+                ).fetchall()
+            ]
+    return {"detector_channels": [_json_row(row) for row in rows]}
+
+
+def list_pie_windows_handler(
+    setup_id: str | None = None,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List PIE window definitions."""
+    with MFDatabase(resolve_database_path()) as db:
+        _require_auth(auth, db.conn)
+        if setup_id:
+            rows = db.list_pie_windows(setup_id)
+        else:
+            rows = [
+                dict(r) for r in db.conn.execute(
+                    "SELECT * FROM mfdb_setup_pie_window WHERE deleted_at IS NULL ORDER BY id"
+                ).fetchall()
+            ]
+    return {"pie_windows": [_json_row(row) for row in rows]}
 
 
 def list_fret_pairs_handler(

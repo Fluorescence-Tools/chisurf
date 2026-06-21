@@ -621,3 +621,27 @@ def test_browse_datasets_format_filter_normalizes_dot(tmp_path):
     for fmts in (["ptu"], [".ptu"], [".PTU"], ["PTU"]):
         n = len(db.browse_datasets(scope="own", owner_id=uid, formats=fmts)["datasets"])
         assert n == 1, f"formats={fmts} should match the stored 'ptu' (got {n})"
+
+
+def test_browse_handler_own_scope_uses_default_user_when_anonymous(tmp_path, monkeypatch):
+    """Regression: with no auth session (in-process GUI client), the 'own' scope
+    must fall back to the configured default_user_id so it matches the owner that
+    registration stamps. Otherwise 'Mine' shows nothing despite registered data."""
+    import chisurf.core.settings
+    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.plugins.core.mfdb_admin.backend import services as svc
+
+    monkeypatch.setitem(
+        chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}
+    )
+    dbp = str(tmp_path / "own.db")
+    db = MFDatabase(dbp)
+    f = tmp_path / "a.spc"
+    f.write_bytes(b"spc")
+    assert rr.register_raw_measurement(file_path=str(f), db=db)
+    db.close()
+
+    monkeypatch.setattr(svc, "resolve_database_path", lambda: dbp)
+    # auth=None -> anonymous principal -> must fall back to default_user_id
+    r = svc.datasets_browse_handler(scope="own", kinds=["raw_measurement"], auth=None)
+    assert r["total"] == 1, "own scope must match the registration owner when anonymous"
