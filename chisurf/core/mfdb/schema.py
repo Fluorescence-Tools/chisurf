@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 36
+SCHEMA_VERSION = 38
 
 
 @dataclass
@@ -769,6 +769,8 @@ CREATE_TABLES_SQL = [
         data_json TEXT,
         data_blob BLOB,
         object_uuid TEXT REFERENCES mfdb_object(object_uuid),
+        created_by_user_id TEXT REFERENCES flr_sample_users(user_id),
+        is_public INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
@@ -880,6 +882,7 @@ CREATE_TABLES_SQL = [
     """__DICT_DDL__mfdb_setup_pie_window__""",
     """__DICT_DDL__mfdb_setup_fcs_pair__""",
     """__DICT_DDL__mfdb_setup_calibration__""",
+    """__DICT_DDL__mfdb_microtime_shift__""",
     """CREATE TABLE IF NOT EXISTS mfdb_audit_log (
         log_id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1046,6 +1049,8 @@ _CANONICAL_CHECK_SQL = [
         data_json TEXT,
         data_blob BLOB,
         object_uuid TEXT REFERENCES mfdb_object(object_uuid),
+        created_by_user_id TEXT REFERENCES flr_sample_users(user_id),
+        is_public INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
@@ -1154,6 +1159,10 @@ for _i, _sql in enumerate(CREATE_TABLES_SQL):
         CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
             _DIC_FOR_DDL, "mfdb_setup_calibration"
         )
+    elif "__DICT_DDL__mfdb_microtime_shift__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_microtime_shift"
+        )
 # ---------------------------------------------------------------------------
 
 # Fresh-DB tables — same as CREATE_TABLES_SQL but with CHECK-constrained
@@ -1226,6 +1235,7 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_pie_window_setup ON mfdb_setup_pie_window (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_fcs_pair_setup ON mfdb_setup_fcs_pair (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup ON mfdb_setup_calibration (setup_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_microtime_shift_operation ON mfdb_microtime_shift (operation_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_target ON mfdb_audit_log (target_type, target_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_timestamp ON mfdb_audit_log (timestamp)",
     # New MFDB table indices
@@ -1594,6 +1604,7 @@ def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) 
         ("mfdb_setup_pie_window", True, True),
         ("mfdb_setup_fcs_pair", True, True),
         ("mfdb_setup_calibration", True, True),
+        ("mfdb_microtime_shift", True, True),
         ("mfdb_sample", True, True),
         ("mfdb_experiment", True, True),
         ("mfdb_branch", True, True),
@@ -1850,6 +1861,7 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
             "tcspc_curve_load",
             "histogram_construction", "background_correction",
             "image_analysis", "population_selection", "calibration",
+            "microtime_shift",
             # Legacy/Custom
             "import", "burst_filtering", "gmm_fitting", "analysis",
             "fitting", "project_archive", "local_fit", "global_fit",
@@ -3875,6 +3887,41 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                     "%d/%d pairs backfilled).",
                     _bf_inserted, _bf_source,
                 )
+
+            if version < 37:
+                logger.info(
+                    "Migrating database schema to version 37 "
+                    "(add mfdb_microtime_shift table)..."
+                )
+                from chisurf.core.mfdb.schema_from_dictionary import generate_create_table_for_category
+                from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+                _dic37 = MmcifDictionary.load_bundled()
+                ddl37 = generate_create_table_for_category(_dic37, "mfdb_microtime_shift")
+                conn.execute(ddl37)
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_microtime_shift_operation "
+                    "ON mfdb_microtime_shift (operation_id)"
+                )
+                set_schema_version(conn, 37)
+                version = 37
+                logger.info("Schema upgraded to v37 (mfdb_microtime_shift table added).")
+
+            # --- v38: add ownership/visibility columns to mfdb_artifact ---
+            if version < 38:
+                logger.info(
+                    "Migrating database schema to version 38 "
+                    "(add created_by_user_id, is_public to mfdb_artifact)..."
+                )
+                _ensure_column(
+                    conn, "mfdb_artifact", "created_by_user_id",
+                    "TEXT REFERENCES flr_sample_users(user_id)"
+                )
+                _ensure_column(
+                    conn, "mfdb_artifact", "is_public", "INTEGER DEFAULT 0"
+                )
+                set_schema_version(conn, 38)
+                version = 38
+                logger.info("Schema upgraded to v38 (ownership columns on mfdb_artifact).")
 
             _ensure_mfdb_setup_columns(conn)
             _ensure_lifecycle_columns(conn)

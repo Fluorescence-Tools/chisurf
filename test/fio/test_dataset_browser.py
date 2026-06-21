@@ -1,0 +1,599 @@
+"""Tests for MFDB dataset browser (PRD-10).
+
+Asserts browsing, scoping, pagination, open, shifter round-trip, and GUI
+construction.  Uses DI via in-process RPC client with a temp database path.
+"""
+
+from __future__ import annotations
+
+import json
+import uuid
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
+from chisurf.core.mfdb.auth import _hash_token
+from chisurf.core.mfdb.repository import MFDatabase
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def user_alice_token() -> str:
+    return "alice-session-token"
+
+
+@pytest.fixture
+def user_bob_token() -> str:
+    return "bob-session-token"
+
+
+@pytest.fixture
+def temp_db(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    user_alice_token: str,
+    user_bob_token: str,
+) -> Path:
+    """Create a temp MFDB with Alice (admin, not admin) and Bob users."""
+    db_path = tmp_path / "test_mfdb.db"
+    db = MFDatabase(db_path)
+
+    alice_hash = _hash_token(user_alice_token)
+    bob_hash = _hash_token(user_bob_token)
+
+    db.conn.execute(
+        "INSERT INTO flr_sample_users (user_id, display_name, is_admin) VALUES (?, ?, ?)",
+        ("alice", "Alice", 0),
+    )
+    db.conn.execute(
+        "INSERT INTO flr_sample_users (user_id, display_name, is_admin) VALUES (?, ?, ?)",
+        ("bob", "Bob", 0),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_session (session_id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        ("sess_alice", "alice", alice_hash, "2099-12-31T23:59:59"),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_session (session_id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        ("sess_bob", "bob", bob_hash, "2099-12-31T23:59:59"),
+    )
+    db.conn.commit()
+
+    # Helper: register a raw_measurement artifact via direct repository call
+    def _register_artifact(
+        artifact_id: str,
+        kind: str = "raw_measurement",
+        data_format: str = "ptu",
+        user_id: str = "alice",
+        is_public: bool = False,
+    ) -> None:
+        db.register_artifact(
+            artifact_id=artifact_id,
+            artifact_kind=kind,
+            data_format=data_format,
+            storage_mode="local_file",
+            file_path="/tmp/fake.ptu",
+            created_by_user_id=user_id,
+            is_public=is_public,
+        )
+
+    # Register test artifacts
+    _register_artifact("art_alice_priv_01", user_id="alice", is_public=False)
+    _register_artifact("art_alice_pub_01", user_id="alice", is_public=True)
+    _register_artifact("art_alice_pub_02", user_id="alice", is_public=True)
+    _register_artifact("art_bob_priv_01", user_id="bob", is_public=False)
+    _register_artifact("art_bob_pub_01", user_id="bob", is_public=True)
+
+    # Register an artifact with a different kind/format for filtering tests
+    _register_artifact(
+        "art_calib_01",
+        kind="calibration_data",
+        data_format="json",
+        user_id="alice",
+        is_public=True,
+    )
+
+    db.close()
+
+    # Patch resolve_database_path in the services module to point to our temp db
+    monkeypatch.setattr(
+        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        lambda: db_path,
+    )
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        lambda: db_path,
+    )
+
+    return db_path
+
+
+def _alice_auth(user_alice_token: str) -> dict:
+    return {"token": user_alice_token}
+
+
+def _bob_auth(user_bob_token: str) -> dict:
+    return {"token": user_bob_token}
+
+
+# ---------------------------------------------------------------------------
+# datasets.browse — scope / pagination / filtering
+# ---------------------------------------------------------------------------
+
+
+def test_browse_mine_returns_only_active_user_datasets(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """'Mine' scope returns only artifacts owned by the authenticated user."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="own",
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_priv_01" in ids
+    assert "art_alice_pub_01" in ids
+    assert "art_alice_pub_02" in ids
+    assert "art_bob_priv_01" not in ids
+    assert "art_bob_pub_01" not in ids
+
+
+def test_browse_public_includes_public_datasets(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """'Public' scope returns only public artifacts regardless of owner."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="public",
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_pub_01" in ids
+    assert "art_alice_pub_02" in ids
+    assert "art_bob_pub_01" in ids
+    assert "art_alice_priv_01" not in ids
+    assert "art_bob_priv_01" not in ids
+
+
+def test_browse_all_includes_public_and_own(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """'All' scope returns public datasets + those owned by the user."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="all",
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_priv_01" in ids  # owned
+    assert "art_alice_pub_01" in ids  # owned + public
+    assert "art_alice_pub_02" in ids
+    assert "art_bob_pub_01" in ids  # public (not owned)
+    assert "art_bob_priv_01" not in ids  # private and not owned
+
+
+def test_browse_kinds_filter(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """kinds filter narrows results to matching artifact_kind."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="public",
+        kinds=["calibration_data"],
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_calib_01" in ids
+    assert "art_alice_pub_01" not in ids
+
+
+def test_browse_formats_filter(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """formats filter narrows results to matching data_format."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="public",
+        formats=["json"],
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_calib_01" in ids
+    assert "art_alice_pub_01" not in ids
+
+
+def test_browse_query_filter(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """query filters by artifact_id substring."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="public",
+        query="pub_01",
+        auth=_alice_auth(user_alice_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_pub_01" in ids
+    assert "art_alice_pub_02" not in ids
+
+
+def test_browse_pagination(
+    temp_db: Path,
+    user_alice_token: str,
+) -> None:
+    """Pagination produces non-overlapping, correctly bounded pages."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    # Page 1 (limit=3)
+    r1 = datasets_browse_handler(
+        scope="public",
+        limit=3,
+        offset=0,
+        auth=_alice_auth(user_alice_token),
+    )
+    # Page 2 (limit=3)
+    r2 = datasets_browse_handler(
+        scope="public",
+        limit=3,
+        offset=3,
+        auth=_alice_auth(user_alice_token),
+    )
+
+    d1 = r1.get("datasets", [])
+    d2 = r2.get("datasets", [])
+    total = r1.get("total", 0)
+
+    # Pages do not overlap
+    ids1 = {d["artifact_id"] for d in d1}
+    ids2 = {d["artifact_id"] for d in d2}
+    assert ids1.isdisjoint(ids2)
+
+    # Total matches expected public count (4 public artifacts)
+    assert total == 4
+
+    # Combined pages cover all public datasets
+    all_ids = ids1 | ids2
+    assert "art_alice_pub_01" in all_ids
+    assert "art_alice_pub_02" in all_ids
+    assert "art_bob_pub_01" in all_ids
+    assert "art_calib_01" in all_ids
+
+    # Total returned on both pages
+    assert r2.get("total") == total
+
+
+# ---------------------------------------------------------------------------
+# Two-user scoping
+# ---------------------------------------------------------------------------
+
+
+def test_user_b_cannot_see_a_private_dataset(
+    temp_db: Path,
+    user_bob_token: str,
+) -> None:
+    """Bob cannot see Alice's private dataset via 'all' scope."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="all",
+        auth=_bob_auth(user_bob_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_priv_01" not in ids
+    assert "art_alice_pub_01" in ids  # public is visible
+
+
+def test_user_b_can_see_a_public_dataset(
+    temp_db: Path,
+    user_bob_token: str,
+) -> None:
+    """Bob can see Alice's public dataset via 'public' scope."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+
+    result = datasets_browse_handler(
+        scope="public",
+        auth=_bob_auth(user_bob_token),
+    )
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+    assert "art_alice_pub_01" in ids
+    assert "art_bob_pub_01" in ids  # own datasets are also public
+
+
+# ---------------------------------------------------------------------------
+# datasets.open
+# ---------------------------------------------------------------------------
+
+
+def test_open_dataset_returns_local_path_for_object_store(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """datasets.open returns a readable local path for a registered object."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_open_handler,
+    )
+
+    obj_root = tmp_path / "obj_store"
+    obj_root.mkdir()
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.object_store_root",
+        lambda: obj_root,
+    )
+
+    db_path = tmp_path / "open_test.db"
+    db = MFDatabase(db_path)
+
+    monkeypatch.setattr(
+        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        lambda: db_path,
+    )
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        lambda: db_path,
+    )
+
+    # Register a session + user
+    tok = "open-test-token"
+    tok_hash = _hash_token(tok)
+    db.conn.execute(
+        "INSERT INTO flr_sample_users (user_id, display_name, is_admin) VALUES (?, ?, ?)",
+        ("open_user", "Open User", 0),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_session (session_id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        ("sess_open", "open_user", tok_hash, "2099-12-31T23:59:59"),
+    )
+    db.conn.commit()
+
+    # Store a real file in the object store
+    content = b"fake tttr data for open test"
+    store = db._get_object_store()
+    ref = store.put_bytes(content, filename="test.ptu")
+    db.conn.execute(
+        "INSERT INTO mfdb_object (object_uuid, content_md5, original_filename, "
+        "size_bytes, storage_path, refcount) VALUES (?, ?, ?, ?, ?, 1)",
+        (ref.uuid, ref.md5, "test.ptu", ref.size, ref.storage_path),
+    )
+    db.conn.commit()
+
+    # Register an artifact pointing to this object
+    art_id = "art_open_01"
+    db.register_artifact(
+        artifact_id=art_id,
+        artifact_kind="raw_measurement",
+        data_format="ptu",
+        storage_mode="managed_archive",
+        object_uuid=ref.uuid,
+        created_by_user_id="open_user",
+        is_public=False,
+    )
+    db.close()
+
+    result = datasets_open_handler(
+        artifact_id=art_id,
+        auth={"token": tok},
+    )
+    local_path = result.get("local_path")
+    assert local_path is not None
+    assert Path(local_path).exists()
+    assert Path(local_path).read_bytes() == content
+
+
+# ---------------------------------------------------------------------------
+# Shifter round-trip
+# ---------------------------------------------------------------------------
+
+
+def test_shifter_round_trip(
+    tmp_path: Path,
+    user_alice_token: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Register a TTTR raw_measurement, browse lists it, open reads it."""
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+        datasets_open_handler,
+    )
+
+    obj_root = tmp_path / "obj_store"
+    obj_root.mkdir()
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.object_store_root",
+        lambda: obj_root,
+    )
+
+    db_path = tmp_path / "shifter_rt.db"
+    db = MFDatabase(db_path)
+
+    monkeypatch.setattr(
+        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        lambda: db_path,
+    )
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        lambda: db_path,
+    )
+
+    # Register Alice (user_default already bootstrapped by ensure_schema)
+    tok_hash = _hash_token(user_alice_token)
+    db.conn.execute(
+        "INSERT INTO flr_sample_users (user_id, display_name, is_admin) VALUES (?, ?, ?)",
+        ("alice", "Alice", 0),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_session (session_id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        ("sess_alice2", "alice", tok_hash, "2099-12-31T23:59:59"),
+    )
+    db.conn.commit()
+
+    # Patch _resolve_active_user_id to return alice for this test
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.result_registry._resolve_active_user_id",
+        lambda: "alice",
+    )
+
+    # Create a real file and register as raw_measurement
+    content = b"fake TTTR data for shifter round trip"
+    src_file = tmp_path / "test_input.ptu"
+    src_file.write_bytes(content)
+
+    from chisurf.core.mfdb.result_registry import register_raw_measurement
+    art_id = register_raw_measurement(
+        file_path=str(src_file),
+        db=db,
+        is_public=False,
+    )
+    assert art_id, "register_raw_measurement should return an artifact_id"
+
+    # Verify browse (mine) lists it
+    browse_result = datasets_browse_handler(
+        scope="own",
+        auth=_alice_auth(user_alice_token),
+    )
+    ds_ids = {d["artifact_id"] for d in browse_result.get("datasets", [])}
+    assert art_id in ds_ids
+
+    # Verify open returns readable content
+    open_result = datasets_open_handler(
+        artifact_id=art_id,
+        auth=_alice_auth(user_alice_token),
+    )
+    local_path = open_result.get("local_path")
+    assert local_path is not None
+    assert Path(local_path).exists()
+    assert Path(local_path).read_bytes() == content
+
+    db.close()
+
+
+# ---------------------------------------------------------------------------
+# GUI construction smoke test (mirrors test/gui/test_detector_wizard_page.py)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    True,
+    reason="Qt smoke test disabled by default; "
+    "run manually with QT_QPA_PLATFORM=offscreen pytest ...",
+)
+def test_mfdb_dataset_browser_constructs() -> None:
+    """MfdbDatasetBrowser constructs without crashing (no client → disabled)."""
+    from qtpy import QtWidgets
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        app = QtWidgets.QApplication([])
+
+    from chisurf.gui.widgets.mfdb.dataset_browser import MfdbDatasetBrowser
+
+    browser = MfdbDatasetBrowser(client=None)
+    assert browser is not None
+    assert browser._is_connected() is False
+    assert browser.status_label.text() == "MFDB not connected"
+    browser.close()
+
+
+@pytest.mark.skipif(
+    True,
+    reason="Qt smoke test disabled by default; "
+    "run manually with QT_QPA_PLATFORM=offscreen pytest ...",
+)
+def test_mfdb_dataset_picker_dialog_returns_none_when_no_client() -> None:
+    """pick_dataset returns None when client is None."""
+    from qtpy import QtWidgets
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        app = QtWidgets.QApplication([])
+
+    from chisurf.gui.widgets.mfdb.dataset_browser import (
+        MfdbDatasetPickerDialog,
+    )
+
+    result = MfdbDatasetPickerDialog.pick_dataset(client=None)
+    assert result is None
+
+
+def test_processed_dataset_with_unseeded_user_registers_and_browses(tmp_path, monkeypatch):
+    """Regression (PRD-10 bug): a processed dataset must register and appear in
+    the browser even when the configured active user was never pre-seeded and the
+    operation type is plugin-specific.
+
+    Covers two silent-failure bugs:
+      * Bug A: operation_type='microtime_shift' must be a valid vocab value.
+      * Bug B: a configured default_user_id with no flr_sample_users row must not
+        fail the created_by_user_id foreign key (ensure_user bootstraps it).
+    """
+    import chisurf.core.settings
+    from chisurf.core.mfdb import result_registry as rr
+
+    # Active user that is NOT pre-seeded in flr_sample_users (config injection).
+    monkeypatch.setitem(
+        chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "scientist_x"}
+    )
+
+    db = MFDatabase(str(tmp_path / "reg.db"))
+    src = tmp_path / "in.dat"
+    src.write_text("hello")
+
+    raw = rr.register_raw_measurement(file_path=str(src), db=db)
+    assert raw, "raw must register even when the active user is not pre-seeded"
+
+    proc = rr.register_result(
+        kind="processed_data",
+        data={"x": [1, 2, 3]},
+        parent_artifact_id=raw,
+        operation_type="microtime_shift",
+        db=db,
+    )
+    assert proc, "processed_data with operation_type='microtime_shift' must register"
+
+    kinds = [
+        d["artifact_kind"]
+        for d in db.browse_datasets(scope="own", owner_id="scientist_x")["datasets"]
+    ]
+    assert "processed_data" in kinds
+    assert "raw_measurement" in kinds

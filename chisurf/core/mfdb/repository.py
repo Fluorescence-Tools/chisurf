@@ -874,6 +874,33 @@ class MFDatabase(MFDBClientBase):
                 (operation_id, artifact_id, role, direction, now, now, None)
             )
 
+    def add_microtime_shift(
+        self,
+        operation_id: str,
+        routing_channel: int,
+        shift: int,
+    ) -> None:
+        """Store one per-channel micro-time shift for an operation.
+
+        Parameters
+        ----------
+        operation_id : str
+            Operation identifier.
+        routing_channel : int
+            Routing channel number.
+        shift : int
+            Effective micro-time shift in channel units.
+
+        """
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                "INSERT OR REPLACE INTO mfdb_microtime_shift "
+                "(operation_id, routing_channel, shift, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (operation_id, int(routing_channel), int(shift), now, now),
+            )
+
     def get_operation_artifacts(self, operation_id, direction=None):
         query = (
             "SELECT mfdb_artifact.*, mfdb_operation_artifact.role, "
@@ -2684,6 +2711,23 @@ class MFDatabase(MFDBClientBase):
     def get_users(self):
         return self.conn.execute("SELECT * FROM flr_sample_users WHERE deleted_at IS NULL ORDER BY user_id").fetchall()
 
+    def ensure_user(self, user_id: str, display_name: str | None = None) -> None:
+        """Create a minimal ``flr_sample_users`` row if the user is absent.
+
+        Ownership stamping (``created_by_user_id``) carries a foreign key to
+        ``flr_sample_users``; a configured ``default_user_id`` that was never
+        seeded (e.g. a personal user id) would otherwise fail the FK and roll
+        back the whole registration. This makes the active user exist on demand.
+        """
+        if not user_id:
+            return
+        import uuid as _uuid
+        self.conn.execute(
+            "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
+            "VALUES (?, ?, ?)",
+            (user_id, str(_uuid.uuid4()), display_name or user_id),
+        )
+
     def add_user(self, user_id, display_name, email=None, affiliation=None, department=None, role=None, address=None, website=None, phone=None, details=None, user_uuid=None, is_admin=0, password_hash=None, allow_passwordless_login=None):
         import uuid
         if not user_uuid:
@@ -3066,6 +3110,8 @@ class MFDatabase(MFDBClientBase):
         artifact_kind: str | None = None,
         data_format: str | None = None,
         object_uuid: str | None = None,
+        created_by_user_id: str | None = None,
+        is_public: bool | int | None = None,
     ) -> str:
         """Register or update an artifact in the canonical MFDB tables.
 
@@ -3130,8 +3176,9 @@ class MFDatabase(MFDBClientBase):
                     file_path, url, folder_path, mime_type, size_bytes, checksum,
                     checksum_algorithm, row_count, validation_status, validation_message,
                     metadata_json, data_json, data_blob, object_uuid,
+                    created_by_user_id, is_public,
                     created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(artifact_id) DO UPDATE SET
                     artifact_kind=excluded.artifact_kind,
                     data_format=excluded.data_format,
@@ -3151,6 +3198,8 @@ class MFDatabase(MFDBClientBase):
                     data_json=excluded.data_json,
                     data_blob=excluded.data_blob,
                     object_uuid=excluded.object_uuid,
+                    created_by_user_id=excluded.created_by_user_id,
+                    is_public=excluded.is_public,
                     updated_at=excluded.updated_at,
                     deleted_at=excluded.deleted_at""",
                 (
@@ -3173,6 +3222,8 @@ class MFDatabase(MFDBClientBase):
                     data_json,
                     data_blob,
                     object_uuid,
+                    created_by_user_id,
+                    1 if is_public else 0,
                     now,
                     now,
                     None,
@@ -3463,6 +3514,184 @@ class MFDatabase(MFDBClientBase):
             params.append(experiment_id)
         query += " ORDER BY created_at, artifact_id"
         return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+
+    def browse_datasets(
+        self,
+        scope: str = "all",
+        query: str | None = None,
+        kinds: list[str] | None = None,
+        formats: list[str] | None = None,
+        sample_id: str | None = None,
+        owner_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """Browse datasets with scope-based access control, search, and
+        pagination.
+
+        Parameters
+        ----------
+        scope : str, default='all'
+            One of ``'own'`` (only owned by *owner_id*), ``'public'``
+            (``is_public = 1``), or ``'all'`` (public + owned by *owner_id*).
+        query : str, optional
+            Free-text search against artifact_id, artifact_kind, data_format,
+            and metadata_json.
+        kinds : list of str, optional
+            Only include artifacts with these artifact_kind values.
+        formats : list of str, optional
+            Only include artifacts with these data_format values.
+        sample_id : str, optional
+            Only include artifacts linked to this sample via mfdb_edge.
+        owner_id : str, optional
+            User ID for ``'own'`` scope or to supplement ``'all'``.
+        limit : int, default=50
+            Maximum results per page.
+        offset : int, default=0
+            Pagination offset.
+
+        Returns
+        -------
+        dict
+            Keys:
+              ``datasets`` : list of artifact dicts,
+              ``total`` : int (total matching count),
+              ``sample_counts`` : dict[str, int] (artifact count per sample).
+        """
+        where_clauses: list[str] = ["a.deleted_at IS NULL"]
+        params: list[Any] = []
+
+        if scope == "own":
+            if not owner_id:
+                owner_id = ""
+            where_clauses.append("a.created_by_user_id = ?")
+            params.append(owner_id)
+        elif scope == "public":
+            where_clauses.append("a.is_public = 1")
+        elif scope == "all":
+            if owner_id:
+                where_clauses.append("(a.is_public = 1 OR a.created_by_user_id = ?)")
+                params.append(owner_id)
+            else:
+                where_clauses.append("a.is_public = 1")
+
+        if query:
+            pattern = f"%{query}%"
+            where_clauses.append(
+                "(a.artifact_id LIKE ? OR a.artifact_kind LIKE ? "
+                "OR a.data_format LIKE ? OR a.metadata_json LIKE ?)"
+            )
+            params.extend([pattern, pattern, pattern, pattern])
+
+        if kinds:
+            placeholders = ",".join("?" for _ in kinds)
+            where_clauses.append(f"a.artifact_kind IN ({placeholders})")
+            params.extend(kinds)
+
+        if formats:
+            placeholders = ",".join("?" for _ in formats)
+            where_clauses.append(f"a.data_format IN ({placeholders})")
+            params.extend(formats)
+
+        if sample_id:
+            where_clauses.append(
+                "a.artifact_id IN ( "
+                "SELECT source_node_id FROM mfdb_edge "
+                "WHERE source_node_type = 'artifact' "
+                "AND target_node_type = 'sample' "
+                "AND target_node_id = ? AND deleted_at IS NULL"
+                ")"
+            )
+            params.append(sample_id)
+
+        where_sql = " AND ".join(where_clauses)
+
+        count_row = self.conn.execute(
+            f"SELECT COUNT(*) FROM mfdb_artifact a WHERE {where_sql}",
+            params,
+        ).fetchone()
+        total = count_row[0] if count_row else 0
+
+        rows = self.conn.execute(
+            f"SELECT a.* FROM mfdb_artifact a WHERE {where_sql} "
+            f"ORDER BY a.created_at DESC, a.artifact_id LIMIT ? OFFSET ?",
+            params + [limit, offset],
+        ).fetchall()
+        datasets = [dict(r) for r in rows]
+
+        sample_counts: dict[str, int] = {}
+        if datasets:
+            art_ids = [d["artifact_id"] for d in datasets]
+            placeholders = ",".join("?" for _ in art_ids)
+            sc_rows = self.conn.execute(
+                f"SELECT e.target_node_id AS sample_id, COUNT(*) AS cnt "
+                f"FROM mfdb_edge e "
+                f"WHERE e.source_node_type = 'artifact' "
+                f"AND e.target_node_type = 'sample' "
+                f"AND e.deleted_at IS NULL "
+                f"AND e.source_node_id IN ({placeholders}) "
+                f"GROUP BY e.target_node_id",
+                art_ids,
+            ).fetchall()
+            for sr in sc_rows:
+                sample_counts[sr["sample_id"]] = sr["cnt"]
+
+        return {
+            "datasets": datasets,
+            "total": total,
+            "sample_counts": sample_counts,
+        }
+
+    def open_dataset(self, artifact_id: str) -> str:
+        """Materialize a dataset artifact to a readable local file path.
+
+        Parameters
+        ----------
+        artifact_id : str
+            Artifact identifier.
+
+        Returns
+        -------
+        str
+            Local file path to the materialized dataset content.
+
+        Raises
+        ------
+        KeyError
+            If the artifact or its stored object is not found.
+        """
+        art = self.get_artifact(artifact_id)
+        if art is None:
+            raise KeyError(f"Artifact not found: {artifact_id}")
+
+        object_uuid = art.get("object_uuid")
+        if object_uuid:
+            store = self._get_object_store()
+            row = self.conn.execute(
+                "SELECT content_md5, original_filename FROM mfdb_object WHERE object_uuid = ?",
+                (object_uuid,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"Object not found for artifact: {artifact_id}")
+            blob_path = store.get_path(row["content_md5"])
+            original_name = row["original_filename"] or artifact_id
+            suffix = Path(original_name).suffix if "." in original_name else ""
+            import tempfile
+            tmp = tempfile.NamedTemporaryFile(
+                suffix=suffix, delete=False, prefix="chisurf-ds-"
+            )
+            tmp.write(blob_path.read_bytes())
+            tmp.close()
+            return tmp.name
+
+        file_path = art.get("file_path")
+        if file_path and Path(file_path).exists():
+            return str(file_path)
+
+        raise KeyError(
+            f"Artifact {artifact_id} has no materializable content "
+            f"(no object_uuid and no valid file_path)"
+        )
 
     def record_operation(
         self,

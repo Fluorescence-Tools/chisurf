@@ -16,6 +16,8 @@ ARTIFACT_KINDS: tuple[str, ...] = (
     "project_snapshot", "archive_manifest", "archive_file",
     "visualization", "external_reference", "chinet_session", "chinet_node",
     "project_dataset", "source_measurement",
+    "trace_data", "image_data", "background_data", "calibration_data",
+    "burst_selection", "tttr_photon_stream",
     # Legacy values (accepted for backward compat)
     "raw_data", "bur", "ptu", "spc", "bh", "fcs",
     "tcspc", "decay", "irf", "pda", "model_curve", "residual",
@@ -29,7 +31,7 @@ ARTIFACT_KINDS: tuple[str, ...] = (
 DATA_FORMATS: tuple[str, ...] = (
     "ptu", "spc", "bh", "tttr", "photon_hdf5", "bur",
     "hdf5", "zip", "json", "csv", "tsv", "png", "svg",
-    "sqlite", "directory", "unknown",
+    "sqlite", "directory", "bin", "msgpack", "unknown",
 )
 
 OPERATION_TYPES: tuple[str, ...] = (
@@ -41,6 +43,9 @@ OPERATION_TYPES: tuple[str, ...] = (
     "tcspc_histogram_computation", "pda_histogram_computation",
     "pch_histogram_computation", "fcs_correlation_load",
     "tcspc_curve_load",
+    "histogram_construction", "background_correction",
+    "image_analysis", "population_selection", "calibration",
+    "microtime_shift",
     # Legacy values
     "import", "burst_filtering", "gmm_fitting", "analysis",
     "fitting", "project_archive", "local_fit", "global_fit",
