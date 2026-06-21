@@ -1501,14 +1501,15 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
         except Exception:
             pass
 
+        # MFDB is the authoritative store for detector setups; the legacy
+        # detector_setups.json is migrated into MFDB and then deleted, so its
+        # absence is normal and must not trigger onboarding. Onboard only when
+        # the active user has no detector setups in MFDB.
         try:
-            import json
-            settings_dir = cs.core.settings.get_path('settings')
-            det_file = settings_dir / 'detector_setups.json'
-            if not det_file.exists():
-                return True
-            with open(det_file, 'r', encoding='utf-8') as fh:
-                data = json.load(fh) or {}
+            from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
+                load_detector_setups,
+            )
+            data = load_detector_setups()
             setups = data.get('setups', {}) if isinstance(data, dict) else {}
             if not isinstance(setups, dict) or len(setups) == 0:
                 return True
@@ -1614,6 +1615,11 @@ def _chisurf_rpc_is_available(timeout_ms: int = 500) -> bool:
         return False
 
 
+def _mfdb_rpc_is_available(timeout_ms: int = 500) -> bool:
+    """Return whether the configured MFDB-compatible RPC endpoint responds."""
+    return _chisurf_rpc_is_available(timeout_ms=timeout_ms)
+
+
 def _ensure_chisurf_rpc_server() -> None:
     """Start the embedded ChiSurf RPC server when no external server responds."""
     if _chisurf_rpc_is_available(timeout_ms=300):
@@ -1658,6 +1664,11 @@ def _ensure_chisurf_rpc_server() -> None:
             return
         time.sleep(0.05)
     raise RuntimeError("Embedded ChiSurf RPC server did not become ready")
+
+
+def _ensure_mfdb_rpc_server() -> None:
+    """Start the embedded MFDB-compatible RPC server."""
+    _ensure_chisurf_rpc_server()
 
 
 class LoginDialog(QtWidgets.QDialog):
