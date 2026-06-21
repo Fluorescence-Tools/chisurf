@@ -175,7 +175,16 @@ def load_fcs_channel_setups(file_path: str | pathlib.Path | None = None,
             if user_id is None:
                 user_id = resolve_active_user_id()
             if not skip_migration:
-                _migrate_json_to_mfdb(db, path, user_id=user_id)
+                imported = _migrate_json_to_mfdb(db, path, user_id=user_id)
+                # Only remove the legacy file when we actually imported data
+                # (so users who already have MFDB setups don't lose a stale
+                # JSON file that may contain additional data).
+                if imported:
+                    try:
+                        if path.exists():
+                            path.unlink()
+                    except Exception:
+                        pass
             result = load_mfdb_setups(db, _fcs_config(), user_id, row_to_data=_fcs_row_to_data)
             return {
                 "version": 1,
@@ -221,14 +230,14 @@ def save_fcs_channel_setups(setups_data: Dict[str, Any], file_path: str | pathli
         }
         return _save_setups(
             mfdb_payload, _fcs_config(),
-            file_path=str(path) if file_path else None,
+            file_path=None if file_path is None else str(path),
             replace=False,
             is_public=is_public,
             save_row_fn=_save_setup_row,
             load_scoped_fn=lambda db, cfg, uid: _load_setups(None, cfg),
         )
 
-    # JSON fallback
+    # JSON export path: explicit file_path only
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(path.suffix + ".tmp")
@@ -240,12 +249,15 @@ def save_fcs_channel_setups(setups_data: Dict[str, Any], file_path: str | pathli
         return False
 
 
-def _migrate_json_to_mfdb(db, path: pathlib.Path, user_id: str | None = None) -> None:
-    """Per-user idempotent migration from fcs_channel_setups.json to MFDB."""
+def _migrate_json_to_mfdb(db, path: pathlib.Path, user_id: str | None = None) -> bool:
+    """Per-user idempotent migration from fcs_channel_setups.json to MFDB.
+
+    Returns ``True`` when at least one setup was imported.
+    """
     from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_setup_utils import (
         migrate_json_to_mfdb as _migrate,
     )
-    _migrate(db, _fcs_config(), path, user_id=user_id, save_row_fn=_save_setup_row)
+    return _migrate(db, _fcs_config(), path, user_id=user_id, save_row_fn=_save_setup_row)
 
 
 # ---------------------------------------------------------------------------

@@ -45,7 +45,6 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_setup_utils import (
     resolve_active_user_id,
 )
 from chisurf.core.fluorescence.fcs.channel_setups import (
-    FCS_CHANNEL_SETUPS_FILE,
     load_fcs_channel_setups,
     save_fcs_channel_setups,
     build_channels_from_setup,
@@ -464,13 +463,7 @@ class FCSChannelDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.information(
                 self,
                 "Saved",
-                f"Saved FCS channel pairs for setup '{self._current_setup}' to:\n{FCS_CHANNEL_SETUPS_FILE}",
-            )
-        else:
-            QtWidgets.QMessageBox.critical(
-                self,
-                "Error",
-                f"Could not save to:\n{FCS_CHANNEL_SETUPS_FILE}",
+                f"Saved FCS channel pairs for setup '{self._current_setup}'.",
             )
 
 

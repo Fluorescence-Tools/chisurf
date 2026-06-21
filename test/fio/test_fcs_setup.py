@@ -529,3 +529,144 @@ def test_v36_migration_backfills_fcs_pair_correlator(tmp_path: Path) -> None:
             assert pr["make_fine"] == 1, f"Expected make_fine=1, got {pr['make_fine']}"
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Sidequest B addendum 2: MFDB-only default save; migration removes legacy
+# ---------------------------------------------------------------------------
+
+
+def test_default_fcs_save_uses_mfdb_no_json(tmp_path: Path) -> None:
+    """Default save (no file_path) writes to MFDB and does NOT create a JSON
+    side-file at the canonical path."""
+    import chisurf.core.fluorescence.fcs.channel_setups as fcs_mod
+    import chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_setup_utils as utils
+
+    # Point canonical file to temp location so we don't depend on real config
+    orig_file = fcs_mod.FCS_CHANNEL_SETUPS_FILE
+    fcs_mod.FCS_CHANNEL_SETUPS_FILE = tmp_path / "fcs_channel_setups.json"
+    fcs_mod._FCS_CONFIG_CACHE = None
+
+    db = _fresh_db(tmp_path)
+    user_id = "user_alice"
+    db.conn.execute(
+        "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
+        "VALUES (?, ?, ?)",
+        (user_id, "00000000-0000-0000-0000-000000000001", user_id),
+    )
+    db.conn.commit()
+
+    orig_get_db = utils.get_db
+    utils.get_db = lambda *a, **kw: db
+    orig_active = utils.resolve_active_user_id
+    utils.resolve_active_user_id = lambda: user_id
+
+    try:
+        data = {
+            "setups": {
+                "MfdbOnlySetup": {
+                    "correlator": {"n_bins": 4, "n_casc": 32, "make_fine": True},
+                    "pairs": [],
+                },
+            },
+            "last_used_setup": "MfdbOnlySetup",
+        }
+
+        ok = save_fcs_channel_setups(data)
+        assert ok, "save_fcs_channel_setups should succeed"
+
+        # No JSON should have been written to the canonical (temp) path
+        assert not fcs_mod.FCS_CHANNEL_SETUPS_FILE.exists(), (
+            "Default save must not create JSON at the canonical path"
+        )
+
+        # Data must be loadable from MFDB
+        loaded = load_fcs_channel_setups(
+            db_path=db.db_path, user_id=user_id, skip_migration=True,
+        )
+        assert "MfdbOnlySetup" in loaded["setups"]
+        assert loaded["last_used_setup"] == "MfdbOnlySetup"
+        sd = loaded["setups"]["MfdbOnlySetup"]
+        assert sd["correlator"]["n_bins"] == 4
+    finally:
+        fcs_mod.FCS_CHANNEL_SETUPS_FILE = orig_file
+        fcs_mod._FCS_CONFIG_CACHE = None
+        utils.get_db = orig_get_db
+        utils.resolve_active_user_id = orig_active
+        db.close()
+
+
+def test_fcs_migration_removes_legacy_file(tmp_path: Path) -> None:
+    """After a verified migration, the legacy JSON file is deleted."""
+    import chisurf.core.fluorescence.fcs.channel_setups as fcs_mod
+    import chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_setup_utils as utils
+
+    # Point the canonical file to our temp directory
+    orig_file = fcs_mod.FCS_CHANNEL_SETUPS_FILE
+    fcs_mod.FCS_CHANNEL_SETUPS_FILE = tmp_path / "fcs_channel_setups.json"
+    fcs_mod._FCS_CONFIG_CACHE = None
+
+    db_path = str(tmp_path / "mfdb.sqlite")
+    with MFDatabase(db_path):
+        pass
+    db = MFDatabase(db_path)
+    user_id = "user_alice"
+    db.conn.execute(
+        "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
+        "VALUES (?, ?, ?)",
+        (user_id, "00000000-0000-0000-0000-000000000001", user_id),
+    )
+    db.conn.commit()
+    db.close()
+
+    legacy_path = fcs_mod.FCS_CHANNEL_SETUPS_FILE
+    _write_legacy_json(legacy_path, {"FCS1": {
+        "correlator": {"n_bins": 5, "n_casc": 40, "make_fine": False},
+        "pairs": [{"name": "GG", "channel_a": "GG", "channel_b": "GG", "kind": "ACF"}],
+    }})
+    assert legacy_path.exists()
+
+    try:
+        # Run load with migration — this triggers migration + file deletion
+        loaded = load_fcs_channel_setups(
+            db_path=db_path, user_id=user_id, skip_migration=False,
+        )
+        # After successful migration, the legacy file should be gone
+        assert not legacy_path.exists(), (
+            "Legacy JSON file must be deleted after verified migration"
+        )
+        # Data from the legacy file must be present in the result
+        assert "FCS1" in loaded["setups"]
+    finally:
+        fcs_mod.FCS_CHANNEL_SETUPS_FILE = orig_file
+        fcs_mod._FCS_CONFIG_CACHE = None
+
+
+def test_fcs_explicit_export_still_roundtrips(tmp_path: Path) -> None:
+    """Explicit export via custom file_path still writes JSON and can be
+    read back."""
+    custom = tmp_path / "my_export.json"
+
+    data = {
+        "version": 1,
+        "setups": {
+            "Exported": {
+                "correlator": {"n_bins": 3, "n_casc": 24, "make_fine": False},
+                "pairs": [{"name": "GG", "channel_a": "GG", "channel_b": "GG", "kind": "ACF"}],
+            },
+        },
+        "last_used_setup": "Exported",
+    }
+
+    ok = save_fcs_channel_setups(data, file_path=str(custom))
+    assert ok
+    assert custom.exists(), "Explicit export should create JSON file"
+
+    raw = json.loads(custom.read_text())
+    assert raw.get("version") == 1
+    assert "Exported" in raw.get("setups", {})
+
+    # Load it back — should go through JSON fallback path
+    loaded = load_fcs_channel_setups(file_path=str(custom))
+    assert "Exported" in loaded["setups"]
+    assert loaded["setups"]["Exported"]["correlator"]["n_bins"] == 3
