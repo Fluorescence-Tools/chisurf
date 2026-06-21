@@ -3589,9 +3589,12 @@ class MFDatabase(MFDBClientBase):
             params.extend(kinds)
 
         if formats:
-            placeholders = ",".join("?" for _ in formats)
-            where_clauses.append(f"a.data_format IN ({placeholders})")
-            params.extend(formats)
+            # Stored data_format is the dot-less suffix (e.g. "ptu"); accept
+            # callers that pass either ".ptu" or "ptu".
+            norm_formats = [str(f).lstrip(".").lower() for f in formats]
+            placeholders = ",".join("?" for _ in norm_formats)
+            where_clauses.append(f"LOWER(a.data_format) IN ({placeholders})")
+            params.extend(norm_formats)
 
         if sample_id:
             where_clauses.append(

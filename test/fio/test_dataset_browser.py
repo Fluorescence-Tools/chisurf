@@ -597,3 +597,27 @@ def test_processed_dataset_with_unseeded_user_registers_and_browses(tmp_path, mo
     ]
     assert "processed_data" in kinds
     assert "raw_measurement" in kinds
+
+
+def test_browse_datasets_format_filter_normalizes_dot(tmp_path):
+    """Regression: browse_datasets must match the dot-less stored data_format
+    whether the caller passes 'ptu', '.ptu', or '.PTU'. The shifter's MFDB
+    picker passed dotted formats, so it always returned zero datasets and the
+    load-from-MFDB roundtrip was broken."""
+    from chisurf.core.mfdb import result_registry as rr
+
+    db = MFDatabase(str(tmp_path / "fmt.db"))
+    f = tmp_path / "meas.ptu"
+    f.write_bytes(b"PQTTTRdata")
+    raw = rr.register_raw_measurement(file_path=str(f), db=db)
+    assert raw
+    uid = rr._resolve_active_user_id()
+
+    row = db.conn.execute(
+        "SELECT data_format FROM mfdb_artifact WHERE artifact_id=?", (raw,)
+    ).fetchone()
+    assert row[0] == "ptu"  # stored without the dot
+
+    for fmts in (["ptu"], [".ptu"], [".PTU"], ["PTU"]):
+        n = len(db.browse_datasets(scope="own", owner_id=uid, formats=fmts)["datasets"])
+        assert n == 1, f"formats={fmts} should match the stored 'ptu' (got {n})"
