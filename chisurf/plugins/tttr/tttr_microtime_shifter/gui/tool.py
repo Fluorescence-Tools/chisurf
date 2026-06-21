@@ -324,7 +324,9 @@ class MicrotimeShifterTool(QtWidgets.QMainWindow):
                 client = MFDBClient(inprocess=True)
                 sel = MfdbDatasetPickerDialog.pick_dataset(
                     parent=self,
-                    kinds=["raw_measurement"],
+                    # Both raw measurements and shifted (processed) TTTR outputs
+                    # are loadable; the format filter keeps it to TTTR files.
+                    kinds=["raw_measurement", "processed_data"],
                     formats=["spc", "ptu", "ht3", "hdf", "h5"],
                     scope="mine",
                     client=client,
