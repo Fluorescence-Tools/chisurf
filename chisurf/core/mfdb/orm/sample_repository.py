@@ -242,9 +242,14 @@ def _create_sample_graph_in_session(
     # Note: SampleDefinition doesn't have separate 'details' or 'project_id' fields
     # 'details' in FlrSample maps to definition.description for backward compat
     # 'project_id' is not exposed in SampleDefinition
+    # flr_sample is the flrCIF/pdbx-canonical table; ensure it always carries a
+    # human-readable name. When the user provides no explicit description, fall
+    # back to the display name so the sample is not nameless in flr_sample-based
+    # views (list_samples, search, experiment joins).
+    _flr_description = definition.description or display_name
     sample = FlrSample(
         sample_id=sample_id,
-        description=definition.description,
+        description=_flr_description,
         details=definition.description,
         num_of_probes=len(definition.probes) if definition.probes else None,
         solvent_phase=definition.solvent_phase,

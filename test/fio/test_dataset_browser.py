@@ -706,3 +706,116 @@ def test_datasets_open_allows_anonymous_with_default_user(tmp_path, monkeypatch)
 
     res = svc.datasets_open_handler(artifact_id=art, auth=None)  # anonymous
     assert res.get("local_path"), "anonymous open must return a local path"
+
+
+def test_browse_datasets_joins_sample_name_and_refcount(
+    temp_db: Path,
+) -> None:
+    """browse_datasets returns sample_name and object_refcount if associated."""
+    db = MFDatabase(temp_db)
+
+    # 1. Insert a sample. flr_sample is the flrCIF/pdbx-canonical table the
+    #    browser joins; the name lives in its ``description`` field.
+    db.conn.execute(
+        "INSERT INTO flr_sample (sample_id, description) VALUES (?, ?)",
+        ("sample_xxx", "Super Cool Protein Sample"),
+    )
+
+    # 2. Insert an object (for refcount and original_filename)
+    db.conn.execute(
+        "INSERT INTO mfdb_object (object_uuid, content_md5, storage_path, refcount, original_filename) VALUES (?, ?, ?, ?, ?)",
+        ("obj_uuid_123", "md5_content_123", "/tmp/nonexistent", 5, "my_original_file.ptu"),
+    )
+
+    # 3. Register artifact associated with the object
+    db.register_artifact(
+        artifact_id="art_with_sample_01",
+        artifact_kind="raw_measurement",
+        data_format="ptu",
+        storage_mode="local_file",
+        file_path="/tmp/fake.ptu",
+        created_by_user_id="alice",
+        is_public=True,
+    )
+    db.conn.execute(
+        "UPDATE mfdb_artifact SET object_uuid = ? WHERE artifact_id = ?",
+        ("obj_uuid_123", "art_with_sample_01"),
+    )
+
+    # 4. Link artifact to sample via edge
+    db.conn.execute(
+        "INSERT INTO mfdb_edge (source_node_type, source_node_id, target_node_type, target_node_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
+        ("artifact", "art_with_sample_01", "sample", "sample_xxx", "measured_sample"),
+    )
+    db.conn.commit()
+
+    # Now query browse_datasets
+    result = db.browse_datasets(scope="all")
+    datasets = result.get("datasets", [])
+
+    # Find our artifact
+    target_ds = None
+    for ds in datasets:
+        if ds.get("artifact_id") == "art_with_sample_01":
+            target_ds = ds
+            break
+
+    assert target_ds is not None
+    assert target_ds.get("sample_name") == "Super Cool Protein Sample"
+    assert target_ds.get("object_refcount") == 5
+    assert target_ds.get("original_filename") == "my_original_file.ptu"
+
+    # Check that another artifact without associations has NA/None or default
+    other_ds = None
+    for ds in datasets:
+        if ds.get("artifact_id") == "art_alice_pub_01":
+            other_ds = ds
+            break
+
+    assert other_ds is not None
+    assert other_ds.get("sample_name") is None
+    assert other_ds.get("object_refcount") is None
+
+
+
+def test_name_only_sample_appears_in_flr_sample_and_list(tmp_path):
+    """Regression: a sample created with only a name (no description) must carry
+    that name into flr_sample.description (the flrCIF/pdbx-canonical table), so it
+    is not nameless in list_samples / search / browse. Previously the name lived
+    only in mfdb_sample.display_name and flr_sample.description was empty."""
+    from chisurf.core.mfdb.sample_manager import create_sample
+    from chisurf.core.mfdb.sample_requests import SampleDefinition
+
+    db = MFDatabase(str(tmp_path / "s.db"))
+    sid = create_sample(db, SampleDefinition(name="DNA-Al488-Cy5"))
+
+    row = db.conn.execute(
+        "SELECT description FROM flr_sample WHERE sample_id = ?", (sid,)
+    ).fetchone()
+    assert row["description"] == "DNA-Al488-Cy5"
+    names = [r["description"] for r in db.list_samples()]
+    assert "DNA-Al488-Cy5" in names
+
+
+def test_backfill_fills_empty_flr_sample_description(tmp_path):
+    """Regression: existing flr_sample rows with an empty description are
+    backfilled from mfdb_sample.display_name when the DB is opened/migrated."""
+    import sqlite3
+    from chisurf.core.mfdb import schema
+
+    dbp = str(tmp_path / "bf.db")
+    db = MFDatabase(dbp)
+    # Simulate the legacy state: name only in mfdb_sample, empty flr_sample.
+    db.conn.execute(
+        "INSERT INTO mfdb_sample (sample_id, display_name) VALUES ('x1','My Sample')"
+    )
+    db.conn.execute(
+        "INSERT INTO flr_sample (sample_id, description) VALUES ('x1','')"
+    )
+    db.conn.commit()
+
+    schema._backfill_flr_sample_names(db.conn)
+    desc = db.conn.execute(
+        "SELECT description FROM flr_sample WHERE sample_id='x1'"
+    ).fetchone()[0]
+    assert desc == "My Sample"

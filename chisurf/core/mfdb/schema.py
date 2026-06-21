@@ -3938,4 +3938,30 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
         bootstrap_auth_groups(conn)
     except sqlite3.OperationalError:
         pass
+    _backfill_flr_sample_names(conn)
     return report
+
+
+def _backfill_flr_sample_names(conn: sqlite3.Connection) -> None:
+    """Carry the sample name into flr_sample.description when it is missing.
+
+    flr_sample is the flrCIF/pdbx-canonical sample table and the source for
+    list/search/experiment views, but minimal samples historically left
+    ``description`` empty while the name lived only in
+    ``mfdb_sample.display_name``. Copy the name across (idempotent: only fills
+    empty descriptions).
+    """
+    try:
+        with conn:
+            conn.execute(
+                "UPDATE flr_sample "
+                "SET description = (SELECT ms.display_name FROM mfdb_sample ms "
+                "                   WHERE ms.sample_id = flr_sample.sample_id) "
+                "WHERE (description IS NULL OR description = '') "
+                "  AND deleted_at IS NULL "
+                "  AND EXISTS (SELECT 1 FROM mfdb_sample ms "
+                "              WHERE ms.sample_id = flr_sample.sample_id "
+                "              AND ms.display_name IS NOT NULL AND ms.display_name != '')"
+            )
+    except sqlite3.OperationalError:
+        pass

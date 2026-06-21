@@ -3616,7 +3616,19 @@ class MFDatabase(MFDBClientBase):
         total = count_row[0] if count_row else 0
 
         rows = self.conn.execute(
-            f"SELECT a.* FROM mfdb_artifact a WHERE {where_sql} "
+            f"SELECT a.*, "
+            f"       o.refcount AS object_refcount, "
+            f"       o.original_filename AS original_filename, "
+            f"       s.description AS sample_name "
+            f"FROM mfdb_artifact a "
+            f"LEFT JOIN mfdb_object o ON o.object_uuid = a.object_uuid "
+            f"LEFT JOIN mfdb_edge e ON e.source_node_id = a.artifact_id "
+            f"  AND e.source_node_type = 'artifact' "
+            f"  AND e.target_node_type = 'sample' "
+            f"  AND e.deleted_at IS NULL "
+            f"LEFT JOIN flr_sample s ON s.sample_id = e.target_node_id "
+            f"  AND s.deleted_at IS NULL "
+            f"WHERE {where_sql} "
             f"ORDER BY a.created_at DESC, a.artifact_id LIMIT ? OFFSET ?",
             params + [limit, offset],
         ).fetchall()
