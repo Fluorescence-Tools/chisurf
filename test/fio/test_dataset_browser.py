@@ -645,3 +645,41 @@ def test_browse_handler_own_scope_uses_default_user_when_anonymous(tmp_path, mon
     # auth=None -> anonymous principal -> must fall back to default_user_id
     r = svc.datasets_browse_handler(scope="own", kinds=["raw_measurement"], auth=None)
     assert r["total"] == 1, "own scope must match the registration owner when anonymous"
+
+
+def test_real_mfdbclient_call_browses_datasets(tmp_path, monkeypatch):
+    """Integration regression: the real MFDBClient must expose ``call`` and
+    return datasets through the in-process dispatcher.
+
+    The browser widget and shifter use ``client.call(...)``; MFDBClient only
+    had ``_call``, so every browse raised AttributeError (swallowed) and the
+    picker showed 0 — even though the backend handler worked. This exercises the
+    real client end to end.
+    """
+    import chisurf.core.settings
+    from chisurf.core.mfdb import result_registry as rr
+    import chisurf.core.mfdb.database_resolver as dr
+    from chisurf.plugins.core.mfdb_admin.backend import services as svc
+    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+
+    monkeypatch.setitem(
+        chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}
+    )
+    dbp = str(tmp_path / "client.db")
+    db = MFDatabase(dbp)
+    f = tmp_path / "m.ptu"
+    f.write_bytes(b"data")
+    assert rr.register_raw_measurement(file_path=str(f), db=db)
+    db.close()
+    monkeypatch.setattr(dr, "resolve_database_path", lambda: dbp)
+    monkeypatch.setattr(svc, "resolve_database_path", lambda: dbp)
+
+    client = MFDBClient(inprocess=True)
+    assert hasattr(client, "call"), "MFDBClient must expose a public call()"
+    res = client.call(
+        "mfdb.datasets.browse",
+        {"scope": "own", "kinds": ["raw_measurement"], "formats": ["ptu"]},
+    )
+    assert isinstance(res, dict)
+    assert res.get("total") == 1
+    assert len(res.get("datasets", [])) == 1

@@ -108,10 +108,13 @@ class MFDBClient:
         ).get("optical_properties", {})
 
     def get_sample_full_description(self, sample_id: str) -> dict[str, Any]:
-        return self._call(
-            "mfdb.samples.full_description",
-            {"sample_id": sample_id},
-        ).get("description", {})
+        try:
+            return self._call(
+                "mfdb.samples.full_description",
+                {"sample_id": sample_id},
+            ).get("description", {})
+        except Exception:
+            return {}
 
     def validate_sample_export(self, sample_id: str) -> dict[str, Any]:
         return self._call(
@@ -210,13 +213,6 @@ class MFDBClient:
 
     def delete_user(self, user_id: str, force: bool = False, requester_id: str = None) -> list[dict[str, Any]]:
         return self._call("mfdb.users.delete", {"user_id": user_id, "force": force, "requester_id": requester_id}).get("users", [])
-
-    def login(self, user_id: str, password: str = "") -> dict[str, Any]:
-        """Legacy login — delegates to new auth.login."""
-        return self._call_raw("mfdb.auth.login", {
-            "user_id": user_id,
-            "password": password,
-        })
 
     def change_password(self, user_id: str, password: str, requester_id: str = None) -> dict[str, Any]:
         return self._call("mfdb.auth.change_password", {"password": password})
@@ -406,10 +402,15 @@ class MFDBClient:
         return ProjectBrowserClient(mfdb_client=self).delete_version(version_id=project_id)
 
     def list_raw_data(self, experiment_id: str | None = None, data_type: str | None = None) -> list[dict[str, Any]]:
-        return self._call("raw_data.list", {"experiment_id": experiment_id, "data_type": data_type}).get("raw_data", [])
+        params: dict[str, Any] = {}
+        if experiment_id is not None:
+            params["experiment_id"] = experiment_id
+        if data_type is not None:
+            params["data_type"] = data_type
+        return self._call("mfdb.raw_data.list", params or None).get("raw_data", [])
 
     def get_raw_data(self, raw_data_id: str) -> dict[str, Any]:
-        return self._call("raw_data.get", {"raw_data_id": raw_data_id}).get("raw_data", {})
+        return self._call("mfdb.raw_data.get", {"raw_data_id": raw_data_id}).get("raw_data", {})
 
     def list_processing_runs(self, experiment_id: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
         return self._call("processing.burst_selection.list", {"experiment_id": experiment_id, "status": status}).get("processing_runs", [])
@@ -831,6 +832,14 @@ class MFDBClient:
         return self._call("mfdb.objects.list", params)
 
     # ---- Internal ----
+
+    def call(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Public RPC entry point (auth-injecting, envelope-unwrapping).
+
+        External consumers (the dataset browser widget, plugin GUIs) call
+        ``client.call(...)``; keep this in sync with ``_call``.
+        """
+        return self._call(method, params)
 
     def _call(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         params = dict(params or {})
