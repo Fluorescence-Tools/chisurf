@@ -234,26 +234,30 @@ def register_services(dispatcher_or_context: Any) -> None:
 
 
 def _default_user_id() -> str | None:
-    """Configured local default user (the one registration stamps ownership with)."""
-    try:
-        import chisurf.core.settings
-        return chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id") or None
-    except Exception:
-        return None
+    """Configured local default user (the one registration stamps ownership with).
+
+    Delegates to the PRD-17 canonical resolver so the anonymous in-process client
+    scopes reads to the very identity registration stamped writes with.
+    """
+    from chisurf.core.mfdb.session import configured_default_user_id
+
+    return configured_default_user_id()
 
 
 def _resolve_owner_id(db: "MFDatabase", auth: dict[str, Any] | None) -> str | None:
-    """Resolve the acting user for MFDB dataset access.
+    """Resolve the acting user for MFDB dataset access (PRD-17 canonical resolver).
 
-    Uses the authenticated principal when present; otherwise (e.g. the
-    in-process desktop client, which has no session) falls back to the
-    configured ``mfdb.default_user_id`` — the same identity registration stamps
-    — so reads and writes agree.
+    Uses the authenticated principal when present; otherwise (e.g. the in-process
+    desktop client, which has no session) falls back to the configured
+    ``mfdb.default_user_id`` — the same identity registration stamps — so reads and
+    writes agree.
     """
+    from chisurf.core.mfdb.session import resolve_active_user_id
+
     principal = principal_from_rpc_auth(db.conn, auth)
     if isinstance(principal, AnonymousPrincipal):
         return _default_user_id()
-    return principal.user_id
+    return resolve_active_user_id(auth, conn=db.conn)
 
 
 def datasets_browse_handler(

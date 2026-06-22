@@ -31,15 +31,14 @@ class LinkValidationError(ValueError):
 
 
 def _resolve_active_user_id() -> str:
-    """Resolve the active MFDB user ID from settings."""
-    try:
-        import chisurf.core.settings
-        uid = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id")
-        if uid:
-            return uid
-    except Exception:
-        pass
-    return "user_default"
+    """Resolve the active MFDB user ID from settings.
+
+    Thin wrapper over the canonical resolver (PRD-17) so writes stamp the same
+    identity reads scope by.
+    """
+    from chisurf.core.mfdb.session import configured_default_user_id
+
+    return configured_default_user_id()
 
 
 def register_result(

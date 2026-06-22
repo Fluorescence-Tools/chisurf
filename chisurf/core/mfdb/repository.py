@@ -1794,11 +1794,8 @@ class MFDatabase(MFDBClientBase):
 
     def add_sample(self, sample_id, uuid=None, description="", details="", num_of_probes=None, solvent_phase=None, sample_condition_id=None, entity_assembly_id=None, project_id=None, measured_by_user_id=None, measured_by_device_id=None, measured_at=None):
         if measured_by_user_id is None:
-            try:
-                import chisurf.core.settings
-                measured_by_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
-            except Exception:
-                measured_by_user_id = "user_default"
+            from chisurf.core.mfdb.session import configured_default_user_id
+            measured_by_user_id = configured_default_user_id()
         import uuid as _uuid
         if uuid is None:
             existing = self.get_sample(sample_id)
@@ -2750,11 +2747,8 @@ class MFDatabase(MFDBClientBase):
         if not experiment_id:
             raise ValueError("experiment_id is required")
         if measured_by_user_id is None:
-            try:
-                import chisurf.core.settings
-                measured_by_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
-            except Exception:
-                measured_by_user_id = "user_default"
+            from chisurf.core.mfdb.session import configured_default_user_id
+            measured_by_user_id = configured_default_user_id()
         with self._transaction():
             now = _utc_now()
             self.conn.execute(
@@ -3684,11 +3678,8 @@ class MFDatabase(MFDBClientBase):
         acl_owner_user_id: str | None = None,
     ) -> str:
         if operator_user_id is None:
-            try:
-                import chisurf.core.settings
-                operator_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
-            except Exception:
-                operator_user_id = "user_default"
+            from chisurf.core.mfdb.session import configured_default_user_id
+            operator_user_id = configured_default_user_id()
         self.validate_extensible_vocab("operation_type", operation_type)
         validate_vocabulary(status, STATUS_VALUES, "status")
         settings_hash = _json_hash(settings)
@@ -4804,11 +4795,8 @@ class MFDatabase(MFDBClientBase):
         timestamp: str | None = None,
     ) -> int:
         if operator_user_id is None:
-            try:
-                import chisurf.core.settings
-                operator_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
-            except Exception:
-                operator_user_id = "user_default"
+            from chisurf.core.mfdb.session import configured_default_user_id
+            operator_user_id = configured_default_user_id()
         now = timestamp or _utc_now()
         with self._transaction():
             self.conn.execute(
