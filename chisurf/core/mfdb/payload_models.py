@@ -238,24 +238,26 @@ def _coerce_table_array(array: np.ndarray, column: str) -> np.ndarray:
     """
     if array.dtype.hasobject:
         flat = array.reshape(-1)
-        # Accept string columns that contain missing values (None/NaN/NA) — common
-        # in burst summary tables (e.g. a "First File" column). Missing entries are
-        # normalized to empty strings so the column serializes as a string array.
-        if all(isinstance(item, str) or _is_table_missing(item) for item in flat):
-            normalized = [
-                "" if _is_table_missing(item) else str(item) for item in flat
-            ]
-            return np.asarray(normalized, dtype=np.str_).reshape(array.shape)
-        raise ValueError(f"generic table column {column!r} has unsupported object dtype")
+        # String-like columns (e.g. a burst summary "First File" column) arrive as
+        # object dtype and often mix filenames with missing values or numeric
+        # sentinels (None / NaN / pandas NA / 0). Serialize any such column as a
+        # string array (missing -> ""). Only genuinely unsupported cells — nested
+        # containers like dict/list/tuple/set — are rejected.
+        if any(isinstance(item, (dict, list, tuple, set)) for item in flat):
+            raise ValueError(f"generic table column {column!r} has unsupported object dtype")
+        normalized = [
+            "" if _is_table_missing(item) else str(item) for item in flat
+        ]
+        return np.asarray(normalized, dtype=np.str_).reshape(array.shape)
     return array
 
 
 def _is_table_missing(value: Any) -> bool:
-    """Return whether a table cell is a missing value (None / NaN / pandas NA)."""
-    if value is None or type(value).__name__ == "NAType":
+    """Return whether a table cell is a missing value (None / NaN / pandas NA/NaT)."""
+    if value is None or type(value).__name__ in {"NAType", "NaTType"}:
         return True
     try:
-        return bool(isinstance(value, float) and np.isnan(value))
+        return bool(np.isscalar(value) and isinstance(value, float) and np.isnan(value))
     except (TypeError, ValueError):
         return False
 
