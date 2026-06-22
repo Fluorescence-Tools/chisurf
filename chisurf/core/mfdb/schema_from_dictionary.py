@@ -246,7 +246,7 @@ def _category_dependency_order(categories: list[str]) -> list[str]:
     # Tables that are referenced by others
     roots = [
         "mfdb_object", "mfdb_setup", "mfdb_artifact", "mfdb_operation",
-        "mfdb_sample", "mfdb_branch", "mfdb_group",
+        "mfdb_branch", "mfdb_group",
     ]
     for r in roots:
         if r in categories:

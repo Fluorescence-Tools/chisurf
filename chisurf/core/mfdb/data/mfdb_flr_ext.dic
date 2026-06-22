@@ -3278,29 +3278,12 @@ save__mfdb_parameter.parameter_type
       global
       calibrated
 
-save_mfdb_sample
-   _category.id              mfdb_sample
-   _category.description
-;     DEPRECATED: duplicate of flr_sample.  Categories remain
-;     for vocabulary seeding until Phase 3 removal.
-;
-   _category.mandatory_code  no
-   _category_key.name        "_mfdb_sample.sample_id"
-
-save__mfdb_sample.sample_id
-   _item.name                "_mfdb_sample.sample_id"
-   _item.category_id         mfdb_sample
-   _item_type.code           code
-   _item.mandatory_code      yes
-   _chisurf_schema.table_name  mfdb_sample
-   _chisurf_schema.column_name sample_id
-
-save__mfdb_sample.sample_type
-   _item.name                "_mfdb_sample.sample_type"
-   _item.category_id         mfdb_sample
+save__flr_sample.sample_type
+   _item.name                "_flr_sample.sample_type"
+   _item.category_id         flr_sample
    _item_type.code           code
    _item.mandatory_code      no
-   _chisurf_schema.table_name  mfdb_sample
+   _chisurf_schema.table_name  flr_sample
    _chisurf_schema.column_name sample_type
     loop_
     _item_enumeration.value

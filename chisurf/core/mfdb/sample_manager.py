@@ -112,7 +112,7 @@ def get_sample(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
 
     """
     row = db.conn.execute(
-        """SELECT sample_id, description, details
+        """SELECT sample_id, description, details, sample_type
            FROM flr_sample
            WHERE sample_id = ? AND deleted_at IS NULL""",
         (sample_id,),
@@ -396,6 +396,7 @@ def _sample_row_to_dict(row: Any) -> dict[str, Any]:
         "sample_id": data.get("sample_id", ""),
         "name": data.get("description", ""),
         "display_name": data.get("description", ""),
+        "sample_type": data.get("sample_type", ""),
     }
     return result
 

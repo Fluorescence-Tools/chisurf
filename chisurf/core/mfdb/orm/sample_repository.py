@@ -236,6 +236,7 @@ def _create_sample_graph_in_session(
         sample_id=sample_id,
         description=display_name,
         details=definition.description or None,
+        sample_type=sample_type,
         num_of_probes=len(definition.probes) if definition.probes else None,
         solvent_phase=definition.solvent_phase,
         project_id=None,

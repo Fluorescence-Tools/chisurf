@@ -121,6 +121,7 @@ CREATE_TABLES_SQL = [
         sample_id TEXT PRIMARY KEY,
         description TEXT,
         details TEXT,
+        sample_type TEXT,
         num_of_probes INTEGER,
         solvent_phase TEXT,
         sample_condition_id TEXT,
@@ -1512,7 +1513,7 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
         "validation_status": "_mfdb_operation.validation_status",
         "storage_mode": "_mfdb_object.storage_mode",
         "lifecycle_status": "_mfdb_branch.lifecycle_status",
-        "sample_type": "_mfdb_sample.sample_type",
+        "sample_type": "_flr_sample.sample_type",
         "entity_type": "_entity.type",
         "fluorophore_type": "_flr_sample_probe_details.fluorophore_type",
         "solvent_phase": "_flr_sample.solvent_phase",
@@ -1760,7 +1761,6 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
         pass
     # Phase 3: drop duplicate/legacy tables
     _drop_legacy_tables(conn)
-    _backfill_flr_sample_names(conn)
     return report
 
 
@@ -1864,26 +1864,3 @@ def _drop_legacy_tables(conn: sqlite3.Connection) -> None:
                 pass  # table may not exist; that's fine
 
 
-def _backfill_flr_sample_names(conn: sqlite3.Connection) -> None:
-    """Carry the sample name into flr_sample.description when it is missing.
-
-    flr_sample is the flrCIF/pdbx-canonical sample table and the source for
-    list/search/experiment views, but minimal samples historically left
-    ``description`` empty while the name lived only in
-    ``mfdb_sample.display_name``. Copy the name across (idempotent: only fills
-    empty descriptions).
-    """
-    try:
-        with conn:
-            conn.execute(
-                "UPDATE flr_sample "
-                "SET description = (SELECT ms.display_name FROM mfdb_sample ms "
-                "                   WHERE ms.sample_id = flr_sample.sample_id) "
-                "WHERE (description IS NULL OR description = '') "
-                "  AND deleted_at IS NULL "
-                "  AND EXISTS (SELECT 1 FROM mfdb_sample ms "
-                "              WHERE ms.sample_id = flr_sample.sample_id "
-                "              AND ms.display_name IS NOT NULL AND ms.display_name != '')"
-            )
-    except sqlite3.OperationalError:
-        pass  # mfdb_sample may already be dropped; this is fine
