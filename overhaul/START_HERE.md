@@ -68,16 +68,22 @@ Read `MASTER-ORDER.md` Phase 2. **PRD-11** (operation-node abstraction) + **PRD-
 - ~~Registry conformance gate~~ ✓: every registered transformer is checked
   (`test_all_registered_transformers_conform`).
 
+- ~~Burst Selection as a conformant transformer~~ ✓: `burst_selection/api/transformer.py`
+  wraps the pure `analyze_request`; `settings_from_parameters` maps the flat declared
+  params back onto nested `AnalysisSettings`. **Both reference transformers now pass
+  the registry conformance gate.**
+
 **Next (in order):**
-1. **Burst Selection as a conformant transformer.** Declare a `Transformer` adapter
-   (like `tttr_microtime_shifter/api/transformer.py`) wrapping burst's pure analysis;
-   declare `input_spec`/`output_spec`; register it (auto-gated by the registry
-   conformance test). Burst already registers through `register_result` with the
-   validated `burst_selection` schema, so this is the contract/adapter layer. It is a
-   bigger plugin — wrapping its analysis purely needs care.
-2. **Apply PRD-23 (thin widgets)** to both tools as touched; consider routing
-   `register_result` internals through `register_operation` so there is one recording
-   path.
+1. **PRD-28 — ndXplorer ↔ MFDB burst round trip** (the manual-test enabler the user
+   asked for; spec'd in `PRD-28-ndxplorer-burst-integration.md`). Add (a) an ndXplorer
+   "Open burst selection from MFDB" launcher: `MfdbDatasetPickerDialog.pick_dataset(
+   kinds=["burst_table"])` → resolve path via `datasets.open` →
+   `NDXplorer.open_files(file_type="burst_dir", file_handles=path)`; and (b) a Burst
+   Selection "Send to ndXplorer" action. Reuse the picker (the Microtime Shifter shows
+   the pattern, `tttr_microtime_shifter/gui/tool.py:325`); keep `modules/ndxplorer`
+   chisurf-free. This makes the whole spine hands-on testable.
+2. **Apply PRD-23 (thin widgets)** to both tools; consider routing `register_result`
+   internals through `register_operation` so there is one recording path.
 3. **PRD-26** (the `.dic` generates DAO/admin/validation/docs) — builds on PRD-19 +
    the operation-parameter schema.
 
@@ -95,7 +101,8 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓, anonymous-fallback removed ✓ — build-once object-threading optional polish | `189db5a3`, `c6a73a17`, `e25cabb6` |
 | **PRD-27** append-only core | go/no-go **decided: append-only-lite** ✓ (build is Phase 3) | `(PRD-27 doc)` |
 | **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, `register_operation` ✓, role-indexed recording ✓, **`mfdb_microtime_shift` retired** ✓, **validation wired into `register_result`** ✓ | `1da6ab6d`…`2a02f560` |
-| **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **Microtime Shifter conformant** ✓, **registry conformance gate** ✓ — Burst Selection adapter next | `(core/transform, tttr)` |
+| **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
+| **PRD-28** ndXplorer↔MFDB burst round trip | spec'd (manual-test enabler) — implement next | `(PRD-28 doc)` |
 
 ## Decisions locked
 
