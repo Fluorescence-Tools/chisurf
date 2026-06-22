@@ -768,6 +768,519 @@ Add a button between Export and the preview area:
   displays content in `preview_edit`
 - User can review the CIF text before committing to a file save
 
+---
+
+### Task 10: Standardize all tables — checkboxes, right-click menus, and bulk actions
+
+**Why**: mfdb-admin currently has many independent `QTableWidget` instances.
+Some admin tables use `_install_table_context_menu()` and row checkboxes, but
+many workflow-critical tables do not. The result is inconsistent and unsafe:
+users cannot reliably select multiple rows, copy identifiers, or delete records
+from the same place they inspect them.
+
+Every table in mfdb-admin must have the same baseline interaction model:
+
+- A dedicated checkbox column for every row
+- Full-row selection
+- A standard right-click context menu
+- Bulk actions that operate on checked rows
+- Clear confirmation before destructive actions
+- Consistent status-bar feedback after actions
+
+#### 10.1 Replace "first column is checkable" with a dedicated checkbox column
+
+**Current state**: `_apply_checkable_first_column()` makes column 0 checkable.
+This mixes selection state with the first data value, usually the ID. It is
+hard to scan and fragile when tables use different ID columns.
+
+**Target state**:
+
+All standard mfdb-admin tables have column 0 named `✓` or `select`; all actual
+data columns shift right by one. The checkbox cell should:
+
+- Be centered
+- Be user-checkable
+- Have no editable text
+- Preserve checked state across refresh when the row ID still exists
+- Support "check selected rows" and "check all visible rows"
+
+Add helper methods in `tool.py`:
+
+```python
+def _setup_standard_table(
+    self,
+    table: QtWidgets.QTableWidget,
+    *,
+    headers: list[str],
+    item_kind: str,
+    id_col: int,
+    delete_one_fn: Callable[[str], Any] | None = None,
+    usage_fn: Callable[[list[str]], dict[str, str]] | None = None,
+    open_details_fn: Callable[[str], None] | None = None,
+    extra_actions: list[tuple[str, Callable[[], None]]] | None = None,
+) -> None:
+    ...
+```
+
+Rules:
+
+- `headers` does **not** include the checkbox column; helper prepends it.
+- `id_col` is the data-column index after the checkbox column has been added.
+- All table fill methods must insert the checkbox item first.
+- All "checked row IDs" helpers must read the checkbox column and then the
+  configured ID column.
+- Existing code that expects ID at column 0 must be updated to use the new
+  configured ID column.
+
+#### 10.2 Standard context menu for every table
+
+Every standard table must install the same baseline right-click menu:
+
+```
+Open details
+Copy checked IDs
+Copy selected row
+Copy selected cell
+---
+Check selected rows
+Uncheck selected rows
+Check all visible
+Uncheck all
+Invert visible checks
+---
+Select all rows
+Clear selection
+---
+Delete checked...
+```
+
+Behavior:
+
+- `Open details` uses the row under the cursor if present; otherwise the
+  currently selected row.
+- `Copy checked IDs` copies newline-separated IDs to the clipboard.
+- `Copy selected row` copies tab-separated column values.
+- `Check all visible` ignores hidden rows after filters/search.
+- `Delete checked...` is shown only when a delete function exists.
+- Destructive menu entries must use clear text and confirmation dialogs; do not
+  rely only on icons.
+
+#### 10.3 Deletion confirmation and usage checks
+
+Deletion must be bulk-safe and explicit:
+
+1. User checks rows.
+2. User selects `Delete checked...`.
+3. Dialog shows count and first 10 IDs.
+4. If a usage checker returns dependencies, show a second warning dialog with
+   a mandatory checkbox: "I understand these records are referenced."
+5. Delete each item through the backend/client API.
+6. Show success/failure summary in the status bar and preview/message pane.
+7. Refresh affected tables.
+
+Usage checks required before enabling or finalizing delete:
+
+| Item kind | Usage check |
+|-----------|-------------|
+| sample | experiments, measured artifacts, analyses, project links |
+| experiment | raw data, processing runs, processed data, analyses, projects |
+| user | samples, experiments, processing runs, project ownership |
+| device | samples, experiments, setups |
+| setup | experiments, raw measurements, processing runs |
+| entity | sample probe positions and sample definitions |
+| probe | sample-probe mappings, FRET pairs, optical properties |
+| probe position | sample-probe mappings and FRET pairs |
+| raw data | processing inputs, provenance edges, project data links |
+| processing run | input/output artifacts, parameters, audit/provenance edges |
+| processed data | downstream analyses, project data links, provenance edges |
+| object | artifact object_uuid references and object-store refcounts |
+| analysis | project versions, result artifacts, downstream provenance |
+| project/version | linked analyses, archived data, user ownership |
+
+If the backend cannot safely delete an item yet, the context menu must still
+support copy/open/check actions but must not show delete.
+
+#### 10.4 Apply the standard table helper to every existing dock
+
+Audit and update all current tables:
+
+| Dock/tab | Table attr | Current state | Target |
+|----------|------------|---------------|--------|
+| All items | `all_items_table` | No shared context/delete | Standard context menu; open details; copy IDs; no direct delete in MVP |
+| Entities | `entities_table` | Read-only, no context | Standard menu; delete via `delete_entity` |
+| Probes | `probes_table` | Read-only, no context | Standard menu; add backend/client delete before exposing delete |
+| Label positions | `positions_table` | Read-only, no context | Standard menu; delete only after backend semantics exist |
+| Users | `users_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Branches | `branches_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Devices | `devices_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Setups | `setups_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Experiment types | `experiment_types_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Experiments | `experiments_table` | Partial context/check | Migrate to dedicated checkbox column |
+| Experiment data | `experiment_data_table` | Delete button only | Standard context; delete via existing client method |
+| Projects | `projects_table` | Partial context/check | Standard context; clarify version delete vs project delete |
+| Raw data | `raw_data_table` | No context/delete | Standard context; delete hidden until backend soft-delete exists |
+| Processing runs | `processing_runs_table` | No context/delete | Standard context; delete hidden until backend semantics exist |
+| Processed products | `processed_products_table` | No context/delete | Standard context; delete hidden until backend soft-delete exists |
+| Objects | `objects_table` | Delete button only | Standard context; delete via existing object delete |
+| Analyses | `analyses_table` | No context/delete | Standard context; add client wrapper for `analysis.run.delete` |
+| Provenance edges | `prov_edge_table` | Read-only selection | Standard copy/open/trace context; no delete in MVP |
+
+#### 10.5 Backend/client delete gaps
+
+Do not fake deletion in the GUI. Add client wrappers and backend handlers only
+where the repository semantics are clear.
+
+Existing delete support to reuse:
+
+- `mfdb.samples.delete`
+- `mfdb.entities.delete`
+- `mfdb.users.delete`
+- `mfdb.devices.delete`
+- `mfdb.experiment_types.delete`
+- `mfdb.experiments.delete`
+- `mfdb.experiments.data.delete`
+- `mfdb.setups.delete`
+- `mfdb.objects.delete`
+- `analysis.run.delete` exists in `measurement_services.py`, but needs an
+  `MFDBClient.delete_analysis_run()` wrapper and GUI wiring.
+
+Delete support to design before enabling:
+
+- `raw_data.delete`
+- `processed_data.delete`
+- `processing.run.delete` / `processing.burst_selection.delete`
+- `probes.delete`
+- `probes.positions.delete`
+- `provenance.edges.delete`
+
+For artifact/operation deletion, default to **soft delete**:
+
+- Set `deleted_at`
+- Preserve audit log
+- Preserve object-store refcounts unless no live artifact references remain
+- Never physically delete files from user paths
+- Remove or soft-delete provenance edges consistently
+
+---
+
+### Task 11: Add workflow-oriented docks for measurements, projects, data, and provenance
+
+**Why**: The current dock set is table-oriented and implementation-oriented.
+It exposes raw data, processing runs, processed products, objects, analyses, and
+projects as separate islands. The user needs mfdb-admin to answer scientific
+workflow questions:
+
+- Which ChiSurf project is this data part of?
+- Which measurements belong to this project?
+- Which sample was measured?
+- Is the sample metadata complete enough?
+- Which raw files produced this result?
+- Which analyses and project versions depend on this data?
+
+mfdb-admin must become a provenance browser for ChiSurf work, not just a row
+editor for MFDB tables.
+
+#### 11.1 Add a `Measurements` dock
+
+There is currently no dock literally named `Measurements`. Measurement-related
+data is split across:
+
+- `Raw data`
+- `Processing runs`
+- `Processed products`
+- `All items`
+
+Add a new `Measurements` dock before the detailed low-level measurement docks.
+
+Initial implementation can aggregate existing client calls in the GUI:
+
+- `client.list_raw_data()`
+- `client.list_processing_runs()`
+- `client.list_processed_data()`
+
+If the GUI aggregation grows complex, add backend RPC:
+
+- `mfdb.measurements.list`
+- `mfdb.measurements.get`
+
+Table columns:
+
+| Column | Meaning |
+|--------|---------|
+| checkbox | bulk/select state |
+| kind | raw measurement, processing run, processed product |
+| id | raw_data_id / processing_id / processed_data_id |
+| sample | linked sample name/id when available |
+| sample QA | red/yellow/green metric from measurement rows |
+| project | linked ChiSurf project/version when available |
+| experiment | experiment_id |
+| setup/device | setup_id, device, detector setup, or blank |
+| status | validation/status |
+| acquired/created | acquired_at, started_at, created_at |
+| location | file path, URL, folder, object UUID |
+
+Context menu:
+
+- Open details
+- Open linked sample
+- Open linked project
+- Trace upstream provenance
+- Trace downstream provenance
+- Copy checked IDs
+- Delete checked only when the row kind has safe delete support
+
+Filtering:
+
+- Text search over id/sample/project/location
+- Kind filter: all/raw/processing/processed
+- Sample QA filter: all/red/yellow/green
+- Project filter
+- Experiment filter
+
+#### 11.2 Improve `Projects` dock
+
+The current `Projects` dock uses project-browser integration but should become
+first-class in mfdb-admin.
+
+Columns:
+
+| Column | Meaning |
+|--------|---------|
+| checkbox | bulk/select state |
+| project_id | stable project identity |
+| project_name | display name |
+| version_id | latest/current version |
+| version | version number |
+| owner | owner_user_id |
+| visibility | private/public |
+| linked experiment | experiment_id if archived with one |
+| data count | linked artifacts/objects |
+| updated | updated_at |
+| notes | notes |
+
+Actions:
+
+- Restore/open project
+- Show version history
+- Filter measurements/data/provenance by project
+- Copy project/version IDs
+- Delete checked version(s), not whole project history, unless backend supports
+  full project deletion explicitly
+
+Selection behavior:
+
+- Selecting a project sets `current_project_id` and `current_project_version_id`.
+- Measurements, Project Data, Objects, Analyses, and Provenance docks should
+  filter to that project when project filtering is active.
+
+#### 11.3 Add `Project Data` dock
+
+Add a dock that shows all data associated with the selected or all ChiSurf
+projects.
+
+Data sources:
+
+- Project archive metadata
+- `mfdb_artifact`
+- `mfdb_object`
+- raw/processed artifacts
+- analysis/result artifacts
+- project version records
+- provenance edges linking project/archive/analysis/data where available
+
+Columns:
+
+| Column | Meaning |
+|--------|---------|
+| checkbox | bulk/select state |
+| artifact id | artifact_id or analysis/result id |
+| object uuid | object_uuid when stored in object store |
+| kind | raw_measurement, raw_data, processed_data, fit_result, project_archive, etc. |
+| project | project_id / version_id |
+| experiment | experiment_id |
+| sample | sample id/name |
+| sample QA | if measurement-derived |
+| storage | storage_mode |
+| validation | validation_status |
+| location | path/url/folder/object store path |
+
+Context menu:
+
+- Open/reveal data
+- Open linked project
+- Open linked measurement
+- Open linked sample
+- Trace provenance
+- Copy IDs
+- Delete checked only when backend semantics are safe
+
+#### 11.4 Make provenance first-class
+
+The existing `Provenance` and `Provenance graph` docks should be improved and
+connected to selections from Projects, Measurements, Project Data, Objects, and
+Analyses.
+
+Views:
+
+1. Edge table
+2. Upstream dependency list
+3. Downstream dependent list
+4. Graph view
+
+Edge table columns:
+
+| Column | Meaning |
+|--------|---------|
+| checkbox | selection only |
+| edge_id | edge identity |
+| source type | source_node_type |
+| source id | source_node_id |
+| relationship | relationship_type |
+| target type | target_node_type |
+| target id | target_node_id |
+| operation | processing_id / operation_id |
+
+Context menu:
+
+- Open source
+- Open target
+- Trace upstream from source
+- Trace downstream from source
+- Trace upstream from target
+- Trace downstream from target
+- Copy edge/source/target IDs
+- Delete hidden until edge delete semantics are defined
+
+Selection behavior:
+
+- Selecting any row in Projects/Measurements/Project Data/Objects/Analyses
+  should allow "Trace provenance" and should set the provenance seed.
+- Provenance graph must make clear which node is the seed.
+- Graph view should not block the GUI; expensive graph fetch/layout should use
+  background fetch and main-thread apply.
+
+#### 11.5 Add `Overview` dock
+
+Add an overview landing dock that summarizes database health and workflow
+quality.
+
+Cards/sections:
+
+- Database path, schema version, user, connection mode
+- Counts: projects, samples, experiments, raw measurements, processed products,
+  analyses, objects, provenance edges
+- Quality warnings:
+  - measurements without samples
+  - samples with red/yellow metadata QA
+  - orphan artifacts
+  - failed/invalid processing runs
+  - objects with missing files/refcount mismatch
+- Recent activity: latest imports, processing runs, project saves
+
+The overview must be operational and compact, not a marketing page.
+
+---
+
+### Task 12: Reorganize mfdb-admin navigation and polish action names/tooltips
+
+**Why**: The current dock order exposes implementation tables before workflow
+surfaces. Users should start from projects, measurements, data, samples, and
+provenance, while low-level admin tables remain available but secondary.
+
+#### 12.1 Target dock order
+
+Use this order in `setup_ui()`:
+
+1. `Overview`
+2. `Projects`
+3. `Measurements`
+4. `Project Data`
+5. `Samples`
+6. `Experiments`
+7. `Processing`
+8. `Objects`
+9. `Provenance`
+10. `Provenance graph`
+11. `Import/Export`
+12. `Admin`
+
+Implementation detail:
+
+- Existing low-level tabs can remain as individual docks during migration.
+- Once `Admin` exists, group users/devices/branches/setups/experiment types
+  there through a nested `QTabWidget`.
+- Keep advanced low-level docks accessible; do not remove functionality while
+  replacing surfaces.
+
+#### 12.2 Rename reset action
+
+Current labels:
+
+- File menu: `Reset database from source...`
+- Toolbar: `Reset from source`
+
+New label:
+
+- `Reset`
+
+Tooltip:
+
+```
+Reset the active MFDB database. A backup is created first.
+```
+
+If implementation shows that no backup is created before reset, fix the reset
+implementation or change the tooltip to say exactly what happens. Do not ship a
+misleading tooltip.
+
+#### 12.3 Add tooltips to every toolbar/menu action
+
+Toolbar actions:
+
+| Action | Tooltip |
+|--------|---------|
+| Login | Connect and authenticate to the selected MFDB server |
+| Logout | Drop the current MFDB authentication token |
+| Refresh | Reload MFDB status and visible tables |
+| Import | Import fluorescence/sample/project data into MFDB |
+| Backup | Create a backup copy of the active MFDB database |
+| Reset | Reset the active MFDB database; backup first |
+
+Dock/table actions:
+
+- Buttons must describe the object type and effect: `Delete checked samples`,
+  `Open selected project`, `Trace selected artifact`.
+- Icon-only controls need tooltips.
+- Button text must not encode hidden behavior. The hidden 10-click demo seed
+  may remain, but when activated it must report progress clearly.
+
+#### 12.4 Status and message reporting
+
+All long or destructive operations must report through:
+
+- `statusBar().showMessage(...)`
+- `status_label`
+- preview/message pane when a detailed summary exists
+
+Operations:
+
+- import
+- export
+- backup
+- reset
+- mock/demo data population
+- delete checked rows
+- provenance trace
+- project restore
+
+For background operations, use `QThread` or another Qt-safe async pattern:
+
+- Worker thread fetches or mutates data.
+- GUI thread updates widgets after completion.
+- Never mutate Qt widgets from the worker thread.
+
+---
+
 ## Implementation notes
 
 ### Backend architecture
@@ -840,6 +1353,17 @@ affect the correctness of the data the admin GUI will display and edit:
 - [ ] **Task 6 complete**: Label positions — all flrCIF fields visible and editable
 - [ ] **Task 7 complete**: Full description preview visible for any selected sample
 - [ ] **Task 8.1 complete**: Metadata tab has PDBx key autocomplete
+- [ ] **Task 10.1 complete**: Standard tables use a dedicated checkbox column, not checkable ID cells
+- [ ] **Task 10.2 complete**: Every mfdb-admin table has a standard right-click context menu
+- [ ] **Task 10.3 complete**: Bulk delete uses checked rows, confirmation, usage checks, and status reporting
+- [ ] **Task 10.4 complete**: All current docks are audited and migrated or explicitly marked read-only/no-delete
+- [ ] **Task 11.1 complete**: `Measurements` dock exists and aggregates raw data, processing runs, and processed products
+- [ ] **Task 11.2 complete**: `Projects` dock displays ChiSurf projects/versions and can filter workflow views
+- [ ] **Task 11.3 complete**: `Project Data` dock displays project-linked artifacts, objects, samples, and validation state
+- [ ] **Task 11.4 complete**: Provenance views can trace from project, measurement, data, object, and analysis selections
+- [ ] **Task 12.2 complete**: Reset action is renamed to `Reset` everywhere and has accurate tooltip text
+- [ ] **Task 12.3 complete**: Toolbar/menu/table actions have tooltips and clear labels
+- [ ] **Task 12.4 complete**: Long operations report through status bar/status label/preview and do not block the GUI
 - [ ] All new RPC handlers have tests (see test list below)
 
 ### Nice-to-have (post-MVP)
@@ -853,6 +1377,42 @@ affect the correctness of the data the admin GUI will display and edit:
 - [ ] Metadata grouped by category prefix (Task 8.3)
 - [ ] Metadata value validation on save (Task 8.2)
 - [ ] Keyboard shortcuts for common actions (Ctrl+N new, Ctrl+S save)
+- [ ] Group low-level admin docks into one `Admin` dock with nested tabs
+- [ ] Add persisted user preferences for visible columns and dock filters
+- [ ] Add project/workflow timeline visualization
+- [ ] Add safe provenance edge delete after backend semantics are defined
+
+
+
+---
+
+### Task 13: General UX Polish (Layouts, Refresh Blocking, and Editability)
+
+**Why**: The `mfdb-admin` GUI currently suffers from UX issues such as blocking the main thread during startup, fixed inflexible layouts, read-only detail panels, and poor visual feedback when tables are empty.
+
+#### 13.1 Unblock GUI Startup (`refresh()`)
+
+Currently, `MFDBWidget.refresh()` calls multiple synchronous endpoints back-to-back on the main thread, blocking the application.
+- Rewrite `refresh()` to execute the data fetching inside a background thread (`_MFDBBackgroundTask`) or via sequential `QTimer` calls.
+- A `QProgressDialog` (or a progress bar in the status bar) must be displayed while loading. This will provide visual feedback on the loading progress across the different tables (with an ETA if measurable), preventing the user from wondering if the application has frozen.
+
+#### 13.2 Implement `QSplitter` Layouts
+
+Most tabs construct their UI by adding a `QTableWidget` and a `QFormLayout` directly to a `QVBoxLayout`. This makes the layout rigid, so users cannot expand the detail pane to read large JSON blobs.
+- **Affected Tabs:** `raw_data_tab`, `processed_products_tab`, `analyses_tab`, `experiment_types_tab`, `experiments_tab`, `projects_tab`, `condition_tab`, `entities_tab`, `probes_tab`, `positions_tab`, `processing_runs_tab`, `setups_tab`, `devices_tab`.
+- **Change:** Wrap the table and the detail form inside a `QtWidgets.QSplitter(QtCore.Qt.Vertical)`. This will allow the user to drag the handle and adjust the relative sizes of the table vs. the details pane.
+
+#### 13.3 Unlock Detail Editing
+
+When a user clicks a row in a table, the row data populates the detailed form below it, but this form is locked (`setReadOnly(True)`).
+- **Change:** Remove the `setReadOnly(True)` locks from descriptive fields, names, and JSON detail fields. 
+- **User Flow:** When the user clicks a row, the detail pane will populate. They should be able to edit the selected row fields directly in this pane.
+- **Save Mechanism:** Add a "💾 Save Changes" button to the bottom layout of each of these tabs. Clicking it must commit the edits back to the MFDB backend using `self.client.update_*` (or appropriate RPC handler) and instantly refresh the row. Primary IDs should remain read-only to prevent corruption.
+
+#### 13.4 Empty Table State
+
+When a table has no data, it appears completely empty, leaving the user wondering if it is broken or just lacks data.
+- **Change:** Add a helper method to `fill_*_table()` functions. If the fetched result set is empty, it should insert a single disabled placeholder row spanning the table saying *"No data available"*.
 
 ### Tests
 
@@ -926,4 +1486,74 @@ def test_save_sample_handler_legacy_compat(db):
 def test_save_sample_handler_structured(db):
     """save_sample_handler with structured dict (probes/entities/fret_pairs)
     delegates to create_sample() and persists all fields."""
+```
+
+Additional tests for Tasks 10-12:
+
+```python
+# --- Task 10 table UX tests ---
+
+def test_standard_table_helper_adds_checkbox_column(qapp):
+    """_setup_standard_table prepends a checkbox column and preserves the
+    configured data ID column."""
+
+def test_standard_context_menu_installed_on_all_tables(qapp):
+    """Every QTableWidget registered by MFDBWidget has the standard context
+    menu policy and is tracked by the standard table registry."""
+
+def test_checked_row_ids_ignore_hidden_rows_for_visible_bulk_action(qapp):
+    """Check-all-visible and invert-visible actions do not modify hidden
+    filtered rows."""
+
+def test_bulk_delete_uses_checked_rows_not_selected_rows(qapp, monkeypatch):
+    """Delete checked calls the delete function for checked IDs only, even
+    when a different row is selected."""
+
+def test_delete_with_usage_requires_second_confirmation(qapp, monkeypatch):
+    """When usage_fn returns dependencies, the destructive delete path requires
+    explicit acknowledgement before calling delete_one_fn."""
+
+def test_no_delete_action_when_backend_delete_missing(qapp):
+    """Tables without safe delete support still expose copy/open/check actions
+    but do not show Delete checked."""
+
+# --- Task 11 workflow dock tests ---
+
+def test_measurements_dock_aggregates_raw_processing_processed(qapp):
+    """Measurements dock contains rows from raw_data.list,
+    processing.burst_selection.list, and processed_data.list."""
+
+def test_measurements_dock_displays_sample_quality(qapp):
+    """Measurement rows display sample QA status/score and preserve the tooltip
+    flags from the service response."""
+
+def test_projects_dock_lists_project_versions(qapp):
+    """Projects dock shows project_id, project_name, latest version, owner,
+    visibility, linked experiment, and notes."""
+
+def test_project_selection_filters_workflow_docks(qapp):
+    """Selecting a project updates current_project_id and filters
+    Measurements, Project Data, Objects, Analyses, and Provenance."""
+
+def test_project_data_dock_lists_linked_artifacts_and_objects(qapp):
+    """Project Data dock includes project-linked artifacts, object UUIDs,
+    sample metadata, storage mode, validation state, and locations."""
+
+def test_provenance_context_can_trace_from_selected_measurement(qapp):
+    """Trace provenance from a selected measurement sets the provenance seed
+    and refreshes upstream/downstream/graph views."""
+
+# --- Task 12 naming/status tests ---
+
+def test_reset_action_label_and_tooltip(qapp):
+    """File menu and toolbar expose Reset, not Reset from source, and tooltip
+    accurately states backup/reset behavior."""
+
+def test_toolbar_actions_have_tooltips(qapp):
+    """Login, Logout, Refresh, Import, Backup, and Reset actions all have
+    non-empty tooltips."""
+
+def test_background_operation_reports_status_and_preview(qapp, monkeypatch):
+    """Slow operations report start/completion/failure through status label,
+    status bar, and preview pane without mutating widgets from worker threads."""
 ```

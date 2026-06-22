@@ -31,6 +31,17 @@ The standard (flrCIF `FLR_INSTRUMENT` / `FLR_INST_SETTING`) is intentionally
 minimal — free-text only, "will be extended in the future." This PRD defines
 the chisurf extension.
 
+> Reconciliation with PRD-04: PRD-04's prerequisite introduces the
+> reading/processing channel base table `mfdb_setup_detector_channel` (detector
+> channels: `channels`, `micro_time_ranges`, `g_factor`, …) and
+> `mfdb_setup_pie_window`. This PRD's `mfdb_optical_channel` is the
+> *spectroscopic extension* of that detection channel, **not** a parallel
+> concept. `mfdb_optical_channel` should carry a
+> `detector_channel_id REFERENCES mfdb_setup_detector_channel(...)` link (and the
+> migration in Task 3 should populate it) so the two tables are joined, not
+> duplicated. Do not re-derive channels from `detectors_json` if the
+> structured base table already exists.
+
 ## Design: OME FilterSet / LightPath Pattern
 
 Following the OME-XML model (OME v6.3.1):
