@@ -4160,6 +4160,7 @@ class MFDatabase(MFDBClientBase):
         prior: dict[str, Any] | None = None,
         mapping: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
+        role: str | None = None,
     ) -> str:
         validate_vocabulary(parameter_type, PARAMETER_TYPES, "parameter_type")
         now = _utc_now()
@@ -4168,10 +4169,10 @@ class MFDatabase(MFDBClientBase):
                 """INSERT INTO mfdb_parameter (
                     parameter_uuid, operation_id, name, value, standard_error,
                     confidence_interval_low, confidence_interval_high, initial_value,
-                    lower_bound, upper_bound, bounds_on, units, parameter_type,
+                    lower_bound, upper_bound, bounds_on, units, parameter_type, role,
                     expression, prior_json, mapping_json, metadata_json,
                     created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(parameter_uuid) DO UPDATE SET
                     operation_id=excluded.operation_id,
                     name=excluded.name,
@@ -4185,6 +4186,7 @@ class MFDatabase(MFDBClientBase):
                     bounds_on=excluded.bounds_on,
                     units=excluded.units,
                     parameter_type=excluded.parameter_type,
+                    role=excluded.role,
                     expression=excluded.expression,
                     prior_json=excluded.prior_json,
                     mapping_json=excluded.mapping_json,
@@ -4205,6 +4207,7 @@ class MFDatabase(MFDBClientBase):
                     1 if bounds_on else 0,
                     units,
                     parameter_type,
+                    role,
                     expression,
                     _json_dumps(prior),
                     _json_dumps(mapping),

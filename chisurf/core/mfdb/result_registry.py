@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from chisurf.core.mfdb.base import MFDBClientBase
+from chisurf.core.mfdb.operation_parameters import OperationParameterError
 
 if TYPE_CHECKING:
     import pandas
@@ -236,6 +237,84 @@ def set_global_db(db: MFDBClientBase | None) -> None:
     """
     global _GLOBAL_DB
     _GLOBAL_DB = db
+
+
+def register_operation(
+    operation_type: str,
+    inputs: list[str] | None = None,
+    outputs: list[str] | None = None,
+    parameters: dict | None = None,
+    setup_id: str = "",
+    status: str = "succeeded",
+    metadata: dict | None = None,
+    db: MFDBClientBase | None = None,
+    validate: bool = True,
+) -> str:
+    """Record a data operation as a node (the uniform PRD-11 contract).
+
+    Records the operation, its typed input/output ports
+    (``mfdb_operation_artifact``), ``derived_from`` edges (each output ← each
+    input), and its parameters — validated against the operation type's `.dic`
+    schema (``mfdb_operation_parameter_def``) when ``validate`` is set. Parameters
+    may be scalar, rich dicts, or a list for a repeatable (role-indexed) parameter.
+
+    Returns the operation_id, or ``""`` when MFDB is unavailable.
+    """
+    db = db if db is not None else _get_global_db()
+    if db is None:
+        logger.warning("register_operation: no MFDB available (operation_type=%s)", operation_type)
+        return ""
+
+    if validate and parameters:
+        from chisurf.core.mfdb.operation_parameters import validate_operation_parameters
+
+        conn = getattr(db, "conn", None)
+        if conn is not None:
+            validate_operation_parameters(conn, operation_type, parameters)
+
+    operation_id = str(uuid.uuid4())
+    inputs = list(inputs or [])
+    outputs = list(outputs or [])
+    try:
+        with db.transaction():
+            db.record_operation(
+                operation_id=operation_id,
+                operation_type=operation_type,
+                setup_id=setup_id or None,
+                status=status,
+                metadata=metadata or None,
+            )
+            for artifact_id in inputs:
+                db.record_operation_link(
+                    operation_id=operation_id,
+                    artifact_id=artifact_id,
+                    direction="input",
+                    role="source",
+                )
+            for artifact_id in outputs:
+                db.record_operation_link(
+                    operation_id=operation_id,
+                    artifact_id=artifact_id,
+                    direction="output",
+                    role="result",
+                )
+                for source_id in inputs:
+                    db.add_edge(
+                        source_node_type="artifact",
+                        source_node_id=artifact_id,
+                        target_node_type="artifact",
+                        target_node_id=source_id,
+                        relationship_type="derived_from",
+                    )
+            if parameters:
+                _record_parameters(db, operation_id, parameters)
+    except OperationParameterError:
+        raise
+    except Exception as exc:
+        logger.error("register_operation failed (operation_type=%s): %s", operation_type, exc, exc_info=True)
+        raise
+    logger.info("Registered operation: type=%s op=%s inputs=%d outputs=%d", operation_type, operation_id, len(inputs), len(outputs))
+    return operation_id
 
 
 def register_raw_measurement(
@@ -864,7 +943,10 @@ def _record_parameters(db: MFDBClientBase, operation_id: str, parameters: dict[s
     operation_id : str
         Operation identifier that owns the parameters.
     parameters : dict
-        Mapping of parameter names to scalar values or rich parameter dicts.
+        Mapping of parameter names to scalar values, rich parameter dicts, or a
+        **list** of entries for a repeatable (role-indexed) parameter — each list
+        entry being a scalar (role = its index) or a dict that may carry a ``role``
+        (the data-side analog of chinet's multiple ports, PRD-11).
 
     Returns
     -------
@@ -872,33 +954,47 @@ def _record_parameters(db: MFDBClientBase, operation_id: str, parameters: dict[s
         Parameters are written through repository methods.
     """
     for name, value in parameters.items():
-        param_uuid = str(uuid.uuid4())
-        if isinstance(value, dict):
-            bounds = value.get("bounds") or [None, None]
-            lower_bound, upper_bound = _coerce_bounds(bounds)
-            db.record_parameter(
-                parameter_uuid=param_uuid,
-                operation_id=operation_id,
-                name=str(name),
-                value=_coerce_float(value.get("value")),
-                standard_error=_coerce_float(value.get("error")),
-                lower_bound=lower_bound,
-                upper_bound=upper_bound,
-                bounds_on=lower_bound is not None or upper_bound is not None,
-                units=value.get("units"),
-                parameter_type="fixed" if value.get("fixed") else "free",
-                metadata={k: v for k, v in value.items() if k not in {"value", "error", "bounds", "units", "fixed"}},
-            )
+        if isinstance(value, (list, tuple)):
+            for i, entry in enumerate(value):
+                role = str(entry.get("role")) if isinstance(entry, dict) and entry.get("role") is not None else str(i)
+                _record_one_parameter(db, operation_id, str(name), entry, role=role)
             continue
+        _record_one_parameter(db, operation_id, str(name), value, role=None)
 
+
+def _record_one_parameter(
+    db: MFDBClientBase, operation_id: str, name: str, value: Any, role: str | None
+) -> None:
+    """Record a single ``mfdb_parameter`` row, with an optional role index."""
+    param_uuid = str(uuid.uuid4())
+    if isinstance(value, dict):
+        bounds = value.get("bounds") or [None, None]
+        lower_bound, upper_bound = _coerce_bounds(bounds)
         db.record_parameter(
             parameter_uuid=param_uuid,
             operation_id=operation_id,
-            name=str(name),
-            value=_coerce_float(value),
-            parameter_type="fixed",
-            metadata=None if isinstance(value, (int, float)) else {"raw_value": value},
+            name=name,
+            value=_coerce_float(value.get("value")),
+            standard_error=_coerce_float(value.get("error")),
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            bounds_on=lower_bound is not None or upper_bound is not None,
+            units=value.get("units"),
+            parameter_type="fixed" if value.get("fixed") else "free",
+            role=role,
+            metadata={k: v for k, v in value.items() if k not in {"value", "error", "bounds", "units", "fixed", "role"}},
         )
+        return
+
+    db.record_parameter(
+        parameter_uuid=param_uuid,
+        operation_id=operation_id,
+        name=name,
+        value=_coerce_float(value),
+        parameter_type="fixed",
+        role=role,
+        metadata=None if isinstance(value, (int, float)) else {"raw_value": value},
+    )
 
 
 def _coerce_bounds(bounds: Any) -> tuple[float | None, float | None]:
