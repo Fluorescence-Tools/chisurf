@@ -44,26 +44,36 @@ PRD-19 **groundwork** just landed and is green; the rest of Phase 1 is still ope
 - `development` is well ahead of `origin/development` (unpushed) and ~1944 commits
   ahead of `master`. **No push, no master merge** unless explicitly asked.
 
+## PRD-19 decision: option B (locked)
+
+MFDB is unreleased and there is no real data yet → **pre-PRD-19 databases are
+disposable**. No forward migration is required; an incompatible old DB is deleted
+and recreated. This is why the version chain could be removed wholesale.
+
 ## What PRD-19 still needs (its DoD is not fully met)
 
-The groundwork landed; the structural collapse did not. Remaining (see
-`PRD-19-dict-vocab-declarative-migrations.md`):
+Progress (committed): vocab is fully `.dic`-sourced; the fresh-DB path is already
+legacy-free (`FRESH_DB_TABLES_SQL` filters `fdb_*`; no `mfdb_sample` CREATE); **the
+39-step migration waterfall is removed** (`bb837a07`, −1862 lines) — fresh + existing
+DBs go through `CREATE IF NOT EXISTS` + `reconcile_schema`. Remaining:
 
-1. **Drop the version chain (idea K):** `SCHEMA_VERSION = 39` and the `if version < N`
-   blocks still exist — replace with pure `reconcile_schema` + run-once data backfills.
-2. **Delete legacy `fdb_*`:** still referenced across ~10 `core/mfdb` files.
+1. ~~**Drop the version chain (idea K).**~~ **DONE** (`bb837a07`); `SCHEMA_VERSION` is
+   now only a harmless stamp.
+2. **Delete dead legacy code:** `fdb_*` CREATEs still sit (unused) in the raw
+   `CREATE_TABLES_SQL` + filter; `graph.py` `fdb_provenance_edge` reads; many
+   now-unused migration helpers (`_ensure_column`, etc.).
 3. **Collapse duplicates onto flrCIF:** remove `mfdb_*` tables that duplicate a flrCIF
    concept; repoint reads/writes to the authoritative `flr_*`. **flrCIF is
    authoritative and the `.dic` extends it** — do NOT demote flrCIF to an export codec.
 4. **Declare genuine extensions** (provenance graph, object store, vocab) as proper
    flrCIF extension categories in `mfdb_flr_ext.dic`, FK'd to flrCIF.
-5. **Remove `bootstrap_vocabulary` dict** now that vocab comes from the `.dic`.
-6. Extend `validate_mapping` gate to assert live ⊇ declared + vocab == dictionary.
+5. **Extend `validate_mapping` gate** to assert live ⊇ declared + vocab == dictionary
+   + no legacy/duplicate tables after reconcile. (Vocab duplication already removed.)
 
 ## Next steps (in order, per MASTER-ORDER)
 
-1. **Finish PRD-19** (items 1–6 above) — minimizes rework before the spine. A
-   coder prompt for the remainder is the immediate next artifact to produce.
+1. **Finish PRD-19** (remaining items above: dead-code deletion, gate extension) —
+   minimizes rework before the spine. Version-chain removal is done.
 2. **PRD-18** — DI + hermetic temp-DB test harness. Flagged "land immediately":
    fixes the real-DB pollution and the Qt-batching hangs we keep hitting.
 3. **PRD-17** — one canonical identity/session context (owner-mismatch class).
