@@ -197,6 +197,35 @@ def test_no_setup_dictionary_items_are_unmapped(tmp_path: Path) -> None:
     )
 
 
+def test_fresh_db_has_no_legacy_or_duplicate_tables(tmp_path: Path) -> None:
+    """PRD-19: a freshly built MFDB contains no legacy ``fdb_*`` tables and no
+    duplicate-of-flrCIF ``mfdb_sample``/``mfdb_experiment`` tables, while the
+    canonical tables are present. Guards the dictionary-driven schema against
+    legacy regressions."""
+    import sqlite3
+
+    db_path = os.path.join(tmp_path, "legacy_check.db")
+    MFDatabase(db_path).close()
+    con = sqlite3.connect(db_path)
+    try:
+        tables = {
+            r[0]
+            for r in con.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+    finally:
+        con.close()
+
+    legacy = sorted(t for t in tables if t.startswith("fdb_"))
+    duplicates = sorted(t for t in tables if t in {"mfdb_sample", "mfdb_experiment"})
+    assert not legacy, f"Legacy fdb_* tables must not exist: {legacy}"
+    assert not duplicates, f"Duplicate-of-flrCIF tables must not exist: {duplicates}"
+    # Canonical tables are present (flrCIF authoritative + mfdb_* extensions).
+    for canonical in ("flr_sample", "mfdb_artifact", "mfdb_operation", "mfdb_edge"):
+        assert canonical in tables, f"Canonical table {canonical!r} missing"
+
+
 # ---------------------------------------------------------------------------
 # Test 4: mfdb-admin setup list/detail RPC returns structured fields
 # ---------------------------------------------------------------------------
