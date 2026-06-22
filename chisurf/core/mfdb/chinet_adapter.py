@@ -28,6 +28,58 @@ CHINET_PARAMETER_SCHEMA = "chinet.parameter_ref.v1"
 FIT_STATE_SCHEMA = "chisurf.fit_state.v1"
 
 
+_PARAMETER_REGISTRY_CACHE: dict[str, dict[str, Any]] | None = None
+
+
+def _load_parameter_registry() -> dict[str, dict[str, Any]]:
+    """Load the parameter registry mapping short names to flrcif_item_id.
+
+    The registry is loaded once from ``chisurf.core.settings.parameter_registry``
+    and cached for subsequent calls.
+
+    Returns
+    -------
+    dict
+        Mapping from short parameter name → entry dict.
+    """
+    global _PARAMETER_REGISTRY_CACHE
+    if _PARAMETER_REGISTRY_CACHE is not None:
+        return _PARAMETER_REGISTRY_CACHE
+    try:
+        import chisurf.core.settings as settings
+        meta = getattr(settings, "parameter_registry", {})
+        params = meta.get("parameters", meta) if isinstance(meta, dict) else {}
+        _PARAMETER_REGISTRY_CACHE = {}
+        for key, entry in params.items():
+            if isinstance(entry, dict):
+                _PARAMETER_REGISTRY_CACHE[key] = entry
+    except Exception:
+        _PARAMETER_REGISTRY_CACHE = {}
+    return _PARAMETER_REGISTRY_CACHE
+
+
+def _lookup_flrcif_name(short_name: str) -> str | None:
+    """Look up the canonical flrCIF item identifier for a short parameter name.
+
+    Parameters
+    ----------
+    short_name : str
+        ChiSurf internal short parameter name (e.g. ``'E_FRET'``, ``'bg'``).
+
+    Returns
+    -------
+    str or None
+        The ``flrcif_item_id`` if found, else ``None``.
+    """
+    registry = _load_parameter_registry()
+    entry = registry.get(short_name)
+    if isinstance(entry, dict):
+        flrcif = entry.get("flrcif_item_id")
+        if isinstance(flrcif, str) and flrcif:
+            return flrcif
+    return None
+
+
 def _require_chinet() -> Any:
     """Return the chinet module or raise an import error.
 
@@ -430,9 +482,12 @@ def _parameter_payload_for_port(
         else:
             parameter_type = "free"
 
+    short_name = str((explicit or {}).get("name") or _port_name(node_key, port_key, port))
+    canonical_name = _lookup_flrcif_name(short_name) or short_name
+    metadata["chisurf_parameter_name"] = short_name
     return {
         "parameter_uuid": _parameter_uuid_for_port(port, explicit),
-        "name": str((explicit or {}).get("name") or _port_name(node_key, port_key, port)),
+        "name": canonical_name,
         "value": value,
         "initial_value": value,
         "lower_bound": None if lb is None else float(lb),
@@ -1262,10 +1317,12 @@ def _store_fit_state_parameters(
         link_target = state.get("link_target")
         parameter_type = "linked" if link_target else "fixed" if state.get("fixed") else "free"
         bounds = state.get("bounds") or [None, None]
+        short_name = str(state.get("name") or uid)
+        canonical_name = _lookup_flrcif_name(short_name) or short_name
         db.record_parameter(
             parameter_uuid=str(uid),
             operation_id=operation_id,
-            name=str(state.get("name") or uid),
+            name=canonical_name,
             value=float(state.get("value") or 0.0),
             initial_value=float(state.get("value") or 0.0),
             lower_bound=None if bounds[0] is None else float(bounds[0]),
@@ -1276,6 +1333,7 @@ def _store_fit_state_parameters(
                 "schema_name": FIT_STATE_SCHEMA,
                 "source": "chisurf.core.project.fit_state",
                 "fit_parameter_uid": str(uid),
+                "chisurf_parameter_name": short_name,
                 "link_target": link_target,
             },
         )

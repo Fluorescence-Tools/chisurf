@@ -27,7 +27,6 @@ from chisurf.core.mfdb.repository import MFDatabase
 
 from .base import session_scope
 from .models import (
-    MfdbSampleIndex,
     Entity,
     EntityPolySeq,
     FlrFretForsterRadius,
@@ -230,27 +229,13 @@ def _create_sample_graph_in_session(
     sample_id = sample_id or definition.name
     display_name = display_name or definition.name
 
-    sample_index = MfdbSampleIndex(
-        sample_id=sample_id,
-        display_name=display_name,
-        sample_type=sample_type or "physical_sample",
-        metadata_json=metadata_json,
-    )
-    session.add(sample_index)
-
     # Create the main sample record
-    # Note: SampleDefinition doesn't have separate 'details' or 'project_id' fields
-    # 'details' in FlrSample maps to definition.description for backward compat
-    # 'project_id' is not exposed in SampleDefinition
-    # flr_sample is the flrCIF/pdbx-canonical table; ensure it always carries a
-    # human-readable name. When the user provides no explicit description, fall
-    # back to the display name so the sample is not nameless in flr_sample-based
-    # views (list_samples, search, experiment joins).
-    _flr_description = definition.description or display_name
+    # flr_sample.description is the primary human-readable identifier (display name).
+    # flr_sample.details holds an optional longer description.
     sample = FlrSample(
         sample_id=sample_id,
-        description=_flr_description,
-        details=definition.description,
+        description=display_name,
+        details=definition.description or None,
         num_of_probes=len(definition.probes) if definition.probes else None,
         solvent_phase=definition.solvent_phase,
         project_id=None,

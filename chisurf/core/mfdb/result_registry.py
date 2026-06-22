@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 _GLOBAL_DB: MFDBClientBase | None = None
 
 
+class LinkValidationError(ValueError):
+    """A requested provenance link target (sample/parent) does not exist.
+
+    Raised at the registration boundary *before* any rows are written, so the
+    registration leaves no partial artifact/object state. Callers (e.g. the
+    burst pipeline) may catch this to report the bad link as a warning rather
+    than aborting, while genuine integration errors during the write still
+    surface loudly. Subclasses :class:`ValueError` for backward compatibility.
+    """
+
+
 def _resolve_active_user_id() -> str:
     """Resolve the active MFDB user ID from settings."""
     try:
@@ -185,9 +196,20 @@ def register_result(
             if parameters:
                 _record_parameters(db, operation_id, parameters)
 
+    except LinkValidationError as exc:
+        # A requested link target (sample/parent) does not exist. This is
+        # checked before the transaction, so nothing was persisted. It is a
+        # caller-recoverable condition (bad input), not silent data loss, so we
+        # surface it without the alarming error-level traceback used for real
+        # failures and re-raise for the caller to handle.
+        logger.warning("register_result: %s (kind=%s); nothing registered", exc, kind)
+        raise
     except Exception as exc:
-        logger.warning("register_result failed (kind=%s): %s", kind, exc, exc_info=True)
-        return ""
+        # db is not None (we already returned "" above for that case), so this
+        # is a real integration error — FK violation, vocab rejection, etc.
+        # Surface it loudly instead of silently dropping data.
+        logger.error("register_result failed (kind=%s): %s", kind, exc, exc_info=True)
+        raise
 
     logger.info("Registered result: kind=%s artifact=%s operation=%s", kind, artifact_id, operation_type or "analysis")
     return artifact_id
@@ -494,12 +516,14 @@ def _validate_links(db: MFDBClientBase, sample_id: str, parent_artifact_id: str)
     Returns
     -------
     None
-        Raises when a requested link target does not exist.
+        Raises :class:`LinkValidationError` when a requested link target does
+        not exist. Validation runs before any rows are written, so a failure
+        leaves no partial artifact/object rows behind.
     """
     if parent_artifact_id and db.get_artifact(parent_artifact_id) is None:
-        raise ValueError(f"Unknown parent_artifact_id {parent_artifact_id!r}")
+        raise LinkValidationError(f"Unknown parent_artifact_id {parent_artifact_id!r}")
     if sample_id and not db.sample_exists(sample_id):
-        raise ValueError(f"Unknown sample_id {sample_id!r}")
+        raise LinkValidationError(f"Unknown sample_id {sample_id!r}")
 
 
 def _store_data(

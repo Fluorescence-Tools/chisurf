@@ -21,8 +21,6 @@ from .base import Base
 
 
 _TABLE_CLASS_NAMES = {
-    "mfdb_sample": "MfdbSampleIndex",
-    "mfdb_experiment": "MfdbExperiment",
     "flr_sample": "FlrSample",
     "flr_sample_condition": "FlrSampleCondition",
     "flr_sample_probe": "FlrSampleProbe",
@@ -94,16 +92,6 @@ def _fk(table_name: str, column_name: str):
 def _relationship_properties(classes: dict[str, type[Base]]) -> dict[str, dict[str, object]]:
     """Return relationship configuration for the bounded sample/probe graph."""
     return {
-        "mfdb_sample": {
-            "experiments": relationship(
-                classes["mfdb_experiment"],
-                back_populates="sample",
-                cascade="all, delete-orphan",
-            ),
-        },
-        "mfdb_experiment": {
-            "sample": relationship(classes["mfdb_sample"], back_populates="experiments"),
-        },
         "flr_sample": {
             "condition": relationship(
                 classes["flr_sample_condition"],

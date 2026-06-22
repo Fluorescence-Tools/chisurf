@@ -2,8 +2,8 @@
 
 This module provides high-level functions for creating, querying, and
 linking samples. It wraps the low-level MFDatabase methods that touch
-``mfdb_sample`` and ``mfdb_edge`` so callers do not need to know the
-underlying table layout.
+``flr_sample`` (the flrCIF-canonical sample table) and ``mfdb_edge``
+so callers do not need to know the underlying table layout.
 """
 from __future__ import annotations
 
@@ -50,8 +50,7 @@ def create_sample(db: MFDatabase, definition: SampleDefinition) -> str:
     display name already exists, its existing sample ID is returned.
 
     This function populates multiple tables:
-    - ``mfdb_sample``: lightweight index for quick lookups
-    - ``flr_sample``: canonical sample table (if condition or assembly info provided)
+    - ``flr_sample``: canonical flrCIF sample table
     - ``entities``: entity information
     - ``entity_poly_seq``: entity sequence
     - ``probes``: probe/fluorophore records
@@ -74,7 +73,7 @@ def create_sample(db: MFDatabase, definition: SampleDefinition) -> str:
         raise ValueError("sample name is required")
 
     existing = db.conn.execute(
-        "SELECT sample_id FROM mfdb_sample WHERE display_name = ? AND deleted_at IS NULL",
+        "SELECT sample_id FROM flr_sample WHERE description = ? AND deleted_at IS NULL",
         (definition.name.strip(),),
     ).fetchone()
     if existing:
@@ -113,8 +112,8 @@ def get_sample(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
 
     """
     row = db.conn.execute(
-        """SELECT sample_id, display_name, sample_type, metadata_json
-           FROM mfdb_sample
+        """SELECT sample_id, description, details
+           FROM flr_sample
            WHERE sample_id = ? AND deleted_at IS NULL""",
         (sample_id,),
     ).fetchone()
@@ -138,10 +137,10 @@ def list_samples(db: MFDatabase) -> list[dict[str, Any]]:
 
     """
     rows = db.conn.execute(
-        """SELECT sample_id, display_name, sample_type, metadata_json
-           FROM mfdb_sample
+        """SELECT sample_id, description, details
+           FROM flr_sample
            WHERE deleted_at IS NULL
-           ORDER BY display_name COLLATE NOCASE"""
+           ORDER BY description COLLATE NOCASE"""
     ).fetchall()
     return [_sample_row_to_dict(row) for row in rows]
 
@@ -163,8 +162,8 @@ def find_sample_by_name(db: MFDatabase, name: str) -> str | None:
 
     """
     row = db.conn.execute(
-        """SELECT sample_id FROM mfdb_sample
-           WHERE display_name = ? AND deleted_at IS NULL""",
+        """SELECT sample_id FROM flr_sample
+           WHERE description = ? AND deleted_at IS NULL""",
         (name,),
     ).fetchone()
     return row["sample_id"] if row else None
@@ -393,14 +392,11 @@ def _sample_row_to_dict(row: Any) -> dict[str, Any]:
 
     """
     data = dict(row)
-    metadata = _json_loads(data.pop("metadata_json")) or {}
     result: dict[str, Any] = {
         "sample_id": data.get("sample_id", ""),
-        "name": data.get("display_name", ""),
-        "display_name": data.get("display_name", ""),
-        "sample_type": data.get("sample_type") or "",
+        "name": data.get("description", ""),
+        "display_name": data.get("description", ""),
     }
-    result.update(metadata)
     return result
 
 
@@ -447,7 +443,7 @@ def _sample_exists(db: MFDatabase, sample_id: str) -> bool:
 
     """
     return db.conn.execute(
-        "SELECT 1 FROM mfdb_sample WHERE sample_id = ?",
+        "SELECT 1 FROM flr_sample WHERE sample_id = ?",
         (sample_id,),
     ).fetchone() is not None
 

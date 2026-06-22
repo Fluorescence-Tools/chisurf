@@ -1754,13 +1754,13 @@ class MFDatabase(MFDBClientBase):
         Returns
         -------
         bool
-            ``True`` when the sample exists in ``mfdb_sample`` and is active.
+            ``True`` when the sample exists in ``flr_sample`` and is active.
 
         """
         if not sample_id:
             return False
         row = self.conn.execute(
-            """SELECT 1 FROM mfdb_sample
+            """SELECT 1 FROM flr_sample
                WHERE sample_id = ? AND deleted_at IS NULL""",
             (sample_id,),
         ).fetchone()

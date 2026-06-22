@@ -8,80 +8,45 @@ from typing import Any, Dict, Optional
 import json
 import numpy as np
 
-# ── Canonical Vocabulary Constants ─────────────────────────────────────
+# ── Canonical Vocabulary Constants (sourced from the mmCIF dictionary) ──
 
-ARTIFACT_KINDS: tuple[str, ...] = (
-    "raw_measurement", "processed_data", "analysis_result",
-    "fit_result", "parameter_table", "selection_mask",
-    "project_snapshot", "archive_manifest", "archive_file",
-    "visualization", "external_reference", "chinet_session", "chinet_node",
-    "project_dataset", "source_measurement",
-    "trace_data", "image_data", "background_data", "calibration_data",
-    "burst_selection", "tttr_photon_stream",
-    # Legacy values (accepted for backward compat)
-    "raw_data", "bur", "ptu", "spc", "bh", "fcs",
-    "tcspc", "decay", "irf", "pda", "model_curve", "residual",
-    "plot_export", "table_export", "project_archive", "external_file",
-    "photon_hdf5", "burst_table", "spectra", "hdf5", "zip",
-    "json_summary", "mti_summary", "fcs_correlation", "irf_curve",
-    "tcspc_decay", "anisotropy_curve", "pda_histogram", "fit_results",
-    "derived_product", "gmm_summary", "clustering_labels",
-)
+def _load_dictionary_vocabulary() -> dict[str, tuple[str, ...]]:
+    """Load all enumeration tuples from the bundled dictionary."""
+    result: dict[str, tuple[str, ...]] = {}
+    _name_map: dict[str, str] = {
+        "artifact_kind": "_mfdb_artifact.artifact_kind",
+        "data_format": "_mfdb_artifact.data_format",
+        "operation_type": "_mfdb_operation.operation_type",
+        "direction": "_mfdb_operation_artifact.direction",
+        "relationship_type": "_mfdb_edge.relationship_type",
+        "status": "_mfdb_operation.status",
+        "validation_status": "_mfdb_operation.validation_status",
+        "storage_mode": "_mfdb_object.storage_mode",
+        "parameter_type": "_mfdb_parameter.parameter_type",
+        "lifecycle_status": "_mfdb_branch.lifecycle_status",
+    }
+    try:
+        from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+        dic = MmcifDictionary.load_bundled()
+        for key, full_name in _name_map.items():
+            raw = dic.get_enumerations(full_name)
+            result[key] = tuple(v for v in raw if v not in {"#", ".", "?"})
+    except Exception:
+        pass
+    return result
 
-DATA_FORMATS: tuple[str, ...] = (
-    "ptu", "spc", "bh", "tttr", "photon_hdf5", "bur",
-    "hdf5", "zip", "json", "csv", "tsv", "png", "svg",
-    "sqlite", "directory", "bin", "msgpack", "unknown",
-)
+_enums = _load_dictionary_vocabulary()
 
-OPERATION_TYPES: tuple[str, ...] = (
-    "measurement_import", "validation", "burst_selection",
-    "filtering", "fcs_correlation", "microtime_histogram",
-    "tcspc_fitting", "model_fitting", "ndxplorer_selection",
-    "ndxplorer_clustering", "project_snapshot",
-    "project_restore", "archive_export",
-    "tcspc_histogram_computation", "pda_histogram_computation",
-    "pch_histogram_computation", "fcs_correlation_load",
-    "tcspc_curve_load",
-    "histogram_construction", "background_correction",
-    "image_analysis", "population_selection", "calibration",
-    "microtime_shift",
-    # Legacy values
-    "import", "burst_filtering", "gmm_fitting", "analysis",
-    "fitting", "project_archive", "local_fit", "global_fit",
-    "project", "analysis_run",
-)
-
-DIRECTIONS: tuple[str, ...] = ("input", "output")
-
-RELATIONSHIP_TYPES: tuple[str, ...] = (
-    "included_in", "contains", "derived_from", "supersedes",
-    "uses_external_reference", "parameter_depends_on", "parameter_of", "linked_to",
-    "project_contains", "grouped_in", "measured_sample",
-)
-
-STATUS_VALUES: tuple[str, ...] = (
-    "pending", "running", "succeeded", "failed", "cancelled",
-    "success", "converged",
-)
-
-VALIDATION_STATUS_VALUES: tuple[str, ...] = (
-    "unvalidated", "valid", "invalid", "warning",
-)
-
-STORAGE_MODES: tuple[str, ...] = (
-    "local_file", "local_directory", "url", "managed_archive",
-    "embedded_json", "embedded_blob",
-    "local", "remote", "embedded", "folder",
-)
-
-PARAMETER_TYPES: tuple[str, ...] = (
-    "free", "fixed", "linked", "shared", "local", "global", "calibrated",
-)
-
-LIFECYCLE_STATUSES: tuple[str, ...] = (
-    "active", "archived", "superseded", "deleted",
-)
+ARTIFACT_KINDS: tuple[str, ...] = _enums.get("artifact_kind", ())
+DATA_FORMATS: tuple[str, ...] = _enums.get("data_format", ())
+OPERATION_TYPES: tuple[str, ...] = _enums.get("operation_type", ())
+DIRECTIONS: tuple[str, ...] = _enums.get("direction", ())
+RELATIONSHIP_TYPES: tuple[str, ...] = _enums.get("relationship_type", ())
+STATUS_VALUES: tuple[str, ...] = _enums.get("status", ())
+VALIDATION_STATUS_VALUES: tuple[str, ...] = _enums.get("validation_status", ())
+STORAGE_MODES: tuple[str, ...] = _enums.get("storage_mode", ())
+PARAMETER_TYPES: tuple[str, ...] = _enums.get("parameter_type", ())
+LIFECYCLE_STATUSES: tuple[str, ...] = _enums.get("lifecycle_status", ())
 
 # ── Sample Vocabulary Constants (PDBx/mmCIF/flrCIF) ──────────────────────────
 

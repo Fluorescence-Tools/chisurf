@@ -11,7 +11,6 @@ sample_manager.py.
 
 from .base import make_engine, session_scope, session_from_mfdatabase
 from .models import (
-    MfdbSampleIndex,
     FlrSample,
     FlrSampleCondition,
     FlrSampleProbe,
@@ -36,7 +35,6 @@ __all__ = [
     "session_scope",
     "session_from_mfdatabase",
     # ORM models
-    "MfdbSampleIndex",
     "FlrSample",
     "FlrSampleCondition",
     "FlrSampleProbe",

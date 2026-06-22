@@ -10,6 +10,7 @@ Usage::
     from chisurf.core.mfdb.schema_from_dictionary import (
         generate_create_table_for_category,
         generate_alter_add_columns_for_category,
+        reconcile_schema,
     )
 
     dic = MmcifDictionary.load_bundled()
@@ -18,6 +19,7 @@ Usage::
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any
 
 from chisurf.core.mfdb.pdbx_metadata import DictItem, MmcifDictionary
@@ -111,12 +113,11 @@ def generate_alter_add_columns_for_category(
             continue
         col = item.schema_column or item.attribute
         sql_type = _sql_type_for_item(item)
-        nullable = " NOT NULL" if item.mandatory else ""
         default = ""
         if item.default_value:
             default = f" DEFAULT {_quote_default(item.default_value, sql_type)}"
         stmts.append(
-            f"ALTER TABLE {table_name} ADD COLUMN {col} {sql_type}{nullable}{default}"
+            f"ALTER TABLE {table_name} ADD COLUMN {col} {sql_type}{default}"
         )
     return stmts
 
@@ -217,3 +218,136 @@ def generate_index_for_table(
     """Generate a ``CREATE INDEX`` statement."""
     ix = index_name or f"idx_{table_name}_{column_name}"
     return f"CREATE INDEX IF NOT EXISTS {ix} ON {table_name} ({column_name})"
+
+
+# ---------------------------------------------------------------------------
+# Schema introspection
+# ---------------------------------------------------------------------------
+
+def introspect_live_schema(conn: sqlite3.Connection) -> dict[str, set[str]]:
+    """Return ``{table_name: {column_name, ...}}`` from a live connection."""
+    schema: dict[str, set[str]] = {}
+    tables = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+    ).fetchall()
+    for (table_name,) in tables:
+        cols = {
+            row[1]
+            for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+        }
+        schema[table_name] = cols
+    return schema
+
+
+def _category_dependency_order(categories: list[str]) -> list[str]:
+    """Sort categories so that referenced (FK) tables come before referrers."""
+    # Simple heuristic: tables without underscores come first, then by key prefix
+    ordered: list[str] = []
+    # Tables that are referenced by others
+    roots = [
+        "mfdb_object", "mfdb_setup", "mfdb_artifact", "mfdb_operation",
+        "mfdb_sample", "mfdb_branch", "mfdb_group",
+    ]
+    for r in roots:
+        if r in categories:
+            ordered.append(r)
+    for c in categories:
+        if c not in ordered:
+            ordered.append(c)
+    return ordered
+
+
+# ---------------------------------------------------------------------------
+# Schema reconciliation
+# ---------------------------------------------------------------------------
+
+def reconcile_schema(
+    conn: sqlite3.Connection,
+    dictionary: MmcifDictionary,
+    category_prefix: str = "mfdb_",
+) -> dict[str, list[str]]:
+    """Reconcile the live database schema with dictionary-defined extension tables.
+
+    For every extension category in the dictionary with the given *category_prefix*:
+
+    * Table missing         → ``CREATE TABLE`` from ``generate_create_table_for_category``
+    * Column missing        → ``ALTER TABLE ADD COLUMN``
+    * FK-index missing      → ``CREATE INDEX IF NOT EXISTS``
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Open database connection.
+    dictionary : MmcifDictionary
+        Loaded bundled dictionary (including extension ``.dic`` files).
+    category_prefix : str
+        Only reconcile categories whose name starts with this prefix.
+
+    Returns
+    -------
+    dict
+        Report with keys ``tables_added``, ``columns_added``, ``indices_added``.
+    """
+    report: dict[str, list[str]] = {
+        "tables_added": [],
+        "columns_added": [],
+        "indices_added": [],
+    }
+
+    live = introspect_live_schema(conn)
+
+    ext_categories = sorted(
+        name for name in dictionary.categories()
+        if name.startswith(category_prefix)
+    )
+    ext_categories = _category_dependency_order(ext_categories)
+
+    for cat_name in ext_categories:
+        cat = dictionary.get_category(cat_name)
+        if cat is None:
+            continue
+        table_name = _resolve_table_name(cat_name, dictionary)
+
+        # -- 1. Create missing table --
+        if table_name not in live:
+            ddl = generate_create_table_for_category(dictionary, cat_name)
+            if ddl.startswith("--"):
+                continue
+            conn.execute(ddl)
+            report["tables_added"].append(table_name)
+            # Refresh live schema after CREATE
+            cols = {
+                row[1]
+                for row in conn.execute(
+                    f"PRAGMA table_info({table_name})"
+                ).fetchall()
+            }
+            live[table_name] = cols
+
+        # -- 2. Add missing columns --
+        existing_cols = live.get(table_name, set())
+        for item in cat.items.values():
+            col = item.schema_column or item.attribute
+            if col and col not in existing_cols:
+                sql_type = _sql_type_for_item(item)
+                default = ""
+                if item.default_value:
+                    default = f" DEFAULT {_quote_default(item.default_value, sql_type)}"
+                stmt = (
+                    f"ALTER TABLE {table_name} "
+                    f"ADD COLUMN {col} {sql_type}{default}"
+                )
+                conn.execute(stmt)
+                report["columns_added"].append(f"{table_name}.{col}")
+
+        # -- 3. Add FK indices --
+        for item in cat.items.values():
+            col = item.schema_column or item.attribute
+            if col and item.schema_foreign_key and col in existing_cols:
+                idx_name = f"idx_{table_name}_{col}"
+                conn.execute(
+                    generate_index_for_table(table_name, col, idx_name)
+                )
+                report["indices_added"].append(idx_name)
+
+    return report

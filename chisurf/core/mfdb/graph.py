@@ -393,8 +393,18 @@ def traverse_legacy_provenance_graph(
     Returns
     -------
     List[sqlite3.Row]
-        List of matching legacy fdb_provenance_edge rows.
+        List of matching legacy fdb_provenance_edge rows.  Returns empty
+        list if the legacy table has been dropped.
     """
+    try:
+        table_check = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='fdb_provenance_edge'"
+        ).fetchone()
+        if not table_check:
+            return []
+    except sqlite3.OperationalError:
+        return []
+
     visited: Set[Tuple[str, str]] = set()
     edges: List[sqlite3.Row] = []
 

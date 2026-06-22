@@ -2930,6 +2930,89 @@ save__mfdb_artifact.artifact_kind
    _item.mandatory_code      yes
    _chisurf_schema.table_name  mfdb_artifact
    _chisurf_schema.column_name artifact_kind
+    loop_
+    _item_enumeration.value
+      raw_measurement
+      processed_data
+      analysis_result
+      fit_result
+      parameter_table
+      selection_mask
+      project_snapshot
+      archive_manifest
+      archive_file
+      visualization
+      external_reference
+      chinet_session
+      chinet_node
+      project_dataset
+      source_measurement
+      trace_data
+      image_data
+      background_data
+      calibration_data
+      burst_selection
+      tttr_photon_stream
+      raw_data
+      bur
+      ptu
+      spc
+      bh
+      fcs
+      tcspc
+      decay
+      irf
+      pda
+      model_curve
+      residual
+      plot_export
+      table_export
+      project_archive
+      external_file
+      photon_hdf5
+      burst_table
+      spectra
+      hdf5
+      zip
+      json_summary
+      mti_summary
+      fcs_correlation
+      irf_curve
+      tcspc_decay
+      anisotropy_curve
+      pda_histogram
+      fit_results
+      derived_product
+      gmm_summary
+      clustering_labels
+
+save__mfdb_artifact.data_format
+   _item.name                "_mfdb_artifact.data_format"
+   _item.category_id         mfdb_artifact
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_artifact
+   _chisurf_schema.column_name data_format
+    loop_
+    _item_enumeration.value
+      ptu
+      spc
+      bh
+      tttr
+      photon_hdf5
+      bur
+      hdf5
+      zip
+      json
+      csv
+      tsv
+      png
+      svg
+      sqlite
+      directory
+      bin
+      msgpack
+      unknown
 
 save__mfdb_artifact.created_by_user_id
    _item.name                "_mfdb_artifact.created_by_user_id"
@@ -3000,4 +3083,778 @@ save__mfdb_artifact_owner.role
    _chisurf_schema.column_name role
    _item_description.description
 ;     Ownership role, e.g. ``owner`` (default) or ``contributor``.
+;
 
+# ======================================================================
+# Vocabulary enumerations — Phase 1: Vocab from .dic
+# ======================================================================
+
+save_mfdb_operation
+   _category.id              mfdb_operation
+   _category.description
+;     A data-processing operation recorded for provenance tracking.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_operation.operation_id"
+
+save__mfdb_operation.operation_id
+   _item.name                "_mfdb_operation.operation_id"
+   _item.category_id         mfdb_operation
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name operation_id
+
+save__mfdb_operation.operation_type
+   _item.name                "_mfdb_operation.operation_type"
+   _item.category_id         mfdb_operation
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name operation_type
+    loop_
+    _item_enumeration.value
+      measurement_import
+      validation
+      burst_selection
+      filtering
+      fcs_correlation
+      microtime_histogram
+      tcspc_fitting
+      model_fitting
+      ndxplorer_selection
+      ndxplorer_clustering
+      project_snapshot
+      project_restore
+      archive_export
+      tcspc_histogram_computation
+      pda_histogram_computation
+      pch_histogram_computation
+      fcs_correlation_load
+      tcspc_curve_load
+      histogram_construction
+      background_correction
+      image_analysis
+      population_selection
+      calibration
+      microtime_shift
+      import
+      burst_filtering
+      gmm_fitting
+      analysis
+      fitting
+      project_archive
+      local_fit
+      global_fit
+      project
+      analysis_run
+
+save__mfdb_operation.status
+   _item.name                "_mfdb_operation.status"
+   _item.category_id         mfdb_operation
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name status
+    loop_
+    _item_enumeration.value
+      pending
+      running
+      succeeded
+      failed
+      cancelled
+      success
+      converged
+
+save__mfdb_operation.validation_status
+   _item.name                "_mfdb_operation.validation_status"
+   _item.category_id         mfdb_operation
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name validation_status
+    loop_
+    _item_enumeration.value
+      unvalidated
+      valid
+      invalid
+      warning
+
+save_mfdb_operation_artifact
+   _category.id              mfdb_operation_artifact
+   _category.description
+;     Links an operation to its input/output artifacts.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_operation_artifact.id"
+
+save__mfdb_operation_artifact.id
+   _item.name                "_mfdb_operation_artifact.id"
+   _item.category_id         mfdb_operation_artifact
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_artifact
+   _chisurf_schema.column_name id
+
+save__mfdb_operation_artifact.direction
+   _item.name                "_mfdb_operation_artifact.direction"
+   _item.category_id         mfdb_operation_artifact
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_artifact
+   _chisurf_schema.column_name direction
+    loop_
+    _item_enumeration.value
+      input
+      output
+
+save_mfdb_edge
+   _category.id              mfdb_edge
+   _category.description
+;     Edges in the MFDB provenance/knowledge graph.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_edge.edge_id"
+
+save__mfdb_edge.edge_id
+   _item.name                "_mfdb_edge.edge_id"
+   _item.category_id         mfdb_edge
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_edge
+   _chisurf_schema.column_name edge_id
+
+save__mfdb_edge.relationship_type
+   _item.name                "_mfdb_edge.relationship_type"
+   _item.category_id         mfdb_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_edge
+   _chisurf_schema.column_name relationship_type
+    loop_
+    _item_enumeration.value
+      included_in
+      contains
+      derived_from
+      supersedes
+      uses_external_reference
+      parameter_depends_on
+      parameter_of
+      linked_to
+      project_contains
+      grouped_in
+      measured_sample
+
+save_mfdb_parameter
+   _category.id              mfdb_parameter
+   _category.description
+;     Named parameters associated with an operation.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_parameter.parameter_id"
+
+save__mfdb_parameter.parameter_id
+   _item.name                "_mfdb_parameter.parameter_id"
+   _item.category_id         mfdb_parameter
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_parameter
+   _chisurf_schema.column_name parameter_id
+
+save__mfdb_parameter.parameter_type
+   _item.name                "_mfdb_parameter.parameter_type"
+   _item.category_id         mfdb_parameter
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_parameter
+   _chisurf_schema.column_name parameter_type
+    loop_
+    _item_enumeration.value
+      free
+      fixed
+      linked
+      shared
+      local
+      global
+      calibrated
+
+save_mfdb_sample
+   _category.id              mfdb_sample
+   _category.description
+;     DEPRECATED: duplicate of flr_sample.  Categories remain
+;     for vocabulary seeding until Phase 3 removal.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_sample.sample_id"
+
+save__mfdb_sample.sample_id
+   _item.name                "_mfdb_sample.sample_id"
+   _item.category_id         mfdb_sample
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_sample
+   _chisurf_schema.column_name sample_id
+
+save__mfdb_sample.sample_type
+   _item.name                "_mfdb_sample.sample_type"
+   _item.category_id         mfdb_sample
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_sample
+   _chisurf_schema.column_name sample_type
+    loop_
+    _item_enumeration.value
+      protein
+      dna
+      rna
+      physical_sample
+
+save_mfdb_object
+   _category.id              mfdb_object
+   _category.description
+;     Content-addressed object store entry (MFDB internal).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_object.object_uuid"
+
+save__mfdb_object.object_uuid
+   _item.name                "_mfdb_object.object_uuid"
+   _item.category_id         mfdb_object
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_object
+   _chisurf_schema.column_name object_uuid
+
+save__mfdb_object.storage_mode
+   _item.name                "_mfdb_object.storage_mode"
+   _item.category_id         mfdb_object
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_object
+   _chisurf_schema.column_name storage_mode
+    loop_
+    _item_enumeration.value
+      local_file
+      local_directory
+      url
+      managed_archive
+      embedded_json
+      embedded_blob
+      local
+      remote
+      embedded
+      folder
+
+save_mfdb_branch
+   _category.id              mfdb_branch
+   _category.description
+;     Named branch/version in the MFDB version graph.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_branch.branch_id"
+
+save__mfdb_branch.branch_id
+   _item.name                "_mfdb_branch.branch_id"
+   _item.category_id         mfdb_branch
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_branch
+   _chisurf_schema.column_name branch_id
+
+save__mfdb_branch.lifecycle_status
+   _item.name                "_mfdb_branch.lifecycle_status"
+   _item.category_id         mfdb_branch
+   _item_type.code           code
+   _item.mandatory_code      no
+   _item_description.description
+;     Lifecycle status of a branch/version.
+;
+   _chisurf_schema.table_name  mfdb_branch
+   _chisurf_schema.column_name lifecycle_status
+    loop_
+    _item_enumeration.value
+      active
+      archived
+      superseded
+      deleted
+
+save_mfdb_vocabulary
+   _category.id              mfdb_vocabulary
+   _category.description
+;     Vocabulary registry for extensible code fields used across MFDB.
+;     Each row maps a field_name + value pair to a display name and description.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_vocabulary.field_name"
+
+save__mfdb_vocabulary.field_name
+   _item.name                "_mfdb_vocabulary.field_name"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name field_name
+
+save__mfdb_vocabulary.value
+   _item.name                "_mfdb_vocabulary.value"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           ucode
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name value
+
+save__mfdb_vocabulary.display_name
+   _item.name                "_mfdb_vocabulary.display_name"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name display_name
+
+save__mfdb_vocabulary.description
+   _item.name                "_mfdb_vocabulary.description"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name description
+
+save__mfdb_vocabulary.is_builtin
+   _item.name                "_mfdb_vocabulary.is_builtin"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       0
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name is_builtin
+
+save__mfdb_vocabulary.is_active
+   _item.name                "_mfdb_vocabulary.is_active"
+   _item.category_id         mfdb_vocabulary
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       1
+   _chisurf_schema.table_name  mfdb_vocabulary
+   _chisurf_schema.column_name is_active
+
+save_mfdb_group
+   _category.id              mfdb_group
+   _category.description
+;     User groups for access control and organization.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_group.group_id"
+
+save__mfdb_group.group_id
+   _item.name                "_mfdb_group.group_id"
+   _item.category_id         mfdb_group
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_group
+   _chisurf_schema.column_name group_id
+
+save__mfdb_group.display_name
+   _item.name                "_mfdb_group.display_name"
+   _item.category_id         mfdb_group
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_group
+   _chisurf_schema.column_name display_name
+
+save__mfdb_group.description
+   _item.name                "_mfdb_group.description"
+   _item.category_id         mfdb_group
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_group
+   _chisurf_schema.column_name description
+
+save__mfdb_group.is_builtin
+   _item.name                "_mfdb_group.is_builtin"
+   _item.category_id         mfdb_group
+   _item_type.code           int
+   _item.mandatory_code      no
+   _item_default.value       0
+   _chisurf_schema.table_name  mfdb_group
+   _chisurf_schema.column_name is_builtin
+
+save__mfdb_group.created_by_user_id
+   _item.name                "_mfdb_group.created_by_user_id"
+   _item.category_id         mfdb_group
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_group
+   _chisurf_schema.column_name created_by_user_id
+
+save_mfdb_group_member
+   _category.id              mfdb_group_member
+   _category.description
+;     Membership of users in groups.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_group_member.group_id"
+
+save__mfdb_group_member.group_id
+   _item.name                "_mfdb_group_member.group_id"
+   _item.category_id         mfdb_group_member
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_group_member
+   _chisurf_schema.column_name group_id
+
+save__mfdb_group_member.user_id
+   _item.name                "_mfdb_group_member.user_id"
+   _item.category_id         mfdb_group_member
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_group_member
+   _chisurf_schema.column_name user_id
+
+save__mfdb_group_member.role
+   _item.name                "_mfdb_group_member.role"
+   _item.category_id         mfdb_group_member
+   _item_type.code           code
+   _item.mandatory_code      no
+   _item_default.value       member
+   _chisurf_schema.table_name  mfdb_group_member
+   _chisurf_schema.column_name role
+
+save__mfdb_group_member.created_by_user_id
+   _item.name                "_mfdb_group_member.created_by_user_id"
+   _item.category_id         mfdb_group_member
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_group_member
+   _chisurf_schema.column_name created_by_user_id
+
+save_mfdb_object_acl
+   _category.id              mfdb_object_acl
+   _category.description
+;     Access control list for objects. Each object has one ACL row.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_object_acl.object_type"
+
+save__mfdb_object_acl.object_type
+   _item.name                "_mfdb_object_acl.object_type"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name object_type
+
+save__mfdb_object_acl.object_id
+   _item.name                "_mfdb_object_acl.object_id"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name object_id
+
+save__mfdb_object_acl.owner_user_id
+   _item.name                "_mfdb_object_acl.owner_user_id"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name owner_user_id
+
+save__mfdb_object_acl.owner_group_id
+   _item.name                "_mfdb_object_acl.owner_group_id"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name owner_group_id
+
+save__mfdb_object_acl.mode
+   _item.name                "_mfdb_object_acl.mode"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _item_default.value       448
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name mode
+
+save__mfdb_object_acl.inherits_from_type
+   _item.name                "_mfdb_object_acl.inherits_from_type"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name inherits_from_type
+
+save__mfdb_object_acl.inherits_from_id
+   _item.name                "_mfdb_object_acl.inherits_from_id"
+   _item.category_id         mfdb_object_acl
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_object_acl
+   _chisurf_schema.column_name inherits_from_id
+
+save_mfdb_acl_entry
+   _category.id              mfdb_acl_entry
+   _category.description
+;     Individual access control entries for fine-grained permissions.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_acl_entry.entry_id"
+
+save__mfdb_acl_entry.entry_id
+   _item.name                "_mfdb_acl_entry.entry_id"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name entry_id
+
+save__mfdb_acl_entry.object_type
+   _item.name                "_mfdb_acl_entry.object_type"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name object_type
+
+save__mfdb_acl_entry.object_id
+   _item.name                "_mfdb_acl_entry.object_id"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name object_id
+
+save__mfdb_acl_entry.subject_type
+   _item.name                "_mfdb_acl_entry.subject_type"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name subject_type
+   loop_
+   _item_enumeration.value
+     user
+     group
+
+save__mfdb_acl_entry.subject_id
+   _item.name                "_mfdb_acl_entry.subject_id"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name subject_id
+
+save__mfdb_acl_entry.effect
+   _item.name                "_mfdb_acl_entry.effect"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name effect
+   loop_
+   _item_enumeration.value
+     allow
+     deny
+
+save__mfdb_acl_entry.permissions
+   _item.name                "_mfdb_acl_entry.permissions"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name permissions
+
+save__mfdb_acl_entry.created_by_user_id
+   _item.name                "_mfdb_acl_entry.created_by_user_id"
+   _item.category_id         mfdb_acl_entry
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_acl_entry
+   _chisurf_schema.column_name created_by_user_id
+
+save_mfdb_session
+   _category.id              mfdb_session
+   _category.description
+;     User authentication sessions.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_session.session_id"
+
+save__mfdb_session.session_id
+   _item.name                "_mfdb_session.session_id"
+   _item.category_id         mfdb_session
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name session_id
+
+save__mfdb_session.user_id
+   _item.name                "_mfdb_session.user_id"
+   _item.category_id         mfdb_session
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name user_id
+
+save__mfdb_session.token_hash
+   _item.name                "_mfdb_session.token_hash"
+   _item.category_id         mfdb_session
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name token_hash
+
+save__mfdb_session.expires_at
+   _item.name                "_mfdb_session.expires_at"
+   _item.category_id         mfdb_session
+   _item_type.code           text
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name expires_at
+
+save__mfdb_session.last_used_at
+   _item.name                "_mfdb_session.last_used_at"
+   _item.category_id         mfdb_session
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name last_used_at
+
+save__mfdb_session.revoked_at
+   _item.name                "_mfdb_session.revoked_at"
+   _item.category_id         mfdb_session
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name revoked_at
+
+save__mfdb_session.client_host
+   _item.name                "_mfdb_session.client_host"
+   _item.category_id         mfdb_session
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name client_host
+
+save__mfdb_session.client_name
+   _item.name                "_mfdb_session.client_name"
+   _item.category_id         mfdb_session
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name client_name
+
+save__mfdb_session.client_metadata_json
+   _item.name                "_mfdb_session.client_metadata_json"
+   _item.category_id         mfdb_session
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_session
+   _chisurf_schema.column_name client_metadata_json
+
+save_mfdb_auth_attempt
+   _category.id              mfdb_auth_attempt
+   _category.description
+;     Record of authentication attempts for security auditing.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_auth_attempt.attempt_id"
+
+save__mfdb_auth_attempt.attempt_id
+   _item.name                "_mfdb_auth_attempt.attempt_id"
+   _item.category_id         mfdb_auth_attempt
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_auth_attempt
+   _chisurf_schema.column_name attempt_id
+
+save__mfdb_auth_attempt.user_id
+   _item.name                "_mfdb_auth_attempt.user_id"
+   _item.category_id         mfdb_auth_attempt
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_auth_attempt
+   _chisurf_schema.column_name user_id
+
+save__mfdb_auth_attempt.client_host
+   _item.name                "_mfdb_auth_attempt.client_host"
+   _item.category_id         mfdb_auth_attempt
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_auth_attempt
+   _chisurf_schema.column_name client_host
+
+save__mfdb_auth_attempt.success
+   _item.name                "_mfdb_auth_attempt.success"
+   _item.category_id         mfdb_auth_attempt
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _item_default.value       0
+   _chisurf_schema.table_name  mfdb_auth_attempt
+   _chisurf_schema.column_name success
+
+save__mfdb_auth_attempt.reason
+   _item.name                "_mfdb_auth_attempt.reason"
+   _item.category_id         mfdb_auth_attempt
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_auth_attempt
+   _chisurf_schema.column_name reason
+
+save_mfdb_audit_log
+   _category.id              mfdb_audit_log
+   _category.description
+;     Audit log for tracking changes to MFDB objects.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_audit_log.log_id"
+
+save__mfdb_audit_log.log_id
+   _item.name                "_mfdb_audit_log.log_id"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name log_id
+
+save__mfdb_audit_log.action
+   _item.name                "_mfdb_audit_log.action"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name action
+
+save__mfdb_audit_log.target_type
+   _item.name                "_mfdb_audit_log.target_type"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name target_type
+
+save__mfdb_audit_log.target_id
+   _item.name                "_mfdb_audit_log.target_id"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name target_id
+
+save__mfdb_audit_log.operator_user_id
+   _item.name                "_mfdb_audit_log.operator_user_id"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name operator_user_id
+
+save__mfdb_audit_log.details_json
+   _item.name                "_mfdb_audit_log.details_json"
+   _item.category_id         mfdb_audit_log
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_audit_log
+   _chisurf_schema.column_name details_json
+
+# End of vocabulary enumerations

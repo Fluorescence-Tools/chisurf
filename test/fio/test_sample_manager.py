@@ -54,12 +54,13 @@ def test_create_and_get_sample(db):
 
     assert sample is not None
     assert sample["name"] == "HP3-Cy3B-ATTO647N"
-    assert sample["entity_name"] == "DNA hairpin HP3"
-    assert sample["donor_probe_name"] == "Cy3B"
-    assert sample["acceptor_probe_name"] == "ATTO647N"
-    assert sample["ph"] == 7.4
-    assert sample["temperature_k"] == 298.15
-    assert sample["salt_concentration_m"] == 0.15
+
+    # Full metadata is available via get_sample_full_description
+    full = get_sample_full_description(db, sample_id)
+    assert full is not None
+    assert full["condition"]["ph"] == 7.4
+    assert full["condition"]["temperature_k"] == 298.15
+    assert full["condition"]["salt_concentration_m"] == 0.15
 
 
 def test_create_sample_idempotent(db):
@@ -145,11 +146,13 @@ def test_create_sample_with_optional_none(db):
     sample = get_sample(db, sample_id)
 
     assert sample is not None
-    assert sample["ph"] is None
-    assert sample["temperature_k"] is None
-    assert sample["salt_concentration_m"] is None
-    assert sample["donor_position"] is None
-    assert sample["acceptor_position"] is None
+
+    # Condition fields are accessible via get_sample_full_description
+    full = get_sample_full_description(db, sample_id)
+    assert full is not None
+    assert full["condition"]["ph"] is None
+    assert full["condition"]["temperature_k"] is None
+    assert full["condition"]["salt_concentration_m"] is None
 
 
 def test_list_samples(db):

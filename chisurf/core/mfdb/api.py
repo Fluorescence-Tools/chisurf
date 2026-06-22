@@ -154,6 +154,7 @@ def register_artifact(
                 data_json=data_json,
                 data_blob=data_blob,
                 data_format=data_format,
+                created_by_user_id=user_id,
             )
             create_default_acl_for_object(db.conn, "artifact", str(art_id), owner_user_id=user_id)
         return {"ok": True, "artifact_id": art_id}
@@ -1027,6 +1028,8 @@ def save_setup(
     timing_resolution: dict[str, Any] | None = None,
     burst_defaults: dict[str, Any] | None = None,
     fcs_calibration: dict[str, Any] | None = None,
+    created_by_user_id: str | None = None,
+    is_public: bool | int | None = None,
 ) -> dict[str, Any]:
     """Save or update an instrument/calibration setup configuration.
 
@@ -1058,6 +1061,10 @@ def save_setup(
         Default burst parameters.
     fcs_calibration : dict, optional
         FCS calibration configuration.
+    created_by_user_id : str, optional
+        User who created this setup. NULL for shared/builtin setups.
+    is_public : bool or int, optional
+        GUI visibility flag. 1 (default) = visible to all, 0 = owner-only.
 
     Returns
     -------
@@ -1079,6 +1086,8 @@ def save_setup(
             timing_resolution=timing_resolution,
             burst_defaults=burst_defaults,
             fcs_calibration=fcs_calibration,
+            created_by_user_id=created_by_user_id,
+            is_public=is_public,
         )
         return {"ok": True}
 
@@ -1112,6 +1121,105 @@ def list_setups() -> dict[str, Any]:
     with MFDatabase(resolve_database_path()) as db:
         setups = db.list_setups()
         return {"setups": setups}
+
+
+def add_setup_calibration(
+    setup_id: str,
+    channel_name: str,
+    g_factor: float | None = None,
+    l1: float | None = None,
+    l2: float | None = None,
+    g_factor_channels: list[int] | None = None,
+    g_factor_calibration_id: str | None = None,
+    calibrated_at: str | None = None,
+    method: str | None = "manual",
+    created_by_user_id: str | None = None,
+) -> dict[str, Any]:
+    """Append a calibration snapshot for one detector channel.
+
+    Parameters
+    ----------
+    setup_id : str
+        Setup identifier.
+    channel_name : str
+        Detector channel name.
+    g_factor : float or None, optional
+        G-factor value.
+    l1 : float or None, optional
+        Leakage parameter l1.
+    l2 : float or None, optional
+        Leakage parameter l2.
+    g_factor_channels : list of int or None, optional
+        Channel indices used for G-factor calculation.
+    g_factor_calibration_id : str or None, optional
+        Reference to the MFDB calibration artifact.
+    calibrated_at : str or None, optional
+        ISO-8601 timestamp. Defaults to current UTC time.
+    method : str or None, optional
+        Calibration method (e.g. ``manual``, ``migrated``).
+    created_by_user_id : str or None, optional
+        User creating this snapshot.
+
+    Returns
+    -------
+    dict
+        RPC result with the inserted snapshot row under key 'snapshot'.
+    """
+    with MFDatabase(resolve_database_path()) as db:
+        snapshot = db.add_setup_calibration(
+            setup_id=setup_id,
+            channel_name=channel_name,
+            g_factor=g_factor,
+            l1=l1,
+            l2=l2,
+            g_factor_channels=g_factor_channels,
+            g_factor_calibration_id=g_factor_calibration_id,
+            calibrated_at=calibrated_at,
+            method=method,
+            created_by_user_id=created_by_user_id,
+        )
+        return {"ok": True, "snapshot": snapshot}
+
+
+def list_setup_calibration_dates(setup_id: str) -> dict[str, Any]:
+    """Return distinct calibration timestamps for a setup, newest first.
+
+    Parameters
+    ----------
+    setup_id : str
+        Setup identifier.
+
+    Returns
+    -------
+    dict
+        RPC result with a list of timestamps under key 'dates'.
+    """
+    with MFDatabase(resolve_database_path()) as db:
+        dates = db.list_setup_calibration_dates(setup_id)
+        return {"dates": dates}
+
+
+def get_setup_calibration(
+    setup_id: str,
+    calibrated_at: str | None = None,
+) -> dict[str, Any]:
+    """Return calibration snapshots for a setup.
+
+    Parameters
+    ----------
+    setup_id : str
+        Setup identifier.
+    calibrated_at : str or None, optional
+        ISO-8601 timestamp. If None, returns the latest snapshot per channel.
+
+    Returns
+    -------
+    dict
+        RPC result with list of calibration rows under key 'calibration'.
+    """
+    with MFDatabase(resolve_database_path()) as db:
+        calibration = db.get_setup_calibration(setup_id, calibrated_at=calibrated_at)
+        return {"calibration": calibration}
 
 
 def list_audit_logs(

@@ -52,6 +52,20 @@ class MigrationReport:
         return "\n".join(lines)
 
 
+def _get_dict_ddl(category_name: str) -> str:
+    """Lazy-cached DDL for a dictionary category.  Used by ``migrate_schema``."""
+    cache = _get_dict_ddl.__dict__.setdefault("_cache", {})
+    if category_name not in cache:
+        from chisurf.core.mfdb.schema_from_dictionary import (
+            generate_create_table_for_category,
+        )
+        from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+        cache[category_name] = generate_create_table_for_category(
+            MmcifDictionary.load_bundled(), category_name
+        )
+    return cache[category_name]
+
+
 CREATE_TABLES_SQL = [
     "CREATE TABLE IF NOT EXISTS _schema_version (version INTEGER)",
     "CREATE TABLE IF NOT EXISTS probe_types (type_id INTEGER PRIMARY KEY, type_name TEXT UNIQUE, display_name TEXT)",
@@ -876,14 +890,13 @@ CREATE_TABLES_SQL = [
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT
     )""",
-    # (mfdb_setup_detector_channel and mfdb_setup_pie_window are
-    # generated from the dictionary below — DO NOT hand-write)
-    """__DICT_DDL__mfdb_setup_detector_channel__""",
-    """__DICT_DDL__mfdb_setup_pie_window__""",
-    """__DICT_DDL__mfdb_setup_fcs_pair__""",
-    """__DICT_DDL__mfdb_setup_calibration__""",
-    """__DICT_DDL__mfdb_microtime_shift__""",
-    """__DICT_DDL__mfdb_artifact_owner__""",
+    # Generated from the dictionary by _get_dict_ddl during module init
+    _get_dict_ddl("mfdb_setup_detector_channel"),
+    _get_dict_ddl("mfdb_setup_pie_window"),
+    _get_dict_ddl("mfdb_setup_fcs_pair"),
+    _get_dict_ddl("mfdb_setup_calibration"),
+    _get_dict_ddl("mfdb_microtime_shift"),
+    _get_dict_ddl("mfdb_artifact_owner"),
     """CREATE TABLE IF NOT EXISTS mfdb_audit_log (
         log_id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -898,26 +911,6 @@ CREATE_TABLES_SQL = [
     )""",
     # New MFDB Tables (v18)
     """CREATE TABLE IF NOT EXISTS mfdb_schema_version (version INTEGER)""",
-    """CREATE TABLE IF NOT EXISTS mfdb_sample (
-        sample_id TEXT PRIMARY KEY,
-        display_name TEXT NOT NULL,
-        sample_type TEXT,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_experiment (
-        experiment_id TEXT PRIMARY KEY,
-        sample_id TEXT REFERENCES mfdb_sample(sample_id) ON DELETE SET NULL,
-        display_name TEXT NOT NULL,
-        project_id TEXT,
-        status TEXT DEFAULT 'pending',
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
     """CREATE TABLE IF NOT EXISTS mfdb_vocabulary (
         field_name TEXT NOT NULL,
         value TEXT NOT NULL,
@@ -1137,38 +1130,9 @@ _CANONICAL_CHECK_SQL = [
 ]
 
 # ---------------------------------------------------------------------------
-# Replace placeholder entries with DDL generated from the dictionary
+# Extension tables managed by reconcile_schema
 # ---------------------------------------------------------------------------
-from chisurf.core.mfdb.schema_from_dictionary import generate_create_table_for_category
-from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
 
-_DIC_FOR_DDL = MmcifDictionary.load_bundled()
-for _i, _sql in enumerate(CREATE_TABLES_SQL):
-    if "__DICT_DDL__mfdb_setup_detector_channel__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_setup_detector_channel"
-        )
-    elif "__DICT_DDL__mfdb_setup_pie_window__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_setup_pie_window"
-        )
-    elif "__DICT_DDL__mfdb_setup_fcs_pair__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_setup_fcs_pair"
-        )
-    elif "__DICT_DDL__mfdb_setup_calibration__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_setup_calibration"
-        )
-    elif "__DICT_DDL__mfdb_microtime_shift__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_microtime_shift"
-        )
-    elif "__DICT_DDL__mfdb_artifact_owner__" in _sql:
-        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
-            _DIC_FOR_DDL, "mfdb_artifact_owner"
-        )
-# ---------------------------------------------------------------------------
 
 # Fresh-DB tables — same as CREATE_TABLES_SQL but with CHECK-constrained
 # canonical table definitions for the mfdb_* canonical tables.
@@ -1245,11 +1209,7 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_microtime_shift_operation ON mfdb_microtime_shift (operation_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_target ON mfdb_audit_log (target_type, target_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_timestamp ON mfdb_audit_log (timestamp)",
-    # New MFDB table indices
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_sample_type ON mfdb_sample (sample_type)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_experiment_sample ON mfdb_experiment (sample_id)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_experiment_project ON mfdb_experiment (project_id)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_experiment_status ON mfdb_experiment (status)",
+    # (mfdb_sample/mfdb_experiment indices removed in Phase 3 — tables are duplicates of flr_*)
     "CREATE INDEX IF NOT EXISTS idx_mfdb_vocabulary_field ON mfdb_vocabulary (field_name)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_vocabulary_active ON mfdb_vocabulary (is_active)",
     # Lifecycle indices (v23)
@@ -1271,8 +1231,7 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_parameter_deleted_at ON mfdb_parameter (deleted_at)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_deleted_at ON mfdb_setup (deleted_at)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_deleted_at ON mfdb_audit_log (deleted_at)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_sample_deleted_at ON mfdb_sample (deleted_at)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_experiment_deleted_at ON mfdb_experiment (deleted_at)",
+    # (mfdb_sample/mfdb_experiment lifecycle indices removed in Phase 3)
     "CREATE INDEX IF NOT EXISTS idx_mfdb_vocabulary_deleted_at ON mfdb_vocabulary (deleted_at)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_branch_deleted_at ON mfdb_branch (deleted_at)",
     # Auth indices (v25)
@@ -1827,85 +1786,40 @@ def bootstrap_auth_groups(conn: sqlite3.Connection) -> None:
 
 
 def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
-    """Bootstrap built-in and legacy extensible vocabulary values in mfdb_vocabulary."""
-    def _dictionary_values(full_name: str) -> list[str]:
-        from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+    """Bootstrap built-in and legacy extensible vocabulary values in mfdb_vocabulary.
 
-        dic = MmcifDictionary.load_bundled()
-        return [value for value in dic.get_enumerations(full_name) if value not in {"#", ".", "?"}]
+    All enumeration values are read from the bundled mmCIF/flrCIF dictionary,
+    including MFDB extension categories defined in ``mfdb_flr_ext.dic``.
+    """
+    from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
 
-    # Extensible vocabulary values to seed
-    vocab = {
-        "artifact_kind": [
-            "raw_measurement", "processed_data", "analysis_result",
-            "fit_result", "parameter_table", "selection_mask",
-            "project_snapshot", "archive_manifest", "archive_file",
-            "visualization", "external_reference", "chinet_session",
-            "chinet_node",
-            "trace_data", "image_data", "background_data", "calibration_data",
-            "burst_selection", "tttr_photon_stream",
-            # Legacy
-            "raw_data", "bur", "ptu", "spc", "bh", "fcs",
-            "tcspc", "decay", "irf", "pda", "model_curve", "residual",
-            "plot_export", "table_export", "project_archive", "external_file",
-            "photon_hdf5", "burst_table", "spectra", "hdf5", "zip",
-            "json_summary", "mti_summary", "fcs_correlation", "irf_curve",
-            "tcspc_decay", "anisotropy_curve", "pda_histogram", "fit_results",
-            "derived_product", "gmm_summary", "clustering_labels"
-        ],
-        "data_format": [
-            "ptu", "spc", "bh", "tttr", "photon_hdf5", "bur",
-            "hdf5", "zip", "json", "csv", "tsv", "png", "svg",
-            "sqlite", "directory", "bin", "msgpack", "txt", "dat", "unknown"
-        ],
-        "operation_type": [
-            "measurement_import", "validation", "burst_selection",
-            "filtering", "fcs_correlation", "microtime_histogram",
-            "tcspc_fitting", "model_fitting", "ndxplorer_selection",
-            "ndxplorer_clustering", "project_snapshot", "project_restore",
-            "archive_export",
-            "tcspc_histogram_computation", "pda_histogram_computation",
-            "pch_histogram_computation", "fcs_correlation_load",
-            "tcspc_curve_load",
-            "histogram_construction", "background_correction",
-            "image_analysis", "population_selection", "calibration",
-            "microtime_shift",
-            # Legacy/Custom
-            "import", "burst_filtering", "gmm_fitting", "analysis",
-            "fitting", "project_archive", "local_fit", "global_fit",
-            "project", "analysis_run", "decay_fit"
-        ],
-        "parameter_type": [
-            "free", "fixed", "linked", "shared", "local", "global", "calibrated"
-        ],
-        "relationship_type": [
-            "included_in", "contains", "derived_from", "supersedes",
-            "uses_external_reference", "parameter_depends_on", "parameter_of", "linked_to",
-            "project_contains", "grouped_in", "measured_sample"
-        ],
-        "sample_type": [
-            "protein", "dna", "rna", "physical_sample"
-        ],
+    dic = MmcifDictionary.load_bundled()
+
+    # Map vocab field_name → dictionary item full_name
+    _field_to_item: dict[str, str] = {
+        "artifact_kind": "_mfdb_artifact.artifact_kind",
+        "data_format": "_mfdb_artifact.data_format",
+        "operation_type": "_mfdb_operation.operation_type",
+        "parameter_type": "_mfdb_parameter.parameter_type",
+        "relationship_type": "_mfdb_edge.relationship_type",
+        "direction": "_mfdb_operation_artifact.direction",
+        "status": "_mfdb_operation.status",
+        "validation_status": "_mfdb_operation.validation_status",
+        "storage_mode": "_mfdb_object.storage_mode",
+        "lifecycle_status": "_mfdb_branch.lifecycle_status",
+        "sample_type": "_mfdb_sample.sample_type",
+        "entity_type": "_entity.type",
+        "fluorophore_type": "_flr_sample_probe_details.fluorophore_type",
+        "solvent_phase": "_flr_sample.solvent_phase",
+        "probe_origin": "_flr_probe_list.probe_origin",
+        "probe_link_type": "_flr_probe_list.probe_link_type",
+        "reactive_probe_flag": "_flr_probe_list.reactive_probe_flag",
+        "ambiguous_stoichiometry": "_flr_poly_probe_position.mutation_flag",
     }
-    vocab.update(
-        {
-            "entity_type": _dictionary_values("_entity.type"),
-            "fluorophore_type": _dictionary_values(
-                "_flr_sample_probe_details.fluorophore_type"
-            ),
-            "solvent_phase": _dictionary_values("_flr_sample.solvent_phase"),
-            "probe_origin": _dictionary_values("_flr_probe_list.probe_origin"),
-            "probe_link_type": _dictionary_values("_flr_probe_list.probe_link_type"),
-            "reactive_probe_flag": _dictionary_values(
-                "_flr_probe_list.reactive_probe_flag"
-            ),
-            "ambiguous_stoichiometry": _dictionary_values(
-                "_flr_poly_probe_position.mutation_flag"
-            ),
-        }
-    )
+
     with conn:
-        for field_name, values in vocab.items():
+        for field_name, item_path in _field_to_item.items():
+            values = [v for v in dic.get_enumerations(item_path) if v not in {"#", ".", "?"}]
             for val in values:
                 conn.execute(
                     """INSERT OR IGNORE INTO mfdb_vocabulary (
@@ -2093,6 +2007,10 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 bootstrap_vocabulary(conn)
                 bootstrap_default_user(conn)
                 bootstrap_auth_groups(conn)
+                from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
+                from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+                reconcile_schema(conn, MmcifDictionary.load_bundled())
+                _drop_legacy_tables(conn)
                 return
 
             # Read version, start legacy migration waterfall
@@ -3510,12 +3428,8 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 from_version = version
 
                 # Create the child tables (generated from the dictionary)
-                _det_ddl = generate_create_table_for_category(
-                    _DIC_FOR_DDL, "mfdb_setup_detector_channel"
-                )
-                _win_ddl = generate_create_table_for_category(
-                    _DIC_FOR_DDL, "mfdb_setup_pie_window"
-                )
+                _det_ddl = _get_dict_ddl("mfdb_setup_detector_channel")
+                _win_ddl = _get_dict_ddl("mfdb_setup_pie_window")
                 cursor.execute(_det_ddl)
                 cursor.execute(_win_ddl)
 
@@ -3750,9 +3664,7 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 _ensure_column(conn, "mfdb_setup", "n_bins", "INTEGER DEFAULT 2")
                 _ensure_column(conn, "mfdb_setup", "n_casc", "INTEGER DEFAULT 25")
                 _ensure_column(conn, "mfdb_setup", "make_fine", "INTEGER DEFAULT 1")
-                _fcs_ddl = generate_create_table_for_category(
-                    _DIC_FOR_DDL, "mfdb_setup_fcs_pair"
-                )
+                _fcs_ddl = _get_dict_ddl("mfdb_setup_fcs_pair")
                 cursor.execute(_fcs_ddl)
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_fcs_pair_setup "
@@ -3781,9 +3693,7 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                     "Migrating database schema to version 35 "
                     "(add mfdb_setup_calibration table)..."
                 )
-                _cal_ddl = generate_create_table_for_category(
-                    _DIC_FOR_DDL, "mfdb_setup_calibration"
-                )
+                _cal_ddl = _get_dict_ddl("mfdb_setup_calibration")
                 cursor.execute(_cal_ddl)
                 cursor.execute(
                     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup "
@@ -3980,8 +3890,28 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
         bootstrap_auth_groups(conn)
     except sqlite3.OperationalError:
         pass
+    # Phase 3: drop duplicate/legacy tables
+    _drop_legacy_tables(conn)
     _backfill_flr_sample_names(conn)
     return report
+
+
+def _drop_legacy_tables(conn: sqlite3.Connection) -> None:
+    """Drop duplicate (mfdb_sample, mfdb_experiment) and legacy (fdb_*) tables."""
+    legacy = [
+        "mfdb_sample", "mfdb_experiment",
+        "fdb_raw_data", "fdb_processing_run", "fdb_processing_input",
+        "fdb_processed_data", "fdb_provenance_edge", "fdb_setup_definition",
+        "fdb_analysis_run", "fdb_analysis_parameter", "fdb_audit_log",
+        "fdb_setup", "fdb_artifact", "fdb_operation",
+        "fdb_operation_artifact", "fdb_edge", "fdb_parameter",
+    ]
+    with conn:
+        for table in legacy:
+            try:
+                conn.execute(f"DROP TABLE IF EXISTS {table}")
+            except sqlite3.OperationalError:
+                pass  # table may not exist; that's fine
 
 
 def _backfill_flr_sample_names(conn: sqlite3.Connection) -> None:
@@ -4006,4 +3936,4 @@ def _backfill_flr_sample_names(conn: sqlite3.Connection) -> None:
                 "              AND ms.display_name IS NOT NULL AND ms.display_name != '')"
             )
     except sqlite3.OperationalError:
-        pass
+        pass  # mfdb_sample may already be dropped; this is fine
