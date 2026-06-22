@@ -114,7 +114,8 @@ def _build_gaussian_density_grid(
         return None
 
     spacing = max(float(grid_spacing), 0.2)
-    pad = max(float(padding), spacing * 1.5)
+    max_sigma = float(np.max(sig_arr))
+    pad = max(float(padding), max_sigma * cutoff_factor + spacing * 2.0)
     max_dim = max(int(max_dim), 16)
 
     mins = pts_arr.min(axis=0) - pad
@@ -192,7 +193,10 @@ def _generate_surface_mesh_from_gaussians(
     verts = np.asarray(verts, dtype=np.float32)
     verts += origin
     faces = np.asarray(faces, dtype=np.int32)
-    norms = np.asarray(norms, dtype=np.float32)
+    # skimage marching_cubes normals point towards higher values (inward). We want outward.
+    norms = -np.asarray(norms, dtype=np.float32)
+    # Swap winding order from CW to CCW (when viewed from outside) so front faces aren't culled
+    faces = faces[:, [0, 2, 1]]
     return verts, faces, norms
 
 

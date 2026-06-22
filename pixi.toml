@@ -102,15 +102,9 @@ tttrlib = "*"
  [tasks]
  build-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh" }
  test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
-build-labellib = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/include/eigen3\" && pip install -e modules/labellib --no-deps", inputs = [
-     "modules/labellib/CMakeLists.txt",
-     "modules/labellib/FlexLabel/**",
-     "modules/labellib/setup.py",
- ] }
  build-ndxplorer = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/include/eigen3\" && pip install -e modules/ndxplorer --no-deps", inputs = [
-     "modules/labellib/CMakeLists.txt",
-     "modules/labellib/FlexLabel/**",
-     "modules/labellib/setup.py",
+     "modules/ndxplorer/CMakeLists.txt",
+     "modules/ndxplorer/setup.py",
  ] }
  build-clsmview = { cmd = "pip install -e modules/clsmview --no-deps", inputs = [     "modules/clsmview/setup.py",
      "modules/clsmview/clsmview/**",
@@ -125,7 +119,7 @@ build-labellib = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.p
      "modules/chinet/src/**",
      "modules/chinet/include/**",
      ] }
-     build-extensions = { depends-on = [     "build-labellib",
+     build-extensions = { depends-on = [
      "build-ndxplorer",
      "build-clsmview",
      "build-quest",

@@ -9,6 +9,7 @@ from .cartoon import (
 )
 from .trace import _extract_ca_trace
 from .bonds import _build_bond_pairs
+from .surface import _generate_surface_mesh_from_gaussians
 
 __all__ = [
     "_compute_center_radius",
@@ -19,4 +20,5 @@ __all__ = [
     "_build_bond_pairs",
     "_generate_cartoon_tube_arrays",
     "_generate_trace_arrays",
+    "_generate_surface_mesh_from_gaussians",
 ]

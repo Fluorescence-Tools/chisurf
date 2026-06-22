@@ -44,6 +44,7 @@ dependencies = [
     "numpy<2.0",
     "numexpr",
     "scipy",
+    "labellib",
     "deprecation",
     "emcee",
     "PyYAML",
@@ -68,6 +69,9 @@ dev = [
     "mypy",
     "ruff",
 ]
+cli = [
+    "ptpython>=3.0",
+]
 mcp = [
     "fastmcp",
 ]
@@ -80,6 +84,7 @@ Repository = "https://github.com/Fluorescence-Tools/chisurf"
 
 [project.scripts]
 csc = "chisurf.cli:cli"
+chimol-cli = "chisurf.plugins.chimol.chimol.app.cli:main"
 
 [project.gui-scripts]
 chisurf = "chisurf.__main__:main"

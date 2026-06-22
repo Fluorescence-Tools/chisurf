@@ -81,6 +81,7 @@ class _MolViewObjectState:
     sticks_mask: Optional[np.ndarray] = None
     bond_pairs: Optional[np.ndarray] = None
     surface_visible: bool = False
+    metaballs_visible: bool = False
     point_overlays: dict[str, dict] = field(default_factory=dict)
     frames: Optional[np.ndarray] = None
     active_frame: int = 0

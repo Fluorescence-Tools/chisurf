@@ -137,13 +137,20 @@ jobs:
           path: ${{ env.OUT_DIR }}/win-64/**/*.conda
           if-no-files-found: error
 
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
         shell: bash -l {0}
         run: |
           micromamba activate build
-          export "BASE_CONDA_ROOT=$MAMBA_ROOT_PREFIX"
-          build_tools/win/build-setup.bat /nobuild
+          # cygpath converts the bash Unix-style path to a Windows path for the bat file
+          WIN_CONDA_ROOT=$(cygpath -w "$MAMBA_ROOT_PREFIX")
+          export BASE_CONDA_ROOT="$WIN_CONDA_ROOT"
+          cmd //c "build_tools\\win\\build-setup.bat /nobuild"
 
       - name: Upload Windows installer
         if: runner.os == 'Windows'
