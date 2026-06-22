@@ -56,3 +56,25 @@ def test_result_registry_wrapper_delegates(monkeypatch):
 
     monkeypatch.setitem(settings.cs_settings, "mfdb", {"default_user_id": "carol"})
     assert _resolve_active_user_id() == resolve_active_user_id() == "carol"
+
+
+def test_injected_session_stamps_owner(tmp_path):
+    """A SessionContext threaded into register_* stamps that user as owner,
+    regardless of the configured default — the PRD-17 injection path."""
+    import os
+
+    from chisurf.core.mfdb.repository import MFDatabase
+    from chisurf.core.mfdb.result_registry import register_raw_measurement, set_global_db
+
+    db = MFDatabase(os.path.join(tmp_path, "owner.db"))
+    try:
+        f = tmp_path / "m.ptu"
+        f.write_bytes(b"\x00\x01\x02")
+        ctx = SessionContext(user_id="dave", db=db)
+        artifact_id = register_raw_measurement(str(f), db=db, session=ctx)
+        assert artifact_id
+        owners = db.list_artifact_owners(artifact_id)
+        assert "dave" in owners, f"expected dave in owners, got {owners}"
+    finally:
+        set_global_db(None)
+        db.close()

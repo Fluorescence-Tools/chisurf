@@ -14,6 +14,8 @@ from chisurf.core.mfdb.base import MFDBClientBase
 if TYPE_CHECKING:
     import pandas
 
+    from chisurf.core.mfdb.session import SessionContext
+
 logger = logging.getLogger(__name__)
 
 _GLOBAL_DB: MFDBClientBase | None = None
@@ -54,6 +56,7 @@ def register_result(
     setup_version: int | None = None,
     db: MFDBClientBase | None = None,
     is_public: bool = False,
+    session: "SessionContext | None" = None,
 ) -> str:
     """Register a plugin result in MFDB.
 
@@ -93,6 +96,9 @@ def register_result(
     is_public : bool, default=False
         Whether the artifact is visible to all users (public) or only
         the owning user (private).
+    session : SessionContext, optional
+        Resolved identity/session (PRD-17). When provided, the artifact is owned
+        by ``session.user_id``; otherwise the canonical default user is resolved.
 
     Returns
     -------
@@ -131,7 +137,7 @@ def register_result(
                     metadata=effective_metadata,
                 )
 
-            user_id = _resolve_active_user_id()
+            user_id = session.user_id if session is not None else _resolve_active_user_id()
             # Ensure the active user exists before stamping ownership; a
             # configured default_user_id that was never seeded would otherwise
             # fail the created_by_user_id foreign key and roll back the whole
@@ -240,6 +246,7 @@ def register_raw_measurement(
     setup_version: int | None = None,
     db: MFDBClientBase | None = None,
     is_public: bool = False,
+    session: "SessionContext | None" = None,
 ) -> str:
     """Register a raw measurement file.
 
@@ -275,6 +282,7 @@ def register_raw_measurement(
         setup_version=setup_version,
         db=db,
         is_public=is_public,
+        session=session,
     )
 
 
@@ -288,6 +296,7 @@ def register_processed_data(
     setup_id: str = "",
     setup_version: int | None = None,
     db: MFDBClientBase | None = None,
+    session: "SessionContext | None" = None,
 ) -> str:
     """Register processed data derived from another artifact.
 
@@ -328,6 +337,7 @@ def register_processed_data(
         setup_id=setup_id,
         setup_version=setup_version,
         db=db,
+        session=session,
     )
 
 
