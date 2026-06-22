@@ -80,6 +80,22 @@ explicit **go/no-go** with two viable shapes:
 Recommendation: commit to **append-only-lite now** (it makes PRD-12/21 right the
 first time) and keep full event-sourcing as the documented end state.
 
+## Decision (LOCKED, 2026-06-22)
+
+**Append-only-lite.** Phase-1 go/no-go is resolved: keep the current `mfdb_*` tables
+but make provenance/state changes **append-only** — recorded facts (operations,
+artifacts, edges, calibrations, state) are new rows, never mutated in place;
+"delete" is a tombstone; PRD-12 lifecycle is the state log and PRD-21 events read
+the same record. Full event-sourcing (a single `mfdb_event` log with tables as pure
+projections) remains the documented end state but is **not** built now. This makes
+PRD-12 and PRD-21 build once on the right foundation without the larger event-store
+rebuild. Branch/merge ("what-if" reprocessing) layers on later via `mfdb_branch` +
+the PRD-21 replayable compute spec.
+
+**Implication for Phase 3:** PRD-12 introduces `mfdb_state_transition` as the
+append-only state log (no in-place status mutation); PRD-21 publishes over the same
+records. Neither needs the full `mfdb_event` log to start.
+
 ## Tasks
 
 1. Go/no-go: pick full vs lite; record the decision and the event vocabulary.
