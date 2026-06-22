@@ -3278,6 +3278,135 @@ save__mfdb_parameter.parameter_type
       global
       calibrated
 
+save__mfdb_parameter.role
+   _item.name                "_mfdb_parameter.role"
+   _item.category_id         mfdb_parameter
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_parameter
+   _chisurf_schema.column_name role
+   _item_description.description
+;     Optional role/index distinguishing repeated parameter rows of the same
+;     name on one operation (the data-side analog of chinet's multiple ports),
+;     e.g. the detector channel for a per-channel shift.  NULL/empty for scalar
+;     parameters (exactly one row per operation+name).
+
+save_mfdb_operation_parameter_def
+   _category.id              mfdb_operation_parameter_def
+   _category.description
+;     Typed parameter schema for an operation type — the data-side analog of a
+;     chinet node's typed ports.  One row per (operation_type, name) declares the
+;     type, units, default, bounds, whether the parameter is required, and whether
+;     it is repeatable (role-indexed).  Operation parameter rows in mfdb_parameter
+;     are validated against this schema at registration.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_operation_parameter_def.def_id"
+
+save__mfdb_operation_parameter_def.def_id
+   _item.name                "_mfdb_operation_parameter_def.def_id"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name def_id
+
+save__mfdb_operation_parameter_def.operation_type
+   _item.name                "_mfdb_operation_parameter_def.operation_type"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name operation_type
+
+save__mfdb_operation_parameter_def.name
+   _item.name                "_mfdb_operation_parameter_def.name"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name name
+
+save__mfdb_operation_parameter_def.value_type
+   _item.name                "_mfdb_operation_parameter_def.value_type"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name value_type
+    loop_
+    _item_enumeration.value
+      int
+      float
+      text
+      bool
+
+save__mfdb_operation_parameter_def.units
+   _item.name                "_mfdb_operation_parameter_def.units"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name units
+
+save__mfdb_operation_parameter_def.default_value
+   _item.name                "_mfdb_operation_parameter_def.default_value"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name default_value
+
+save__mfdb_operation_parameter_def.lower_bound
+   _item.name                "_mfdb_operation_parameter_def.lower_bound"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name lower_bound
+
+save__mfdb_operation_parameter_def.upper_bound
+   _item.name                "_mfdb_operation_parameter_def.upper_bound"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name upper_bound
+
+save__mfdb_operation_parameter_def.required
+   _item.name                "_mfdb_operation_parameter_def.required"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           boolean
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name required
+
+save__mfdb_operation_parameter_def.repeatable
+   _item.name                "_mfdb_operation_parameter_def.repeatable"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           boolean
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name repeatable
+
+save__mfdb_operation_parameter_def.role_domain
+   _item.name                "_mfdb_operation_parameter_def.role_domain"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name role_domain
+   _item_description.description
+;     Names the role domain for a repeatable parameter (e.g. detector_channel).
+
+save__mfdb_operation_parameter_def.description
+   _item.name                "_mfdb_operation_parameter_def.description"
+   _item.category_id         mfdb_operation_parameter_def
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation_parameter_def
+   _chisurf_schema.column_name description
+
 save__flr_sample.sample_type
    _item.name                "_flr_sample.sample_type"
    _item.category_id         flr_sample

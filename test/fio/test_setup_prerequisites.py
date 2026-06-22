@@ -158,7 +158,7 @@ def _setup_dictionary_mapper(tmp_path: Path):
     return build_dictionary_schema_map(db_path)
 
 
-_SETUP_CATEGORIES = {"mfdb_setup", "mfdb_setup_detector_channel", "mfdb_setup_pie_window", "mfdb_setup_fcs_pair", "mfdb_setup_calibration", "mfdb_microtime_shift", "mfdb_artifact"}
+_SETUP_CATEGORIES = {"mfdb_setup", "mfdb_setup_detector_channel", "mfdb_setup_pie_window", "mfdb_setup_fcs_pair", "mfdb_setup_calibration", "mfdb_microtime_shift", "mfdb_artifact", "mfdb_parameter", "mfdb_operation_parameter_def"}
 
 
 def test_every_setup_dictionary_item_maps_to_live_column(tmp_path: Path) -> None:
