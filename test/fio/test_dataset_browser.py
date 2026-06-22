@@ -819,3 +819,123 @@ def test_backfill_fills_empty_flr_sample_description(tmp_path):
         "SELECT description FROM flr_sample WHERE sample_id='x1'"
     ).fetchone()[0]
     assert desc == "My Sample"
+
+
+def test_browse_datasets_excludes_grouped_members(
+    temp_db: Path,
+) -> None:
+    """browse_datasets only returns the group artifact, not its member files."""
+    db = MFDatabase(temp_db)
+
+    # 1. Register a group artifact
+    db.register_artifact(
+        artifact_id="art_group_01",
+        artifact_kind="raw_measurement",
+        data_format="ptu",
+        storage_mode="local_file",
+        file_path="/tmp/group.ptu",
+        created_by_user_id="alice",
+        is_public=True,
+    )
+
+    # 2. Register member artifacts
+    db.register_artifact(
+        artifact_id="art_member_01",
+        artifact_kind="raw_measurement",
+        data_format="ptu",
+        storage_mode="local_file",
+        file_path="/tmp/member1.ptu",
+        created_by_user_id="alice",
+        is_public=True,
+    )
+    db.register_artifact(
+        artifact_id="art_member_02",
+        artifact_kind="raw_measurement",
+        data_format="ptu",
+        storage_mode="local_file",
+        file_path="/tmp/member2.ptu",
+        created_by_user_id="alice",
+        is_public=True,
+    )
+
+    # 3. Create grouped_in edges: member -> grouped_in -> group
+    db.conn.execute(
+        "INSERT INTO mfdb_edge (source_node_type, source_node_id, target_node_type, target_node_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
+        ("artifact", "art_member_01", "artifact", "art_group_01", "grouped_in"),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_edge (source_node_type, source_node_id, target_node_type, target_node_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
+        ("artifact", "art_member_02", "artifact", "art_group_01", "grouped_in"),
+    )
+    db.conn.commit()
+
+    # Now query browse_datasets
+    result = db.browse_datasets(scope="all")
+    datasets = result.get("datasets", [])
+    ids = {d["artifact_id"] for d in datasets}
+
+    # Verify group is present, but members are excluded
+    assert "art_group_01" in ids
+    assert "art_member_01" not in ids
+    assert "art_member_02" not in ids
+
+
+
+def test_multi_owner_browse_and_dict_mapping(tmp_path, monkeypatch):
+    """A dataset can be co-owned: each owner sees it under 'own'; non-owners do
+    not. The mfdb_artifact_owner items map to live columns (dict-driven)."""
+    import chisurf.core.settings
+    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
+
+    monkeypatch.setitem(
+        chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "alice"}
+    )
+    dbp = str(tmp_path / "mo.db")
+    db = MFDatabase(dbp)
+    f = tmp_path / "x.ptu"
+    f.write_bytes(b"shared")
+    art = rr.register_raw_measurement(file_path=str(f), db=db)
+
+    assert db.list_artifact_owners(art) == ["alice"]            # creator owns
+    assert db.browse_datasets(scope="own", owner_id="alice")["total"] == 1
+    assert db.browse_datasets(scope="own", owner_id="bob")["total"] == 0
+
+    db.add_artifact_owner(art, "bob")                            # co-own
+    assert set(db.list_artifact_owners(art)) == {"alice", "bob"}
+    assert db.browse_datasets(scope="own", owner_id="bob")["total"] == 1
+    assert db.browse_datasets(scope="own", owner_id="carol")["total"] == 0
+
+    # add_artifact_owner is idempotent
+    db.add_artifact_owner(art, "bob")
+    assert db.list_artifact_owners(art).count("bob") == 1
+
+    mapper = build_dictionary_schema_map(dbp)
+    unmapped = [u.dictionary_name for u in mapper.get_unmapped_flr_items()
+                if u.category == "mfdb_artifact_owner"]
+    assert unmapped == []
+
+
+def test_v39_backfills_artifact_owner_from_creator(tmp_path):
+    """Upgrading to v39 backfills one owner row per existing artifact from its
+    created_by_user_id."""
+    from chisurf.core.mfdb import schema
+
+    dbp = str(tmp_path / "up.db")
+    db = MFDatabase(dbp)
+    db.conn.execute(
+        "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
+        "VALUES ('dave','u','dave')"
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_artifact (artifact_id, artifact_kind, storage_mode, created_by_user_id) "
+        "VALUES ('art1','raw_measurement','local_file','dave')"
+    )
+    db.conn.execute("DELETE FROM mfdb_artifact_owner")
+    schema.set_schema_version(db.conn, 38)
+    db.conn.commit()
+    schema.migrate_schema(db.conn)
+    rows = db.conn.execute(
+        "SELECT artifact_id, user_id FROM mfdb_artifact_owner"
+    ).fetchall()
+    assert ("art1", "dave") in [tuple(r) for r in rows]

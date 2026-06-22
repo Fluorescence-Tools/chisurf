@@ -143,6 +143,10 @@ def register_result(
                 created_by_user_id=user_id,
                 is_public=is_public,
             )
+            # Record the creator in the many-to-many owner set.
+            add_owner = getattr(db, "add_artifact_owner", None)
+            if user_id and callable(add_owner):
+                add_owner(artifact_id, user_id)
 
             op_type = operation_type or "analysis"
             db.record_operation(

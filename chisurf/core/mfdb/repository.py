@@ -2728,6 +2728,30 @@ class MFDatabase(MFDBClientBase):
             (user_id, str(_uuid.uuid4()), display_name or user_id),
         )
 
+    def add_artifact_owner(self, artifact_id: str, user_id: str, role: str = "owner") -> None:
+        """Add a co-owner to an artifact (idempotent).
+
+        Datasets are many-to-many owned; registering or reusing content by the
+        same user adds them to the owner set without duplicating the artifact.
+        """
+        if not artifact_id or not user_id:
+            return
+        self.ensure_user(user_id)
+        self.conn.execute(
+            "INSERT OR IGNORE INTO mfdb_artifact_owner (artifact_id, user_id, role) "
+            "VALUES (?, ?, ?)",
+            (artifact_id, user_id, role),
+        )
+
+    def list_artifact_owners(self, artifact_id: str) -> list[str]:
+        """Return the user IDs that own an artifact."""
+        rows = self.conn.execute(
+            "SELECT user_id FROM mfdb_artifact_owner "
+            "WHERE artifact_id = ? AND deleted_at IS NULL ORDER BY created_at",
+            (artifact_id,),
+        ).fetchall()
+        return [r[0] for r in rows]
+
     def add_user(self, user_id, display_name, email=None, affiliation=None, department=None, role=None, address=None, website=None, phone=None, details=None, user_uuid=None, is_admin=0, password_hash=None, allow_passwordless_login=None):
         import uuid
         if not user_uuid:
@@ -3558,20 +3582,36 @@ class MFDatabase(MFDBClientBase):
               ``total`` : int (total matching count),
               ``sample_counts`` : dict[str, int] (artifact count per sample).
         """
-        where_clauses: list[str] = ["a.deleted_at IS NULL"]
+        where_clauses: list[str] = [
+            "a.deleted_at IS NULL",
+            "a.artifact_id NOT IN ("
+            "  SELECT source_node_id FROM mfdb_edge"
+            "  WHERE source_node_type = 'artifact'"
+            "    AND target_node_type = 'artifact'"
+            "    AND relationship_type = 'grouped_in'"
+            "    AND deleted_at IS NULL"
+            ")"
+        ]
         params: list[Any] = []
 
+        # A dataset can be co-owned (mfdb_artifact_owner). "own" matches the
+        # original creator OR any co-owner so every owner sees it under Mine.
+        owner_match = (
+            "(a.created_by_user_id = ? OR a.artifact_id IN "
+            "(SELECT artifact_id FROM mfdb_artifact_owner "
+            " WHERE user_id = ? AND deleted_at IS NULL))"
+        )
         if scope == "own":
             if not owner_id:
                 owner_id = ""
-            where_clauses.append("a.created_by_user_id = ?")
-            params.append(owner_id)
+            where_clauses.append(owner_match)
+            params.extend([owner_id, owner_id])
         elif scope == "public":
             where_clauses.append("a.is_public = 1")
         elif scope == "all":
             if owner_id:
-                where_clauses.append("(a.is_public = 1 OR a.created_by_user_id = ?)")
-                params.append(owner_id)
+                where_clauses.append(f"(a.is_public = 1 OR {owner_match})")
+                params.extend([owner_id, owner_id])
             else:
                 where_clauses.append("a.is_public = 1")
 

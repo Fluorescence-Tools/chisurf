@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 38
+SCHEMA_VERSION = 39
 
 
 @dataclass
@@ -883,6 +883,7 @@ CREATE_TABLES_SQL = [
     """__DICT_DDL__mfdb_setup_fcs_pair__""",
     """__DICT_DDL__mfdb_setup_calibration__""",
     """__DICT_DDL__mfdb_microtime_shift__""",
+    """__DICT_DDL__mfdb_artifact_owner__""",
     """CREATE TABLE IF NOT EXISTS mfdb_audit_log (
         log_id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1163,6 +1164,10 @@ for _i, _sql in enumerate(CREATE_TABLES_SQL):
         CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
             _DIC_FOR_DDL, "mfdb_microtime_shift"
         )
+    elif "__DICT_DDL__mfdb_artifact_owner__" in _sql:
+        CREATE_TABLES_SQL[_i] = generate_create_table_for_category(
+            _DIC_FOR_DDL, "mfdb_artifact_owner"
+        )
 # ---------------------------------------------------------------------------
 
 # Fresh-DB tables — same as CREATE_TABLES_SQL but with CHECK-constrained
@@ -1234,6 +1239,8 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_detector_channel_setup ON mfdb_setup_detector_channel (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_pie_window_setup ON mfdb_setup_pie_window (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_fcs_pair_setup ON mfdb_setup_fcs_pair (setup_id)",
+    "CREATE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_user ON mfdb_artifact_owner (user_id)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_uniq ON mfdb_artifact_owner (artifact_id, user_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup ON mfdb_setup_calibration (setup_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_microtime_shift_operation ON mfdb_microtime_shift (operation_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_target ON mfdb_audit_log (target_type, target_id)",
@@ -1605,6 +1612,7 @@ def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) 
         ("mfdb_setup_fcs_pair", True, True),
         ("mfdb_setup_calibration", True, True),
         ("mfdb_microtime_shift", True, True),
+        ("mfdb_artifact_owner", True, True),
         ("mfdb_sample", True, True),
         ("mfdb_experiment", True, True),
         ("mfdb_branch", True, True),
@@ -3922,6 +3930,40 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                 set_schema_version(conn, 38)
                 version = 38
                 logger.info("Schema upgraded to v38 (ownership columns on mfdb_artifact).")
+
+            # --- v39: many-to-many artifact ownership ---
+            if version < 39:
+                logger.info(
+                    "Migrating database schema to version 39 "
+                    "(add mfdb_artifact_owner join table)..."
+                )
+                from chisurf.core.mfdb.schema_from_dictionary import (
+                    generate_create_table_for_category as _gen39,
+                )
+                from chisurf.core.mfdb.pdbx_metadata import (
+                    MmcifDictionary as _Mmcif39,
+                )
+                _dic39 = _Mmcif39.load_bundled()
+                cursor.execute(
+                    _gen39(_dic39, "mfdb_artifact_owner")
+                )
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_user "
+                    "ON mfdb_artifact_owner (user_id)"
+                )
+                cursor.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_uniq "
+                    "ON mfdb_artifact_owner (artifact_id, user_id)"
+                )
+                # Backfill: one owner row per existing artifact from its creator.
+                cursor.execute(
+                    "INSERT OR IGNORE INTO mfdb_artifact_owner (artifact_id, user_id, role) "
+                    "SELECT artifact_id, created_by_user_id, 'owner' FROM mfdb_artifact "
+                    "WHERE created_by_user_id IS NOT NULL AND deleted_at IS NULL"
+                )
+                set_schema_version(conn, 39)
+                version = 39
+                logger.info("Schema upgraded to v39 (mfdb_artifact_owner).")
 
             _ensure_mfdb_setup_columns(conn)
             _ensure_lifecycle_columns(conn)
