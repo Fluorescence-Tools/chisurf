@@ -128,6 +128,13 @@ def register_result(
 
     try:
         _validate_links(db, sample_id=sample_id, parent_artifact_id=parent_artifact_id)
+        if parameters:
+            from chisurf.core.mfdb.operation_parameters import validate_operation_parameters
+
+            conn = getattr(db, "conn", None)
+            if conn is not None:
+                # No-op unless this operation type has a declared .dic schema.
+                validate_operation_parameters(conn, operation_type or "analysis", parameters)
         with db.transaction():
             if data is not None:
                 object_uuid, storage_mode, data_format, size_bytes, checksum, mime_type = _store_data(
@@ -202,12 +209,11 @@ def register_result(
             if parameters:
                 _record_parameters(db, operation_id, parameters)
 
-    except LinkValidationError as exc:
-        # A requested link target (sample/parent) does not exist. This is
-        # checked before the transaction, so nothing was persisted. It is a
-        # caller-recoverable condition (bad input), not silent data loss, so we
-        # surface it without the alarming error-level traceback used for real
-        # failures and re-raise for the caller to handle.
+    except (LinkValidationError, OperationParameterError) as exc:
+        # A bad link target or a parameter set that violates the operation type's
+        # declared schema. Both are checked before the transaction, so nothing was
+        # persisted. Caller-recoverable conditions (bad input), not silent data
+        # loss, so surface without the alarming error-level traceback and re-raise.
         logger.warning("register_result: %s (kind=%s); nothing registered", exc, kind)
         raise
     except Exception as exc:

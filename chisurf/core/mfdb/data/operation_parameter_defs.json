@@ -54,6 +54,43 @@
       "required": false,
       "repeatable": false,
       "description": "Maximum photon count rate threshold."
+    },
+    {
+      "name": "filter_active",
+      "value_type": "bool",
+      "required": false,
+      "repeatable": false,
+      "description": "Whether the photon filter is active."
+    },
+    {
+      "name": "count_rate_time_window",
+      "value_type": "float",
+      "units": "ms",
+      "required": false,
+      "repeatable": false,
+      "description": "Time window for the count-rate filter."
+    },
+    {
+      "name": "delta_macro_time_min",
+      "value_type": "float",
+      "required": false,
+      "repeatable": false,
+      "description": "Minimum delta macro time for the inter-photon-time filter."
+    },
+    {
+      "name": "delta_macro_time_max",
+      "value_type": "float",
+      "required": false,
+      "repeatable": false,
+      "description": "Maximum delta macro time for the inter-photon-time filter."
+    },
+    {
+      "name": "gmm_max_components",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "description": "Maximum number of GMM components."
     }
   ]
 }

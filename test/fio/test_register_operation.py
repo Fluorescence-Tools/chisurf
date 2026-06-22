@@ -83,6 +83,28 @@ def test_register_operation_role_indexed_parameters(tmp_path):
         db.close()
 
 
+def test_register_result_validates_declared_operation_type(tmp_path):
+    """register_result rejects a parameter outside the operation type's .dic
+    schema (validation is wired at the boundary; nothing is persisted)."""
+    from chisurf.core.mfdb.result_registry import register_result
+
+    db = _db(tmp_path)
+    try:
+        src = _raw(db, tmp_path)
+        with pytest.raises(OperationParameterError):
+            register_result(
+                kind="processed_data",
+                data={"x": [0], "y": [0]},
+                parent_artifact_id=src,
+                operation_type="microtime_shift",
+                parameters={"global_shift": 0, "bogus_param": 1},
+                db=db,
+            )
+    finally:
+        set_global_db(None)
+        db.close()
+
+
 def test_register_operation_rejects_unknown_parameter(tmp_path):
     db = _db(tmp_path)
     try:
