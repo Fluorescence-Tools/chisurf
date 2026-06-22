@@ -1,5 +1,6 @@
 import json as _json
 import logging
+import re
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -1724,14 +1725,26 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
             # dictionary; the post-processing below seeds vocabulary and drops
             # legacy/duplicate tables. An incompatible pre-PRD-19 database can
             # simply be deleted and recreated.
-            for sql in FRESH_DB_SCHEMA_SQL:
+            # Create any missing tables first (CREATE IF NOT EXISTS is a no-op for
+            # tables that already exist; it does NOT add columns to them).
+            for sql in FRESH_DB_TABLES_SQL:
                 cursor.execute(sql)
             set_schema_version(conn, SCHEMA_VERSION)
+            # Then ensure every canonical column (incl. flr_*) exists on existing
+            # tables, and reconcile mfdb_* extension tables, BEFORE creating indices
+            # (an index on a not-yet-added column would fail on an older DB).
+            _ensure_canonical_columns(conn)
             from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
             from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
             reconcile_schema(conn, MmcifDictionary.load_bundled())
             _ensure_mfdb_setup_columns(conn)
             _ensure_lifecycle_columns(conn)
+            # Indices + triggers last; tolerate an odd missing column on a stale DB.
+            for sql in FRESH_DB_INDICES_SQL + MFDB_EDGE_VOCABULARY_TRIGGER_SQL:
+                try:
+                    cursor.execute(sql)
+                except sqlite3.OperationalError:
+                    pass
 
         finally:
             cursor.close()
@@ -1749,6 +1762,88 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
     _drop_legacy_tables(conn)
     _backfill_flr_sample_names(conn)
     return report
+
+
+def _parse_create_table_columns(create_sql: str) -> tuple[str | None, list[tuple[str, str]]]:
+    """Extract ``(table_name, [(column_name, column_def), ...])`` from a CREATE.
+
+    Constraint clauses (PRIMARY KEY / FOREIGN KEY / UNIQUE / CHECK / CONSTRAINT)
+    are skipped — only real column definitions are returned.
+    """
+    m = re.search(r"CREATE TABLE IF NOT EXISTS (\w+)\s*\((.*)\)\s*$", create_sql, re.S)
+    if not m:
+        return None, []
+    table, body = m.group(1), m.group(2)
+    parts: list[str] = []
+    depth = 0
+    cur = ""
+    for ch in body:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        parts.append(cur)
+    constraint_kw = {"PRIMARY", "FOREIGN", "UNIQUE", "CHECK", "CONSTRAINT"}
+    cols: list[tuple[str, str]] = []
+    for part in parts:
+        s = part.strip()
+        if not s:
+            continue
+        tokens = s.split()
+        if tokens[0].upper() in constraint_kw:
+            continue
+        cols.append((tokens[0].strip('"'), s))
+    return table, cols
+
+
+def _ensure_canonical_columns(conn: sqlite3.Connection) -> None:
+    """ALTER-add any canonical column missing from an existing live table.
+
+    Option B (PRD-19) replaced the versioned migration waterfall with
+    ``reconcile_schema``, which only covers ``mfdb_*`` extension tables. This adds
+    missing columns to the remaining canonical/``flr_*`` tables too, so an existing
+    database (notably the shipped curated source DB) is brought to the current
+    schema rather than failing on a missing column.
+    """
+    cur = conn.cursor()
+    try:
+        live = {
+            r[0]
+            for r in cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        for sql in FRESH_DB_TABLES_SQL:
+            table, cols = _parse_create_table_columns(sql)
+            if not table or table not in live:
+                continue
+            existing = {r[1] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()}
+            for name, coldef in cols:
+                if name in existing:
+                    continue
+                # SQLite forbids PRIMARY KEY / UNIQUE in ALTER ADD COLUMN.
+                add_def = re.sub(r"\bPRIMARY KEY\b|\bUNIQUE\b", "", coldef, flags=re.I).strip()
+                try:
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN {add_def}")
+                except sqlite3.OperationalError:
+                    # Non-constant DEFAULT (e.g. CURRENT_TIMESTAMP) or other clause
+                    # rejected by ALTER: fall back to a bare typed column.
+                    tokens = coldef.split()
+                    coltype = tokens[1] if len(tokens) > 1 and tokens[1].upper() not in {
+                        "PRIMARY", "REFERENCES", "DEFAULT", "NOT", "UNIQUE", "CHECK"
+                    } else "TEXT"
+                    try:
+                        cur.execute(f"ALTER TABLE {table} ADD COLUMN {name} {coltype}")
+                    except sqlite3.OperationalError:
+                        pass
+    finally:
+        cur.close()
 
 
 def _drop_legacy_tables(conn: sqlite3.Connection) -> None:

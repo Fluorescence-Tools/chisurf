@@ -34,6 +34,19 @@ os.environ["CHISURF_SETTINGS_DIR"] = str(_HERMETIC_SETTINGS_DIR)
 def _hermetic_settings_dir():
     """Ensure every test uses the temp settings dir, never the real ~/.chisurf."""
     os.environ["CHISURF_SETTINGS_DIR"] = str(_HERMETIC_SETTINGS_DIR)
+    # Pre-create a fresh, current-schema user database so resolve_database_path()
+    # does not copy the shipped curated source DB (which carries demo data and an
+    # older schema). Tests get a clean DB; isolation is preserved.
+    try:
+        from chisurf.core.mfdb.database_resolver import user_database_path
+        from chisurf.core.mfdb.repository import MFDatabase
+
+        user_db = user_database_path()
+        user_db.parent.mkdir(parents=True, exist_ok=True)
+        if not user_db.exists():
+            MFDatabase(str(user_db)).close()
+    except Exception:
+        pass
     yield _HERMETIC_SETTINGS_DIR
 
 
