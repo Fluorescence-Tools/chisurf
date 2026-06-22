@@ -24,10 +24,9 @@ resolution.
   any registration call; thread it to `browse_datasets` for the read scope. Files:
   `services.py` (`datasets_browse_handler` ~263, `datasets_open_handler` ~313),
   `chisurf/core/mfdb/session.py` (`resolve_session`).
-- **PRD-18 Task 2 — integration test against the *real* in-process `MFDBClient`**
-  (not a mock): browse + open end-to-end. `.call` is already the public method; this
-  guards against the `.call`/`_call` interface-drift class. Put it in
-  `test/plugins/` (run it *not* batched with the GUI file — see gotchas).
+- ~~**PRD-18 Task 2 — integration test against the real in-process `MFDBClient`.**~~
+  **DONE** (`test_mfdb_client_integration`, drives public `.call` browse+open). Writing
+  it caught + fixed an existing-DB migrate bug (see "🔴 production follow-up" below).
 - **PRD-18 Task 4 — remove namespace-bound `resolve_database_path`.** ~32 files do
   `from … import resolve_database_path`, which makes patching fragile (the original
   test-pollution root). Prefer `database_resolver.resolve_database_path()` calls or an
@@ -52,7 +51,20 @@ codec.**
   (the no-legacy-table half is already asserted by
   `test_fresh_db_has_no_legacy_or_duplicate_tables`).
 
-### 3. PRD-27 — append-only provenance/state core (decision gates PRD-12/21)
+### 3. 🔴 Regenerate the shipped curated DB (production follow-up — option B fallout)
+
+`chisurf/core/fio/mmCIF/db/sample_management.db` is **pre-PRD-19** (Jun 11 schema).
+`resolve_database_path()` copies it on first run. Removing the migration waterfall
+(option B) means it is no longer fully migrated forward: `_ensure_canonical_columns`
+(added) fixes missing *columns*, but **table-structure staleness** (e.g.
+`flr_sample_users` missing the UNIQUE `user_uuid` an FK needs) cannot be fixed by
+`ALTER ADD COLUMN`, so production first-run hits a `put_object` "foreign key mismatch".
+Tests dodge this (the hermetic harness pre-creates a fresh DB). **Fix:** regenerate the
+curated DB with the current schema, preserving its reference data (probes 7,
+optical_properties 27, spectra 14, probe_types 3, entities/poly_seq) — a `build_tools`
+script. Until then, real first-run registration of objects is broken.
+
+### 4. PRD-27 — append-only provenance/state core (decision gates PRD-12/21)
 
 Go/no-go on append-only-lite vs full event-sourcing (recommend lite). Decide before
 the Phase-3 lifecycle/events PRDs so they're built once as projections. See
@@ -69,7 +81,7 @@ transformers), then PRD-26 (model-driven layer); apply PRD-23 (thin widgets) per
 | Foundation | State | Key commits |
 |---|---|---|
 | **PRD-19** schema/vocab/migrations | version chain removed ✓, vocab from `.dic` ✓, **all `fdb_*` removed** ✓, legacy-free gate ✓ — **flrCIF collapse remains** (NEXT #2) | `bb837a07`, `adc6ea08`, `083d3f8c`, `c65f6b4a`, `ffca20e7` |
-| **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓ — **Tasks 2/3/4 remain** (NEXT #1) | `547b5a51` |
+| **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓ — **Task 4** (namespace binding) remains; 🔴 curated-DB regen (NEXT #3) | `547b5a51`, `+column-ensure` |
 | **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓ — **build-once-at-boundary remains** (NEXT #1) | `189db5a3`, `c6a73a17` |
 | **PRD-27** append-only core | not started (NEXT #3) | — |
 
