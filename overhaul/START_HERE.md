@@ -95,10 +95,15 @@ DBs go through `CREATE IF NOT EXISTS` + `reconcile_schema`. Remaining:
   `default_user_id` reads (result_registry, mfdb_admin services, repository) to
   delegate to it, so the anonymous in-process client now scopes reads to the same
   identity registration stamps. `test_session_context` (5) locks it.
-- Remaining: thread the `SessionContext` *object* through API signatures
-  (`register_result(session=ctx)`, `browse_datasets(session=ctx)`) and build it once
-  at RPC dispatch / GUI launch. That unblocks **PRD-18 Tasks 3–4** (inject db/session;
-  remove `from … import resolve_database_path` namespace binding).
+- ~~**Thread `SessionContext` into `register_*`.**~~ **DONE** (`c6a73a17`):
+  `register_result` + `register_raw_measurement`/`register_processed_data` accept an
+  optional `session=`; when supplied the artifact is owned by `session.user_id`.
+  Backward compatible; a test asserts an injected session stamps that owner.
+- Remaining: build the context **once** at RPC dispatch / GUI launch and thread it to
+  the registration + `browse_datasets` call sites (currently each still resolves at
+  the boundary via the canonical resolver — correct, but not yet injected). That
+  finishes PRD-17 and unblocks **PRD-18 Tasks 3–4** (inject db/session; remove
+  `from … import resolve_database_path` namespace binding).
 
 ## Next steps (in order, per MASTER-ORDER)
 
