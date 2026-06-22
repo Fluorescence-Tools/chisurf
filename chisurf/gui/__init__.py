@@ -343,25 +343,24 @@ class CustomProgressBar(QtWidgets.QProgressBar):
         # Do not call the default paint event to avoid drawing the percentage text
         painter = QtGui.QPainter(self)
 
-        # Customize the progress bar appearance if needed (e.g., color, border, etc.)
-        # painter.setPen(QtCore.Qt.green)  # Example for setting color
-        # painter.setBrush(QtCore.Qt.blue)  # Example for setting fill color
+        rect = self.rect()
+        # Draw progress bar track background (subtle translucent white/gray)
+        painter.fillRect(rect, QtGui.QColor(255, 255, 255, 40))
 
         # Draw the progress bar manually
-        rect = self.rect()
-        progress = self.value() / self.maximum()  # Calculate the progress percentage
+        progress = self.value() / self.maximum() if self.maximum() > 0 else 0
         progress_width = int(rect.width() * progress)  # Width based on progress
         progress_rect = QtCore.QRect(rect.x(), rect.y(), progress_width, rect.height())
         painter.fillRect(progress_rect, QtCore.Qt.green)  # Fill with desired color
 
         # Customize the text style and color
-        painter.setPen(QtCore.Qt.white)
-        font = painter.font()
-        font.setBold(True)
-        painter.setFont(font)
-
-        # Draw the custom text on top of the progress bar
-        painter.drawText(rect, QtCore.Qt.AlignCenter, self.custom_text)
+        if self.custom_text:
+            painter.setPen(QtCore.Qt.white)
+            font = painter.font()
+            font.setBold(True)
+            painter.setFont(font)
+            # Draw the custom text on top of the progress bar
+            painter.drawText(rect, QtCore.Qt.AlignCenter, self.custom_text)
 
         painter.end()
 
@@ -372,12 +371,13 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         # Use the CustomProgressBar to show text on top of the progress bar
         self.progress_bar = CustomProgressBar(self)
-        self.progress_bar.setGeometry(130, self.height() - 40, self.width() - 300, 5)
+        self.progress_bar.setGeometry(130, self.height() - 60, self.width() - 260, 5)
         self.progress_bar.setRange(0, 100)  # Progress bar range 0 to 100
         self.progress_bar.setValue(0)  # Initial value
 
         # Initialize message attributes
         self.current_message = ""
+        self.current_log_message = ""
         self.message_color = QtCore.Qt.lightGray  # Light gray text color
 
         # Get version information
@@ -405,6 +405,11 @@ class SplashScreen(QtWidgets.QSplashScreen):
         )
         self.repaint()  # Ensure the message is updated immediately
 
+    def update_log_message(self, message: str):
+        """Update the log message displayed on the splash screen."""
+        self.current_log_message = message
+        self.repaint()  # Force repaint to show the updated log message
+
     def drawContents(self, painter):
         """Override the drawContents method to ensure text is drawn."""
         painter.setPen(self.message_color)
@@ -412,35 +417,64 @@ class SplashScreen(QtWidgets.QSplashScreen):
         # Get the geometry of the progress bar
         progress_bar_rect = self.progress_bar.geometry()
 
-        # Calculate the position to draw the message above the progress bar
-        message_y = progress_bar_rect.top() + 10  # Adjust as necessary to move up from the progress bar
-        message_rect = self.rect().adjusted(0, 0, 0, 0)  # Full rect for alignment
+        # Draw the message (general stage info) centered below the progress bar
+        # Progress bar is at y=211, height=5. Bottom is y=216.
+        # General stage info starts at y = 222
+        stage_rect = QtCore.QRect(10, progress_bar_rect.bottom() + 4, self.width() - 20, 16)
+        font = painter.font()
+        font.setBold(True)
+        painter.setFont(font)
+        painter.drawText(stage_rect, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, self.current_message)
 
-        # Draw the message centered above the progress bar
-        painter.drawText(message_rect.adjusted(0, message_y, 0, 0),
-                         QtCore.Qt.AlignHCenter,
-                         self.current_message)
+        # Draw the logging info below the general stage info (size 8 font)
+        log_font = painter.font()
+        log_font.setPointSize(8)
+        log_font.setBold(False)
+        painter.setFont(log_font)
+        painter.setPen(QtCore.Qt.gray)
+        log_rect = QtCore.QRect(10, progress_bar_rect.bottom() + 20, self.width() - 20, 15)
+        painter.drawText(log_rect, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter, self.current_log_message)
 
         # Set font for additional text boxes
-        font = painter.font()
-        font.setPointSize(8)
-        painter.setFont(font)
+        other_font = painter.font()
+        other_font.setPointSize(8)
+        painter.setFont(other_font)
+        painter.setPen(self.message_color)
 
         # Draw copyright text at the bottom left
-        copyright_rect = QtCore.QRect(10, self.height() - 100, self.width() - 20, 20)
+        copyright_rect = QtCore.QRect(10, self.height() - 95, self.width() - 20, 20)
         painter.drawText(copyright_rect, QtCore.Qt.AlignLeft, self.copyright_text)
 
         # Draw version text below copyright
-        version_rect = QtCore.QRect(10, self.height() - 90, self.width() - 20, 20)
+        version_rect = QtCore.QRect(10, self.height() - 83, self.width() - 20, 20)
         painter.drawText(version_rect, QtCore.Qt.AlignLeft, self.version_text)
 
         # Draw license text below version
-        license_rect = QtCore.QRect(10, self.height() - 80, self.width() - 20, 20)
+        license_rect = QtCore.QRect(10, self.height() - 71, self.width() - 20, 20)
         painter.drawText(license_rect, QtCore.Qt.AlignLeft, self.license_text)
 
-        # Draw contributors text at the bottom right
-        contributors_rect = QtCore.QRect(240, self.height() - 80, self.width() - 20, 100)
+        # Draw contributors text at the bottom right, just above the progress bar
+        contributors_rect = QtCore.QRect(240, self.height() - 85, self.width() - 20, 100)
         painter.drawText(contributors_rect, QtCore.Qt.AlignLeft, self.contributors_text)
+
+
+class SplashLogHandler(logging.Handler):
+    """Custom logging handler to update the splash screen with log messages."""
+
+    def __init__(self, splash_screen: SplashScreen) -> None:
+        super().__init__()
+        self.splash_screen = splash_screen
+        self.setLevel(logging.INFO)
+        self.setFormatter(logging.Formatter("%(message)s"))
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            msg = self.format(record)
+            if len(msg) > 75:
+                msg = msg[:72] + "..."
+            self.splash_screen.update_log_message(msg)
+        except Exception:
+            pass
 
 
 def setup_gui(
@@ -1341,107 +1375,114 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
 
     manager = AppStartupServiceManager()
 
-    # --- Phase 1: splash phase (GUI critical path) -------------------------
-    def _on_splash_start(payload):
-        splash.update_message(payload.get("label", ""))
-        splash.update_progress(payload.get("progress", 0))
+    # Create and add splash log handler to log messages during splash screen phase
+    splash_log_handler = SplashLogHandler(splash)
+    logging.getLogger().addHandler(splash_log_handler)
+
+    try:
+        # --- Phase 1: splash phase (GUI critical path) -------------------------
+        def _on_splash_start(payload):
+            splash.update_message(payload.get("label", ""))
+            splash.update_progress(payload.get("progress", 0))
+            app.processEvents()
+
+        try:
+            manager.start(
+                surface="gui",
+                phase="splash",
+                on_stage_start=_on_splash_start,
+            )
+        except Exception:
+            logging.exception("Splash startup failed")
+
+        window = manager.get_service_result("startup_interface")
+
+        # If user chose to open updater, interrupt startup immediately
+        try:
+            if getattr(cs, "__startup_interrupt_for_updater__", False):
+                try:
+                    cs.__startup_in_progress__ = False
+                except Exception:
+                    pass
+                splash.hide()
+                return window
+        except Exception:
+            pass
+
+        # --- Phase 1 complete: show window immediately -----------------------
+        splash.update_message("Starting up…")
+        splash.update_progress(100)
         app.processEvents()
 
-    try:
-        manager.start(
-            surface="gui",
-            phase="splash",
-            on_stage_start=_on_splash_start,
-        )
-    except Exception:
-        logging.exception("Splash startup failed")
-
-    window = manager.get_service_result("startup_interface")
-
-    # If user chose to open updater, interrupt startup immediately
-    try:
-        if getattr(cs, "__startup_interrupt_for_updater__", False):
+        # Install FittingClient (ZMQ RPC adapter for widget/backend communication).
+        # ZMQ connect is lazy, so probe with a short ping before exposing the
+        # transport to widgets.
+        from chisurf.gui.widgets.fitting.fitting_client import install_fitting_client
+        fitting_adapter = None
+        try:
+            from chisurf.core.api._client import ChisurfClient
+            import chisurf.core.settings as cs_settings
             try:
-                cs.__startup_in_progress__ = False
-            except Exception:
-                pass
-            splash.hide()
-            return window
-    except Exception:
-        pass
-
-    # --- Phase 1 complete: show window immediately -----------------------
-    splash.update_message("Starting up…")
-    splash.update_progress(100)
-    app.processEvents()
-
-    # Install FittingClient (ZMQ RPC adapter for widget/backend communication).
-    # ZMQ connect is lazy, so probe with a short ping before exposing the
-    # transport to widgets.
-    from chisurf.gui.widgets.fitting.fitting_client import install_fitting_client
-    fitting_adapter = None
-    try:
-        from chisurf.core.api._client import ChisurfClient
-        import chisurf.core.settings as cs_settings
-        try:
-            _ensure_chisurf_rpc_server()
-        except Exception as _server_err:
-            logging.warning(f"FittingClient embedded server unavailable: {_server_err}")
-        mfdb_cfg = cs_settings.cs_settings.get("mfdb", {})
-        fitting_transport = ChisurfClient(
-            cmd_port=int(mfdb_cfg.get("cmd_port", 8765)),
-            pub_port=int(mfdb_cfg.get("pub_port", 8766)),
-            host=str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
-            timeout_ms=int(mfdb_cfg.get("fitting_timeout_ms", 300)),
-        )
-        fitting_transport.connect()
-        fitting_transport.call("meta.ping", {})
-        fitting_adapter = install_fitting_client(fitting_transport)
-    except Exception as _fc_err:
-        logging.warning(f"FittingClient server unreachable: {_fc_err}")
-        fitting_adapter = install_fitting_client()
-
-    # ── Event wiring (Phase 0) ─────────────────────────────────────────
-    import chisurf as _cs_ref
-    import chisurf.logging as _cs_log
-
-    def _handle_server_event(payload: dict) -> None:
-        try:
-            w = getattr(_cs_ref, "cs", None)
-            if w is not None:
-                w._on_server_event(payload)
-        except Exception:
-            _cs_log.exception("Error routing server event to GUI")
-
-    for _topic in ("fit.", "parameter.", "dataset.", "session.", "project.", "globalview."):
-        try:
-            fitting_adapter.subscribe(_topic, _handle_server_event)
-        except Exception:
-            logging.warning(f"Could not subscribe to topic '{_topic}'")
-
-    try:
-        from chisurf.gui.zmq_poller import ZmqSubscriberPoller
-        poller_client = getattr(getattr(fitting_adapter, "_client", None), "_client", None)
-        if poller_client is not None:
-            window._zmq_poller = ZmqSubscriberPoller(
-                poller_client,
-                poll_interval_ms=50,
-                parent=window,
+                _ensure_chisurf_rpc_server()
+            except Exception as _server_err:
+                logging.warning(f"FittingClient embedded server unavailable: {_server_err}")
+            mfdb_cfg = cs_settings.cs_settings.get("mfdb", {})
+            fitting_transport = ChisurfClient(
+                cmd_port=int(mfdb_cfg.get("cmd_port", 8765)),
+                pub_port=int(mfdb_cfg.get("pub_port", 8766)),
+                host=str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
+                timeout_ms=int(mfdb_cfg.get("fitting_timeout_ms", 300)),
             )
-            logging.info("ZmqSubscriberPoller started (50 ms)")
-        else:
-            logging.info("ZmqSubscriberPoller not started; fitting RPC unavailable")
-    except Exception:
-        logging.exception("Failed to start ZmqSubscriberPoller")
+            fitting_transport.connect()
+            fitting_transport.call("meta.ping", {})
+            fitting_adapter = install_fitting_client(fitting_transport)
+        except Exception as _fc_err:
+            logging.warning(f"FittingClient server unreachable: {_fc_err}")
+            fitting_adapter = install_fitting_client()
 
-    window.show()
-    splash.hide()
-    splash.finish(window)
+        # ── Event wiring (Phase 0) ─────────────────────────────────────────
+        import chisurf as _cs_ref
+        import chisurf.logging as _cs_log
 
-    try:
-        cs.__startup_in_progress__ = False
-    except Exception:
-        pass
+        def _handle_server_event(payload: dict) -> None:
+            try:
+                w = getattr(_cs_ref, "cs", None)
+                if w is not None:
+                    w._on_server_event(payload)
+            except Exception:
+                _cs_log.exception("Error routing server event to GUI")
+
+        for _topic in ("fit.", "parameter.", "dataset.", "session.", "project.", "globalview."):
+            try:
+                fitting_adapter.subscribe(_topic, _handle_server_event)
+            except Exception:
+                logging.warning(f"Could not subscribe to topic '{_topic}'")
+
+        try:
+            from chisurf.gui.zmq_poller import ZmqSubscriberPoller
+            poller_client = getattr(getattr(fitting_adapter, "_client", None), "_client", None)
+            if poller_client is not None:
+                window._zmq_poller = ZmqSubscriberPoller(
+                    poller_client,
+                    poll_interval_ms=50,
+                    parent=window,
+                )
+                logging.info("ZmqSubscriberPoller started (50 ms)")
+            else:
+                logging.info("ZmqSubscriberPoller not started; fitting RPC unavailable")
+        except Exception:
+            logging.exception("Failed to start ZmqSubscriberPoller")
+
+        window.show()
+        splash.hide()
+        splash.finish(window)
+
+        try:
+            cs.__startup_in_progress__ = False
+        except Exception:
+            pass
+    finally:
+        logging.getLogger().removeHandler(splash_log_handler)
 
     # --- Phase 2: deferred stages via BackgroundStartupRunner adapter ----
     # Add a placeholder in the Plugins menu so it's never empty while loading
