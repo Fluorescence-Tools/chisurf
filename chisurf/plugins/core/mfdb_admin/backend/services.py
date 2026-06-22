@@ -252,11 +252,11 @@ def _resolve_owner_id(db: "MFDatabase", auth: dict[str, Any] | None) -> str | No
     ``mfdb.default_user_id`` — the same identity registration stamps — so reads and
     writes agree.
     """
+    # The canonical resolver already returns the authenticated principal when
+    # present and the configured default otherwise — no separate anonymous-fallback
+    # branch needed (PRD-17).
     from chisurf.core.mfdb.session import resolve_active_user_id
 
-    principal = principal_from_rpc_auth(db.conn, auth)
-    if isinstance(principal, AnonymousPrincipal):
-        return _default_user_id()
     return resolve_active_user_id(auth, conn=db.conn)
 
 
