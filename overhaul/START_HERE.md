@@ -35,19 +35,43 @@ issue — do opportunistically or skip:
   *flrCIF* extensions FK'd to flrCIF, and add live⊇declared + vocab==dictionary asserts
   to the gate.
 
-## Phase 2 starting point (the actual next build)
+## ▶ Phase 2 — operation/transformer spine (IN PROGRESS)
 
-Read `MASTER-ORDER.md` Phase 2. The spine: **PRD-11** (operation-node abstraction:
-`.dic`-declared operation-parameter schemas via `mfdb_operation_parameter_def`,
-role-indexed parameters) + **PRD-16** (the transformer contract every plugin obeys),
-shipping together; they **supersede PRD-07**. Then refactor **Burst Selection**
-(`chisurf/plugins/burst/burst_selection`) and **Microtime Shifter**
-(`chisurf/plugins/tttr/tttr_microtime_shifter`) as the two reference conformant
-transformers — retiring the bespoke `mfdb_microtime_shift` table into role-indexed
-`mfdb_parameter` rows — applying **PRD-23** (thin widgets) as you touch each. Then
-**PRD-26** (the `.dic` generates DAO/admin/validation/docs). The Orange3 lessons fold
-in here: typed kind-matched ports (16/11), transformer-as-serializable-value (16/22),
-and `compute_value`-style replayable provenance (21/27).
+Read `MASTER-ORDER.md` Phase 2. **PRD-11** (operation-node abstraction) + **PRD-16**
+(transformer contract) ship together; they **supersede PRD-07**.
+
+**Landed:**
+- ~~PRD-11 operation-parameter schema~~ ✓ (`1da6ab6d`): `.dic`-declared
+  `mfdb_operation_parameter_def` (typed schema per operation type) + `mfdb_parameter.role`
+  (role-indexed params).
+- ~~PRD-11 seed + validate~~ ✓ (`+seed/validate`): `data/operation_parameter_defs.json`
+  (authored defs for `microtime_shift` + `burst_selection`) seeded into the table on
+  migrate; `operation_parameters.py` (`validate_operation_parameters` rejects
+  unknown/missing-required).
+- ~~PRD-16 transformer contract~~ ✓ (`+transform`): `chisurf/core/transform/`
+  (`PortSpec`, `Transformer` Protocol, registry, `check_transformer_conformance`).
+
+**Next (in order):**
+1. **PRD-11 Task 3 — `register_operation`.** A uniform contract that records an
+   operation node: typed inputs/outputs (`mfdb_operation_artifact`), `derived_from`
+   edges, and **role-indexed parameters** (extend `record_parameter`/`_record_parameters`
+   to carry `role`), validated via `validate_operation_parameters` (fail-loud). Route
+   `register_result` through it. Files: `result_registry.py`, `repository.py`
+   (`record_parameter` ~4144 — add `role`).
+2. **Refactor the two reference transformers** onto the PRD-16 contract:
+   **Burst Selection** (`chisurf/plugins/burst/burst_selection`) and **Microtime
+   Shifter** (`chisurf/plugins/tttr/tttr_microtime_shifter`). Retire the bespoke
+   `mfdb_microtime_shift` table into role-indexed `mfdb_parameter` rows (role =
+   detector_channel); make each declare `input_spec`/`output_spec` and register via
+   `register_operation`. **Then** wire strict `validate_operation_parameters` into the
+   registration path (deferred until the plugins pass only declared params). Apply
+   **PRD-23** (thin widgets) as you touch each.
+3. **Conformance test** parametrised over the transformer registry (every transformer
+   has a `.dic` schema, declares ports, pure `transform`, registers uniformly).
+4. **PRD-26** (the `.dic` generates DAO/admin/validation/docs).
+
+Orange3 lessons fold in here: typed kind-matched ports (16/11), transformer-as-
+serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 
 ---
 
@@ -59,6 +83,8 @@ and `compute_value`-style replayable provenance (21/27).
 | **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓, curated DB regenerated ✓ — Task 4 (de-namespace) optional polish | `547b5a51`, `638b5e69`, … |
 | **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓, anonymous-fallback removed ✓ — build-once object-threading optional polish | `189db5a3`, `c6a73a17`, `e25cabb6` |
 | **PRD-27** append-only core | go/no-go **decided: append-only-lite** ✓ (build is Phase 3) | `(PRD-27 doc)` |
+| **PRD-11** operation nodes (Phase 2) | operation-parameter schema ✓, `role` column ✓, seed+validate ✓ — `register_operation` + role-indexed recording next | `1da6ab6d`, … |
+| **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓ — plugin refactor next | `(core/transform)` |
 
 ## Decisions locked
 
