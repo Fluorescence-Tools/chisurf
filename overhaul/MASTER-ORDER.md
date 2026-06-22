@@ -51,6 +51,9 @@ These make everything after cheaper and safer; do them right after 03/04.
    (ship together; **supersedes PRD-07**). Refactor Burst Selection (PRD-04) and
    Microtime Shifter (PRD-09) as the two reference conformant transformers, applying
    **PRD-23** (thin widgets) to those tools as you touch them.
+   - **PRD-28** ndXplorer ↔ MFDB burst-selection round trip — a manual-test enabler
+     that rides this spine (send a burst selection to ndXplorer; open one from MFDB via
+     the dataset picker). Do once Burst Selection registers conformantly.
 7. **PRD-26** model-driven data layer (idea **J**) — the `.dic` generates the
    DAO/repository, admin entity registry, RPC validation, and docs. Builds on
    PRD-19's generator + PRD-11's parameter schemas; subsumes most hand-maintained

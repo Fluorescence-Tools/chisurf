@@ -42,6 +42,7 @@
 29. **PRD-25-consistency-hardening.md** -- Fail-loud, RPC envelope, caching, N+1, dead code + idea **N** (typed IDs, units, boundary validation).
 30. **PRD-26-model-driven-data-layer.md** -- Idea **J**: the `.dic` generates DAO/repository, admin registry, RPC validation, and docs (on PRD-19).
 31. **PRD-27-event-sourced-provenance-core.md** -- Idea **M**: append-only provenance/state core with branching. *(Phase-1 decision; PRD-12/21 project over it.)*
+32. **PRD-28-ndxplorer-burst-integration.md** -- ndXplorer ↔ MFDB burst-selection round trip (send to / open from ndXplorer via the dataset picker). *(Phase-2 manual-test enabler.)*
 
 ## ► Authoritative sequence: see **MASTER-ORDER.md**
 
