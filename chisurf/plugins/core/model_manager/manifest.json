@@ -1,0 +1,20 @@
+{
+  "id": "model_manager",
+  "version": "1.0.0",
+  "display_name": "Setup:Models",
+  "description": "Model Manager for ChiSurf",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "⚙️",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "model_manager_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.model_manager.gui.tool:ModelManagerWidget"
+  }
+}

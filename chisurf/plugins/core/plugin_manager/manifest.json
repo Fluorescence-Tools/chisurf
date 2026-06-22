@@ -1,0 +1,20 @@
+{
+  "id": "plugin_manager",
+  "version": "1.0.0",
+  "display_name": "Setup:Plugins",
+  "description": "Plugin Manager for ChiSurf",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "🔌",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "plugin_manager_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.plugin_manager.gui.tool:PluginManagerWidget"
+  }
+}

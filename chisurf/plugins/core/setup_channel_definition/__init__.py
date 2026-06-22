@@ -1,25 +1,42 @@
-"""
-Channel Definition
+from __future__ import annotations
 
-This plugin provides a graphical interface for defining and configuring detector channels 
-and time windows for Time-Tagged Time-Resolved (TTTR) fluorescence spectroscopy data.
+from pathlib import Path
+import chisurf as cs
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
+from chisurf.plugins.core.setup_channel_definition.gui.tool import SetupChannelDefinitionWidget
 
-Features:
-- Definition of detector channels with specific routing channel numbers
-- Configuration of Pulsed Interleaved Excitation (PIE) time windows
-- Association of microtime ranges with specific detectors
-- Import and export of channel definitions via JSON files
-- Interactive wizard interface for intuitive setup
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Setup:Channel Definition"
 
-The Channel Definition plugin is essential for preprocessing TTTR data before analysis, 
-allowing researchers to properly map physical detector channels to their experimental 
-setup and define time windows for techniques like PIE. These definitions are used by 
-other analysis plugins to correctly interpret the raw photon data.
+description = (
+    "This tool defines and configures detector channels and time windows."
+)
+icon = "🔢"
 
-The plugin is particularly useful for multi-detector setups and advanced fluorescence 
-techniques such as single-molecule FRET, fluorescence lifetime imaging, and 
-fluorescence correlation spectroscopy, where proper channel assignment is critical 
-for accurate data analysis.
-"""
 
-name = "Setup:Channel Definition"
+def load():
+    """Return the setup channel definition widget."""
+    return SetupChannelDefinitionWidget()
+
+
+__all__ = [
+    "SetupChannelDefinitionWidget",
+    "load",
+    "name",
+    "description",
+    "icon",
+]
+
+if __name__ == "plugin":
+    try:
+        parent = getattr(cs, "cs", None)
+        window = SetupChannelDefinitionWidget(parent=parent)
+        if _manifest is not None:
+            apply_manifest_statefulness(window, _manifest)
+        window.show()
+    except Exception as exc:
+        print(f"Failed to open Setup Channel Definition: {exc}")

@@ -145,15 +145,15 @@ class PasswordChangeDialog(QDialog):
         self.accept()
 
 
-class UserEditorWidget(QMainWindow):
+class UserEditorWidget(QWidget):
     """
     A GUI plugin for managing users in Chisurf coupled with MFDB.
     Communicates with the backend using the ZMQ JSON-RPC client,
     ensuring conformance to the new plugin architecture.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("User Editor")
         self.resize(980, 520)
         self.setMinimumSize(760, 420)
@@ -166,12 +166,16 @@ class UserEditorWidget(QMainWindow):
         self.load_users()
 
     def setup_ui(self):
-        # Central widget and horizontal split layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
+        # Outer layout to support QHBoxLayout + Status Bar in a QWidget
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(4)
+
+        # Horizontal layout for left/right panels
+        main_layout = QHBoxLayout()
         main_layout.setContentsMargins(6, 6, 6, 6)
         main_layout.setSpacing(8)
+        outer_layout.addLayout(main_layout, stretch=1)
 
         # Left panel: user list
         left_layout = QVBoxLayout()
@@ -298,7 +302,8 @@ class UserEditorWidget(QMainWindow):
 
         # Status Bar
         self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
+        self.status_bar.setSizeGripEnabled(False)
+        outer_layout.addWidget(self.status_bar)
         self.status_bar.showMessage("Ready")
 
     def load_users(self, select_user_id: str | None = None):

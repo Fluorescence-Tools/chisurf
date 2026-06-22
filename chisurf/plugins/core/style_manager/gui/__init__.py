@@ -1,0 +1,1 @@
+"""Style Manager GUI package."""

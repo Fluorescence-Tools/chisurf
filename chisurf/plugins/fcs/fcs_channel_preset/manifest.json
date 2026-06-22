@@ -1,0 +1,20 @@
+{
+  "id": "fcs_channel_preset",
+  "version": "1.0.0",
+  "display_name": "Setup:FCS Definitions",
+  "description": "FCS channel definition plugin per detector setup",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "📡",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "fcs_channel_preset_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fcs.fcs_channel_preset.gui.tool:FCSChannelWidget"
+  }
+}

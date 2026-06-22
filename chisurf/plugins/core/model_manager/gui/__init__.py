@@ -1,0 +1,1 @@
+"""Model Manager GUI package."""

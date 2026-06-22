@@ -13,7 +13,8 @@
     }
   },
   "entrypoints": {
-    "gui": "chisurf.plugins.core.user_editor.gui:UserEditorWidget"
+    "gui": "chisurf.plugins.core.user_editor.gui.tool:UserEditorWidget"
   },
-  "icon": "👥"
+  "icon": "👥",
+  "menu_hidden": true
 }

@@ -1,0 +1,20 @@
+{
+  "id": "style_manager",
+  "version": "1.0.0",
+  "display_name": "Setup:Styles",
+  "description": "Style Manager Plugin for ChiSurf",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "🎨",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "style_manager_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.style_manager.gui.tool:StyleManagerWidget"
+  }
+}

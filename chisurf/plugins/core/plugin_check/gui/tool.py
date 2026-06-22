@@ -7,7 +7,7 @@ from typing import Any
 from qtpy import QtCore, QtGui, QtWidgets
 
 
-class PluginCheckTool(QtWidgets.QMainWindow):
+class PluginCheckTool(QtWidgets.QWidget):
     """Plugin startup-check tool with toolbar controls."""
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
@@ -24,13 +24,11 @@ class PluginCheckTool(QtWidgets.QMainWindow):
 
     def _build_ui(self) -> None:
         """Build the main user interface."""
-        central = QtWidgets.QWidget(self)
-        self.setCentralWidget(central)
-        layout = QtWidgets.QVBoxLayout(central)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(4)
 
-        self._setup_toolbar()
+        self._setup_toolbar(layout)
 
         title_label = QtWidgets.QLabel("🧪 ChiSurf Plugin Check")
         title_font = QtGui.QFont()
@@ -135,13 +133,14 @@ class PluginCheckTool(QtWidgets.QMainWindow):
         self.status_label.setStyleSheet("color: #666; font-size: 10px;")
         layout.addWidget(self.status_label)
 
-    def _setup_toolbar(self) -> None:
+    def _setup_toolbar(self, layout) -> None:
         """Create the plugin check toolbar."""
-        toolbar = self.addToolBar("Plugin Check")
+        toolbar = QtWidgets.QToolBar("Plugin Check")
         toolbar.setObjectName("plugin_check_toolbar")
         toolbar.setMovable(False)
         toolbar.setIconSize(QtCore.QSize(18, 18))
         toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        layout.addWidget(toolbar)
 
         self.test_all_action = QtWidgets.QAction("🧪 Test All Plugins", self)
         self.test_all_action.setToolTip("Run startup checks for every plugin")

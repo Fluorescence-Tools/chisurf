@@ -1,20 +1,34 @@
-"""
-AI Settings plugin for configuring API providers and backends.
+from __future__ import annotations
 
-This plugin provides a GUI for managing centralized AI API settings,
-including provider selection, base URL, model selection, and API key.
-"""
-from chisurf.plugins.ai_settings.plugin import AISettingsWidget
+from pathlib import Path
+import chisurf as cs
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
+from chisurf.plugins.ai_settings.gui.tool import AISettingsWidget
 
-name = "Tools:AI Settings"
-icon = "🤖"  # Robot emoji for AI
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Tools:AI Settings"
+
+description = "AI Settings plugin for configuring API providers and backends."
+icon = "🤖"
+
 
 def load():
     """Return the plugin's main widget instance."""
     return AISettingsWidget()
 
+
 __all__ = ["name", "load", "icon", "AISettingsWidget"]
 
 if __name__ == "plugin":
-    window = AISettingsWidget()
-    window.show()
+    try:
+        parent = getattr(cs, "cs", None)
+        window = AISettingsWidget(parent=parent)
+        if _manifest is not None:
+            apply_manifest_statefulness(window, _manifest)
+        window.show()
+    except Exception as exc:
+        print(f"Failed to open AI Settings: {exc}")

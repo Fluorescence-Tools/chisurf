@@ -4,25 +4,25 @@ from pathlib import Path
 import chisurf as cs
 from chisurf.core.plugin import load_manifest
 from chisurf.core.plugin.registry import apply_manifest_statefulness
-from chisurf.plugins.core.style_manager.gui.tool import StyleManagerWidget
+from chisurf.plugins.core.settings.gui.tool import UnifiedSettingsTool
 
 _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:
     name = _manifest.display_name
 else:
-    name = "Setup:Styles"
+    name = "Setup:Settings"
 
-description = "Style Manager Plugin for ChiSurf"
-icon = "🎨"
+description = "Unified Settings Dialog for ChiSurf"
+icon = "⚙️"
 
 
 def load():
-    """Return the style manager widget."""
-    return StyleManagerWidget()
+    """Return the unified settings window."""
+    return UnifiedSettingsTool()
 
 
 __all__ = [
-    "StyleManagerWidget",
+    "UnifiedSettingsTool",
     "load",
     "name",
     "description",
@@ -32,13 +32,13 @@ __all__ = [
 if __name__ == "plugin":
     try:
         parent = getattr(cs, "cs", None)
-        window = StyleManagerWidget(parent=parent)
+        window = UnifiedSettingsTool(parent=parent)
         if _manifest is not None:
             apply_manifest_statefulness(window, _manifest)
         window.show()
         window.raise_()
         window.activateWindow()
     except Exception as exc:
-        print(f"Failed to open Style Manager: {exc}")
+        print(f"Failed to open Settings: {exc}")
         import traceback
         traceback.print_exc()

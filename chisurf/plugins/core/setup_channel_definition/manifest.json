@@ -1,0 +1,19 @@
+{
+  "id": "setup_channel_definition",
+  "version": "1.0.0",
+  "display_name": "Setup:Channel Definition",
+  "description": "Detector Channel and PIE-window definition wizard",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "🔢",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": false,
+    "window": {
+      "enabled": false
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.setup_channel_definition.gui.tool:SetupChannelDefinitionWidget"
+  }
+}

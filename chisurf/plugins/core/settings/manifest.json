@@ -1,0 +1,19 @@
+{
+  "id": "settings",
+  "version": "1.0.0",
+  "display_name": "Setup:Settings",
+  "description": "Unified Settings for ChiSurf",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "⚙️",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "settings_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.settings.gui.tool:UnifiedSettingsTool"
+  }
+}

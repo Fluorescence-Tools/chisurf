@@ -12,7 +12,7 @@ else:
 
 # When the plugin is loaded, this code will be executed
 if __name__ == "plugin":
-    from chisurf.plugins.core.user_editor.gui import UserEditorWidget
+    from chisurf.plugins.core.user_editor.gui.tool import UserEditorWidget
     # Create an instance of the UserEditorWidget class
     window = UserEditorWidget()
     # Show the window
