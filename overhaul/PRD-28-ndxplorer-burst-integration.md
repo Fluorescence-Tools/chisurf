@@ -107,6 +107,24 @@ Reuse `MfdbDatasetPickerDialog` + `datasets.open` (no new browser); thin GUI
 orchestration only; `modules/ndxplorer` untouched; identity via the PRD-17 resolver so
 the picker scopes correctly.
 
+## Implementation status
+
+Direction A is implemented:
+- `chisurf/plugins/ndxplorer/mfdb_launcher.py` — `open_burst_selection_from_mfdb()`
+  (pick via `MfdbDatasetPickerDialog` → resolve path via `mfdb.datasets.open` →
+  `open_path_like_drop`), plus `resolve_dataset_path` (tested against the real
+  in-process client) and `send_path_to_ndxplorer` (direction B helper).
+- `chisurf/plugins/ndxplorer_open_burst/` — the menu entry
+  **"Tools:Open Burst in ndXplorer"** invoking the launcher.
+- Manual test now: run that menu action (or, from the Code Editor,
+  `from chisurf.plugins.ndxplorer.mfdb_launcher import open_burst_selection_from_mfdb;
+  open_burst_selection_from_mfdb()`), pick a registered burst selection, and it opens
+  in ndXplorer.
+
+Remaining: a "Send to ndXplorer" button on the Burst Selection tool (direction B,
+`send_path_to_ndxplorer`); confirm ndXplorer ingests the resolved artifact path
+(burst_table object vs. the burst-dir `external_reference`) during interactive use.
+
 ## Relationship
 
 Manual-test enabler for **PRD-04** (burst pipeline) and the **Phase-2** spine
