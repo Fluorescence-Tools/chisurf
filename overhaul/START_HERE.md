@@ -76,6 +76,17 @@ DBs go through `CREATE IF NOT EXISTS` + `reconcile_schema`. Remaining:
    (`ffca20e7`): `test_fresh_db_has_no_legacy_or_duplicate_tables`. (Further
    live ⊇ declared + vocab == dictionary asserts can still be added.)
 
+## PRD-18 (hermetic test harness) — started
+
+- ~~**Task 1: autouse hermetic fixture.**~~ **DONE** (`547b5a51`): tests now redirect
+  all per-user state to a temp dir via the new `CHISURF_SETTINGS_DIR` override; a
+  per-test guard fails loudly if the settings dir / user DB / object store ever
+  resolves under the real `~/.chisurf`. No test can touch the real sample DB.
+- Remaining: Task 2 (integration test against the *real* in-process `MFDBClient`,
+  not a mock — `.call` is already public); Tasks 3–4 (inject session/db into
+  handlers, remove `from … import resolve_database_path` namespace binding) — these
+  depend on **PRD-17** (`SessionContext`), so do PRD-17 first.
+
 ## Next steps (in order, per MASTER-ORDER)
 
 1. **Finish PRD-19** (remaining items above: dead-code deletion, gate extension) —
