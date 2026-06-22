@@ -8,8 +8,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from chisurf.core.mfdb.database_resolver import resolve_database_path
-from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.result_registry import (
     register_raw_measurement,
     register_result,
@@ -196,11 +194,19 @@ class MicrotimeShiftMFDBPipeline:
                 continue
 
             applied = result.applied_shifts_by_file.get(norm_path, {})
+            # Operation parameters per the .dic schema for operation_type
+            # "microtime_shift": a scalar global_shift and the repeatable,
+            # role-indexed shift (one entry per detector channel, role = channel).
+            # This replaces both the flat shift_ch<N> names and the bespoke
+            # mfdb_microtime_shift table (retired) with role-indexed mfdb_parameter
+            # rows recorded by register_result/_record_parameters.
             param_dict: dict[str, Any] = {
                 "global_shift": applied.get("global_shift", 0),
+                "shift": [
+                    {"value": sv, "role": str(ch)}
+                    for ch, sv in applied.get("channel_shifts", {}).items()
+                ],
             }
-            for ch, sv in applied.get("channel_shifts", {}).items():
-                param_dict[f"shift_ch{ch}"] = sv
 
             try:
                 artifact_id = register_result(
@@ -208,7 +214,7 @@ class MicrotimeShiftMFDBPipeline:
                     data=shifted_path,
                     sample_id=request.mfdb.sample_id,
                     parent_artifact_id=raw_id,
-                    operation_type="calibration",
+                    operation_type="microtime_shift",
                     parameters=param_dict,
                     metadata={
                         "plugin": "microtime_shifter",
@@ -227,7 +233,6 @@ class MicrotimeShiftMFDBPipeline:
                 )
                 if artifact_id:
                     registration.output_artifacts[norm_path] = artifact_id
-                    self._store_channel_shifts(artifact_id, applied)
                 else:
                     registration.warnings.append(
                         f"MFDB did not register shifted output for {norm_path}."
@@ -238,29 +243,3 @@ class MicrotimeShiftMFDBPipeline:
                 )
 
         return registration
-
-    def _store_channel_shifts(
-        self,
-        operation_id: str,
-        applied: dict[str, Any],
-    ) -> None:
-        """Store per-channel shifts in ``mfdb_microtime_shift`` table.
-
-        Parameters
-        ----------
-        operation_id : str
-            MFDB operation/artifact ID.
-        applied : dict
-            Applied shifts dict with ``channel_shifts`` key.
-
-        """
-        channel_shifts = applied.get("channel_shifts", {})
-        if not channel_shifts:
-            return
-        try:
-            db_path = resolve_database_path()
-            with MFDatabase(db_path) as db:
-                for ch, sv in channel_shifts.items():
-                    db.add_microtime_shift(operation_id, int(ch), int(sv))
-        except Exception as exc:
-            logger.warning("Could not store channel shifts in mfdb_microtime_shift: %s", exc)

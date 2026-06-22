@@ -874,33 +874,6 @@ class MFDatabase(MFDBClientBase):
                 (operation_id, artifact_id, role, direction, now, now, None)
             )
 
-    def add_microtime_shift(
-        self,
-        operation_id: str,
-        routing_channel: int,
-        shift: int,
-    ) -> None:
-        """Store one per-channel micro-time shift for an operation.
-
-        Parameters
-        ----------
-        operation_id : str
-            Operation identifier.
-        routing_channel : int
-            Routing channel number.
-        shift : int
-            Effective micro-time shift in channel units.
-
-        """
-        now = _utc_now()
-        with self._transaction():
-            self.conn.execute(
-                "INSERT OR REPLACE INTO mfdb_microtime_shift "
-                "(operation_id, routing_channel, shift, created_at, updated_at) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (operation_id, int(routing_channel), int(shift), now, now),
-            )
-
     def get_operation_artifacts(self, operation_id, direction=None):
         query = (
             "SELECT mfdb_artifact.*, mfdb_operation_artifact.role, "

@@ -2853,58 +2853,6 @@ save__mfdb_setup_calibration.created_by_user_id
    _item_description.description
 ;     User who created this calibration snapshot.  NULL for migrated defaults.
 
-save_mfdb_microtime_shift
-   _category.id              mfdb_microtime_shift
-   _category.description
-;     Per-channel micro-time shift applied to a TTTR file within a
-;     microtime_shift operation.  Each row records the shift applied to
-;     one routing channel in micro-time channel units.
-;     One row per (operation, routing_channel).  The global shift is stored
-;     as an mfdb_parameter row on the same operation for backward compat.
-;
-   _category.mandatory_code  no
-   _category_key.name        "_mfdb_microtime_shift.id"
-
-save__mfdb_microtime_shift.id
-   _item.name                "_mfdb_microtime_shift.id"
-   _item.category_id         mfdb_microtime_shift
-   _item_type.code           int
-   _item.mandatory_code      yes
-   _chisurf_schema.table_name  mfdb_microtime_shift
-   _chisurf_schema.column_name id
-
-save__mfdb_microtime_shift.operation_id
-   _item.name                "_mfdb_microtime_shift.operation_id"
-   _item.category_id         mfdb_microtime_shift
-   _item_type.code           code
-   _item.mandatory_code      yes
-   _chisurf_schema.table_name  mfdb_microtime_shift
-   _chisurf_schema.column_name operation_id
-   _chisurf_schema.foreign_key  mfdb_operation(operation_id) ON DELETE CASCADE
-   _item_description.description
-;     The operation that produced this micro-time shift.
-
-save__mfdb_microtime_shift.routing_channel
-   _item.name                "_mfdb_microtime_shift.routing_channel"
-   _item.category_id         mfdb_microtime_shift
-   _item_type.code           int
-   _item.mandatory_code      yes
-   _chisurf_schema.table_name  mfdb_microtime_shift
-   _chisurf_schema.column_name routing_channel
-   _item_description.description
-;     The TTTR routing channel number that was shifted.
-
-save__mfdb_microtime_shift.shift
-   _item.name                "_mfdb_microtime_shift.shift"
-   _item.category_id         mfdb_microtime_shift
-   _item_type.code           int
-   _item.mandatory_code      yes
-   _chisurf_schema.table_name  mfdb_microtime_shift
-   _chisurf_schema.column_name shift
-   _item_description.description
-;     The effective shift applied to this routing channel in micro-time
-;     channel units (modulo n_mt).
-
 save_mfdb_artifact
    _category.id              mfdb_artifact
    _category.description

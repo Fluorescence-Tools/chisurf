@@ -914,7 +914,6 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_user ON mfdb_artifact_owner (user_id)",
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_mfdb_artifact_owner_uniq ON mfdb_artifact_owner (artifact_id, user_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_setup_calibration_setup ON mfdb_setup_calibration (setup_id)",
-    "CREATE INDEX IF NOT EXISTS idx_mfdb_microtime_shift_operation ON mfdb_microtime_shift (operation_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_target ON mfdb_audit_log (target_type, target_id)",
     "CREATE INDEX IF NOT EXISTS idx_mfdb_audit_log_timestamp ON mfdb_audit_log (timestamp)",
     # (mfdb_sample/mfdb_experiment indices removed in Phase 3 — tables are duplicates of flr_*)
@@ -1840,7 +1839,7 @@ def _ensure_canonical_columns(conn: sqlite3.Connection) -> None:
 def _drop_legacy_tables(conn: sqlite3.Connection) -> None:
     """Drop duplicate (mfdb_sample, mfdb_experiment) and legacy (fdb_*) tables."""
     legacy = [
-        "mfdb_sample", "mfdb_experiment",
+        "mfdb_sample", "mfdb_experiment", "mfdb_microtime_shift",
         "fdb_raw_data", "fdb_processing_run", "fdb_processing_input",
         "fdb_processed_data", "fdb_provenance_edge", "fdb_setup_definition",
         "fdb_analysis_run", "fdb_analysis_parameter", "fdb_audit_log",
