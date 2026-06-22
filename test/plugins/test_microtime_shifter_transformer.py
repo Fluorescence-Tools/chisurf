@@ -38,3 +38,20 @@ def test_ports_declare_expected_kinds():
     assert t.input_spec[0].accepts_kind("raw_measurement")
     assert t.input_spec[0].accepts_format("ptu")
     assert t.output_spec[0].accepts_kind("processed_data")
+
+
+def test_all_registered_transformers_conform(tmp_path):
+    """Gate: every transformer in the registry satisfies the PRD-16 contract,
+    including a declared .dic parameter schema for its operation_type."""
+    # Importing this module above registered the Microtime Shifter; add others
+    # here as they are written.
+    from chisurf.core.transform import check_transformer_conformance, list_transformers
+
+    transformers = list_transformers()
+    assert transformers, "no transformers registered"
+    db = MFDatabase(os.path.join(tmp_path, "t.db"))
+    try:
+        for t in transformers:
+            check_transformer_conformance(t, conn=db.conn)
+    finally:
+        db.close()
