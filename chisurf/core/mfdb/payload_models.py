@@ -238,10 +238,26 @@ def _coerce_table_array(array: np.ndarray, column: str) -> np.ndarray:
     """
     if array.dtype.hasobject:
         flat = array.reshape(-1)
-        if all(isinstance(item, str) for item in flat):
-            return np.asarray(array, dtype=np.str_)
+        # Accept string columns that contain missing values (None/NaN/NA) — common
+        # in burst summary tables (e.g. a "First File" column). Missing entries are
+        # normalized to empty strings so the column serializes as a string array.
+        if all(isinstance(item, str) or _is_table_missing(item) for item in flat):
+            normalized = [
+                "" if _is_table_missing(item) else str(item) for item in flat
+            ]
+            return np.asarray(normalized, dtype=np.str_).reshape(array.shape)
         raise ValueError(f"generic table column {column!r} has unsupported object dtype")
     return array
+
+
+def _is_table_missing(value: Any) -> bool:
+    """Return whether a table cell is a missing value (None / NaN / pandas NA)."""
+    if value is None or type(value).__name__ == "NAType":
+        return True
+    try:
+        return bool(isinstance(value, float) and np.isnan(value))
+    except (TypeError, ValueError):
+        return False
 
 
 @dataclass
