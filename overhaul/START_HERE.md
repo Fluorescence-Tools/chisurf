@@ -3,9 +3,10 @@
 _Branch: `development` (work stays on dev; **no push, no master merge** unless asked).
 Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-22._
 
-We are in **Phase 1 (architecture foundations)**. Most of PRD-19, PRD-18, and PRD-17
-have landed; what remains in Phase 1 is the **flrCIF table collapse** (PRD-19) and the
-**identity/DI finish** (PRD-17 build-once + PRD-18 3–4), then **PRD-27**.
+We are in **Phase 1 (architecture foundations)**. PRD-19 (incl. the flrCIF
+`mfdb_sample` collapse) and the PRD-18 hermetic harness + curated-DB fix have landed;
+what remains in Phase 1 is the **identity/DI finish** (PRD-17 build-once + PRD-18
+Task 4), small PRD-19 extension-declaration polish, and **PRD-27**.
 
 ---
 
@@ -36,20 +37,21 @@ resolution.
 - **DoD:** identity built once at the boundary; no handler re-resolves; one integration
   test drives the real client; `grep -rn "import resolve_database_path"` trends to zero.
 
-### 2. PRD-19 — collapse `mfdb_*` duplicates onto authoritative flrCIF (structural)
+### 2. PRD-19 — collapse `mfdb_*` duplicates onto authoritative flrCIF — ✅ substantially DONE
 
-The last PRD-19 item and the biggest remaining structural cleanup before the PRD-11
-spine. **flrCIF is authoritative; the `.dic` extends it — do NOT demote flrCIF to a
-codec.**
-- Remove the `mfdb_*` tables that *duplicate* a flrCIF concept (`_drop_legacy_tables`
-  already drops `mfdb_sample`/`mfdb_experiment`; finish repointing any remaining reads
-  to the authoritative `flr_*`, e.g. `bootstrap_vocabulary._field_to_item`
-  `_mfdb_sample.sample_type`).
-- Declare the genuine extensions (provenance graph, object store, vocab) as proper
-  flrCIF extension categories in `mfdb_flr_ext.dic`, FK'd to flrCIF.
-- Optionally strengthen the gate to assert live ⊇ declared + vocab == dictionary
-  (the no-legacy-table half is already asserted by
-  `test_fresh_db_has_no_legacy_or_duplicate_tables`).
+**flrCIF is authoritative; the `.dic` extends it — never demote flrCIF to a codec.**
+- ~~Collapse `mfdb_sample`.~~ **DONE** (`638b5e69`): removed the deprecated
+  `mfdb_sample` category from the `.dic` (it was created-then-dropped); relocated its
+  one real concept `sample_type` onto `flr_sample` as a flrCIF extension
+  (`_flr_sample.sample_type`), fixing a latent data-loss bug; removed dead
+  `_backfill_flr_sample_names`. `mfdb_experiment` was never in the `.dic`;
+  `_drop_legacy_tables` still drops both defensively.
+- Remaining (smaller): the `mfdb_*` provenance/object-store/vocab tables are already
+  declared as `mfdb_` extension categories; optionally tighten them as *flrCIF*
+  extensions FK'd to flrCIF, and prune the stale `fdb_*`/`mfdb_sample`/`mfdb_experiment`
+  entries still in `lifecycle_table_config` (tolerated no-ops today). Optionally
+  strengthen the gate to assert live ⊇ declared + vocab == dictionary (no-legacy-table
+  half already asserted by `test_fresh_db_has_no_legacy_or_duplicate_tables`).
 
 ### 3. ~~Regenerate the shipped curated DB~~ ✅ DONE (production follow-up — option B fallout)
 
@@ -78,7 +80,7 @@ transformers), then PRD-26 (model-driven layer); apply PRD-23 (thin widgets) per
 
 | Foundation | State | Key commits |
 |---|---|---|
-| **PRD-19** schema/vocab/migrations | version chain removed ✓, vocab from `.dic` ✓, **all `fdb_*` removed** ✓, legacy-free gate ✓ — **flrCIF collapse remains** (NEXT #2) | `bb837a07`, `adc6ea08`, `083d3f8c`, `c65f6b4a`, `ffca20e7` |
+| **PRD-19** schema/vocab/migrations | version chain removed ✓, vocab from `.dic` ✓, **all `fdb_*` removed** ✓, legacy-free gate ✓, existing-DB column reconcile ✓, curated DB regenerated ✓, **flrCIF `mfdb_sample` collapse ✓** — minor extension-declaration polish remains | `bb837a07`, `c65f6b4a`, `638b5e69`, … |
 | **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓ — **Task 4** (namespace binding) remains; 🔴 curated-DB regen (NEXT #3) | `547b5a51`, `+column-ensure` |
 | **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓ — **build-once-at-boundary remains** (NEXT #1) | `189db5a3`, `c6a73a17` |
 | **PRD-27** append-only core | not started (NEXT #3) | — |
