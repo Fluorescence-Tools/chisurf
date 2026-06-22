@@ -3,76 +3,51 @@
 _Branch: `development` (work stays on dev; **no push, no master merge** unless asked).
 Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-22._
 
-We are in **Phase 1 (architecture foundations)**. PRD-19 (incl. the flrCIF
-`mfdb_sample` collapse) and the PRD-18 hermetic harness + curated-DB fix have landed;
-what remains in Phase 1 is the **identity/DI finish** (PRD-17 build-once + PRD-18
-Task 4), small PRD-19 extension-declaration polish, and **PRD-27**.
+**Phase 1 (architecture foundations) is functionally complete.** Every bug-class the
+foundations targeted is fixed: vocab drift + the 39-step migration chain (PRD-19),
+all `fdb_*` legacy code, the `mfdb_sample` flrCIF duplicate (+ latent `sample_type`
+data-loss), real-DB test pollution (PRD-18 hermetic harness), the owner-mismatch
+"Mine shows 0" class (PRD-17 canonical resolver), and a first-run production breakage
+(curated DB regenerated). PRD-27's go/no-go is locked (append-only-lite).
+
+**▶ NEXT: Phase 2 — the operation/transformer spine (PRD-11 + PRD-16).** Refactor
+Burst Selection (PRD-04) and Microtime Shifter (PRD-09) as the two reference
+conformant transformers; apply PRD-23 (thin widgets) as you touch them; then PRD-26
+(model-driven layer). See `MASTER-ORDER.md` Phase 2.
 
 ---
 
-## ▶ NEXT (recommended order)
+## Optional Phase-1 polish (non-blocking — the bugs are already fixed)
 
-### 1. Finish the identity / DI foundation (small, in-flight — closes PRD-17 + PRD-18)
+These are the remaining DoD *checkboxes*, but each is now cleanliness, not a live
+issue — do opportunistically or skip:
 
-The canonical resolver and `register_*` injection are done; what's left is making the
-**entry point build the `SessionContext` once** and removing fragile module-global
-resolution.
+- **PRD-17 build-once threading.** The canonical resolver already makes reads/writes
+  agree (the actual bug). Threading a `SessionContext` *object* through handler/
+  `browse_datasets` signatures (vs. each calling `resolve_active_user_id`) is DI polish.
+  `resolve_session(auth, db)` exists in `chisurf/core/mfdb/session.py`.
+- **PRD-18 Task 4 — de-namespace `resolve_database_path`.** ~32 files do
+  `from … import resolve_database_path`. This *was* the test-pollution root, but the
+  hermetic harness overrides via `CHISURF_SETTINGS_DIR` *inside* `get_path`, so the
+  binding is now **functionally harmless**; converting to qualified calls is pure style.
+- **PRD-19 extension-declaration polish.** The `mfdb_*` provenance/object-store/vocab
+  tables are declared as `mfdb_` extension categories; optionally tighten them as
+  *flrCIF* extensions FK'd to flrCIF, and add live⊇declared + vocab==dictionary asserts
+  to the gate.
 
-- **Build `SessionContext` once at the RPC boundary.** In
-  `chisurf/plugins/core/mfdb_admin/backend/services.py`, the dataset handlers already
-  resolve identity via `_resolve_owner_id(db, auth)` (which delegates to the canonical
-  resolver). Build one `resolve_session(auth, db)` per dispatch and pass `session=` to
-  any registration call; thread it to `browse_datasets` for the read scope. Files:
-  `services.py` (`datasets_browse_handler` ~263, `datasets_open_handler` ~313),
-  `chisurf/core/mfdb/session.py` (`resolve_session`).
-- ~~**PRD-18 Task 2 — integration test against the real in-process `MFDBClient`.**~~
-  **DONE** (`test_mfdb_client_integration`, drives public `.call` browse+open). Writing
-  it caught + fixed an existing-DB migrate bug (see "🔴 production follow-up" below).
-- **PRD-18 Task 4 — remove namespace-bound `resolve_database_path`.** ~32 files do
-  `from … import resolve_database_path`, which makes patching fragile (the original
-  test-pollution root). Prefer `database_resolver.resolve_database_path()` calls or an
-  injected path/`session.db`. The hermetic harness already neutralizes the *test* risk,
-  so this is now cleanliness — do it incrementally, highest-traffic modules first
-  (`api.py`, `result_registry.py`, `repository.py`, the plugin `backend/services.py`).
-- **DoD:** identity built once at the boundary; no handler re-resolves; one integration
-  test drives the real client; `grep -rn "import resolve_database_path"` trends to zero.
+## Phase 2 starting point (the actual next build)
 
-### 2. PRD-19 — collapse `mfdb_*` duplicates onto authoritative flrCIF — ✅ substantially DONE
-
-**flrCIF is authoritative; the `.dic` extends it — never demote flrCIF to a codec.**
-- ~~Collapse `mfdb_sample`.~~ **DONE** (`638b5e69`): removed the deprecated
-  `mfdb_sample` category from the `.dic` (it was created-then-dropped); relocated its
-  one real concept `sample_type` onto `flr_sample` as a flrCIF extension
-  (`_flr_sample.sample_type`), fixing a latent data-loss bug; removed dead
-  `_backfill_flr_sample_names`. `mfdb_experiment` was never in the `.dic`;
-  `_drop_legacy_tables` still drops both defensively.
-- Remaining (smaller): the `mfdb_*` provenance/object-store/vocab tables are already
-  declared as `mfdb_` extension categories; optionally tighten them as *flrCIF*
-  extensions FK'd to flrCIF, and prune the stale `fdb_*`/`mfdb_sample`/`mfdb_experiment`
-  entries still in `lifecycle_table_config` (tolerated no-ops today). Optionally
-  strengthen the gate to assert live ⊇ declared + vocab == dictionary (no-legacy-table
-  half already asserted by `test_fresh_db_has_no_legacy_or_duplicate_tables`).
-
-### 3. ~~Regenerate the shipped curated DB~~ ✅ DONE (production follow-up — option B fallout)
-
-The curated source DB (`chisurf/core/fio/mmcif/db/sample_management.db`, tracked at
-lowercase `mmcif`) was pre-PRD-19 and, after the waterfall removal, hit a `put_object`
-foreign-key mismatch on first run (stale `flr_sample_users` structure that
-`ALTER ADD COLUMN` can't fix). **Fixed:** `build_tools/regenerate_curated_db.py`
-rebuilds it on the current schema and copies the curated/demo data (probes 7,
-spectra 14, optical_properties 27, samples 3, …); ran with `--replace`. Verified:
-integrity ok, 0 FK violations, production-like copy+register round trip succeeds.
-Re-run the script after any future schema change that the shipped DB must carry.
-
-### 4. PRD-27 — append-only provenance/state core (decision gates PRD-12/21)
-
-Go/no-go on append-only-lite vs full event-sourcing (recommend lite). Decide before
-the Phase-3 lifecycle/events PRDs so they're built once as projections. See
-`PRD-27-event-sourced-provenance-core.md`.
-
-### Then → Phase 2
-PRD-11 + PRD-16 spine (refactor burst + microtime-shifter as the two reference
-transformers), then PRD-26 (model-driven layer); apply PRD-23 (thin widgets) per tool.
+Read `MASTER-ORDER.md` Phase 2. The spine: **PRD-11** (operation-node abstraction:
+`.dic`-declared operation-parameter schemas via `mfdb_operation_parameter_def`,
+role-indexed parameters) + **PRD-16** (the transformer contract every plugin obeys),
+shipping together; they **supersede PRD-07**. Then refactor **Burst Selection**
+(`chisurf/plugins/burst/burst_selection`) and **Microtime Shifter**
+(`chisurf/plugins/tttr/tttr_microtime_shifter`) as the two reference conformant
+transformers — retiring the bespoke `mfdb_microtime_shift` table into role-indexed
+`mfdb_parameter` rows — applying **PRD-23** (thin widgets) as you touch each. Then
+**PRD-26** (the `.dic` generates DAO/admin/validation/docs). The Orange3 lessons fold
+in here: typed kind-matched ports (16/11), transformer-as-serializable-value (16/22),
+and `compute_value`-style replayable provenance (21/27).
 
 ---
 
@@ -81,9 +56,9 @@ transformers), then PRD-26 (model-driven layer); apply PRD-23 (thin widgets) per
 | Foundation | State | Key commits |
 |---|---|---|
 | **PRD-19** schema/vocab/migrations | version chain removed ✓, vocab from `.dic` ✓, **all `fdb_*` removed** ✓, legacy-free gate ✓, existing-DB column reconcile ✓, curated DB regenerated ✓, **flrCIF `mfdb_sample` collapse ✓** — minor extension-declaration polish remains | `bb837a07`, `c65f6b4a`, `638b5e69`, … |
-| **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓ — **Task 4** (namespace binding) remains; 🔴 curated-DB regen (NEXT #3) | `547b5a51`, `+column-ensure` |
-| **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓ — **build-once-at-boundary remains** (NEXT #1) | `189db5a3`, `c6a73a17` |
-| **PRD-27** append-only core | not started (NEXT #3) | — |
+| **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓, curated DB regenerated ✓ — Task 4 (de-namespace) optional polish | `547b5a51`, `638b5e69`, … |
+| **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓, anonymous-fallback removed ✓ — build-once object-threading optional polish | `189db5a3`, `c6a73a17`, `e25cabb6` |
+| **PRD-27** append-only core | go/no-go **decided: append-only-lite** ✓ (build is Phase 3) | `(PRD-27 doc)` |
 
 ## Decisions locked
 
