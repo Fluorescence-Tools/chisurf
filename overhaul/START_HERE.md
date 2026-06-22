@@ -51,18 +51,16 @@ codec.**
   (the no-legacy-table half is already asserted by
   `test_fresh_db_has_no_legacy_or_duplicate_tables`).
 
-### 3. 🔴 Regenerate the shipped curated DB (production follow-up — option B fallout)
+### 3. ~~Regenerate the shipped curated DB~~ ✅ DONE (production follow-up — option B fallout)
 
-`chisurf/core/fio/mmCIF/db/sample_management.db` is **pre-PRD-19** (Jun 11 schema).
-`resolve_database_path()` copies it on first run. Removing the migration waterfall
-(option B) means it is no longer fully migrated forward: `_ensure_canonical_columns`
-(added) fixes missing *columns*, but **table-structure staleness** (e.g.
-`flr_sample_users` missing the UNIQUE `user_uuid` an FK needs) cannot be fixed by
-`ALTER ADD COLUMN`, so production first-run hits a `put_object` "foreign key mismatch".
-Tests dodge this (the hermetic harness pre-creates a fresh DB). **Fix:** regenerate the
-curated DB with the current schema, preserving its reference data (probes 7,
-optical_properties 27, spectra 14, probe_types 3, entities/poly_seq) — a `build_tools`
-script. Until then, real first-run registration of objects is broken.
+The curated source DB (`chisurf/core/fio/mmcif/db/sample_management.db`, tracked at
+lowercase `mmcif`) was pre-PRD-19 and, after the waterfall removal, hit a `put_object`
+foreign-key mismatch on first run (stale `flr_sample_users` structure that
+`ALTER ADD COLUMN` can't fix). **Fixed:** `build_tools/regenerate_curated_db.py`
+rebuilds it on the current schema and copies the curated/demo data (probes 7,
+spectra 14, optical_properties 27, samples 3, …); ran with `--replace`. Verified:
+integrity ok, 0 FK violations, production-like copy+register round trip succeeds.
+Re-run the script after any future schema change that the shipped DB must carry.
 
 ### 4. PRD-27 — append-only provenance/state core (decision gates PRD-12/21)
 
