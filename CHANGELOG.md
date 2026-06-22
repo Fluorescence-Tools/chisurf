@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Implemented the first PRD-02 sample-tracking foundation**:
+  - Added `SampleDefinition`, `sample_manager` CRUD/link helpers, and `measured_sample` relationship vocabulary.
+  - Added a modal sample picker and TTTR/PCH/PDA import integration that stores `sample_id` in dataset metadata.
+  - Project archiving now links dataset artifacts to samples, and mfdb-admin raw/processed tables show linked sample names.
+  - Added MFDB sample manager regression tests.
+
 - **Refactored root tests and prototypes into permanent test suite**:
   - Moved functional `chimol` command tests from root to `test/plugins/test_chimol_*.py` using `pytest`.
   - Consolidated Windows-specific path and file-handle tests into `test/core/test_win_unicode_paths.py`.
@@ -18,6 +24,22 @@
   - Hardened the `ChiSurf` launcher to use absolute paths for `PYTHONPATH` and `QT_PLUGIN_PATH`, ensuring the bundle remains self-contained regardless of the current working directory.
 
 ### Changed
+
+- **MFDB: `flr_sample` is now the canonical sample-name source (flrCIF/pdbx-aligned)** ⚠️ *breaking*:
+  - `flr_sample.description` now holds the **display name** (the sample's primary
+    human-readable identifier); the optional longer free-text description is stored
+    in `flr_sample.details`. Previously `description` held the long text and the
+    name lived only in the `mfdb_sample` index, which caused nameless/missing
+    samples in the dataset browser and a dual-write across the two tables.
+  - Sample reads (browser, mfdb-admin) now resolve the name from the authoritative
+    `flr_sample` row rather than the `mfdb_sample` index. Existing names are
+    backfilled on schema migration.
+  - **Migration note for API consumers**: any code that read `flr_sample.description`
+    as the long description must now read `flr_sample.details`; `description` is the
+    display name. The structured-sample full-description API exposes `description`
+    (display name); `details` is persisted on the row.
+  - Updated `test_mfdb_admin_prd02b_structured_sample_services` to assert the new
+    semantics and that the long description is preserved in `flr_sample.details`.
 
 - **Cleaned up project root directory**:
   - Removed over 40 temporary scripts, old reports, and junk files from the root.

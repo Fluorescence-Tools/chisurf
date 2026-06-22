@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import sys
 import tempfile
 from pathlib import Path
@@ -11,6 +12,7 @@ from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.plugin.manifest import load_manifest
 from chisurf.plugins.core.mfdb_admin.backend import measurement_services, services
 from chisurf.plugins.core.mfdb_admin.backend.services import register_services
+from chisurf.plugins.core.mfdb_admin.seed_example import seed_example
 from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 from chisurf.plugins.core.mfdb_admin.gui.tool import (
     MFDBWidget,
@@ -346,7 +348,15 @@ def test_mfdb_admin_prd02b_structured_sample_services(tmp_path, monkeypatch):
 
     sample_id = result["sample_id"]
     assert sample_id == "admin_structured_sample"
-    assert result["description"]["description"] == "created through admin RPC"
+    # description now stores the display name (name), not the longer description
+    assert result["description"]["description"] == "Admin Structured Sample"
+    # ...and the longer free-text description is not lost: it is persisted in
+    # flr_sample.details (no data loss on the rename).
+    with sqlite3.connect(db_path) as _con:
+        _details = _con.execute(
+            "SELECT details FROM flr_sample WHERE sample_id = ?", (sample_id,)
+        ).fetchone()[0]
+    assert _details == "created through admin RPC"
 
     full = dispatcher.dispatch(
         "mfdb.samples.full_description",
@@ -473,10 +483,39 @@ def test_mfdb_admin_populates_mock_data_from_test_fixtures(tmp_path, monkeypatch
     assert len(summary["used_test_files"]) == 3
     assert all(Path(path).exists() for path in summary["used_test_files"])
     assert len(summary["raw_data_ids"]) == 3
+    assert summary["quality_example_raw_data_ids"] == ["raw_demo_unlinked_sample_red_flag"]
 
     with MFDatabase(db_path) as db:
         assert db.get_sample(summary["sample_id"]) is not None
         assert db.get_experiment(summary["experiment_id"]) is not None
+
+
+def test_mfdb_measurement_rows_include_sample_quality(tmp_path, monkeypatch):
+    """Measurement list rows expose linked and missing sample quality states."""
+    db_path = tmp_path / "measurement_quality.db"
+    summary = seed_example(db_path)
+    monkeypatch.setattr(measurement_services, "resolve_database_path", lambda: db_path)
+
+    raw_rows = measurement_services.list_raw_data_handler()["raw_data"]
+    raw_by_id = {row["raw_data_id"]: row for row in raw_rows}
+    linked = raw_by_id[summary["raw_data_ids"][0]]
+    unlinked = raw_by_id[summary["quality_example_raw_data_ids"][0]]
+
+    assert linked["sample_id"] == summary["sample_id"]
+    assert linked["sample_quality_status"] == "green"
+    assert linked["sample_quality_score"] >= 80
+
+    assert unlinked["sample_id"] == ""
+    assert unlinked["sample_quality_status"] == "red"
+    assert unlinked["sample_quality_score"] == 0
+    assert "missing_sample" in unlinked["sample_quality_flags"]
+
+    processed_rows = measurement_services.list_processed_data_handler()["processed_data"]
+    processed_by_id = {row["processed_data_id"]: row for row in processed_rows}
+    processed = processed_by_id[summary["processed_data_id"]]
+
+    assert processed["sample_id"] == summary["sample_id"]
+    assert processed["sample_quality_status"] == "green"
 
 
 
