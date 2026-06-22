@@ -117,10 +117,8 @@ gui:
     "Datasets": "#3b674a"
     "Analysis": "#674a3b"
     "Plot settings": "#5c3b67"
-    "Code": "#67613b"
     "History / Log": "#3b6767"
   show_console: true
-  show_macro_edit: true
   qt_style: auto
   style_sheet: dark_blue_flat.qss
   mol_viewer: chimol # 3D molecule viewer backend: chimol (default) or pymol

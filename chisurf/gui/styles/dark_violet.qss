@@ -737,10 +737,7 @@ QDockWidget#dockWidgetPlot::title {
     color: #f0f0f0;
 }
 
-QDockWidget#dockWidgetScriptEdit::title {
-    background: #67613b;
-    color: #f0f0f0;
-}
+
 
 QDockWidget#dockWidgetHistory::title {
     background: #3b6767;

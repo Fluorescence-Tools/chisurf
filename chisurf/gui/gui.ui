@@ -504,43 +504,6 @@
     </layout>
    </widget>
   </widget>
-   <widget class="QDockWidget" name="dockWidgetScriptEdit">
-    <property name="floating">
-     <bool>false</bool>
-    </property>
-    <property name="windowTitle">
-     <string>Code</string>
-    </property>
-   <attribute name="dockWidgetArea">
-    <number>8</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_5">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <item row="0" column="0" colspan="2">
-      <layout class="QVBoxLayout" name="verticalLayout_10">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <widget class="QDockWidget" name="dockWidgetHistory">
    <property name="windowTitle">
     <string>Logging</string>
@@ -1497,7 +1460,6 @@
   <zorder>dockWidgetAnalysis</zorder>
   <zorder>dockWidgetPlot</zorder>
   <zorder>dockWidget_console</zorder>
-  <zorder>dockWidgetScriptEdit</zorder>
   <zorder>dockWidgetHistory</zorder>
   <zorder>dockWidgetReadData</zorder>
  </widget>

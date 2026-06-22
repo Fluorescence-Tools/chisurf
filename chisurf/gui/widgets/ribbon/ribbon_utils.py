@@ -196,20 +196,17 @@ class UtilityMethodsMixin:
     def _open_code_editor(self):
         """Open code editor"""
         try:
-            import chisurf.plugins.core.code_editor
-            # Code editor integration would go here
-            QMessageBox.information(
-                self.main_window,
-                'Code Editor',
-                'Code editor would be opened here.\n\n'
-                'This provides a Python code editor for\n'
-                'custom scripts and data analysis.'
-            )
-        except ImportError:
+            import chisurf as cs
+            import pathlib
+            plugin_root = pathlib.Path(cs.plugins.__file__).absolute().parent
+            code_editor_dir = plugin_root / "core" / "code_editor"
+            from chisurf.gui.misc_helpers import run_plugin_from_dir
+            run_plugin_from_dir(self.main_window, code_editor_dir)
+        except Exception as e:
             QMessageBox.warning(
                 self.main_window,
                 'Code Editor',
-                'Code editor plugin is not available.'
+                f'Failed to open code editor: {e}'
             )
 
     def _add_theme_actions(self, panel):

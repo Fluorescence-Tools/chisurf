@@ -266,8 +266,8 @@ plot defaults. Many of these are read via `chisurf.settings.gui`.
   styles directory copied to the user settings folder). Updated by the
   style‑manager plugin.
 
-- **`show_console`** / **`show_macro_edit`**  
-  Control whether the embedded IPython console and macro editor panes are
+- **`show_console`**  
+  Control whether the embedded IPython console pane is  
   visible on startup.
 
 - **`start_jupyter_on_startup`**  

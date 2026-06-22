@@ -646,7 +646,7 @@ class ChiSurfRibbonIntegration(QObject):
             # Ensure dock widgets are visible and properly styled
             dock_widgets = [
                 'dockWidgetAnalysis', 'dockWidgetReadData', 'dockWidgetDatasets',
-                'dockWidgetPlot', 'dockWidgetScriptEdit', 'dockWidget_console'
+                'dockWidgetPlot', 'dockWidget_console'
             ]
 
             for dock_name in dock_widgets:

@@ -209,7 +209,7 @@ def open_in_editor(
     path: str,
     line: Optional[int] = None,
 ) -> bool:
-    """Open a file in the embedded code editor.
+    """Open a file in the standalone CodeEditorWindow plugin.
 
     Args:
         main_window: The main ChiSurf window
@@ -220,37 +220,64 @@ def open_in_editor(
         True if successful, False otherwise
     """
     if main_window is None:
-        chisurf.logging.error("open_in_editor: main_window is None")
-        return False
-
-    editor_dock = getattr(main_window, "dockWidgetScriptEdit", None)
-    if editor_dock is None:
-        chisurf.logging.error("open_in_editor: dockWidgetScriptEdit not found")
-        return False
-
-    editor = getattr(main_window, "editor", None)
-    if editor is None:
-        chisurf.logging.error("open_in_editor: editor not found")
+        import logging
+        logging.error("open_in_editor: main_window is None")
         return False
 
     try:
-        editor_dock.setVisible(True)
-        editor_dock.raise_()
+        from chisurf.plugins.core.code_editor.window import CodeEditorWindow
 
-        if hasattr(editor, "open_file"):
-            editor.open_file(path, line=line)
-        elif hasattr(editor, "load_file"):
-            editor.load_file(filename=path)
-            if line and hasattr(editor, "goto_line"):
-                editor.goto_line(line)
+        # Check if an instance of CodeEditorWindow is already open
+        editor_window = None
+        for widget in QtWidgets.QApplication.topLevelWidgets():
+            if isinstance(widget, CodeEditorWindow):
+                editor_window = widget
+                break
+
+        if editor_window is None:
+            # Instantiate and display the plugin's code editor window
+            editor_window = CodeEditorWindow()
+            # Apply statefulness from manifest if possible
+            try:
+                from chisurf.core.plugin.registry import apply_manifest_statefulness
+                from chisurf.core.plugin.manifest import load_manifest
+                import pathlib
+                import chisurf.plugins.core.code_editor as ce
+                manifest_path = pathlib.Path(ce.__file__).parent / "manifest.json"
+                if manifest_path.exists():
+                    manifest = load_manifest(manifest_path)
+                    if manifest:
+                        apply_manifest_statefulness(editor_window, manifest)
+            except Exception as e:
+                import logging
+                logging.warning(f"Could not apply code editor statefulness: {e}")
+
+            # Store reference in main_window._plugin_contexts to prevent garbage collection
+            if not hasattr(main_window, "_plugin_contexts"):
+                main_window._plugin_contexts = {}
+            import chisurf.plugins.core.code_editor as ce
+            import pathlib
+            plugin_key = str(pathlib.Path(ce.__file__).parent)
+            if plugin_key not in main_window._plugin_contexts:
+                main_window._plugin_contexts[plugin_key] = {"__name__": "plugin"}
+            main_window._plugin_contexts[plugin_key]["window"] = editor_window
+
+            editor_window.show()
+
+        editor_window.raise_()
+        editor_window.activateWindow()
+
+        if hasattr(editor_window, "editor") and editor_window.editor is not None:
+            editor_window.editor.open_file(path, line=line)
+            return True
         else:
-            chisurf.logging.error("open_in_editor: editor has no open_file or load_file method")
+            import logging
+            logging.error("open_in_editor: CodeEditorWindow has no editor widget")
             return False
 
-        return True
-
     except Exception as e:
-        chisurf.logging.error(f"open_in_editor failed: {e}")
+        import logging
+        logging.error(f"open_in_editor failed: {e}")
         return False
 
 

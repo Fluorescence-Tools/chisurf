@@ -38,77 +38,82 @@ import chisurf.gui.widgets as _gw
 # import cs.plugins
 # import cs.core.fitting
 import chisurf.gui.resources
-import chisurf.plugins.core.code_editor
 
 
 class _MdiDropEventFilter(QtCore.QObject):
     def __init__(self, mdiarea):
         super().__init__(mdiarea)
         self.mdiarea = mdiarea
+        self._in_filter = False
 
     def eventFilter(self, obj, event):
-        event_types = (3, 175)
-        if hasattr(QtCore.QEvent, 'NonClientAreaMouseButtonRelease'):
-            event_types = event_types + (QtCore.QEvent.NonClientAreaMouseButtonRelease,)
-            
-        if event.type() in event_types:
-            if isinstance(obj, QtWidgets.QDockWidget) and obj.isFloating():
-                pos = QtGui.QCursor.pos()
-                try:
-                    mdi_rect = self.mdiarea.rect()
-                    top_left = self.mdiarea.mapToGlobal(mdi_rect.topLeft())
-                    bottom_right = self.mdiarea.mapToGlobal(mdi_rect.bottomRight())
-                    global_rect = QtCore.QRect(top_left, bottom_right)
-                except Exception:
-                    global_rect = None
+        if self._in_filter:
+            return False
+        self._in_filter = True
+        try:
+            event_types = (3, 175)
+            if hasattr(QtCore.QEvent, 'NonClientAreaMouseButtonRelease'):
+                event_types = event_types + (QtCore.QEvent.NonClientAreaMouseButtonRelease,)
                 
-                if global_rect is not None and global_rect.contains(pos):
-                    widget = obj.widget()
-                    if widget is not None:
-                        title = obj.windowTitle()
-                        size = obj.size()
-                        
-                        # Tag widget with original dock name for re-docking
-                        widget.setProperty("_original_dock_name", obj.objectName())
-                        
-                        # Unparent carefully to prevent deletion on dock close
-                        widget.setParent(None)
-                        obj.close()
-                        
-                        try:
-                            cs.logging.info(f"Converting dock '{title}' to MDI subwindow")
-                        except Exception:
-                            pass
-                        
-                        sub = self.mdiarea.addSubWindow(widget)
-                        sub.setWindowTitle(title)
-                        sub.resize(size)
-                        
-                        # Explicitly show both the inner widget and the subwindow wrapper
-                        widget.show()
-                        sub.show()
-                        return True
-        
-        # Handle re-docking when the dock is re-enabled/shown
-        if event.type() == 17: # QEvent.Show
-            if isinstance(obj, QtWidgets.QDockWidget) and obj.widget() is None:
-                dock_name = obj.objectName()
-                if dock_name:
-                    for sub in self.mdiarea.subWindowList():
-                        w = sub.widget()
-                        if w and w.property("_original_dock_name") == dock_name:
+            if event.type() in event_types:
+                if isinstance(obj, QtWidgets.QDockWidget) and obj.isFloating():
+                    pos = QtGui.QCursor.pos()
+                    try:
+                        mdi_rect = self.mdiarea.rect()
+                        top_left = self.mdiarea.mapToGlobal(mdi_rect.topLeft())
+                        bottom_right = self.mdiarea.mapToGlobal(mdi_rect.bottomRight())
+                        global_rect = QtCore.QRect(top_left, bottom_right)
+                    except Exception:
+                        global_rect = None
+                    
+                    if global_rect is not None and global_rect.contains(pos):
+                        widget = obj.widget()
+                        if widget is not None:
+                            title = obj.windowTitle()
+                            size = obj.size()
+                            
+                            # Tag widget with original dock name for re-docking
+                            widget.setProperty("_original_dock_name", obj.objectName())
+                            
+                            # Unparent carefully to prevent deletion on dock close
+                            widget.setParent(None)
+                            obj.close()
+                            
                             try:
-                                cs.logging.info(f"Restoring dock '{dock_name}' from MDI")
+                                cs.logging.info(f"Converting dock '{title}' to MDI subwindow")
                             except Exception:
                                 pass
-                            # Move back to dock
-                            sub.setWidget(None)
-                            sub.close()
-                            obj.setWidget(w)
-                            w.show()
+                            
+                            sub = self.mdiarea.addSubWindow(widget)
+                            sub.setWindowTitle(title)
+                            sub.resize(size)
+                            
+                            # Explicitly show both the inner widget and the subwindow wrapper
+                            widget.show()
+                            sub.show()
                             return True
-
-        return super().eventFilter(obj, event)
+            
+            # Handle re-docking when the dock is re-enabled/shown
+            if event.type() == 17: # QEvent.Show
+                if isinstance(obj, QtWidgets.QDockWidget) and obj.widget() is None:
+                    dock_name = obj.objectName()
+                    if dock_name:
+                        for sub in self.mdiarea.subWindowList():
+                            w = sub.widget()
+                            if w and w.property("_original_dock_name") == dock_name:
+                                try:
+                                    cs.logging.info(f"Restoring dock '{dock_name}' from MDI")
+                                except Exception:
+                                    pass
+                                # Move back to dock
+                                sub.setWidget(None)
+                                sub.close()
+                                obj.setWidget(w)
+                                w.show()
+                                return True
+            return super().eventFilter(obj, event)
+        finally:
+            self._in_filter = False
 
 
 from chisurf.gui.main_helper import (
@@ -1260,7 +1265,6 @@ class Main(
         #      Push variables to console and add it to           #
         #      user interface                                    #
         ##########################################################
-        self.dockWidgetScriptEdit.setVisible(cs.core.settings.gui['show_macro_edit'])
         self.dockWidget_console.setVisible(cs.core.settings.gui['show_console'])
         # Set the height of the console dock widget
         if 'console_height' in cs.core.settings.gui:
@@ -1275,85 +1279,7 @@ class Main(
         self.tabifyDockWidget(self.dockWidgetReadData, self.dockWidgetDatasets)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
-        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = cs.plugins.core.code_editor.CodeEditor()
-        self.editor._on_editor_created = self._on_code_editor_created
-
-        # --- Code dock navigation toolbar (same as FitSubWindow) ---
-        self._code_toolbar = QtWidgets.QHBoxLayout()
-        self._code_toolbar.setContentsMargins(5, 5, 5, 5)
-        code_button_style = """
-            QToolButton {
-                background-color: transparent;
-                border: none;
-                border-radius: 4px;
-                padding: 3px 6px;
-                margin: 0px;
-            }
-            QToolButton:hover {
-                background-color: rgba(255, 255, 255, 35);
-            }
-            QToolButton:pressed {
-                background-color: rgba(255, 255, 255, 55);
-            }
-        """
-
-        self._code_agent_btn = QtWidgets.QToolButton()
-        self._code_agent_btn.setText("\U0001f916")
-        self._code_agent_btn.setToolTip("Toggle AI agent panel")
-
-        self._code_nav_back_btn = QtWidgets.QToolButton()
-        self._code_nav_back_btn.setText("\u2190")
-        self._code_nav_back_btn.setToolTip("Navigate back to previous cursor position")
-
-        self._code_nav_forward_btn = QtWidgets.QToolButton()
-        self._code_nav_forward_btn.setText("\u2192")
-        self._code_nav_forward_btn.setToolTip("Navigate forward to next cursor position")
-
-        self._code_file_combo = QtWidgets.QComboBox()
-        self._code_func_combo = QtWidgets.QComboBox()
-
-        self._code_save_btn = QtWidgets.QToolButton()
-        self._code_save_btn.setText("Save/Apply")
-        self._code_save_btn.setToolTip("Save the current editor content")
-
-        self._code_settings_btn = self.editor.create_settings_button(self)
-
-        self._code_toolbar.addWidget(self._code_agent_btn)
-        self._code_toolbar.addWidget(self._code_nav_back_btn)
-        self._code_toolbar.addWidget(self._code_nav_forward_btn)
-        self._code_toolbar.addWidget(QtWidgets.QLabel("File:"))
-        self._code_toolbar.addWidget(self._code_file_combo, 1)
-        self._code_toolbar.addWidget(QtWidgets.QLabel("  Jump to:"))
-        self._code_toolbar.addWidget(self._code_func_combo, 1)
-        self._code_toolbar.addStretch()
-        self._code_toolbar.addWidget(self._code_settings_btn)
-        self._code_toolbar.addWidget(self._code_save_btn)
-
-        for button in (
-            self._code_agent_btn,
-            self._code_nav_back_btn,
-            self._code_nav_forward_btn,
-            self._code_save_btn,
-            self._code_settings_btn,
-        ):
-            button.setAutoRaise(True)
-            button.setStyleSheet(code_button_style)
-
-        self.verticalLayout_10.addLayout(self._code_toolbar)
-
-        self.verticalLayout_10.addWidget(self.editor)
-
-        # Wire toolbar signals
-        self._code_nav_back_btn.clicked.connect(self._code_nav_back)
-        self._code_nav_forward_btn.clicked.connect(self._code_nav_forward)
-        self._code_file_combo.currentIndexChanged.connect(self._on_code_file_selected)
-        self._code_func_combo.currentIndexChanged.connect(self._on_code_func_selected)
-        self._code_save_btn.clicked.connect(self._code_save)
-        self._code_agent_btn.clicked.connect(self.editor._toggle_agent_panel)
-        self.editor.settings_changed.connect(self._on_code_editor_settings_changed)
-        self.editor.symbolsChanged.connect(self._sync_code_symbol_combo)
 
         # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
@@ -1379,99 +1305,7 @@ class Main(
 
         QtCore.QTimer.singleShot(0, self._apply_read_data_dock_width)
 
-    # ---- Code dock navigation callbacks ------------------------------------
 
-    def _on_code_editor_created(self, editor):
-        """Called when a new editor tab is created inside the code editor."""
-        editor.file_load_callback = self._code_load_file
-
-    def _sync_code_symbol_combo(self, symbols):
-        """Populate the code dock symbol combo from shared editor symbols."""
-        self._code_func_combo.blockSignals(True)
-        self._code_func_combo.clear()
-        self._code_func_combo.addItem("Select...", -1)
-        for symbol in symbols:
-            line = getattr(symbol, "line", 1)
-            kind = getattr(symbol, "kind", "")
-            name = getattr(symbol, "display_name", getattr(symbol, "name", ""))
-            prefix = "  " if kind == "method" else ""
-            self._code_func_combo.addItem(f"{prefix}{name}", max(0, int(line) - 1))
-        self._code_func_combo.blockSignals(False)
-
-    def _code_nav_back(self):
-        editor = self.editor._get_current_editor()
-        if editor is not None:
-            editor.navigate_back()
-
-    def _code_nav_forward(self):
-        editor = self.editor._get_current_editor()
-        if editor is not None:
-            editor.navigate_forward()
-
-    def _code_load_file(self, file_path, line_number: int = 0):
-        """Load a source file into the code editor and populate the function combo."""
-        self.editor.open_file(file_path)
-        editor = self.editor._get_current_editor()
-        if editor is None:
-            return
-
-        if line_number > 0:
-            doc = editor.document()
-            block = doc.findBlockByNumber(line_number)
-            if block.isValid():
-                cursor = editor.textCursor()
-                cursor.setPosition(block.position())
-                editor.setTextCursor(cursor)
-                editor.centerCursor()
-
-        self._sync_code_symbol_combo(editor.refresh_symbols())
-        if not editor._nav_history:
-            editor.push_nav_history(file_path, 0)
-
-    def _on_code_file_selected(self, idx):
-        if idx < 0:
-            return
-        file_path = self._code_file_combo.itemData(idx)
-        if file_path:
-            self._code_load_file(file_path)
-
-    def _on_code_func_selected(self, idx):
-        if idx < 0:
-            return
-        line_num = self._code_func_combo.itemData(idx)
-        if line_num is not None and line_num >= 0:
-            editor = self.editor._get_current_editor()
-            if editor is None:
-                return
-            doc = editor.document()
-            block = doc.findBlockByNumber(line_num)
-            cursor = editor.textCursor()
-            cursor.setPosition(block.position())
-            editor.setTextCursor(cursor)
-            editor.centerCursor()
-            editor.setFocus()
-
-    def _code_save(self):
-        """Save the current editor content to its file."""
-        editor = self.editor._get_current_editor()
-        if editor is None:
-            return
-        self.editor.save_text()
-
-    def _on_code_editor_settings_changed(self, settings: dict) -> None:
-        """Apply editor font settings to dependent code widgets."""
-        font = QtGui.QFont()
-        font.setFamily(str(settings.get("font_family", cs.core.settings.gui["editor"]["font_family"])))
-        try:
-            font.setPointSize(int(settings.get("font_size", cs.core.settings.gui["editor"]["font_size"])))
-        except (TypeError, ValueError):
-            font.setPointSize(int(cs.core.settings.gui["editor"]["font_size"]))
-
-        try:
-            if hasattr(cs, "console") and hasattr(cs.console, "set_editor_font"):
-                cs.console.set_editor_font(font)
-        except Exception as e:
-            logging.log(1, f"Error updating console font: {e}")
 
     def filter_log_content(self):
         """
