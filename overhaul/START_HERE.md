@@ -87,6 +87,19 @@ DBs go through `CREATE IF NOT EXISTS` + `reconcile_schema`. Remaining:
   handlers, remove `from … import resolve_database_path` namespace binding) — these
   depend on **PRD-17** (`SessionContext`), so do PRD-17 first.
 
+## PRD-17 (canonical identity/session) — started
+
+- ~~**Canonical resolver.**~~ **DONE** (`189db5a3`): new `chisurf/core/mfdb/session.py`
+  (`SessionContext` + `resolve_active_user_id`/`configured_default_user_id`) is the
+  single place the active user is decided. Consolidated the ~6 duplicated
+  `default_user_id` reads (result_registry, mfdb_admin services, repository) to
+  delegate to it, so the anonymous in-process client now scopes reads to the same
+  identity registration stamps. `test_session_context` (5) locks it.
+- Remaining: thread the `SessionContext` *object* through API signatures
+  (`register_result(session=ctx)`, `browse_datasets(session=ctx)`) and build it once
+  at RPC dispatch / GUI launch. That unblocks **PRD-18 Tasks 3–4** (inject db/session;
+  remove `from … import resolve_database_path` namespace binding).
+
 ## Next steps (in order, per MASTER-ORDER)
 
 1. **Finish PRD-19** (remaining items above: dead-code deletion, gate extension) —
