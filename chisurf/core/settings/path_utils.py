@@ -45,6 +45,16 @@ def get_path(path_type: str = 'settings') -> pathlib.Path:
       Never modifies attributes of the installed package directory.
     """
     if path_type == 'settings':
+        # Allow overriding the settings directory via the environment. This is the
+        # single indirection point for redirecting all per-user state (database,
+        # object store, settings files) — used by the hermetic test harness to keep
+        # tests off the real ~/.chisurf, and available to users who want a custom
+        # location.
+        override = os.environ.get('CHISURF_SETTINGS_DIR')
+        if override:
+            path = pathlib.Path(override).expanduser()
+            path.mkdir(parents=True, exist_ok=True)
+            return path
         path = pathlib.Path.home() / '.chisurf'
         existed_before = path.exists()
         global USER_SETTINGS_EXISTED_BEFORE

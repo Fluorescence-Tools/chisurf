@@ -216,7 +216,10 @@ mfdb:
   save_login: true
   autologin: false
   object_store:
-    root: ~/.chisurf/objects
+    # Relative to the settings directory (defaults to ~/.chisurf/objects). Keeping
+    # it relative lets the object store follow a redirected settings dir, e.g. the
+    # hermetic test harness's CHISURF_SETTINGS_DIR.
+    root: objects
   last_server: 127.0.0.1
   server_history:
     - 127.0.0.1
