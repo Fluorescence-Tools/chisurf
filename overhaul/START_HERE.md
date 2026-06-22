@@ -57,21 +57,29 @@ Read `MASTER-ORDER.md` Phase 2. **PRD-11** (operation-node abstraction) + **PRD-
   schema (fail-loud, no partial rows). `result_registry.register_operation`.
 - ~~Microtime Shifter as a conformant transformer~~ ✓: `api/transformer.py` wraps the
   pure `shift_file`; declares ports + `operation_type`; passes conformance.
+- ~~Retire `mfdb_microtime_shift`~~ ✓ (`19fbc18a`): the shifter records
+  `operation_type="microtime_shift"` with the role-indexed `shift` parameter (role =
+  channel); the bespoke write-only table is gone end to end (`.dic`, index,
+  `add_microtime_shift`, gate; added to `_drop_legacy_tables`).
+- ~~Strict validation wired into `register_result`~~ ✓ (`2a02f560`): both reference
+  operation types fully declared (`burst_selection` now has all 9 params); a param
+  outside an operation type's `.dic` schema raises `OperationParameterError` at the
+  boundary (no partial rows); no-op for undeclared types.
+- ~~Registry conformance gate~~ ✓: every registered transformer is checked
+  (`test_all_registered_transformers_conform`).
 
 **Next (in order):**
-1. **Route the Microtime Shifter's registration through `register_operation`** and
-   **retire the bespoke `mfdb_microtime_shift` table** into role-indexed
-   `mfdb_parameter` rows (role = detector_channel). Files:
-   `tttr_microtime_shifter/api/mfdb.py` (`_store_channel_shifts` ~242,
-   `db.add_microtime_shift`); drop the `mfdb_microtime_shift` reads/writes + its `.dic`
-   category. Then **wire strict `validate_operation_parameters` into the registration
-   path** (now safe — the plugin passes only declared params).
-2. **Burst Selection** (`chisurf/plugins/burst/burst_selection`): same treatment —
-   declare a conformant transformer, register via `register_operation`. Apply
-   **PRD-23** (thin widgets) as you touch each.
-3. **Registry-parametrised conformance test** (every registered transformer has a
-   `.dic` schema, declares ports, pure `transform`, registers uniformly).
-4. **PRD-26** (the `.dic` generates DAO/admin/validation/docs).
+1. **Burst Selection as a conformant transformer.** Declare a `Transformer` adapter
+   (like `tttr_microtime_shifter/api/transformer.py`) wrapping burst's pure analysis;
+   declare `input_spec`/`output_spec`; register it (auto-gated by the registry
+   conformance test). Burst already registers through `register_result` with the
+   validated `burst_selection` schema, so this is the contract/adapter layer. It is a
+   bigger plugin — wrapping its analysis purely needs care.
+2. **Apply PRD-23 (thin widgets)** to both tools as touched; consider routing
+   `register_result` internals through `register_operation` so there is one recording
+   path.
+3. **PRD-26** (the `.dic` generates DAO/admin/validation/docs) — builds on PRD-19 +
+   the operation-parameter schema.
 
 Orange3 lessons fold in here: typed kind-matched ports (16/11), transformer-as-
 serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
@@ -86,8 +94,8 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-18** hermetic harness | Task 1 (temp-DB redirect + guard) ✓, Task 2 (real-client integration test) ✓, existing-DB column reconcile ✓, curated DB regenerated ✓ — Task 4 (de-namespace) optional polish | `547b5a51`, `638b5e69`, … |
 | **PRD-17** identity/session | canonical resolver ✓, `register_*` injection ✓, anonymous-fallback removed ✓ — build-once object-threading optional polish | `189db5a3`, `c6a73a17`, `e25cabb6` |
 | **PRD-27** append-only core | go/no-go **decided: append-only-lite** ✓ (build is Phase 3) | `(PRD-27 doc)` |
-| **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, **`register_operation` + role-indexed recording ✓** — route plugins through it + retire `mfdb_microtime_shift` next | `1da6ab6d`, … |
-| **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **Microtime Shifter conformant ✓** — Burst Selection + registry conformance test next | `(core/transform, tttr)` |
+| **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, `register_operation` ✓, role-indexed recording ✓, **`mfdb_microtime_shift` retired** ✓, **validation wired into `register_result`** ✓ | `1da6ab6d`…`2a02f560` |
+| **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **Microtime Shifter conformant** ✓, **registry conformance gate** ✓ — Burst Selection adapter next | `(core/transform, tttr)` |
 
 ## Decisions locked
 
