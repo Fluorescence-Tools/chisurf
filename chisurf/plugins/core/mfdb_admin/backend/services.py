@@ -80,7 +80,6 @@ VERSIONED_MFDB_METHODS = {
     "graph.downstream": "graph_downstream",
     "graph.export": "export_graph",
     "graph.traverse": "traverse_canonical_graph",
-    "graph.traverse_legacy": "traverse_legacy_graph",
     "parameters.record": "record_parameter",
     "parameters.get": "get_parameter",
     "parameters.list": "list_parameters",

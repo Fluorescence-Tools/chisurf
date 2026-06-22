@@ -746,40 +746,6 @@ def traverse_canonical_graph(
         return {"edges": edges}
 
 
-def traverse_legacy_graph(
-    start_node_type: str,
-    start_node_id: str,
-    direction: str = "upstream",
-    max_depth: int = 100,
-) -> dict[str, Any]:
-    """Traverse the legacy graph recursively, cycle-safe.
-
-    Parameters
-    ----------
-    start_node_type : str
-        Starting node type (e.g. 'processed_data', 'processing_run').
-    start_node_id : str
-        Starting node identifier.
-    direction : str, default='upstream'
-        Direction of traversal ('upstream' or 'downstream').
-    max_depth : int, default=100
-        Maximum search depth.
-
-    Returns
-    -------
-    dict
-        RPC result containing a list of edges under key 'edges'.
-    """
-    with MFDatabase(resolve_database_path()) as db:
-        from chisurf.core.mfdb.graph import traverse_legacy_provenance_graph as traverse
-        rows = traverse(
-            db.conn,
-            start_node_type,
-            start_node_id,
-            direction,
-            max_depth,
-        )
-        return {"edges": [dict(row) for row in rows]}
 
 
 def record_parameter(

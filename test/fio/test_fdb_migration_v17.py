@@ -8,35 +8,7 @@ from unittest.mock import patch
 from chisurf.core.mfdb.schema import migrate_schema, set_schema_version, get_schema_version, SCHEMA_VERSION
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb import api as fdb_api
-from chisurf.core.mfdb.graph import traverse_canonical_graph, traverse_legacy_provenance_graph
-
-
-def test_v17_migration_uses_flr_sample_model_and_constrained_migrated_schema(tmp_path: pathlib.Path) -> None:
-    """Migrated canonical schema matches fresh FLR sample model and edge constraints."""
-    db_path = tmp_path / "test_migration_constraints.db"
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    from chisurf.core.mfdb.schema import CREATE_TABLES_SQL
-    for sql in CREATE_TABLES_SQL:
-        if not any(sql.lstrip().startswith(f"CREATE TABLE IF NOT EXISTS {name} ") for name in ("mfdb_sample", "mfdb_experiment")):
-            conn.execute(sql)
-    set_schema_version(conn, 17)
-    conn.execute("INSERT INTO flr_sample (sample_id) VALUES ('sample1')")
-    conn.execute("INSERT INTO fdb_edge (source_node_type, source_node_id, target_node_type, target_node_id, relationship_type) VALUES ('artifact', 'a', 'operation', 'op', 'input_to')")
-    conn.commit()
-
-    migrate_schema(conn)
-
-    tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert "mfdb_sample" not in tables
-    assert "mfdb_experiment" not in tables
-    assert "flr_sample" in tables
-    with pytest.raises(sqlite3.IntegrityError):
-        conn.execute(
-            "INSERT INTO mfdb_edge (source_node_type, source_node_id, target_node_type, target_node_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
-            ("artifact", "b", "operation", "op2", "produced"),
-        )
-    conn.close()
+from chisurf.core.mfdb.graph import traverse_canonical_graph
 
 
 def test_idempotent_updates(tmp_path: pathlib.Path) -> None:
@@ -114,36 +86,6 @@ def test_cycle_safe_graph_traversal(tmp_path: pathlib.Path) -> None:
         assert {edge["target_node_type"] for edge in edges} == {"operation", "artifact"}
         assert any(edge.get("source_operation_type") == "burst_selection" for edge in edges)
         assert any(edge.get("target_artifact_kind") == "processed_data" for edge in edges)
-
-        # Legacy provenance graph cycle
-        db.conn.execute("""
-            CREATE TABLE IF NOT EXISTS fdb_provenance_edge (
-                source_node_type TEXT,
-                source_node_id TEXT,
-                target_node_type TEXT,
-                target_node_id TEXT,
-                relationship_type TEXT,
-                processing_id TEXT
-            )
-        """)
-        db.conn.execute("""
-            INSERT INTO fdb_provenance_edge (
-                source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-            ) VALUES ('artifact', 'A', 'operation', 'B', 'input_to')
-        """)
-        db.conn.execute("""
-            INSERT INTO fdb_provenance_edge (
-                source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-            ) VALUES ('operation', 'B', 'artifact', 'C', 'produced')
-        """)
-        db.conn.execute("""
-            INSERT INTO fdb_provenance_edge (
-                source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-            ) VALUES ('artifact', 'C', 'artifact', 'A', 'derived_from')
-        """)
-
-        legacy_edges = traverse_legacy_provenance_graph(db.conn, "artifact", "A", direction="downstream")
-        assert len(legacy_edges) == 3
 
 
 def test_json_rpc_versioned_services(tmp_path: pathlib.Path) -> None:

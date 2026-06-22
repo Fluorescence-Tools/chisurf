@@ -21,7 +21,7 @@ from .database_resolver import (
     source_database_path,
     user_database_path,
 )
-from .graph import traverse_canonical_graph, traverse_legacy_provenance_graph
+from .graph import traverse_canonical_graph
 from .models import (
     ARTIFACT_KINDS,
     BUFFER_COMPONENTS,
@@ -245,7 +245,6 @@ __all__ = [
     "suggest_pdbx_keys",
     "transaction",
     "traverse_canonical_graph",
-    "traverse_legacy_provenance_graph",
     "user_database_path",
     "validate_sample_for_export",
     "validate_vocabulary",

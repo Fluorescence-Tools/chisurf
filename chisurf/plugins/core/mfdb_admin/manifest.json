@@ -269,9 +269,6 @@
       "name": "mfdb.v1.graph.export"
     },
     {
-      "name": "mfdb.v1.graph.traverse_legacy"
-    },
-    {
       "name": "mfdb.v1.parameters.record"
     },
     {

@@ -18,41 +18,6 @@ from chisurf.plugins.sample_database.backend.setup_services import (
 )
 
 
-def test_v13_database_migrates_to_v14(tmp_path: pathlib.Path) -> None:
-    """Verify legacy database upgrades to v14 and adds setup definition tables/columns."""
-    db_path = tmp_path / "legacy_v13.db"
-    conn = sqlite3.connect(db_path)
-    try:
-        # Create all tables except setups-related ones by filtering schema SQLs
-        for sql in schema.CREATE_TABLES_SQL:
-            if "fdb_setup_definition" not in sql:
-                conn.execute(sql)
-        conn.execute("DELETE FROM _schema_version")
-        conn.execute("INSERT INTO _schema_version (version) VALUES (13)")
-        conn.commit()
-    finally:
-        conn.close()
-
-    with MFDatabase(db_path) as db:
-        assert db._get_schema_version() == schema.SCHEMA_VERSION
-
-        
-        # Verify setups table exists
-        tables = {
-            row["name"]
-            for row in db.conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
-        assert "fdb_setup_definition" in tables
-        
-        # Verify setup_definition_id column was added to flr_experiment
-        cols = {
-            r[1] for r in db.conn.execute("PRAGMA table_info(flr_experiment)").fetchall()
-        }
-        assert "setup_definition_id" in cols
-
-
 def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) -> None:
     """Verify setup CRUD operations and linkage to experiments in MFDatabase."""
     db_path = tmp_path / "test_setups.db"

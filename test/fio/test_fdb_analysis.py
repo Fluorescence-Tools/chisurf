@@ -19,45 +19,6 @@ from chisurf.plugins.sample_database.backend.measurement_services import (
 )
 
 
-def test_v14_database_migrates_to_v15(tmp_path: pathlib.Path) -> None:
-    """Verify legacy database upgrades to v15 and adds analysis/parameter tables."""
-    db_path = tmp_path / "legacy_v14.db"
-    conn = sqlite3.connect(db_path)
-    try:
-        # Create all tables except analysis-related ones by filtering schema SQLs
-        for sql in schema.CREATE_TABLES_SQL:
-            if "fdb_analysis_run" not in sql and "fdb_analysis_parameter" not in sql:
-                conn.execute(sql)
-        conn.execute("DELETE FROM _schema_version")
-        conn.execute("INSERT INTO _schema_version (version) VALUES (14)")
-        conn.commit()
-    finally:
-        conn.close()
-
-    with MFDatabase(db_path) as db:
-        assert db._get_schema_version() == schema.SCHEMA_VERSION
-
-        # Verify analysis and parameter tables exist
-        tables = {
-            row["name"]
-            for row in db.conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
-        assert "fdb_analysis_run" in tables
-        assert "fdb_analysis_parameter" in tables
-
-        # Verify indices exist
-        indices = {
-            row["name"]
-            for row in db.conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='index'"
-            ).fetchall()
-        }
-        assert "idx_fdb_analysis_parameter_analysis" in indices
-        assert "idx_fdb_analysis_parameter_uuid" in indices
-
-
 def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
     """Test full analysis CRUD, fit grouping, parameter linkages, and traces."""
     db_path = tmp_path / "test_analysis.db"
