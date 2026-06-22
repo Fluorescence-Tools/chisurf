@@ -59,16 +59,21 @@ DBs go through `CREATE IF NOT EXISTS` + `reconcile_schema`. Remaining:
 
 1. ~~**Drop the version chain (idea K).**~~ **DONE** (`bb837a07`); `SCHEMA_VERSION` is
    now only a harmless stamp.
-2. **Delete dead legacy code:** `fdb_*` CREATEs still sit (unused) in the raw
-   `CREATE_TABLES_SQL` + filter; `graph.py` `fdb_provenance_edge` reads; many
-   now-unused migration helpers (`_ensure_column`, etc.).
+2. **Delete dead legacy code (partly blocked):** `fdb_*` CREATEs still sit (unused,
+   filtered out of `FRESH_DB_TABLES_SQL`) in the raw `CREATE_TABLES_SQL`;
+   `graph.py::traverse_legacy_provenance_graph` (always returns `[]` now) is still in
+   the public API + `api.py`. **Entangled:** `test_fdb_migration_v17.py::
+   test_v17_migration_...` still consumes `CREATE_TABLES_SQL` (incl. `fdb_*`), and the
+   legacy traversal is re-exported — so removing them needs that test rewritten and
+   the public API trimmed together. Defer as a focused cleanup.
 3. **Collapse duplicates onto flrCIF:** remove `mfdb_*` tables that duplicate a flrCIF
    concept; repoint reads/writes to the authoritative `flr_*`. **flrCIF is
    authoritative and the `.dic` extends it** — do NOT demote flrCIF to an export codec.
 4. **Declare genuine extensions** (provenance graph, object store, vocab) as proper
    flrCIF extension categories in `mfdb_flr_ext.dic`, FK'd to flrCIF.
-5. **Extend `validate_mapping` gate** to assert live ⊇ declared + vocab == dictionary
-   + no legacy/duplicate tables after reconcile. (Vocab duplication already removed.)
+5. ~~**Extend the gate** to assert no legacy/duplicate tables.~~ **DONE**
+   (`ffca20e7`): `test_fresh_db_has_no_legacy_or_duplicate_tables`. (Further
+   live ⊇ declared + vocab == dictionary asserts can still be added.)
 
 ## Next steps (in order, per MASTER-ORDER)
 
