@@ -1060,30 +1060,6 @@ class MFDatabase(MFDBClientBase):
             results.append(d)
         return results
 
-    def traverse_legacy_provenance_graph(self, start_id, direction="downstream", max_depth=10):
-        visited = set()
-        result = []
-        def _traverse(node_id, depth):
-            if depth > max_depth or node_id in visited:
-                return
-            visited.add(node_id)
-            if direction == "downstream":
-                edges = self.conn.execute(
-                    "SELECT * FROM fdb_provenance_edge WHERE source_artifact_id = ? AND deleted_at IS NULL",
-                    (node_id,)
-                ).fetchall()
-            else:
-                edges = self.conn.execute(
-                    "SELECT * FROM fdb_provenance_edge WHERE target_artifact_id = ? AND deleted_at IS NULL",
-                    (node_id,)
-                ).fetchall()
-            for edge in edges:
-                result.append(dict(edge))
-                neighbor = edge["target_artifact_id"] if direction == "downstream" else edge["source_artifact_id"]
-                _traverse(neighbor, depth + 1)
-        _traverse(start_id, 0)
-        return result
-
     def export_provenance_graph(
         self,
         seed_node_type: str,
@@ -1475,61 +1451,6 @@ class MFDatabase(MFDBClientBase):
             status=status,
             metadata=meta_dict,
         )
-        try:
-            table_names = {
-                row[0]
-                for row in self.conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                ).fetchall()
-            }
-        except sqlite3.OperationalError:
-            table_names = set()
-        has_fdb_processing_run = "fdb_processing_run" in table_names
-        has_fdb_analysis_run = "fdb_analysis_run" in table_names
-        if has_fdb_processing_run:
-            now = _utc_now()
-            self.conn.execute(
-                """INSERT OR IGNORE INTO fdb_processing_run (
-                    processing_id, processing_type, experiment_id, settings_json,
-                    settings_hash, software_package, software_module, software_version,
-                    status, created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    aid,
-                    analysis_type,
-                    experiment_id,
-                    _json_dumps(optimizer_settings),
-                    _json_hash(optimizer_settings),
-                    software_package,
-                    software_module,
-                    software_version,
-                    status,
-                    now, now, None,
-                ),
-            )
-        if has_fdb_analysis_run and has_fdb_processing_run:
-            now = _utc_now()
-            self.conn.execute(
-                """INSERT OR REPLACE INTO fdb_analysis_run (
-                    analysis_id, model_name, model_type, model_version,
-                    fit_structure_json, parameter_links_json, covariance_matrix_json,
-                    goodness_of_fit_json, notes, metadata_json,
-                    created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    aid,
-                    model_name,
-                    model_type,
-                    model_version,
-                    _json_dumps(fit_structure),
-                    _json_dumps(parameter_links),
-                    _json_dumps(covariance_matrix),
-                    _json_dumps(goodness_of_fit),
-                    notes,
-                    _json_dumps(meta_dict),
-                    now, now, None,
-                ),
-            )
 
         self.add_audit_log(
             action="create",
@@ -3077,13 +2998,6 @@ class MFDatabase(MFDBClientBase):
                 params.append(value)
         params.append(run_id)
         with self.conn:
-            try:
-                self.conn.execute(
-                    f"UPDATE fdb_processing_run SET {', '.join(updates)} WHERE processing_id = ?",
-                    params
-                )
-            except sqlite3.OperationalError:
-                pass
             self.conn.execute(
                 """UPDATE mfdb_operation
                    SET status = ?,
@@ -4932,35 +4846,6 @@ class MFDatabase(MFDBClientBase):
             logs.append(data)
         return logs
 
-    # -- backward compat aliases --
-
-    def add_fdb_raw_data(self, *args, **kwargs):
-        return self.add_artifact(*args, artifact_kind=kwargs.pop("artifact_kind", "raw_data"), **kwargs)
-
-    def add_fdb_processing_run(self, *args, **kwargs):
-        return self.add_operation(*args, operation_type=kwargs.pop("operation_type", "processing"), **kwargs)
-
-    def add_fdb_processed_data(self, *args, **kwargs):
-        return self.add_artifact(*args, artifact_kind=kwargs.pop("artifact_kind", "processed_data"), **kwargs)
-
-    def get_fdb_processing_run(self, run_id):
-        return self.get_operation(run_id)
-
-    def get_fdb_analysis_run(self, run_id):
-        return self.get_analysis_run(run_id)
-
-    def get_fdb_processed_data(self, data_id):
-        return self.get_artifact(data_id)
-
-    def get_fdb_raw_data(self, data_id):
-        return self.get_artifact(data_id)
-
-    def get_fdb_provenance_edges(self, *args, **kwargs):
-        return self.get_downstream_artifacts(*args, **kwargs)
-
-    def get_fdb_parameters(self, *args, **kwargs):
-        return self.get_parameters(*args, **kwargs)
-
     # ── Legacy backward-compat stubs ───────────────────────────────────
 
     def add_raw_data_reference(
@@ -5322,33 +5207,6 @@ class MFDatabase(MFDBClientBase):
         return self.get_operation(run_id)
 
     def add_setup_definition(self, setup_id: str, name: str, **kwargs):
-        try:
-            with self.conn:
-                now = _utc_now()
-                self.conn.execute(
-                    """INSERT OR REPLACE INTO fdb_setup_definition (
-                        setup_id, name, version, instrument_id, description,
-                        configuration_json, detectors_json, timing_calibration_json,
-                        irf_definition_json, burst_defaults_json, fcs_calibration_json,
-                        created_at, updated_at, deleted_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        setup_id,
-                        name,
-                        kwargs.get("version", 1),
-                        kwargs.get("instrument_id"),
-                        kwargs.get("description"),
-                        _json_dumps(kwargs.get("configuration")),
-                        _json_dumps(kwargs.get("detectors")),
-                        _json_dumps(kwargs.get("timing_calibration")),
-                        _json_dumps(kwargs.get("irf_definition")),
-                        _json_dumps(kwargs.get("burst_defaults")),
-                        _json_dumps(kwargs.get("fcs_calibration")),
-                        now, now, None,
-                    ),
-                )
-        except sqlite3.OperationalError:
-            pass
         result = self.save_setup(setup_id=setup_id, name=name, **kwargs)
         self.add_audit_log(
             action="create",
@@ -5362,11 +5220,6 @@ class MFDatabase(MFDBClientBase):
         return self.get_setup(setup_id, **kwargs)
 
     def delete_setup_definition(self, setup_id: str, **kwargs):
-        try:
-            with self.conn:
-                self.conn.execute("UPDATE fdb_setup_definition SET deleted_at = ? WHERE setup_id = ?", (_utc_now(), setup_id))
-        except sqlite3.OperationalError:
-            pass
         return self.delete_setup(setup_id)
 
     def _decode_setup_definition_row(self, row):
@@ -5584,20 +5437,6 @@ class MFDatabase(MFDBClientBase):
     list_audit_logs = get_audit_logs
 
     def get_analysis_run(self, analysis_id: str) -> sqlite3.Row | dict[str, Any] | None:
-        try:
-            row = self.conn.execute(
-                """SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
-                          pr.software_package, pr.software_module, pr.software_version,
-                          pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
-                   FROM fdb_analysis_run AS ar
-                   JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
-                   WHERE ar.analysis_id = ?""",
-                (analysis_id,),
-            ).fetchone()
-            if row is not None:
-                return row
-        except sqlite3.OperationalError:
-            pass
         row = self.conn.execute(
             """SELECT operation_id AS analysis_id, operation_type AS analysis_type,
                       experiment_id, software_package, software_module, software_version,
@@ -5630,22 +5469,15 @@ class MFDatabase(MFDBClientBase):
         run = self._decode_analysis_run_row(run_row)
 
         # Get parameters
-        try:
-            param_rows = self.conn.execute(
-                "SELECT * FROM fdb_analysis_parameter WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
-                (analysis_id,),
-            ).fetchall()
-            run["parameters"] = [self._decode_analysis_parameter_row(row) for row in param_rows]
-        except sqlite3.OperationalError:
-            param_rows = self.conn.execute(
-                "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
-                (analysis_id,),
-            ).fetchall()
-            run["parameters"] = []
-            for row in param_rows:
-                d = dict(row)
-                d["analysis_id"] = d.pop("operation_id", None)
-                run["parameters"].append(self._decode_analysis_parameter_row(d))
+        param_rows = self.conn.execute(
+            "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
+            (analysis_id,),
+        ).fetchall()
+        run["parameters"] = []
+        for row in param_rows:
+            d = dict(row)
+            d["analysis_id"] = d.pop("operation_id", None)
+            run["parameters"].append(self._decode_analysis_parameter_row(d))
 
         # Get input processed data via operation-artifact links
         run["input_processed_data"] = [
@@ -5672,47 +5504,34 @@ class MFDatabase(MFDBClientBase):
         ]
 
         # Get sub-fits grouped in this analysis
-        try:
-            grouped_rows = self.conn.execute(
-                """SELECT ar.*
-                   FROM mfdb_edge AS pe
-                   JOIN fdb_analysis_run AS ar ON ar.analysis_id = pe.target_node_id
-                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
-                     AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
-                     AND pe.deleted_at IS NULL AND ar.deleted_at IS NULL
-                   ORDER BY pe.edge_id""",
-                (analysis_id,),
-            ).fetchall()
-            run["grouped_fits"] = [self._decode_analysis_run_row(row) for row in grouped_rows]
-        except sqlite3.OperationalError:
-            grouped_rows = self.conn.execute(
-                """SELECT op.operation_id AS analysis_id, op.operation_type AS analysis_type,
-                          op.experiment_id, op.software_package, op.software_module, op.software_version,
-                          op.settings_json AS optimizer_settings_json, op.status AS convergence_status,
-                          op.metadata_json, op.created_at, op.updated_at
-                   FROM mfdb_edge AS pe
-                   JOIN mfdb_operation AS op ON op.operation_id = pe.target_node_id
-                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
-                     AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
-                     AND pe.deleted_at IS NULL AND op.deleted_at IS NULL
-                   ORDER BY pe.edge_id""",
-                (analysis_id,),
-            ).fetchall()
-            run["grouped_fits"] = []
-            for row in grouped_rows:
-                d = dict(row)
-                m = _json_loads(d.pop("metadata_json", None)) or {}
-                d["model_name"] = m.get("model_name")
-                d["model_type"] = m.get("model_type")
-                d["model_version"] = m.get("model_version")
-                d["notes"] = m.get("notes")
-                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
-                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
-                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
-                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
-                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
-                d["metadata_json"] = _json_dumps(m)
-                run["grouped_fits"].append(self._decode_analysis_run_row(d))
+        grouped_rows = self.conn.execute(
+            """SELECT op.operation_id AS analysis_id, op.operation_type AS analysis_type,
+                      op.experiment_id, op.software_package, op.software_module, op.software_version,
+                      op.settings_json AS optimizer_settings_json, op.status AS convergence_status,
+                      op.metadata_json, op.created_at, op.updated_at
+               FROM mfdb_edge AS pe
+               JOIN mfdb_operation AS op ON op.operation_id = pe.target_node_id
+               WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
+                 AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
+                 AND pe.deleted_at IS NULL AND op.deleted_at IS NULL
+               ORDER BY pe.edge_id""",
+            (analysis_id,),
+        ).fetchall()
+        run["grouped_fits"] = []
+        for row in grouped_rows:
+            d = dict(row)
+            m = _json_loads(d.pop("metadata_json", None)) or {}
+            d["model_name"] = m.get("model_name")
+            d["model_type"] = m.get("model_type")
+            d["model_version"] = m.get("model_version")
+            d["notes"] = m.get("notes")
+            d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+            d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+            d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+            d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+            d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+            d["metadata_json"] = _json_dumps(m)
+            run["grouped_fits"].append(self._decode_analysis_run_row(d))
 
         # Get provenance edges referencing this run
         run["provenance_edges"] = [
@@ -5727,78 +5546,50 @@ class MFDatabase(MFDBClientBase):
         experiment_id: str | None = None,
         analysis_type: str | None = None,
     ) -> list[sqlite3.Row | dict[str, Any]]:
-        try:
-            query = """
-                SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
-                       pr.software_package, pr.software_module, pr.software_version,
-                       pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
-                FROM fdb_analysis_run AS ar
-                JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
-                WHERE 1=1 AND ar.deleted_at IS NULL AND pr.deleted_at IS NULL
-            """
-            params: list[Any] = []
-            if experiment_id is not None:
-                query += " AND pr.experiment_id = ?"
-                params.append(experiment_id)
-            if analysis_type is not None:
-                query += " AND pr.processing_type = ?"
-                params.append(analysis_type)
-            query += " ORDER BY ar.created_at DESC"
-            return self.conn.execute(query, params).fetchall()
-        except sqlite3.OperationalError:
-            query = """
-                SELECT operation_id AS analysis_id, operation_type AS analysis_type, experiment_id,
-                       software_package, software_module, software_version,
-                       settings_json AS optimizer_settings_json, status AS convergence_status,
-                       metadata_json, created_at, updated_at
-                FROM mfdb_operation
-                WHERE 1=1 AND deleted_at IS NULL
-            """
-            params = []
-            if experiment_id is not None:
-                query += " AND experiment_id = ?"
-                params.append(experiment_id)
-            if analysis_type is not None:
-                query += " AND operation_type = ?"
-                params.append(analysis_type)
-            else:
-                query += " AND operation_type IN ('local_fit', 'global_fit', 'analysis', 'fitting', 'project_archive', 'project', 'decay_fit')"
-            query += " ORDER BY created_at DESC"
-            rows = self.conn.execute(query, params).fetchall()
-            results = []
-            for row in rows:
-                d = dict(row)
-                m = _json_loads(d.pop("metadata_json", None)) or {}
-                d["model_name"] = m.get("model_name")
-                d["model_type"] = m.get("model_type")
-                d["model_version"] = m.get("model_version")
-                d["notes"] = m.get("notes")
-                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
-                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
-                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
-                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
-                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
-                d["metadata_json"] = _json_dumps(m)
-                results.append(d)
-            return results
+        query = """
+            SELECT operation_id AS analysis_id, operation_type AS analysis_type, experiment_id,
+                   software_package, software_module, software_version,
+                   settings_json AS optimizer_settings_json, status AS convergence_status,
+                   metadata_json, created_at, updated_at
+            FROM mfdb_operation
+            WHERE 1=1 AND deleted_at IS NULL
+        """
+        params: list[Any] = []
+        if experiment_id is not None:
+            query += " AND experiment_id = ?"
+            params.append(experiment_id)
+        if analysis_type is not None:
+            query += " AND operation_type = ?"
+            params.append(analysis_type)
+        else:
+            query += " AND operation_type IN ('local_fit', 'global_fit', 'analysis', 'fitting', 'project_archive', 'project', 'decay_fit')"
+        query += " ORDER BY created_at DESC"
+        rows = self.conn.execute(query, params).fetchall()
+        results = []
+        for row in rows:
+            d = dict(row)
+            m = _json_loads(d.pop("metadata_json", None)) or {}
+            d["model_name"] = m.get("model_name")
+            d["model_type"] = m.get("model_type")
+            d["model_version"] = m.get("model_version")
+            d["notes"] = m.get("notes")
+            d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+            d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+            d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+            d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+            d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+            d["metadata_json"] = _json_dumps(m)
+            results.append(d)
+        return results
 
     def delete_analysis_run(self, analysis_id: str) -> None:
-        try:
-            parameter_ids = [
-                row["parameter_uuid"]
-                for row in self.conn.execute(
-                    "SELECT parameter_uuid FROM fdb_analysis_parameter WHERE analysis_id = ?",
-                    (analysis_id,),
-                ).fetchall()
-            ]
-        except sqlite3.OperationalError:
-            parameter_ids = [
-                row["parameter_uuid"]
-                for row in self.conn.execute(
-                    "SELECT parameter_uuid FROM mfdb_parameter WHERE operation_id = ?",
-                    (analysis_id,),
-                ).fetchall()
-            ]
+        parameter_ids = [
+            row["parameter_uuid"]
+            for row in self.conn.execute(
+                "SELECT parameter_uuid FROM mfdb_parameter WHERE operation_id = ?",
+                (analysis_id,),
+            ).fetchall()
+        ]
 
         with self.conn:
             now = _utc_now()
@@ -5809,13 +5600,6 @@ class MFDatabase(MFDBClientBase):
                           OR (target_node_type IN ('analysis_parameter', 'parameter') AND target_node_id = ?)""",
                     (now, parameter_id, parameter_id),
                 )
-                try:
-                    self.conn.execute(
-                        "UPDATE fdb_analysis_parameter SET deleted_at = ? WHERE parameter_uuid = ?",
-                        (now, parameter_id),
-                    )
-                except sqlite3.OperationalError:
-                    pass
                 self.conn.execute(
                     "UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_uuid = ?",
                     (now, parameter_id),
@@ -5828,14 +5612,6 @@ class MFDatabase(MFDBClientBase):
                       OR (metadata_json IS NOT NULL AND json_extract(metadata_json, '$.processing_id') = ?)""",
                 (now, analysis_id, analysis_id, analysis_id, analysis_id),
             )
-            try:
-                self.conn.execute("UPDATE fdb_analysis_run SET deleted_at = ? WHERE analysis_id = ?", (now, analysis_id))
-            except sqlite3.OperationalError:
-                pass
-            try:
-                self.conn.execute("UPDATE fdb_processing_run SET deleted_at = ? WHERE processing_id = ?", (now, analysis_id))
-            except sqlite3.OperationalError:
-                pass
             self.conn.execute("UPDATE mfdb_operation SET deleted_at = ? WHERE operation_id = ?", (now, analysis_id))
         self.add_audit_log(
             action="delete",
@@ -5870,39 +5646,6 @@ class MFDatabase(MFDBClientBase):
             raise ValueError("name is required")
         uuid_str = parameter_uuid or f"param_{uuid.uuid4().hex[:12]}"
         now = _utc_now()
-        try:
-            self.conn.execute(
-                """INSERT OR REPLACE INTO fdb_analysis_parameter
-                   (parameter_uuid, analysis_id, name, value, standard_error,
-                    confidence_interval_low, confidence_interval_high, initial_value,
-                    lower_bound, upper_bound, bounds_on, units, parameter_type,
-                    expression, prior_json, mapping_json, metadata_json, created_at, updated_at, deleted_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    uuid_str,
-                    analysis_id,
-                    name,
-                    value,
-                    standard_error,
-                    confidence_interval_low,
-                    confidence_interval_high,
-                    initial_value,
-                    lower_bound,
-                    upper_bound,
-                    1 if bounds_on else 0,
-                    units,
-                    parameter_type,
-                    expression,
-                    _json_dumps(prior),
-                    _json_dumps(mapping),
-                    _json_dumps(metadata),
-                    now,
-                    now,
-                    None,
-                ),
-            )
-        except sqlite3.OperationalError:
-            pass
         self.record_parameter(
             parameter_uuid=uuid_str,
             operation_id=analysis_id,
@@ -5919,21 +5662,15 @@ class MFDatabase(MFDBClientBase):
         return uuid_str
 
     def get_analysis_parameter(self, parameter_uuid: str) -> sqlite3.Row | dict[str, Any] | None:
-        try:
-            return self.conn.execute(
-                "SELECT * FROM fdb_analysis_parameter WHERE parameter_uuid = ?",
-                (parameter_uuid,),
-            ).fetchone()
-        except sqlite3.OperationalError:
-            row = self.conn.execute(
-                "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?",
-                (parameter_uuid,),
-            ).fetchone()
-            if row:
-                d = dict(row)
-                d["analysis_id"] = d.pop("operation_id", None)
-                return d
-            return None
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?",
+            (parameter_uuid,),
+        ).fetchone()
+        if row:
+            d = dict(row)
+            d["analysis_id"] = d.pop("operation_id", None)
+            return d
+        return None
 
     def add_analysis_product(
         self,
@@ -5965,41 +5702,6 @@ class MFDatabase(MFDBClientBase):
             raise ValueError("storage_mode is required")
         prod_id = processed_data_id or f"prod_{uuid.uuid4().hex[:12]}"
         now = _utc_now()
-        try:
-            self.conn.execute(
-                """INSERT OR REPLACE INTO fdb_processed_data (
-                    processed_data_id, processing_id, product_type, storage_mode,
-                    file_path, url, folder_path, mime_type, size_bytes, checksum,
-                    checksum_algorithm, row_count, product_summary_json, metadata_json,
-                    data_json, data_blob, validation_status, validation_message,
-                    created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    prod_id,
-                    analysis_id,
-                    product_type,
-                    storage_mode,
-                    file_path,
-                    url,
-                    folder_path,
-                    mime_type,
-                    size_bytes,
-                    checksum,
-                    checksum_algorithm,
-                    row_count,
-                    _json_dumps(product_summary),
-                    _json_dumps(metadata),
-                    data_json,
-                    data_blob,
-                    validation_status,
-                    validation_message,
-                    now,
-                    now,
-                    None,
-                ),
-            )
-        except sqlite3.OperationalError:
-            pass
         self.add_processed_data_product(
             processing_id=analysis_id,
             product_type=product_type,
