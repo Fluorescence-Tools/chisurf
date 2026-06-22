@@ -1,0 +1,88 @@
+"""Burst Selection as a conformant transformer (PRD-16 / PRD-11).
+
+Adapts the plugin's pure ``analyze_request`` to the general transformer contract:
+declared typed ports, an ``operation_type`` ("burst_selection") whose parameter
+schema lives in the `.dic` (``mfdb_operation_parameter_def``), and a pure
+``transform``. No Qt, no DB. The flat declared parameters are mapped back onto the
+nested ``AnalysisSettings`` (the inverse of ``extract_burst_parameters``).
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from chisurf.core.transform import PortSpec, TransformInputs, TransformResult, register_transformer
+from chisurf.plugins.burst.burst_selection.api.models import (
+    AnalysisRequest,
+    AnalysisSettings,
+    BurstDetectionSettings,
+    CountRateFilterSettings,
+    DeltaMacroTimeFilterSettings,
+    GMMSettings,
+    PhotonFilterSettings,
+)
+from chisurf.plugins.burst.burst_selection.api.selection import analyze_request
+
+#: Vocabulary value shared with mfdb_operation_parameter_def / register_operation.
+OPERATION_TYPE = "burst_selection"
+
+
+def settings_from_parameters(parameters: dict) -> AnalysisSettings:
+    """Build nested ``AnalysisSettings`` from the flat declared parameters.
+
+    The inverse of ``api.mfdb.extract_burst_parameters``; only the declared
+    operation-parameter names are consumed.
+    """
+    p = parameters or {}
+    return AnalysisSettings(
+        photon_filter=PhotonFilterSettings(
+            filter_active=bool(p.get("filter_active", True)),
+            count_rate_filter=CountRateFilterSettings(
+                n_ph_max=int(p.get("count_rate_n_ph_max", 60)),
+                time_window=float(p.get("count_rate_time_window", 1e-3)),
+            ),
+            delta_macro_time_filter=DeltaMacroTimeFilterSettings(
+                dT_min=float(p.get("delta_macro_time_min", 1e-4)),
+                dT_max=float(p.get("delta_macro_time_max", 0.15)),
+            ),
+        ),
+        burst_detection=BurstDetectionSettings(
+            min_photons=int(p.get("min_photons", 60)),
+            photon_window=int(p.get("photon_window", 10)),
+            time_window=float(p.get("time_window", 1e-3)),
+        ),
+        gmm=GMMSettings(max_components=int(p.get("gmm_max_components", 10))),
+    )
+
+
+class BurstSelectionTransformer:
+    """Conformant transformer over the ``burst_selection`` operation type."""
+
+    transformer_id = "burst_selection"
+    operation_type = OPERATION_TYPE
+    version = "1.0"
+    input_spec = [
+        PortSpec(
+            name="raw",
+            kinds=("raw_measurement",),
+            formats=("ptu", "spc", "ht3", "hdf", "h5"),
+        )
+    ]
+    output_spec = [PortSpec(name="burst_table", kinds=("burst_table", "processed_data"))]
+
+    def transform(self, inputs: TransformInputs, parameters: dict) -> TransformResult:
+        """Pure transform: run burst selection over the input files. No Qt, no DB."""
+        request = AnalysisRequest(
+            files=list(inputs.files),
+            settings=settings_from_parameters(parameters),
+            filetype=parameters.get("filetype"),
+            output_dir=parameters.get("output_dir"),
+        )
+        result = analyze_request(request)
+        outputs: dict[str, Any] = dict(getattr(result, "output_paths", {}) or {})
+        warnings = list(getattr(result, "warnings", []) or [])
+        return TransformResult(outputs={"burst_table": outputs}, warnings=warnings)
+
+
+#: Registered instance for discovery / conformance enumeration.
+BURST_SELECTION_TRANSFORMER = register_transformer(BurstSelectionTransformer())
