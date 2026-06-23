@@ -136,9 +136,27 @@ class MFDatabase(MFDBClientBase):
             raise RuntimeError("Database not connected. Call connect() first.")
         return self._conn
 
+    @property
+    def dao(self) -> "DictionaryDao":
+        """Dictionary-/schema-driven CRUD accessor (PRD-26 Task 1).
+
+        Provides parameterised, schema-whitelisted ``insert/get/list/update/
+        soft_delete`` over the live tables, built lazily from the connection
+        after the schema is reconciled. CRUD-shaped repository methods are being
+        migrated onto this to remove hand-written/f-string SQL.
+        """
+        dao = getattr(self, "_dao", None)
+        if dao is None:
+            from chisurf.core.mfdb.dao import DictionaryDao
+
+            dao = DictionaryDao.from_connection(self.conn)
+            self._dao = dao
+        return dao
+
     def connect(self):
         if self._conn is not None:
             return
+        self._dao = None
         self._conn = sqlite3.connect(str(self.db_path))
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
@@ -3280,11 +3298,8 @@ class MFDatabase(MFDBClientBase):
         dict or None
             Object metadata, or None if not found.
         """
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_object WHERE object_uuid = ?",
-            (object_uuid,),
-        ).fetchone()
-        return _row_to_dict(row)
+        # PRD-26 Task 2: parameterised, schema-driven get-by-PK (was a hand SELECT).
+        return self.dao.get("mfdb_object", object_uuid, include_deleted=True)
 
     def get_object_path(self, object_uuid: str) -> Path:
         """Return the filesystem path for an object.
@@ -3397,10 +3412,10 @@ class MFDatabase(MFDBClientBase):
         return [dict(r) for r in self.conn.execute(query, params).fetchall()]
 
     def get_artifact(self, artifact_id: str) -> dict[str, Any] | None:
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_artifact WHERE artifact_id = ?", (artifact_id,)
-        ).fetchone()
-        return _row_to_dict(row)
+        # PRD-26 Task 1: parameterised, schema-driven get. ``include_deleted`` is
+        # required to preserve the historical behaviour of returning artifacts
+        # regardless of soft-delete (callers that need live-only filter explicitly).
+        return self.dao.get("mfdb_artifact", artifact_id, include_deleted=True)
 
     def list_artifacts(
         self,
@@ -3760,10 +3775,8 @@ class MFDatabase(MFDBClientBase):
         return operation_id
 
     def get_operation(self, operation_id: str) -> dict[str, Any] | None:
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_operation WHERE operation_id = ?", (operation_id,)
-        ).fetchone()
-        return _row_to_dict(row)
+        # PRD-26 Task 2: parameterised, schema-driven get-by-PK (was a hand SELECT).
+        return self.dao.get("mfdb_operation", operation_id, include_deleted=True)
 
     def list_operations(
         self,
@@ -4212,10 +4225,8 @@ class MFDatabase(MFDBClientBase):
         return parameter_uuid
 
     def get_parameter(self, parameter_uuid: str) -> dict[str, Any] | None:
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?", (parameter_uuid,)
-        ).fetchone()
-        return _row_to_dict(row)
+        # PRD-26 Task 2: parameterised, schema-driven get-by-PK (was a hand SELECT).
+        return self.dao.get("mfdb_parameter", parameter_uuid, include_deleted=True)
 
     def list_parameters(
         self,
