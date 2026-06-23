@@ -19,7 +19,13 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 #: Artifact kinds that can be opened in ndXplorer (burst outputs).
-BURST_KINDS = ["burst_table", "external_reference", "processed_data"]
+#: A burst selection's .bur files reference photons by index in the original TTTR
+#: file, so the thing to open is the on-disk burst *folder* (registered as a
+#: directory external_reference next to the TTTR files), not an object-store copy.
+#: That folder is also the single group for a multi-file run — one entry per run.
+BURST_KINDS = ["external_reference"]
+#: Data formats to show: the burst output directory (the group).
+BURST_FORMATS = ["directory"]
 
 
 def resolve_dataset_path(client: Any, artifact_id: str) -> str | None:
@@ -64,6 +70,7 @@ def open_burst_selection_from_mfdb(parent: Any = None, scope: str = "all") -> An
     sel = MfdbDatasetPickerDialog.pick_dataset(
         parent=parent,
         kinds=BURST_KINDS,
+        formats=BURST_FORMATS,
         scope=scope,
         client=client,
     )

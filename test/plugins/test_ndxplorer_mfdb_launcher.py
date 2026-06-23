@@ -78,5 +78,11 @@ def test_resolve_dataset_path_empty_artifact_returns_none():
     assert resolve_dataset_path(_NoCall(), "") is None
 
 
-def test_burst_kinds_includes_burst_table():
-    assert "burst_table" in BURST_KINDS
+def test_burst_kinds_target_the_on_disk_burst_folder():
+    # The burst .bur files reference photons in the original TTTR file, so the
+    # launcher opens the on-disk burst folder (a directory external_reference),
+    # which is also the single group per multi-file run — not an object-store copy.
+    from chisurf.plugins.ndxplorer.mfdb_launcher import BURST_FORMATS
+
+    assert BURST_KINDS == ["external_reference"]
+    assert "directory" in BURST_FORMATS
