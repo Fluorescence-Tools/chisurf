@@ -74,18 +74,28 @@ Read `MASTER-ORDER.md` Phase 2. **PRD-11** (operation-node abstraction) + **PRD-
   the registry conformance gate.**
 
 **Next (in order):**
-1. **PRD-28 — ndXplorer ↔ MFDB burst round trip** (the manual-test enabler the user
-   asked for; spec'd in `PRD-28-ndxplorer-burst-integration.md`). Add (a) an ndXplorer
-   "Open burst selection from MFDB" launcher: `MfdbDatasetPickerDialog.pick_dataset(
-   kinds=["burst_table"])` → resolve path via `datasets.open` →
-   `NDXplorer.open_files(file_type="burst_dir", file_handles=path)`; and (b) a Burst
-   Selection "Send to ndXplorer" action. Reuse the picker (the Microtime Shifter shows
-   the pattern, `tttr_microtime_shifter/gui/tool.py:325`); keep `modules/ndxplorer`
-   chisurf-free. This makes the whole spine hands-on testable.
-2. **Apply PRD-23 (thin widgets)** to both tools; consider routing `register_result`
-   internals through `register_operation` so there is one recording path.
-3. **PRD-26** (the `.dic` generates DAO/admin/validation/docs) — builds on PRD-19 +
-   the operation-parameter schema.
+1. ~~**PRD-28 — ndXplorer ↔ MFDB burst round trip**~~ ✓ **DONE.** Both directions
+   landed (direction A "Open Burst in ndXplorer" launcher + menu plugin; direction B
+   "to ndXplorer" toolbar button), plus the **headless CLI handoff**: `csc
+   burst-selection analyze --mfdb` registers raw+sample, burst tables, and a single
+   named output-folder group whose artifact resolves (via `mfdb.datasets.open`) to the
+   co-located `.bur` folder ndXplorer opens. Manual-test fixes folded in (proximity
+   ratio = raw micro-time ranges, multi-file grouping, open-from-MFDB path,
+   `external_reference` materialization). Spec updated in
+   `PRD-28-ndxplorer-burst-integration.md`. Follow-on specs written:
+   **PRD-31** (ndXplorer headless burst-filter + imaging CLI), **PRD-34** (BID saves to
+   MFDB + downstream plugins ingest MFDB BIDs directly). _(Several ndXplorer-side
+   usability/perf fixes also landed in the `modules/ndxplorer` submodule working
+   tree — tangential to the core MFDB track.)_
+2. **▶ PRD-26 (model-driven data layer) — IN PROGRESS.** The `.dic` generates the
+   DAO/admin/validation/docs. **Task 1 (DAO generator core)** is the current concrete
+   deliverable: `chisurf/core/mfdb/dao.py` — a dictionary-/schema-validated,
+   fully-parameterised CRUD layer (`insert/get/list/update/soft_delete`) that hand SQL
+   can migrate onto (Task 2). Builds on `DictionarySchemaMap` (PRD-19) + the
+   operation-parameter schema (PRD-11).
+3. **Apply PRD-23 (thin widgets)** to both transformer tools; consider routing
+   `register_result` internals through `register_operation` so there is one recording
+   path.
 
 Orange3 lessons fold in here: typed kind-matched ports (16/11), transformer-as-
 serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
@@ -102,7 +112,8 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-27** append-only core | go/no-go **decided: append-only-lite** ✓ (build is Phase 3) | `(PRD-27 doc)` |
 | **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, `register_operation` ✓, role-indexed recording ✓, **`mfdb_microtime_shift` retired** ✓, **validation wired into `register_result`** ✓ | `1da6ab6d`…`2a02f560` |
 | **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
-| **PRD-28** ndXplorer↔MFDB burst round trip | spec'd (manual-test enabler) — implement next | `(PRD-28 doc)` |
+| **PRD-28** ndXplorer↔MFDB burst round trip | **implemented** ✓ — both directions + headless CLI handoff (`analyze --mfdb`); manual-test fixes folded in; follow-ons PRD-31/34 spec'd | `b9137030`…`e647cc8c` |
+| **PRD-26** model-driven data layer (Phase 2) | **Task 1 (DAO core) landed** ✓ — `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete), `test/fio/test_dao.py`. **Task 2 in progress** ✓ — `MFDatabase.dao` accessor + the get-by-PK family migrated (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info` → `dao.get(..., include_deleted=True)`, behaviour-equivalent, A/B-verified, regression-tested). Deferred: `get_sample` (Row/subset shape), `delete_*` (`_utc_now` vs `CURRENT_TIMESTAMP`). Tasks 2 (cont.)/3/4/5 next | `(core/mfdb/dao.py, repository.py)` |
 
 ## Decisions locked
 
@@ -123,9 +134,12 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 - **Pre-existing failures (NOT yours):** `test_sample_database_plugin.py::test_json_rpc_
   versioned_services` & `::test_gui_starts_embedded_mfdb_rpc_when_unavailable`
   (AuthError / GUI bootstrap); `test_fdb_vocab_and_migration.py` two `migrated_mfdb_edge`
-  vocab tests; `test_rename.py`, `test_becker_hickl_set.py`, `test_bhfiles.py`
-  collection errors (hardcoded paths / `BeckerHicklSetReader` import in other
-  subsystems). Confirm any new red is yours via a `git stash` A/B before owning it.
+  vocab tests; `test_dataset_browser.py` three migration/owner-backfill tests (v39 owner,
+  unseeded-user, backfill-description); `test_setup_calibration_history.py::
+  test_v35_migration_backfills_existing_channels`; `test_rename.py`,
+  `test_becker_hickl_set.py`, `test_bhfiles.py` collection errors (hardcoded paths /
+  `BeckerHicklSetReader` import). Confirm any new red is yours via a `git stash` A/B
+  before owning it.
 - **GUI batching hangs:** running `test_sample_database_plugin.py` batched with other
   files under `QT_QPA_PLATFORM=offscreen` can hang. Run GUI files (or individual GUI
   tests) separately.

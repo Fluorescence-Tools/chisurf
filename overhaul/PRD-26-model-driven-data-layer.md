@@ -71,6 +71,50 @@ updates schema, DAO, admin, validation, and docs together.
 f-string SQL; generated + bespoke-query separation is explicit; behavior-asserting
 tests that a single `.dic` edit propagates everywhere.
 
+## Implementation status
+
+**Task 1 (DAO generator core) — landed.** `chisurf/core/mfdb/dao.py` provides
+`DictionaryDao`: generic, fully-parameterised CRUD (`insert/get/list/update/
+soft_delete`) over any dictionary-declared table. Table/column identifiers are
+**whitelisted against the live schema** (built via `DictionarySchemaMap` /
+`introspect_sqlite_schema`), so identifiers never carry caller input and all values
+are bound parameters — closing the f-string-SQL/injection surface. Conventions are
+applied automatically when a table declares them: `deleted_at` soft-delete (default
+reads hide deleted rows; `soft_delete` falls back to hard `DELETE` when absent) and
+an `updated_at` touch on update. Constructors: `from_connection` (introspect a live
+`MFDatabase.conn`), `from_dictionary_map`, `from_db_path`. Covered by
+`test/fio/test_dao.py` (CRUD round trip + soft-delete on `flr_sample`,
+unknown-table/column rejection, PK-immutable, and a parameterisation/no-injection
+assertion).
+
+**Task 2 (migrate repository CRUD onto the DAO) — in progress.** `MFDatabase`
+exposes a lazy `dao` accessor (`DictionaryDao.from_connection(self.conn)`, built after
+schema reconcile). Migrated so far — the `_row_to_dict(SELECT * … WHERE pk=?)`
+get-by-PK family, each behaviour-equivalent (`_row_to_dict` ≡ `dict(row)`;
+`include_deleted=True` preserves the historical "return regardless of soft-delete"
+semantics) and replacing a hand SELECT:
+- `get_artifact` → `dao.get("mfdb_artifact", …, include_deleted=True)`
+- `get_operation` → `dao.get("mfdb_operation", …, include_deleted=True)`
+- `get_parameter` → `dao.get("mfdb_parameter", …, include_deleted=True)`
+- `get_object_info` → `dao.get("mfdb_object", …, include_deleted=True)`
+
+Verified: all operation/parameter/object/registry/burst-pipeline suites pass; the
+only reds are pre-existing migration/owner-backfill failures (v35/v39), A/B-confirmed
+unchanged with the migration reverted. Plus a dedicated `get_artifact` soft-delete
+regression test.
+
+**Deferred (need care, not behaviour-equivalent yet):**
+- `get_sample` returns a `sqlite3.Row` with an explicit column subset (not `SELECT *`/
+  dict) — migrating changes the return type/shape; audit callers first.
+- The `delete_*` soft-delete methods set `deleted_at` via `_utc_now()` (Python ISO
+  string), whereas `DictionaryDao.soft_delete` uses `CURRENT_TIMESTAMP`; some cascade
+  across related tables. Align the DAO's soft-delete timestamp/cascade story before
+  migrating these.
+
+Remaining: continue **Task 2** (CRUD-shaped methods, each with an equivalence check;
+keep bespoke lineage/browse SQL explicit); **Tasks 3–5** generate the admin entity
+registry, RPC parameter validation, and API/schema docs from the `.dic`.
+
 ## Relationship
 
 Builds directly on **PRD-19** (canonical schema + reconcile generator) and **PRD-11**

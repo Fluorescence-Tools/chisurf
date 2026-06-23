@@ -43,6 +43,11 @@
 30. **PRD-26-model-driven-data-layer.md** -- Idea **J**: the `.dic` generates DAO/repository, admin registry, RPC validation, and docs (on PRD-19).
 31. **PRD-27-event-sourced-provenance-core.md** -- Idea **M**: append-only provenance/state core with branching. *(Phase-1 decision; PRD-12/21 project over it.)*
 32. **PRD-28-ndxplorer-burst-integration.md** -- ndXplorer ↔ MFDB burst-selection round trip (send to / open from ndXplorer via the dataset picker). *(Phase-2 manual-test enabler.)*
+33. **PRD-29-visual-burst-programming.md** -- visual burst programming workflow.
+34. **PRD-30-cli-pipeline-tools.md** -- Unix pipe support for burst/TTTR CLI tools.
+35. **PRD-31-ndxplorer-headless-cli.md** -- headless ndXplorer burst filtering + imaging CLI.
+36. **PRD-32-acquisition-output-folder.md** -- setup-defined standard acquisition output folder.
+37. **PRD-33-acquisition-mfdb-registration.md** -- direct acquisition registration into MFDB.
 
 ## ► Authoritative sequence: see **MASTER-ORDER.md**
 

@@ -53,7 +53,12 @@ These make everything after cheaper and safer; do them right after 03/04.
    **PRD-23** (thin widgets) to those tools as you touch them.
    - **PRD-28** ndXplorer ↔ MFDB burst-selection round trip — a manual-test enabler
      that rides this spine (send a burst selection to ndXplorer; open one from MFDB via
-     the dataset picker). Do once Burst Selection registers conformantly.
+     the dataset picker). Do once Burst Selection registers conformantly. The CLI
+     handoff (`BS analyze --mfdb` → resolvable group artifact) is implemented and
+     verified.
+   - **PRD-31** ndXplorer headless CLI (parameter-based burst filtering + headless
+     imaging) — completes the CLI leg of PRD-28; specified for separate
+     implementation.
 7. **PRD-26** model-driven data layer (idea **J**) — the `.dic` generates the
    DAO/repository, admin entity registry, RPC validation, and docs. Builds on
    PRD-19's generator + PRD-11's parameter schemas; subsumes most hand-maintained
@@ -88,6 +93,15 @@ These make everything after cheaper and safer; do them right after 03/04.
 - **PRD-25** consistency hardening (+ idea **N**) — H1/H2 + N1/N3 in Phase 1; H3 is
   subsumed by PRD-19 (one canonical schema); N2 (units) lands with PRD-11 params;
   H4 (caching), H5 (N+1), H6 (dead-code, mostly subsumed by PRD-19) as convenient.
+- **PRD-32** acquisition standard output folder — setup-defined default save path
+  for new measurements; independent and shippable now.
+- **PRD-33** acquisition-to-MFDB registration — sample-linked or new-sample
+  measurement registration; depends on PRD-02/03 and stays separate from the
+  file-output path.
+- **PRD-34** BID saves to MFDB + downstream plugins ingest MFDB BIDs directly —
+  when connected, a burst selection (BID) registers to MFDB (reference, not a loose
+  file) and the burst tools open BIDs from the dataset picker. Generalizes PRD-28
+  to all BID producers/consumers; rides PRD-03/11/16 + PRD-10.
 
 ## Dependency graph
 

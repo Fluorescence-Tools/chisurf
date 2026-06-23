@@ -142,9 +142,28 @@ Direction A is implemented:
   open_burst_selection_from_mfdb()`), pick a registered burst selection, and it opens
   in ndXplorer.
 
+### CLI handoff (verified)
+
+The `raw+sample → BS → ndXplorer` path is now exercisable headlessly:
+- The **Burst Selection CLI** gained MFDB registration: `csc burst-selection
+  analyze … --mfdb --db <db> --sample-name <name>` registers raw inputs linked to
+  the sample, burst tables, and a single output-folder group, printing
+  `mfdb_artifacts` (with the group's `output_folder` artifact id).
+- That group artifact resolves (via `MFDatabase.open_dataset`, the same call
+  behind `mfdb.datasets.open` / `resolve_dataset_path`) to the on-disk burstwise
+  folder containing the `.bur` files co-located with the TTTR — exactly what
+  ndXplorer opens as a `burst_dir`. Verified on `bh_spc132_sm_dna` and covered by
+  `test_cli.py::test_analyze_mfdb_registers_raw_sample_and_group`.
+- **Shared-DB caveat:** the in-process `MFDBClient` opens the *configured*
+  database, so for a real round trip BS and ndXplorer must target the same MFDB
+  (use the configured DB or thread the same path through both).
+
 Remaining: a "Send to ndXplorer" button on the Burst Selection tool (direction B,
 `send_path_to_ndxplorer`); confirm ndXplorer ingests the resolved artifact path
-(burst_table object vs. the burst-dir `external_reference`) during interactive use.
+(burst_table object vs. the burst-dir `external_reference`) during interactive
+use. The **headless ndXplorer side** (use ndXplorer as a parameter-based burst
+filter *and* for headless imaging) is specified in **PRD-31** for separate
+implementation.
 
 ## Relationship
 
