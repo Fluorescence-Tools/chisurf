@@ -3624,6 +3624,19 @@ class MFDatabase(MFDBClientBase):
         if file_path and Path(file_path).exists():
             return str(file_path)
 
+        # External references (e.g. a burst output directory or .bur file) carry
+        # their path in metadata rather than the object store; materialize that.
+        metadata = art.get("metadata") or art.get("metadata_json")
+        if isinstance(metadata, str):
+            try:
+                metadata = _json_loads(metadata)
+            except Exception:
+                metadata = None
+        if isinstance(metadata, dict):
+            meta_path = metadata.get("path") or metadata.get("folder_path")
+            if meta_path and Path(meta_path).exists():
+                return str(meta_path)
+
         raise KeyError(
             f"Artifact {artifact_id} has no materializable content "
             f"(no object_uuid and no valid file_path)"

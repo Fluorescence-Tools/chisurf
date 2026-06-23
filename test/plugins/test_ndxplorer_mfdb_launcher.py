@@ -33,6 +33,43 @@ def test_resolve_dataset_path_via_real_client(tmp_path):
             close()
 
 
+def test_resolve_external_reference_directory_via_metadata(tmp_path):
+    """A burst output folder is registered as an external_reference (no object,
+    no file_path) with its on-disk path in metadata — resolve_dataset_path must
+    return that path (the .bur folder co-located with the TTTR files, preserving
+    the photon-index linkage), not fail."""
+    from chisurf.core.mfdb.result_registry import register_raw_measurement, register_result
+    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+
+    burst_dir = tmp_path / "burstwise"
+    burst_dir.mkdir()
+    (burst_dir / "f1.bur").write_text("0 100\n")
+    raw_file = tmp_path / "m.ptu"
+    raw_file.write_bytes(b"\x00\x01")
+
+    # Register into the resolved (hermetic) DB the in-process client also opens.
+    raw = register_raw_measurement(str(raw_file))
+    ext = register_result(
+        kind="external_reference",
+        data=None,
+        parent_artifact_id=raw,
+        operation_type="burst_selection",
+        data_format="directory",
+        metadata={"plugin": "burst_selection", "output_role": "output_folder", "path": str(burst_dir)},
+    )
+    assert ext
+
+    client = MFDBClient(inprocess=True)
+    try:
+        path = resolve_dataset_path(client, ext)
+        assert path == str(burst_dir)
+    finally:
+        set_global_db(None)
+        close = getattr(client, "close", None)
+        if callable(close):
+            close()
+
+
 def test_resolve_dataset_path_empty_artifact_returns_none():
     class _NoCall:
         def call(self, *a, **k):  # pragma: no cover - must not be reached
