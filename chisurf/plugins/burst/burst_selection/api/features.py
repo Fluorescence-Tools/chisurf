@@ -27,6 +27,39 @@ def _feature_column(frame: pd.DataFrame, preferred: str, fallback: str) -> pd.Se
     return frame[fallback]
 
 
+def _numeric(frame: pd.DataFrame, column: str) -> np.ndarray | None:
+    """Return a numeric array for ``column`` when present, else ``None``."""
+    if column not in frame.columns:
+        return None
+    return pd.to_numeric(frame[column], errors="coerce").to_numpy(dtype=float)
+
+
+def proximity_ratio(frame: pd.DataFrame) -> np.ndarray | None:
+    """Compute the burst proximity ratio PR = red / (green + red).
+
+    Uses an explicit ``Proximity Ratio`` column when present, otherwise the
+    per-detector green/red photon counts (``Number of Photons (red|green)``), then
+    the green/red count rates. Returns ``None`` when no source columns exist.
+    Bursts with no green+red signal yield ``NaN`` (excluded from histograms),
+    rather than collapsing to 0.
+    """
+    explicit = _numeric(frame, "Proximity Ratio")
+    if explicit is not None:
+        return explicit
+    for red_col, green_col in (
+        ("Number of Photons (red)", "Number of Photons (green)"),
+        ("Red Count Rate (KHz)", "Green Count Rate (KHz)"),
+    ):
+        red = _numeric(frame, red_col)
+        green = _numeric(frame, green_col)
+        if red is not None and green is not None:
+            total = red + green
+            return np.divide(
+                red, total, out=np.full(len(frame), np.nan, dtype=float), where=total > 0
+            )
+    return None
+
+
 def extract_features(frames: Sequence[pd.DataFrame]) -> pd.DataFrame:
     """Extract numerical burst features from burst summary DataFrames.
 
@@ -58,10 +91,12 @@ def extract_features(frames: Sequence[pd.DataFrame]) -> pd.DataFrame:
         )
         if "fret" in frame:
             fret = frame["fret"].to_numpy(dtype=float)
-        elif "Proximity Ratio" in frame:
-            fret = frame["Proximity Ratio"].to_numpy(dtype=float)
         else:
-            fret = np.zeros(len(frame))
+            # Derive the proximity ratio from green/red photon counts when there is
+            # no explicit column (generate_burst_dataframe records per-detector
+            # counts but no Proximity Ratio column) — otherwise every burst was 0.
+            pr = proximity_ratio(frame)
+            fret = pr if pr is not None else np.zeros(len(frame))
         records.extend(
             {
                 "nphotons": n,

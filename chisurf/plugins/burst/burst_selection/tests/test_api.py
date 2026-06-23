@@ -26,6 +26,7 @@ from chisurf.plugins.burst.burst_selection.api.models import (
     BurstFilterMode,
     DeltaMacroTimeFilterSettings,
     GMMSettings,
+    MFDBContext,
     PhotonFilterSettings,
 )
 from chisurf.plugins.burst.burst_selection.api.selection import (
@@ -79,6 +80,9 @@ def test_contract_descriptor_defines_workflow_io() -> None:
         "output_paths",
         "metadata",
     ]
+    assert "mfdb" in contract["inputs"]["AnalyzeFiles"]["properties"]
+    assert "output_paths_by_file" in contract["outputs"]["AnalysisResult"]["properties"]
+    assert "mfdb_artifacts" in contract["outputs"]["AnalysisResult"]["properties"]
     assert contract["rpc_methods"][METHOD_ANALYZE_FILES]["input"] == "AnalyzeFiles"
 
 
@@ -112,6 +116,32 @@ def test_analysis_request_payload_roundtrip_normalizes_json_inputs() -> None:
     payload = analysis_request_to_payload(request)
     assert payload["windows"] == {"prompt": [0, 2048]}
     assert payload["settings"]["photon_filter"]["used_filter"] == "burst"
+    assert payload["mfdb"]["enabled"] is True
+
+
+def test_analysis_request_accepts_nested_mfdb_context() -> None:
+    """Workflow payloads should accept nested MFDB archival context."""
+    request = analysis_request_from_payload(
+        {
+            "files": ["m000.spc"],
+            "mfdb": {
+                "enabled": False,
+                "sample_id": "sample_1",
+                "source_artifact_ids": {"m000.spc": "artifact_1"},
+                "register_missing_inputs": False,
+                "setup_id": "tttr_detector_setup:bh_spc_130",
+                "setup_version": 1,
+            },
+        }
+    )
+
+    assert isinstance(request.mfdb, MFDBContext)
+    assert request.mfdb.enabled is False
+    assert request.mfdb.sample_id == "sample_1"
+    assert request.mfdb.source_artifact_ids == {"m000.spc": "artifact_1"}
+    assert request.mfdb.register_missing_inputs is False
+    assert request.mfdb.setup_id == "tttr_detector_setup:bh_spc_130"
+    assert request.mfdb.setup_version == 1
 
 
 def test_analysis_result_payload_is_json_safe() -> None:
@@ -122,12 +152,16 @@ def test_analysis_result_payload_is_json_safe() -> None:
             dataframes={str(BH_SPC_FILE): [{"First Photon": 0}]},
             output_paths={"bur": str(BH_SPC_FILE.with_suffix(".bur"))},
             metadata={"n_photons": 1},
+            mfdb_artifacts={"burst_table_artifacts": {str(BH_SPC_FILE): "artifact_1"}},
+            warnings=["mfdb unavailable"],
         )
     )
 
     assert payload["files"] == [str(BH_SPC_FILE)]
     assert payload["dataframes"][str(BH_SPC_FILE)][0]["First Photon"] == 0
     assert payload["output_paths"]["bur"].endswith(".bur")
+    assert payload["mfdb_artifacts"]["burst_table_artifacts"][str(BH_SPC_FILE)] == "artifact_1"
+    assert payload["warnings"] == ["mfdb unavailable"]
 
 
 def test_find_bursts_bridges_configured_gap() -> None:
@@ -310,6 +344,25 @@ def test_extract_features_supports_chisurf_bur_columns() -> None:
     features = extract_features([df])
     assert features.loc[0, "nphotons"] == 10
     assert features.loc[1, "fret"] == 0.75
+
+
+def test_extract_features_derives_proximity_ratio_from_green_red() -> None:
+    """When there is no explicit Proximity Ratio column, the proximity ratio is
+    derived from green/red photon counts (PR = red / (red + green)), not 0."""
+    df = pd.DataFrame(
+        {
+            "Number of Photons": [10, 20, 0],
+            "Duration (ms)": [1.0, 2.0, 0.0],
+            "Number of Photons (red)": [2, 10, 0],
+            "Number of Photons (green)": [8, 10, 0],
+        }
+    )
+    features = extract_features([df])
+    fret = features["fret"].to_numpy()
+    assert fret[0] == 0.2
+    assert fret[1] == 0.5
+    # a burst with no green+red signal is NaN (excluded), not collapsed to 0
+    assert np.isnan(fret[2])
 
 
 def test_extract_features_and_fit_gmm() -> None:
