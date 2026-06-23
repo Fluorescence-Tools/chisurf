@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 from dataclasses import asdict
@@ -14,13 +15,20 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys
+from chisurf.core.mfdb.base import MFDBClientBase
+from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.result_registry import register_result
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
+from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_channel_definition import (
     DetectorWizardPage,
 )
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
+    _resolve_active_user_id,
     load_detector_setups,
+    setup_id_for_name,
 )
 from chisurf.gui.widgets.wizard.tttr_photonfilter.tttr_photon_filter import WizardTTTRPhotonFilter
 from chisurf.server.rpc_logging import RpcLogWriter
@@ -80,6 +88,151 @@ def _normalize_filetype(filetype: str | None) -> str | None:
     if not filetype or str(filetype).strip().lower() == "auto":
         return None
     return str(filetype).strip()
+
+
+def _file_md5(path: Path) -> str:
+    """Return the MD5 content hash for a file.
+
+    Parameters
+    ----------
+    path : Path
+        File path.
+
+    Returns
+    -------
+    str
+        Hex-encoded MD5 digest.
+
+    """
+    digest = hashlib.md5()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sample_id_for_raw_path(db: MFDBClientBase, path: Path) -> str | None:
+    """Return the sample already associated with raw file content.
+
+    Parameters
+    ----------
+    db : MFDBClientBase
+        MFDB connection.
+    path : Path
+        Raw input file path.
+
+    Returns
+    -------
+    str or None
+        Existing sample ID, or ``None`` when the file content is not yet
+        associated with a sample.
+
+    """
+    try:
+        return db.lookup_sample_by_md5(_file_md5(path))
+    except Exception:
+        return None
+
+
+def _raw_artifact_id_for_path(db: MFDBClientBase, path: Path) -> str:
+    """Return an existing raw-measurement artifact for a file, if any.
+
+    Parameters
+    ----------
+    db : MFDBClientBase
+        MFDB connection.
+    path : Path
+        Raw input file path.
+
+    Returns
+    -------
+    str
+        Existing artifact ID, or an empty string.
+
+    """
+    try:
+        return db.find_raw_artifact_by_md5(_file_md5(path))
+    except Exception:
+        return ""
+
+
+def _raw_file_data_format(path: Path) -> str:
+    """Return the MFDB data-format vocabulary value for a raw TTTR file.
+
+    Parameters
+    ----------
+    path : Path
+        Raw input file path.
+
+    Returns
+    -------
+    str
+        Data-format value accepted by MFDB.
+
+    """
+    suffix = path.suffix.lower().lstrip(".")
+    return {
+        "h5": "hdf5",
+        "ht3": "tttr",
+    }.get(suffix, suffix or "tttr")
+
+
+def _register_raw_input_for_sample(
+    *,
+    db: MFDBClientBase,
+    path: Path,
+    sample_id: str,
+    filetype: str | None,
+    selected_setup: str | None,
+    setup_id: str = "",
+) -> str:
+    """Register a raw input artifact and bind its object content to a sample.
+
+    Parameters
+    ----------
+    db : MFDBClientBase
+        MFDB connection.
+    path : Path
+        Raw input file path.
+    sample_id : str
+        Existing sample ID.
+    filetype : str, optional
+        Reader file type.
+    selected_setup : str, optional
+        Detector setup name.
+    setup_id : str, optional
+        MFDB setup identifier.
+
+    Returns
+    -------
+    str
+        Registered raw artifact ID, or an empty string.
+
+    """
+    if not db.sample_exists(sample_id):
+        return ""
+    artifact_id = register_result(
+        kind="raw_measurement",
+        data=path,
+        sample_id=sample_id,
+        operation_type="measurement_import",
+        data_format=_raw_file_data_format(path),
+        setup_id=setup_id,
+        metadata={
+            "plugin": "burst_selection",
+            "role": "raw_tttr",
+            "filetype": filetype,
+            "selected_setup": selected_setup,
+        },
+        db=db,
+    )
+    if not artifact_id:
+        return ""
+    artifact = db.get_artifact(artifact_id)
+    object_uuid = artifact.get("object_uuid") if artifact else None
+    if object_uuid:
+        db.set_object_sample_id(object_uuid, sample_id)
+    return artifact_id
 
 
 def _setup_summary(setup_name: str | None, filetype: str | None) -> str:
@@ -415,6 +568,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         self._closed_diagnostic_plots: set[str] = set()
         self._selected_setup_name: str | None = None
         self._selected_filetype: str | None = None
+        self._mfdb_db: MFDBClientBase | None = None
         self._fit_gmm_on_update = False
         self._building_ui = True
         self._metadata: dict[str, str] = {}
@@ -750,15 +904,18 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         self.csv_output_check.setChecked(True)
         self.hdf_output_check = QtWidgets.QCheckBox("MFD-HDF", group)
         self.hdf_output_check.setEnabled(False)
+        self.mfdb_output_check = QtWidgets.QCheckBox("MFDB", group)
         self.zip_output_check = QtWidgets.QCheckBox("Zip Output", group)
         self.remove_folder_check = QtWidgets.QCheckBox("Remove Folder", group)
         format_layout.addWidget(self.csv_output_check)
         format_layout.addWidget(self.hdf_output_check)
+        format_layout.addWidget(self.mfdb_output_check)
         format_layout.addWidget(self.zip_output_check)
         format_layout.addWidget(self.remove_folder_check)
         group_layout.addLayout(format_layout)
         self.csv_output_check.stateChanged.connect(self._sync_output_format_controls)
         self.hdf_output_check.stateChanged.connect(self._sync_output_format_controls)
+        self.mfdb_output_check.stateChanged.connect(self._sync_output_format_controls)
         self.zip_output_check.stateChanged.connect(self._sync_output_format_controls)
         layout.addWidget(group)
         return panel
@@ -1395,6 +1552,180 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             return self._last_frames_by_file[path]
         return None
 
+    def _selected_sample_id(self) -> str:
+        """Return the selected MFDB sample ID when the tool exposes one."""
+        def safe_getattr(obj: object, name: str, default: object = None) -> object:
+            """Read an attribute from Qt test doubles that may skip ``__init__``."""
+            try:
+                return getattr(obj, name, default)
+            except RuntimeError:
+                return default
+
+        for attr_name in ("sample_picker", "sample_selector"):
+            picker = safe_getattr(self, attr_name)
+            if picker is None:
+                continue
+            for method_name in ("selected_sample_id", "current_sample_id"):
+                method = safe_getattr(picker, method_name)
+                if callable(method):
+                    sample_id = method()
+                    if sample_id:
+                        return str(sample_id)
+            sample_id = safe_getattr(picker, "sample_id", "")
+            if sample_id:
+                return str(sample_id)
+        sample_id = safe_getattr(self, "sample_id", "")
+        return str(sample_id) if sample_id else ""
+
+    def _mfdb_output_selected(self) -> bool:
+        """Return whether MFDB archival is selected as an output mode.
+
+        Returns
+        -------
+        bool
+            ``True`` when the MFDB output checkbox is checked.
+
+        """
+        check = self._safe_getattr("mfdb_output_check")
+        try:
+            return bool(check is not None and check.isChecked())
+        except RuntimeError:
+            return False
+
+    def _db(self) -> MFDBClientBase | None:
+        """Return the MFDB connection used by the output preflight.
+
+        Returns
+        -------
+        MFDBClientBase or None
+            Active or newly opened MFDB connection.
+
+        """
+        if self._mfdb_db is not None:
+            return self._mfdb_db
+        try:
+            from chisurf.core.mfdb.result_registry import _get_global_db
+
+            db = _get_global_db()
+        except Exception:
+            db = None
+        if db is not None:
+            self._mfdb_db = db
+            return db
+        try:
+            self._mfdb_db = MFDatabase(resolve_database_path())
+        except Exception as exc:
+            _LOG.warning("failed to open MFDB for burst-selection sample preflight", error=str(exc))
+            self._mfdb_db = None
+        return self._mfdb_db
+
+    def _ensure_selected_setup_in_mfdb(self, db: MFDBClientBase) -> str:
+        """Return the selected setup ID, saving the current setup when missing.
+
+        Parameters
+        ----------
+        db : MFDBClientBase
+            MFDB connection used for archival preflight.
+
+        Returns
+        -------
+        str
+            MFDB setup ID, or an empty string when no setup is selected.
+
+        """
+        selected_setup = self.wizard.comboBox.currentText()
+        if not selected_setup:
+            return ""
+        user_id = _resolve_active_user_id()
+        setup_id = setup_id_for_name(selected_setup, user_id=user_id)
+        if db.get_setup(setup_id) is not None:
+            return setup_id
+        windows = getattr(self.wizard, "windows", {}) or {}
+        detectors = getattr(self.wizard, "detectors", {}) or {}
+        tttr_reading = {
+            "file_type": self._selected_filetype,
+        }
+        setup_data = {
+            "windows": windows,
+            "detectors": detectors,
+            "tttr_reading": tttr_reading,
+        }
+        db.save_setup(
+            setup_id=setup_id,
+            name=selected_setup,
+            description="TTTR detector and PIE-window setup",
+            configuration={"setup_type": "tttr_detector_setup", "setup_data": setup_data},
+            detectors=detectors,
+            windows=windows,
+            timing_resolution=tttr_reading,
+            created_by_user_id=user_id,
+            is_public=False,
+        )
+        return setup_id
+
+    def _prepare_mfdb_context_for_paths(self, paths: list[Path]) -> dict[str, Any] | None:
+        """Build MFDB context and prompt for sample registration when needed.
+
+        Parameters
+        ----------
+        paths : list of Path
+            Raw TTTR files about to be processed.
+
+        Returns
+        -------
+        dict or None
+            MFDB context for the analysis request, or ``None`` when MFDB output
+            is disabled.
+
+        Raises
+        ------
+        RuntimeError
+            If MFDB output is selected but no sample is selected or created.
+
+        """
+        if not self._mfdb_output_selected():
+            return None
+
+        db = self._db()
+        if db is None:
+            return {"enabled": True}
+
+        normalized_paths = [path.resolve() for path in paths if path.is_file()]
+        sample_ids = {sample_id for path in normalized_paths if (sample_id := _sample_id_for_raw_path(db, path))}
+        sample_id = self._selected_sample_id()
+        if not sample_id and len(sample_ids) == 1:
+            sample_id = next(iter(sample_ids))
+        if not sample_id or any(_sample_id_for_raw_path(db, path) is None for path in normalized_paths):
+            selected = show_sample_picker_dialog(db=db, parent=self)
+            if not selected:
+                raise RuntimeError("MFDB output requires a registered sample for the raw data.")
+            sample_id = selected
+
+        source_artifact_ids: dict[str, str] = {}
+        selected_setup = self.wizard.comboBox.currentText()
+        setup_id = self._ensure_selected_setup_in_mfdb(db)
+        for path in normalized_paths:
+            artifact_id = _raw_artifact_id_for_path(db, path)
+            if not artifact_id:
+                artifact_id = _register_raw_input_for_sample(
+                    db=db,
+                    path=path,
+                    sample_id=sample_id,
+                    filetype=self._selected_filetype,
+                    selected_setup=selected_setup,
+                    setup_id=setup_id,
+                )
+            if artifact_id:
+                source_artifact_ids[str(path)] = artifact_id
+
+        return {
+            "enabled": True,
+            "sample_id": sample_id,
+            "source_artifact_ids": source_artifact_ids,
+            "register_missing_inputs": True,
+            "setup_id": setup_id,
+        }
+
     def _display_frame_set(
         self,
         frames: list[pd.DataFrame],
@@ -1447,10 +1778,15 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             legacy_output=False,
             selected_setup=self.wizard.comboBox.currentText(),
             legacy_parameters=self._legacy_parameters(),
+            mfdb=None,
         )
         frame = self._frame_from_result(path, result.get("dataframes", {}))
         self._last_frames_by_file[path.resolve()] = frame
-        return frame, result.get("metadata", {})
+        metadata = result.get("metadata", {})
+        if result.get("warnings"):
+            metadata = dict(metadata)
+            metadata["warnings"] = result["warnings"]
+        return frame, metadata
 
     def _analyze_selected_file(self, path: Path, settings: AnalysisSettings) -> None:
         """Analyze and display burst table and histogram data for one file."""
@@ -1570,8 +1906,13 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             self.summary.setPlainText("No TTTR files selected.")
             return
         settings = self._settings_from_controls()
-        if not settings.output_formats:
+        if not settings.output_formats and not self._mfdb_output_selected():
             self.summary.setPlainText("No output format selected.")
+            return
+        try:
+            mfdb_context = self._prepare_mfdb_context_for_paths(self._file_paths)
+        except RuntimeError as exc:
+            self.summary.setPlainText(str(exc))
             return
         frames: list[pd.DataFrame] = []
         frames_by_file: dict[Path, pd.DataFrame] = {}
@@ -1603,6 +1944,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
                     legacy_output=True,
                     selected_setup=self.wizard.comboBox.currentText(),
                     legacy_parameters=legacy_parameters,
+                    mfdb=mfdb_context,
                 )
             except RuntimeError as rpc_err:
                 dialog.finish(
@@ -1620,6 +1962,9 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
                     frames.append(frame)
                     frames_by_file[path.resolve()] = frame
                 metadata.update(result.get("metadata", {}))
+                if result.get("warnings"):
+                    metadata["warnings"] = result["warnings"]
+                    _LOG.warning("MFDB registration warnings", warnings=result["warnings"])
                 dialog.update_progress(100, "Processing files...")
         finally:
             final_text = "Burst selection cancelled." if cancelled else "Burst selection finished."
@@ -2550,9 +2895,9 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
 
     def _sync_output_format_controls(self) -> None:
         """Synchronize output-format checkboxes."""
-        has_output_format = self.csv_output_check.isChecked() or self.hdf_output_check.isChecked()
-        self.zip_output_check.setEnabled(has_output_format)
-        if not has_output_format:
+        has_file_output_format = self.csv_output_check.isChecked() or self.hdf_output_check.isChecked()
+        self.zip_output_check.setEnabled(has_file_output_format)
+        if not has_file_output_format:
             self.zip_output_check.setChecked(False)
         self.remove_folder_check.setEnabled(self.zip_output_check.isChecked())
         if not self.zip_output_check.isChecked():
@@ -2703,6 +3048,13 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         )
         toolbar.addWidget(spacer)
 
+        ndx_action = QtWidgets.QAction("🔬 to ndXplorer", self)
+        ndx_action.setToolTip(
+            "Open a registered burst selection from MFDB in ndXplorer"
+        )
+        ndx_action.triggered.connect(self._open_in_ndxplorer)
+        toolbar.addAction(ndx_action)
+
         help_action = QtWidgets.QAction("ℹ️ Help", self)
         help_action.setToolTip("Show help and CLI reference")
         help_action.triggered.connect(self._show_help)
@@ -2729,6 +3081,15 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         """Show the help dialog."""
         dialog = HelpDialog(self)
         dialog.exec_()
+
+    def _open_in_ndxplorer(self) -> None:
+        """Open a registered burst selection from MFDB in ndXplorer (PRD-28)."""
+        try:
+            from chisurf.plugins.ndxplorer.mfdb_launcher import open_burst_selection_from_mfdb
+
+            open_burst_selection_from_mfdb(parent=self)
+        except Exception as exc:
+            self._status_bar.showMessage(f"Could not open ndXplorer: {exc}")
 
     def _show_metadata_dialog(self) -> None:
         """Show metadata dialog for editing analysis metadata."""
