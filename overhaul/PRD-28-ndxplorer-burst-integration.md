@@ -47,6 +47,27 @@ pipeline manually testable.
   file_handles=<path>, append=False)` and
   `ndxplorer.__main__.open_path_like_drop(ndx, path)` (`modules/ndxplorer`).
 
+## Constraints (learned from manual testing)
+
+- **`.bur` files reference photons by index in the original TTTR file.** A burst
+  selection (start/stop indices) is only meaningful next to its co-located TTTR
+  file. So the burst output is registered as an **on-disk reference** (a directory
+  `external_reference` with its path in metadata, no object-store copy) — copying
+  `.bur` into the object store would break the linkage. `open_dataset` materializes
+  such references from their metadata path; ndXplorer opens the folder as a
+  `burst_dir`, with indices resolving against the adjacent TTTR files.
+- **Multi-file runs must appear as one group.** When Burst Selection processes
+  several TTTR files, the selector must list the run as a **single** entry, not one
+  per file/artifact. Two viable shapes:
+  1. **Single output folder per run** (current launcher approach): the burst run
+     writes one output directory; the launcher filters the picker to
+     `external_reference` + `directory`, so one directory = one run = one group.
+     Works when the pipeline produces a single run-level folder.
+  2. **MFDB group** (more robust): register all of a run's artifacts into an
+     `mfdb_group` (the tables exist) and let the picker show/select groups. Needed
+     if a multi-file run produces *per-file* folders rather than one run folder.
+  Confirm which shape the burst pipeline produces and finish accordingly.
+
 ## Design
 
 ### A. ndXplorer ← MFDB (open a registered burst selection)
