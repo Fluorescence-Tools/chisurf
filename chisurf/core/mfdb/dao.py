@@ -279,21 +279,35 @@ class DictionaryDao:
         return int(self.conn.execute(sql, params).rowcount)
 
     def soft_delete(
-        self, table: str, pk_value: Any, *, pk_column: str | None = None
+        self,
+        table: str,
+        pk_value: Any,
+        *,
+        pk_column: str | None = None,
+        deleted_at: str | None = None,
     ) -> int:
         """Soft-delete one row (set ``deleted_at``); return affected row count.
 
-        Falls back to a hard ``DELETE`` for tables without a ``deleted_at`` column.
+        ``deleted_at`` defaults to SQLite ``CURRENT_TIMESTAMP``; pass an explicit
+        value (e.g. an application ``_utc_now()`` ISO string) to control the stored
+        marker. Falls back to a hard ``DELETE`` for tables without a ``deleted_at``
+        column.
         """
         self._require_table(table)
         pk = pk_column or self.primary_key(table)
         if not self._has(table, SOFT_DELETE_COLUMN):
             sql = f"DELETE FROM {quote_identifier(table)} WHERE {quote_identifier(pk)} = ?"
             return int(self.conn.execute(sql, [pk_value]).rowcount)
+        params: list[Any] = []
+        if deleted_at is None:
+            set_clause = f"{quote_identifier(SOFT_DELETE_COLUMN)} = CURRENT_TIMESTAMP"
+        else:
+            set_clause = f"{quote_identifier(SOFT_DELETE_COLUMN)} = ?"
+            params.append(deleted_at)
         sql = (
-            f"UPDATE {quote_identifier(table)} "
-            f"SET {quote_identifier(SOFT_DELETE_COLUMN)} = CURRENT_TIMESTAMP "
+            f"UPDATE {quote_identifier(table)} SET {set_clause} "
             f"WHERE {quote_identifier(pk)} = ? "
             f"AND {quote_identifier(SOFT_DELETE_COLUMN)} IS NULL"
         )
-        return int(self.conn.execute(sql, [pk_value]).rowcount)
+        params.append(pk_value)
+        return int(self.conn.execute(sql, params).rowcount)

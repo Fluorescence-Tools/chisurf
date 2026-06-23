@@ -331,7 +331,7 @@ class MFDatabase(MFDBClientBase):
 
     def delete_citation(self, citeulike_id):
         with self.conn:
-            self.conn.execute("UPDATE citeulike SET deleted_at = ? WHERE citeulike_id = ?", (_utc_now(), citeulike_id))
+            self.dao.soft_delete("citeulike", citeulike_id, pk_column="citeulike_id", deleted_at=_utc_now())
 
     # -- probes / spectra / entities --
 
@@ -540,7 +540,7 @@ class MFDatabase(MFDBClientBase):
 
     def delete_probe(self, probe_id):
         with self.conn:
-            self.conn.execute("UPDATE probes SET deleted_at = ? WHERE probe_id = ?", (_utc_now(), probe_id))
+            self.dao.soft_delete("probes", probe_id, pk_column="probe_id", deleted_at=_utc_now())
 
     # -- spectra --
 
@@ -624,7 +624,7 @@ class MFDatabase(MFDBClientBase):
 
     def delete_spectrum(self, spectrum_id):
         with self.conn:
-            self.conn.execute("UPDATE spectra SET deleted_at = ? WHERE spectrum_id = ?", (_utc_now(), spectrum_id))
+            self.dao.soft_delete("spectra", spectrum_id, pk_column="spectrum_id", deleted_at=_utc_now())
 
     # -- entities --
 
@@ -1188,8 +1188,10 @@ class MFDatabase(MFDBClientBase):
             if _json_loads(setup.get("configuration_json")).get("setup_type") == setup_type
         ]
     def delete_setup(self, setup_id):
+        # PRD-26 Task 2: schema-driven soft-delete (was a hand UPDATE). The explicit
+        # _utc_now() value keeps the stored deleted_at marker format identical.
         with self.conn:
-            self.conn.execute("UPDATE mfdb_setup SET deleted_at = ? WHERE setup_id = ?", (_utc_now(), setup_id))
+            self.dao.soft_delete("mfdb_setup", setup_id, pk_column="setup_id", deleted_at=_utc_now())
 
     def list_detector_channels(self, setup_id: str) -> list[dict[str, Any]]:
         """List detector channel definitions for a setup.

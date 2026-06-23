@@ -63,6 +63,29 @@ def test_crud_round_trip_with_soft_delete(db):
     assert deleted is not None and deleted["deleted_at"] is not None
 
 
+def test_soft_delete_accepts_explicit_deleted_at_value(db):
+    """An explicit deleted_at value is stored verbatim (repo passes _utc_now())."""
+    dao = _dao(db)
+    dao.insert("flr_sample", {"sample_id": "sd", "description": "x"})
+    marker = "2024-01-02T03:04:05+00:00"
+    assert dao.soft_delete("flr_sample", "sd", deleted_at=marker) == 1
+    row = dao.get("flr_sample", "sd", include_deleted=True)
+    assert row["deleted_at"] == marker
+    # Idempotent: re-deleting an already-deleted row affects no rows.
+    assert dao.soft_delete("flr_sample", "sd", deleted_at=marker) == 0
+
+
+def test_delete_setup_migrated_to_dao(db):
+    """The DAO-backed delete_setup soft-deletes the setup (sets deleted_at)."""
+    db.add_setup("setup-1", name="S1")
+    dao = _dao(db)
+    assert dao.get("mfdb_setup", "setup-1")["deleted_at"] is None
+    db.delete_setup("setup-1")
+    # Hidden from default reads; the deleted_at marker is set.
+    assert dao.get("mfdb_setup", "setup-1") is None
+    assert dao.get("mfdb_setup", "setup-1", include_deleted=True)["deleted_at"] is not None
+
+
 def test_unknown_table_and_column_are_rejected(db):
     dao = _dao(db)
     with pytest.raises(UnknownTableError):
