@@ -331,6 +331,50 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.bocpd_changepoint_prob = value
 
     @property
+    def cusum_bg_rate(self):
+        """The background rate parameter for CUSUM filter.
+        Uses doubleSpinBox_5.
+        """
+        return self.doubleSpinBox_5.value()
+
+    @cusum_bg_rate.setter
+    def cusum_bg_rate(self, value):
+        self.doubleSpinBox_5.setValue(value)
+
+    @property
+    def cusum_sb_ratio(self):
+        """The signal-to-background ratio parameter for CUSUM filter.
+        Uses doubleSpinBox_6.
+        """
+        return self.doubleSpinBox_6.value()
+
+    @cusum_sb_ratio.setter
+    def cusum_sb_ratio(self, value):
+        self.doubleSpinBox_6.setValue(value)
+
+    @property
+    def cusum_alpha(self):
+        """The false alarm probability parameter for CUSUM filter.
+        Uses doubleSpinBox_7.
+        """
+        return self.doubleSpinBox_7.value()
+
+    @cusum_alpha.setter
+    def cusum_alpha(self, value):
+        self.doubleSpinBox_7.setValue(value)
+
+    @property
+    def cusum_beta(self):
+        """The missed detection probability parameter for CUSUM filter.
+        Uses doubleSpinBox_8.
+        """
+        return self.doubleSpinBox_8.value()
+
+    @cusum_beta.setter
+    def cusum_beta(self, value):
+        self.doubleSpinBox_8.setValue(value)
+
+    @property
     def kalman_q(self):
         """
         The process noise parameter for Kalman filter.
@@ -495,6 +539,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             return 'bocpd'
         elif current_text == "Kalman Burst":
             return 'kalman'
+        elif current_text == "CUSUM Burst":
+            return 'cusum'
 
     @property
     def selected(self):
@@ -663,6 +709,26 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             # Create mask
             n = len(tttr)
             sel = create_array_with_ones(start_stop, n)
+            s = np.logical_and(s, sel)
+
+        elif self.used_filter == 'cusum':
+            # Get CUSUM parameters from UI
+            min_ph = self.min_ph
+            bg_rate = int(self.cusum_bg_rate)
+            sb_ratio = self.cusum_sb_ratio
+            alpha = self.cusum_alpha
+            beta = self.cusum_beta
+
+            # Run CUSUM burst detection
+            import chisurf.core.fluorescence.burst.cusum as cusum_mod
+            sel = cusum_mod.cusum_filter(
+                tttr=tttr,
+                min_ph=min_ph,
+                background_rate=bg_rate,
+                sb_ratio=sb_ratio,
+                alpha=alpha,
+                beta=beta
+            )
             s = np.logical_and(s, sel)
 
         # Apply invert logic if the invert checkbox is checked (for all filter modes)
@@ -922,6 +988,118 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             self.plot_decay_all.setData(x=[1.0], y=[1.0])
             self.plot_decay_selected.setData(x=[1.0], y=[1.0])
 
+    def _rebuild_channel_labels(self):
+        """Rebuild per-detector labels in the info panel from user-defined detectors."""
+        tttr = self.tttr
+        old_labels = self._channel_labels
+        self._channel_labels = {}
+
+        # Remove old labels from the form layout
+        for lbl in old_labels.values():
+            lbl.setParent(None)
+            lbl.deleteLater()
+        old_labels.clear()
+
+        if tttr is None:
+            return
+
+        # Create one label per detector name
+        for det_name in sorted(self.detectors.keys()):
+            lbl = QtWidgets.QLabel("—")
+            lbl.setToolTip(f"Mean photons per burst in detector '{det_name}'")
+            self._channel_labels[det_name] = lbl
+            self._info_form.addRow(f"Mean ph ({det_name}):", lbl)
+
+    def update_burst_info(self):
+        """Refresh the burst info panel with current burst statistics."""
+        try:
+            tttr = self.tttr
+            start_stop = self.burst_start_stop
+            if tttr is None:
+                self.label_burst_count.setText("0")
+                self.label_mean_duration.setText("—")
+                self.label_mean_photons.setText("—")
+                for lbl in self._channel_labels.values():
+                    lbl.setText("—")
+                return
+
+            # Rebuild labels when detectors change
+            current_detectors = set(self.detectors.keys()) if self.detectors else set()
+            if current_detectors != set(self._channel_labels.keys()):
+                self._rebuild_channel_labels()
+
+            if start_stop is None or len(start_stop) == 0:
+                self.label_burst_count.setText("0")
+                self.label_mean_duration.setText("—")
+                self.label_mean_photons.setText("—")
+                for lbl in self._channel_labels.values():
+                    lbl.setText("—")
+                return
+
+            n_bursts = len(start_stop)
+            self.label_burst_count.setText(str(n_bursts))
+
+            macro_times = tttr.macro_times
+            mt_res = tttr.header.macro_time_resolution
+
+            durations = (macro_times[start_stop[:, 1]] - macro_times[start_stop[:, 0]]) * mt_res * 1000.0
+            photon_counts = start_stop[:, 1] - start_stop[:, 0] + 1
+
+            self.label_mean_duration.setText(f"{np.mean(durations):.3f} ms")
+            self.label_mean_photons.setText(f"{np.mean(photon_counts):.1f}")
+
+            routing = tttr.routing_channels
+            for det_name, lbl in self._channel_labels.items():
+                det_chs = list(self.detectors[det_name].get('chs', []))
+                if not det_chs:
+                    lbl.setText("—")
+                    continue
+                per_burst = []
+                for s, e in start_stop:
+                    mask = np.isin(routing[s:e + 1], det_chs)
+                    per_burst.append(np.sum(mask))
+                lbl.setText(f"{np.mean(per_burst):.1f}" if per_burst else "—")
+        except Exception:
+            pass
+
+    def _create_burst_info_panel(self):
+        """Build the burst info QGroupBox and insert it next to the Filter groupBox."""
+        self.burst_info_group = QtWidgets.QGroupBox("Info")
+        self._info_form = QtWidgets.QFormLayout(self.burst_info_group)
+        self._info_form.setContentsMargins(4, 8, 4, 4)
+        self._info_form.setSpacing(2)
+
+        self.label_burst_count = QtWidgets.QLabel("0")
+        self.label_mean_duration = QtWidgets.QLabel("—")
+        self.label_mean_photons = QtWidgets.QLabel("—")
+
+        self._info_form.addRow("Bursts:", self.label_burst_count)
+        self._info_form.addRow("Mean duration:", self.label_mean_duration)
+        self._info_form.addRow("Mean photons/burst:", self.label_mean_photons)
+
+        self._channel_labels = {}
+        self._info_container = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout(self._info_container)
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setSpacing(4)
+
+        parent = self.groupBox.parentWidget()
+        layout = parent.layout()
+        pos = None
+        if isinstance(layout, QtWidgets.QGridLayout):
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                if item is not None and item.widget() == self.groupBox:
+                    pos = layout.getItemPosition(i)
+                    layout.removeWidget(self.groupBox)
+                    break
+
+        hbox.addWidget(self.groupBox)
+        hbox.addWidget(self.burst_info_group)
+
+        if pos is not None:
+            layout.addWidget(self._info_container, pos[0], pos[1], pos[2], pos[3])
+
     def update_plots(self, selection: str = "all"):
         """
         Convenience method to update different sets of plots
@@ -941,6 +1119,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             self.update_mcs_plot()
             self.update_filter_plot()
             self.update_burst_histogram()
+        self.update_burst_info()
 
     def read_tttr(self):
         """
@@ -996,6 +1175,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             path_prefix = "bocpd"
         elif self.used_filter == "kalman":
             path_prefix = "kalman"
+        elif self.used_filter == "cusum":
+            path_prefix = "cusum"
         else:
             path_prefix = "burstwise"
 
@@ -1673,6 +1854,15 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 "kalman_merge_gap": self.kalman_merge_gap
             })
 
+        # Add CUSUM filter parameters if CUSUM is selected
+        if self.used_filter == 'cusum':
+            params.update({
+                "cusum_bg_rate": self.cusum_bg_rate,
+                "cusum_sb_ratio": self.cusum_sb_ratio,
+                "cusum_alpha": self.cusum_alpha,
+                "cusum_beta": self.cusum_beta
+            })
+
         return params
 
     def save_burst_selection_parameters(self):
@@ -1901,6 +2091,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                         self.comboBox_burst_filter.setCurrentText("BOCPD Burst")
                     elif burst_params["filter_mode"] == "kalman":
                         self.comboBox_burst_filter.setCurrentText("Kalman Burst")
+                    elif burst_params["filter_mode"] == "cusum":
+                        self.comboBox_burst_filter.setCurrentText("CUSUM Burst")
                     else:
                         # Default to burst mode if unknown
                         self.comboBox_burst_filter.setCurrentText("Burst")
@@ -1926,6 +2118,17 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                         self.kalman_min_len = burst_params["kalman_min_len"]
                     if "kalman_merge_gap" in burst_params:
                         self.kalman_merge_gap = burst_params["kalman_merge_gap"]
+
+                # CUSUM filter parameters
+                if burst_params.get("filter_mode") == "cusum":
+                    if "cusum_bg_rate" in burst_params:
+                        self.cusum_bg_rate = burst_params["cusum_bg_rate"]
+                    if "cusum_sb_ratio" in burst_params:
+                        self.cusum_sb_ratio = burst_params["cusum_sb_ratio"]
+                    if "cusum_alpha" in burst_params:
+                        self.cusum_alpha = burst_params["cusum_alpha"]
+                    if "cusum_beta" in burst_params:
+                        self.cusum_beta = burst_params["cusum_beta"]
 
                 if "use_gap_fill" in burst_params:
                     self.checkBox_5.setChecked(burst_params["use_gap_fill"])
@@ -2059,6 +2262,9 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         create_plots(self, colors)
         place_plots(self)
 
+        # Build the burst info panel next to the Filter groupBox
+        self._create_burst_info_panel()
+
         # Setup all signal-slot connections
         self.setup_connections()
 
@@ -2087,11 +2293,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.toolButton_7.setChecked(show_burst)
 
         # -- Set the default filter mode --
-        if default_filter_mode == 'burst':
-            self.comboBox_burst_filter.setCurrentText("Burst")
-        else:
-            # Fallback or default to 'count_rate'
-            self.comboBox_burst_filter.setCurrentText("Count rate")
+        # install_filter_mode_visibility above already set the combobox
+        # based on default_filter_mode. Nothing more to do here.
 
         # Update micro time binning and burst selection parameters from the selected setup
         self.update_micro_time_binning()
