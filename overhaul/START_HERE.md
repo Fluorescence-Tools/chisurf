@@ -1,7 +1,7 @@
 # START HERE — MFDB / chisurf overhaul
 
 _Branch: `development` (work stays on dev; **no push, no master merge** unless asked).
-Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-22._
+Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-23._
 
 **Phase 1 (architecture foundations) is functionally complete.** Every bug-class the
 foundations targeted is fixed: vocab drift + the 39-step migration chain (PRD-19),
@@ -113,7 +113,7 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, `register_operation` ✓, role-indexed recording ✓, **`mfdb_microtime_shift` retired** ✓, **validation wired into `register_result`** ✓ | `1da6ab6d`…`2a02f560` |
 | **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
 | **PRD-28** ndXplorer↔MFDB burst round trip | **implemented** ✓ — both directions + headless CLI handoff (`analyze --mfdb`); manual-test fixes folded in; follow-ons PRD-31/34 spec'd | `b9137030`…`e647cc8c` |
-| **PRD-26** model-driven data layer (Phase 2) | **Task 1 (DAO core) landed** ✓ — `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete), `test/fio/test_dao.py`. **Task 2 in progress** ✓ — `MFDatabase.dao` accessor + the get-by-PK family migrated (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info` → `dao.get(..., include_deleted=True)`, behaviour-equivalent, A/B-verified, regression-tested). Deferred: `get_sample` (Row/subset shape), `delete_*` (`_utc_now` vs `CURRENT_TIMESTAMP`). Tasks 2 (cont.)/3/4/5 next | `(core/mfdb/dao.py, repository.py)` |
+| **PRD-26** model-driven data layer (Phase 2) | **Task 1 (DAO core) landed** ✓ — `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete), `test/fio/test_dao.py`. **Task 2 in progress** ✓ — `MFDatabase.dao` accessor + the get-by-PK family migrated (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info` → `dao.get(..., include_deleted=True)`, behaviour-equivalent, A/B-verified, regression-tested). Plus the single-table `delete_*` soft-delete family (`delete_citation/probe/spectrum/setup` → `dao.soft_delete(..., deleted_at=_utc_now())`, exact marker preserved). Still deferred: `get_sample` (Row/subset shape), `delete_parameter` (dual-key). **Task 5 (docs generator) landed** ✓ — `docs_generator.py` renders tables/vocab/operation-param schemas from the `.dic`, `test/fio/test_docs_generator.py` 4/4. Task 3 already satisfied (admin fields `.dic`-driven; registry is wiring-only). **Task 4 (RPC/boundary validation from `.dic`) next** | `(core/mfdb/dao.py, docs_generator.py, repository.py)` |
 
 ## Decisions locked
 
@@ -175,3 +175,11 @@ PRD-18: `547b5a51` hermetic harness. PRD-17: `189db5a3` canonical resolver + con
 ~6 duplicate `default_user_id` reads · `c6a73a17` thread `SessionContext` into
 `register_*`. Docs: `50c22d6c` flr_sample changelog/assertion; `bb274d1b` PRD set +
 MASTER-ORDER + ORANGE3-lessons.
+PRD-28 (ndXplorer round trip): `b9137030`…`e647cc8c` directions A/B + manual-test fixes
+(committed earlier session); headless CLI handoff (`analyze --mfdb`) this session.
+PRD-26 (model-driven layer): `0d63d1d9` `DictionaryDao` core + get-by-PK migrations
+(get_artifact/operation/parameter/object_info) · `cdc5bc74` schema docs generator
+(`docs_generator.py`) + DAO soft-delete value param + single-table `delete_*` migration.
+Overhaul docs: `04635319` PRD-26 status / PRD-31/34 specs / PRD-28 CLI / PRD-29-33 drafts;
+this commit folds the Light Path Simulator into PRD-08 and `_dev/fluorophore_db` into
+PRD-06 (+ PRD-05 computed-from-optics/spectra cross-refs).

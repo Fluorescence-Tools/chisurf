@@ -103,17 +103,39 @@ only reds are pre-existing migration/owner-backfill failures (v35/v39), A/B-conf
 unchanged with the migration reverted. Plus a dedicated `get_artifact` soft-delete
 regression test.
 
-**Deferred (need care, not behaviour-equivalent yet):**
+Soft-delete family migrated: `DictionaryDao.soft_delete` gained an optional
+`deleted_at` value (defaults to `CURRENT_TIMESTAMP`), so the single-table
+`delete_citation`/`delete_probe`/`delete_spectrum`/`delete_setup` now delegate to
+`dao.soft_delete(table, id, pk_column=…, deleted_at=_utc_now())` — exact marker
+format preserved; the only delta is the now-idempotent `AND deleted_at IS NULL` guard
+(callers ignore the rowcount). Verified by `test_fdb_setups` + dao tests.
+
+**Still deferred (need care):**
 - `get_sample` returns a `sqlite3.Row` with an explicit column subset (not `SELECT *`/
   dict) — migrating changes the return type/shape; audit callers first.
-- The `delete_*` soft-delete methods set `deleted_at` via `_utc_now()` (Python ISO
-  string), whereas `DictionaryDao.soft_delete` uses `CURRENT_TIMESTAMP`; some cascade
-  across related tables. Align the DAO's soft-delete timestamp/cascade story before
-  migrating these.
+- `delete_parameter` does a dual-key UPDATE (`parameter_uuid` *and* `parameter_id`) —
+  legacy two-column delete, not a single `soft_delete`.
 
-Remaining: continue **Task 2** (CRUD-shaped methods, each with an equivalence check;
-keep bespoke lineage/browse SQL explicit); **Tasks 3–5** generate the admin entity
-registry, RPC parameter validation, and API/schema docs from the `.dic`.
+**Task 5 (generate API/schema docs from the `.dic`) — landed.**
+`chisurf/core/mfdb/docs_generator.py` renders a Markdown reference straight from the
+dictionary: tables → columns (type, required, FK, allowed-values, description),
+controlled vocabularies (from `.dic` enumerations + enum-details), and the PRD-11
+operation parameter schemas (from `data/operation_parameter_defs.json`). It is
+dictionary-only (no DB needed; default scope = `flr_*`/`mfdb_*` tables) and can be
+restricted to a live `MFDatabase` schema via `tables=…` so the doc never drifts from
+what exists. `write_schema_reference(path, …)` emits the file. Covered by
+`test/fio/test_docs_generator.py` (live-table coverage, no-drift/no-extras when
+restricted, default-namespace scope, determinism).
+
+**Task 3 (admin entity registry) — largely already satisfied.** `mfdb_admin`'s
+`entity_schema.py` already derives the per-entity `FieldSpec` (columns/types/enums)
+from the `.dic`; `entity_registry.py` is intentionally *wiring-only* (rpc namespace,
+title, group), which is genuine UI metadata not derivable from the dictionary. No
+generation needed beyond what exists.
+
+Remaining: continue **Task 2** (harder CRUD families — align DAO soft-delete; inserts;
+`get_sample` shape); **Task 4** derive general RPC/boundary parameter validation from
+the `.dic` (extending the PRD-11 operation-parameter validation).
 
 ## Relationship
 

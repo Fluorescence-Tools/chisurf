@@ -78,8 +78,12 @@ These make everything after cheaper and safer; do them right after 03/04.
 12. **PRD-22** pipeline/workflow engine — needs the spine (11/16) + lineage (21);
     "what-if" reprocessing rides PRD-27 branches.
 13. **PRD-15** reagent inventory (LIMS P4), **PRD-05 remainder** (gamma/crosstalk/
-    R0 — g-factor done via PRD-04 C/D), **PRD-06** fluorophore DB, **PRD-08**
-    optical configuration — independent; slot as needed.
+    R0 — g-factor done via PRD-04 C/D), **PRD-06** fluorophore DB (folds in the
+    `_dev/fluorophore_db` plugin as the curated real-spectra source — FPbase/ATTO/
+    PhotochemCAD/QFE importers + curation GUI — registered into MFDB), **PRD-08**
+    optical configuration (now also folds in the **Light Path Simulator** as the
+    optics authoring/visualization tool + a computed crosstalk/R₀ source feeding
+    PRD-05) — independent; slot as needed.
 
 ## Phase 5 — Capstone
 

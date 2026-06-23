@@ -688,6 +688,47 @@ def test_channel_setting_per_measurement(db):
     assert row[0] == 10.0
 ```
 
+## Task 8: Light Path Simulator as the optical-config authoring / visualization tool
+
+The **Light Path Simulator** plugin
+(`chisurf/plugins/core/lightpath_simulator/`) already models the full optical path
+as a node graph — excitation sources, filters, dichroics/beam-splitters, detectors,
+and fluorophores — and computes derived quantities (spectral **crosstalk** and
+**R₀ overlap integrals**, `backend/crosstalk.py`). Its `backend/mmcif_export.py`
+already declares dataclasses that mirror this PRD's hardware components:
+
+| Simulator dataclass (`mmcif_export.py`) | This PRD's structured table |
+|---|---|
+| `LaserLine` (excitation source) | `mfdb_light_source` |
+| `FilterSetting` (`role` = excitation_filter / emission_filter / dichroic / splitter) | `mfdb_optical_filter` / `mfdb_dichroic` |
+| `DetectorSetting` (detector channel) | `mfdb_detector` + `mfdb_optical_channel` |
+| `FluorophoreSetting` | `flr_probe_list` (existing) |
+| `InstrumentSetting` (composite) | `flr_instrument` + `mfdb_channel_setting` |
+
+Today it serializes these to the **untyped** `flr_inst_setting` key-value blob —
+exactly the gap this PRD closes. So the simulator becomes the natural **authoring,
+visualization, and validation front-end** for the structured optical configuration:
+
+1. **Author / edit** a setup's optics in the simulator's node graph and **persist
+   to the structured tables** (`mfdb_light_source`/`mfdb_optical_filter`/
+   `mfdb_dichroic`/`mfdb_detector`/`mfdb_optical_channel`/`mfdb_channel_setting`)
+   instead of the `flr_inst_setting` blob — reuse `build_instrument_setting(
+   node_states, db)` but target the typed tables.
+2. **Visualize** a stored setup: load its optical-config rows from MFDB back into the
+   node graph so any saved/registered setup's light path can be inspected.
+3. **Validate / derive**: the simulator already computes crosstalk + R₀ overlap from
+   the optical config (filter/dichroic transmission × **dye spectra from PRD-06's
+   fluorophore DB**); surface those as setup-level derived values feeding **PRD-05**
+   (γ / crosstalk / R₀) and as a sanity check on detector/filter choices.
+4. **Link, don't duplicate**: `mfdb_optical_channel.detector_channel_id` references
+   the detection channel base table (`mfdb_setup_detector_channel`, PRD-04 /
+   centralized-detector-setup PRD); the simulator edits the spectroscopic extension,
+   not a parallel channel concept.
+
+Scope note: keep the pure optics model (`backend/simulator.py`, `crosstalk.py`)
+chisurf-DB-free; MFDB read/write lives in the plugin's backend services, mirroring
+the PRD-08 repository methods.
+
 ## Definition of Done
 
 - [ ] Tables `mfdb_light_source`, `mfdb_optical_filter`, `mfdb_dichroic`,
@@ -698,6 +739,9 @@ def test_channel_setting_per_measurement(db):
 - [ ] New tables appear in mfdb-admin GUI under "Instrument" group
 - [ ] flrCIF export serializes channels to `FLR_INST_SETTING` key-value rows
 - [ ] Dictionary (`.dic` file) has save blocks for source_type and channel_role enumerations
+- [ ] **Light Path Simulator** writes/reads a setup's optics to/from the structured
+      tables (not the `flr_inst_setting` blob), can visualize a stored setup's light
+      path, and surfaces crosstalk / R₀ as setup-level derived values (PRD-05 feed)
 - [ ] All tests in `test_optical_configuration.py` pass
 
 ## References

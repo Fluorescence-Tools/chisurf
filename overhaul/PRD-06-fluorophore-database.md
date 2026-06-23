@@ -446,10 +446,47 @@ def test_forster_radius_zero_quantum_yield():
     assert R0 == 0.0
 ```
 
+## Task 7: Fold in the Fluorophore-DB plugin as the real-data source of truth
+
+A working prototype already exists: **`chisurf/plugins/_dev/fluorophore_db/`**. It is
+the real-data engine this PRD's Task 2 ("add real spectral data") was going to
+hand-roll — but sourced from authoritative databases and curated, not embedded
+Gaussian approximations:
+
+- **Importers** (`download/`): FPbase (`fpbase.py`, `probe_fpbase.py`), ATTO
+  (`atto.py`), PhotochemCAD (`photochemcad_common_compounds.py`), QFE
+  (`import_qfe_spectra.py`), plus bulk/dye spectra helpers.
+- **Store** (`spectra.db`): per-fluorophore `chromophore_name`, `category`, `source`,
+  `curated`, `quality`, `abs_max`, `em_max`, `QY`, `lifetime`, `extinction`, and
+  absorption/emission spectra (`db.get_spectrum(probe_id, 'absorption'|'emission')`).
+- **Curation GUI** (`db_manager_widget.py`, `editor.py`, `download_manager.py`):
+  browse/edit/plot spectra, mark curated + quality, download from sources.
+
+**Integration plan (supersedes the embedded-array approach of Task 2):**
+1. **Promote** the plugin out of `_dev/` to a shipped plugin once reconciled.
+2. **Reconcile its store with MFDB**: map the `spectra.db` schema onto the MFDB
+   fluorophore tables — `flr_probe_list` (probe + category), `spectra` (abs/em BLOBs),
+   `optical_properties` (QY, lifetime, extinction, abs/em maxima), with a **provenance
+   `source`** (FPbase / ATTO / PhotochemCAD / QFE / user) and the `curated`/`quality`
+   flags carried as provenance, not a parallel sqlite file. Either back the plugin
+   directly by MFDB or register curated entries into MFDB on save.
+3. **Feed downstream**: curated spectra drive Task 1's `forster.py` overlap integral
+   (R0), the **Light Path Simulator** crosstalk/R₀ computation (**PRD-08** Task 8),
+   and the *computed-from-spectra* calibration source (**PRD-05**).
+4. **Seed**: replace/augment the 7-probe placeholder seed (Task 3) with curated
+   real entries exported from this plugin.
+
+Keep the importers/curation pure-Python (network + spectra parsing); MFDB read/write
+goes through the plugin backend services mirroring the repository methods.
+
 ## Definition of Done
 
 - [ ] `forster.py` computes overlap integral and R0 correctly
 - [ ] At least 20 common dyes have spectral data (Gaussian approximations OK for now)
+- [ ] The `fluorophore_db` plugin's curated probes/spectra/optical-properties are
+      registered into MFDB (`flr_probe_list`/`spectra`/`optical_properties`) with a
+      provenance `source`; the standalone `spectra.db` is reconciled (no parallel
+      source of truth), and the plugin is promoted out of `_dev/`
 - [ ] R0 is precomputed for at least 5 common FRET pairs
 - [ ] `lookup_forster_radius()` can retrieve R0 by dye names
 - [ ] R0 lookup is optional -- user can enter R0 directly (stored as `method="user_provided"`)

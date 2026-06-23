@@ -33,6 +33,14 @@ In smFRET, before you can get real distances, you need these correction paramete
 Currently these are free `FittingParameter` objects. Nobody tracks where their values
 came from.
 
+> **Computed from the optical configuration (PRD-08).** `crosstalk` and `R0` can also
+> be *predicted* from a setup's structured optical path (filters/dichroics/detectors
+> + dye spectra) by the **Light Path Simulator** (`chisurf/plugins/core/
+> lightpath_simulator/backend/crosstalk.py`), which already computes spectral
+> crosstalk and R₀ overlap integrals. Record such values with a "computed-from-optics"
+> provenance source (vs. measured), so a setup's predicted vs. measured crosstalk/R₀
+> can be compared. This makes PRD-08's optical config a first-class calibration source.
+
 ## Tasks
 
 ### Task 1: Define Calibration Data Model
