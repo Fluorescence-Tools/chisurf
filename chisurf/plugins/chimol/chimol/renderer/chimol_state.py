@@ -50,6 +50,7 @@ def _coerce_covariance_array(value):
 class _MolViewObjectState:
     coords: Optional[np.ndarray] = None
     center: Optional[np.ndarray] = None
+    raw_center: Optional[np.ndarray] = None
     radius: float = 1.0
     atoms: Optional[np.ndarray] = None
     all_atom_coords: Optional[np.ndarray] = None

@@ -34,6 +34,7 @@ from ..geometry import (
     _generate_surface_mesh_from_density,
     _generate_surface_mesh_edt,
     _generate_surface_mesh_from_gaussians,
+    _generate_surface_mesh_from_points,
     _generate_trace_arrays,
     _get_surface_atom_mask,
 )
@@ -146,6 +147,7 @@ class MolView(QtWidgets.QWidget):
 
     _coords = _StateField("coords")
     _center = _StateField("center")
+    _raw_center = _StateField("raw_center")
     _radius = _StateField("radius")
     _atoms = _StateField("atoms")
     _all_atom_coords = _StateField("all_atom_coords")
@@ -485,6 +487,7 @@ class MolView(QtWidgets.QWidget):
         size_scale: float = 0.03,
         min_size: float = 2.5,
         alpha: float = 0.6,
+        transform_to_scene: bool = True,
     ) -> None:
         """Add or replace a named point-cloud overlay in the 3D view.
 
@@ -507,17 +510,120 @@ class MolView(QtWidgets.QWidget):
             Minimum point size in world units.
         alpha : float
             Global alpha multiplier applied on top of the per-point alpha.
+        transform_to_scene : bool, optional
+            Whether to convert raw molecular coordinates into Chimol scene
+            coordinates.
         """
         if self._point_overlays is None:
             self._point_overlays = {}
+        scene_scale = self._world_to_scene_scale()
+        if transform_to_scene:
+            coords = self._transform_world_coords_to_scene(coords)
         self._point_overlays[key] = {
             "coords": coords,
             "color": color,
             "size_scale": size_scale,
-            "min_size": min_size,
+            "min_size": min_size * scene_scale,
             "alpha": alpha,
         }
         self._update_view()
+
+    def add_surface_overlay(
+        self,
+        key: str,
+        coords: np.ndarray,
+        color: np.ndarray | Sequence[float] = (0.0, 1.0, 0.0, 0.35),
+        alpha: float = 0.35,
+        grid_spacing: float = 1.0,
+        padding: float = 1.5,
+        smoothing_sigma: float = 0.75,
+        dilation_iterations: int = 1,
+        max_dim: int = 96,
+        fallback_size_scale: float = 0.025,
+        fallback_min_size: float = 2.0,
+    ) -> None:
+        """Add or replace a named point-cloud surface overlay.
+
+        Parameters
+        ----------
+        key : str
+            Unique identifier for this overlay. Calling again with the same key
+            replaces the existing overlay.
+        coords : (N, 3) ndarray
+            3D point cloud used to build the surface.
+        color : (4,) array-like
+            RGBA surface colour in [0, 1].
+        alpha : float, optional
+            Global alpha multiplier applied to the surface colour.
+        grid_spacing : float, optional
+            Target voxel spacing for point-cloud meshing.
+        padding : float, optional
+            Empty border around the point cloud before meshing.
+        smoothing_sigma : float, optional
+            Gaussian smoothing sigma in voxel units.
+        dilation_iterations : int, optional
+            Number of binary dilation passes before smoothing.
+        max_dim : int, optional
+            Maximum mesh grid dimension.
+        fallback_size_scale : float, optional
+            Point size scale if a mesh cannot be generated.
+        fallback_min_size : float, optional
+            Minimum point size if a mesh cannot be generated.
+        """
+        if self._point_overlays is None:
+            self._point_overlays = {}
+        scene_scale = self._world_to_scene_scale()
+        coords = self._transform_world_coords_to_scene(coords)
+        self._point_overlays[key] = {
+            "coords": coords,
+            "color": color,
+            "alpha": alpha,
+            "overlay_kind": "surface",
+            "grid_spacing": grid_spacing * scene_scale,
+            "padding": padding * scene_scale,
+            "smoothing_sigma": smoothing_sigma,
+            "dilation_iterations": dilation_iterations,
+            "max_dim": max_dim,
+            "size_scale": fallback_size_scale,
+            "min_size": fallback_min_size * scene_scale,
+        }
+        self._update_view()
+
+    def _transform_world_coords_to_scene(self, coords: np.ndarray) -> np.ndarray:
+        """Transform raw molecular coordinates into Chimol scene coordinates.
+
+        Parameters
+        ----------
+        coords : numpy.ndarray
+            Raw world coordinates in the same units as the loaded structure.
+
+        Returns
+        -------
+        numpy.ndarray
+            Centered and scaled scene coordinates.
+        """
+        arr = np.asarray(coords, dtype=float)
+        raw_center = getattr(self, "_raw_center", None)
+        if raw_center is None:
+            return arr
+        try:
+            center = np.asarray(raw_center, dtype=float).reshape(3)
+        except Exception:
+            return arr
+        return (arr - center) * float(self._scale_factor)
+
+    def _world_to_scene_scale(self) -> float:
+        """Return the coordinate scale used for raw-to-scene overlays.
+
+        Returns
+        -------
+        float
+            The active structure scale if raw centering metadata is available,
+            otherwise ``1.0``.
+        """
+        if getattr(self, "_raw_center", None) is None:
+            return 1.0
+        return float(self._scale_factor)
 
     def update_point_overlay(
         self,
@@ -563,6 +669,7 @@ class MolView(QtWidgets.QWidget):
         color: Sequence[float] = (1.0, 0.8, 0.2, 0.9),
         label: str | None = None,
         key: str | None = None,
+        transform_to_scene: bool = True,
     ) -> str:
         """Place a single sphere at *center* (e.g. an AV mean position or attachment point).
 
@@ -578,6 +685,9 @@ class MolView(QtWidgets.QWidget):
             Text label placed next to the sphere.
         key : str, optional
             Overlay key; auto-generated as ``'sphere_<n>'`` if not provided.
+        transform_to_scene : bool, optional
+            Whether to convert raw molecular coordinates into Chimol scene
+            coordinates.
 
         Returns
         -------
@@ -591,11 +701,14 @@ class MolView(QtWidgets.QWidget):
             key = f"sphere_{n}"
 
         coords = np.asarray(center, dtype=float).reshape(1, 3)
+        scene_scale = self._world_to_scene_scale()
+        if transform_to_scene:
+            coords = self._transform_world_coords_to_scene(coords)
         self._point_overlays[key] = {
             "coords": coords,
             "color": color,
             "size_scale": 0.0,
-            "min_size": 2 * radius,
+            "min_size": 2 * radius * scene_scale,
             "alpha": color[3] if len(color) > 3 else 1.0,
             "glyph": "sphere",
         }
@@ -1399,6 +1512,7 @@ class MolView(QtWidgets.QWidget):
                     self._all_atom_radii = None
 
             self._center = np.zeros(3, dtype=float)
+            self._raw_center = np.asarray(center, dtype=float)
             self._radius = float(radius * scale)
             if getattr(self, "_ca_indices", None) is None:
                 try:
@@ -1471,6 +1585,7 @@ class MolView(QtWidgets.QWidget):
         self._all_atom_coords = arr
         self._coords = arr
         self._center = np.zeros(3, dtype=float)
+        self._raw_center = np.asarray(center, dtype=float)
         self._radius = float(radius * scale)
         self._update_view()
 
@@ -3914,13 +4029,19 @@ class MolView(QtWidgets.QWidget):
         surface_min_size = float(surface_cfg.get("min_size", 2.5))
 
         scene_objects = []
-        for overlay in list(overlays.values()):
+        for key, overlay in list(overlays.items()):
             try:
                 pts_ov = np.asarray(overlay.get("coords"), dtype=float)
             except Exception:
                 continue
             if pts_ov.ndim != 2 or pts_ov.shape[0] == 0 or pts_ov.shape[1] != 3:
                 continue
+
+            if overlay.get("overlay_kind") == "surface":
+                surface_objects = self._build_surface_overlay_scene(key, overlay, pts_ov)
+                if surface_objects:
+                    scene_objects += surface_objects
+                    continue
 
             try:
                 col = overlay.get("color", None)
@@ -3972,7 +4093,7 @@ class MolView(QtWidgets.QWidget):
                 colors=colors_ov,
                 meta={"size": size_ov, "glyph": overlay.get("glyph", "sphere")},
             )
-            scene_objects.append(SceneObject(id="overlay", geometry=geom, render_mode="transparent"))
+            scene_objects.append(SceneObject(id=f"overlay:{key}", geometry=geom, render_mode="transparent"))
 
             if overlay.get("label"):
                 label_geom = Geometry(
@@ -3981,9 +4102,122 @@ class MolView(QtWidgets.QWidget):
                     colors=colors_ov[0].reshape(1, 4),
                     meta={"labels": [overlay["label"]]},
                 )
-                scene_objects.append(SceneObject(id="overlay_label", geometry=label_geom, render_mode="overlay"))
+                scene_objects.append(SceneObject(id=f"overlay_label:{key}", geometry=label_geom, render_mode="overlay"))
 
         return scene_objects
+
+    def _build_surface_overlay_scene(
+        self,
+        key: str,
+        overlay: dict,
+        points: np.ndarray,
+    ) -> list[SceneObject] | None:
+        """Build mesh or point fallback objects for a surface overlay.
+
+        Parameters
+        ----------
+        key : str
+            Overlay identifier.
+        overlay : dict
+            Overlay style and meshing parameters.
+        points : numpy.ndarray
+            Surface point cloud with shape ``(N, 3)``.
+
+        Returns
+        -------
+        list of SceneObject or None
+            Scene objects representing the surface overlay.
+        """
+        try:
+            grid_spacing = float(overlay.get("grid_spacing", 1.0))
+        except Exception:
+            grid_spacing = 1.0
+        try:
+            padding = float(overlay.get("padding", 1.5))
+        except Exception:
+            padding = 1.5
+        try:
+            smoothing_sigma = float(overlay.get("smoothing_sigma", 0.75))
+        except Exception:
+            smoothing_sigma = 0.75
+        try:
+            dilation_iterations = int(overlay.get("dilation_iterations", 1))
+        except Exception:
+            dilation_iterations = 1
+        try:
+            max_dim = int(overlay.get("max_dim", 96))
+        except Exception:
+            max_dim = 96
+        try:
+            alpha = float(overlay.get("alpha", 1.0))
+        except Exception:
+            alpha = 1.0
+
+        mesh_data = _generate_surface_mesh_from_points(
+            points,
+            grid_spacing=grid_spacing,
+            padding=padding,
+            smoothing_sigma=smoothing_sigma,
+            dilation_iterations=dilation_iterations,
+            max_dim=max_dim,
+        )
+
+        color = overlay.get("color", (0.0, 1.0, 0.0, 0.62))
+        try:
+            base_color = np.asarray(color, dtype=float).reshape(-1)
+            if base_color.shape[0] < 4:
+                base_color = np.array(
+                    [base_color[0], base_color[1], base_color[2], 1.0],
+                    dtype=float,
+                )
+            else:
+                base_color = base_color[:4]
+        except Exception:
+            base_color = np.array([0.0, 1.0, 0.0, 0.62], dtype=float)
+        base_color = np.clip(base_color, 0.0, 1.0)
+        base_color[3] = np.clip(base_color[3] * alpha, 0.0, 1.0)
+
+        if mesh_data is None:
+            try:
+                size_scale = float(overlay.get("size_scale", 0.025))
+            except Exception:
+                size_scale = 0.025
+            try:
+                min_size = float(overlay.get("min_size", 2.0))
+            except Exception:
+                min_size = 2.0
+            size = max(self._radius * size_scale, min_size)
+            colors = np.tile(base_color, (points.shape[0], 1))
+            geom = Geometry(
+                kind="points",
+                positions=points,
+                colors=colors,
+                meta={"size": size, "glyph": "sphere"},
+            )
+            return [
+                SceneObject(
+                    id=f"overlay_surface_points:{key}",
+                    geometry=geom,
+                    render_mode="transparent",
+                )
+            ]
+
+        verts, faces, norms = mesh_data
+        colors = np.tile(base_color, (verts.shape[0], 1))
+        geom = Geometry(
+            kind="mesh",
+            positions=verts,
+            indices=faces,
+            normals=norms,
+            colors=colors,
+        )
+        return [
+            SceneObject(
+                id=f"overlay_surface:{key}",
+                geometry=geom,
+                render_mode="transparent",
+            )
+        ]
 
     def _update_measurements(self) -> list[SceneObject]:
         measurements = getattr(self, "_measurements", None)
@@ -3995,6 +4229,9 @@ class MolView(QtWidgets.QWidget):
             kind = mdata.get("kind", "distance")
             coords = np.asarray(mdata.get("positions", []), dtype=float)
             if coords.size == 0: continue
+
+            if mdata.get("transform_to_scene", True):
+                coords = self._transform_world_coords_to_scene(coords)
 
             color = np.asarray(mdata.get("color", [1.0, 1.0, 1.0, 1.0]), dtype=float)
             label = str(mdata.get("label", ""))

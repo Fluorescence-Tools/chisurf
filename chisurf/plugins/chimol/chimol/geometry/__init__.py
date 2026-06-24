@@ -13,6 +13,7 @@ from .bonds import _build_bond_pairs
 from .surface import (
     _generate_surface_mesh_from_gaussians,
     _generate_surface_mesh_from_density,
+    _generate_surface_mesh_from_points,
     _generate_surface_mesh_edt,
     _get_surface_atom_mask,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "_generate_trace_arrays",
     "_generate_surface_mesh_from_gaussians",
     "_generate_surface_mesh_from_density",
+    "_generate_surface_mesh_from_points",
     "_generate_surface_mesh_edt",
     "_get_surface_atom_mask",
 ]

@@ -21,10 +21,16 @@ except Exception:  # pragma: no cover - optional dependency
     _HAVE_SKIMAGE = False
 
 try:  # Optional scipy distance transform
-    from scipy.ndimage import distance_transform_edt  # type: ignore
+    from scipy.ndimage import (  # type: ignore
+        binary_dilation,
+        distance_transform_edt,
+        gaussian_filter,
+    )
     _HAVE_SCIPY_EDT = True
 except ImportError:  # pragma: no cover
+    binary_dilation = None  # type: ignore
     distance_transform_edt = None  # type: ignore
+    gaussian_filter = None  # type: ignore
     _HAVE_SCIPY_EDT = False
 
 
@@ -394,6 +400,104 @@ def _generate_surface_mesh_from_gaussians(
     )
 
 
+def _generate_surface_mesh_from_points(
+    pts: np.ndarray,
+    *,
+    grid_spacing: float = 1.0,
+    padding: float = 1.5,
+    smoothing_sigma: float = 0.75,
+    dilation_iterations: int = 1,
+    max_dim: int = 96,
+) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """Generate a surface mesh around occupied point-cloud voxels.
+
+    Parameters
+    ----------
+    pts : numpy.ndarray
+        Point coordinates with shape ``(N, 3)``.
+    grid_spacing : float, optional
+        Target voxel spacing in the same coordinate units as ``pts``.
+    padding : float, optional
+        Empty border around the point cloud.
+    smoothing_sigma : float, optional
+        Gaussian smoothing sigma in voxel units. Set to ``0`` to disable
+        smoothing.
+    dilation_iterations : int, optional
+        Number of binary dilation passes before smoothing.
+    max_dim : int, optional
+        Maximum grid dimension. The actual spacing is increased if needed.
+
+    Returns
+    -------
+    tuple of numpy.ndarray or None
+        ``(vertices, faces, normals)`` if marching cubes succeeds, otherwise
+        ``None``.
+    """
+    if not _HAVE_SKIMAGE:
+        return None
+
+    points = np.asarray(pts, dtype=float)
+    if points.ndim != 2 or points.shape[1] != 3 or points.shape[0] < 4:
+        return None
+    finite_mask = np.isfinite(points).all(axis=1)
+    points = points[finite_mask]
+    if points.shape[0] < 4:
+        return None
+
+    spacing = max(float(grid_spacing), 1e-3)
+    pad = max(float(padding), spacing)
+    max_grid_dim = max(int(max_dim), 8)
+
+    xyz_min = points.min(axis=0) - pad
+    xyz_max = points.max(axis=0) + pad
+    extent = np.maximum(xyz_max - xyz_min, spacing)
+    shape = np.ceil(extent / spacing).astype(int) + 1
+
+    largest = int(shape.max())
+    if largest > max_grid_dim:
+        spacing *= largest / float(max_grid_dim)
+        shape = np.ceil(extent / spacing).astype(int) + 1
+
+    shape = np.maximum(shape, 4)
+    grid = np.zeros(tuple(int(v) for v in shape), dtype=np.float32)
+    indices = np.rint((points - xyz_min) / spacing).astype(int)
+    for axis in range(3):
+        indices[:, axis] = np.clip(indices[:, axis], 0, shape[axis] - 1)
+    grid[indices[:, 0], indices[:, 1], indices[:, 2]] = 1.0
+
+    if binary_dilation is not None and dilation_iterations > 0:
+        grid = binary_dilation(
+            grid > 0.0,
+            iterations=int(dilation_iterations),
+        ).astype(np.float32)
+
+    if gaussian_filter is not None and smoothing_sigma > 0.0:
+        grid = gaussian_filter(grid, sigma=float(smoothing_sigma)).astype(np.float32)
+
+    level = 0.5
+    grid_max = float(grid.max())
+    if grid_max <= 0.0:
+        return None
+    if level >= grid_max:
+        level = grid_max * 0.5
+
+    try:
+        verts, faces, norms, _ = _sk_measure.marching_cubes(  # type: ignore[call-arg]
+            grid,
+            level=level,
+            spacing=(spacing, spacing, spacing),
+        )
+    except Exception:
+        return None
+
+    verts = np.asarray(verts, dtype=np.float32)
+    verts += xyz_min
+    faces = np.asarray(faces, dtype=np.int32)
+    norms = -np.asarray(norms, dtype=np.float32)
+    faces = faces[:, [0, 2, 1]]
+    return verts, faces, norms
+
+
 def _generate_surface_mesh_edt(
     pts: np.ndarray,
     radii: np.ndarray,
@@ -560,5 +664,3 @@ __all__ = [
     "_generate_surface_mesh_edt",
     "_get_surface_atom_mask",
 ]
-
-
