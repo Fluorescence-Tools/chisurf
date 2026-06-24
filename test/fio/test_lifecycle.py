@@ -118,3 +118,61 @@ def test_audit_log_records_transition(db):
     logs = db.get_audit_logs(action="transition", target_type="state:sample", target_id="s6")
     assert logs
     assert logs[0]["target_id"] == "s6"
+
+
+# -- Increment 3: registration paths emit initial states ---------------------
+
+
+def test_register_raw_measurement_starts_artifact_lifecycle(db, tmp_path):
+    from chisurf.core.mfdb.result_registry import (
+        register_raw_measurement,
+        set_global_db,
+    )
+
+    f = tmp_path / "m.ptu"
+    f.write_bytes(b"\x00\x01\x02")
+    try:
+        raw = register_raw_measurement(str(f), db=db)
+    finally:
+        set_global_db(None)
+    assert db.get_state("artifact", raw) == "registered"
+
+
+def test_register_result_starts_artifact_lifecycle(db, tmp_path):
+    from chisurf.core.mfdb.result_registry import (
+        register_raw_measurement,
+        register_result,
+        set_global_db,
+    )
+
+    f = tmp_path / "m.ptu"
+    f.write_bytes(b"\x00\x01\x02")
+    try:
+        raw = register_raw_measurement(str(f), db=db)
+        shifted = register_result(
+            kind="processed_data",
+            data={"x": [0], "y": [1]},
+            parent_artifact_id=raw,
+            operation_type="microtime_shift",
+            parameters={"global_shift": 1},
+            db=db,
+        )
+    finally:
+        set_global_db(None)
+    assert db.get_state("artifact", shifted) == "registered"
+
+
+def test_register_with_sample_starts_sample_lifecycle(db, tmp_path):
+    from chisurf.core.mfdb.result_registry import (
+        register_raw_measurement,
+        set_global_db,
+    )
+
+    db.add_sample("samp_lc", description="lifecycle sample", num_of_probes=1)
+    f = tmp_path / "m.ptu"
+    f.write_bytes(b"\x00\x01\x02")
+    try:
+        register_raw_measurement(str(f), sample_id="samp_lc", db=db)
+    finally:
+        set_global_db(None)
+    assert db.get_state("sample", "samp_lc") == "registered"

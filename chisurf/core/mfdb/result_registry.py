@@ -235,7 +235,32 @@ def register_result(
         operation_id=operation_id,
         sample_id=sample_id or "",
     )
+    # Post-commit, best-effort lifecycle start (PRD-12): the new artifact enters its
+    # lifecycle at "registered"; a freshly-linked sample gets its initial state too.
+    # Never breaks registration (the registration transaction already committed).
+    _start_lifecycle(db, artifact_id=artifact_id, sample_id=sample_id)
     return artifact_id
+
+
+def _start_lifecycle(
+    db: "MFDBClientBase | None", *, artifact_id: str, sample_id: str = ""
+) -> None:
+    """Best-effort initial lifecycle transitions for a freshly registered artifact.
+
+    Advances the artifact to ``registered`` (its lifecycle start) and, when a sample
+    is linked and has no state yet, the sample to ``registered``. Any failure (no
+    ``transition_state``, an RPC client without the method, a transient error) is
+    logged and swallowed — lifecycle is auxiliary to registration.
+    """
+    transition = getattr(db, "transition_state", None)
+    if not callable(transition):
+        return
+    try:
+        transition("artifact", artifact_id, "registered")
+        if sample_id and db.get_state("sample", sample_id) is None:
+            transition("sample", sample_id, "registered")
+    except Exception as exc:  # pragma: no cover - defensive, lifecycle is best-effort
+        logger.debug("lifecycle start skipped for artifact %s: %s", artifact_id, exc)
 
 
 def set_global_db(db: MFDBClientBase | None) -> None:
