@@ -239,15 +239,31 @@ class TestRestoreProject:
         save = save_project_handler(
             auth=mock_auth,
             project_name="RestoreTest",
-            project_payload={"key": "value", "nested": {"a": 1}},
+            project_payload={
+                "name": "RestoreTest",
+                "project_format_version": 4,
+                "meta": {
+                    "chisurf_version": "1.0.0",
+                    "created": "2026-01-01T00:00:00",
+                    "name": "RestoreTest",
+                },
+                "datasets": {},
+                "experiments": {},
+                "fits": [],
+                "ui": {},
+                "extra": {},
+            },
         )
         version_id = save["version_id"]
         result = restore_project_handler(auth=mock_auth, version_id=version_id)
         assert result["ok"]
         assert result["project_name"] == "RestoreTest"
         payload = result["project_payload"]
-        assert payload["key"] == "value"
-        assert payload["nested"]["a"] == 1
+        assert isinstance(payload, dict)
+        assert payload.get("project_format_version") == 5
+        assert payload.get("datasets") == {}
+        assert payload.get("fits") == []
+        assert payload.get("experiments") == {}
 
 
 class TestExportImport:

@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 
 import pytest
+import numpy as np
 
 pytest.importorskip("qtpy")
 pytest.importorskip("pyqtgraph")
@@ -22,7 +23,10 @@ assert _SPEC is not None and _SPEC.loader is not None
 sys.modules[_SPEC.name] = _MOD
 _SPEC.loader.exec_module(_MOD)
 
-JordiGFactorCalculator = _MOD.JordiGFactorCalculator
+from chisurf.plugins.jordi_g_factor.core.calculations import (
+    solve_linked_l_from_steady_state,
+    estimate_lifetime_first_moment,
+)
 
 
 def test_solve_linked_l_from_steady_state_recovers_reference() -> None:
@@ -35,7 +39,7 @@ def test_solve_linked_l_from_steady_state_recovers_reference() -> None:
     den = (1.0 - 3.0 * l_ref) * g * sp + (2.0 - 3.0 * l_ref) * ss
     r_target = num / den
 
-    l_est = JordiGFactorCalculator._solve_linked_l_from_steady_state(
+    l_est = solve_linked_l_from_steady_state(
         sp=sp,
         ss=ss,
         g_factor=g,
@@ -48,6 +52,7 @@ def test_estimate_lifetime_first_moment_returns_weighted_mean() -> None:
     t = [0.0, 1.0, 2.0, 3.0]
     i = [0.0, 2.0, 2.0, 0.0]
 
-    tau = JordiGFactorCalculator._estimate_lifetime_first_moment(t, i)
+    tau = estimate_lifetime_first_moment(np.array(t), np.array(i))
 
     assert tau == pytest.approx(0.5, rel=1e-12, abs=1e-12)
+

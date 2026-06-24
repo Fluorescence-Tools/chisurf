@@ -510,6 +510,113 @@ def test_shifter_round_trip(
 
 
 # ---------------------------------------------------------------------------
+# Regression: processed_data via register_result appears in browse
+# ---------------------------------------------------------------------------
+
+
+def test_processed_data_appears_in_browse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Register a processed_data artifact via register_result with a
+    non-default user and verify it appears in browse_datasets.
+
+    This guards against silent registration failures (Bug C).
+    """
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        datasets_browse_handler,
+    )
+    from chisurf.core.mfdb.result_registry import register_result
+
+    obj_root = tmp_path / "obj_store"
+    obj_root.mkdir()
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.object_store_root",
+        lambda: obj_root,
+    )
+
+    db_path = tmp_path / "regr_processed.db"
+    db = MFDatabase(db_path)
+
+    monkeypatch.setattr(
+        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        lambda: db_path,
+    )
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        lambda: db_path,
+    )
+
+    # Create a non-default user (not "user_default", not "guest")
+    tok = "regr-user-token"
+    tok_hash = _hash_token(tok)
+    db.conn.execute(
+        "INSERT INTO flr_sample_users (user_id, display_name, is_admin) VALUES (?, ?, ?)",
+        ("regr_user", "Regression User", 0),
+    )
+    db.conn.execute(
+        "INSERT INTO mfdb_session (session_id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        ("sess_regr", "regr_user", tok_hash, "2099-12-31T23:59:59"),
+    )
+    db.conn.commit()
+
+    # Patch _resolve_active_user_id to return our test user
+    monkeypatch.setattr(
+        "chisurf.core.mfdb.result_registry._resolve_active_user_id",
+        lambda: "regr_user",
+    )
+
+    # Register processed_data with operation_type="microtime_shift"
+    content = b'{"processed": true}'
+    art_id = register_result(
+        kind="processed_data",
+        data=content,
+        operation_type="microtime_shift",
+        db=db,
+    )
+    assert art_id, "register_result should return a non-empty artifact_id"
+
+    # Verify it appears in browse for the owning user
+    auth = {"token": tok}
+    browse_result = datasets_browse_handler(scope="own", auth=auth)
+    ds_ids = {d["artifact_id"] for d in browse_result.get("datasets", [])}
+    assert art_id in ds_ids, (
+        f"processed_data artifact {art_id} should appear in browse(scope='own') "
+        f"for user regr_user; got {ds_ids}"
+    )
+
+    # Also verify it appears in scope="all" for the same user
+    browse_all = datasets_browse_handler(scope="all", auth=auth)
+    all_ids = {d["artifact_id"] for d in browse_all.get("datasets", [])}
+    assert art_id in all_ids
+
+    db.close()
+
+
+def test_register_result_fails_loud_on_real_error(tmp_path: Path) -> None:
+    """register_result raises when the DB is present but a real error occurs.
+
+    A vocabulary violation (bad operation_type) must propagate, not silently
+    return "".
+    """
+    from chisurf.core.mfdb.result_registry import register_result
+
+    db_path = tmp_path / "loud_fail.db"
+    db = MFDatabase(db_path)
+
+    # Register with a bogus operation_type that is NOT in OPERATION_TYPES
+    with pytest.raises(Exception, match="operation_type"):
+        register_result(
+            kind="processed_data",
+            data=b"test",
+            operation_type="__nonexistent_optype__",
+            db=db,
+        )
+
+    db.close()
+
+
+# ---------------------------------------------------------------------------
 # GUI construction smoke test (mirrors test/gui/test_detector_wizard_page.py)
 # ---------------------------------------------------------------------------
 

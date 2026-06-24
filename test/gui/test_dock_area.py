@@ -292,3 +292,31 @@ def test_dock_area_stacked_close_hides_and_restores(qtbot):
     assert w2.parentWidget() is dock_area
     assert dock_area.showTab(1) is True
     assert dock_area.visibleCount() == 2
+
+
+def test_dock_area_is_inside_client_content(qtbot):
+    """Test is_inside_client_content correctly identifies clicks inside client widgets."""
+    dock_area = DockArea()
+    qtbot.addWidget(dock_area)
+
+    w1 = QtWidgets.QWidget()
+    child_btn = QtWidgets.QPushButton("Click Me", w1)
+    layout = QtWidgets.QVBoxLayout(w1)
+    layout.addWidget(child_btn)
+
+    dock_area.addTab(w1, "Tab 1")
+    dock_area.show()
+
+    # Wait for the widget to be visible/exposed on screen
+    qtbot.waitExposed(dock_area)
+
+    # Get the global position of the center of child_btn
+    global_pos = child_btn.mapToGlobal(child_btn.rect().center())
+
+    # It should be identified as inside client content
+    assert dock_area.is_inside_client_content(global_pos) is True
+
+    # A position outside should be False
+    outside_pos = QtCore.QPoint(-1000, -1000)
+    assert dock_area.is_inside_client_content(outside_pos) is False
+

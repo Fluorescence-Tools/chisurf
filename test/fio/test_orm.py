@@ -27,7 +27,6 @@ from chisurf.core.mfdb.orm.models import (
     Spectrum,
     FlrFretForsterRadius,
     ChemDescriptor,
-    MfdbSampleIndex,
     MfdbVocabulary,
 )
 from chisurf.core.mfdb.orm.sync import (
@@ -94,17 +93,17 @@ class TestORMBase:
 
         # Insert data within a session
         with session_scope(temp_db_path) as session:
-            test_entry = MfdbSampleIndex(
+            test_entry = FlrSample(
                 sample_id="test_sample",
-                display_name="Test Sample",
+                description="Test Sample",
             )
             session.add(test_entry)
 
         # Verify the data was committed
         with session_scope(temp_db_path) as session:
-            result = session.get(MfdbSampleIndex, "test_sample")
+            result = session.get(FlrSample, "test_sample")
             assert result is not None
-            assert result.display_name == "Test Sample"
+            assert result.description == "Test Sample"
 
     def test_session_scope_rolls_back_on_error(self, temp_db_path):
         """Test that session_scope rolls back on exception."""
@@ -115,16 +114,16 @@ class TestORMBase:
         # Try to insert data but raise an exception
         with pytest.raises(ValueError):
             with session_scope(temp_db_path) as session:
-                test_entry = MfdbSampleIndex(
+                test_entry = FlrSample(
                     sample_id="test_sample",
-                    display_name="Test Sample",
+                    description="Test Sample",
                 )
                 session.add(test_entry)
                 raise ValueError("Test error")
 
         # Verify the data was NOT committed
         with session_scope(temp_db_path) as session:
-            result = session.get(MfdbSampleIndex, "test_sample")
+            result = session.get(FlrSample, "test_sample")
             assert result is None
 
     def test_clear_session_cache(self):
@@ -297,7 +296,6 @@ class TestSampleRepository:
             make_engine,
             session_scope,
             session_from_mfdatabase,
-            MfdbSampleIndex,
             FlrSample,
             FlrSampleCondition,
             FlrSampleProbe,
@@ -426,8 +424,9 @@ class TestSampleRepository:
         # Verify sample data
         sample = result["sample"]
         assert sample["sample_id"] == "test_sample_orm"
-        assert sample["description"] == "Test sample for ORM adapter round-trip"
+        assert sample["description"] == "test_sample_orm"
         assert sample["solvent_phase"] == "liquid"
+        assert sample["details"] == "Test sample for ORM adapter round-trip"
 
         # Verify entities
         assert len(result["entities"]) == 2
@@ -651,7 +650,6 @@ class TestORMBoundedSlice:
     def test_phase_a_tables_present(self):
         """Test that all Phase A tables have ORM models."""
         phase_a_tables = [
-            "mfdb_sample",
             "flr_sample",
             "flr_sample_condition",
             "flr_sample_probe",

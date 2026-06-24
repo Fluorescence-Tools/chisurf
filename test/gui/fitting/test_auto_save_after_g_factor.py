@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMessageBox
 
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import (
@@ -157,3 +158,26 @@ def test_auto_save_after_g_factor(qtbot, monkeypatch, setups_file, initial_data)
     assert (
         updated_g_factor == 1.234
     ), f"G-factor was not updated. Expected 1.234, got {updated_g_factor}"
+
+
+def test_g_factor_decay_uuid_roundtrip(qtbot, setups_file, initial_data) -> None:
+    # Set a custom g_factor_decay_uuid in the initial data
+    initial_data["setups"]["test_setup"]["detectors"]["test_detector"]["g_factor_decay_uuid"] = "some-uuid-1234"
+    save_detector_setups(initial_data, setups_file)
+
+    wizard = DetectorWizard(json_file=setups_file)
+    qtbot.addWidget(wizard)
+
+    page = wizard.page(0)
+    page.current_setups_file = setups_file
+    page.current_setup_name = "test_setup"
+
+    # Verify that it loaded into the item's data (Qt.UserRole + 1)
+    item = page.detectors_form.item(0, 0)
+    assert item is not None
+    assert item.data(Qt.UserRole + 1) == "some-uuid-1234"
+
+    # Retrieve settings and verify round-trip
+    settings = page.get_settings()
+    assert settings["detectors"]["test_detector"]["g_factor_decay_uuid"] == "some-uuid-1234"
+
