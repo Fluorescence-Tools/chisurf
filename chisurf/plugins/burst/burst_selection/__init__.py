@@ -18,9 +18,19 @@ else:
 
 USE_LEGACY_GUI = False
 
-if USE_LEGACY_GUI:
-    from .gui.legacy.burst_selector import BurstSelectionTool
-else:
-    from .gui.tool import BurstSelectionTool
-
 __all__ = ["BurstSelectionTool", "USE_LEGACY_GUI"]
+
+
+def __getattr__(name: str):
+    """Lazily import the GUI tool (PRD-23: no Qt import as a package side effect).
+
+    Keeps ``from ...burst_selection import BurstSelectionTool`` working while the
+    Qt-free ``api``/``cli`` submodules can be imported headlessly (no Qt needed).
+    """
+    if name == "BurstSelectionTool":
+        if USE_LEGACY_GUI:
+            from .gui.legacy.burst_selector import BurstSelectionTool
+        else:
+            from .gui.tool import BurstSelectionTool
+        return BurstSelectionTool
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

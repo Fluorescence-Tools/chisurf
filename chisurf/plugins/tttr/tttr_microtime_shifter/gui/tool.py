@@ -783,11 +783,9 @@ class MicrotimeShifterTool(QtWidgets.QMainWindow):
 
     def _db(self) -> Any:
         """Return the active MFDB connection if available."""
-        try:
-            from chisurf.core.mfdb.result_registry import _get_global_db
-            return _get_global_db()
-        except Exception:
-            return None
+        from ..api.mfdb import active_mfdb_connection
+
+        return active_mfdb_connection()
 
     # ── save ───────────────────────────────────────────────────────
 

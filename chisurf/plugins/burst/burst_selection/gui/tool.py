@@ -16,9 +16,6 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys
 from chisurf.core.mfdb.base import MFDBClientBase
-from chisurf.core.mfdb.database_resolver import resolve_database_path
-from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import register_result
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
@@ -33,6 +30,14 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups impo
 from chisurf.gui.widgets.wizard.tttr_photonfilter.tttr_photon_filter import WizardTTTRPhotonFilter
 from chisurf.server.rpc_logging import RpcLogWriter
 
+from ..api.mfdb import (
+    acquire_mfdb_connection,
+    file_md5 as _file_md5,
+    raw_artifact_id_for_path as _raw_artifact_id_for_path,
+    raw_file_data_format as _raw_file_data_format,
+    register_raw_input_for_sample as _register_raw_input_for_sample,
+    sample_id_for_raw_path as _sample_id_for_raw_path,
+)
 from ..api.models import (
     AnalysisSettings,
     BurstDetectionSettings,
@@ -88,151 +93,6 @@ def _normalize_filetype(filetype: str | None) -> str | None:
     if not filetype or str(filetype).strip().lower() == "auto":
         return None
     return str(filetype).strip()
-
-
-def _file_md5(path: Path) -> str:
-    """Return the MD5 content hash for a file.
-
-    Parameters
-    ----------
-    path : Path
-        File path.
-
-    Returns
-    -------
-    str
-        Hex-encoded MD5 digest.
-
-    """
-    digest = hashlib.md5()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _sample_id_for_raw_path(db: MFDBClientBase, path: Path) -> str | None:
-    """Return the sample already associated with raw file content.
-
-    Parameters
-    ----------
-    db : MFDBClientBase
-        MFDB connection.
-    path : Path
-        Raw input file path.
-
-    Returns
-    -------
-    str or None
-        Existing sample ID, or ``None`` when the file content is not yet
-        associated with a sample.
-
-    """
-    try:
-        return db.lookup_sample_by_md5(_file_md5(path))
-    except Exception:
-        return None
-
-
-def _raw_artifact_id_for_path(db: MFDBClientBase, path: Path) -> str:
-    """Return an existing raw-measurement artifact for a file, if any.
-
-    Parameters
-    ----------
-    db : MFDBClientBase
-        MFDB connection.
-    path : Path
-        Raw input file path.
-
-    Returns
-    -------
-    str
-        Existing artifact ID, or an empty string.
-
-    """
-    try:
-        return db.find_raw_artifact_by_md5(_file_md5(path))
-    except Exception:
-        return ""
-
-
-def _raw_file_data_format(path: Path) -> str:
-    """Return the MFDB data-format vocabulary value for a raw TTTR file.
-
-    Parameters
-    ----------
-    path : Path
-        Raw input file path.
-
-    Returns
-    -------
-    str
-        Data-format value accepted by MFDB.
-
-    """
-    suffix = path.suffix.lower().lstrip(".")
-    return {
-        "h5": "hdf5",
-        "ht3": "tttr",
-    }.get(suffix, suffix or "tttr")
-
-
-def _register_raw_input_for_sample(
-    *,
-    db: MFDBClientBase,
-    path: Path,
-    sample_id: str,
-    filetype: str | None,
-    selected_setup: str | None,
-    setup_id: str = "",
-) -> str:
-    """Register a raw input artifact and bind its object content to a sample.
-
-    Parameters
-    ----------
-    db : MFDBClientBase
-        MFDB connection.
-    path : Path
-        Raw input file path.
-    sample_id : str
-        Existing sample ID.
-    filetype : str, optional
-        Reader file type.
-    selected_setup : str, optional
-        Detector setup name.
-    setup_id : str, optional
-        MFDB setup identifier.
-
-    Returns
-    -------
-    str
-        Registered raw artifact ID, or an empty string.
-
-    """
-    if not db.sample_exists(sample_id):
-        return ""
-    artifact_id = register_result(
-        kind="raw_measurement",
-        data=path,
-        sample_id=sample_id,
-        operation_type="measurement_import",
-        data_format=_raw_file_data_format(path),
-        setup_id=setup_id,
-        metadata={
-            "plugin": "burst_selection",
-            "role": "raw_tttr",
-            "filetype": filetype,
-            "selected_setup": selected_setup,
-        },
-        db=db,
-    )
-    if not artifact_id:
-        return ""
-    artifact = db.get_artifact(artifact_id)
-    object_uuid = artifact.get("object_uuid") if artifact else None
-    if object_uuid:
-        db.set_object_sample_id(object_uuid, sample_id)
-    return artifact_id
 
 
 def _setup_summary(setup_name: str | None, filetype: str | None) -> str:
@@ -694,7 +554,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
 
     def _connect_filter_controls_to_selection_update(self) -> None:
         """Connect filter controls to selected-file result and plot updates."""
-        for control in (
+        controls = [
             self.wizard.comboBox_2,
             self.wizard.comboBox_3,
             self.wizard.comboBox_burst_filter,
@@ -709,7 +569,22 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             self.wizard.doubleSpinBox,
             self.wizard.doubleSpinBox_2,
             self.wizard.doubleSpinBox_3,
+        ]
+        # Append CUSUM/BOCPD/Kalman widgets safely if they exist
+        for name in (
+            "doubleSpinBox_5",
+            "doubleSpinBox_6",
+            "doubleSpinBox_7",
+            "doubleSpinBox_8",
+            "doubleSpinBox_9",
+            "doubleSpinBox_10",
+            "spinBox_9"
         ):
+            widget = getattr(self.wizard, name, None)
+            if widget is not None:
+                controls.append(widget)
+
+        for control in controls:
             if isinstance(control, QtWidgets.QComboBox):
                 control.currentTextChanged.connect(self._on_filter_settings_changed)
             elif isinstance(control, QtWidgets.QCheckBox):
@@ -1466,20 +1341,27 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
 
     def _settings_from_controls(self) -> AnalysisSettings:
         """Build API settings from the embedded wizard's current state."""
+        from chisurf.plugins.burst.burst_selection.gui.adapter import photon_filter_settings_from_wizard
+
         mode_text = self.wizard.comboBox_burst_filter.currentText()
-        used_filter = BurstFilterMode.BURST if "Burst" in mode_text else BurstFilterMode.COUNT_RATE
+        if "CUSUM" in mode_text:
+            used_filter = BurstFilterMode.CUSUM
+        elif "BOCPD" in mode_text:
+            used_filter = BurstFilterMode.BOCPD
+        elif "Kalman" in mode_text:
+            used_filter = BurstFilterMode.KALMAN
+        elif "Burst" in mode_text:
+            used_filter = BurstFilterMode.BURST
+        else:
+            used_filter = BurstFilterMode.COUNT_RATE
+
         threshold = int(self.wizard.min_ph)
         time_window = float(self.wizard.spinBox.value() if hasattr(self.wizard, 'spinBox') else DEFAULT_TIME_WINDOW_MS) / 1000.0
-        if used_filter == BurstFilterMode.BURST:
+        if used_filter in (BurstFilterMode.BURST, BurstFilterMode.BOCPD, BurstFilterMode.KALMAN, BurstFilterMode.CUSUM):
             burst_detection = BurstDetectionSettings(
                 min_photons=threshold,
                 photon_window=self.wizard.ph_window,
                 time_window=time_window,
-            )
-            count_rate = CountRateFilterSettings(
-                n_ph_max=DEFAULT_MIN_PHOTONS,
-                time_window=time_window,
-                invert=self.wizard.checkBox.isChecked(),
             )
         else:
             burst_detection = BurstDetectionSettings(
@@ -1487,35 +1369,17 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
                 photon_window=self.wizard.ph_window,
                 time_window=time_window,
             )
-            count_rate = CountRateFilterSettings(
-                n_ph_max=threshold,
-                time_window=time_window,
-                invert=self.wizard.checkBox.isChecked(),
-            )
-        channels = list(self.wizard.channels) if self.wizard.channels else []
-        micro_ranges = self.wizard.microtime_ranges or []
+
         output_formats = []
         if self.csv_output_check.isChecked():
             output_formats.append("bur")
         if self.hdf_output_check.isChecked():
             output_formats.append("hdf5")
+
+        photon_filter = photon_filter_settings_from_wizard(self.wizard)
+
         return AnalysisSettings(
-            photon_filter=PhotonFilterSettings(
-                channels=channels,
-                microtime_ranges=micro_ranges,
-                filter_active=self.wizard.checkBox_4.isChecked(),
-                used_filter=used_filter,
-                count_rate_filter=count_rate,
-                delta_macro_time_filter=DeltaMacroTimeFilterSettings(
-                    dT_min=float(self.wizard.dT_min),
-                    dT_max=float(self.wizard.dT_max),
-                    dT_min_active=bool(self.wizard.use_lower),
-                    dT_max_active=bool(self.wizard.use_upper),
-                ),
-                invert_filter=self.wizard.checkBox.isChecked(),
-                max_gap=int(self.wizard.max_gap),
-                use_gap_fill=bool(self.wizard.use_gap_fill),
-            ),
+            photon_filter=photon_filter,
             burst_detection=burst_detection,
             output_formats=output_formats,
             zip_output=self.zip_output_check.isChecked(),
@@ -1603,20 +1467,9 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         """
         if self._mfdb_db is not None:
             return self._mfdb_db
-        try:
-            from chisurf.core.mfdb.result_registry import _get_global_db
-
-            db = _get_global_db()
-        except Exception:
-            db = None
-        if db is not None:
-            self._mfdb_db = db
-            return db
-        try:
-            self._mfdb_db = MFDatabase(resolve_database_path())
-        except Exception as exc:
-            _LOG.warning("failed to open MFDB for burst-selection sample preflight", error=str(exc))
-            self._mfdb_db = None
+        # Connection acquisition is api-layer logic (PRD-23): prefer the global
+        # connection, else open the resolved default DB.
+        self._mfdb_db = acquire_mfdb_connection()
         return self._mfdb_db
 
     def _ensure_selected_setup_in_mfdb(self, db: MFDBClientBase) -> str:

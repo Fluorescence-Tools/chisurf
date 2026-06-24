@@ -58,3 +58,32 @@ mandatory; reuse the base, don't fork.
 
 Enforces the GUI half of PRD-16 (transformer contract). Generalizes the fixes made
 to the shifter/FCS dialog this session. Incremental — apply per tool.
+
+## Implementation status
+
+**Task 2 (move residual DB logic out of `gui/`) — landed for both reference
+transformers (the non-GUI half).**
+
+- **Burst Selection.** The raw-input registration/lookup logic that lived in
+  `gui/tool.py` (importing `register_result`/`MFDatabase`/`resolve_database_path`
+  into the view) moved to `api/mfdb.py`: `file_md5`, `sample_id_for_raw_path`,
+  `raw_artifact_id_for_path`, `raw_file_data_format`, `register_raw_input_for_sample`,
+  and a new `acquire_mfdb_connection()` (global-or-default connection acquisition).
+  `gui/tool.py` now imports these from `..api.mfdb` (re-exported under the old private
+  names for callers/tests) and its `_db()` is a one-liner over
+  `acquire_mfdb_connection()`. The view no longer imports `MFDatabase`/
+  `register_result`/`resolve_database_path`.
+- **Microtime Shifter.** `api/mfdb.py` gained `active_mfdb_connection()`; the GUI
+  `_db()` and the `MicrotimeShiftMFDBPipeline` default both use it, so the view no
+  longer imports `_get_global_db` directly.
+- **Import side-effects (overlaps Task 4).** Both plugin `__init__.py` files no longer
+  import the Qt GUI tool eagerly — `BurstSelectionTool`/`MicrotimeShifterTool` resolve
+  lazily via module `__getattr__` (PEP 562). The `api`/`cli` layers are now importable
+  **headlessly** (no Qt binding required), which the new
+  `tests/test_api_mfdb.py` exercises (and which previously made the api/cli tests
+  uncollectable when Qt was absent).
+
+**Still to do (the GUI half):** Task 1 (`ChisurfDockTool` shared base), Task 3
+(construction smoke tests per tool), Task 4 (forbid DB writes during widget
+`__init__`, beyond the import-side-effect fix above) — all require a Qt-capable
+environment.

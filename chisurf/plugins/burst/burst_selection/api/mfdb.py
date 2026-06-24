@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -349,6 +350,14 @@ class BurstMFDBPipeline:
             for role, path in role_paths.items():
                 if role == "bur" or not path:
                     continue
+                # Per-file directory roles (e.g. the shared ``Info`` / output
+                # folder) all point at the single run-level output directory, so
+                # registering one per file would list a multi-file run as many
+                # duplicate, UUID-named directory entries instead of one group.
+                # The run output folder is registered once above via
+                # ``global_roles``; skip per-file directories here.
+                if Path(path).is_dir():
+                    continue
                 sidecar_key = f"{_normalize_path(input_path)}:{role}"
                 self._register_sidecar(sidecar_key, path, parent_id, request, registration)
 
@@ -615,3 +624,105 @@ def _sidecar_data_format(path: Path) -> str:
     if suffix in {"h5", "hdf"}:
         return "hdf5"
     return suffix or "unknown"
+
+
+# --- raw-input registration / lookup (PRD-23: moved out of gui/) -------------
+#
+# These are view-agnostic MFDB/IO helpers; the GUI tool re-exports them so its
+# construction stays free of registration logic (PRD-23 Task 2/4).
+
+
+def file_md5(path: Path) -> str:
+    """Return the hex-encoded MD5 digest of a file (streamed)."""
+    digest = hashlib.md5()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def sample_id_for_raw_path(db: "MFDBClientBase", path: Path) -> str | None:
+    """Return the sample already associated with a raw file's content, or ``None``."""
+    try:
+        return db.lookup_sample_by_md5(file_md5(path))
+    except Exception:
+        return None
+
+
+def raw_artifact_id_for_path(db: "MFDBClientBase", path: Path) -> str:
+    """Return an existing raw-measurement artifact for a file, or an empty string."""
+    try:
+        return db.find_raw_artifact_by_md5(file_md5(path))
+    except Exception:
+        return ""
+
+
+def raw_file_data_format(path: Path) -> str:
+    """Return the MFDB data-format vocabulary value for a raw TTTR file."""
+    suffix = Path(path).suffix.lower().lstrip(".")
+    return {"h5": "hdf5", "ht3": "tttr"}.get(suffix, suffix or "tttr")
+
+
+def register_raw_input_for_sample(
+    *,
+    db: "MFDBClientBase",
+    path: Path,
+    sample_id: str,
+    filetype: str | None,
+    selected_setup: str | None,
+    setup_id: str = "",
+) -> str:
+    """Register a raw input artifact and bind its object content to a sample.
+
+    Returns the registered raw artifact ID, or an empty string when the sample
+    does not exist or registration produced no artifact.
+    """
+    if not db.sample_exists(sample_id):
+        return ""
+    artifact_id = register_result(
+        kind="raw_measurement",
+        data=path,
+        sample_id=sample_id,
+        operation_type="measurement_import",
+        data_format=raw_file_data_format(path),
+        setup_id=setup_id,
+        metadata={
+            "plugin": "burst_selection",
+            "role": "raw_tttr",
+            "filetype": filetype,
+            "selected_setup": selected_setup,
+        },
+        db=db,
+    )
+    if not artifact_id:
+        return ""
+    artifact = db.get_artifact(artifact_id)
+    object_uuid = artifact.get("object_uuid") if artifact else None
+    if object_uuid:
+        db.set_object_sample_id(object_uuid, sample_id)
+    return artifact_id
+
+
+def acquire_mfdb_connection() -> "MFDBClientBase | None":
+    """Return the active global MFDB connection, or open the default database.
+
+    Connection acquisition is api-layer (not view) logic: prefer the in-process
+    global connection, else open the resolved default DB. Returns ``None`` when no
+    connection can be established.
+    """
+    try:
+        from chisurf.core.mfdb.result_registry import _get_global_db
+
+        db = _get_global_db()
+    except Exception:
+        db = None
+    if db is not None:
+        return db
+    try:
+        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.repository import MFDatabase
+
+        return MFDatabase(resolve_database_path())
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        logger.warning("failed to open MFDB connection: %s", exc)
+        return None

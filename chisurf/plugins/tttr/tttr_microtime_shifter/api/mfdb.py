@@ -63,6 +63,21 @@ def _file_md5(path: str) -> str:
     return digest.hexdigest()
 
 
+def active_mfdb_connection() -> "MFDBClientBase | None":
+    """Return the active/global MFDB connection, or ``None``.
+
+    Connection acquisition is api-layer (not view) logic (PRD-23); the GUI tool
+    reads the ambient connection through this helper instead of importing the
+    result registry directly.
+    """
+    try:
+        from chisurf.core.mfdb.result_registry import _get_global_db
+
+        return _get_global_db()
+    except Exception:
+        return None
+
+
 class MicrotimeShiftMFDBPipeline:
     """Register Micro-time Shifter inputs and outputs in MFDB."""
 
@@ -77,11 +92,7 @@ class MicrotimeShiftMFDBPipeline:
 
         """
         if db is None:
-            try:
-                from chisurf.core.mfdb.result_registry import _get_global_db
-                db = _get_global_db()
-            except Exception:
-                db = None
+            db = active_mfdb_connection()
         self.db = db
 
     def _find_raw_artifact_by_md5(self, md5: str) -> str:

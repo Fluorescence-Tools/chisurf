@@ -1,23 +1,37 @@
 """
-PTU Microtime Shifter Plugin
+Micro-time Shifter Plugin
 
-This plugin provides tools for adjusting the micro-time channels in TTTR (Time-Tagged Time-Resolved)
-files, particularly those in the PicoQuant PTU format. Micro-time shifting is useful for:
-
-1. Correcting timing offsets between different detection channels
-2. Aligning fluorescence decay curves from different detectors
-3. Compensating for electronic delays in the detection system
-4. Preparing data for multi-detector analysis
-
-The plugin features:
-- Loading and visualizing TTTR files
-- Applying global or channel-specific micro-time shifts
-- Real-time visualization of micro-time histograms
-- Saving the modified TTTR files
-
-This tool is particularly valuable for multi-color FRET experiments where precise
-temporal alignment of detection channels is critical for accurate analysis.
+Apply global and per-channel micro-time shifts to TTTR files.
 """
 
-name = "TTTR:Editor:Microtime Shifter"
+from __future__ import annotations
 
+from pathlib import Path
+
+from chisurf.core.plugin import load_manifest
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+
+__all__ = ["MicrotimeShifterTool"]
+
+
+def __getattr__(name: str):
+    """Lazily import the GUI tool (PRD-23: no Qt import as a package side effect).
+
+    Keeps ``from ...tttr_microtime_shifter import MicrotimeShifterTool`` working
+    while the Qt-free ``api``/``cli`` submodules can be imported headlessly.
+    """
+    if name == "MicrotimeShifterTool":
+        from .gui.tool import MicrotimeShifterTool
+
+        return MicrotimeShifterTool
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+if __name__ == "plugin":
+    from .gui.tool import MicrotimeShifterTool
+
+    window = MicrotimeShifterTool()
+    window.show()
