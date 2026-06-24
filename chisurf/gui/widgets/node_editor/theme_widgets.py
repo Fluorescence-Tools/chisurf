@@ -30,7 +30,9 @@ def apply_node_ui_theme(root: QtWidgets.QWidget) -> None:
     QComboBox:hover {{ border: 1px solid rgb(60,120,160); }}
     QComboBox::drop-down {{ subcontrol-origin: padding; subcontrol-position: top right; width: 16px; border: 0px; background: transparent; }}
     QComboBox::down-arrow {{ width: 8px; height: 8px; }}
-    QComboBox QAbstractItemView {{ background: rgb(60,64,70); color: rgb(235,235,235); selection-background-color: rgb(60,120,160); selection-color: white; outline: 0; border: 1px solid rgb(40,40,40); }}
+    QComboBox QAbstractItemView {{ background: rgb(60,64,70); color: rgb(235,235,235); selection-background-color: rgb(60,120,160); selection-color: white; outline: 0; border: 1px solid rgb(40,40,40); padding: 2px; }}
+    QComboBox QAbstractItemView::item {{ padding: 3px 6px; min-height: 18px; }}
+    QComboBox QAbstractItemView::item:hover {{ background: rgb(60,120,160); }}
     QPushButton {{ color: rgb(235,235,235); background: rgb(70,120,160); border: 0px; border-radius: 4px; padding: 2px 8px; font-size: {size_px}px; min-height: {btn_h}px; max-height: {btn_h}px; }}
     QPushButton:hover {{ background: rgb(80,130,175); }}
     QPushButton:pressed {{ background: rgb(60,110,145); }}
@@ -67,6 +69,12 @@ class StyledComboBox(QtWidgets.QComboBox):
 
     def showPopup(self) -> None:  # type: ignore[override]
         super().showPopup()
+        # The popup is a separate top-level QFrame; force it opaque so the
+        # QGraphicsScene background doesn't bleed through on macOS.
+        container = self.view().parentWidget() if self.view() else None
+        if container is not None:
+            container.setAttribute(QtCore.Qt.WA_TranslucentBackground, False)
+            container.setAutoFillBackground(True)
         self._before_index = self.currentIndex()
         self.editingStarted.emit()
 
