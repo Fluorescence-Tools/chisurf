@@ -224,9 +224,34 @@ over the edge-rich client methods (`dependencies_upstream` / `dependencies_downs
 descendants" admin view is satisfied; the new headless `Lineage` service is the
 complementary artifact-centric primitive for programmatic/CLI consumers. Not rebuilt.
 
-**Remaining (optional):** a replay executor for `burst_selection` (Task 2 follow-on, the
-same seam as microtime_shift but its output is a `.bur` table/folder group, so it must
-match the PRD-28 burst registration shape rather than register a single file).
+**Remaining (optional) — burst_selection replay executor is BLOCKED on schema
+completeness.** The same seam as microtime_shift, but burst replay is *not faithfully
+reproducible from the current compute spec*: `extract_burst_parameters`
+(`burst_selection/api/mfdb.py`) records only nine scalar params and **omits the stream
+channel mask** (`PhotonFilterSettings.channels`, e.g. `[0,1,8,9]` for the bundled
+`m000.spc`) and several GMM settings (`covariance_type`, `random_state`, `max_iter`,
+`n_init`). So `settings_from_parameters` (the spec→settings inverse) would rebuild a run
+with *default* channels and produce different/zero bursts — a silently wrong replay.
+Microtime_shift was clean because its full state (`global_shift` + role-indexed per-
+channel `shift`) *is* in the declared `.dic` schema. **Do not build the burst executor
+until the `burst_selection` operation-parameter schema (`mfdb_operation_parameter_def` /
+`data/operation_parameter_defs.json`) captures the full reproducible set** — at minimum
+the channel mask (a role-indexed repeatable param, like `shift`) and the GMM determinism
+fields. That is a PRD-11 schema decision owned by the burst transformer. Once the schema
+is complete, the executor mirrors `tttr_microtime_shifter/api/replay.py`: materialize the
+source TTTR, reconstruct an `AnalysisRequest`, run `analyze_request`, and register via
+`BurstMFDBPipeline.register_run` (reusing the PRD-28 registration shape — headless-
+testable with the bundled `bh_spc132_sm_dna/m000.spc` fixture).
+
+### ▶ START NEXT (if resuming this track)
+PRD-21 is functionally complete (all DoD met). The only open follow-on is the
+`burst_selection` replay executor, **blocked** as above. Resume order:
+1. Extend `data/operation_parameter_defs.json` for `burst_selection` to declare the
+   channel mask (role-indexed) + GMM determinism params; reseed; update
+   `extract_burst_parameters` / `settings_from_parameters` to round-trip them.
+2. Add `burst_selection/api/replay.py` mirroring the shifter's executor + a headless
+   test over `m000.spc`.
+Otherwise this PRD needs no further work.
 
 ## Relationship
 
