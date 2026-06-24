@@ -1196,20 +1196,47 @@ class NodeScene(QtWidgets.QGraphicsScene):
 
     def _create_node_by_type(self, node_type: str, scene_pos: QtCore.QPointF):
         if self.node_adder is not None:
+            owner = self.parent()
+            if owner is not None and hasattr(owner, "begin_undo"):
+                try:
+                    owner.begin_undo(f"Add {node_type}")  # type: ignore[attr-defined]
+                except Exception:
+                    pass
             try:
-                self.node_adder(node_type, scene_pos)
+                result = self.node_adder(node_type, scene_pos)
+                # If node_adder returns an item instead of adding it itself, add it now.
+                if result is not None:
+                    try:
+                        if result.scene() is None:
+                            self.addItem(result)
+                            result.setPos(scene_pos)
+                    except Exception:
+                        pass
             except Exception:
+                if owner is not None and hasattr(owner, "commit_undo"):
+                    try:
+                        owner.commit_undo()  # type: ignore[attr-defined]
+                    except Exception:
+                        pass
                 return
+            if owner is not None and hasattr(owner, "commit_undo"):
+                try:
+                    owner.commit_undo()  # type: ignore[attr-defined]
+                except Exception:
+                    pass
 
     # ----- Layout using networkx ------------------------------------------
     def auto_layout(self):
-        """Automatically arrange nodes using a hierarchical spring approach.
+        """Arrange nodes in a deterministic hierarchical layout with crossing minimisation.
 
-        This algorithm:
-        1. Assigns nodes to horizontal levels (columns) based on graph flow.
-        2. Uses a spring layout guess for vertical ordering.
-        3. Stacks nodes in columns while ensuring no vertical overlaps.
-        4. Adjusts column spacing to account for node widths.
+        Algorithm:
+        1. Assign each node to a column (level) using longest-path layering on the
+           directed graph so that all edges point left-to-right.
+        2. Within each column, order nodes using the barycenter heuristic: sort by
+           the average position of the node's predecessors (left-to-right sweep) and
+           successors (right-to-left sweep), repeated for a few passes.  This is
+           deterministic and substantially reduces edge crossings.
+        3. Stack nodes vertically inside each column, centering the column.
         """
         if nx is None:
             logger.warning("networkx is not available; auto layout disabled")
@@ -1223,72 +1250,89 @@ class NodeScene(QtWidgets.QGraphicsScene):
         if not index_by_node:
             return
 
-        # node_by_idx[int] -> NodeGraphicsItem
         node_by_idx = {i: n for n, i in index_by_node.items()}
 
-        # 1. Assign levels (X-axis)
-        # Using simple distance from roots for depth
-        levels = {}
-        roots = [n for n, d in G_directed.in_degree() if d == 0]
-        if not roots and len(G_directed.nodes) > 0:
-            roots = [list(G_directed.nodes)[0]] # Handle cycles by picking an arbitrary root
+        # 1. Assign levels via longest-path layering (deterministic for DAGs).
+        levels: Dict[int, int] = {}
+        try:
+            topo = list(nx.topological_sort(G_directed))
+        except Exception:
+            topo = None  # graph has cycles
 
-        queue = [(r, 0) for r in roots]
-        processed = set()
-        while queue:
-            idx, lvl = queue.pop(0)
-            levels[idx] = max(levels.get(idx, 0), lvl)
-            if idx not in processed:
-                processed.add(idx)
-                for succ in G_directed.successors(idx):
-                    queue.append((succ, lvl+1))
+        if topo is not None:
+            for idx in topo:
+                preds = list(G_directed.predecessors(idx))
+                levels[idx] = (max(levels[p] for p in preds) + 1) if preds else 0
+        else:
+            # Fallback: BFS from source nodes
+            roots = [n for n, d in G_directed.in_degree() if d == 0]
+            if not roots:
+                roots = [sorted(G_directed.nodes)[0]]
+            queue = [(r, 0) for r in roots]
+            visited: set = set()
+            while queue:
+                idx, lvl = queue.pop(0)
+                levels[idx] = max(levels.get(idx, 0), lvl)
+                if idx not in visited:
+                    visited.add(idx)
+                    for succ in G_directed.successors(idx):
+                        queue.append((succ, lvl + 1))
 
-        # Ensure every node has a level (e.g. disconnected nodes)
         for idx in G_directed.nodes:
             if idx not in levels:
                 levels[idx] = 0
 
-        # 2. Get relative vertical order from spring layout
-        # This keeps the general "tangle" of the graph preserved
-        pos = nx.spring_layout(G_undirected, k=1.0, iterations=50)
-
-        # 3. Group by level and calculate positions
-        nodes_by_level = {}
+        # 2. Group nodes by level; start with a stable initial order.
+        nodes_by_level: Dict[int, List[int]] = {}
         for idx, lvl in levels.items():
             nodes_by_level.setdefault(lvl, []).append(idx)
+        sorted_levels = sorted(nodes_by_level.keys())
+        for lvl in sorted_levels:
+            nodes_by_level[lvl] = sorted(nodes_by_level[lvl])  # stable by index
 
-        h_gap = 100.0 # horizontal gap between columns
-        v_gap = 40.0  # vertical gap between nodes
+        # 3. Barycenter crossing minimisation (4 alternating sweeps).
+        for _pass in range(4):
+            # Left-to-right: sort by average predecessor position
+            for lvl in sorted_levels:
+                prev_lvl = lvl - 1
+                if prev_lvl not in nodes_by_level:
+                    continue
+                prev_pos = {idx: pos for pos, idx in enumerate(nodes_by_level[prev_lvl])}
+                def _bc_pred(idx: int) -> float:
+                    ps = [prev_pos[p] for p in G_directed.predecessors(idx) if p in prev_pos]
+                    return sum(ps) / len(ps) if ps else float(nodes_by_level[lvl].index(idx))
+                nodes_by_level[lvl] = sorted(nodes_by_level[lvl], key=_bc_pred)
 
+            # Right-to-left: sort by average successor position
+            for lvl in reversed(sorted_levels):
+                next_lvl = lvl + 1
+                if next_lvl not in nodes_by_level:
+                    continue
+                next_pos = {idx: pos for pos, idx in enumerate(nodes_by_level[next_lvl])}
+                def _bc_succ(idx: int) -> float:
+                    ss = [next_pos[s] for s in G_directed.successors(idx) if s in next_pos]
+                    return sum(ss) / len(ss) if ss else float(nodes_by_level[lvl].index(idx))
+                nodes_by_level[lvl] = sorted(nodes_by_level[lvl], key=_bc_succ)
+
+        # 4. Place nodes.
+        h_gap = 100.0
+        v_gap = 40.0
         current_x = 0.0
 
-        # To avoid visual jump, we'll store moves in the parent's undo if available
-        owner = self.parent()
-        if owner and hasattr(owner, "begin_undo"):
-             pass # Already called in contextMenuEvent
-
-        for lvl in sorted(nodes_by_level.keys()):
+        for lvl in sorted_levels:
             level_nodes = nodes_by_level[lvl]
-            # Order nodes in this level by their spring layout Y position
-            level_nodes.sort(key=lambda idx: pos[idx][1])
-
-            max_w = 0.0
-            # Calculate total height of this column to center it
-            col_height = sum(node_by_idx[idx].boundingRect().height() for idx in level_nodes)
-            col_height += v_gap * (len(level_nodes) - 1)
-
-            current_y = -col_height / 2.0
+            max_w = max(
+                (node_by_idx[idx].boundingRect().width() for idx in level_nodes),
+                default=120.0,
+            )
+            col_h = sum(node_by_idx[idx].boundingRect().height() for idx in level_nodes)
+            col_h += v_gap * max(len(level_nodes) - 1, 0)
+            current_y = -col_h / 2.0
 
             for idx in level_nodes:
                 node = node_by_idx[idx]
-                br = node.boundingRect()
-
-                # Snap to horizontal center of its intended column?
-                # Better: Left align in column and track max width.
                 node.setPos(current_x, current_y)
-
-                max_w = max(max_w, br.width())
-                current_y += br.height() + v_gap
+                current_y += node.boundingRect().height() + v_gap
 
             current_x += max_w + h_gap
 
