@@ -208,7 +208,13 @@ class _SingleProbeTable(QtWidgets.QWidget):
         vh.setDefaultSectionSize(16)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         layout.addWidget(self.table)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.table.itemSelectionChanged.connect(self.changed.emit)
         self.populate()
 
@@ -1107,7 +1113,9 @@ class _DyeTableWidget(QtWidgets.QWidget):
         vh.setVisible(False)
         vh.setDefaultSectionSize(16)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-        self.table.setMaximumHeight(180)
+        self.table.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         layout.addWidget(self.table)
 
         self.filter_edit.textChanged.connect(self._on_filter)
@@ -1563,6 +1571,9 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self._detector_widgets = []
         is_polarizer = _is_polarizer_template(detectors[:n_det])
         det_grid_w = QtWidgets.QWidget()
+        det_grid_w.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         det_grid = QtWidgets.QGridLayout(det_grid_w)
         det_grid.setContentsMargins(0, 0, 0, 0)
         det_grid.setSpacing(2)
@@ -1612,7 +1623,7 @@ class LightPathEasyWidget(QtWidgets.QWidget):
             self._detector_widgets.append({"bp": bp_tbl, "qe": qe_tbl, "name": det_name})
 
         sec_channels.add_widget(det_grid_w)
-        self.form_layout.addWidget(sec_channels)
+        self.form_layout.addWidget(sec_channels, 1)  # stretch=1: claims available vertical space
 
         # ── Section: Filter Dyes ──
         sec_dyes = _CollapsibleBox("Filter Dyes", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
@@ -1641,8 +1652,6 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         sec_params.add_row("kappa²:", self.kappa2_spin)
         sec_params.add_row("n:", self.n_spin)
         self.form_layout.addWidget(sec_params)
-
-        self.form_layout.addStretch(1)
 
     # ── Signals ──
 

@@ -151,7 +151,16 @@ class CollapsibleBox(QtWidgets.QWidget):
     def _apply_state(self, *, animate: bool = True) -> None:
         self._content.setVisible(self._expanded)
         self._update_header_text()
-        # Let the parent re-layout so available space is redistributed
+        # Switch size policy so the parent layout can give us vertical space when
+        # expanded and treat us as fixed-height when collapsed.
+        if self._expanded:
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            )
+        else:
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
+            )
         if self.parent() is not None:
             try:
                 self.parent().updateGeometry()  # type: ignore[union-attr]
