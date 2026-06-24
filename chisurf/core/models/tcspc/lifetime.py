@@ -536,7 +536,7 @@ class LifetimeMixtureModel(LifetimeModel):
         return len(self.lifetime_model_instances)
 
     @property
-    def factions(self) -> np.ndarray:
+    def fractions(self) -> np.ndarray:
         """Normalized mixing fractions of the model instances."""
         if self.n_model > 0:
             v = np.array([x.value for x in self._fractions])
@@ -546,10 +546,15 @@ class LifetimeMixtureModel(LifetimeModel):
             return np.array([1.0], dtype=np.float64)
 
     @property
+    def model_names(self) -> typing.List[str]:
+        """Names of the model instances in the mixture."""
+        return [f'x{i + 1}' for i in range(len(self._fractions))]
+
+    @property
     def lifetime_spectrum(self) -> np.array:
         """Interleaved (amplitude, lifetime, ...) array."""
         lts = list()
-        for model, fraction in zip(self.lifetime_model_instances, self.factions):
+        for model, fraction in zip(self.lifetime_model_instances, self.fractions):
             lt = np.copy(model.lifetime_spectrum)
             lt[::2] *= fraction
             lts.append(lt)

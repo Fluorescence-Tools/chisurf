@@ -983,7 +983,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
         cs.gui.widgets.general.clear_layout(layout)
         layout.addWidget(QtWidgets.QLabel("Fraction"), 0, 0)
         layout.addWidget(QtWidgets.QLabel("Model"), 0, 1)
-        for i, (name, fraction) in enumerate(zip(self.model_names, self.fractions)):
+        for i, (name, fraction) in enumerate(zip(self.model_names, self._fractions)):
             layout.addWidget(
                 cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                     fraction,

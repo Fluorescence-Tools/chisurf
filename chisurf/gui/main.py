@@ -400,6 +400,7 @@ class Main(
                     if f == sub_window.fit:
                         if self.current_fit is not cs.fits[fit_idx]:
                             cs.run(f"cs.current_fit = cs.fits[{fit_idx}]")
+                            self.current_fit = cs.fits[fit_idx]
                             self._fit_idx = fit_idx
                             break
 
@@ -915,7 +916,7 @@ class Main(
 
     def init_console(self):
         self.verticalLayout_4.addWidget(cs.console)
-        cs.console.pushVariables({'cs': self})
+        cs.console.pushVariables({'gui': self})
         cs.console.pushVariables({'cs': cs})
         try:
             cs.console.pushVariables({'history': cs.history})
@@ -1493,11 +1494,7 @@ class Main(
         #      Settings                                          #
         ##########################################################
         # Configuration editor
-        self.configuration = _gw.settings_editor.SettingsEditor(
-            filename=cs.core.settings.chisurf_settings_file,
-            window_title="ChiSurf Settings"
-        )
-        self.actionSettings.triggered.connect(self.configuration.show)
+        self.actionSettings.triggered.connect(lambda: self.load_and_show_plugin("chisurf.plugins.core.setup"))
         # Global FRET R_DA axis settings dialog
         self.actionFretRdaAxisSettings = QtWidgets.QAction("FRET RDA axis ...", self)
         self.actionFretRdaAxisSettings.triggered.connect(self.onOpenFretRdaAxisSettings)
