@@ -1,0 +1,61 @@
+{
+  "id": "microtime_shifter",
+  "version": "2.0.0",
+  "display_name": "TTTR:Editor:Microtime Shifter",
+  "description": "Apply global and per-channel micro-time shifts to TTTR files.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["TTTR", "Editor"],
+  "icon": "icon.png",
+  "state_namespace": "microtime_shifter",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "last_file": {"type": ["string", "null"]},
+      "global_shift": {"type": "integer"},
+      "channel_shifts": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": false
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.tttr.tttr_microtime_shifter.gui.tool:MicrotimeShifterTool",
+    "cli": "microtime-shift=chisurf.plugins.tttr.tttr_microtime_shifter.cli.main:cli",
+    "services": "chisurf.plugins.tttr.tttr_microtime_shifter.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "microtime_shift.apply",
+      "summary": "Apply micro-time shifts to TTTR files.",
+      "params_schema": "api.contract#/inputs/Apply",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "microtime_shift.load_metadata",
+      "summary": "Return routing channels and n_mt for a file.",
+      "params_schema": "api.contract#/inputs/LoadMetadata",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "microtime_shift.identify",
+      "summary": "Look up a file in the MFDB object store.",
+      "params_schema": "api.contract#/inputs/Identify",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "microtime_shift.contract.describe",
+      "summary": "Return the Micro-time Shifter workflow contract.",
+      "params_schema": {},
+      "result_schema": "api.contract",
+      "long_running": false,
+      "cancelable": false
+    }
+  ]
+}
