@@ -90,11 +90,13 @@ those rows addressed as a unit), not a second serialization format.
 
 ## Definition of Done
 
-- [ ] Lineage API answers ancestors/descendants/what_used; call sites stop writing
+- [x] Lineage API answers ancestors/descendants/what_used; call sites stop writing
       bespoke edge SQL.
-- [ ] Event bus publishes registration/state/calibration events; at least one
+- [x] Event bus publishes registration/state/calibration events; at least one
       subscriber (audit or lifecycle) consumes them.
-- [ ] Admin shows a provenance graph; PRD-05 impact query works.
+- [ ] Admin shows a provenance graph; PRD-05 impact query works. *(impact query
+      primitive landed — `Lineage.impact_of`/`what_used`; the admin GUI view is the
+      one remaining piece, Task 3b.)*
 
 ## Definition of Clean
 
@@ -173,9 +175,23 @@ immutability, root-artifact `None`, recompute/replay dispatch + override, no-exe
 error). Wiring each transformer's executor (so replay actually re-runs the pipeline) is
 plugin work that fills this seam.
 
-**Remaining:** the admin provenance view (Task 3b); wire PRD-05's calibration-change
-impact to `what_used` for non-artifact (setup/calibration/reagent) nodes (Task 4);
-register per-transformer replay executors (Task 2 follow-on).
+**Task 4 (calibration-change impact) — landed.** `Lineage.what_used` is now the full
+PRD-05 "impact of change" query for *any* node, not only artifacts consumed through an
+operation port. Besides the transitive operation-graph descendants it follows the
+`mfdb_edge` `USAGE_RELATIONSHIPS` (`measured_sample`, `linked_to`,
+`parameter_depends_on`, `uses_external_reference`; `calibrated_by` listed forward for
+PRD-05, a no-op until that vocabulary term + edge writes land) to the *consumers* of a
+node and adds their descendants — so a calibration/setup/reagent/sample node resolves to
+the downstream artifacts it affects. `Lineage.impact_of` is the underlying primitive
+(operation consumers contribute their output artifacts; artifact consumers contribute
+themselves), `_edge_referrers` the one-hop reverse-edge step; `db.get_artifact_impact`
+documents the broadened semantics. Backward compatible — a node with no usage edges
+returns exactly its descendants. Covered by three new `test/fio/test_lineage.py` cases
+(calibration reached via an artifact edge, via an operation edge, and the plain-artifact
+back-compat case).
+
+**Remaining:** the admin provenance view (Task 3b, GUI-bound); register per-transformer
+replay executors (Task 2 follow-on, plugin work).
 
 ## Relationship
 
