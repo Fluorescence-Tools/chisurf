@@ -1352,72 +1352,7 @@ class _DetectorTableWidget(QtWidgets.QWidget):
                     ni.setText(n)
 
 
-# ---------------------------------------------------------------------------
-# Collapsible section widget
-# ---------------------------------------------------------------------------
-
-class _CollapsibleBox(QtWidgets.QWidget):
-    """A section header that toggles the visibility of its content widget."""
-
-    def __init__(self, title: str, parent=None, *, expanded: bool = True):
-        super().__init__(parent)
-        self._expanded = expanded
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        # Header button
-        self._btn = QtWidgets.QToolButton()
-        self._btn.setCheckable(True)
-        self._btn.setChecked(expanded)
-        self._btn.setStyleSheet(
-            "QToolButton { background: #2a2e36; color: #ccc; border: none; "
-            "font-size: 10px; font-weight: bold; padding: 3px 6px; text-align: left; }"
-            "QToolButton:hover { background: #363c48; }"
-        )
-        self._btn.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        self._btn.clicked.connect(self._toggle)
-        self._update_btn_text(title)
-        self._title = title
-        layout.addWidget(self._btn)
-
-        # Content container
-        self._content = QtWidgets.QWidget()
-        self._content.setVisible(expanded)
-        self._content_layout = QtWidgets.QVBoxLayout(self._content)
-        self._content_layout.setContentsMargins(4, 2, 4, 4)
-        self._content_layout.setSpacing(2)
-        layout.addWidget(self._content)
-
-    def _update_btn_text(self, title: str) -> None:
-        arrow = "▼" if self._expanded else "▶"
-        self._btn.setText(f"{arrow}  {title}")
-
-    def _toggle(self) -> None:
-        self._expanded = not self._expanded
-        self._content.setVisible(self._expanded)
-        self._update_btn_text(self._title)
-
-    def add_widget(self, widget: QtWidgets.QWidget) -> None:
-        self._content_layout.addWidget(widget)
-
-    def add_row(self, label: str, widget: QtWidgets.QWidget) -> None:
-        row = QtWidgets.QWidget()
-        row_layout = QtWidgets.QHBoxLayout(row)
-        row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(8)
-        lbl = QtWidgets.QLabel(label)
-        lbl.setFixedWidth(90)
-        lbl.setStyleSheet("color: #aaa; font-size: 10px;")
-        row_layout.addWidget(lbl)
-        row_layout.addWidget(widget, 1)
-        self._content_layout.addWidget(row)
-
-    def set_expanded(self, expanded: bool) -> None:
-        if expanded != self._expanded:
-            self._toggle()
-
+from chisurf.gui.widgets.collapsible_box import CollapsibleBox as _CollapsibleBox
 
 # ---------------------------------------------------------------------------
 # Easy mode widget — load optical path (full graph) and change filters/dyes
@@ -1426,10 +1361,17 @@ class _CollapsibleBox(QtWidgets.QWidget):
 class LightPathEasyWidget(QtWidgets.QWidget):
     """Easy mode: load an optical path preset, then pick the spectra probes."""
 
-    def __init__(self, probes: list[dict], parent=None, db_path: str | None = None):
+    def __init__(
+        self,
+        probes: list[dict],
+        parent=None,
+        db_path: str | None = None,
+        auto_fold_timeout_ms: int = 1500,
+    ):
         super().__init__(parent)
         self.probes = probes
         self._db_path = db_path
+        self._auto_fold_timeout_ms = auto_fold_timeout_ms
         self._last_results: dict | None = None
         self._suppress_recalc = False
         self._suppress_form_sync = False
@@ -1475,10 +1417,20 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         scroll.setWidget(self.form_container)
         main_layout.addWidget(scroll, 1)
 
-        # ── Auto-recalc ──
+        # ── Auto-recalc + auto-fold controls ──
+        ctrl_row = QtWidgets.QHBoxLayout()
         self.auto_recalc_cb = QtWidgets.QCheckBox("Auto recalculate")
         self.auto_recalc_cb.setChecked(True)
-        main_layout.addWidget(self.auto_recalc_cb)
+        self.auto_fold_cb = QtWidgets.QCheckBox("Auto fold")
+        self.auto_fold_cb.setToolTip(
+            "Collapse each section automatically when the mouse leaves it"
+        )
+        self.auto_fold_cb.setChecked(False)
+        self.auto_fold_cb.toggled.connect(self._on_auto_fold_toggled)
+        ctrl_row.addWidget(self.auto_recalc_cb)
+        ctrl_row.addStretch(1)
+        ctrl_row.addWidget(self.auto_fold_cb)
+        main_layout.addLayout(ctrl_row)
 
         # ── Buttons ──
         btn_row = QtWidgets.QHBoxLayout()
@@ -1546,9 +1498,13 @@ class LightPathEasyWidget(QtWidgets.QWidget):
     def _populate_form(self, cfg: dict):
         """Build collapsible sections from a config dict, keeping topology fixed."""
         self._clear_form()
+        af = getattr(self, "auto_fold_cb", None)
+        auto_fold = bool(af.isChecked()) if af is not None else False
+
+        af_ms = self._auto_fold_timeout_ms
 
         # ── Section: Optical Components (lasers, dichroic, splitters) ──
-        sec_optics = _CollapsibleBox("Optical Components", expanded=True)
+        sec_optics = _CollapsibleBox("Optical Components", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
         self._component_rows.append(sec_optics)
 
         # Lasers row
@@ -1600,7 +1556,7 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self.form_layout.addWidget(sec_optics)
 
         # ── Section: Channels ──
-        sec_channels = _CollapsibleBox("Channels", expanded=True)
+        sec_channels = _CollapsibleBox("Channels", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
         self._component_rows.append(sec_channels)
 
         self._detector_widgets = []
@@ -1644,7 +1600,7 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self.form_layout.addWidget(sec_channels)
 
         # ── Section: Filter Dyes ──
-        sec_dyes = _CollapsibleBox("Filter Dyes", expanded=True)
+        sec_dyes = _CollapsibleBox("Filter Dyes", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
         self._component_rows.append(sec_dyes)
         self.dye_table = _DyeTableWidget(self.probes, db_path=self._db_path)
         dyes = cfg.get("dyes", {})
@@ -1655,7 +1611,7 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self.form_layout.addWidget(sec_dyes)
 
         # ── Section: Parameters (collapsed by default to save space) ──
-        sec_params = _CollapsibleBox("Parameters", expanded=False)
+        sec_params = _CollapsibleBox("Parameters", expanded=False, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
         self._component_rows.append(sec_params)
         self.kappa2_spin = QtWidgets.QDoubleSpinBox()
         self.kappa2_spin.setRange(0, 4)
@@ -1757,6 +1713,14 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         else:
             w = LightPathSimulatorWidget()
             w.show()
+
+    # ── Auto fold ──
+
+    def _on_auto_fold_toggled(self, checked: bool) -> None:
+        """Apply auto-fold setting to all live _CollapsibleBox sections."""
+        for w in self._component_rows:
+            if isinstance(w, _CollapsibleBox):
+                w.auto_fold = checked
 
     # ── Auto recalculate ──
 

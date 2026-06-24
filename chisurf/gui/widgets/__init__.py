@@ -8,7 +8,7 @@ import typing
 
 # List of modules that provide top-level widget attributes.
 # We try these in order when an attribute is requested.
-_DATA_PROVIDERS = [".general", ".mdi_custom_titlebar"]
+_DATA_PROVIDERS = [".general", ".mdi_custom_titlebar", ".collapsible_box"]
 
 # List of known sub-packages in chisurf.gui.widgets
 _SUB_PACKAGES = {
