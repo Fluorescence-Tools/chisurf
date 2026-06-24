@@ -133,9 +133,26 @@ from the `.dic`; `entity_registry.py` is intentionally *wiring-only* (rpc namesp
 title, group), which is genuine UI metadata not derivable from the dictionary. No
 generation needed beyond what exists.
 
-Remaining: continue **Task 2** (harder CRUD families — align DAO soft-delete; inserts;
-`get_sample` shape); **Task 4** derive general RPC/boundary parameter validation from
-the `.dic` (extending the PRD-11 operation-parameter validation).
+**Task 4 (derive RPC/boundary parameter validation from the `.dic`) — landed.**
+`chisurf/core/mfdb/boundary_validation.py` provides `DictionaryValidator`: built from
+`MmcifDictionary` (per-table `ColumnRule`s carrying `type_code`/`mandatory`/
+`enumerations`), it validates a boundary payload against the dictionary-declared
+columns — rejecting unknown columns, missing mandatory ones, type-incoherent values,
+and out-of-vocabulary values (`validate(table, values, *, require_mandatory,
+allow_unknown)`; no-op for undeclared tables; partial-update friendly). The value
+side is one shared kernel, `check_value_type`, normalising the mmCIF `type_code`s
+(and PRD-11 `value_type`s) to `int`/`float`/`bool`/`date`/`str` and accepting
+stringly-typed payloads. The PRD-11 operation-parameter validation now reuses that
+kernel: `validate_operation_parameters` additionally enforces declared `value_type`
+and numeric `lower_bound`/`upper_bound` (unwrapping rich `{value,…}` dicts and
+role-indexed lists), so the wired boundary in `result_registry` is now
+type/bound-checked, not just name-checked. Covered by
+`test/fio/test_boundary_validation.py` (unknown/missing/type/enum rejection,
+partial + allow-unknown, unknown-table no-op, the shared `check_value_type` kernel,
+and op-param out-of-bounds/wrong-type/valid-rich-repeatable).
+
+Remaining: continue **Task 2** (harder CRUD families — inserts; `get_sample` shape;
+`delete_parameter` dual-key). Tasks 1, 3, 4, 5 are landed.
 
 ## Relationship
 

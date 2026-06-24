@@ -123,6 +123,41 @@ def get_operation_parameter_defs(
     return out
 
 
+def _check_param_value(name: str, value: Any, d: OperationParameterDef) -> str | None:
+    """Return an error message if ``value`` violates the param def, else ``None``.
+
+    Checks the declared ``value_type`` (shared with the dictionary boundary
+    validator) and the numeric ``lower_bound``/``upper_bound`` (PRD-11). A value may
+    be a scalar, a list/tuple (repeatable, role-indexed), or a rich mapping carrying
+    ``value``/``error``/``fixed``/``bounds``/``units`` — the inner ``value`` is the
+    one checked.
+    """
+    from chisurf.core.mfdb.boundary_validation import check_value_type
+
+    if isinstance(value, (list, tuple)):
+        for i, element in enumerate(value):
+            err = _check_param_value(f"{name}[{i}]", element, d)
+            if err:
+                return err
+        return None
+    if isinstance(value, Mapping) and "value" in value:
+        value = value["value"]
+    type_error = check_value_type(value, d.value_type, field_name=name)
+    if type_error:
+        return type_error
+    if value is None or (d.lower_bound is None and d.upper_bound is None):
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None  # non-numeric type already validated above
+    if d.lower_bound is not None and numeric < d.lower_bound:
+        return f"{name}: {value!r} below lower bound {d.lower_bound}"
+    if d.upper_bound is not None and numeric > d.upper_bound:
+        return f"{name}: {value!r} above upper bound {d.upper_bound}"
+    return None
+
+
 def validate_operation_parameters(
     conn: sqlite3.Connection,
     operation_type: str,
@@ -130,15 +165,16 @@ def validate_operation_parameters(
 ) -> None:
     """Validate a parameter mapping against an operation type's declared schema.
 
-    Rejects unknown parameter names and missing required ones. No-op when the
-    operation type has no declared schema (unvalidated, backward compatible).
-    Raises :class:`OperationParameterError` on a violation.
+    Rejects unknown parameter names, missing required ones, type-incoherent values,
+    and out-of-bounds values. No-op when the operation type has no declared schema
+    (unvalidated, backward compatible). Raises :class:`OperationParameterError` on a
+    violation.
     """
     defs = get_operation_parameter_defs(conn, operation_type)
     if not defs:
         return
-    provided = set(parameters or {})
-    unknown = sorted(provided - set(defs))
+    provided = dict(parameters or {})
+    unknown = sorted(set(provided) - set(defs))
     if unknown:
         raise OperationParameterError(
             f"Unknown parameter(s) {unknown} for operation_type {operation_type!r}; "
@@ -149,4 +185,14 @@ def validate_operation_parameters(
         raise OperationParameterError(
             f"Missing required parameter(s) {missing} for operation_type "
             f"{operation_type!r}"
+        )
+    errors = [
+        err
+        for name, value in provided.items()
+        if (err := _check_param_value(name, value, defs[name])) is not None
+    ]
+    if errors:
+        raise OperationParameterError(
+            f"Invalid parameter value(s) for operation_type {operation_type!r}: "
+            + "; ".join(errors)
         )
