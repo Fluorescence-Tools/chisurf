@@ -4,7 +4,9 @@ import logging
 import os
 import platform
 import re
+import shutil
 import sqlite3
+import tempfile
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -3383,6 +3385,43 @@ class MFDatabase(MFDBClientBase):
             raise KeyError(f"Object not found: {object_uuid}")
         store = self._get_object_store()
         return store.get_path(row["content_md5"])
+
+    def materialize_artifact_file(self, artifact_id: str, *, into: str | None = None) -> str:
+        """Copy an artifact's stored blob to a temp file and return its path.
+
+        The object store is content-addressed, so its blob carries no file
+        extension; readers such as ``tttrlib`` infer the container from the suffix.
+        This copies the blob into a fresh temp file that carries the artifact's
+        recorded ``data_format`` suffix so a re-read works — the materialization
+        primitive behind replay/recompute (PRD-21 Task 2).
+
+        Parameters
+        ----------
+        artifact_id : str
+            Artifact whose stored object should be materialized.
+        into : str, optional
+            Directory for the temp file (defaults to the system temp dir).
+
+        Returns
+        -------
+        str
+            Path to the materialized copy.
+        """
+        artifact = self.get_artifact(artifact_id)
+        if not artifact:
+            raise KeyError(f"artifact {artifact_id!r} not found")
+        object_uuid = artifact.get("object_uuid")
+        if not object_uuid:
+            raise ValueError(
+                f"artifact {artifact_id!r} has no stored object to materialize"
+            )
+        blob = str(self.get_object_path(object_uuid))
+        data_format = (artifact.get("data_format") or "").lstrip(".")
+        suffix = f".{data_format}" if data_format else ""
+        fd, tmp = tempfile.mkstemp(prefix="mfdb_materialize_", suffix=suffix, dir=into)
+        os.close(fd)
+        shutil.copyfile(blob, tmp)
+        return tmp
 
     def delete_object(self, object_uuid: str) -> dict[str, Any]:
         """Delete an object or decrement its refcount.

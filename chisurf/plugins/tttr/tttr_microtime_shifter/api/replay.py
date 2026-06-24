@@ -14,7 +14,6 @@ Importing this module self-registers the executor (the same idiom as
 from __future__ import annotations
 
 import os
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -26,30 +25,6 @@ from chisurf.plugins.tttr.tttr_microtime_shifter.api.transformer import (
     MICROTIME_SHIFTER,
     OPERATION_TYPE,
 )
-
-
-def _materialize(db: Any, artifact_id: str, *, into: str) -> str:
-    """Copy a source artifact's stored TTTR blob into ``into`` and return the path.
-
-    The object store is content-addressed, so its blob carries no file extension;
-    tttrlib infers the container from the suffix. We copy the blob into a temp file
-    that carries the artifact's recorded ``data_format`` suffix so the re-read works.
-    """
-    artifact = db.get_artifact(artifact_id)
-    if not artifact:
-        raise ValueError(f"artifact {artifact_id!r} not found; cannot replay")
-    object_uuid = artifact.get("object_uuid")
-    if not object_uuid:
-        raise ValueError(
-            f"artifact {artifact_id!r} has no stored object to materialize for replay"
-        )
-    blob = str(db.get_object_path(object_uuid))
-    data_format = (artifact.get("data_format") or "").lstrip(".")
-    suffix = f".{data_format}" if data_format else ""
-    fd, tmp = tempfile.mkstemp(prefix="mfdb_replay_src_", suffix=suffix, dir=into)
-    os.close(fd)
-    shutil.copyfile(blob, tmp)
-    return tmp
 
 
 def microtime_shift_replay_executor(spec: ComputeSpec, db: Any) -> str:
@@ -65,7 +40,10 @@ def microtime_shift_replay_executor(spec: ComputeSpec, db: Any) -> str:
         raise ValueError("microtime_shift replay needs at least one source artifact")
 
     work_dir = tempfile.mkdtemp(prefix="mfdb_replay_shift_")
-    paths = [_materialize(db, aid, into=work_dir) for aid in spec.source_artifact_ids]
+    paths = [
+        db.materialize_artifact_file(aid, into=work_dir)
+        for aid in spec.source_artifact_ids
+    ]
     out_dir = os.path.join(work_dir, "out")
     os.makedirs(out_dir, exist_ok=True)
     transform_params = dict(spec.parameters)

@@ -91,6 +91,50 @@
       "required": false,
       "repeatable": false,
       "description": "Maximum number of GMM components."
+    },
+    {
+      "name": "channels",
+      "value_type": "int",
+      "lower_bound": 0,
+      "required": false,
+      "repeatable": true,
+      "role_domain": "channel_index",
+      "description": "Detector routing channels forming the photon stream mask (role = ordinal index). Part of the reproducible compute spec: changing the channel set changes which photons are analysed."
+    },
+    {
+      "name": "gmm_covariance_type",
+      "value_type": "text",
+      "required": false,
+      "repeatable": false,
+      "default_value": "full",
+      "description": "GMM covariance type (e.g. 'full', 'spherical'). Affects the clustering result; recorded for reproducible replay."
+    },
+    {
+      "name": "gmm_random_state",
+      "value_type": "int",
+      "lower_bound": 0,
+      "required": false,
+      "repeatable": false,
+      "default_value": "42",
+      "description": "GMM random seed; recorded so a replay reproduces the same clustering."
+    },
+    {
+      "name": "gmm_max_iter",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "default_value": "300",
+      "description": "GMM maximum EM iterations; part of the reproducible compute spec."
+    },
+    {
+      "name": "gmm_n_init",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "default_value": "10",
+      "description": "GMM number of initialisations; part of the reproducible compute spec."
     }
   ]
 }

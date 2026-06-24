@@ -437,7 +437,7 @@ def extract_burst_parameters(request: AnalysisRequest) -> dict[str, Any]:
     count_rate = photon_filter.count_rate_filter
     delta = photon_filter.delta_macro_time_filter
     gmm = request.settings.gmm
-    return {
+    params: dict[str, Any] = {
         "min_photons": burst_detection.min_photons,
         "photon_window": burst_detection.photon_window,
         "time_window": burst_detection.time_window,
@@ -447,7 +447,21 @@ def extract_burst_parameters(request: AnalysisRequest) -> dict[str, Any]:
         "delta_macro_time_min": delta.dT_min,
         "delta_macro_time_max": delta.dT_max,
         "gmm_max_components": gmm.max_components,
+        # GMM determinism — recorded so a replay reproduces the same clustering.
+        "gmm_covariance_type": gmm.covariance_type,
+        "gmm_random_state": gmm.random_state,
+        "gmm_max_iter": gmm.max_iter,
+        "gmm_n_init": gmm.n_init,
     }
+    # The detector stream mask is a role-indexed repeatable parameter (role =
+    # ordinal index), matching the microtime_shift `shift` precedent; it is part of
+    # the reproducible compute spec because it selects which photons are analysed.
+    if photon_filter.channels:
+        params["channels"] = [
+            {"value": int(ch), "role": str(i)}
+            for i, ch in enumerate(photon_filter.channels)
+        ]
+    return params
 
 
 def build_burst_metadata(
