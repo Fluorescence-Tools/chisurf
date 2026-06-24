@@ -134,10 +134,24 @@ complementary *artifact-centric* primitive (ancestor/descendant IDs, impact, a c
 operation-graph projection); it does not replace the edge-rich path. Covered by
 `test/fio/test_lineage.py` repository-accessor test.
 
+**Task 3 (event model) — landed.** `chisurf/core/mfdb/events.py` provides a minimal
+in-process `EventBus` (a process-default singleton + `publish`/`subscribe`/
+`subscribe_all` helpers) and the event vocabulary (`artifact.registered`,
+`operation.succeeded`, `state.changed`, `calibration.updated`). The contract holds:
+publishes are **post-commit** (fired after the registration transaction in
+`register_result`/`register_operation`), **best-effort and isolated** (a raising
+handler is logged and swallowed — `publish` never raises, so a subscriber can never
+break registration), and **synchronous/ordered** (name-specific then global
+subscribers). `register_result` publishes `artifact.registered`; `register_operation`
+publishes `operation.succeeded` + `artifact.registered` per output. A ready-made
+`audit_log_subscriber` is provided (opt-in). Covered by `test/fio/test_events.py`
+(bus delivery/ordering/isolation/unsubscribe; post-commit publish on registration; a
+raising subscriber does not break registration). `state.changed`/`calibration.updated`
+publish points are added with their producers (PRD-12 lifecycle / PRD-05 calibration).
+
 **Remaining:** embedded replayable compute spec + `recompute`/`replay` (Task 2); the
-post-commit event bus + publish points (Task 3); the admin provenance view (Task 3b);
-wire PRD-05's calibration-change impact to `what_used` for non-artifact (setup/
-calibration/reagent) nodes (Task 4).
+admin provenance view (Task 3b); wire PRD-05's calibration-change impact to
+`what_used` for non-artifact (setup/calibration/reagent) nodes (Task 4).
 
 ## Relationship
 

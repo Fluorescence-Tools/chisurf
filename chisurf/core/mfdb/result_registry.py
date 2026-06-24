@@ -224,6 +224,17 @@ def register_result(
         raise
 
     logger.info("Registered result: kind=%s artifact=%s operation=%s", kind, artifact_id, operation_type or "analysis")
+    # Post-commit, best-effort event (PRD-21 Task 3); never breaks registration.
+    from chisurf.core.mfdb.events import EVENT_ARTIFACT_REGISTERED, publish
+
+    publish(
+        EVENT_ARTIFACT_REGISTERED,
+        artifact_id=artifact_id,
+        kind=kind,
+        operation_type=operation_type or "analysis",
+        operation_id=operation_id,
+        sample_id=sample_id or "",
+    )
     return artifact_id
 
 
@@ -320,6 +331,29 @@ def register_operation(
         logger.error("register_operation failed (operation_type=%s): %s", operation_type, exc, exc_info=True)
         raise
     logger.info("Registered operation: type=%s op=%s inputs=%d outputs=%d", operation_type, operation_id, len(inputs), len(outputs))
+    # Post-commit, best-effort events (PRD-21 Task 3); never break registration.
+    from chisurf.core.mfdb.events import (
+        EVENT_ARTIFACT_REGISTERED,
+        EVENT_OPERATION_SUCCEEDED,
+        publish,
+    )
+
+    publish(
+        EVENT_OPERATION_SUCCEEDED,
+        operation_id=operation_id,
+        operation_type=operation_type,
+        inputs=list(inputs),
+        outputs=list(outputs),
+    )
+    for output_id in outputs:
+        publish(
+            EVENT_ARTIFACT_REGISTERED,
+            artifact_id=output_id,
+            kind="",
+            operation_type=operation_type,
+            operation_id=operation_id,
+            sample_id="",
+        )
     return operation_id
 
 
