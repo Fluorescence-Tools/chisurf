@@ -88,10 +88,38 @@ transitions (surfaced, not swallowed, on real errors; best-effort for
 MFDB-unavailable); behavior-asserting tests; DI over monkeypatching; GUI smoke for
 the admin view.
 
-## ▶ START NEXT — turnkey implementation recipe (researched 2026-06-24)
+## Implementation status
 
-PRD-21 (events) is **complete** and is the substrate for this PRD. Concrete steps,
-with the exact mechanism verified in the current code:
+**Increment 1 (schema foundation) — DONE** (`PRD-12 Increment 1` commit). The `.dic`
+declares `mfdb_state_transition` (the transition log) and `mfdb_state_transition_rule`
+(allowed transitions); both are `mfdb_*` extension tables so `reconcile_schema` creates
+them on migrate (no hand DDL). `data/state_lifecycle_defs.json` is the authored single
+source for per-entity-type states + allowed transitions (sample/artifact/operation);
+`core/mfdb/lifecycle.py` (`LifecycleDef`, `load_lifecycle_defs`, `get_lifecycle_def`,
+`bootstrap_lifecycle_defs`) seeds the state vocabularies (`mfdb_vocabulary`
+`field_name="state:<entity_type>"`) and the rule table (idempotent), wired into both
+migrate paths in `schema.py`. Covered by `test/fio/test_lifecycle_schema.py` (6).
+
+### ▶ START NEXT — Increment 2 (repository API + tests)
+Add to `repository.py` (use `lifecycle.get_lifecycle_def` / the seeded
+`mfdb_state_transition_rule` for validation; assign `transition_id` explicitly = MAX+1,
+the `operation_parameter_def` convention):
+- `transition_state(entity_type, entity_id, to_state, reason="", operator_user_id=None)`
+  — resolve current state via `get_state`; **idempotent no-op** if already `to_state`;
+  reject if `(entity_type, current_state, to_state)` is not an allowed rule (raise a
+  `StateTransitionError`, surfaced not swallowed); insert a transition row; **publish
+  PRD-21's `EVENT_STATE_CHANGED` = `state.changed` post-commit** (the constant already
+  exists in `events.py` — add the publish point here, mirroring `register_result`).
+- `get_state(entity_type, entity_id)` → latest non-deleted `to_state` (ORDER BY
+  `created_at`, `transition_id` DESC), or `None`.
+- `get_state_history(entity_type, entity_id)` → ordered transitions.
+Tests (`test/fio/test_lifecycle.py`): legal transition recorded; illegal rejected;
+history ordered; current resolves; idempotent re-transition; a subscriber sees
+`state.changed`. Then Increment 3 (wire registration paths, higher blast radius) and
+Increment 4 (mfdb-admin state+history view, Qt). Run tests in the `arm64` env
+(`-o addopts=""`).
+
+## Original recipe (full reference)
 
 **Increment 1 — schema foundation (committable on its own; verify with the gate).**
 1. `.dic` (`chisurf/core/mfdb/data/mfdb_flr_ext.dic`): add a `save_mfdb_state_transition`
