@@ -69,12 +69,42 @@ abstraction (PRD-11).
 
 ## Definition of Done
 
-- [ ] `mfdb_protocol` exists (dict-declared, generated, gate-covered), versioned
+- [x] `mfdb_protocol` exists (dict-declared, generated, gate-covered), versioned
       append-only, scoped own+public, linked to operation_type/setup.
-- [ ] Operations reference `protocol_id` + `protocol_version`; their parameters
+- [x] Operations reference `protocol_id` + `protocol_version`; their parameters
       validate against the protocol/operation parameter schema.
-- [ ] Admin shows protocols + versions and per-operation protocol provenance.
-- [ ] Tests pass including versioning and parameter validation.
+- [x] Admin shows protocols + versions and per-operation protocol provenance.
+- [x] Tests pass including versioning and parameter validation. (43 tests, arm64.)
+
+## Implementation status — COMPLETE
+
+**Increment 1 (schema + versioned CRUD).** `mfdb_protocol` is `.dic`-declared
+(`mfdb_flr_ext.dic`) and created by `reconcile_schema`; `mfdb_operation` gains
+`protocol_id`/`protocol_version` (ALTER-added on migrate). `repository.py`:
+`create_protocol` (append-only — a new name → v1, editing a name → max+1 with a fresh
+`protocol_id`, never mutating prior rows; owner = active user), `get_protocol(name,
+version="latest")`, `get_protocol_by_id`, `list_protocol_versions`,
+`list_protocols(scope)`, and `get_protocol_parameter_schema` — which **reuses** the
+operation_type's PRD-11 `mfdb_operation_parameter_def` schema (no forked parameter
+stack, per the DoC). `test/fio/test_protocol.py`.
+
+**Increment 2 (operations reference the protocol).** `register_operation(...,
+protocol_id, protocol_version)` records the reference via `record_operation`; with
+`validate` it requires the protocol to exist and its `operation_type` to match
+(`ValueError`, surfaced not swallowed). `protocol_version` defaults to the referenced
+version, so a run pins the exact procedure version even after the protocol is later
+edited. Parameter validation is unchanged (operation_type schema = the protocol schema).
+
+**Increment 3 (admin).** Backend handlers `mfdb.protocols.{list,get,versions,create,
+for_operation}` (`get` returns the JSON-flattened parameter schema; `create` returns an
+`error` for a bad category; `for_operation` is the per-operation protocol provenance) +
+`MFDBClient` methods + a standalone `gui/protocols_view.py::ProtocolsView` (scoped list,
+version history, parameter schema, create). Kept standalone like `LifecycleView` so the
+mid-overhaul dock layer (`OVERHAUL_PLAN.md`) slots it in. Tested via the `InProcessClient`
+and offscreen.
+
+**Deferred (same as PRD-12):** wiring `ProtocolsView` into the admin tool's dock layout
+once the dock rewrite lands.
 
 ## Definition of Clean
 
