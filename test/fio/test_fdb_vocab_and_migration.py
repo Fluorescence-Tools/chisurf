@@ -431,63 +431,12 @@ def test_add_processing_run_rolls_back_audit_failure(tmp_path: pathlib.Path) -> 
         assert db.conn.execute("SELECT COUNT(*) FROM mfdb_audit_log").fetchone()[0] == 1
 
 
-def test_migrated_mfdb_edge_enforces_active_vocabulary(tmp_path: pathlib.Path) -> None:
-    db_path = tmp_path / "test_migrated_edge_vocabulary.db"
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    for sql in schema.CREATE_TABLES_SQL + schema.CREATE_INDICES_SQL:
-        conn.execute(sql)
-    schema.set_schema_version(conn, 19)
-    schema.bootstrap_vocabulary(conn)
-    conn.execute(
-        """INSERT INTO mfdb_edge (
-            source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-        ) VALUES ('artifact', 'legacy', 'artifact', 'bad', 'nonsense_rel')"""
-    )
-    conn.commit()
-
-    with pytest.raises(ValueError, match="Invalid mfdb_edge.relationship_type"):
-        schema.migrate_schema(conn)
-
-    conn.execute(
-        "UPDATE mfdb_edge SET relationship_type = 'contains' WHERE edge_id = 1"
-    )
-    conn.commit()
-    report = schema.migrate_schema(conn)
-    assert report is not None
-    assert report.to_version == schema.SCHEMA_VERSION
-    # The v20 migration's backfill data is preserved in the v20 migration step,
-    # but the final report reflects the last migration (v23). The important
-    # assertion is that the edge constraint is now enforced (tested below).
-
-    with pytest.raises(sqlite3.IntegrityError):
-        conn.execute(
-            """INSERT INTO mfdb_edge (
-                source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-            ) VALUES ('artifact', 'a', 'artifact', 'b', 'nonsense_rel')"""
-        )
-    conn.close()
-
-
-def test_migrated_mfdb_edge_rejects_invalid_vocabulary_rows(tmp_path: pathlib.Path) -> None:
-    db_path = tmp_path / "test_migrated_edge_invalid_vocabulary.db"
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    for sql in schema.CREATE_TABLES_SQL + schema.CREATE_INDICES_SQL:
-        conn.execute(sql)
-    schema.set_schema_version(conn, 19)
-    schema.bootstrap_vocabulary(conn)
-    conn.execute(
-        """INSERT INTO mfdb_edge (
-            source_node_type, source_node_id, target_node_type, target_node_id, relationship_type
-        ) VALUES ('artifact', 'legacy', 'artifact', 'bad', 'nonsense_rel')"""
-    )
-    conn.commit()
-
-    with pytest.raises(ValueError, match="Invalid mfdb_edge.relationship_type"):
-        schema.migrate_schema(conn)
-
-    conn.close()
+# Note: the former test_migrated_mfdb_edge_* tests exercised the removed
+# version-chain migration (schema.migrate_schema stepping v19→v23). PRD-19 deleted
+# the version chain (pre-PRD-19 DBs are disposable, no forward migration), so those
+# tests asserted legacy behaviour. The same edge vocab/constraint guarantees are
+# covered on a fresh database by test_fresh_mfdb_edge_enforces_active_vocabulary and
+# test_fresh_mfdb_edge_rejects_operation_relationships above.
 
 
 def test_fresh_database_has_no_migration_report(tmp_path: pathlib.Path) -> None:

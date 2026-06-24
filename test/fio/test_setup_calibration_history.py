@@ -315,67 +315,8 @@ def test_get_setup_includes_calibration(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# D5: Migration backfill
-# ---------------------------------------------------------------------------
-
-
-def test_v35_migration_backfills_existing_channels(tmp_path: Path) -> None:
-    """Migration to v35 creates calibration snapshots for existing channels
-    with non-null calibration values."""
-    import sqlite3
-    from chisurf.core.mfdb import schema as mod_schema
-
-    db_path = os.path.join(tmp_path, "migrate_backfill.db")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    try:
-        # Bootstrap to v34 — create tables at version 34
-        mod_schema.migrate_schema(conn)
-        setattr(mod_schema, "SCHEMA_VERSION", 34)
-        # Force version to 34
-        conn.execute("DELETE FROM mfdb_schema_version")
-        conn.execute("INSERT INTO mfdb_schema_version (version) VALUES (34)")
-        conn.commit()
-
-        # Insert a setup with a detector channel that has g_factor
-        conn.execute(
-            "INSERT INTO mfdb_setup (setup_id, name, created_at, updated_at) "
-            "VALUES ('bf_test', 'Backfill Test', '2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        conn.execute(
-            "INSERT INTO mfdb_setup_detector_channel "
-            "(setup_id, name, channels, g_factor, l1, l2, created_at, updated_at) "
-            "VALUES ('bf_test', 'green', '[0]', 1.05, 0.01, 0.02, "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        conn.execute(
-            "INSERT INTO mfdb_setup_detector_channel "
-            "(setup_id, name, channels, g_factor, l1, l2, created_at, updated_at) "
-            "VALUES ('bf_test', 'red', '[1]', 1.10, 0.03, 0.04, "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        # Add a channel without calibration (should NOT be backfilled)
-        conn.execute(
-            "INSERT INTO mfdb_setup_detector_channel "
-            "(setup_id, name, channels, created_at, updated_at) "
-            "VALUES ('bf_test', 'no_cal', '[2]', "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        conn.commit()
-
-        # Run migration
-        mod_schema.migrate_schema(conn)
-
-        # Verify calibration snapshots were created
-        snaps = conn.execute(
-            "SELECT * FROM mfdb_setup_calibration WHERE setup_id = 'bf_test' ORDER BY channel_name"
-        ).fetchall()
-        assert len(snaps) == 2, f"Expected 2 snapshots, got {len(snaps)}"
-        by_ch = {r["channel_name"]: dict(r) for r in snaps}
-        assert by_ch["green"]["g_factor"] == 1.05
-        assert by_ch["green"]["method"] == "migrated"
-        assert by_ch["red"]["g_factor"] == 1.10
-        assert by_ch["red"]["method"] == "migrated"
-        assert "no_cal" not in by_ch
-    finally:
-        conn.close()
+# Note: the former test_v35_migration_backfills_existing_channels test exercised the
+# removed version-chain migration (mfdb_schema_version stepping v34→v35 with a calibration
+# backfill, method="migrated"). PRD-19 deleted the version chain (pre-PRD-19 DBs are
+# disposable). Calibration-snapshot creation on the current path is covered by
+# test_save_setup_creates_calibration_snapshots / _appends_snapshots above.

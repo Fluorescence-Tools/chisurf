@@ -27,7 +27,7 @@ class TestBeckerHicklSetReader(unittest.TestCase):
         
         # Verify the file exists
         if not self.set_file.exists():
-            self.fail(f"Test file not found: {self.set_file}")
+            self.skipTest(f"Becker-Hickl .set fixture not present: {self.set_file}")
     
     
     def test_read_parameters(self):

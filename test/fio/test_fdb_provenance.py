@@ -9,49 +9,12 @@ from chisurf.core.mfdb import schema
 from chisurf.core.mfdb.repository import MFDatabase
 
 
-def test_v12_database_migrates_to_v13_without_losing_existing_rows(tmp_path: Path) -> None:
-    """Verify existing experiment rows survive the Phase 1 provenance migration."""
-    db_path = tmp_path / "legacy_v12.db"
-    conn = sqlite3.connect(db_path)
-    try:
-        for sql in schema.CREATE_TABLES_SQL:
-            if "CREATE TABLE IF NOT EXISTS fdb_" not in sql:
-                conn.execute(sql)
-        conn.execute("DELETE FROM _schema_version")
-        conn.execute("INSERT INTO _schema_version (version) VALUES (12)")
-        conn.execute(
-            "INSERT INTO flr_sample (sample_id, description) VALUES (?, ?)",
-            ("sample_1", "legacy sample"),
-        )
-        conn.execute(
-            "INSERT INTO flr_experiment (experiment_id, sample_id, status) VALUES (?, ?, ?)",
-            ("exp_1", "sample_1", "complete"),
-        )
-        conn.execute(
-            """INSERT INTO flr_experiment_data
-               (experiment_id, data_type, storage_mode, file_path)
-               VALUES (?, ?, ?, ?)""",
-            ("exp_1", "TTTR", "local_file", "legacy.ptu"),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-    with MFDatabase(db_path) as db:
-        assert db._get_schema_version() == schema.SCHEMA_VERSION
-
-        assert db.get_experiment("exp_1")["sample_id"] == "sample_1"
-        assert len(db.get_experiment_data("exp_1")) == 1
-        tables = {
-            row["name"]
-            for row in db.conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
-        assert "fdb_raw_data" in tables
-        assert "fdb_processing_run" in tables
-        assert "fdb_processed_data" in tables
-        assert "fdb_provenance_edge" in tables
+# Note: the former test_v12_database_migrates_to_v13_without_losing_existing_rows test
+# asserted the legacy fdb_* provenance tables (fdb_raw_data/fdb_processing_run/…) exist
+# after a version migration. PRD-19 removed all fdb_* tables (legacy-free) and the
+# version-chain migration; _drop_legacy_tables drops any leftover on open. The current
+# provenance path (register_artifact / mfdb_* via the add_*_reference shims) is exercised
+# by test_burst_provenance_chain_and_manifest below.
 
 
 def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:

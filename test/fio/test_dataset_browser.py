@@ -683,8 +683,8 @@ def test_processed_dataset_with_unseeded_user_registers_and_browses(tmp_path, mo
     )
 
     db = MFDatabase(str(tmp_path / "reg.db"))
-    src = tmp_path / "in.dat"
-    src.write_text("hello")
+    src = tmp_path / "in.ptu"  # a valid raw data_format; the bug under test is the
+    src.write_text("hello")     # unseeded user + plugin operation_type, not the format
 
     raw = rr.register_raw_measurement(file_path=str(src), db=db)
     assert raw, "raw must register even when the active user is not pre-seeded"
@@ -904,28 +904,10 @@ def test_name_only_sample_appears_in_flr_sample_and_list(tmp_path):
     assert "DNA-Al488-Cy5" in names
 
 
-def test_backfill_fills_empty_flr_sample_description(tmp_path):
-    """Regression: existing flr_sample rows with an empty description are
-    backfilled from mfdb_sample.display_name when the DB is opened/migrated."""
-    import sqlite3
-    from chisurf.core.mfdb import schema
-
-    dbp = str(tmp_path / "bf.db")
-    db = MFDatabase(dbp)
-    # Simulate the legacy state: name only in mfdb_sample, empty flr_sample.
-    db.conn.execute(
-        "INSERT INTO mfdb_sample (sample_id, display_name) VALUES ('x1','My Sample')"
-    )
-    db.conn.execute(
-        "INSERT INTO flr_sample (sample_id, description) VALUES ('x1','')"
-    )
-    db.conn.commit()
-
-    schema._backfill_flr_sample_names(db.conn)
-    desc = db.conn.execute(
-        "SELECT description FROM flr_sample WHERE sample_id='x1'"
-    ).fetchone()[0]
-    assert desc == "My Sample"
+# Note: the former test_backfill_fills_empty_flr_sample_description test simulated the
+# legacy state by inserting into mfdb_sample and backfilling flr_sample from it. PRD-19
+# collapsed that duplicate — mfdb_sample no longer exists (flr_sample is the single
+# source of truth) — so the backfill-from-mfdb_sample path is gone.
 
 
 def test_browse_datasets_excludes_grouped_members(
@@ -1023,26 +1005,8 @@ def test_multi_owner_browse_and_dict_mapping(tmp_path, monkeypatch):
     assert unmapped == []
 
 
-def test_v39_backfills_artifact_owner_from_creator(tmp_path):
-    """Upgrading to v39 backfills one owner row per existing artifact from its
-    created_by_user_id."""
-    from chisurf.core.mfdb import schema
-
-    dbp = str(tmp_path / "up.db")
-    db = MFDatabase(dbp)
-    db.conn.execute(
-        "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
-        "VALUES ('dave','u','dave')"
-    )
-    db.conn.execute(
-        "INSERT INTO mfdb_artifact (artifact_id, artifact_kind, storage_mode, created_by_user_id) "
-        "VALUES ('art1','raw_measurement','local_file','dave')"
-    )
-    db.conn.execute("DELETE FROM mfdb_artifact_owner")
-    schema.set_schema_version(db.conn, 38)
-    db.conn.commit()
-    schema.migrate_schema(db.conn)
-    rows = db.conn.execute(
-        "SELECT artifact_id, user_id FROM mfdb_artifact_owner"
-    ).fetchall()
-    assert ("art1", "dave") in [tuple(r) for r in rows]
+# Note: the former test_v39_backfills_artifact_owner_from_creator test drove the removed
+# version-chain migration (set_schema_version(38) + migrate_schema → v39 owner backfill).
+# PRD-19 deleted the version chain (pre-PRD-19 DBs are disposable). On the current path
+# register_result records the owner in mfdb_artifact_owner directly (covered by the
+# scope/own browse tests above), so no migration backfill is needed.
