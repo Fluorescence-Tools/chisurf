@@ -10,10 +10,24 @@ data-loss), real-DB test pollution (PRD-18 hermetic harness), the owner-mismatch
 "Mine shows 0" class (PRD-17 canonical resolver), and a first-run production breakage
 (curated DB regenerated). PRD-27's go/no-go is locked (append-only-lite).
 
-**▶ NEXT: Phase 2 — the operation/transformer spine (PRD-11 + PRD-16).** Refactor
-Burst Selection (PRD-04) and Microtime Shifter (PRD-09) as the two reference
-conformant transformers; apply PRD-23 (thin widgets) as you touch them; then PRD-26
-(model-driven layer). See `MASTER-ORDER.md` Phase 2.
+**Phase 2 (operation/transformer spine + model-driven layer) is functionally
+complete:** PRD-11/16 spine ✓, both reference transformers conformant ✓, PRD-28 round
+trip ✓, PRD-26 model-driven layer substantially complete ✓ (see snapshot).
+
+**Phase 3 (provenance + LIMS) underway: PRD-21 (lineage API + event model) is COMPLETE**
+— lineage read API, replayable compute specs with both reference replay executors,
+post-commit event bus, calibration-impact query, admin provenance view (see snapshot).
+
+**▶ START NEXT: PRD-12 — lifecycle state machine (LIMS P1).** It is the next Phase 3
+item (`MASTER-ORDER.md` §Phase 3) and **consumes the PRD-21 event bus** just landed
+(`chisurf/core/mfdb/events.py`): subscribe to `artifact.registered` / `operation.succeeded`
+to advance state, and publish `state.changed` on transitions (the constant already exists
+in `events.py`; its publish point is to be added with the lifecycle producer). The
+transition log is PRD-27's state projection. Remaining smaller threads if preferred
+instead: PRD-23 "one recording path" (route `register_result` through `register_operation`
+— headless, but high blast radius) and PRD-26's deferred `INSERT OR REPLACE` upsert family
+(only if a DAO `upsert` primitive is worth building). Run tests in the `arm64` conda env
+(`-o addopts=""`).
 
 ---
 
