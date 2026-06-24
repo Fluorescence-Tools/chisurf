@@ -291,6 +291,8 @@ def register_operation(
     metadata: dict | None = None,
     db: MFDBClientBase | None = None,
     validate: bool = True,
+    protocol_id: str | None = None,
+    protocol_version: int | None = None,
 ) -> str:
     """Record a data operation as a node (the uniform PRD-11 contract).
 
@@ -299,6 +301,11 @@ def register_operation(
     input), and its parameters — validated against the operation type's `.dic`
     schema (``mfdb_operation_parameter_def``) when ``validate`` is set. Parameters
     may be scalar, rich dicts, or a list for a repeatable (role-indexed) parameter.
+
+    When ``protocol_id`` is given (PRD-14), the operation records the exact
+    procedure + version it ran; with ``validate`` the protocol must exist and its
+    ``operation_type`` (when declared) must match. ``protocol_version`` defaults to
+    the referenced protocol's version.
 
     Returns the operation_id, or ``""`` when MFDB is unavailable.
     """
@@ -314,6 +321,23 @@ def register_operation(
         if conn is not None:
             validate_operation_parameters(conn, operation_type, parameters)
 
+    if protocol_id:
+        protocol = None
+        get_by_id = getattr(db, "get_protocol_by_id", None)
+        if callable(get_by_id):
+            protocol = get_by_id(protocol_id)
+        if validate:
+            if protocol is None:
+                raise ValueError(f"unknown protocol_id {protocol_id!r}")
+            proto_op = protocol.get("operation_type")
+            if proto_op and proto_op != operation_type:
+                raise ValueError(
+                    f"protocol {protocol_id!r} realizes operation_type "
+                    f"{proto_op!r}, not {operation_type!r}"
+                )
+        if protocol_version is None and protocol is not None:
+            protocol_version = protocol.get("version")
+
     operation_id = str(uuid.uuid4())
     inputs = list(inputs or [])
     outputs = list(outputs or [])
@@ -325,6 +349,8 @@ def register_operation(
                 setup_id=setup_id or None,
                 status=status,
                 metadata=metadata or None,
+                protocol_id=protocol_id,
+                protocol_version=protocol_version,
             )
             for artifact_id in inputs:
                 db.record_operation_link(

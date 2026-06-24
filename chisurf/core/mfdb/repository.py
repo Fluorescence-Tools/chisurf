@@ -4035,6 +4035,8 @@ class MFDatabase(MFDBClientBase):
         metadata: dict[str, Any] | None = None,
         setup_version: int | None = None,
         acl_owner_user_id: str | None = None,
+        protocol_id: str | None = None,
+        protocol_version: int | None = None,
     ) -> str:
         if operator_user_id is None:
             from chisurf.core.mfdb.session import configured_default_user_id
@@ -4052,8 +4054,9 @@ class MFDatabase(MFDBClientBase):
                     software_package, software_module, software_version,
                     runtime_environment_json, started_at, ended_at, status,
                     error_message, traceback_summary, metadata_json,
+                    protocol_id, protocol_version,
                     created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(operation_id) DO UPDATE SET
                     operation_type=excluded.operation_type,
                     experiment_id=excluded.experiment_id,
@@ -4071,6 +4074,8 @@ class MFDatabase(MFDBClientBase):
                     error_message=excluded.error_message,
                     traceback_summary=excluded.traceback_summary,
                     metadata_json=excluded.metadata_json,
+                    protocol_id=excluded.protocol_id,
+                    protocol_version=excluded.protocol_version,
                     updated_at=excluded.updated_at,
                     deleted_at=excluded.deleted_at""",
                 (
@@ -4091,6 +4096,8 @@ class MFDatabase(MFDBClientBase):
                     error_message,
                     traceback_summary,
                     _json_dumps(metadata),
+                    protocol_id,
+                    protocol_version,
                     now,
                     now,
                     None,

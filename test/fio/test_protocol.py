@@ -89,3 +89,90 @@ def test_parameter_schema_is_operation_type_schema(db):
 def test_protocol_with_no_operation_type_has_empty_schema(db):
     pid, _ = db.create_protocol("freeform", "analysis")
     assert db.get_protocol_parameter_schema(db.get_protocol_by_id(pid)) == {}
+
+
+# -- Increment 2: operations reference the protocol they ran -----------------
+
+
+def _set_global(db):
+    from chisurf.core.mfdb.result_registry import set_global_db
+
+    set_global_db(db)
+
+
+def test_register_operation_records_protocol_ref(db, tmp_path):
+    from chisurf.core.mfdb.result_registry import register_operation, set_global_db
+
+    pid, version = db.create_protocol(
+        "shift v", "processing", operation_type="microtime_shift"
+    )
+    try:
+        op_id = register_operation(
+            operation_type="microtime_shift",
+            parameters={"global_shift": 2},
+            protocol_id=pid,
+            db=db,
+        )
+    finally:
+        set_global_db(None)
+    row = db.conn.execute(
+        "SELECT protocol_id, protocol_version FROM mfdb_operation WHERE operation_id = ?",
+        (op_id,),
+    ).fetchone()
+    assert row[0] == pid
+    # protocol_version defaults to the referenced protocol's version
+    assert row[1] == version
+
+
+def test_register_operation_rejects_unknown_protocol(db):
+    from chisurf.core.mfdb.result_registry import register_operation, set_global_db
+
+    try:
+        with pytest.raises(ValueError):
+            register_operation(
+                operation_type="microtime_shift",
+                protocol_id="does-not-exist",
+                db=db,
+            )
+    finally:
+        set_global_db(None)
+
+
+def test_register_operation_rejects_operation_type_mismatch(db):
+    from chisurf.core.mfdb.result_registry import register_operation, set_global_db
+
+    pid, _ = db.create_protocol("burst proc", "processing", operation_type="burst_selection")
+    try:
+        with pytest.raises(ValueError):
+            # protocol realizes burst_selection, but the operation is microtime_shift
+            register_operation(
+                operation_type="microtime_shift",
+                protocol_id=pid,
+                db=db,
+            )
+    finally:
+        set_global_db(None)
+
+
+def test_reproduce_run_by_protocol_and_version(db):
+    """The recorded operation pins exactly which protocol version produced it."""
+    from chisurf.core.mfdb.result_registry import register_operation, set_global_db
+
+    pid_v1, v1 = db.create_protocol("pipe", "processing", operation_type="microtime_shift")
+    try:
+        op = register_operation(
+            operation_type="microtime_shift",
+            parameters={"global_shift": 5},
+            protocol_id=pid_v1,
+            db=db,
+        )
+        # a later protocol edit (v2) does not change the recorded operation's ref
+        db.create_protocol("pipe", "processing", operation_type="microtime_shift")
+    finally:
+        set_global_db(None)
+    row = db.conn.execute(
+        "SELECT protocol_id, protocol_version FROM mfdb_operation WHERE operation_id = ?",
+        (op,),
+    ).fetchone()
+    assert (row[0], row[1]) == (pid_v1, v1)
+    assert db.get_protocol("pipe")["version"] == 2  # latest advanced, the run did not
