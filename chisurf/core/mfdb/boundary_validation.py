@@ -71,6 +71,12 @@ def check_value_type(value: Any, type_code: str, *, field_name: str = "value") -
             return f"{field_name}: expected integer, got boolean {value!r}"
         if isinstance(value, int):
             iv = value
+        elif isinstance(value, float):
+            # SQLite stores numbers as REAL, so an integer round-trips as an
+            # integral float (1 -> 1.0); accept those, reject genuine fractions.
+            if not value.is_integer():
+                return f"{field_name}: expected integer, got {value!r}"
+            iv = int(value)
         elif isinstance(value, str):
             try:
                 iv = int(value.strip())

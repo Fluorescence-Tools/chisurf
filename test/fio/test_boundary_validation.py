@@ -37,6 +37,8 @@ def test_check_value_type_accepts_coercible_and_rejects_incoherent():
     assert check_value_type("5", "int") is None  # stringly-typed payloads pass
     assert check_value_type("x", "int") is not None
     assert check_value_type(True, "int") is not None  # bool is not an int here
+    assert check_value_type(1.0, "int") is None  # SQLite REAL round-trip of an int
+    assert check_value_type(1.5, "int") is not None  # genuine fraction rejected
     assert check_value_type(1.5, "float") is None
     assert check_value_type("1.5", "float") is None
     assert check_value_type("nan-ish", "float") is not None

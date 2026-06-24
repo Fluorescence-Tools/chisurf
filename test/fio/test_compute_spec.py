@@ -15,11 +15,20 @@ from chisurf.core.mfdb.compute_spec import (
     ComputeSpec,
     NoReplayExecutorError,
     get_compute_spec,
+    get_replay_executor,
     recompute,
     register_replay_executor,
     replay,
     unregister_replay_executor,
 )
+
+
+def _restore_executor(operation_type, prior):
+    """Restore a previously-registered executor (the registry is process-global)."""
+    if prior is None:
+        unregister_replay_executor(operation_type)
+    else:
+        register_replay_executor(operation_type, prior)
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.result_registry import (
     register_operation,
@@ -129,6 +138,7 @@ def test_recompute_and_replay_dispatch_to_registered_executor(chain):
         calls.append(spec)
         return "new-artifact"
 
+    prior = get_replay_executor("microtime_shift")
     register_replay_executor("microtime_shift", fake_executor)
     try:
         assert recompute(db, ids["shifted"]) == "new-artifact"
@@ -137,10 +147,16 @@ def test_recompute_and_replay_dispatch_to_registered_executor(chain):
         assert replay(db, ids["shifted"], {"global_shift": 42}) == "new-artifact"
         assert calls[-1].parameters["global_shift"] == 42
     finally:
-        unregister_replay_executor("microtime_shift")
+        _restore_executor("microtime_shift", prior)
 
 
 def test_recompute_without_executor_raises(chain):
     db, ids = chain
-    with pytest.raises(NoReplayExecutorError):
-        recompute(db, ids["shifted"])
+    # the plugin executor may be registered process-globally; remove it for this case
+    prior = get_replay_executor("microtime_shift")
+    unregister_replay_executor("microtime_shift")
+    try:
+        with pytest.raises(NoReplayExecutorError):
+            recompute(db, ids["shifted"])
+    finally:
+        _restore_executor("microtime_shift", prior)
