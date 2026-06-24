@@ -1138,13 +1138,16 @@ class MFDatabase(MFDBClientBase):
         """Artifact IDs (transitively) derived from ``artifact_id``."""
         return self.lineage.descendants(artifact_id)
 
-    def get_artifact_impact(self, artifact_id: str) -> list[str]:
-        """Downstream artifacts impacted by a change to ``artifact_id``.
+    def get_artifact_impact(self, node_id: str) -> list[str]:
+        """Artifacts impacted by a change to ``node_id`` (PRD-05's impact query).
 
-        The data-side of PRD-05's "when X changes, which results used it" — a thin
-        alias of the transitive descendants, named for the impact-query call site.
+        The data-side of "when X changes, which results used it". Besides the
+        transitive operation-graph descendants this also follows ``mfdb_edge`` usage
+        links (e.g. a fit ``calibrated_by`` a calibration, a run that
+        ``measured_sample`` a sample) so calibration/setup/reagent nodes resolve to
+        the downstream artifacts they affect. See :meth:`Lineage.what_used`.
         """
-        return self.lineage.what_used(artifact_id)
+        return self.lineage.what_used(node_id)
 
     def get_artifact_provenance_graph(
         self, artifact_id: str, *, depth: int = 100

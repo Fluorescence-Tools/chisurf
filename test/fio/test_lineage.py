@@ -92,6 +92,74 @@ def test_what_used_is_downstream_impact(chain):
     assert set(lin.what_used(ids["raw"])) == {ids["shifted"], ids["burst"]}
 
 
+def test_what_used_follows_calibration_edge_to_downstream(chain):
+    """A non-artifact-port node (a calibration) impacts the results that used it.
+
+    The calibration is reached not through an operation port but via an
+    ``mfdb_edge`` usage link (``linked_to``); ``what_used`` must follow it and also
+    pull in the consumer's descendants.
+    """
+    db, ids = chain
+    lin = Lineage.from_db(db)
+    # a calibration artifact, used by the burst result via a usage edge
+    cal = register_result(
+        kind="calibration_data",
+        data={"g_factor": 1.02},
+        operation_type="calibration",
+        parameters={"g_factor": {"value": 1.02, "error": 0.01}},
+        db=db,
+    )
+    # the operation graph alone sees nothing downstream of the calibration
+    assert lin.descendants(cal) == []
+    db.add_edge(
+        source_node_type="artifact",
+        source_node_id=ids["burst"],
+        target_node_type="artifact",
+        target_node_id=cal,
+        relationship_type="linked_to",
+    )
+    impacted = set(lin.what_used(cal))
+    # the consumer (burst) is impacted; with no burst descendants that's the whole set
+    assert ids["burst"] in impacted
+    assert impacted == {ids["burst"]}
+
+
+def test_what_used_via_operation_referrer_includes_outputs(chain, tmp_path):
+    """A usage edge from an *operation* resolves to that operation's outputs."""
+    db, ids = chain
+    lin = Lineage.from_db(db)
+    cal = register_result(
+        kind="calibration_data",
+        data={"gamma": 0.9},
+        operation_type="calibration",
+        parameters={"gamma": 0.9},
+        db=db,
+    )
+    # the producing operation of the burst artifact "linked_to" the calibration
+    op_id = db.conn.execute(
+        "SELECT operation_id FROM mfdb_operation_artifact "
+        "WHERE artifact_id = ? AND direction = 'output' LIMIT 1",
+        (ids["burst"],),
+    ).fetchone()[0]
+    db.add_edge(
+        source_node_type="operation",
+        source_node_id=op_id,
+        target_node_type="artifact",
+        target_node_id=cal,
+        relationship_type="linked_to",
+    )
+    # the operation's output artifact (burst) is the impacted node
+    assert set(lin.what_used(cal)) == {ids["burst"]}
+
+
+def test_what_used_on_plain_artifact_is_just_descendants(chain):
+    """No usage edges → impact equals operation-graph descendants (back-compat)."""
+    db, ids = chain
+    lin = Lineage.from_db(db)
+    assert set(lin.what_used(ids["raw"])) == {ids["shifted"], ids["burst"]}
+    assert lin.what_used(ids["raw"])[0] == ids["shifted"]
+
+
 def test_provenance_graph_has_artifacts_operations_and_edges(chain):
     db, ids = chain
     lin = Lineage.from_db(db)

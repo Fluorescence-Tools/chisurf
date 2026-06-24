@@ -24,6 +24,27 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Any, Iterable
 
+#: ``mfdb_edge`` relationship types meaning "the *source* node was produced or
+#: derived **using** the *target* node" — following them answers PRD-05's
+#: "impact of change" for nodes that are not consumed through an operation port
+#: (the sample a run ``measured_sample``, a setup/reagent/calibration a result
+#: ``linked_to`` / ``parameter_depends_on`` / ``uses_external_reference``). The
+#: operation-graph relationships (``produced``/``input_to``) are excluded — that
+#: derivation is followed natively via ``mfdb_operation_artifact`` — as are the
+#: pure-membership relationships (``contains``/``included_in``/``grouped_in``/
+#: ``project_contains``/``supersedes``), which are organisational, not provenance.
+#: ``calibrated_by`` is listed forward (PRD-05 adds the vocabulary term and the
+#: edge writes); filtering on a not-yet-emitted name is simply a no-op today.
+USAGE_RELATIONSHIPS: frozenset[str] = frozenset(
+    {
+        "calibrated_by",
+        "measured_sample",
+        "parameter_depends_on",
+        "linked_to",
+        "uses_external_reference",
+    }
+)
+
 
 @dataclass(frozen=True)
 class LineageNode:
@@ -142,14 +163,89 @@ class Lineage:
         """The derivation chain: ``artifact_id`` first, then its ancestors."""
         return [artifact_id, *self.ancestors(artifact_id, max_depth=max_depth)]
 
-    def what_used(self, artifact_id: str, *, max_depth: int = 100) -> list[str]:
-        """Artifacts that used ``artifact_id`` (its transitive descendants).
+    def what_used(self, node_id: str, *, max_depth: int = 100) -> list[str]:
+        """Artifacts impacted if ``node_id`` changes (PRD-05's "impact of change").
 
-        The data-side of PRD-05's "impact of change": e.g. which downstream results
-        used this raw measurement / processed input. (Setup/calibration/reagent nodes
-        are a follow-up; this resolves artifact inputs.)
+        This is the full impact query and works for any node, not just artifacts
+        consumed through an operation port:
+
+        - the transitive **operation-graph descendants** of ``node_id`` (a raw or
+          processed artifact consumed as an operation input), plus
+        - the consumers reached over :data:`USAGE_RELATIONSHIPS` ``mfdb_edge`` links
+          (a fit ``calibrated_by`` this calibration, a run that ``measured_sample``
+          this sample, a result that ``linked_to`` this setup/reagent) and *their*
+          descendants.
+
+        Deduplicated; operation-graph descendants first. A plain artifact with no
+        usage edges therefore still returns exactly its descendants.
         """
-        return self.descendants(artifact_id, max_depth=max_depth)
+        return self.impact_of(node_id, max_depth=max_depth)
+
+    def _edge_referrers(
+        self, node_id: str, *, relationships: Iterable[str]
+    ) -> list[tuple[str, str]]:
+        """``(source_type, source_id)`` of non-operation edges *into* ``node_id``.
+
+        The direct consumers of ``node_id``: rows whose ``target_node_id`` is
+        ``node_id`` and whose ``relationship_type`` is one of ``relationships``
+        (soft-deleted edges excluded).
+        """
+        rels = tuple(relationships)
+        if not rels:
+            return []
+        placeholders = ",".join("?" for _ in rels)
+        rows = self.conn.execute(
+            "SELECT DISTINCT source_node_type, source_node_id FROM mfdb_edge "
+            "WHERE target_node_id = ? AND deleted_at IS NULL "
+            f"AND relationship_type IN ({placeholders})",
+            (node_id, *rels),
+        ).fetchall()
+        return [(r[0], r[1]) for r in rows]
+
+    def impact_of(
+        self,
+        node_id: str,
+        *,
+        relationships: Iterable[str] = USAGE_RELATIONSHIPS,
+        max_depth: int = 100,
+    ) -> list[str]:
+        """Artifact ids impacted by a change to ``node_id`` (see :meth:`what_used`).
+
+        Generalises ``descendants`` beyond the operation graph by also following
+        ``mfdb_edge`` usage relationships to consumers (operations contribute their
+        output artifacts; artifacts contribute themselves) and adding each consumer's
+        descendants. Pass ``relationships`` to scope which links count as "usage".
+        """
+        impacted: list[str] = []
+        seen: set[str] = set()
+
+        def _add(aid: str) -> None:
+            if aid not in seen:
+                seen.add(aid)
+                impacted.append(aid)
+            for d in self.descendants(aid, max_depth=max_depth):
+                if d not in seen:
+                    seen.add(d)
+                    impacted.append(d)
+
+        # 1. operation-graph descendants (node consumed as an operation input)
+        for d in self.descendants(node_id, max_depth=max_depth):
+            if d not in seen:
+                seen.add(d)
+                impacted.append(d)
+
+        # 2. edge referrers (calibrated_by / measured_sample / linked_to / …)
+        _operation_types = {"operation", "processing_run", "analysis_run"}
+        for src_type, src_id in self._edge_referrers(
+            node_id, relationships=relationships
+        ):
+            if (src_type or "").lower() in _operation_types:
+                for out in self._op_outputs(src_id):
+                    _add(out)
+            else:
+                _add(src_id)
+
+        return impacted
 
     def parents(self, artifact_id: str) -> list[str]:
         """Direct (one-hop) source artifacts."""
