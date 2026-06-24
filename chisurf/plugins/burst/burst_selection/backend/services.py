@@ -20,6 +20,7 @@ from ..api.contract import (
     contract_descriptor,
     service_success,
 )
+from ..api.mfdb import BurstMFDBPipeline, registration_result_to_payload
 from ..api.models import AnalysisSettings
 from ..api.selection import analyze_request
 from ..api.serialization import settings_from_dict
@@ -34,11 +35,7 @@ def register_services(dispatcher: Any) -> None:
     dispatcher : ServiceDispatcher
         The server's service dispatcher.
 
-    Registers both new dotted names and legacy snake_case aliases for
-    backward compatibility during migration.
-
     """
-    # New dotted names (canonical)
     dispatcher.register(
         METHOD_ANALYZE_FILES,
         lambda params: analyze_files_handler(**params),
@@ -59,34 +56,16 @@ def register_services(dispatcher: Any) -> None:
         METHOD_DESCRIBE_CONTRACT,
         lambda params: contract_handler(**(params or {})),
     )
-    # Legacy aliases (backward compat, will be removed after migration)
-    dispatcher.register(
-        "burst_selection.analyze_files",
-        lambda params: analyze_files_handler(**params),
-    )
-    dispatcher.register(
-        "burst_selection.inspect_bur",
-        lambda params: inspect_bur_handler(**params),
-    )
-    dispatcher.register(
-        "burst_selection.fit_gmm_from_bur",
-        lambda params: fit_gmm_handler(**params),
-    )
 
 
 def list_methods() -> dict[str, str]:
-    """Return the Burst Selection RPC method catalogue (includes legacy aliases)."""
+    """Return the Burst Selection RPC method catalogue."""
     return {
-        # New dotted names (canonical)
         METHOD_ANALYZE_FILES: "Run burst selection analysis over TTTR files.",
         METHOD_INSPECT_BUR: "Inspect a saved ChiSurf .bur file.",
         METHOD_FIT_GMM: "Fit a GMM to features extracted from a .bur file.",
         METHOD_LOAD_DIAGNOSTICS: "Run photon filtering and burst finding for diagnostic plots.",
         METHOD_DESCRIBE_CONTRACT: "Return the Burst Selection workflow contract.",
-        # Legacy aliases
-        "burst_selection.analyze_files": "[legacy] Run burst selection analysis over TTTR files.",
-        "burst_selection.inspect_bur": "[legacy] Inspect a saved ChiSurf .bur file.",
-        "burst_selection.fit_gmm_from_bur": "[legacy] Fit a GMM to features extracted from a .bur file.",
     }
 
 
@@ -101,6 +80,7 @@ def analyze_files_handler(
     legacy_output_folder_name: str | None = None,
     selected_setup: str | None = None,
     legacy_parameters: dict[str, Any] | None = None,
+    mfdb: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run Burst Selection analysis over TTTR files.
 
@@ -126,6 +106,8 @@ def analyze_files_handler(
         Detector setup name stored in the legacy Info metadata.
     legacy_parameters : dict, optional
         Additional legacy Info metadata.
+    mfdb : dict, optional
+        MFDB archival context.
 
     Returns
     -------
@@ -146,9 +128,14 @@ def analyze_files_handler(
                 "legacy_output_folder_name": legacy_output_folder_name,
                 "selected_setup": selected_setup,
                 "legacy_parameters": legacy_parameters or {},
+                "mfdb": mfdb or {},
             }
         )
         result = analyze_request(request)
+        if request.mfdb.enabled:
+            registration = BurstMFDBPipeline().register_run(request, result)
+            result.mfdb_artifacts = registration_result_to_payload(registration)
+            result.warnings.extend(registration.warnings)
         return service_success(result)
     except Exception as exc:
         from chisurf.server.services import OPERATION_FAILED, service_error

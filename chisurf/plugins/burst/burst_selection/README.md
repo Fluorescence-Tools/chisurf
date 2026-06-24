@@ -24,7 +24,8 @@ different conformational states or populations in the data.
 Burst Selection is the reference plugin for workflow-ready ChiSurf plugins. It
 defines explicit JSON-safe inputs and outputs for API, CLI, ZMQ/RPC, and GUI
 usage. The contract is implemented in `api/contract.py` and documented in
-`docs/CONTRACT.md`.
+`docs/CONTRACT.md`. The implementation pattern is documented in
+`docs/REFERENCE_IMPLEMENTATION.md`.
 
 Integration surfaces:
 
@@ -40,6 +41,26 @@ Integration surfaces:
 
 The GUI is an adapter over `BurstSelectionClient`; analysis behavior belongs in
 `api/` and JSON/RPC adaptation belongs in `backend/services.py`.
+
+### MFDB Reference Implementation
+
+Burst Selection is also the reference plugin for MFDB archival:
+
+- Pure analysis runs in `api/selection.py` and does not require a database.
+- MFDB registration lives in plugin-owned `api/mfdb.py`.
+- `backend/services.py` registers results only after analysis succeeds.
+- Inputs are archived as `raw_measurement` artifacts.
+- Primary outputs are archived as typed `burst_table` artifacts.
+- Per-file provenance is preserved through `output_paths_by_file`.
+- In the GUI, selecting MFDB as an output preflights raw files against the
+  sample registry and opens sample registration before processing when the raw
+  content is not yet linked to a molecular sample definition.
+- Detector and PIE-window setups are stored in MFDB setup definitions, and
+  processed burst outputs link their operations to the selected setup.
+- Registration failures are returned as warnings and do not fail analysis.
+
+Future workflow-ready plugins should copy this layering rather than importing
+plugin code from `chisurf.core` or writing MFDB rows directly.
 
 ### Burst Selection Process
 

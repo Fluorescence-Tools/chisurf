@@ -36,7 +36,15 @@ from .models import (
     CountRateFilterSettings,
     DeltaMacroTimeFilterSettings,
     GMMSettings,
+    MFDBContext,
     PhotonFilterSettings,
+)
+from .mfdb import (
+    BurstMFDBPipeline,
+    BurstRegistrationResult,
+    build_burst_metadata,
+    extract_burst_parameters,
+    registration_result_to_payload,
 )
 from .selection import (
     analyze_file,
@@ -57,6 +65,9 @@ __all__ = [
     "CountRateFilterSettings",
     "DeltaMacroTimeFilterSettings",
     "GMMSettings",
+    "MFDBContext",
+    "BurstMFDBPipeline",
+    "BurstRegistrationResult",
     "METHOD_ANALYZE_FILES",
     "METHOD_DESCRIBE_CONTRACT",
     "METHOD_FIT_GMM",
@@ -70,7 +81,9 @@ __all__ = [
     "analyze_file",
     "analyze_request",
     "apply_photon_filters",
+    "build_burst_metadata",
     "contract_descriptor",
+    "extract_burst_parameters",
     "extract_features",
     "find_bursts",
     "fit_gmm",
@@ -78,6 +91,7 @@ __all__ = [
     "get_unique_folder_path",
     "load_tttr",
     "read_bur",
+    "registration_result_to_payload",
     "settings_from_dict",
     "service_success",
     "summarize_bursts",

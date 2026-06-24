@@ -9,6 +9,7 @@ can be executed independently.
 1. `STATUS.md` — current codebase state
 2. `PRD.md` — product requirements and target architecture
 3. `NEW_GUI_MIGRATION.md` — stepwise migration plan
+4. `REFERENCE_IMPLEMENTATION.md` — reference workflow/MFDB plugin pattern
 
 ## Instruction files (execute in order)
 

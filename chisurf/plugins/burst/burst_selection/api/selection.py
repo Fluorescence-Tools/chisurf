@@ -15,7 +15,10 @@ import pandas as pd
 import tttrlib
 
 from chisurf.core.fio.fluorescence.burst import generate_burst_dataframe, write_mti_summary
-from chisurf.core.fluorescence.burst import burst_filter, count_rate_filter
+from chisurf.core.fluorescence.burst import burst_filter, count_rate_filter, cusum_filter
+import chisurf.core.fluorescence.burst.bocpd as bocpd_mod
+import chisurf.core.fluorescence.burst.kalman as kalman_mod
+from chisurf.core.fluorescence.burst.utils import create_array_with_ones
 from chisurf.core.math.signal import fill_small_gaps_in_array
 from chisurf.core.math.signal import find_bursts as signal_find_bursts
 
@@ -104,6 +107,80 @@ def apply_photon_filters(
                 time_window=detection_window,
             )
             selected = np.logical_and(selected, selection)
+        elif used_filter == BurstFilterMode.BOCPD:
+            channel_list = settings.channels
+            if len(channel_list) < 1:
+                channel_list = list(tttr.get_used_routing_channels())
+            macro_times = tttr.macro_times
+            time_unit = tttr.header.macro_time_resolution
+            timestamps = macro_times * time_unit
+            channels = tttr.routing_channels
+            timestamps_list = []
+            for channel in channel_list:
+                channel_timestamps = timestamps[channels == channel]
+                timestamps_list.append(channel_timestamps)
+                if len(channel_timestamps) == 0:
+                    return np.zeros_like(selected, dtype=np.uint8)
+            bocpd_settings = settings.bocpd_filter
+            min_counts = burst_detection.min_photons if burst_detection else 60
+            bursts, _, _, _, _ = bocpd_mod.bocpd_burst_detection_multi(
+                timestamps_list,
+                dt=bocpd_settings.dt,
+                prior_count=bocpd_settings.prior_count,
+                prior_duration=bocpd_settings.prior_duration,
+                changepoint_prob=bocpd_settings.changepoint_prob,
+                max_run=256,
+                min_counts=min_counts
+            )
+            start_stop = bocpd_mod.convert_bursts_to_start_stop(bursts, tttr)
+            if len(start_stop) > 0:
+                selection = create_array_with_ones(start_stop, len(tttr))
+                selected = np.logical_and(selected, selection)
+            else:
+                selected = np.zeros_like(selected)
+        elif used_filter == BurstFilterMode.KALMAN:
+            channel_list = settings.channels
+            if len(channel_list) < 1:
+                channel_list = list(tttr.get_used_routing_channels())
+            macro_times = tttr.macro_times
+            time_unit = tttr.header.macro_time_resolution
+            timestamps = macro_times * time_unit
+            channels = tttr.routing_channels
+            timestamps_list = []
+            for channel in channel_list:
+                channel_timestamps = timestamps[channels == channel]
+                timestamps_list.append(channel_timestamps)
+                if len(channel_timestamps) == 0:
+                    return np.zeros_like(selected, dtype=np.uint8)
+            kalman_settings = settings.kalman_filter
+            min_counts = burst_detection.min_photons if burst_detection else 60
+            bursts, _, _, _, _ = kalman_mod.kalman_burst_detection_multi(
+                timestamps_list,
+                dt=kalman_settings.dt,
+                q=kalman_settings.q,
+                r_scale=kalman_settings.r_scale,
+                z_thresh=kalman_settings.z_thresh,
+                min_len=kalman_settings.min_len,
+                merge_gap=kalman_settings.merge_gap,
+                min_counts=min_counts
+            )
+            start_stop = kalman_mod.convert_bursts_to_start_stop(bursts, tttr)
+            if len(start_stop) > 0:
+                selection = create_array_with_ones(start_stop, len(tttr))
+                selected = np.logical_and(selected, selection)
+            else:
+                selected = np.zeros_like(selected)
+        elif used_filter == BurstFilterMode.CUSUM:
+            cusum_settings = settings.cusum_filter
+            selection = cusum_filter(
+                tttr=tttr,
+                min_ph=cusum_settings.min_photons,
+                background_rate=cusum_settings.background_rate,
+                sb_ratio=cusum_settings.sb_ratio,
+                alpha=cusum_settings.alpha,
+                beta=cusum_settings.beta,
+            )
+            selected = np.logical_and(selected, selection)
         else:
             raise ValueError(f"Unsupported filter mode: {settings.used_filter}")
 
@@ -183,7 +260,16 @@ def legacy_output_folder_name(settings: AnalysisSettings) -> str:
     channels = settings.photon_filter.channels
     channel_text = ",".join(str(channel) for channel in channels) if channels else "All"
     mode = BurstFilterMode(settings.photon_filter.used_filter)
-    prefix = "countrate" if mode == BurstFilterMode.COUNT_RATE else "burstwise"
+    if mode == BurstFilterMode.COUNT_RATE:
+        prefix = "countrate"
+    elif mode == BurstFilterMode.BOCPD:
+        prefix = "bocpd"
+    elif mode == BurstFilterMode.KALMAN:
+        prefix = "kalman"
+    elif mode == BurstFilterMode.CUSUM:
+        prefix = "cusum"
+    else:
+        prefix = "burstwise"
     return (
         f"{prefix}_{channel_text} "
         f"{settings.photon_filter.delta_macro_time_filter.dT_max:.4f}"
@@ -260,6 +346,7 @@ def analyze_file(
     AnalysisResult
         Analysis result.
     """
+    normalized_path = str(Path(path).resolve())
     analysis_settings = settings or AnalysisSettings()
     tttr = load_tttr(path, filetype=filetype)
     if len(tttr) == 0:
@@ -268,6 +355,7 @@ def analyze_file(
             dataframes={str(path): []},
             metadata={"n_photons": 0, "n_selected": 0, "n_bursts": 0},
             output_paths={},
+            output_paths_by_file={normalized_path: {}},
         )
     selected = apply_photon_filters(
         tttr,
@@ -309,6 +397,7 @@ def analyze_file(
             "macro_time_resolution": output_resolution,
         },
         output_paths=output_paths,
+        output_paths_by_file={normalized_path: dict(output_paths)},
     )
 
 
@@ -327,6 +416,7 @@ def analyze_request(request: AnalysisRequest) -> AnalysisResult:
     """
     frames: dict[str, list[dict[str, Any]]] = {}
     output_paths: dict[str, str] = {}
+    output_paths_by_file: dict[str, dict[str, str]] = {}
     metadata: dict[str, Any] = {
         "n_files": len(request.files),
         "n_bursts": 0,
@@ -357,6 +447,7 @@ def analyze_request(request: AnalysisRequest) -> AnalysisResult:
             batch_macro_time_resolution = float(result.metadata["macro_time_resolution"])
         frames.update(result.dataframes)
         output_paths.update(result.output_paths)
+        output_paths_by_file.update(result.output_paths_by_file)
         if legacy_output_folder is not None and "hdf5" in request.settings.output_formats:
             frame = pd.DataFrame(result.dataframes.get(str(path), []))
             frame["Source File"] = str(path)
@@ -386,5 +477,6 @@ def analyze_request(request: AnalysisRequest) -> AnalysisResult:
         files=request.files,
         dataframes=frames,
         output_paths=output_paths,
+        output_paths_by_file=output_paths_by_file,
         metadata=metadata,
     )

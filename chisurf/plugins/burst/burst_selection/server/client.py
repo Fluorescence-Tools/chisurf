@@ -6,7 +6,12 @@ from typing import Any
 
 from chisurf.server.transport.zmq import ZmqClient
 
-from ..api.contract import METHOD_DESCRIBE_CONTRACT
+from ..api.contract import (
+    METHOD_ANALYZE_FILES,
+    METHOD_DESCRIBE_CONTRACT,
+    METHOD_FIT_GMM,
+    METHOD_INSPECT_BUR,
+)
 
 
 class BurstSelectionClient:
@@ -56,20 +61,20 @@ class BurstSelectionClient:
 
     def analyze_files(self, files: list[str], **kwargs: Any) -> dict[str, Any]:
         """Run Burst Selection analysis over TTTR files."""
-        return self._call("burst_selection.analyze_files", {"files": files, **kwargs})
+        return self._call(METHOD_ANALYZE_FILES, {"files": files, **kwargs})
 
     def inspect_bur(self, path: str) -> dict[str, Any]:
         """Inspect a ``.bur`` file."""
-        return self._call("burst_selection.inspect_bur", {"path": path})
+        return self._call(METHOD_INSPECT_BUR, {"path": path})
 
-    def fit_gmm_from_bur(
+    def fit_gmm(
         self,
         path: str,
         settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Fit a GMM to features extracted from a ``.bur`` file."""
         return self._call(
-            "burst_selection.fit_gmm_from_bur",
+            METHOD_FIT_GMM,
             {"path": path, "settings": settings or {}},
         )
 

@@ -14,6 +14,11 @@ from chisurf.plugins.burst.burst_selection.api.models import (
     DeltaMacroTimeFilterSettings,
     PhotonFilterSettings,
 )
+from chisurf.plugins.burst.burst_selection.api.contract import (
+    METHOD_ANALYZE_FILES,
+    METHOD_FIT_GMM,
+    METHOD_INSPECT_BUR,
+)
 from chisurf.plugins.burst.burst_selection.api.selection import analyze_file
 from chisurf.plugins.burst.burst_selection.server import methods as server_module
 from chisurf.plugins.burst.burst_selection.server.services import register_burst_selection_services
@@ -70,11 +75,11 @@ def test_register_with_service_dispatcher() -> None:
 
     dispatcher = ServiceDispatcher(SessionState())
     register_burst_selection_services(dispatcher)
-    assert dispatcher.has_method("burst_selection.inspect_bur")
+    assert dispatcher.has_method(METHOD_INSPECT_BUR)
     assert set(dispatcher.list_methods()) >= {
-        "burst_selection.analyze_files",
-        "burst_selection.fit_gmm_from_bur",
-        "burst_selection.inspect_bur",
+        METHOD_ANALYZE_FILES,
+        METHOD_FIT_GMM,
+        METHOD_INSPECT_BUR,
     }
 
 
@@ -85,10 +90,10 @@ def test_zmq_client_can_call_analyze_and_fit_gmm(tmp_path: Path) -> None:
 
     def handler(method: str, params: dict[str, Any]) -> dict[str, Any]:
         """Dispatch Burst Selection server methods for the ZMQ test."""
-        if method == "burst_selection.analyze_files":
+        if method == METHOD_ANALYZE_FILES:
             return server_module.analyze_files(**params)
-        if method == "burst_selection.fit_gmm_from_bur":
-            return server_module.fit_gmm_from_bur(**params)
+        if method == METHOD_FIT_GMM:
+            return server_module.fit_gmm(**params)
         raise ValueError(method)
 
     cmd_port = _free_port()
@@ -106,7 +111,7 @@ def test_zmq_client_can_call_analyze_and_fit_gmm(tmp_path: Path) -> None:
                 settings=real_data_settings_json(),
             )
             bur_path = analysis["output_paths"]["bur"]
-            fit = client.fit_gmm_from_bur(
+            fit = client.fit_gmm(
                 bur_path,
                 settings={"covariance_type": "spherical", "n_init": 1},
             )

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .models import AnalysisRequest, AnalysisResult, AnalysisSettings
+from .models import AnalysisRequest, AnalysisResult, AnalysisSettings, MFDBContext
 from .serialization import settings_from_dict, to_jsonable
 
 PLUGIN_ID = "burst_selection"
@@ -22,22 +22,12 @@ METHOD_FIT_GMM = "burst_selection.gmm.fit"
 METHOD_LOAD_DIAGNOSTICS = "burst_selection.diagnostics.load"
 METHOD_DESCRIBE_CONTRACT = "burst_selection.contract.describe"
 
-LEGACY_METHOD_ANALYZE_FILES = "burst_selection.analyze_files"
-LEGACY_METHOD_INSPECT_BUR = "burst_selection.inspect_bur"
-LEGACY_METHOD_FIT_GMM = "burst_selection.fit_gmm_from_bur"
-
 CANONICAL_METHODS = (
     METHOD_ANALYZE_FILES,
     METHOD_INSPECT_BUR,
     METHOD_FIT_GMM,
     METHOD_LOAD_DIAGNOSTICS,
     METHOD_DESCRIBE_CONTRACT,
-)
-
-LEGACY_METHODS = (
-    LEGACY_METHOD_ANALYZE_FILES,
-    LEGACY_METHOD_INSPECT_BUR,
-    LEGACY_METHOD_FIT_GMM,
 )
 
 
@@ -100,6 +90,7 @@ def analysis_request_from_payload(payload: dict[str, Any]) -> AnalysisRequest:
         legacy_output_folder_name=payload.get("legacy_output_folder_name"),
         selected_setup=payload.get("selected_setup"),
         legacy_parameters=payload.get("legacy_parameters") or {},
+        mfdb=_mfdb_context_from_payload(payload),
     )
 
 
@@ -111,6 +102,42 @@ def analysis_request_to_payload(request: AnalysisRequest) -> dict[str, Any]:
 def analysis_result_to_payload(result: AnalysisResult) -> dict[str, Any]:
     """Return a JSON-compatible analysis result payload."""
     return to_jsonable(result)
+
+
+def _mfdb_context_from_payload(payload: dict[str, Any]) -> MFDBContext:
+    """Normalize nested and convenience MFDB request fields.
+
+    Parameters
+    ----------
+    payload : dict
+        JSON-compatible workflow/RPC request payload.
+
+    Returns
+    -------
+    MFDBContext
+        Normalized archival context.
+
+    """
+    raw_context = payload.get("mfdb") or {}
+    if isinstance(raw_context, MFDBContext):
+        context = raw_context
+    elif isinstance(raw_context, dict):
+        context = MFDBContext(
+            enabled=bool(raw_context.get("enabled", True)),
+            sample_id=str(raw_context.get("sample_id") or ""),
+            source_artifact_ids={
+                str(path): str(artifact_id)
+                for path, artifact_id in (raw_context.get("source_artifact_ids") or {}).items()
+                if artifact_id
+            },
+            register_missing_inputs=bool(raw_context.get("register_missing_inputs", True)),
+            setup_id=str(raw_context.get("setup_id") or ""),
+            setup_version=raw_context.get("setup_version"),
+        )
+    else:
+        context = MFDBContext()
+
+    return context
 
 
 def service_success(result: AnalysisResult | dict[str, Any]) -> dict[str, Any]:
@@ -157,6 +184,7 @@ def contract_descriptor() -> dict[str, Any]:
                     "legacy_output_folder_name": {"type": ["string", "null"]},
                     "selected_setup": {"type": ["string", "null"]},
                     "legacy_parameters": {"type": "object"},
+                    "mfdb": {"$ref": "#/definitions/MFDBContext"},
                 },
             },
             "InspectBur": {
@@ -201,11 +229,28 @@ def contract_descriptor() -> dict[str, Any]:
                     "feature_dataframe": {"type": ["object", "null"]},
                     "gmm_fit": {"type": ["object", "null"]},
                     "output_paths": {"type": "object"},
+                    "output_paths_by_file": {"type": "object"},
                     "metadata": {"type": "object"},
+                    "mfdb_artifacts": {"type": "object"},
+                    "warnings": {"type": "array", "items": {"type": "string"}},
                 },
             },
         },
         "definitions": {
+            "MFDBContext": {
+                "type": "object",
+                "properties": {
+                    "enabled": {"type": "boolean"},
+                    "sample_id": {"type": "string"},
+                    "source_artifact_ids": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    },
+                    "register_missing_inputs": {"type": "boolean"},
+                    "setup_id": {"type": "string"},
+                    "setup_version": {"type": ["integer", "null"]},
+                },
+            },
             "AnalysisSettings": {
                 "type": "object",
                 "properties": {

@@ -1,18 +1,10 @@
-"""Dedicated ZMQ server adapter for the Burst Selection API.
-
-This module exists for backwards compatibility with the historical
-``chisurf.plugins.burst.burst_selection.server`` import path.  New code should
-use ``backend.services`` or the public ``api`` package directly.
-"""
+"""Dedicated ZMQ server adapter for the Burst Selection API."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from ..api.contract import (
-    LEGACY_METHOD_ANALYZE_FILES,
-    LEGACY_METHOD_FIT_GMM,
-    LEGACY_METHOD_INSPECT_BUR,
     METHOD_ANALYZE_FILES,
     METHOD_DESCRIBE_CONTRACT,
     METHOD_FIT_GMM,
@@ -36,9 +28,6 @@ def _dispatch(method: str, params: dict[str, Any]) -> dict[str, Any]:
         METHOD_FIT_GMM: lambda payload: fit_gmm_handler(**payload),
         METHOD_LOAD_DIAGNOSTICS: lambda payload: diagnostics_handler(**payload),
         METHOD_DESCRIBE_CONTRACT: lambda _payload: contract_handler(),
-        LEGACY_METHOD_ANALYZE_FILES: lambda payload: analyze_files_handler(**payload),
-        LEGACY_METHOD_INSPECT_BUR: lambda payload: inspect_bur_handler(**payload),
-        LEGACY_METHOD_FIT_GMM: lambda payload: fit_gmm_handler(**payload),
     }
     try:
         return handlers[method](params or {})
@@ -70,6 +59,7 @@ def analyze_files(
     legacy_output_folder_name: str | None = None,
     selected_setup: str | None = None,
     legacy_parameters: dict[str, Any] | None = None,
+    mfdb: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run Burst Selection analysis over TTTR files."""
     return analyze_files_handler(
@@ -83,6 +73,7 @@ def analyze_files(
         legacy_output_folder_name=legacy_output_folder_name,
         selected_setup=selected_setup,
         legacy_parameters=legacy_parameters,
+        mfdb=mfdb,
     )
 
 
@@ -91,6 +82,6 @@ def inspect_bur(path: str) -> dict[str, Any]:
     return inspect_bur_handler(path=path)
 
 
-def fit_gmm_from_bur(path: str, settings: dict[str, Any] | None = None) -> dict[str, Any]:
+def fit_gmm(path: str, settings: dict[str, Any] | None = None) -> dict[str, Any]:
     """Fit a GMM to features extracted from a saved ``.bur`` file."""
     return fit_gmm_handler(path=path, settings=settings)

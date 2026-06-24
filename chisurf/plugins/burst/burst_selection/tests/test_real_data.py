@@ -91,6 +91,7 @@ def test_real_bh_spc_analyze_file_matches_core_burst_dataframe(tmp_path: Path) -
         "n_photons": 174438,
         "n_selected": 126887,
         "n_bursts": int(len(start_stop)),
+        "macro_time_resolution": float(tttr.header.macro_time_resolution),
     }
     assert api_result.metadata["n_bursts"] == 5577
     assert Path(api_result.output_paths["bur"]).exists()

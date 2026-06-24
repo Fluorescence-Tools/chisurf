@@ -19,6 +19,9 @@ from ..api.models import (
     DeltaMacroTimeFilterSettings,
     GMMSettings,
     PhotonFilterSettings,
+    BocpdFilterSettings,
+    KalmanFilterSettings,
+    CusumFilterSettings,
 )
 from ..api.selection import analyze_file
 
@@ -95,6 +98,33 @@ def analysis_settings_from_wizard(wizard: Any) -> AnalysisSettings:
 
 def photon_filter_settings_from_wizard(wizard_filter: Any) -> PhotonFilterSettings:
     """Create photon filter settings from a WizardTTTRPhotonFilter instance."""
+    # Safe checks for BOCPD settings
+    bocpd_settings = BocpdFilterSettings(
+        prior_count=float(getattr(wizard_filter, "bocpd_prior_count", 1.0)),
+        prior_duration=float(getattr(wizard_filter, "bocpd_prior_duration", 0.1)),
+        changepoint_prob=float(getattr(wizard_filter, "bocpd_changepoint_prob", 1e-5)),
+        dt=float(getattr(wizard_filter, "trace_bin_width", 1.0)) / 1000.0,
+    )
+
+    # Safe checks for Kalman settings
+    kalman_settings = KalmanFilterSettings(
+        q=float(getattr(wizard_filter, "kalman_q", 0.01)),
+        r_scale=float(getattr(wizard_filter, "kalman_r_scale", 0.1)),
+        z_thresh=float(getattr(wizard_filter, "kalman_z_thresh", 3.0)),
+        min_len=int(getattr(wizard_filter, "kalman_min_len", 2)),
+        merge_gap=int(getattr(wizard_filter, "kalman_merge_gap", 5)),
+        dt=float(getattr(wizard_filter, "trace_bin_width", 1.0)) / 1000.0,
+    )
+
+    # Safe checks for CUSUM settings
+    cusum_settings = CusumFilterSettings(
+        min_photons=int(getattr(wizard_filter, "min_ph", 50)),
+        background_rate=int(getattr(wizard_filter, "cusum_bg_rate", 2000)),
+        sb_ratio=float(getattr(wizard_filter, "cusum_sb_ratio", 30.0)),
+        alpha=float(getattr(wizard_filter, "cusum_alpha", 0.05)),
+        beta=float(getattr(wizard_filter, "cusum_beta", 0.05)),
+    )
+
     return PhotonFilterSettings(
         channels=list(wizard_filter.channels),
         microtime_ranges=list(wizard_filter.microtime_ranges),
@@ -105,6 +135,9 @@ def photon_filter_settings_from_wizard(wizard_filter: Any) -> PhotonFilterSettin
             time_window=float(wizard_filter.settings["count_rate_filter"]["time_window"]),
             invert=bool(wizard_filter.settings.get("invert_filter", False)),
         ),
+        bocpd_filter=bocpd_settings,
+        kalman_filter=kalman_settings,
+        cusum_filter=cusum_settings,
         delta_macro_time_filter=DeltaMacroTimeFilterSettings(
             dT_min=float(wizard_filter.dT_min),
             dT_max=float(wizard_filter.dT_max),

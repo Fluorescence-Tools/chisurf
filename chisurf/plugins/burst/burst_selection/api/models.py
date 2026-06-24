@@ -13,6 +13,9 @@ class BurstFilterMode(str, Enum):
 
     COUNT_RATE = "count_rate"
     BURST = "burst"
+    BOCPD = "bocpd"
+    KALMAN = "kalman"
+    CUSUM = "cusum"
 
 
 @dataclass
@@ -22,6 +25,39 @@ class CountRateFilterSettings:
     n_ph_max: int = 60
     time_window: float = 1e-3
     invert: bool = False
+
+
+@dataclass
+class BocpdFilterSettings:
+    """BOCPD photon filter settings."""
+
+    prior_count: float = 1.0
+    prior_duration: float = 0.1
+    changepoint_prob: float = 1e-5
+    dt: float = 0.001
+
+
+@dataclass
+class KalmanFilterSettings:
+    """Kalman photon filter settings."""
+
+    q: float = 0.01
+    r_scale: float = 0.1
+    z_thresh: float = 3.0
+    min_len: int = 2
+    merge_gap: int = 5
+    dt: float = 0.001
+
+
+@dataclass
+class CusumFilterSettings:
+    """CUSUM/SPRT photon filter settings."""
+
+    min_photons: int = 50
+    background_rate: int = 2000
+    sb_ratio: float = 30.0
+    alpha: float = 0.05
+    beta: float = 0.05
 
 
 @dataclass
@@ -43,6 +79,9 @@ class PhotonFilterSettings:
     filter_active: bool = True
     used_filter: BurstFilterMode = BurstFilterMode.COUNT_RATE
     count_rate_filter: CountRateFilterSettings = field(default_factory=CountRateFilterSettings)
+    bocpd_filter: BocpdFilterSettings = field(default_factory=BocpdFilterSettings)
+    kalman_filter: KalmanFilterSettings = field(default_factory=KalmanFilterSettings)
+    cusum_filter: CusumFilterSettings = field(default_factory=CusumFilterSettings)
     delta_macro_time_filter: DeltaMacroTimeFilterSettings = field(default_factory=DeltaMacroTimeFilterSettings)
     invert_filter: bool = False
     max_gap: int = 4
@@ -111,6 +150,36 @@ class AnalysisSettings:
 
 
 @dataclass
+class MFDBContext:
+    """MFDB archival context for a burst-selection request.
+
+    Attributes
+    ----------
+    enabled : bool
+        If ``False``, skip MFDB registration for this request.
+    sample_id : str
+        Optional existing MFDB sample identifier linked to registered artifacts.
+    source_artifact_ids : dict
+        Mapping from normalized input file path to an existing raw artifact ID.
+    register_missing_inputs : bool
+        If ``True``, archive input files that do not already have a source
+        artifact ID.
+    setup_id : str
+        Optional MFDB setup identifier linked to registered operations.
+    setup_version : int, optional
+        Optional setup version for traceability metadata.
+
+    """
+
+    enabled: bool = True
+    sample_id: str = ""
+    source_artifact_ids: dict[str, str] = field(default_factory=dict)
+    register_missing_inputs: bool = True
+    setup_id: str = ""
+    setup_version: int | None = None
+
+
+@dataclass
 class AnalysisRequest:
     """Workflow input object for burst-selection analysis.
 
@@ -140,6 +209,8 @@ class AnalysisRequest:
         Detector setup label stored in output metadata.
     legacy_parameters : dict
         Additional metadata written to legacy ``Info`` files.
+    mfdb : MFDBContext
+        Optional MFDB archival context.
 
     """
 
@@ -153,6 +224,7 @@ class AnalysisRequest:
     legacy_output_folder_name: str | None = None
     selected_setup: str | None = None
     legacy_parameters: dict[str, Any] = field(default_factory=dict)
+    mfdb: MFDBContext = field(default_factory=MFDBContext)
 
 
 @dataclass
@@ -171,8 +243,14 @@ class AnalysisResult:
         Optional GMM result.
     output_paths : dict
         Paths written by the analysis, keyed by output role.
+    output_paths_by_file : dict
+        Per-input output paths, keyed first by input file and then by role.
     metadata : dict
         Counts and additional run metadata.
+    mfdb_artifacts : dict
+        MFDB artifact IDs returned by the archival layer.
+    warnings : list
+        Non-fatal analysis or MFDB archival warnings.
 
     """
 
@@ -181,7 +259,10 @@ class AnalysisResult:
     feature_dataframe: dict[str, Any] | None = None
     gmm_fit: dict[str, Any] | None = None
     output_paths: dict[str, str] = field(default_factory=dict)
+    output_paths_by_file: dict[str, dict[str, str]] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    mfdb_artifacts: dict[str, Any] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary representation."""
