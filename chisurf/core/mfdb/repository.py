@@ -1157,9 +1157,14 @@ class MFDatabase(MFDBClientBase):
         return [dict(row) for row in self.conn.execute(query, params).fetchall()]
 
     def delete_parameter(self, param_id):
+        # PRD-26 Task 2: schema-driven soft-delete (was two hand UPDATEs). param_id may
+        # be either key, so soft-delete by each; the explicit _utc_now() keeps the
+        # stored deleted_at marker format identical. The only delta is the now-idempotent
+        # `AND deleted_at IS NULL` guard (callers ignore the rowcount).
         with self._transaction():
-            self.conn.execute("UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_uuid = ?", (_utc_now(), param_id))
-            self.conn.execute("UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_id = ?", (_utc_now(), param_id))
+            now = _utc_now()
+            self.dao.soft_delete("mfdb_parameter", param_id, pk_column="parameter_uuid", deleted_at=now)
+            self.dao.soft_delete("mfdb_parameter", param_id, pk_column="parameter_id", deleted_at=now)
 
     # -- mfdb setup / setup definitions --
 
@@ -1777,13 +1782,12 @@ class MFDatabase(MFDBClientBase):
         return str(row["artifact_id"]) if row else ""
 
     def get_sample(self, sample_id):
-        return self.conn.execute(
-            "SELECT sample_id, sample_uuid, description, details, num_of_probes, "
-            "solvent_phase, sample_condition_id, entity_assembly_id, project_id, "
-            "measured_by_user_id, measured_by_device_id, measured_at "
-            "FROM flr_sample WHERE sample_id = ?",
-            (sample_id,)
-        ).fetchone()
+        # PRD-26 Task 2: schema-driven get-by-PK (was a hand SELECT of a column
+        # subset returning a sqlite3.Row). Now returns a dict (or None) covering all
+        # flr_sample columns — a superset of the former subset; callers index by key
+        # (some already rely on dict `.get(...)`). include_deleted=True preserves the
+        # former "return regardless of soft-delete" semantics (no deleted_at filter).
+        return self.dao.get("flr_sample", sample_id, include_deleted=True)
 
     def add_sample(self, sample_id, uuid=None, description="", details="", num_of_probes=None, solvent_phase=None, sample_condition_id=None, entity_assembly_id=None, project_id=None, measured_by_user_id=None, measured_by_device_id=None, measured_at=None):
         if measured_by_user_id is None:

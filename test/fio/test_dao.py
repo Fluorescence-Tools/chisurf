@@ -137,3 +137,51 @@ def test_values_are_parameterised_no_injection(db):
     # The table still exists and is queryable (injection did not execute).
     assert dao.get("flr_sample", "s4") is not None
     assert dao.has_table("flr_sample")
+
+
+def test_get_sample_migrated_to_dao_returns_dict(db):
+    """The DAO-backed ``get_sample`` returns a dict (not a sqlite3.Row).
+
+    Callers index by key and some already use dict ``.get(...)``; the dict must
+    cover the former column subset and ``None`` for a missing sample.
+    """
+    db.add_sample("samp", description="hello", num_of_probes=1)
+    row = db.get_sample("samp")
+    assert isinstance(row, dict)
+    # superset of the former subset; key access (and .get) works
+    assert row.get("sample_uuid")
+    assert row["description"] == "hello"
+    assert db.get_sample("missing") is None
+
+
+def test_get_sample_returns_soft_deleted(db):
+    """``get_sample`` had no deleted_at filter; migration keeps that semantics."""
+    db.add_sample("samp2", description="x", num_of_probes=1)
+    db.dao.soft_delete("flr_sample", "samp2", pk_column="sample_id")
+    row = db.get_sample("samp2")
+    assert row is not None and row["deleted_at"] is not None
+
+
+def test_delete_parameter_migrated_to_dao_soft_deletes_by_either_key(db):
+    """delete_parameter soft-deletes by parameter_uuid *or* parameter_id."""
+    dao = _dao(db)
+    dao.insert(
+        "mfdb_parameter",
+        {"parameter_id": 101, "parameter_uuid": "p-uuid", "name": "k", "value": 1.0},
+    )
+    # delete by the uuid key
+    db.delete_parameter("p-uuid")
+    assert dao.get("mfdb_parameter", 101, pk_column="parameter_id") is None
+    assert (
+        dao.get("mfdb_parameter", 101, pk_column="parameter_id", include_deleted=True)[
+            "deleted_at"
+        ]
+        is not None
+    )
+    # a second row deleted by the integer key
+    dao.insert(
+        "mfdb_parameter",
+        {"parameter_id": 102, "parameter_uuid": "p-uuid-2", "name": "k", "value": 1.0},
+    )
+    db.delete_parameter(102)
+    assert dao.get("mfdb_parameter", 102, pk_column="parameter_id") is None

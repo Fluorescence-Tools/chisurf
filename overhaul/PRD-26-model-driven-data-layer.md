@@ -110,11 +110,20 @@ Soft-delete family migrated: `DictionaryDao.soft_delete` gained an optional
 format preserved; the only delta is the now-idempotent `AND deleted_at IS NULL` guard
 (callers ignore the rowcount). Verified by `test_fdb_setups` + dao tests.
 
-**Still deferred (need care):**
-- `get_sample` returns a `sqlite3.Row` with an explicit column subset (not `SELECT *`/
-  dict) — migrating changes the return type/shape; audit callers first.
-- `delete_parameter` does a dual-key UPDATE (`parameter_uuid` *and* `parameter_id`) —
-  legacy two-column delete, not a single `soft_delete`.
+`get_sample` migrated: now `dao.get("flr_sample", …, include_deleted=True)` — returns a
+dict (superset of the former column subset) instead of a `sqlite3.Row`. Caller audit
+showed indexing is by key throughout and two GUI callers (`fitinfo`,
+`sample_selector_widget`) already assumed dict `.get(...)` (a latent bug against the old
+`sqlite3.Row`), so the dict return is the correct shape; `include_deleted=True` preserves
+the former no-`deleted_at`-filter semantics. `delete_parameter` migrated: the dual-key
+UPDATE became two `dao.soft_delete` calls (by `parameter_uuid` and by `parameter_id`),
+marker format preserved (`_utc_now()`), the only delta the now-idempotent
+`AND deleted_at IS NULL` guard. Covered by new `test_dao` cases (dict shape, soft-deleted
+visibility, dual-key delete).
+
+**Still deferred (need care):** the CRUD `insert` family (`add_*`/`save_*` use
+`INSERT OR REPLACE` with explicit audit columns and id-recovery logic — not a plain
+`dao.insert`).
 
 **Task 5 (generate API/schema docs from the `.dic`) — landed.**
 `chisurf/core/mfdb/docs_generator.py` renders a Markdown reference straight from the
