@@ -94,9 +94,13 @@ those rows addressed as a unit), not a second serialization format.
       bespoke edge SQL.
 - [x] Event bus publishes registration/state/calibration events; at least one
       subscriber (audit or lifecycle) consumes them.
-- [ ] Admin shows a provenance graph; PRD-05 impact query works. *(impact query
-      primitive landed — `Lineage.impact_of`/`what_used`; the admin GUI view is the
-      one remaining piece, Task 3b.)*
+- [x] Admin shows a provenance graph; PRD-05 impact query works. *(The mfdb-admin
+      provenance tab already seeds any record and renders upstream/ancestors,
+      downstream/descendants, and the full graph — `gui/tool.py`
+      `load_provenance_upstream`/`_downstream`/`_full_graph` over the edge-rich
+      `dependencies_upstream`/`_downstream`/`export_provenance_graph` →
+      `provenance_graph.mfdb_graph_to_node_editor_graph`. The PRD-05 impact-query
+      primitive landed as `Lineage.impact_of`/`what_used`.)*
 
 ## Definition of Clean
 
@@ -208,8 +212,21 @@ executor registration; no-executor error). The registry tests are now order-inde
 (save/restore the process-global executor slot). Burst Selection's executor (table
 output, not a file) is the remaining per-transformer wiring.
 
-**Remaining:** the admin provenance view (Task 3b, GUI-bound — needs Qt); a replay
-executor for `burst_selection` (Task 2 follow-on, the same seam).
+**Task 3b (admin provenance view) — already present.** On inspection the mfdb-admin
+plugin already ships a complete provenance tab: a record's context menu offers "Use as
+provenance seed" (raw data / processing run / processed product / analysis), and the
+provenance dock then loads **upstream (ancestors)**, **downstream (descendants)**, or
+the **full graph**, with JSON/ZIP export and an edge table — `gui/tool.py`
+`load_provenance_upstream` / `load_provenance_downstream` / `load_provenance_full_graph`
+over the edge-rich client methods (`dependencies_upstream` / `dependencies_downstream` /
+`export_provenance_graph`), rendered through the Qt-free
+`provenance_graph.mfdb_graph_to_node_editor_graph`. So the "ancestors → node →
+descendants" admin view is satisfied; the new headless `Lineage` service is the
+complementary artifact-centric primitive for programmatic/CLI consumers. Not rebuilt.
+
+**Remaining (optional):** a replay executor for `burst_selection` (Task 2 follow-on, the
+same seam as microtime_shift but its output is a `.bur` table/folder group, so it must
+match the PRD-28 burst registration shape rather than register a single file).
 
 ## Relationship
 
