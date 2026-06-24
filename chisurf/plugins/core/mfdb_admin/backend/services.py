@@ -182,6 +182,11 @@ def register_services(dispatcher_or_context: Any) -> None:
         "lifecycle.history": lifecycle_history_handler,
         "lifecycle.transition": lifecycle_transition_handler,
         "lifecycle.definitions": lifecycle_definitions_handler,
+        "protocols.list": list_protocols_handler,
+        "protocols.get": get_protocol_handler,
+        "protocols.versions": list_protocol_versions_handler,
+        "protocols.create": create_protocol_handler,
+        "protocols.for_operation": protocol_for_operation_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -455,6 +460,89 @@ def get_sample_handler(sample_id: str, auth: dict[str, Any] | None = None) -> di
 def get_sample_condition_handler(condition_id: str) -> dict[str, Any]:
     with MFDatabase(resolve_database_path()) as db:
         return {"condition": _get_sample_condition_row(db, condition_id)}
+
+
+# -- protocols (PRD-14 Increment 3) -----------------------------------------
+
+def _schema_to_jsonable(schema: dict[str, Any]) -> list[dict[str, Any]]:
+    """Flatten a ``{name: OperationParameterDef}`` schema to a JSON-safe list."""
+    out: list[dict[str, Any]] = []
+    for name, d in schema.items():
+        out.append({
+            "name": name,
+            "value_type": getattr(d, "value_type", ""),
+            "units": getattr(d, "units", None),
+            "default_value": getattr(d, "default_value", None),
+            "required": bool(getattr(d, "required", False)),
+            "repeatable": bool(getattr(d, "repeatable", False)),
+            "description": getattr(d, "description", None),
+        })
+    return out
+
+
+def list_protocols_handler(
+    scope: str = "all", auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List the latest version of each protocol, scoped own/public/all."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"protocols": db.list_protocols(scope=scope)}
+
+
+def get_protocol_handler(
+    name: str, version: Any = "latest", auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return a protocol (default latest) with its declared parameter schema."""
+    with MFDatabase(resolve_database_path()) as db:
+        protocol = db.get_protocol(name, version=version)
+        schema = db.get_protocol_parameter_schema(protocol) if protocol else {}
+        return {"protocol": protocol, "parameter_schema": _schema_to_jsonable(schema)}
+
+
+def list_protocol_versions_handler(
+    name: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return all versions of a protocol name (oldest first)."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"versions": db.list_protocol_versions(name)}
+
+
+def create_protocol_handler(
+    name: str,
+    category: str,
+    operation_type: str | None = None,
+    setup_id: str | None = None,
+    description: str = "",
+    is_public: bool = False,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a protocol (or a new version); an invalid category returns an error."""
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            protocol_id, version = db.create_protocol(
+                name, category, operation_type=operation_type, setup_id=setup_id,
+                description=description, is_public=is_public,
+            )
+            return {"protocol_id": protocol_id, "version": version}
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+
+def protocol_for_operation_handler(
+    operation_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return the protocol/version recorded on an operation (run provenance)."""
+    with MFDatabase(resolve_database_path()) as db:
+        row = db.conn.execute(
+            "SELECT protocol_id, protocol_version FROM mfdb_operation "
+            "WHERE operation_id = ?",
+            (operation_id,),
+        ).fetchone()
+        if not row or not row[0]:
+            return {"protocol": None}
+        return {
+            "protocol": db.get_protocol_by_id(row[0]),
+            "protocol_version": row[1],
+        }
 
 
 # -- lifecycle state machine (PRD-12 Increment 4) ---------------------------

@@ -123,6 +123,43 @@ class MFDBClient:
     def lifecycle_definitions(self) -> dict[str, Any]:
         return self._call("mfdb.lifecycle.definitions").get("definitions", {})
 
+    def list_protocols(self, scope: str = "all") -> list[dict[str, Any]]:
+        return self._call("mfdb.protocols.list", {"scope": scope}).get("protocols", [])
+
+    def get_protocol(self, name: str, version: Any = "latest") -> dict[str, Any]:
+        return self._call(
+            "mfdb.protocols.get", {"name": name, "version": version}
+        )
+
+    def list_protocol_versions(self, name: str) -> list[dict[str, Any]]:
+        return self._call("mfdb.protocols.versions", {"name": name}).get("versions", [])
+
+    def create_protocol(
+        self,
+        name: str,
+        category: str,
+        operation_type: str | None = None,
+        setup_id: str | None = None,
+        description: str = "",
+        is_public: bool = False,
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.protocols.create",
+            {
+                "name": name,
+                "category": category,
+                "operation_type": operation_type,
+                "setup_id": setup_id,
+                "description": description,
+                "is_public": is_public,
+            },
+        )
+
+    def protocol_for_operation(self, operation_id: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.protocols.for_operation", {"operation_id": operation_id}
+        )
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 
