@@ -187,6 +187,11 @@ def register_services(dispatcher_or_context: Any) -> None:
         "protocols.versions": list_protocol_versions_handler,
         "protocols.create": create_protocol_handler,
         "protocols.for_operation": protocol_for_operation_handler,
+        "studies.list": list_studies_handler,
+        "studies.get": get_study_handler,
+        "studies.create": create_study_handler,
+        "studies.members.add": add_study_member_handler,
+        "studies.fields.set": set_study_field_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -543,6 +548,67 @@ def protocol_for_operation_handler(
             "protocol": db.get_protocol_by_id(row[0]),
             "protocol_version": row[1],
         }
+
+
+# -- studies / projects (PRD-13 Increment 3) --------------------------------
+
+def list_studies_handler(
+    scope: str = "all", auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List studies scoped mine/public/all."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"studies": db.list_studies(scope=scope)}
+
+
+def get_study_handler(
+    study_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return a study with its members and configurable fields."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {
+            "study": db.get_study(study_id),
+            "members": db.list_study_members(study_id),
+            "fields": db.get_study_fields(study_id),
+        }
+
+
+def create_study_handler(
+    name: str,
+    description: str = "",
+    is_public: bool = False,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a study; a missing name returns an error."""
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            return {"study_id": db.create_study(name, description, is_public=is_public)}
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+
+def add_study_member_handler(
+    study_id: str,
+    member_type: str,
+    member_id: str,
+    role: str = "member",
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Add a sample/artifact to a study; a bad member_type returns an error."""
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            db.add_study_member(study_id, member_type, member_id, role=role)
+            return {"members": db.list_study_members(study_id)}
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+
+def set_study_field_handler(
+    study_id: str, key: str, value: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Set a configurable per-study field."""
+    with MFDatabase(resolve_database_path()) as db:
+        db.set_study_field(study_id, key, value)
+        return {"fields": db.get_study_fields(study_id)}
 
 
 # -- lifecycle state machine (PRD-12 Increment 4) ---------------------------

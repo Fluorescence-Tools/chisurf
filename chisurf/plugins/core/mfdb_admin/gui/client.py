@@ -160,6 +160,35 @@ class MFDBClient:
             "mfdb.protocols.for_operation", {"operation_id": operation_id}
         )
 
+    def list_studies(self, scope: str = "all") -> list[dict[str, Any]]:
+        return self._call("mfdb.studies.list", {"scope": scope}).get("studies", [])
+
+    def get_study(self, study_id: str) -> dict[str, Any]:
+        return self._call("mfdb.studies.get", {"study_id": study_id})
+
+    def create_study(
+        self, name: str, description: str = "", is_public: bool = False
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.studies.create",
+            {"name": name, "description": description, "is_public": is_public},
+        )
+
+    def add_study_member(
+        self, study_id: str, member_type: str, member_id: str, role: str = "member"
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.studies.members.add",
+            {"study_id": study_id, "member_type": member_type,
+             "member_id": member_id, "role": role},
+        )
+
+    def set_study_field(self, study_id: str, key: str, value: str) -> dict[str, Any]:
+        return self._call(
+            "mfdb.studies.fields.set",
+            {"study_id": study_id, "key": key, "value": value},
+        )
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 
