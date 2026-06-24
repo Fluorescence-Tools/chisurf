@@ -176,13 +176,14 @@ class _SingleProbeTable(QtWidgets.QWidget):
 
     changed = QtCore.Signal()
 
-    def __init__(self, probes, db_path=None, filter_key=None, parent=None):
+    def __init__(self, probes, db_path=None, filter_key=None, parent=None, show_header=True):
         super().__init__(parent)
         self.probes = probes
         self._db_path = db_path
         self._filter_key = filter_key
         self._db_adapter = None
         self._db_opened = False
+        self._show_header = show_header
         self._setup_ui()
 
     def _setup_ui(self):
@@ -200,13 +201,13 @@ class _SingleProbeTable(QtWidgets.QWidget):
             QTableWidget::item:selected { background: #3a6ea5; }
         """)
         hh = self.table.horizontalHeader()
+        hh.setVisible(self._show_header)
         hh.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         vh = self.table.verticalHeader()
         vh.setVisible(False)
         vh.setDefaultSectionSize(16)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.setMaximumHeight(130)
         layout.addWidget(self.table)
         self.table.itemSelectionChanged.connect(self.changed.emit)
         self.populate()
@@ -1566,9 +1567,18 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         det_grid.setContentsMargins(0, 0, 0, 0)
         det_grid.setSpacing(2)
         det_grid.setColumnStretch(0, 0)
-        det_grid.setColumnMinimumWidth(0, 40)
+        det_grid.setColumnMinimumWidth(0, 32)
         det_grid.setColumnStretch(1, 1)
         det_grid.setColumnStretch(2, 1)
+
+        # Column headers row (row 0) — replaces per-table "Probe" headers
+        _hdr_style = "color: #9ba3af; font-size: 9px; font-weight: bold; padding: 1px 4px;"
+        for col_idx, col_label in enumerate(["Bandpass", "QE"], start=1):
+            lbl = QtWidgets.QLabel(col_label)
+            lbl.setStyleSheet(_hdr_style)
+            lbl.setAlignment(QtCore.Qt.AlignCenter)
+            det_grid.addWidget(lbl, 0, col_idx)
+        det_grid.setRowStretch(0, 0)
 
         for i, det in enumerate(detectors[:n_det]):
             det_name = det.get("name", f"Channel {i + 1}")
@@ -1582,17 +1592,22 @@ class LightPathEasyWidget(QtWidgets.QWidget):
 
             lbl = QtWidgets.QLabel(label)
             lbl.setStyleSheet("font-weight: bold; font-size: 10px;")
-            det_grid.addWidget(lbl, i, 0)
+            lbl.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+            det_grid.addWidget(lbl, i + 1, 0)
 
-            bp_tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="has_trans")
+            bp_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
+                                       filter_key="has_trans", show_header=False)
             bp_tbl.set_selected_probe_id(det.get("bandpass_probe_id"))
             bp_tbl.changed.connect(self._schedule_recalc)
-            det_grid.addWidget(bp_tbl, i, 1)
+            det_grid.addWidget(bp_tbl, i + 1, 1)
 
-            qe_tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="has_qe")
+            qe_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
+                                       filter_key="has_qe", show_header=False)
             qe_tbl.set_selected_probe_id(det.get("qe_probe_id"))
             qe_tbl.changed.connect(self._schedule_recalc)
-            det_grid.addWidget(qe_tbl, i, 2)
+            det_grid.addWidget(qe_tbl, i + 1, 2)
+
+            det_grid.setRowStretch(i + 1, 1)
 
             self._detector_widgets.append({"bp": bp_tbl, "qe": qe_tbl, "name": det_name})
 

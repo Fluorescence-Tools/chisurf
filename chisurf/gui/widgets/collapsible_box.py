@@ -79,7 +79,7 @@ class CollapsibleBox(QtWidgets.QWidget):
             "  font-size: 10px;"
             "  font-weight: bold;"
             "  text-align: left;"
-            "  padding: 4px 6px 4px 4px;"
+            "  padding: 4px 6px 4px 0px;"
             "}"
             "QToolButton:hover { background: #32363f; }"
             "QToolButton:checked { color: #7eb8f7; }"
