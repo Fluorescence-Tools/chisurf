@@ -128,3 +128,25 @@ def test_browse_datasets_filters_by_study(db, tmp_path):
         for d in db.browse_datasets(scope="own", owner_id=owner)["datasets"]
     }
     assert {a_sample, b_direct, c_out} <= all_ids
+
+
+def test_backfill_studies_from_project_ids(db):
+    db.add_sample("s1", num_of_probes=1)
+    db.add_sample("s2", num_of_probes=1)
+    db.add_sample("s3", num_of_probes=1)
+    db.conn.execute("UPDATE flr_sample SET project_id = 'projA' WHERE sample_id IN ('s1','s2')")
+    db.conn.execute("UPDATE flr_sample SET project_id = 'projB' WHERE sample_id = 's3'")
+    db.conn.commit()
+
+    report = db.backfill_studies_from_project_ids()
+    assert report["studies_created"] == 2
+    assert report["members_added"] == 3
+
+    studies = {s["name"]: s["study_id"] for s in db.list_studies(scope="all")}
+    assert {"projA", "projB"} <= set(studies)
+    members_a = {m["member_id"] for m in db.list_study_members(studies["projA"])}
+    assert members_a == {"s1", "s2"}
+
+    # idempotent: a second run creates nothing new
+    again = db.backfill_studies_from_project_ids()
+    assert again == {"studies_created": 0, "members_added": 0}

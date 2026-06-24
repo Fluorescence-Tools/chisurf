@@ -1589,6 +1589,49 @@ class MFDatabase(MFDBClientBase):
         ).fetchall()
         return {r[0]: r[1] for r in rows}
 
+    def backfill_studies_from_project_ids(self) -> dict[str, int]:
+        """Create one study per distinct ``flr_sample.project_id`` and join its samples.
+
+        A one-shot, idempotent backfill (callable on demand — not a version migration,
+        per PRD-19's disposable-DB policy): for each distinct non-empty ``project_id``
+        on ``flr_sample`` that has no study of the same name yet, create a study named
+        after the project_id and add each carrying sample as a member. Returns
+        ``{"studies_created", "members_added"}``.
+        """
+        studies_created = 0
+        members_added = 0
+        rows = self.conn.execute(
+            "SELECT project_id, sample_id FROM flr_sample "
+            "WHERE project_id IS NOT NULL AND project_id != '' AND deleted_at IS NULL "
+            "ORDER BY project_id"
+        ).fetchall()
+        by_project: dict[str, list[str]] = {}
+        for project_id, sample_id in rows:
+            by_project.setdefault(project_id, []).append(sample_id)
+        for project_id, sample_ids in by_project.items():
+            existing = self.conn.execute(
+                "SELECT study_id FROM mfdb_study WHERE name = ? AND deleted_at IS NULL "
+                "ORDER BY created_at LIMIT 1",
+                (project_id,),
+            ).fetchone()
+            if existing:
+                study_id = existing[0]
+            else:
+                study_id = self.create_study(
+                    project_id, description=f"Backfilled from project_id {project_id!r}"
+                )
+                studies_created += 1
+            for sample_id in sample_ids:
+                before = self.conn.execute(
+                    "SELECT COUNT(*) FROM mfdb_study_member WHERE study_id = ? "
+                    "AND member_type = 'sample' AND member_id = ? AND deleted_at IS NULL",
+                    (study_id, sample_id),
+                ).fetchone()[0]
+                self.add_study_member(study_id, "sample", sample_id)
+                if not before:
+                    members_added += 1
+        return {"studies_created": studies_created, "members_added": members_added}
+
 
     # -- mfdb parameters --
 
