@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 
 _DEFS_PATH = Path(__file__).parent / "data" / "state_lifecycle_defs.json"
 
+
+class StateTransitionError(ValueError):
+    """An illegal lifecycle state transition (no matching rule) — PRD-12."""
+
 #: ``mfdb_vocabulary.field_name`` for an entity type's states.
 def state_field(entity_type: str) -> str:
     """Return the vocabulary ``field_name`` keying an entity type's states."""
