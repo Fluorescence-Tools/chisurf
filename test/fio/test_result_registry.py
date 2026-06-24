@@ -13,6 +13,7 @@ from chisurf.core.mfdb.payload_codec import PayloadSchemaError, encode_payload
 from chisurf.core.mfdb.payload_models import BurstSelection, FcsCorrelation
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.result_registry import (
+    LinkValidationError,
     read_result,
     register_calibration,
     register_fit_result,
@@ -190,16 +191,18 @@ def test_register_result_with_parameters(db):
 
 
 def test_register_result_missing_parent_rolls_back_all_rows(db):
-    """Invalid provenance links fail before partial result rows are committed."""
-    art_id = register_result(
-        kind="processed_data",
-        data={"x": [1, 2], "y": [3, 4]},
-        parent_artifact_id="missing_parent",
-        operation_type="analysis",
-        db=db,
-    )
+    """Invalid provenance links fail loudly before partial result rows are committed."""
+    # register_result is fail-loud (PRD-10/PRD-25): a bad link raises rather than
+    # silently dropping data, and nothing is persisted.
+    with pytest.raises(LinkValidationError):
+        register_result(
+            kind="processed_data",
+            data={"x": [1, 2], "y": [3, 4]},
+            parent_artifact_id="missing_parent",
+            operation_type="analysis",
+            db=db,
+        )
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_operation").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_operation_artifact").fetchone()[0] == 0
@@ -207,30 +210,30 @@ def test_register_result_missing_parent_rolls_back_all_rows(db):
 
 
 def test_register_result_missing_sample_rolls_back_all_rows(db):
-    """Invalid sample links do not leave orphaned artifacts."""
-    art_id = register_result(
-        kind="processed_data",
-        data={"x": [1, 2], "y": [3, 4]},
-        sample_id="missing_sample",
-        operation_type="analysis",
-        db=db,
-    )
+    """Invalid sample links raise and do not leave orphaned artifacts."""
+    with pytest.raises(LinkValidationError):
+        register_result(
+            kind="processed_data",
+            data={"x": [1, 2], "y": [3, 4]},
+            sample_id="missing_sample",
+            operation_type="analysis",
+            db=db,
+        )
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_object").fetchone()[0] == 0
 
 
 def test_register_result_rejects_unreadable_object_dtype_table(db):
     """Generic table fallback must not write object-dtype msgpack artifacts."""
-    art_id = register_result(
-        kind="fit_result",
-        data={"model": {"a": 1}},
-        operation_type="analysis",
-        db=db,
-    )
+    with pytest.raises(ValueError):
+        register_result(
+            kind="fit_result",
+            data={"model": {"a": 1}},
+            operation_type="analysis",
+            db=db,
+        )
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_object").fetchone()[0] == 0
 
@@ -242,9 +245,9 @@ def test_register_result_rejects_artifact_payload_kind_mismatch(db):
         correlation=np.array([1.0, 0.9], dtype=np.float64),
     )
 
-    art_id = register_result(kind="spectra", data=payload, operation_type="analysis", db=db)
+    with pytest.raises(ValueError):
+        register_result(kind="spectra", data=payload, operation_type="analysis", db=db)
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
 
 
@@ -285,9 +288,9 @@ def test_register_result_burst_selection_dataframe_rejects_ambiguous_mask_value(
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"mask": ["True", "maybe"]})
 
-    art_id = register_result(kind="burst_selection", data=df, operation_type="burst_selection", db=db)
+    with pytest.raises(ValueError):
+        register_result(kind="burst_selection", data=df, operation_type="burst_selection", db=db)
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_object").fetchone()[0] == 0
 
@@ -360,9 +363,9 @@ def test_register_result_spectrum_dataframe_rejects_ambiguous_normalized_value(d
         }
     )
 
-    art_id = register_result(kind="spectra", data=df, operation_type="analysis", db=db)
+    with pytest.raises(ValueError):
+        register_result(kind="spectra", data=df, operation_type="analysis", db=db)
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
 
 
@@ -371,9 +374,9 @@ def test_register_result_rejects_unsupported_known_kind_dataframe(db):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"x": [0.0, 1.0], "y": [1.0, 2.0]})
 
-    art_id = register_result(kind="pda_histogram", data=df, operation_type="analysis", db=db)
+    with pytest.raises(ValueError):
+        register_result(kind="pda_histogram", data=df, operation_type="analysis", db=db)
 
-    assert art_id == ""
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_artifact").fetchone()[0] == 0
     assert db.conn.execute("SELECT COUNT(*) FROM mfdb_object").fetchone()[0] == 0
 
