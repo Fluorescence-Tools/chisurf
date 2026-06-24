@@ -14,21 +14,27 @@ data-loss), real-DB test pollution (PRD-18 hermetic harness), the owner-mismatch
 complete:** PRD-11/16 spine ✓, both reference transformers conformant ✓, PRD-28 round
 trip ✓, PRD-26 model-driven layer substantially complete ✓ (see snapshot).
 
-**Phase 3 (provenance + LIMS): PRD-21 (lineage + events), PRD-12 (lifecycle state
-machine), and PRD-14 (protocols) are COMPLETE** (see snapshot). PRD-14 added the
-`.dic`-declared `mfdb_protocol` (append-only versioned), `protocol_id`/`protocol_version`
-on `mfdb_operation`, `register_operation` recording + validating the protocol ref, and a
-standalone admin `ProtocolsView`.
+**Phase 3 (provenance + LIMS) is COMPLETE: PRD-21 (lineage + events), PRD-12 (lifecycle),
+PRD-14 (protocols), and PRD-13 (study/project) all landed** (see snapshot). PRD-13 added
+`.dic`-declared `mfdb_study`/`mfdb_study_member`/`mfdb_study_key_value`, study CRUD +
+many-to-many membership + configurable fields + `project_id` backfill, a `browse_datasets`
+study facet, and a standalone admin `StudiesView`.
 
-**▶ START NEXT: PRD-13 (study/project) finishes Phase-3 LIMS, or jump to Phase-4
-PRD-22 (pipeline engine; prereqs spine+lineage done).** PRD-13 promotes `project_id` into
-a real `mfdb_study` entity with `mfdb_study_member` + per-study key-values and a browser
-facet — same `.dic`+seed+repository+admin pattern just used 3× (PRD-12/14). PRD-22 is the
-higher-ceiling keystone (compose transformers into recorded, type-checked pipelines).
-Deferred LIMS threads: wire `LifecycleView`/`ProtocolsView` into the admin dock layout
-once the `OVERHAUL_PLAN.md` dock rewrite lands (intentionally standalone, not against the
-legacy tabs). Smaller standing threads: PRD-23 "one recording path", PRD-26 upsert family.
-Run tests in the `arm64` conda env (`-o addopts=""`).
+**▶ START NEXT: Phase 4 — PRD-22 (pipeline/workflow engine).** The keystone: compose the
+conformant transformers (both now replayable) into a type-checked, recorded dataflow graph
+executed via `register_operation`, queryable through the PRD-21 lineage API. All hard
+prereqs (PRD-11/16 spine + PRD-21 lineage) are done. Headless/scripted pipelines first;
+GUI editor later (PRD-29). Other Phase-4 items (PRD-15 reagents, PRD-05 remainder, PRD-06
+fluorophore DB, PRD-08 optics) are independent; Phase-5 is PRD-24 (extract `modules/mfdb`).
+Deferred LIMS threads: wire the standalone `LifecycleView`/`ProtocolsView`/`StudiesView`
+into the admin dock layout once the `OVERHAUL_PLAN.md` dock rewrite lands. Standing
+threads: PRD-23 "one recording path", PRD-26 upsert family. Run tests in `arm64`
+(`-o addopts=""`).
+
+**⚠️ Concurrency note (2026-06-25):** this branch is edited by multiple workers. A
+concurrent commit reverted `repository.py`/`result_registry.py` to a pre-PRD-12 state
+(silently breaking HEAD's committed lifecycle/protocol tests); commit `b6d22d74` restored
+them. When editing those hot files, pull/commit promptly to avoid re-clobbering.
 
 ---
 
@@ -132,6 +138,7 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
 | **PRD-28** ndXplorer↔MFDB burst round trip | **implemented** ✓ — both directions + headless CLI handoff (`analyze --mfdb`); manual-test fixes folded in; follow-ons PRD-31/34 spec'd | `b9137030`…`e647cc8c` |
 | **PRD-21** lineage API + event model (Phase 3) | **Complete — all DoD met.** **Task 1 (lineage read API)** ✓ `core/mfdb/lineage.py` `Lineage` (ancestors/descendants/lineage_to_root/parents/children/`what_used`/`provenance_graph`) over `mfdb_operation_artifact`; exposed on `MFDatabase` (`lineage` + `get_artifact_ancestors/_descendants/_impact/_provenance_graph`). **Task 2 (replayable compute spec)** ✓ `compute_spec.py` (`ComputeSpec`/`with_overrides`/`recompute`/`replay` + executor registry); **both reference executors wired** — `tttr_microtime_shifter/api/replay.py` and `burst_selection/api/replay.py` re-run the real pipelines (shared `db.materialize_artifact_file` → transform → register); the burst `.dic` schema was completed first (channel mask + GMM determinism) so replay is faithful. **Task 3 (event bus)** ✓ `events.py` (post-commit, best-effort, isolated; `audit_log_subscriber`) wired into `register_result`/`register_operation`. **Task 4 (calibration impact)** ✓ `what_used`/`impact_of` follow `USAGE_RELATIONSHIPS` `mfdb_edge` links to downstream artifacts. **Task 3b (admin provenance view)** ✓ already shipped in mfdb-admin (seed → upstream/downstream/full graph). Fixed an int round-trip bug (`check_value_type` accepts integral floats). Both reference transformers (microtime_shift + burst_selection) are now replayable. Tests: `test_lineage` 11, `test_events` 7, `test_compute_spec` 6, shifter+burst `test_replay` 6, `test_boundary_validation` 19. **Nothing remaining.** | `69ce1b05`…`29f0f577` |
+| **PRD-13** study/project (Phase 3) | **Complete — all DoD met.** `.dic`-declared `mfdb_study` + `mfdb_study_member` (many-to-many sample/artifact membership) + `mfdb_study_key_value` (configurable fields, key-value pattern — no forked EAV). `repository`: `create_study`/`get_study`/`list_studies(scope)`, `add_study_member`/`list_study_members`/`list_studies_for_member`, `set_study_field`/`get_study_fields`, `backfill_studies_from_project_ids` (callable/idempotent). `browse_datasets` gains a `study_id` facet (direct members + sample-of-member). mfdb-admin `mfdb.studies.*` handlers + `MFDBClient` + standalone `gui/studies_view.py`. Tests: CRUD/scoping/membership/fields/browse/backfill 8, handlers 5, view 3, dataset-browser 22 = green. | `study Increments 1–3` |
 | **PRD-14** protocols (Phase 3) | **Complete — all DoD met.** `.dic`-declared `mfdb_protocol` (append-only versioned; name+version, category {measurement/processing/analysis}, operation_type, setup_id, owner, is_public) + `protocol_id`/`protocol_version` on `mfdb_operation` (created/ALTERed by `reconcile_schema`). `repository`: `create_protocol` (new version on edit, never mutates), `get_protocol`/`get_protocol_by_id`/`list_protocol_versions`/`list_protocols(scope)`, `get_protocol_parameter_schema` (reuses the operation_type's PRD-11 schema — no forked stack). `register_operation(protocol_id, protocol_version)` records + validates (exists + operation_type match). mfdb-admin `mfdb.protocols.*` handlers + `MFDBClient` + standalone `gui/protocols_view.py`. Tests: CRUD/versioning 11, handlers 6, view 3 = 20. Deferred: slot `ProtocolsView` into the dock layout. | `protocol Increments 1–3` |
 | **PRD-12** lifecycle state machine (Phase 3) | **Complete — all DoD met.** `.dic`-declared `mfdb_state_transition` (log) + `mfdb_state_transition_rule` (created by `reconcile_schema`); authored `data/state_lifecycle_defs.json` (sample/artifact/operation states + transitions) seeded by `lifecycle.py` `bootstrap_lifecycle_defs` into state vocabularies + rules. `repository.transition_state`/`get_state`/`get_state_history` — rule-validated (`StateTransitionError` on illegal jump), idempotent, publishes PRD-21 `state.changed` post-commit. `register_result` starts artifact/sample lifecycles best-effort. mfdb-admin `mfdb.lifecycle.*` handlers + `MFDBClient` + standalone `gui/lifecycle_view.py::LifecycleView`. Tests: schema 6, API 12, handlers 5, view 4 = 27. Deferred: slot `LifecycleView` into the dock layout (after the dock rewrite). | `lifecycle Increments 1–4` |
 | **PRD-26** model-driven data layer (Phase 2) | **Substantially complete — Tasks 1, 3, 4, 5 landed; Task 2 = read/delete/get_sample/delete_parameter migrated, `insert` family is documented bespoke remainder.** **T1 (DAO core)** ✓ `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete). **T2** ✓ `MFDatabase.dao` accessor; get-by-PK family (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info`→`dao.get(...,include_deleted=True)`); single-table `delete_*` soft-delete (`delete_citation/probe/spectrum/setup`→`dao.soft_delete(...,deleted_at=_utc_now())`); **`get_sample`→`dao.get(...,include_deleted=True)`** (now a dict superset; fixed two GUI callers already assuming dict `.get`); **`delete_parameter`→two `dao.soft_delete` (dual-key)**. Deferred: `INSERT OR REPLACE` `add_*`/`save_*` family (bespoke upsert + audit cols + id-recovery — PRD allows hand SQL for bespoke). **T5 (docs generator)** ✓ `docs_generator.py`. **T3** ✓ already satisfied (admin fields `.dic`-driven; registry wiring-only). **T4 (RPC/boundary validation from `.dic`)** ✓ `boundary_validation.py` `DictionaryValidator` (+shared `check_value_type`; op-param validation now type/bound-checked). Tests: `test_dao` 11/11, `test_docs_generator` 4/4, `test_boundary_validation` 17/17. | `0d63d1d9`,`cdc5bc74`,`93cca203`,`254dc26a` |

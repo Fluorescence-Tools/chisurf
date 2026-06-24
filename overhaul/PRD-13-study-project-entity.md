@@ -64,12 +64,40 @@ ownership/visibility, and gives the dataset browser a "study" facet.
 
 ## Definition of Done
 
-- [ ] `mfdb_study` + `mfdb_study_member` (+ key-value/field-def) exist, dict-
-      declared, generated, gate-covered; project_id backfilled into studies.
-- [ ] Studies are user-scoped (own + public); datasets/samples are many-to-many
-      members; configurable per-study fields work.
-- [ ] `browse_datasets` filters by study; the browser and admin expose studies.
-- [ ] Tests pass including two-user scoping and browse-by-study.
+- [x] `mfdb_study` + `mfdb_study_member` + `mfdb_study_key_value` exist, dict-
+      declared, generated, gate-covered; project_id backfilled into studies
+      (`backfill_studies_from_project_ids`, callable/idempotent — not a version
+      migration, per PRD-19's disposable-DB policy).
+- [x] Studies are user-scoped (own + public); datasets/samples are many-to-many
+      members; configurable per-study fields work (the key-value pattern, no forked
+      EAV stack).
+- [x] `browse_datasets` filters by study; the admin exposes studies (the dataset
+      browser widget facet can call the same `study_id` parameter).
+- [x] Tests pass including two-user scoping and browse-by-study. (23 tests, arm64.)
+
+## Implementation status — COMPLETE
+
+**Increment 1 (schema + CRUD + membership + fields).** `mfdb_study` /
+`mfdb_study_member` / `mfdb_study_key_value` are `.dic`-declared and created by
+`reconcile_schema`. `repository.py`: `create_study`/`get_study`/`list_studies(scope
+mine|public|all)`, `add_study_member`/`list_study_members`/`list_studies_for_member`
+(idempotent, many-to-many), `set_study_field`/`get_study_fields` (configurable fields via
+the key-value pattern), `backfill_studies_from_project_ids`. Study references are logical
+(the dictionary key is not emitted as a PRIMARY KEY, so no hard FK — the repository
+manages integrity, as for `mfdb_operation.protocol_id`). `test/fio/test_study.py`.
+
+**Increment 2 (browser facet).** `browse_datasets` gains a `study_id` filter — an artifact
+is in the study if it is a direct member or if its linked sample is a member.
+
+**Increment 3 (admin).** Backend handlers `mfdb.studies.{list,get,create,members.add,
+fields.set}` + `MFDBClient` methods + a standalone `gui/studies_view.py::StudiesView`
+(scoped list, members, fields, create + add-member). Tested via the `InProcessClient` and
+offscreen. Kept standalone like the Lifecycle/Protocols views so the mid-overhaul dock
+layer (`OVERHAUL_PLAN.md`) slots it in.
+
+**Deferred (same as PRD-12/14):** wiring `StudiesView` into the admin tool's dock layout
+and adding a study selector to the dataset-browser *widget* (the `browse_datasets`
+`study_id` parameter is ready) — once the dock rewrite lands.
 
 ## Definition of Clean
 
