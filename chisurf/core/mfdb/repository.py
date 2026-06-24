@@ -153,10 +153,28 @@ class MFDatabase(MFDBClientBase):
             self._dao = dao
         return dao
 
+    @property
+    def lineage(self) -> "Lineage":
+        """Lineage query API over the operation graph (PRD-21 Task 1).
+
+        Artifact-centric ancestry/descent and the provenance-graph projection
+        (``ancestors``/``descendants``/``what_used``/``provenance_graph``), built
+        lazily from the connection. Call sites should use this instead of rolling
+        their own ``mfdb_operation_artifact`` traversal.
+        """
+        lineage = getattr(self, "_lineage", None)
+        if lineage is None:
+            from chisurf.core.mfdb.lineage import Lineage
+
+            lineage = Lineage.from_connection(self.conn)
+            self._lineage = lineage
+        return lineage
+
     def connect(self):
         if self._conn is not None:
             return
         self._dao = None
+        self._lineage = None
         self._conn = sqlite3.connect(str(self.db_path))
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
@@ -1109,6 +1127,30 @@ class MFDatabase(MFDBClientBase):
             "nodes": nodes,
             "edges": edges,
         }
+
+    # -- artifact lineage (PRD-21 Task 1; over the operation graph) --
+
+    def get_artifact_ancestors(self, artifact_id: str) -> list[str]:
+        """Artifact IDs ``artifact_id`` was (transitively) derived from."""
+        return self.lineage.ancestors(artifact_id)
+
+    def get_artifact_descendants(self, artifact_id: str) -> list[str]:
+        """Artifact IDs (transitively) derived from ``artifact_id``."""
+        return self.lineage.descendants(artifact_id)
+
+    def get_artifact_impact(self, artifact_id: str) -> list[str]:
+        """Downstream artifacts impacted by a change to ``artifact_id``.
+
+        The data-side of PRD-05's "when X changes, which results used it" — a thin
+        alias of the transitive descendants, named for the impact-query call site.
+        """
+        return self.lineage.what_used(artifact_id)
+
+    def get_artifact_provenance_graph(
+        self, artifact_id: str, *, depth: int = 100
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Operation-graph provenance (nodes + edges) around an artifact."""
+        return self.lineage.provenance_graph(artifact_id, depth=depth)
 
 
     # -- mfdb parameters --

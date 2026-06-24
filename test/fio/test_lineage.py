@@ -107,6 +107,19 @@ def test_provenance_graph_has_artifacts_operations_and_edges(chain):
     assert graph["edges"], "expected at least one edge"
 
 
+def test_repository_lineage_accessors_delegate(chain):
+    """MFDatabase exposes lineage so call sites use it instead of bespoke SQL."""
+    db, ids = chain
+    # the lazy property is the lineage service over the live connection
+    assert db.lineage.ancestors(ids["burst"]) == db.get_artifact_ancestors(ids["burst"])
+    assert set(db.get_artifact_ancestors(ids["burst"])) == {ids["shifted"], ids["raw"]}
+    assert set(db.get_artifact_descendants(ids["raw"])) == {ids["shifted"], ids["burst"]}
+    # impact == downstream artifacts (PRD-05 data-side)
+    assert set(db.get_artifact_impact(ids["raw"])) == {ids["shifted"], ids["burst"]}
+    graph = db.get_artifact_provenance_graph(ids["shifted"])
+    assert {"nodes", "edges"} == set(graph)
+
+
 def test_no_lineage_for_isolated_artifact(chain, tmp_path):
     db, ids = chain
     lin = Lineage.from_db(db)

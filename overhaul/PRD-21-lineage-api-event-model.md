@@ -119,8 +119,22 @@ burst_selection` chain: ancestors/descendants order, one-hop parents/children,
 `lineage_to_root`, `what_used` impact, the graph projection, and the isolated-artifact
 empty case).
 
-**Remaining:** replace the ad-hoc edge SQL in browse/admin with `Lineage` (Task 1
-rollout); embedded replayable compute spec + `recompute`/`replay` (Task 2); the
+**Task 1 rollout — `Lineage` exposed on the repository.** `MFDatabase` now has a lazy
+`lineage` property (`Lineage.from_connection(self.conn)`, reset on `connect()`) plus
+artifact-centric accessors `get_artifact_ancestors` / `get_artifact_descendants` /
+`get_artifact_impact` (PRD-05 data-side alias of descendants) /
+`get_artifact_provenance_graph`, so call sites use one primitive instead of rolling
+their own `mfdb_operation_artifact` traversal. _Finding:_ the graph traversal was
+already consolidated into `graph.py` (`traverse_canonical_graph`) and its repository
+wrappers (`get_upstream_dependencies`/`get_downstream_dependencies`/
+`export_provenance_graph` → RPC `graph_upstream`/`graph_downstream`/`export_graph`);
+those are **edge-rich** (they include non-operation `mfdb_edge` relationships — sample/
+calibration links — and per-edge metadata) and are intentionally kept. `Lineage` is the
+complementary *artifact-centric* primitive (ancestor/descendant IDs, impact, a clean
+operation-graph projection); it does not replace the edge-rich path. Covered by
+`test/fio/test_lineage.py` repository-accessor test.
+
+**Remaining:** embedded replayable compute spec + `recompute`/`replay` (Task 2); the
 post-commit event bus + publish points (Task 3); the admin provenance view (Task 3b);
 wire PRD-05's calibration-change impact to `what_used` for non-artifact (setup/
 calibration/reagent) nodes (Task 4).
