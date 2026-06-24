@@ -149,6 +149,14 @@ publishes `operation.succeeded` + `artifact.registered` per output. A ready-made
 raising subscriber does not break registration). `state.changed`/`calibration.updated`
 publish points are added with their producers (PRD-12 lifecycle / PRD-05 calibration).
 
+**Security note (in-process only).** The MFDB event bus is an in-process Python
+publish/subscribe registry — no sockets, no serialization, no RPC surface — so it has
+no authentication/handshake because none is applicable (subscribers are in-process
+trusted code). It is **not** bridged to the server's networked ZeroMQ PUB broadcast.
+Before any networked deployment it **must not** be bridged without passing through the
+authorization + payload-hygiene review in **PRD-37** (network deployment security);
+treat any network-broadcast payload as readable by every authorized subscriber.
+
 **Remaining:** embedded replayable compute spec + `recompute`/`replay` (Task 2); the
 admin provenance view (Task 3b); wire PRD-05's calibration-change impact to
 `what_used` for non-artifact (setup/calibration/reagent) nodes (Task 4).
