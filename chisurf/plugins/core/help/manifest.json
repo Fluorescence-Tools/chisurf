@@ -1,0 +1,76 @@
+{
+  "id": "help",
+  "version": "2.0.0",
+  "display_name": "Help:Documentation",
+  "description": "Documentation browser and help resource viewer for ChiSurf.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Help"],
+  "icon": "📖",
+  "state_namespace": "help",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "current_path": {"type": ["string", "null"]},
+      "filter_text": {"type": "string"},
+      "edit_mode": {"type": "boolean"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "help_documentation"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.help.gui.tool:HelpWidget",
+    "cli": "help=chisurf.plugins.core.help.cli.main:cli",
+    "services": "chisurf.plugins.core.help.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "help.docs.list",
+      "summary": "List all available documentation files with metadata.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "help.docs.read",
+      "summary": "Read a documentation file and return its content.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "help.docs.save",
+      "summary": "Save content to a documentation file.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "help.docs.search",
+      "summary": "Search documentation files for matching text.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "help.docs.contract",
+      "summary": "Return the Help plugin workflow contract.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {"topic": "help.docs.*", "description": "Document lifecycle events"}
+  ]
+}

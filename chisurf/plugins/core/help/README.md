@@ -1,49 +1,64 @@
 # ChiSurf Help Plugin
 
-This plugin provides access to the ChiSurf documentation and help resources.
+Documentation browser and help resource viewer for ChiSurf.
+
+## Architecture
+
+This plugin follows the **new standard architecture** with clean separation:
+
+```
+help/
+  manifest.json         Plugin manifest (source of truth)
+  __init__.py           Package init, loads manifest
+  api/                  Pure Python layer (no Qt)
+    contract.py         Workflow contract & JSON schemas
+    models.py           Dataclass models
+    markdown.py         Markdown rendering (with/without `markdown` package)
+    io.py               Document discovery, reading, saving, search
+  backend/              ZMQ RPC handlers
+    services.py         RPC method registration
+    state.py            Plugin state dataclass
+  gui/                  Qt GUI layer
+    tool.py             HelpWidget (QMainWindow with toolbar)
+    client.py           HelpClient wrapping PluginClient
+  cli/                  Click-based CLI
+    main.py             CLI commands (list, read, render, search)
+  test/                 Pytest tests
+    test_widgets.py     HelpWidget creation test
+```
 
 ## Features
 
-- Open the ChiSurf documentation in a web browser
-- Access to video tutorials
-- Access to user guides and tutorials
-- Quick reference for common tasks
+- **Tree navigation** of user manual, core docs, and per-plugin documentation
+- **Full-text search** across all documents with real-time filter
+- **In-app Markdown editing** with toggle between View/Edit
+- **Toolbar buttons** with emoji icons:
+  - ✏️ Edit / 👁️ View toggle
+  - 💾 Save document edits
+  - 📖 Open Docs — online documentation in browser
+  - 🎬 Video Tutorials — tutorial videos in browser
+  - ❌ Close — dismiss help window
+- **Context-sensitive help** from experiments and settings panels
 
-## Overview
+## CLI Usage
 
-The ChiSurf Help plugin provides a simple interface for accessing the ChiSurf documentation and help resources. It allows users to quickly open the online documentation in their default web browser.
+```bash
+python -m chisurf help list         # List all docs
+python -m chisurf help read <path>  # Read a doc file
+python -m chisurf help render <path> # Render doc to HTML
+python -m chisurf help search <q>   # Search docs
+```
 
-The documentation includes user guides, tutorials, API references, and other resources to help users get the most out of ChiSurf.
+## RPC Methods
 
-## Requirements
-
-- Python packages:
-  - PyQt5
-  - webbrowser (standard library)
-  - chisurf core modules
-
-## Usage
-
-1. Launch the plugin from the ChiSurf menu: Help > Documentation
-2. Click "Open Documentation" to open the ChiSurf documentation in your default web browser
-3. Click "Video Tutorials" to access video tutorials for ChiSurf
-4. The documentation or tutorials will open in a new browser window or tab
-5. Click "Close" to dismiss the help dialog
-
-## Applications
-
-The ChiSurf Help plugin can be used for:
-- Learning how to use ChiSurf
-- Watching video tutorials for visual learning
-- Finding information about specific features
-- Troubleshooting issues
-- Discovering advanced functionality
-- Getting started with ChiSurf for new users
+| Method | Description |
+|--------|-------------|
+| `help.docs.list` | List all documentation files |
+| `help.docs.read` | Read and render a document |
+| `help.docs.save` | Save edited document content |
+| `help.docs.search` | Search across documents |
+| `help.docs.contract` | Return workflow contract |
 
 ## License
 
-This plugin is part of the ChiSurf package and is distributed under the same license.
-
-## Author
-
-This plugin was created as part of the ChiSurf project.
+Part of the ChiSurf package. Distributed under the same license.
