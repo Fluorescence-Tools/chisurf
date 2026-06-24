@@ -102,14 +102,21 @@ that builds the real widget (not `__new__`) and asserts it constructs, reuses
 `burst_selection/tests/test_construction_smoke.py` (new) and the existing
 `tttr_microtime_shifter/tests/test_gui.py` (augmented).
 
-**Task 4 (read-only construction) — substantially met for the two tools.** The
-import-side-effect fix (above) plus the lazy `acquire_mfdb_connection` hook mean
-neither tool opens a DB or registers anything during `__init__`; the smoke tests
-assert `_mfdb_db is None` after construction. A general lint/guard forbidding DB
-writes in any widget `__init__` is not yet automated.
+**Task 4 (read-only construction) — enforced repo-wide.** Beyond the two tools (whose
+smoke tests assert `_mfdb_db is None` after construction), the rule is now an
+automated static guard: `test/test_no_db_writes_in_widget_init.py` AST-parses every
+GUI module and fails if any class `__init__` *directly* calls an MFDB write/open
+entrypoint (`register_*`, `MFDatabase(...)`, `save_setup`/`add_*`,
+`set_object_sample_id`, `reconcile_schema`, …); calls inside nested callbacks defined
+in `__init__` are deferred and not flagged (meta-tested both ways). The guard is
+AST-only (no Qt — runs in any CI). The one pre-existing violation it surfaced —
+`lightpath_simulator/gui/easy_mode.py` opening `MFDatabase` in a dye-table widget's
+`__init__` (which can trigger schema-reconcile writes) — was fixed by deferring the
+adapter open to first tooltip render (`_ensure_db_adapter`). The allowlist is empty.
 
 **Still to do:** migrate the FCS dialog + detector wizard onto `ChisurfDockTool`
-(Task 1, remaining tools); automate the "no DB writes during `__init__`" guard
-(Task 4). The above GUI work was written without a Qt-capable environment to run it;
-the smoke/base tests must be executed under `QT_QPA_PLATFORM=offscreen` with Qt
-bindings installed to confirm.
+(Task 1, remaining tools). The FCS write-on-construction bug itself is already fixed
+(its `register_result` is in an explicit action handler, not `__init__`; the guard
+confirms this). The GUI base/smoke work was written without a Qt-capable environment;
+run the smoke/base tests under `QT_QPA_PLATFORM=offscreen` with Qt bindings to
+confirm (the static guard above needs no Qt).
