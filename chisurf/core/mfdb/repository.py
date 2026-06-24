@@ -4,7 +4,9 @@ import logging
 import os
 import platform
 import re
+import shutil
 import sqlite3
+import tempfile
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -1138,13 +1140,16 @@ class MFDatabase(MFDBClientBase):
         """Artifact IDs (transitively) derived from ``artifact_id``."""
         return self.lineage.descendants(artifact_id)
 
-    def get_artifact_impact(self, artifact_id: str) -> list[str]:
-        """Downstream artifacts impacted by a change to ``artifact_id``.
+    def get_artifact_impact(self, node_id: str) -> list[str]:
+        """Artifacts impacted by a change to ``node_id`` (PRD-05's impact query).
 
-        The data-side of PRD-05's "when X changes, which results used it" — a thin
-        alias of the transitive descendants, named for the impact-query call site.
+        The data-side of "when X changes, which results used it". Besides the
+        transitive operation-graph descendants this also follows ``mfdb_edge`` usage
+        links (e.g. a fit ``calibrated_by`` a calibration, a run that
+        ``measured_sample`` a sample) so calibration/setup/reagent nodes resolve to
+        the downstream artifacts they affect. See :meth:`Lineage.what_used`.
         """
-        return self.lineage.what_used(artifact_id)
+        return self.lineage.what_used(node_id)
 
     def get_artifact_provenance_graph(
         self, artifact_id: str, *, depth: int = 100
@@ -1161,6 +1166,428 @@ class MFDatabase(MFDBClientBase):
         from chisurf.core.mfdb.compute_spec import get_compute_spec
 
         return get_compute_spec(self, artifact_id)
+
+    # -- lifecycle state machine (PRD-12) --
+
+    def get_state(self, entity_type: str, entity_id: str) -> str | None:
+        """Return an entity's current lifecycle state, or ``None``.
+
+        The current state is the latest non-deleted transition's ``to_state`` — the
+        transition log is the source of truth (no separate mutable status flag).
+        """
+        row = self.conn.execute(
+            "SELECT to_state FROM mfdb_state_transition "
+            "WHERE entity_type = ? AND entity_id = ? AND deleted_at IS NULL "
+            "ORDER BY created_at DESC, transition_id DESC LIMIT 1",
+            (entity_type, entity_id),
+        ).fetchone()
+        return row[0] if row else None
+
+    def get_state_history(
+        self, entity_type: str, entity_id: str
+    ) -> list[dict[str, Any]]:
+        """Return an entity's transitions in chronological order (oldest first)."""
+        rows = self.conn.execute(
+            "SELECT transition_id, entity_type, entity_id, from_state, to_state, "
+            "reason, operator_user_id, created_at FROM mfdb_state_transition "
+            "WHERE entity_type = ? AND entity_id = ? AND deleted_at IS NULL "
+            "ORDER BY created_at, transition_id",
+            (entity_type, entity_id),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def _state_transition_allowed(
+        self, entity_type: str, from_state: str | None, to_state: str
+    ) -> bool:
+        """Is ``(entity_type, from_state, to_state)`` a declared transition rule?
+
+        A NULL ``from_state`` rule declares an allowed initial state.
+        """
+        row = self.conn.execute(
+            "SELECT 1 FROM mfdb_state_transition_rule "
+            "WHERE entity_type = ? AND to_state = ? AND deleted_at IS NULL "
+            "AND ((from_state IS NULL AND ? IS NULL) OR from_state = ?) LIMIT 1",
+            (entity_type, to_state, from_state, from_state),
+        ).fetchone()
+        return row is not None
+
+    def transition_state(
+        self,
+        entity_type: str,
+        entity_id: str,
+        to_state: str,
+        *,
+        reason: str = "",
+        operator_user_id: str | None = None,
+    ) -> bool:
+        """Move an entity to ``to_state``, recording the transition (PRD-12).
+
+        Validates against ``mfdb_state_transition_rule`` (raises
+        :class:`~chisurf.core.mfdb.lifecycle.StateTransitionError` on an illegal jump,
+        surfaced not swallowed), is an **idempotent no-op** when already in
+        ``to_state`` (returns ``False``), and otherwise records a transition row and
+        publishes PRD-21's ``state.changed`` event post-commit (best-effort; a
+        subscriber can never break the transition). Returns ``True`` when a transition
+        was recorded.
+        """
+        from chisurf.core.mfdb.lifecycle import StateTransitionError
+
+        current = self.get_state(entity_type, entity_id)
+        if current == to_state:
+            return False
+        if not self._state_transition_allowed(entity_type, current, to_state):
+            raise StateTransitionError(
+                f"illegal {entity_type} transition {current!r} -> {to_state!r} "
+                "(no matching mfdb_state_transition_rule)"
+            )
+        now = _utc_now()
+        with self._transaction():
+            next_id = (
+                self.conn.execute(
+                    "SELECT COALESCE(MAX(transition_id), 0) FROM mfdb_state_transition"
+                ).fetchone()[0]
+                + 1
+            )
+            self.conn.execute(
+                "INSERT INTO mfdb_state_transition "
+                "(transition_id, entity_type, entity_id, from_state, to_state, reason, "
+                "operator_user_id, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    next_id, entity_type, entity_id, current, to_state,
+                    reason or None, operator_user_id, now, now, None,
+                ),
+            )
+            self.add_audit_log(
+                action="transition",
+                target_type=f"state:{entity_type}",
+                target_id=entity_id,
+                operator_user_id=operator_user_id,
+                details={"from": current, "to": to_state, "reason": reason},
+            )
+        # Post-commit, best-effort event (PRD-21 Task 3); never breaks the transition.
+        from chisurf.core.mfdb.events import EVENT_STATE_CHANGED, publish
+
+        publish(
+            EVENT_STATE_CHANGED,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            from_state=current,
+            to_state=to_state,
+            reason=reason or "",
+            operator_user_id=operator_user_id or "",
+        )
+        return True
+
+    # -- protocols (PRD-14): named, versioned procedures --
+
+    #: Allowed protocol categories (declared as the .dic enumeration on
+    #: mfdb_protocol.category).
+    PROTOCOL_CATEGORIES = ("measurement", "processing", "analysis")
+
+    def create_protocol(
+        self,
+        name: str,
+        category: str,
+        *,
+        operation_type: str | None = None,
+        setup_id: str | None = None,
+        description: str = "",
+        is_public: bool = False,
+        created_by_user_id: str | None = None,
+    ) -> tuple[str, int]:
+        """Create a protocol (or a new version of an existing name); append-only.
+
+        Returns ``(protocol_id, version)``. Editing a protocol means calling this
+        again with the same ``name`` — it never mutates an existing row; a new row
+        with ``version = max(version for name) + 1`` is recorded, so operations keep
+        the exact version they ran. Owner defaults to the active user.
+        """
+        if category not in self.PROTOCOL_CATEGORIES:
+            raise ValueError(
+                f"unknown protocol category {category!r}; "
+                f"expected one of {self.PROTOCOL_CATEGORIES}"
+            )
+        if not name:
+            raise ValueError("protocol name is required")
+        if created_by_user_id is None:
+            from chisurf.core.mfdb.session import configured_default_user_id
+            created_by_user_id = configured_default_user_id()
+        now = _utc_now()
+        with self._transaction():
+            prev = self.conn.execute(
+                "SELECT COALESCE(MAX(version), 0) FROM mfdb_protocol "
+                "WHERE name = ? AND deleted_at IS NULL",
+                (name,),
+            ).fetchone()[0]
+            version = int(prev) + 1
+            protocol_id = str(uuid.uuid4())
+            self.conn.execute(
+                "INSERT INTO mfdb_protocol (protocol_id, name, version, category, "
+                "description, operation_type, setup_id, created_by_user_id, is_public, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    protocol_id, name, version, category, description or None,
+                    operation_type, setup_id, created_by_user_id,
+                    1 if is_public else 0, now, now, None,
+                ),
+            )
+            self.add_audit_log(
+                action="create",
+                target_type="protocol",
+                target_id=protocol_id,
+                operator_user_id=created_by_user_id,
+                details={"name": name, "version": version, "category": category},
+            )
+        return protocol_id, version
+
+    def get_protocol(
+        self, name: str, version: int | str = "latest"
+    ) -> dict[str, Any] | None:
+        """Return a protocol by ``name`` and ``version`` (default the latest)."""
+        if version == "latest":
+            row = self.conn.execute(
+                "SELECT * FROM mfdb_protocol WHERE name = ? AND deleted_at IS NULL "
+                "ORDER BY version DESC LIMIT 1",
+                (name,),
+            ).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT * FROM mfdb_protocol WHERE name = ? AND version = ? "
+                "AND deleted_at IS NULL",
+                (name, int(version)),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def get_protocol_by_id(self, protocol_id: str) -> dict[str, Any] | None:
+        """Return a specific protocol version row by its ``protocol_id``."""
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_protocol WHERE protocol_id = ? AND deleted_at IS NULL",
+            (protocol_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def list_protocol_versions(self, name: str) -> list[dict[str, Any]]:
+        """Return all versions of a protocol ``name``, oldest first."""
+        rows = self.conn.execute(
+            "SELECT * FROM mfdb_protocol WHERE name = ? AND deleted_at IS NULL "
+            "ORDER BY version",
+            (name,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_protocols(
+        self, scope: str = "all", owner_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        """List the latest version of each protocol, scoped own/public/all.
+
+        ``scope``: ``'own'`` (owned by ``owner_id``), ``'public'`` (``is_public=1``),
+        or ``'all'`` (public + own). ``owner_id`` defaults to the active user.
+        """
+        if owner_id is None and scope in ("own", "all"):
+            from chisurf.core.mfdb.session import configured_default_user_id
+            owner_id = configured_default_user_id()
+        latest = (
+            "version = (SELECT MAX(p2.version) FROM mfdb_protocol p2 "
+            "WHERE p2.name = mfdb_protocol.name AND p2.deleted_at IS NULL)"
+        )
+        where = [f"deleted_at IS NULL", latest]
+        params: list[Any] = []
+        if scope == "own":
+            where.append("created_by_user_id = ?")
+            params.append(owner_id)
+        elif scope == "public":
+            where.append("is_public = 1")
+        else:  # all
+            where.append("(is_public = 1 OR created_by_user_id = ?)")
+            params.append(owner_id)
+        rows = self.conn.execute(
+            f"SELECT * FROM mfdb_protocol WHERE {' AND '.join(where)} ORDER BY name",
+            params,
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_protocol_parameter_schema(
+        self, protocol: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Return the declared parameter schema for a protocol (no forked stack).
+
+        The schema is the protocol's ``operation_type`` schema from PRD-11
+        (``mfdb_operation_parameter_def``) — ``{name: OperationParameterDef}`` — so a
+        protocol pins a named procedure to an operation kind without duplicating the
+        parameter declarations.
+        """
+        from chisurf.core.mfdb.operation_parameters import get_operation_parameter_defs
+
+        operation_type = (protocol or {}).get("operation_type") or ""
+        if not operation_type:
+            return {}
+        return get_operation_parameter_defs(self.conn, operation_type)
+
+    # -- studies / projects (PRD-13): grouping + membership + fields --
+
+    #: Allowed study member types (the .dic enumeration on member_type).
+    STUDY_MEMBER_TYPES = ("sample", "artifact")
+
+    def create_study(
+        self,
+        name: str,
+        description: str = "",
+        *,
+        is_public: bool = False,
+        study_id: str | None = None,
+        created_by_user_id: str | None = None,
+    ) -> str:
+        """Create a study/project and return its ``study_id`` (owner = active user)."""
+        if not name:
+            raise ValueError("study name is required")
+        if created_by_user_id is None:
+            from chisurf.core.mfdb.session import configured_default_user_id
+            created_by_user_id = configured_default_user_id()
+        sid = study_id or str(uuid.uuid4())
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                "INSERT INTO mfdb_study (study_id, name, description, "
+                "created_by_user_id, is_public, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (sid, name, description or None, created_by_user_id,
+                 1 if is_public else 0, now, now, None),
+            )
+            self.add_audit_log(
+                action="create", target_type="study", target_id=sid,
+                operator_user_id=created_by_user_id,
+                details={"name": name, "is_public": bool(is_public)},
+            )
+        return sid
+
+    def get_study(self, study_id: str) -> dict[str, Any] | None:
+        """Return a study row by id, or ``None``."""
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_study WHERE study_id = ? AND deleted_at IS NULL",
+            (study_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def list_studies(
+        self, scope: str = "all", owner_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        """List studies scoped ``mine``/``own`` | ``public`` | ``all`` (own+public)."""
+        if owner_id is None and scope in ("mine", "own", "all"):
+            from chisurf.core.mfdb.session import configured_default_user_id
+            owner_id = configured_default_user_id()
+        where = ["deleted_at IS NULL"]
+        params: list[Any] = []
+        if scope in ("mine", "own"):
+            where.append("created_by_user_id = ?")
+            params.append(owner_id)
+        elif scope == "public":
+            where.append("is_public = 1")
+        else:  # all
+            where.append("(is_public = 1 OR created_by_user_id = ?)")
+            params.append(owner_id)
+        rows = self.conn.execute(
+            f"SELECT * FROM mfdb_study WHERE {' AND '.join(where)} ORDER BY name",
+            params,
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def add_study_member(
+        self, study_id: str, member_type: str, member_id: str, role: str = "member"
+    ) -> None:
+        """Add a sample/artifact to a study (idempotent on the unique triple)."""
+        if member_type not in self.STUDY_MEMBER_TYPES:
+            raise ValueError(
+                f"unknown member_type {member_type!r}; expected {self.STUDY_MEMBER_TYPES}"
+            )
+        now = _utc_now()
+        with self._transaction():
+            exists = self.conn.execute(
+                "SELECT 1 FROM mfdb_study_member WHERE study_id = ? AND member_type = ? "
+                "AND member_id = ? AND deleted_at IS NULL",
+                (study_id, member_type, member_id),
+            ).fetchone()
+            if exists:
+                return
+            next_id = (
+                self.conn.execute(
+                    "SELECT COALESCE(MAX(member_row_id), 0) FROM mfdb_study_member"
+                ).fetchone()[0]
+                + 1
+            )
+            self.conn.execute(
+                "INSERT INTO mfdb_study_member (member_row_id, study_id, member_type, "
+                "member_id, role, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (next_id, study_id, member_type, member_id, role or None, now, now, None),
+            )
+
+    def list_study_members(
+        self, study_id: str, member_type: str | None = None
+    ) -> list[dict[str, Any]]:
+        """List a study's members, optionally filtered by ``member_type``."""
+        sql = (
+            "SELECT member_type, member_id, role FROM mfdb_study_member "
+            "WHERE study_id = ? AND deleted_at IS NULL"
+        )
+        params: list[Any] = [study_id]
+        if member_type is not None:
+            sql += " AND member_type = ?"
+            params.append(member_type)
+        sql += " ORDER BY member_type, member_id"
+        return [dict(r) for r in self.conn.execute(sql, params).fetchall()]
+
+    def list_studies_for_member(
+        self, member_type: str, member_id: str
+    ) -> list[str]:
+        """Return the ids of studies a sample/artifact belongs to (many-to-many)."""
+        return [
+            r[0]
+            for r in self.conn.execute(
+                "SELECT DISTINCT study_id FROM mfdb_study_member "
+                "WHERE member_type = ? AND member_id = ? AND deleted_at IS NULL",
+                (member_type, member_id),
+            ).fetchall()
+        ]
+
+    def set_study_field(self, study_id: str, key: str, value: str) -> None:
+        """Set a configurable per-study metadata field (upsert on (study_id, key))."""
+        now = _utc_now()
+        with self._transaction():
+            existing = self.conn.execute(
+                "SELECT kv_id FROM mfdb_study_key_value WHERE study_id = ? AND key = ? "
+                "AND deleted_at IS NULL",
+                (study_id, key),
+            ).fetchone()
+            if existing:
+                self.conn.execute(
+                    "UPDATE mfdb_study_key_value SET value = ?, updated_at = ? "
+                    "WHERE kv_id = ?",
+                    (value, now, existing[0]),
+                )
+                return
+            next_id = (
+                self.conn.execute(
+                    "SELECT COALESCE(MAX(kv_id), 0) FROM mfdb_study_key_value"
+                ).fetchone()[0]
+                + 1
+            )
+            self.conn.execute(
+                "INSERT INTO mfdb_study_key_value (kv_id, study_id, key, value, "
+                "details, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (next_id, study_id, key, value, None, now, now, None),
+            )
+
+    def get_study_fields(self, study_id: str) -> dict[str, str]:
+        """Return a study's configurable fields as a ``{key: value}`` mapping."""
+        rows = self.conn.execute(
+            "SELECT key, value FROM mfdb_study_key_value WHERE study_id = ? "
+            "AND deleted_at IS NULL ORDER BY key",
+            (study_id,),
+        ).fetchall()
+        return {r[0]: r[1] for r in rows}
 
 
     # -- mfdb parameters --
@@ -3381,6 +3808,43 @@ class MFDatabase(MFDBClientBase):
         store = self._get_object_store()
         return store.get_path(row["content_md5"])
 
+    def materialize_artifact_file(self, artifact_id: str, *, into: str | None = None) -> str:
+        """Copy an artifact's stored blob to a temp file and return its path.
+
+        The object store is content-addressed, so its blob carries no file
+        extension; readers such as ``tttrlib`` infer the container from the suffix.
+        This copies the blob into a fresh temp file that carries the artifact's
+        recorded ``data_format`` suffix so a re-read works — the materialization
+        primitive behind replay/recompute (PRD-21 Task 2).
+
+        Parameters
+        ----------
+        artifact_id : str
+            Artifact whose stored object should be materialized.
+        into : str, optional
+            Directory for the temp file (defaults to the system temp dir).
+
+        Returns
+        -------
+        str
+            Path to the materialized copy.
+        """
+        artifact = self.get_artifact(artifact_id)
+        if not artifact:
+            raise KeyError(f"artifact {artifact_id!r} not found")
+        object_uuid = artifact.get("object_uuid")
+        if not object_uuid:
+            raise ValueError(
+                f"artifact {artifact_id!r} has no stored object to materialize"
+            )
+        blob = str(self.get_object_path(object_uuid))
+        data_format = (artifact.get("data_format") or "").lstrip(".")
+        suffix = f".{data_format}" if data_format else ""
+        fd, tmp = tempfile.mkstemp(prefix="mfdb_materialize_", suffix=suffix, dir=into)
+        os.close(fd)
+        shutil.copyfile(blob, tmp)
+        return tmp
+
     def delete_object(self, object_uuid: str) -> dict[str, Any]:
         """Delete an object or decrement its refcount.
 
@@ -3503,6 +3967,7 @@ class MFDatabase(MFDBClientBase):
         owner_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
+        study_id: str | None = None,
     ) -> dict[str, Any]:
         """Browse datasets with scope-based access control, search, and
         pagination.
@@ -3600,6 +4065,24 @@ class MFDatabase(MFDBClientBase):
                 ")"
             )
             params.append(sample_id)
+
+        if study_id:
+            # The study facet (PRD-13): an artifact is in the study if it is a direct
+            # member, or if its linked sample is a member (membership is many-to-many).
+            where_clauses.append(
+                "(a.artifact_id IN ("
+                "  SELECT member_id FROM mfdb_study_member "
+                "  WHERE study_id = ? AND member_type = 'artifact' AND deleted_at IS NULL"
+                ") OR a.artifact_id IN ("
+                "  SELECT e.source_node_id FROM mfdb_edge e "
+                "  JOIN mfdb_study_member m ON m.member_id = e.target_node_id "
+                "    AND m.member_type = 'sample' AND m.study_id = ? "
+                "    AND m.deleted_at IS NULL "
+                "  WHERE e.source_node_type = 'artifact' "
+                "    AND e.target_node_type = 'sample' AND e.deleted_at IS NULL"
+                "))"
+            )
+            params.extend([study_id, study_id])
 
         where_sql = " AND ".join(where_clauses)
 
@@ -3735,6 +4218,8 @@ class MFDatabase(MFDBClientBase):
         metadata: dict[str, Any] | None = None,
         setup_version: int | None = None,
         acl_owner_user_id: str | None = None,
+        protocol_id: str | None = None,
+        protocol_version: int | None = None,
     ) -> str:
         if operator_user_id is None:
             from chisurf.core.mfdb.session import configured_default_user_id
@@ -3752,8 +4237,9 @@ class MFDatabase(MFDBClientBase):
                     software_package, software_module, software_version,
                     runtime_environment_json, started_at, ended_at, status,
                     error_message, traceback_summary, metadata_json,
+                    protocol_id, protocol_version,
                     created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(operation_id) DO UPDATE SET
                     operation_type=excluded.operation_type,
                     experiment_id=excluded.experiment_id,
@@ -3771,6 +4257,8 @@ class MFDatabase(MFDBClientBase):
                     error_message=excluded.error_message,
                     traceback_summary=excluded.traceback_summary,
                     metadata_json=excluded.metadata_json,
+                    protocol_id=excluded.protocol_id,
+                    protocol_version=excluded.protocol_version,
                     updated_at=excluded.updated_at,
                     deleted_at=excluded.deleted_at""",
                 (
@@ -3791,6 +4279,8 @@ class MFDatabase(MFDBClientBase):
                     error_message,
                     traceback_summary,
                     _json_dumps(metadata),
+                    protocol_id,
+                    protocol_version,
                     now,
                     now,
                     None,

@@ -3601,6 +3601,180 @@ save__mfdb_operation.protocol_version
    _chisurf_schema.table_name  mfdb_operation
    _chisurf_schema.column_name protocol_version
 
+########################################
+## mfdb_study (PRD-13 LIMS P2)          #
+########################################
+
+save_mfdb_study
+   _category.id              mfdb_study
+   _category.description
+;     A study/project: a named grouping of samples and datasets with ownership +
+;     visibility and configurable per-study metadata.  Promotes the loose
+;     project_id string into a first-class entity (samples/artifacts join via
+;     mfdb_study_member; custom fields live in mfdb_study_key_value — the existing
+;     key-value pattern, not a new EAV stack).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_study.study_id"
+
+save__mfdb_study.study_id
+   _item.name                "_mfdb_study.study_id"
+   _item.category_id         mfdb_study
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study
+   _chisurf_schema.column_name study_id
+
+save__mfdb_study.name
+   _item.name                "_mfdb_study.name"
+   _item.category_id         mfdb_study
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study
+   _chisurf_schema.column_name name
+
+save__mfdb_study.description
+   _item.name                "_mfdb_study.description"
+   _item.category_id         mfdb_study
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study
+   _chisurf_schema.column_name description
+
+save__mfdb_study.created_by_user_id
+   _item.name                "_mfdb_study.created_by_user_id"
+   _item.category_id         mfdb_study
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+
+save__mfdb_study.is_public
+   _item.name                "_mfdb_study.is_public"
+   _item.category_id         mfdb_study
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study
+   _chisurf_schema.column_name is_public
+
+########################################
+## mfdb_study_member (PRD-13)           #
+########################################
+
+save_mfdb_study_member
+   _category.id              mfdb_study_member
+   _category.description
+;     Many-to-many membership linking existing samples / artifacts into a study.
+;     member_type is 'sample' or 'artifact'; (study_id, member_type, member_id) is
+;     unique (enforced by the repository).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_study_member.member_row_id"
+
+save__mfdb_study_member.member_row_id
+   _item.name                "_mfdb_study_member.member_row_id"
+   _item.category_id         mfdb_study_member
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_member
+   _chisurf_schema.column_name member_row_id
+
+save__mfdb_study_member.study_id
+   _item.name                "_mfdb_study_member.study_id"
+   _item.category_id         mfdb_study_member
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_member
+   _chisurf_schema.column_name study_id
+   _item_description.description
+;     References mfdb_study.study_id (a logical reference; the dictionary-generated
+;     study_id is not emitted as a PRIMARY KEY, so no hard FK — the repository
+;     manages study membership integrity, as for mfdb_operation.protocol_id).
+
+save__mfdb_study_member.member_type
+   _item.name                "_mfdb_study_member.member_type"
+   _item.category_id         mfdb_study_member
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_member
+   _chisurf_schema.column_name member_type
+    loop_
+    _item_enumeration.value
+      sample
+      artifact
+
+save__mfdb_study_member.member_id
+   _item.name                "_mfdb_study_member.member_id"
+   _item.category_id         mfdb_study_member
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_member
+   _chisurf_schema.column_name member_id
+
+save__mfdb_study_member.role
+   _item.name                "_mfdb_study_member.role"
+   _item.category_id         mfdb_study_member
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study_member
+   _chisurf_schema.column_name role
+
+########################################
+## mfdb_study_key_value (PRD-13)        #
+########################################
+
+save_mfdb_study_key_value
+   _category.id              mfdb_study_key_value
+   _category.description
+;     Configurable per-study metadata as key/value pairs (the existing key-value
+;     pattern; no new typed EAV stack).  (study_id, key) is unique (repository).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_study_key_value.kv_id"
+
+save__mfdb_study_key_value.kv_id
+   _item.name                "_mfdb_study_key_value.kv_id"
+   _item.category_id         mfdb_study_key_value
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_key_value
+   _chisurf_schema.column_name kv_id
+
+save__mfdb_study_key_value.study_id
+   _item.name                "_mfdb_study_key_value.study_id"
+   _item.category_id         mfdb_study_key_value
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_key_value
+   _chisurf_schema.column_name study_id
+   _item_description.description
+;     References mfdb_study.study_id (a logical reference; see mfdb_study_member).
+
+save__mfdb_study_key_value.key
+   _item.name                "_mfdb_study_key_value.key"
+   _item.category_id         mfdb_study_key_value
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_study_key_value
+   _chisurf_schema.column_name key
+
+save__mfdb_study_key_value.value
+   _item.name                "_mfdb_study_key_value.value"
+   _item.category_id         mfdb_study_key_value
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study_key_value
+   _chisurf_schema.column_name value
+
+save__mfdb_study_key_value.details
+   _item.name                "_mfdb_study_key_value.details"
+   _item.category_id         mfdb_study_key_value
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_study_key_value
+   _chisurf_schema.column_name details
+
 save__flr_sample.sample_type
    _item.name                "_flr_sample.sample_type"
    _item.category_id         flr_sample
