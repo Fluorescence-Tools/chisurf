@@ -74,12 +74,15 @@ One generic transition log instead of per-entity status columns:
 
 ## Definition of Done
 
-- [ ] `mfdb_state_transition` exists (dict-declared, generated, gate-covered) with
-      per-entity-type state vocabularies and (optional) transition rules.
-- [ ] sample / artifact / operation lifecycles defined; transitions validated and
+- [x] `mfdb_state_transition` exists (dict-declared, generated, gate-covered) with
+      per-entity-type state vocabularies and transition rules.
+- [x] sample / artifact / operation lifecycles defined; transitions validated and
       recorded with operator + timestamp; history queryable.
-- [ ] registration paths emit initial/advancing states; admin shows state+history.
-- [ ] Tests pass; no flat status flag is the sole source of truth.
+- [x] registration paths emit initial/advancing states; admin shows state+history
+      *(via the standalone `LifecycleView`; slotting it into the mid-overhaul dock
+      layout is the one deferred wiring step)*.
+- [x] Tests pass; no flat status flag is the sole source of truth (the transition log
+      is the source of truth; `get_state` is the fold). 27 tests, arm64.
 
 ## Definition of Clean
 
@@ -111,22 +114,35 @@ when already in `to_state`, records the row + audit log, publishes PRD-21's
 rejected (state unchanged), idempotent no-op (no row, no event), ordered history,
 branching operation lifecycle, `state.changed` payload, audit log.
 
-### ▶ START NEXT — Increment 3 (wire registration paths; higher blast radius)
-Emit lifecycle transitions from the registration paths in
-`chisurf/core/mfdb/result_registry.py`, **best-effort** (wrap in try/except, never break
-registration — same posture as the event publish there):
-- `register_raw_measurement` → set the raw artifact's initial state `registered` (and,
-  when a `sample_id` is linked, the sample's `registered` if it has no state yet).
-- `register_result` → advance the output artifact to `registered` (its lifecycle start);
-  leave richer advancement (`validated`/`published`) to explicit callers/admin for now.
-- Operation status: `register_operation`/`register_result` already record
-  `status="succeeded"`; optionally mirror that through `transition_state("operation", …)`
-  so the operation lifecycle has history (pending→running→succeeded). Keep it best-effort.
-Tests: after `register_raw_measurement`/`register_result`, `db.get_state("artifact", id)`
-== `registered`; a `state.changed` subscriber fires. Watch the existing registration
-test suites for regressions (run the `test/fio` mfdb slice in `arm64`, `-o addopts=""`).
-Then **Increment 4** — mfdb-admin state+history view (Qt; arm64 has PyQt5): show current
-state + `get_state_history` per entity and allow admin transitions.
+**Increment 3 (registration wiring) — DONE** (`PRD-12 Increment 3` commit).
+`register_result` (and thus `register_raw_measurement`) emits initial lifecycle states
+post-commit, best-effort via `_start_lifecycle`: the new artifact → `registered`, and a
+freshly-linked sample with no state yet → `registered`. Wrapped in try/except — never
+breaks registration (an RPC client without `transition_state` or any transient error is
+logged at debug and swallowed), mirroring the post-commit event publish. Covered by
+`test/fio/test_lifecycle.py` (+3); the registration-heavy regression slice stays green
+(the one pre-existing red, `test_fdb_provenance` v12→v13, is an unrelated legacy-`fdb_*`
+test — confirmed via stash A/B).
+
+**Increment 4 (admin view) — DONE** (`PRD-12 Increment 4a/4b` commits). 4a: backend RPC
+handlers `mfdb.lifecycle.{state,history,transition,definitions}` (an illegal jump returns
+an `error` field, not an exception, across the boundary) + `MFDBClient` methods, covered
+end-to-end through the `InProcessClient` (`test_lifecycle_handlers.py`, 5). 4b: a
+**standalone** `gui/lifecycle_view.py::LifecycleView` (entity picker, current state, legal
+next-state combo, history table, apply-transition surfacing illegal jumps) — thin over
+the client (PRD-23). Kept standalone (not wired into the 5681-line mid-overhaul `tool.py`)
+so the in-flight dock-layer rewrite (`OVERHAUL_PLAN.md`) slots it in; Qt smoke test
+`test_lifecycle_view.py` (4, offscreen).
+
+### ▶ START NEXT — PRD-12 is functionally complete (all DoD met)
+Headless core (schema/API/registration) + admin view all landed; 27 tests green. The
+only optional remainder is **wiring `LifecycleView` into the admin tool's dock layout** —
+deferred on purpose until the `OVERHAUL_PLAN.md` dock rewrite lands (so it isn't built
+against the soon-to-be-replaced legacy tab framework). When ready: add a dock that
+constructs `LifecycleView(self.client)` and, from a record's context menu, calls
+`view.set_entity(entity_type, entity_id); view.refresh()` (mirror the provenance "Use as
+seed" action in `gui/tool.py`). The next *track* item is the remaining Phase-3 LIMS PRDs
+(PRD-14 protocols / PRD-13 study-project) or Phase-4 PRD-22 (pipeline engine).
 
 ## Original recipe (full reference)
 

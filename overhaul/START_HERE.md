@@ -14,19 +14,18 @@ data-loss), real-DB test pollution (PRD-18 hermetic harness), the owner-mismatch
 complete:** PRD-11/16 spine ✓, both reference transformers conformant ✓, PRD-28 round
 trip ✓, PRD-26 model-driven layer substantially complete ✓ (see snapshot).
 
-**Phase 3 (provenance + LIMS) underway: PRD-21 (lineage API + event model) is COMPLETE**
-— lineage read API, replayable compute specs with both reference replay executors,
-post-commit event bus, calibration-impact query, admin provenance view (see snapshot).
+**Phase 3 (provenance + LIMS) underway: PRD-21 (lineage + events) and PRD-12 (lifecycle
+state machine) are COMPLETE** (see snapshot). PRD-12 added the `.dic`-declared transition
+log, `transition_state`/`get_state`/`get_state_history` with rule validation publishing
+`state.changed`, best-effort registration wiring, and a standalone admin `LifecycleView`.
 
-**▶ START NEXT: PRD-12 — lifecycle state machine (LIMS P1).** It is the next Phase 3
-item (`MASTER-ORDER.md` §Phase 3) and **consumes the PRD-21 event bus** just landed
-(`chisurf/core/mfdb/events.py`): subscribe to `artifact.registered` / `operation.succeeded`
-to advance state, and publish `state.changed` on transitions (the constant already exists
-in `events.py`; its publish point is to be added with the lifecycle producer). The
-transition log is PRD-27's state projection. Remaining smaller threads if preferred
-instead: PRD-23 "one recording path" (route `register_result` through `register_operation`
-— headless, but high blast radius) and PRD-26's deferred `INSERT OR REPLACE` upsert family
-(only if a DAO `upsert` primitive is worth building). Run tests in the `arm64` conda env
+**▶ START NEXT: next Phase-3 LIMS PRD — PRD-14 (protocols) or PRD-13 (study/project)**
+(`MASTER-ORDER.md` §Phase 3), or Phase-4 **PRD-22** (pipeline engine; needs the spine +
+lineage, both done). One deferred PRD-12 thread: wire `LifecycleView` into the admin dock
+layout once the `OVERHAUL_PLAN.md` dock rewrite lands (intentionally not built against the
+legacy tab framework). Smaller standing threads: PRD-23 "one recording path" (route
+`register_result` through `register_operation`; headless, high blast radius) and PRD-26's
+deferred `INSERT OR REPLACE` upsert family. Run tests in the `arm64` conda env
 (`-o addopts=""`).
 
 ---
@@ -131,6 +130,7 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
 | **PRD-28** ndXplorer↔MFDB burst round trip | **implemented** ✓ — both directions + headless CLI handoff (`analyze --mfdb`); manual-test fixes folded in; follow-ons PRD-31/34 spec'd | `b9137030`…`e647cc8c` |
 | **PRD-21** lineage API + event model (Phase 3) | **Complete — all DoD met.** **Task 1 (lineage read API)** ✓ `core/mfdb/lineage.py` `Lineage` (ancestors/descendants/lineage_to_root/parents/children/`what_used`/`provenance_graph`) over `mfdb_operation_artifact`; exposed on `MFDatabase` (`lineage` + `get_artifact_ancestors/_descendants/_impact/_provenance_graph`). **Task 2 (replayable compute spec)** ✓ `compute_spec.py` (`ComputeSpec`/`with_overrides`/`recompute`/`replay` + executor registry); **both reference executors wired** — `tttr_microtime_shifter/api/replay.py` and `burst_selection/api/replay.py` re-run the real pipelines (shared `db.materialize_artifact_file` → transform → register); the burst `.dic` schema was completed first (channel mask + GMM determinism) so replay is faithful. **Task 3 (event bus)** ✓ `events.py` (post-commit, best-effort, isolated; `audit_log_subscriber`) wired into `register_result`/`register_operation`. **Task 4 (calibration impact)** ✓ `what_used`/`impact_of` follow `USAGE_RELATIONSHIPS` `mfdb_edge` links to downstream artifacts. **Task 3b (admin provenance view)** ✓ already shipped in mfdb-admin (seed → upstream/downstream/full graph). Fixed an int round-trip bug (`check_value_type` accepts integral floats). Both reference transformers (microtime_shift + burst_selection) are now replayable. Tests: `test_lineage` 11, `test_events` 7, `test_compute_spec` 6, shifter+burst `test_replay` 6, `test_boundary_validation` 19. **Nothing remaining.** | `69ce1b05`…`29f0f577` |
+| **PRD-12** lifecycle state machine (Phase 3) | **Complete — all DoD met.** `.dic`-declared `mfdb_state_transition` (log) + `mfdb_state_transition_rule` (created by `reconcile_schema`); authored `data/state_lifecycle_defs.json` (sample/artifact/operation states + transitions) seeded by `lifecycle.py` `bootstrap_lifecycle_defs` into state vocabularies + rules. `repository.transition_state`/`get_state`/`get_state_history` — rule-validated (`StateTransitionError` on illegal jump), idempotent, publishes PRD-21 `state.changed` post-commit. `register_result` starts artifact/sample lifecycles best-effort. mfdb-admin `mfdb.lifecycle.*` handlers + `MFDBClient` + standalone `gui/lifecycle_view.py::LifecycleView`. Tests: schema 6, API 12, handlers 5, view 4 = 27. Deferred: slot `LifecycleView` into the dock layout (after the dock rewrite). | `lifecycle Increments 1–4` |
 | **PRD-26** model-driven data layer (Phase 2) | **Substantially complete — Tasks 1, 3, 4, 5 landed; Task 2 = read/delete/get_sample/delete_parameter migrated, `insert` family is documented bespoke remainder.** **T1 (DAO core)** ✓ `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete). **T2** ✓ `MFDatabase.dao` accessor; get-by-PK family (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info`→`dao.get(...,include_deleted=True)`); single-table `delete_*` soft-delete (`delete_citation/probe/spectrum/setup`→`dao.soft_delete(...,deleted_at=_utc_now())`); **`get_sample`→`dao.get(...,include_deleted=True)`** (now a dict superset; fixed two GUI callers already assuming dict `.get`); **`delete_parameter`→two `dao.soft_delete` (dual-key)**. Deferred: `INSERT OR REPLACE` `add_*`/`save_*` family (bespoke upsert + audit cols + id-recovery — PRD allows hand SQL for bespoke). **T5 (docs generator)** ✓ `docs_generator.py`. **T3** ✓ already satisfied (admin fields `.dic`-driven; registry wiring-only). **T4 (RPC/boundary validation from `.dic`)** ✓ `boundary_validation.py` `DictionaryValidator` (+shared `check_value_type`; op-param validation now type/bound-checked). Tests: `test_dao` 11/11, `test_docs_generator` 4/4, `test_boundary_validation` 17/17. | `0d63d1d9`,`cdc5bc74`,`93cca203`,`254dc26a` |
 
 ## Decisions locked
