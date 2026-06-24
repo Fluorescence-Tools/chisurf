@@ -12,6 +12,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from chisurf import logging
 from chisurf.gui.misc_helpers import persist_plugin_state
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.gui.widgets.tools import ChisurfDockTool, PathDropListWidget
 
 from ..api.models import TimeWindowResult
 from .client import TimeWindowClient
@@ -44,45 +45,15 @@ def _supported_exts() -> set[str]:
     return norm
 
 
-class DropListWidget(QtWidgets.QListWidget):
-    """List widget that accepts dropped TTTR file paths."""
-
-    pathsDropped = QtCore.Signal(list)
-
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._exts = _supported_exts()
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        if event.mimeData().hasUrls():
-            for url in event.mimeData().urls():
-                path = url.toLocalFile()
-                if path and self._is_supported(path):
-                    event.acceptProposedAction()
-                    return
-        event.ignore()
-
-    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
-        event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        paths: list[Path] = []
-        for url in event.mimeData().urls():
-            local = url.toLocalFile()
-            if local and self._is_supported(local):
-                paths.append(Path(local))
-        if paths:
-            self.pathsDropped.emit(paths)
-        event.acceptProposedAction()
-
-    def _is_supported(self, path: str) -> bool:
-        lower = path.lower()
-        return any(
-            lower.endswith(ext)
-            or lower.endswith(ext + ".gz")
-            or lower.endswith(ext + ".bz2")
-            for ext in self._exts
-        )
+def _is_supported_path(path: str) -> bool:
+    """Return whether a path has a supported TTTR extension (optionally .gz/.bz2)."""
+    lower = path.lower()
+    return any(
+        lower.endswith(ext)
+        or lower.endswith(ext + ".gz")
+        or lower.endswith(ext + ".bz2")
+        for ext in _supported_exts()
+    )
 
 
 class HelpDialog(QtWidgets.QDialog):
@@ -150,12 +121,14 @@ class HelpDialog(QtWidgets.QDialog):
 
 
 @persist_plugin_state("tttr_time_windows")
-class TTTRTimeWindowTool(QtWidgets.QMainWindow):
+class TTTRTimeWindowTool(ChisurfDockTool):
     """Single-window TTTR→BID tool with split docks, toolbar, and preview.
 
     Consolidates setup, file selection, preview, and processing into one
     resizable window with draggable dock panels.
     """
+
+    tool_settings_name = "TTTRTimeWindowTool"
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
@@ -216,7 +189,9 @@ class TTTRTimeWindowTool(QtWidgets.QMainWindow):
         hint.setStyleSheet("color: gray; font-style: italic;")
         files_splitter.addWidget(hint)
 
-        self.file_list = DropListWidget(self.dock_area)
+        self.file_list = PathDropListWidget(
+            self.dock_area, path_filter=_is_supported_path
+        )
         self.file_list.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection
         )
@@ -651,21 +626,6 @@ class TTTRTimeWindowTool(QtWidgets.QMainWindow):
             pass
 
     # ── Drag-drop on main window ────────────────────────────────────
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept file drops on the main window."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        """Add dropped files to the queue."""
-        paths = [
-            Path(url.toLocalFile())
-            for url in event.mimeData().getUrls()
-            if url.toLocalFile()
-        ]
-        self._add_paths(paths)
-        event.acceptProposedAction()
 
     # ── Dock layout persistence ────────────────────────────────────
 

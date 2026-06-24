@@ -14,19 +14,31 @@ hook, called lazily on demand — never in `__init__`.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+#: A predicate over a local path string deciding whether a dropped path is accepted.
+PathFilter = Callable[[str], bool]
+
 
 def local_paths_from_event(
-    event: QtGui.QDropEvent, *, require_exists: bool = False
+    event: QtGui.QDropEvent,
+    *,
+    require_exists: bool = False,
+    path_filter: PathFilter | None = None,
 ) -> list[Path]:
-    """Return existing-or-not local filesystem paths from a drop event's URLs."""
+    """Return local filesystem paths from a drop event's URLs.
+
+    ``require_exists`` drops non-existent paths; ``path_filter`` (a predicate over
+    the local path string) drops paths it rejects (e.g. unsupported extensions).
+    """
     paths: list[Path] = []
     for url in event.mimeData().urls():
         local_path = url.toLocalFile()
         if not local_path:
+            continue
+        if path_filter is not None and not path_filter(local_path):
             continue
         path = Path(local_path)
         if require_exists and not path.exists():
@@ -39,17 +51,36 @@ class PathDropListWidget(QtWidgets.QListWidget):
     """List widget that accepts dropped file and folder paths.
 
     Emits :attr:`pathsDropped` with the dropped local paths (existing only).
-    Previously duplicated verbatim in each transformer tool.
+    Pass ``path_filter`` to accept only matching paths (e.g. supported file
+    extensions); without it, every existing dropped path is accepted. Previously
+    duplicated verbatim in each transformer tool.
     """
 
     pathsDropped = QtCore.Signal(list)
 
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None = None,
+        *,
+        path_filter: PathFilter | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self._path_filter = path_filter
+
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept URL drops."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
+        """Accept URL drops (only when at least one passes the filter)."""
+        if not event.mimeData().hasUrls():
             event.ignore()
+            return
+        if self._path_filter is None:
+            event.acceptProposedAction()
+            return
+        for url in event.mimeData().urls():
+            local = url.toLocalFile()
+            if local and self._path_filter(local):
+                event.acceptProposedAction()
+                return
+        event.ignore()
 
     def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
         """Accept URL moves."""
@@ -57,7 +88,9 @@ class PathDropListWidget(QtWidgets.QListWidget):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         """Emit local paths from dropped URLs."""
-        paths = local_paths_from_event(event, require_exists=True)
+        paths = local_paths_from_event(
+            event, require_exists=True, path_filter=self._path_filter
+        )
         if paths:
             self.pathsDropped.emit(paths)
         event.acceptProposedAction()

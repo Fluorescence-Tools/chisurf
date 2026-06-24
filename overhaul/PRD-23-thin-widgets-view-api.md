@@ -114,9 +114,22 @@ AST-only (no Qt — runs in any CI). The one pre-existing violation it surfaced 
 `__init__` (which can trigger schema-reconcile writes) — was fixed by deferring the
 adapter open to first tooltip render (`_ensure_db_adapter`). The allowlist is empty.
 
-**Still to do:** migrate the FCS dialog + detector wizard onto `ChisurfDockTool`
-(Task 1, remaining tools). The FCS write-on-construction bug itself is already fixed
-(its `register_result` is in an explicit action handler, not `__init__`; the guard
-confirms this). The GUI base/smoke work was written without a Qt-capable environment;
-run the smoke/base tests under `QT_QPA_PLATFORM=offscreen` with Qt bindings to
-confirm (the static guard above needs no Qt).
+**Third tool migrated — TTTR Time-Window (`tttr_time_windows`).** It had the same
+copied `DropListWidget` + window drag-drop, but its list filtered by supported TTTR
+extension. Rather than fork, `PathDropListWidget` gained an optional `path_filter`
+predicate (None = accept all, preserving the burst/shifter behavior; a predicate
+restricts drag-accept and drop), so the tool now reuses the shared widget
+(`PathDropListWidget(..., path_filter=_is_supported_path)`), subclasses
+`ChisurfDockTool`, drops its window `dragEnter`/`dropEvent`, and lazy-loads its GUI in
+`__init__.py`. Covered by `tttr_time_windows/tests/test_construction_smoke.py` and an
+added base test for the filter variant. This proves the base generalises beyond the
+two reference transformers, including the extension-filtered drop case.
+
+**Still to do:** migrate the remaining `QMainWindow` dockable tools onto
+`ChisurfDockTool` opportunistically (e.g. `tttr_image_browser`, `trace_browser`,
+`tttr_lut_tools`, `pch`, FCS dialog, detector wizard — though the detector wizard is a
+`QWizardPage`, not a `QMainWindow`, so it does not fit this base). The FCS
+write-on-construction bug is already fixed (its `register_result` is in an explicit
+action handler, not `__init__`; the guard confirms). The GUI base/smoke work was
+written without a Qt-capable environment; run the smoke/base tests under
+`QT_QPA_PLATFORM=offscreen` with Qt bindings to confirm (the static guard needs no Qt).

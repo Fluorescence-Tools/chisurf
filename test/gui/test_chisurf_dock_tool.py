@@ -20,6 +20,14 @@ def test_path_drop_list_widget_constructs(qapp):
     assert widget.supportedDropActions() is not None
 
 
+def test_path_drop_list_widget_accepts_optional_filter(qapp):
+    # the extension-filtering variant (used by the TTTR time-window tool) constructs
+    widget = PathDropListWidget(path_filter=lambda p: p.endswith(".ptu"))
+    assert widget._path_filter is not None
+    assert widget._path_filter("/d/x.ptu") is True
+    assert widget._path_filter("/d/x.txt") is False
+
+
 def test_dock_tool_constructs_read_only(qapp):
     """Construction wires Qt only — no MFDB connection acquired."""
     tool = ChisurfDockTool()
