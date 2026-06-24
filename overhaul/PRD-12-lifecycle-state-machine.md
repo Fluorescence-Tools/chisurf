@@ -88,6 +88,49 @@ transitions (surfaced, not swallowed, on real errors; best-effort for
 MFDB-unavailable); behavior-asserting tests; DI over monkeypatching; GUI smoke for
 the admin view.
 
+## ▶ START NEXT — turnkey implementation recipe (researched 2026-06-24)
+
+PRD-21 (events) is **complete** and is the substrate for this PRD. Concrete steps,
+with the exact mechanism verified in the current code:
+
+**Increment 1 — schema foundation (committable on its own; verify with the gate).**
+1. `.dic` (`chisurf/core/mfdb/data/mfdb_flr_ext.dic`): add a `save_mfdb_state_transition`
+   category block + one `save__mfdb_state_transition.<col>` block per column. Use the
+   `save_mfdb_operation_parameter_def` block (~line 3242) as the exact template — each
+   column block needs `_item.name`, `_item.category_id`, `_item_type.code`
+   (`int`/`code`/`text`/`boolean`), `_item.mandatory_code`, and the
+   `_chisurf_schema.table_name`/`column_name` pair. Columns: `transition_id` (int PK),
+   `entity_type` (code), `entity_id` (code), `from_state` (code, optional),
+   `to_state` (code), `reason` (text, optional), `operator_user_id` (code, optional),
+   `created_at`/`updated_at`/`deleted_at` (text). Do the same for the small
+   `mfdb_state_transition_rule` (`entity_type`, `from_state`, `to_state`).
+2. DDL: add `CREATE TABLE IF NOT EXISTS mfdb_state_transition (...)` and
+   `mfdb_state_transition_rule (...)` to `CREATE_TABLES_SQL` in
+   `chisurf/core/mfdb/schema.py` (~line 70); add indices to `CREATE_INDICES_SQL`
+   (~line 885): `idx_mfdb_state_transition_entity (entity_type, entity_id, created_at)`
+   + a `deleted_at` index. `FRESH_DB_TABLES_SQL`/`FRESH_DB_INDICES_SQL` derive
+   automatically.
+3. Seed per-entity-type state vocabularies into `mfdb_vocabulary`
+   (`field_name = "state:sample"|"state:artifact"|"state:operation"`) and the
+   transition rules — follow the existing vocabulary seed path; the lifecycles are
+   sample `registered→measured→processed→validated→archived`, artifact
+   `registered→validated→published→archived`, operation
+   `pending→running→succeeded→failed→cancelled`.
+4. Verify: run the schema/dictionary gate test (live⊇declared + vocab==dictionary) in
+   the `arm64` env, `-o addopts=""`.
+
+**Increment 2 — repository API + tests.** `transition_state(entity_type, entity_id,
+to_state, reason="", operator_user_id=None)` (validate against the rule table; idempotent
+no-op if already in `to_state`; record a row; publish PRD-21's `EVENT_STATE_CHANGED` =
+`state.changed` post-commit — the constant already exists in `events.py`, just add the
+publish point here), `get_state` (latest non-deleted `to_state`), `get_state_history`
+(ordered). Behaviour tests: legal recorded, illegal rejected, history ordered, current
+resolves, idempotent re-transition.
+
+**Increment 3 (higher blast radius) — wire registration paths** (`register_raw_measurement`
+initial `registered`; `register_result` advances) best-effort; **Increment 4** — the
+mfdb-admin state+history view (Qt; arm64 has PyQt5).
+
 ## Relationship
 
 A **projection over PRD-27** (the append-only core): the transition log is the
