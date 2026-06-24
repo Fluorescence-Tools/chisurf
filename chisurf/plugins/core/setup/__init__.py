@@ -4,7 +4,7 @@ from pathlib import Path
 import chisurf as cs
 from chisurf.core.plugin import load_manifest
 from chisurf.core.plugin.registry import apply_manifest_statefulness
-from chisurf.plugins.core.settings.gui.tool import UnifiedSettingsTool
+from chisurf.plugins.core.setup.gui.tool import UnifiedSettingsTool
 
 _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:

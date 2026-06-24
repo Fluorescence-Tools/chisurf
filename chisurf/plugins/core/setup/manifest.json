@@ -1,5 +1,5 @@
 {
-  "id": "settings",
+  "id": "setup",
   "version": "1.0.0",
   "display_name": "Setup:Settings",
   "description": "Unified Settings for ChiSurf",
@@ -14,6 +14,6 @@
     }
   },
   "entrypoints": {
-    "gui": "chisurf.plugins.core.settings.gui.tool:UnifiedSettingsTool"
+    "gui": "chisurf.plugins.core.setup.gui.tool:UnifiedSettingsTool"
   }
 }

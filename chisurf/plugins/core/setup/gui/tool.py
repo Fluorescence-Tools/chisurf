@@ -20,6 +20,20 @@ class UnifiedSettingsTool(QtWidgets.QMainWindow):
         # Map list items to widget classes/factories
         self.panels = [
             {
+                "name": "ChiSurf Settings",
+                "icon": "📄",
+                "class_path": "chisurf.plugins.core.setup.gui.tool",
+                "class_name": "ChiSurfSettingsEditorWidget",
+                "instance": None,
+            },
+            {
+                "name": "Acquisition",
+                "icon": "📷",
+                "class_path": "chisurf.plugins.core.acq.gui.settings_panel",
+                "class_name": "AcquisitionSettingsWidget",
+                "instance": None,
+            },
+            {
                 "name": "Styles",
                 "icon": "🎨",
                 "class_path": "chisurf.plugins.core.style_manager.gui.tool",
@@ -98,14 +112,15 @@ class UnifiedSettingsTool(QtWidgets.QMainWindow):
             QListWidget {
                 border: none;
                 border-right: 1px solid rgba(128, 128, 128, 0.3);
-                padding-top: 10px;
+                padding-top: 5px;
             }
             QListWidget::item {
-                height: 40px;
-                padding-left: 15px;
+                height: 32px;
+                padding-left: 10px;
                 border-radius: 8px;
                 margin: 2px 10px;
-                font-weight: 500;
+                font-weight: bold;
+                font-size: 14px;
             }
         """)
 
@@ -180,3 +195,20 @@ class UnifiedSettingsTool(QtWidgets.QMainWindow):
                 self.stacked_widget.insertWidget(index, error_widget)
 
         self.stacked_widget.setCurrentWidget(panel["instance"])
+
+class ChiSurfSettingsEditorWidget(QtWidgets.QWidget):
+    """Wrapper for the core ChiSurf SettingsEditor."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        import chisurf as cs
+        from chisurf.gui.widgets.settings_editor import SettingsEditor
+        
+        self.editor = SettingsEditor(
+            parent,
+            filename=cs.core.settings.chisurf_settings_file,
+            window_title="ChiSurf Settings"
+        )
+        layout.addWidget(self.editor)
