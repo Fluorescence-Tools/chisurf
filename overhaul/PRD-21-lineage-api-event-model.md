@@ -101,6 +101,30 @@ those rows addressed as a unit), not a second serialization format.
 One lineage API (no duplicated edge SQL); events are post-commit, best-effort,
 never break registration; behavior-asserting tests over real chains.
 
+## Implementation status
+
+**Task 1 (lineage read API) — core landed.** `chisurf/core/mfdb/lineage.py` provides
+`Lineage` (`from_db`/`from_connection`), a read-only service over the authoritative
+operation graph (`mfdb_operation_artifact`): an artifact is *produced by* the
+operations listing it as `output` and *consumed by* those listing it as `input`, and
+ancestry/descent is the transitive closure over artifact→operation→artifact hops. It
+deliberately does **not** rely on the dual-written `derived_from` `mfdb_edge` rows
+(direction-ambiguous), so results are correct by construction. API: `ancestors`,
+`descendants`, `lineage_to_root`, `parents`/`children` (one-hop), `what_used` (the
+data-side of PRD-05 downstream-impact = transitive descendants), and
+`provenance_graph(artifact_id, depth)` → `{"nodes", "edges"}` (artifact + operation
+nodes, `produced`/`input_to` edges) for the admin/pipeline visualization. Covered by
+`test/fio/test_lineage.py` (7 tests over a real `sample → raw → microtime_shift →
+burst_selection` chain: ancestors/descendants order, one-hop parents/children,
+`lineage_to_root`, `what_used` impact, the graph projection, and the isolated-artifact
+empty case).
+
+**Remaining:** replace the ad-hoc edge SQL in browse/admin with `Lineage` (Task 1
+rollout); embedded replayable compute spec + `recompute`/`replay` (Task 2); the
+post-commit event bus + publish points (Task 3); the admin provenance view (Task 3b);
+wire PRD-05's calibration-change impact to `what_used` for non-artifact (setup/
+calibration/reagent) nodes (Task 4).
+
 ## Relationship
 
 Builds on PRD-03/11 (operations + edges) and **PRD-27** (the event log is the
