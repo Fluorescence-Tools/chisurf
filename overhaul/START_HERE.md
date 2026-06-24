@@ -1,7 +1,7 @@
 # START HERE — MFDB / chisurf overhaul
 
 _Branch: `development` (work stays on dev; **no push, no master merge** unless asked).
-Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-23._
+Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-24._
 
 **Phase 1 (architecture foundations) is functionally complete.** Every bug-class the
 foundations targeted is fixed: vocab drift + the 39-step migration chain (PRD-19),
@@ -87,15 +87,18 @@ Read `MASTER-ORDER.md` Phase 2. **PRD-11** (operation-node abstraction) + **PRD-
    MFDB + downstream plugins ingest MFDB BIDs directly). _(Several ndXplorer-side
    usability/perf fixes also landed in the `modules/ndxplorer` submodule working
    tree — tangential to the core MFDB track.)_
-2. **▶ PRD-26 (model-driven data layer) — IN PROGRESS.** The `.dic` generates the
-   DAO/admin/validation/docs. **Task 1 (DAO generator core)** is the current concrete
-   deliverable: `chisurf/core/mfdb/dao.py` — a dictionary-/schema-validated,
-   fully-parameterised CRUD layer (`insert/get/list/update/soft_delete`) that hand SQL
-   can migrate onto (Task 2). Builds on `DictionarySchemaMap` (PRD-19) + the
-   operation-parameter schema (PRD-11).
-3. **Apply PRD-23 (thin widgets)** to both transformer tools; consider routing
+2. ~~**PRD-26 (model-driven data layer)**~~ ✓ **SUBSTANTIALLY COMPLETE.** The `.dic`
+   now generates the DAO (`dao.py`), boundary/RPC validation (`boundary_validation.py`),
+   and schema/API docs (`docs_generator.py`); admin fields were already `.dic`-driven.
+   Tasks 1, 3, 4, 5 landed; Task 2 migrated the read-path, the `delete_*`/soft-delete
+   family, `get_sample`, and `delete_parameter` onto the DAO. **Remaining:** the
+   `INSERT OR REPLACE` `add_*`/`save_*` insert family stays hand SQL (bespoke upsert +
+   explicit audit columns + per-method id-recovery — the PRD permits hand SQL for
+   genuinely bespoke queries). Pick it up only if/when a DAO `upsert` primitive
+   (auto audit-column management + proper `ON CONFLICT` semantics) is worth building.
+3. **▶ Apply PRD-23 (thin widgets)** to both transformer tools; consider routing
    `register_result` internals through `register_operation` so there is one recording
-   path.
+   path. _(Next concrete deliverable; GUI-heavy — needs a Qt-capable env to smoke-test.)_
 
 Orange3 lessons fold in here: typed kind-matched ports (16/11), transformer-as-
 serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
@@ -113,7 +116,7 @@ serializable-value (16/22), `compute_value`-style replayable provenance (21/27).
 | **PRD-11** operation nodes (Phase 2) | param schema ✓, `role` ✓, seed+validate ✓, `register_operation` ✓, role-indexed recording ✓, **`mfdb_microtime_shift` retired** ✓, **validation wired into `register_result`** ✓ | `1da6ab6d`…`2a02f560` |
 | **PRD-16** transformer contract (Phase 2) | `PortSpec`/`Transformer`/registry/conformance ✓, **registry gate** ✓, **both reference transformers (Microtime Shifter + Burst Selection) conformant** ✓ | `(core/transform, tttr, burst)` |
 | **PRD-28** ndXplorer↔MFDB burst round trip | **implemented** ✓ — both directions + headless CLI handoff (`analyze --mfdb`); manual-test fixes folded in; follow-ons PRD-31/34 spec'd | `b9137030`…`e647cc8c` |
-| **PRD-26** model-driven data layer (Phase 2) | **Task 1 (DAO core) landed** ✓ — `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete), `test/fio/test_dao.py`. **Task 2 in progress** ✓ — `MFDatabase.dao` accessor + the get-by-PK family migrated (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info` → `dao.get(..., include_deleted=True)`, behaviour-equivalent, A/B-verified, regression-tested). Plus the single-table `delete_*` soft-delete family (`delete_citation/probe/spectrum/setup` → `dao.soft_delete(..., deleted_at=_utc_now())`, exact marker preserved). Still deferred: `get_sample` (Row/subset shape), `delete_parameter` (dual-key). **Task 5 (docs generator) landed** ✓ — `docs_generator.py` renders tables/vocab/operation-param schemas from the `.dic`, `test/fio/test_docs_generator.py` 4/4. Task 3 already satisfied (admin fields `.dic`-driven; registry is wiring-only). **Task 4 (RPC/boundary validation from `.dic`) next** | `(core/mfdb/dao.py, docs_generator.py, repository.py)` |
+| **PRD-26** model-driven data layer (Phase 2) | **Substantially complete — Tasks 1, 3, 4, 5 landed; Task 2 = read/delete/get_sample/delete_parameter migrated, `insert` family is documented bespoke remainder.** **T1 (DAO core)** ✓ `dao.py` `DictionaryDao` (parameterised, schema-whitelisted CRUD + soft-delete). **T2** ✓ `MFDatabase.dao` accessor; get-by-PK family (`get_artifact`/`get_operation`/`get_parameter`/`get_object_info`→`dao.get(...,include_deleted=True)`); single-table `delete_*` soft-delete (`delete_citation/probe/spectrum/setup`→`dao.soft_delete(...,deleted_at=_utc_now())`); **`get_sample`→`dao.get(...,include_deleted=True)`** (now a dict superset; fixed two GUI callers already assuming dict `.get`); **`delete_parameter`→two `dao.soft_delete` (dual-key)**. Deferred: `INSERT OR REPLACE` `add_*`/`save_*` family (bespoke upsert + audit cols + id-recovery — PRD allows hand SQL for bespoke). **T5 (docs generator)** ✓ `docs_generator.py`. **T3** ✓ already satisfied (admin fields `.dic`-driven; registry wiring-only). **T4 (RPC/boundary validation from `.dic`)** ✓ `boundary_validation.py` `DictionaryValidator` (+shared `check_value_type`; op-param validation now type/bound-checked). Tests: `test_dao` 11/11, `test_docs_generator` 4/4, `test_boundary_validation` 17/17. | `0d63d1d9`,`cdc5bc74`,`93cca203`,`254dc26a` |
 
 ## Decisions locked
 
