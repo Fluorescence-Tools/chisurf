@@ -3355,6 +3355,131 @@ save__mfdb_operation_parameter_def.description
    _chisurf_schema.table_name  mfdb_operation_parameter_def
    _chisurf_schema.column_name description
 
+########################################
+## mfdb_state_transition (PRD-12 LIMS)  #
+########################################
+
+save_mfdb_state_transition
+   _category.id              mfdb_state_transition
+   _category.description
+;     Lifecycle transition log (LIMS P1).  One row per state change of a tracked
+;     entity (sample / artifact / operation): who moved it, when, from where to
+;     where, and why.  The log is the source of truth; an entity's "current state"
+;     is the latest non-deleted transition's to_state (optionally cached on the
+;     entity).  Allowed transitions are declared in mfdb_state_transition_rule.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_state_transition.transition_id"
+
+save__mfdb_state_transition.transition_id
+   _item.name                "_mfdb_state_transition.transition_id"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name transition_id
+
+save__mfdb_state_transition.entity_type
+   _item.name                "_mfdb_state_transition.entity_type"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name entity_type
+   _item_description.description
+;     The kind of entity whose state changed (e.g. sample, artifact, operation).
+
+save__mfdb_state_transition.entity_id
+   _item.name                "_mfdb_state_transition.entity_id"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name entity_id
+
+save__mfdb_state_transition.from_state
+   _item.name                "_mfdb_state_transition.from_state"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name from_state
+   _item_description.description
+;     The prior state; null/empty for the initial transition into a lifecycle.
+
+save__mfdb_state_transition.to_state
+   _item.name                "_mfdb_state_transition.to_state"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name to_state
+
+save__mfdb_state_transition.reason
+   _item.name                "_mfdb_state_transition.reason"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name reason
+
+save__mfdb_state_transition.operator_user_id
+   _item.name                "_mfdb_state_transition.operator_user_id"
+   _item.category_id         mfdb_state_transition
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_state_transition
+   _chisurf_schema.column_name operator_user_id
+   _item_description.description
+;     The user who performed the transition (references flr_sample_users.user_id).
+
+############################################
+## mfdb_state_transition_rule (PRD-12)     #
+############################################
+
+save_mfdb_state_transition_rule
+   _category.id              mfdb_state_transition_rule
+   _category.description
+;     Allowed lifecycle transitions per entity_type.  A transition_state() call is
+;     rejected unless a matching (entity_type, from_state, to_state) rule exists; a
+;     null from_state declares an allowed initial state.  Seeded from the authored
+;     lifecycle definitions (data/state_lifecycle_defs.json).
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_state_transition_rule.rule_id"
+
+save__mfdb_state_transition_rule.rule_id
+   _item.name                "_mfdb_state_transition_rule.rule_id"
+   _item.category_id         mfdb_state_transition_rule
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition_rule
+   _chisurf_schema.column_name rule_id
+
+save__mfdb_state_transition_rule.entity_type
+   _item.name                "_mfdb_state_transition_rule.entity_type"
+   _item.category_id         mfdb_state_transition_rule
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition_rule
+   _chisurf_schema.column_name entity_type
+
+save__mfdb_state_transition_rule.from_state
+   _item.name                "_mfdb_state_transition_rule.from_state"
+   _item.category_id         mfdb_state_transition_rule
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_state_transition_rule
+   _chisurf_schema.column_name from_state
+
+save__mfdb_state_transition_rule.to_state
+   _item.name                "_mfdb_state_transition_rule.to_state"
+   _item.category_id         mfdb_state_transition_rule
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_state_transition_rule
+   _chisurf_schema.column_name to_state
+
 save__flr_sample.sample_type
    _item.name                "_flr_sample.sample_type"
    _item.category_id         flr_sample

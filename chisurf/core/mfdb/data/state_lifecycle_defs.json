@@ -1,0 +1,34 @@
+{
+  "_comment": "Authored lifecycle definitions per entity_type (PRD-12 LIMS P1). Single source seeded into mfdb_vocabulary (field_name='state:<entity_type>') and mfdb_state_transition_rule. The transition log tables are .dic-declared/generated; consolidating this authoring into the .dic natively is a documented refinement (consistent with operation_parameter_defs.json). A null `from` declares an allowed initial state.",
+  "sample": {
+    "states": ["registered", "measured", "processed", "validated", "archived"],
+    "transitions": [
+      [null, "registered"],
+      ["registered", "measured"],
+      ["measured", "processed"],
+      ["processed", "validated"],
+      ["validated", "archived"]
+    ]
+  },
+  "artifact": {
+    "states": ["registered", "validated", "published", "archived"],
+    "transitions": [
+      [null, "registered"],
+      ["registered", "validated"],
+      ["validated", "published"],
+      ["published", "archived"],
+      ["validated", "archived"]
+    ]
+  },
+  "operation": {
+    "states": ["pending", "running", "succeeded", "failed", "cancelled"],
+    "transitions": [
+      [null, "pending"],
+      ["pending", "running"],
+      ["pending", "cancelled"],
+      ["running", "succeeded"],
+      ["running", "failed"],
+      ["running", "cancelled"]
+    ]
+  }
+}

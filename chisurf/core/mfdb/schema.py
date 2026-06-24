@@ -1704,6 +1704,8 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
                     bootstrap_operation_parameter_defs,
                 )
                 bootstrap_operation_parameter_defs(conn)
+                from chisurf.core.mfdb.lifecycle import bootstrap_lifecycle_defs
+                bootstrap_lifecycle_defs(conn)
                 _drop_legacy_tables(conn)
                 return
 
@@ -1740,6 +1742,8 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
     bootstrap_vocabulary(conn)
     from chisurf.core.mfdb.operation_parameters import bootstrap_operation_parameter_defs
     bootstrap_operation_parameter_defs(conn)
+    from chisurf.core.mfdb.lifecycle import bootstrap_lifecycle_defs
+    bootstrap_lifecycle_defs(conn)
     # Ensure auth columns exist on flr_sample_users (for DBs that skipped v22 migration)
     for col, col_type in [("is_admin", "INTEGER DEFAULT 0"), ("password_hash", "TEXT"), ("allow_passwordless_login", "INTEGER DEFAULT 0")]:
         with conn:
