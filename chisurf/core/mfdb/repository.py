@@ -1152,6 +1152,16 @@ class MFDatabase(MFDBClientBase):
         """Operation-graph provenance (nodes + edges) around an artifact."""
         return self.lineage.provenance_graph(artifact_id, depth=depth)
 
+    def get_artifact_compute_spec(self, artifact_id: str):
+        """Return the replayable compute spec for an artifact (PRD-21 Task 2).
+
+        The producing operation captured as a unit (operation_type + parameters +
+        source artifact ids), or ``None`` for a root/imported artifact.
+        """
+        from chisurf.core.mfdb.compute_spec import get_compute_spec
+
+        return get_compute_spec(self, artifact_id)
+
 
     # -- mfdb parameters --
 

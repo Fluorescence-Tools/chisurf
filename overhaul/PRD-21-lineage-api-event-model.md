@@ -157,9 +157,25 @@ Before any networked deployment it **must not** be bridged without passing throu
 authorization + payload-hygiene review in **PRD-37** (network deployment security);
 treat any network-broadcast payload as readable by every authorized subscriber.
 
-**Remaining:** embedded replayable compute spec + `recompute`/`replay` (Task 2); the
-admin provenance view (Task 3b); wire PRD-05's calibration-change impact to
-`what_used` for non-artifact (setup/calibration/reagent) nodes (Task 4).
+**Task 2 (embedded replayable compute spec) — landed.**
+`chisurf/core/mfdb/compute_spec.py` reads a derived artifact's producing operation as a
+replayable unit — **not a new format**: `ComputeSpec(operation_type, parameters,
+source_artifact_ids, operation_id)` is reconstructed from the existing `mfdb_operation`
+/ `mfdb_operation_artifact` / `mfdb_parameter` rows (role-indexed parameters rebuilt
+into the repeatable `{value, role}` form `register_operation` accepts). `with_overrides`
+is the "what-if" (new spec, no `operation_id`) behind PRD-27 branching;
+`recompute(db, artifact_id)` / `replay(db, artifact_id, overrides)` dispatch to a
+**pluggable replay-executor registry** (`register_replay_executor(operation_type, fn)`)
+— extraction/what-if need no executor, and a missing one raises
+`NoReplayExecutorError`. Exposed as `db.get_artifact_compute_spec(...)`. Covered by
+`test/fio/test_compute_spec.py` (extraction incl. role-indexed round-trip, what-if
+immutability, root-artifact `None`, recompute/replay dispatch + override, no-executor
+error). Wiring each transformer's executor (so replay actually re-runs the pipeline) is
+plugin work that fills this seam.
+
+**Remaining:** the admin provenance view (Task 3b); wire PRD-05's calibration-change
+impact to `what_used` for non-artifact (setup/calibration/reagent) nodes (Task 4);
+register per-transformer replay executors (Task 2 follow-on).
 
 ## Relationship
 
