@@ -89,6 +89,40 @@ class MFDBClient:
             {"sample_id": sample_id, "key_values": key_values},
         ).get("sample")
 
+    def lifecycle_state(self, entity_type: str, entity_id: str) -> str | None:
+        return self._call(
+            "mfdb.lifecycle.state",
+            {"entity_type": entity_type, "entity_id": entity_id},
+        ).get("state")
+
+    def lifecycle_history(self, entity_type: str, entity_id: str) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.lifecycle.history",
+            {"entity_type": entity_type, "entity_id": entity_id},
+        ).get("history", [])
+
+    def lifecycle_transition(
+        self,
+        entity_type: str,
+        entity_id: str,
+        to_state: str,
+        reason: str = "",
+        operator_user_id: str | None = None,
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.lifecycle.transition",
+            {
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "to_state": to_state,
+                "reason": reason,
+                "operator_user_id": operator_user_id,
+            },
+        )
+
+    def lifecycle_definitions(self) -> dict[str, Any]:
+        return self._call("mfdb.lifecycle.definitions").get("definitions", {})
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 

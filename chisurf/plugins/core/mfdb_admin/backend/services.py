@@ -178,6 +178,10 @@ def register_services(dispatcher_or_context: Any) -> None:
         "samples.create_structured": create_structured_sample_handler,
         "sample_conditions.get": get_sample_condition_handler,
         "sample_conditions.save": save_sample_condition_handler,
+        "lifecycle.state": lifecycle_state_handler,
+        "lifecycle.history": lifecycle_history_handler,
+        "lifecycle.transition": lifecycle_transition_handler,
+        "lifecycle.definitions": lifecycle_definitions_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -451,6 +455,66 @@ def get_sample_handler(sample_id: str, auth: dict[str, Any] | None = None) -> di
 def get_sample_condition_handler(condition_id: str) -> dict[str, Any]:
     with MFDatabase(resolve_database_path()) as db:
         return {"condition": _get_sample_condition_row(db, condition_id)}
+
+
+# -- lifecycle state machine (PRD-12 Increment 4) ---------------------------
+
+def lifecycle_state_handler(
+    entity_type: str, entity_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return an entity's current lifecycle state (or ``None``)."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"state": db.get_state(entity_type, entity_id)}
+
+
+def lifecycle_history_handler(
+    entity_type: str, entity_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return an entity's ordered transition history (already JSON-safe dicts)."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"history": db.get_state_history(entity_type, entity_id)}
+
+
+def lifecycle_transition_handler(
+    entity_type: str,
+    entity_id: str,
+    to_state: str,
+    reason: str = "",
+    operator_user_id: str | None = None,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Transition an entity; an illegal jump is returned as ``error`` (not raised)."""
+    from chisurf.core.mfdb.lifecycle import StateTransitionError
+
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            changed = db.transition_state(
+                entity_type, entity_id, to_state,
+                reason=reason, operator_user_id=operator_user_id,
+            )
+            return {"changed": changed, "state": db.get_state(entity_type, entity_id)}
+        except StateTransitionError as exc:
+            return {
+                "changed": False,
+                "error": str(exc),
+                "state": db.get_state(entity_type, entity_id),
+            }
+
+
+def lifecycle_definitions_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return the authored lifecycle definitions (states + transitions per entity)."""
+    from chisurf.core.mfdb.lifecycle import load_lifecycle_defs
+
+    defs = load_lifecycle_defs()
+    return {
+        "definitions": {
+            et: {
+                "states": list(ld.states),
+                "transitions": [[f, t] for f, t in ld.transitions],
+            }
+            for et, ld in defs.items()
+        }
+    }
 
 
 def save_sample_condition_handler(condition: dict[str, Any], auth: dict[str, Any] | None = None) -> dict[str, Any]:
