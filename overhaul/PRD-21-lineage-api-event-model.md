@@ -190,8 +190,26 @@ returns exactly its descendants. Covered by three new `test/fio/test_lineage.py`
 (calibration reached via an artifact edge, via an operation edge, and the plain-artifact
 back-compat case).
 
-**Remaining:** the admin provenance view (Task 3b, GUI-bound); register per-transformer
-replay executors (Task 2 follow-on, plugin work).
+**Task 2 follow-on (replay executor) — first transformer wired.** The Micro-time
+Shifter now fills the replay seam: `chisurf/plugins/tttr/tttr_microtime_shifter/api/
+replay.py` self-registers a replay executor for `operation_type="microtime_shift"`. On
+`recompute(db, artifact_id)` / `replay(db, artifact_id, overrides)` it materializes each
+source artifact's stored TTTR blob (copied out of the content-addressed object store into
+a temp file carrying the recorded `data_format` suffix so `tttrlib` can infer the
+container), re-runs the conformant `MICROTIME_SHIFTER` transformer with the spec's
+parameters, and registers each shifted output as a new `processed_data` artifact derived
+from its source — so an artifact is now genuinely *replayable*, not just traceable. A
+round-trip bug fell out and was fixed: `mfdb_parameter.value` is SQLite `REAL`, so an
+int parameter (`shift=1`) reads back as `1.0` and re-validation rejected it;
+`check_value_type` now accepts integral floats for `int` kinds (`1.0` ok, `1.5`
+rejected). Covered by `chisurf/plugins/tttr/tttr_microtime_shifter/tests/test_replay.py`
+(real-PTU recompute + replay-with-override, skipped if `tttrlib`/fixture absent;
+executor registration; no-executor error). The registry tests are now order-independent
+(save/restore the process-global executor slot). Burst Selection's executor (table
+output, not a file) is the remaining per-transformer wiring.
+
+**Remaining:** the admin provenance view (Task 3b, GUI-bound — needs Qt); a replay
+executor for `burst_selection` (Task 2 follow-on, the same seam).
 
 ## Relationship
 
