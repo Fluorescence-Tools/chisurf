@@ -17,6 +17,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys
 from chisurf.core.mfdb.base import MFDBClientBase
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.gui.widgets.tools import ChisurfDockTool
+from chisurf.gui.widgets.tools import PathDropListWidget as DropListWidget
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_channel_definition import (
@@ -31,7 +33,7 @@ from chisurf.gui.widgets.wizard.tttr_photonfilter.tttr_photon_filter import Wiza
 from chisurf.server.rpc_logging import RpcLogWriter
 
 from ..api.mfdb import (
-    acquire_mfdb_connection,
+    acquire_mfdb_connection as _acquire_mfdb_connection,
     file_md5 as _file_md5,
     raw_artifact_id_for_path as _raw_artifact_id_for_path,
     raw_file_data_format as _raw_file_data_format,
@@ -273,40 +275,6 @@ class MetadataDialog(QtWidgets.QDialog):
         return metadata
 
 
-class DropListWidget(QtWidgets.QListWidget):
-    """List widget that accepts dropped file and folder paths."""
-
-    pathsDropped = QtCore.Signal(list)
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept URL drops."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
-        """Accept URL moves."""
-        event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        """Emit local paths from dropped URLs."""
-        paths: list[Path] = []
-        for url in event.mimeData().urls():
-            local_path = url.toLocalFile()
-            if local_path:
-                path = Path(local_path)
-                if path.exists():
-                    paths.append(path)
-        if paths:
-            self.pathsDropped.emit(paths)
-        event.acceptProposedAction()
-
-    def supportedDropActions(self) -> QtCore.Qt.DropAction:
-        """Return supported drop actions."""
-        return QtCore.Qt.DropAction.CopyAction
-
-
 class BatchProcessingDialog(QtWidgets.QDialog):
     """Dialog for adding folders containing TTTR files."""
 
@@ -384,8 +352,10 @@ class BatchProcessingDialog(QtWidgets.QDialog):
         return [Path(item.text()) for item_index in range(self.list_widget.count()) for item in [self.list_widget.item(item_index)]]
 
 
-class BurstSelectionTool(QtWidgets.QMainWindow):
+class BurstSelectionTool(ChisurfDockTool):
     """Migrated Burst Selection GUI with legacy-style controls and plots."""
+
+    tool_settings_name = "BurstSelectionTool"
 
     def __init__(
         self,
@@ -1456,6 +1426,10 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         except RuntimeError:
             return False
 
+    def acquire_mfdb_connection(self) -> MFDBClientBase | None:
+        """Return the cached/opened MFDB connection (PRD-23 base hook)."""
+        return self._db()
+
     def _db(self) -> MFDBClientBase | None:
         """Return the MFDB connection used by the output preflight.
 
@@ -1469,7 +1443,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             return self._mfdb_db
         # Connection acquisition is api-layer logic (PRD-23): prefer the global
         # connection, else open the resolved default DB.
-        self._mfdb_db = acquire_mfdb_connection()
+        self._mfdb_db = _acquire_mfdb_connection()
         return self._mfdb_db
 
     def _ensure_selected_setup_in_mfdb(self, db: MFDBClientBase) -> str:
@@ -3008,17 +2982,6 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         dialog = BatchProcessingDialog(self)
         if dialog.exec_() == QtWidgets.QDialog.DialogCode.Accepted:
             self._add_paths(dialog.folders())
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept file URL drops on the main window."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        """Add dropped files to the analysis queue."""
-        paths = [Path(url.toLocalFile()) for url in event.mimeData().urls() if url.toLocalFile()]
-        self._add_paths(paths)
-        event.acceptProposedAction()
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Save window geometry and dock layout before closing."""

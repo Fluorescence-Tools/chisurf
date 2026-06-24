@@ -10,46 +10,16 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.gui.widgets.tools import ChisurfDockTool
+from chisurf.gui.widgets.tools import PathDropListWidget as DropListWidget
 
 from .client import MicrotimeShifterClient
 
 
-class DropListWidget(QtWidgets.QListWidget):
-    """List widget that accepts dropped file and folder paths."""
-
-    pathsDropped = QtCore.Signal(list)
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept URL drops."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
-        """Accept URL moves."""
-        event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        """Emit local paths from dropped URLs."""
-        paths: list[Path] = []
-        for url in event.mimeData().urls():
-            local_path = url.toLocalFile()
-            if local_path:
-                path = Path(local_path)
-                if path.exists():
-                    paths.append(path)
-        if paths:
-            self.pathsDropped.emit(paths)
-        event.acceptProposedAction()
-
-    def supportedDropActions(self) -> QtCore.Qt.DropAction:
-        """Return supported drop actions."""
-        return QtCore.Qt.DropAction.CopyAction
-
-
-class MicrotimeShifterTool(QtWidgets.QMainWindow):
+class MicrotimeShifterTool(ChisurfDockTool):
     """Micro-time Shifter with DockArea tabs and toolbar."""
+
+    tool_settings_name = "MicrotimeShifterTool"
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
@@ -456,17 +426,6 @@ class MicrotimeShifterTool(QtWidgets.QMainWindow):
         self.save_action.setEnabled(False)
         self._update_status()
 
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        """Accept file URL drops on the main window."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        """Add dropped files to the file list."""
-        paths = [Path(url.toLocalFile()) for url in event.mimeData().urls() if url.toLocalFile()]
-        self._add_paths(paths)
-        event.acceptProposedAction()
-
     def _load_metadata(self) -> None:
         if not self._current_path:
             return
@@ -781,11 +740,15 @@ class MicrotimeShifterTool(QtWidgets.QMainWindow):
         self._update_plot()
         self.plot.getPlotItem().vb.autoRange()
 
-    def _db(self) -> Any:
-        """Return the active MFDB connection if available."""
+    def acquire_mfdb_connection(self) -> Any:
+        """Return the active MFDB connection (PRD-23 base hook)."""
         from ..api.mfdb import active_mfdb_connection
 
         return active_mfdb_connection()
+
+    def _db(self) -> Any:
+        """Return the active MFDB connection if available."""
+        return self.acquire_mfdb_connection()
 
     # ── save ───────────────────────────────────────────────────────
 

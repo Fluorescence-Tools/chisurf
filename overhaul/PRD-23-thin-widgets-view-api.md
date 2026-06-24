@@ -83,7 +83,33 @@ transformers (the non-GUI half).**
   `tests/test_api_mfdb.py` exercises (and which previously made the api/cli tests
   uncollectable when Qt was absent).
 
-**Still to do (the GUI half):** Task 1 (`ChisurfDockTool` shared base), Task 3
-(construction smoke tests per tool), Task 4 (forbid DB writes during widget
-`__init__`, beyond the import-side-effect fix above) — all require a Qt-capable
-environment.
+**Task 1 (shared dockable-tool base) — landed.** `chisurf/gui/widgets/tools/`
+provides `ChisurfDockTool(QMainWindow)` and `PathDropListWidget`. The base factors
+the boilerplate both transformer tools had copied: window-level path drag-drop
+(dispatched to an overridable `on_paths_dropped` hook → `_add_paths` by convention),
+the byte-identical drop-list widget, window-geometry persistence helpers, and lazy
+MFDB-connectivity accessors (`acquire_mfdb_connection` hook, `mfdb_connection`,
+`mfdb_connected`) that do **no** work on construction. Burst Selection and Microtime
+Shifter now subclass it: each deleted its private `DropListWidget` (now
+`PathDropListWidget`) and its duplicated window `dragEnterEvent`/`dropEvent`, and
+routes connection acquisition through the `acquire_mfdb_connection` hook.
+
+**Task 3 (construction smoke tests) — landed for both reference transformers.**
+`test/gui/test_chisurf_dock_tool.py` covers the base (read-only construction, drop
+dispatch, MFDB hooks, geometry). Each tool has an offscreen construction smoke test
+that builds the real widget (not `__new__`) and asserts it constructs, reuses
+`ChisurfDockTool`, and opens no MFDB connection on init:
+`burst_selection/tests/test_construction_smoke.py` (new) and the existing
+`tttr_microtime_shifter/tests/test_gui.py` (augmented).
+
+**Task 4 (read-only construction) — substantially met for the two tools.** The
+import-side-effect fix (above) plus the lazy `acquire_mfdb_connection` hook mean
+neither tool opens a DB or registers anything during `__init__`; the smoke tests
+assert `_mfdb_db is None` after construction. A general lint/guard forbidding DB
+writes in any widget `__init__` is not yet automated.
+
+**Still to do:** migrate the FCS dialog + detector wizard onto `ChisurfDockTool`
+(Task 1, remaining tools); automate the "no DB writes during `__init__`" guard
+(Task 4). The above GUI work was written without a Qt-capable environment to run it;
+the smoke/base tests must be executed under `QT_QPA_PLATFORM=offscreen` with Qt
+bindings installed to confirm.
