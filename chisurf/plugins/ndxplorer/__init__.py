@@ -61,3 +61,41 @@ if __name__ == "plugin":
     ndx.show()
     ndx.raise_()
     ndx.activateWindow()
+
+    # Add MFDB toolbar button if MFDB is connected
+    try:
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from chisurf.plugins.ndxplorer.mfdb_launcher import (
+            BURST_FORMATS, BURST_KINDS, resolve_dataset_path,
+        )
+        from chisurf.gui.widgets.mfdb.dataset_browser import MfdbDatasetPickerDialog
+        from ndxplorer.__main__ import open_path_like_drop
+        from qtpy import QtCore
+
+        client = MFDBClient(inprocess=True)
+        client.status()  # raises if MFDB database is not accessible
+
+        def _open_burst_in_current_ndx() -> None:
+            sel = MfdbDatasetPickerDialog.pick_dataset(
+                parent=ndx,
+                kinds=BURST_KINDS,
+                formats=BURST_FORMATS,
+                scope="all",
+                client=client,
+            )
+            if sel is None:
+                return
+            path = resolve_dataset_path(client, sel.artifact_id)
+            if not path:
+                return
+            QtCore.QTimer.singleShot(
+                0, lambda: open_path_like_drop(ndx, str(path))
+            )
+
+        toolbar = ndx.addToolBar("MFDB")
+        toolbar.setObjectName("ndxplorerMfdbToolbar")
+        mfdb_action = toolbar.addAction("🗄️ Open from MFDB")
+        mfdb_action.setToolTip("Open a burst selection registered in MFDB")
+        mfdb_action.triggered.connect(_open_burst_in_current_ndx)
+    except Exception:
+        pass  # MFDB not available — skip toolbar button

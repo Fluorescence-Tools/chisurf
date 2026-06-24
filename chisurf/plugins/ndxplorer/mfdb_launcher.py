@@ -45,14 +45,22 @@ def open_path_in_ndxplorer(path: str) -> Any:
     try:
         import ndxplorer
         from ndxplorer.__main__ import open_path_like_drop
+        from qtpy import QtCore
     except Exception as exc:  # pragma: no cover - depends on optional module
         logger.error("ndXplorer is not available: %s", exc)
         return None
     ndx = ndxplorer.NDXplorer()
-    open_path_like_drop(ndx, str(path))
     ndx.show()
     ndx.raise_()
     ndx.activateWindow()
+    # Open AFTER ndXplorer's deferred initialization has run. NDXplorer schedules
+    # _deferred_init via singleShot(0) from __init__, and that is what loads the
+    # settings/equations (which derive Sg/Sr/Proximity ratio/FRET…) and seeds the
+    # default state. Opening synchronously here would (a) compute columns with
+    # empty equations and (b) race deferred init, which then overwrites the loaded
+    # data with the bundled example dataset. Scheduling the open with a second
+    # singleShot(0) guarantees FIFO ordering: deferred init first, then the open.
+    QtCore.QTimer.singleShot(0, lambda: open_path_like_drop(ndx, str(path)))
     return ndx
 
 
