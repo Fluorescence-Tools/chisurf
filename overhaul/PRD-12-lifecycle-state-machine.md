@@ -100,24 +100,33 @@ source for per-entity-type states + allowed transitions (sample/artifact/operati
 `field_name="state:<entity_type>"`) and the rule table (idempotent), wired into both
 migrate paths in `schema.py`. Covered by `test/fio/test_lifecycle_schema.py` (6).
 
-### ▶ START NEXT — Increment 2 (repository API + tests)
-Add to `repository.py` (use `lifecycle.get_lifecycle_def` / the seeded
-`mfdb_state_transition_rule` for validation; assign `transition_id` explicitly = MAX+1,
-the `operation_parameter_def` convention):
-- `transition_state(entity_type, entity_id, to_state, reason="", operator_user_id=None)`
-  — resolve current state via `get_state`; **idempotent no-op** if already `to_state`;
-  reject if `(entity_type, current_state, to_state)` is not an allowed rule (raise a
-  `StateTransitionError`, surfaced not swallowed); insert a transition row; **publish
-  PRD-21's `EVENT_STATE_CHANGED` = `state.changed` post-commit** (the constant already
-  exists in `events.py` — add the publish point here, mirroring `register_result`).
-- `get_state(entity_type, entity_id)` → latest non-deleted `to_state` (ORDER BY
-  `created_at`, `transition_id` DESC), or `None`.
-- `get_state_history(entity_type, entity_id)` → ordered transitions.
-Tests (`test/fio/test_lifecycle.py`): legal transition recorded; illegal rejected;
-history ordered; current resolves; idempotent re-transition; a subscriber sees
-`state.changed`. Then Increment 3 (wire registration paths, higher blast radius) and
-Increment 4 (mfdb-admin state+history view, Qt). Run tests in the `arm64` env
-(`-o addopts=""`).
+**Increment 2 (transition API) — DONE** (`PRD-12 Increment 2` commit). `repository.py`
+now has `transition_state(entity_type, entity_id, to_state, reason="",
+operator_user_id=None)` (validates against `mfdb_state_transition_rule`, raises
+`lifecycle.StateTransitionError` on an illegal jump, idempotent no-op returning `False`
+when already in `to_state`, records the row + audit log, publishes PRD-21's
+`state.changed` post-commit), `get_state` (latest non-deleted `to_state`), and
+`get_state_history` (ordered). `transition_id` is assigned MAX+1. Covered by
+`test/fio/test_lifecycle.py` (9): initial/advancing, illegal jump + illegal initial
+rejected (state unchanged), idempotent no-op (no row, no event), ordered history,
+branching operation lifecycle, `state.changed` payload, audit log.
+
+### ▶ START NEXT — Increment 3 (wire registration paths; higher blast radius)
+Emit lifecycle transitions from the registration paths in
+`chisurf/core/mfdb/result_registry.py`, **best-effort** (wrap in try/except, never break
+registration — same posture as the event publish there):
+- `register_raw_measurement` → set the raw artifact's initial state `registered` (and,
+  when a `sample_id` is linked, the sample's `registered` if it has no state yet).
+- `register_result` → advance the output artifact to `registered` (its lifecycle start);
+  leave richer advancement (`validated`/`published`) to explicit callers/admin for now.
+- Operation status: `register_operation`/`register_result` already record
+  `status="succeeded"`; optionally mirror that through `transition_state("operation", …)`
+  so the operation lifecycle has history (pending→running→succeeded). Keep it best-effort.
+Tests: after `register_raw_measurement`/`register_result`, `db.get_state("artifact", id)`
+== `registered`; a `state.changed` subscriber fires. Watch the existing registration
+test suites for regressions (run the `test/fio` mfdb slice in `arm64`, `-o addopts=""`).
+Then **Increment 4** — mfdb-admin state+history view (Qt; arm64 has PyQt5): show current
+state + `get_state_history` per entity and allow admin transitions.
 
 ## Original recipe (full reference)
 
