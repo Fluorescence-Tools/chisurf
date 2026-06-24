@@ -3480,6 +3480,127 @@ save__mfdb_state_transition_rule.to_state
    _chisurf_schema.table_name  mfdb_state_transition_rule
    _chisurf_schema.column_name to_state
 
+########################################
+## mfdb_protocol (PRD-14 LIMS P3)       #
+########################################
+
+save_mfdb_protocol
+   _category.id              mfdb_protocol
+   _category.description
+;     A named, versioned procedure (measurement / processing / analysis) that
+;     operations reference, so every recorded operation names the exact procedure +
+;     version it executed ("re-run protocol X v3").  Append-only by version: editing
+;     a protocol creates a new row (new protocol_id) with version = max+1 for that
+;     name; operations keep the version they ran.  The parameter schema is the
+;     operation_type's declared schema (mfdb_operation_parameter_def, PRD-11) — no
+;     forked parameter stack.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_protocol.protocol_id"
+
+save__mfdb_protocol.protocol_id
+   _item.name                "_mfdb_protocol.protocol_id"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name protocol_id
+
+save__mfdb_protocol.name
+   _item.name                "_mfdb_protocol.name"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name name
+   _item_description.description
+;     The protocol's stable name; shared across versions (UNIQUE with version,
+;     enforced by the repository).
+
+save__mfdb_protocol.version
+   _item.name                "_mfdb_protocol.version"
+   _item.category_id         mfdb_protocol
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name version
+
+save__mfdb_protocol.category
+   _item.name                "_mfdb_protocol.category"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name category
+    loop_
+    _item_enumeration.value
+      measurement
+      processing
+      analysis
+
+save__mfdb_protocol.description
+   _item.name                "_mfdb_protocol.description"
+   _item.category_id         mfdb_protocol
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name description
+
+save__mfdb_protocol.operation_type
+   _item.name                "_mfdb_protocol.operation_type"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name operation_type
+   _item_description.description
+;     The PRD-11 operation kind this protocol realizes; its declared parameter
+;     schema (mfdb_operation_parameter_def) is the protocol's parameter schema.
+
+save__mfdb_protocol.setup_id
+   _item.name                "_mfdb_protocol.setup_id"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name setup_id
+   _chisurf_schema.foreign_key  mfdb_setup(setup_id)
+
+save__mfdb_protocol.created_by_user_id
+   _item.name                "_mfdb_protocol.created_by_user_id"
+   _item.category_id         mfdb_protocol
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+
+save__mfdb_protocol.is_public
+   _item.name                "_mfdb_protocol.is_public"
+   _item.category_id         mfdb_protocol
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_protocol
+   _chisurf_schema.column_name is_public
+
+## Operations reference the protocol + version they ran (PRD-14).
+
+save__mfdb_operation.protocol_id
+   _item.name                "_mfdb_operation.protocol_id"
+   _item.category_id         mfdb_operation
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name protocol_id
+
+save__mfdb_operation.protocol_version
+   _item.name                "_mfdb_operation.protocol_version"
+   _item.category_id         mfdb_operation
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_operation
+   _chisurf_schema.column_name protocol_version
+
 save__flr_sample.sample_type
    _item.name                "_flr_sample.sample_type"
    _item.category_id         flr_sample
