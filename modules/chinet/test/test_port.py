@@ -240,6 +240,51 @@ class Tests(unittest.TestCase):
             True
         )
 
+    def test_port_link_dag_enforced(self):
+        # The link graph must remain acyclic. set_link uses Kahn's algorithm
+        # to reject any link that would create a cycle.
+        a = cn.Port(1.0); a.name = 'a'
+        b = cn.Port(2.0); b.name = 'b'
+        c = cn.Port(3.0); c.name = 'c'
+
+        # Build the chain c -> b -> a (each follows the previous).
+        b.link = a
+        c.link = b
+
+        # would_create_cycle is a side-effect-free predicate.
+        self.assertTrue(a.would_create_cycle(c))   # a -> c closes the loop
+        e = cn.Port(5.0); e.name = 'e'
+        self.assertFalse(a.would_create_cycle(e))  # linking to an independent port is fine
+
+        # Closing the loop must raise and leave the graph untouched.
+        with self.assertRaises(cn.LinkCycleError):
+            a.link = c
+        self.assertFalse(a.is_linked())
+
+        # Linking a port to itself is a degenerate cycle.
+        with self.assertRaises(cn.LinkCycleError):
+            a.link = a
+
+        # A non-cyclic re-link is still allowed.
+        d = cn.Port(4.0); d.name = 'd'
+        c.link = d
+        self.assertTrue(c.is_linked())
+
+    def test_node_link_dag_enforced(self):
+        # Cycles across nodes (n1 depends on n2 depends on n1) are rejected too.
+        n1 = cn.Node(name='n1')
+        n1.add_input_port('in', cn.Port(name='in'))
+        n1.add_output_port('out', cn.Port(name='out'))
+        n2 = cn.Node(name='n2')
+        n2.add_input_port('in', cn.Port(name='in'))
+        n2.add_output_port('out', cn.Port(name='out'))
+
+        # n2 depends on n1.
+        n2.get_input_port('in').link = n1.get_output_port('out')
+        # n1 depending back on n2 would create a node-level cycle.
+        with self.assertRaises(cn.LinkCycleError):
+            n1.get_input_port('in').link = n2.get_output_port('out')
+
     def test_port_fixed(self):
         p1 = cn.Port(12)
         p1.fixed = True

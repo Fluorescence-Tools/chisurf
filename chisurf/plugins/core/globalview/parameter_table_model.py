@@ -438,6 +438,30 @@ class ParameterTableModel(QtCore.QAbstractTableModel):
 
         return False
 
+    def _warn_link(self, message: str) -> None:
+        """Show a modal warning popup for a rejected link.
+
+        The table model is not itself a widget, so the active application
+        window (falling back to the model's parent) is used as the dialog
+        parent. Failures to display are swallowed so headless/test contexts
+        keep working.
+        """
+        # Only attempt a dialog when a Qt application is actually running;
+        # constructing a widget without one aborts at the C++ level (a crash
+        # that Python cannot catch), which would break headless/test contexts.
+        if QtWidgets.QApplication.instance() is None:
+            return
+        try:
+            parent = QtWidgets.QApplication.activeWindow()
+            if parent is None:
+                p = self.parent()
+                parent = p if isinstance(p, QtWidgets.QWidget) else None
+            QtWidgets.QMessageBox.warning(
+                parent, "Linking Error", message, QtWidgets.QMessageBox.Ok
+            )
+        except Exception:
+            pass
+
     def _set_link_data(self, index: QtCore.QModelIndex, value: Any, fc: Any) -> bool:
         """Apply an edit to the link-row column.
 
@@ -476,11 +500,18 @@ class ParameterTableModel(QtCore.QAbstractTableModel):
         target_fit_idx, _, resolved_target_local_idx, target_param = self._rows[target_row_idx]
         target_param_name = str(getattr(target_param, "name", ""))
         if target_param is param:
-            logging.log(0, f"Cannot link {param.name} to itself")
+            msg = f"Cannot link '{param.name}' to itself."
+            logging.log(0, msg)
+            self._warn_link(msg)
             return False
         try:
             if Parameter.check_recursive_link(target_param, param):
-                logging.log(0, f"Cycle detected: cannot link {param.name} -> row {target_row_number}")
+                msg = (
+                    f"Cannot link '{param.name}' → '{target_param_name}': "
+                    "this would create a cyclic dependency between parameters."
+                )
+                logging.log(0, "Cycle detected: " + msg)
+                self._warn_link(msg)
                 return False
         except Exception:
             pass
@@ -495,7 +526,9 @@ class ParameterTableModel(QtCore.QAbstractTableModel):
                 target_local_idx=resolved_target_local_idx,
             )
             if not result.get("ok", False):
-                logging.log(0, f"Link failed: {result.get('error', 'unknown error')}")
+                err = result.get("error", "unknown error")
+                logging.log(0, f"Link failed: {err}")
+                self._warn_link(f"Could not link '{param.name}': {err}")
                 return False
         self._finalize(fc, fit_idx, self._rows[index.row()][1], local_idx, param)
         self.dataChanged.emit(index, index)

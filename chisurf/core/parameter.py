@@ -41,12 +41,36 @@ class Parameter(chisurf.core.base.Base):
 
     @staticmethod
     def check_recursive_link(current, target):
-        """Check if linking *current* to *target* would create a recursive cycle."""
-        if id(current) == id(target):
-            return True
-        if current.link is not None:
-            return Parameter.check_recursive_link(current.link, target)
-        return False
+        """Return ``True`` if linking *target* as a follower of *current* would
+        break the directed-acyclic-graph (DAG) invariant of the link graph.
+
+        The proposed assignment ``target.link = current`` adds the dependency
+        edge ``target -> current``; it is rejected when *current* can already
+        reach *target* through existing links.
+
+        The cycle detection itself lives in ``chinet`` -- the underlying
+        :class:`chinet.Port` enforces the DAG with Kahn's algorithm whenever a
+        link is created (see :meth:`chinet.Port.would_create_cycle`). This
+        method simply delegates to it on the backing ports so the logic is
+        defined once. It is retained as a side-effect-free predicate for GUI
+        call sites that want to validate a link *before* attempting it.
+
+        Parameters
+        ----------
+        current : Parameter
+            The prospective master (link target).
+        target : Parameter
+            The follower whose ``.link`` would be set to *current*.
+
+        Returns
+        -------
+        bool
+            ``True`` if the assignment would introduce a cycle, else ``False``.
+        """
+        if current is None or target is None:
+            return False
+        # target.link = current  <=>  target._port.set_link(current._port)
+        return bool(target._port.would_create_cycle(current._port))
 
     @property
     def fit_idx(self):
@@ -369,7 +393,7 @@ class Parameter(chisurf.core.base.Base):
         registry_id = kwargs.pop('registry_id', None)
         if not desc:
             try:
-                meta = getattr(chisurf.core.settings, "fitting_parameters", {})
+                meta = getattr(chisurf.core.settings, "parameter_registry", {})
                 params_meta = meta.get("parameters", meta) if isinstance(meta, dict) else {}
                 entry = None
                 if isinstance(params_meta, dict):

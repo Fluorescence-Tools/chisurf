@@ -2,6 +2,47 @@ import numpy as np
 import json
 from .base import BaseObject
 
+
+class LinkCycleError(ValueError):
+    """Raised when linking two ports would create a cycle in the graph.
+
+    chinet computation graphs must remain directed acyclic graphs (DAGs):
+    a node may only depend on nodes that do not (transitively) depend on it.
+    Linking is the only operation that adds dependency edges, so the DAG
+    invariant is enforced there. Subclasses :class:`ValueError` so existing
+    callers that catch ``ValueError`` keep working.
+    """
+
+
+def _dependency_vertex(port):
+    """Return the dependency-graph vertex a port belongs to.
+
+    Ports attached to a :class:`~chinet.node.Node` share that node as their
+    vertex (a node depends on whatever its input ports are linked to);
+    unattached ports -- e.g. the standalone ports backing chisurf fitting
+    parameters -- are their own vertex.
+    """
+    get_node = getattr(port, "get_node", None)
+    node = get_node() if get_node is not None else None
+    return node if node is not None else port
+
+
+def _vertex_dependencies(vertex):
+    """Yield the vertices *vertex* directly depends on via existing links.
+
+    A node depends on the sources of all its linked input ports; a standalone
+    port depends on whatever it is linked to.
+    """
+    in_ports = getattr(vertex, "in_", None)
+    if in_ports is not None:  # a Node
+        for p in in_ports.values():
+            if p._link is not None:
+                yield _dependency_vertex(p._link)
+    else:  # a standalone Port
+        if vertex._link is not None:
+            yield _dependency_vertex(vertex._link)
+
+
 class ValueType(int):
     """
     Sneaky ValueType class that allows 0 to match 2, and 1 to match 3.
@@ -164,8 +205,91 @@ class Port(BaseObject):
     @link.setter
     def link(self, other): self.set_link(other)
 
+    def would_create_cycle(self, v):
+        """Return ``True`` if ``self.set_link(v)`` would break the DAG invariant.
+
+        Linking makes ``vertex(self)`` depend on ``vertex(v)`` (see
+        :func:`_dependency_vertex`). That edge is safe exactly when *v*'s
+        vertex cannot already reach *self*'s vertex through existing
+        dependency edges. The check builds the subgraph reachable from
+        ``vertex(v)``, adds the proposed edge, and runs Kahn's topological-sort
+        algorithm: if any vertex cannot be peeled off (because it keeps an
+        incoming edge) the subgraph is cyclic and the link must be rejected.
+
+        Two ports of the *same* node may be linked (chinet lets a node read its
+        own output), so that is not treated as a cycle; a standalone port
+        linked to *itself*, however, is a degenerate self-cycle and is
+        rejected. The traversal uses a visited set, so it terminates even if
+        the existing graph is already corrupt.
+        """
+        if v is None:
+            return False
+
+        sv = _dependency_vertex(self)
+        vv = _dependency_vertex(v)
+        if sv is vv:
+            return self is v
+
+        # Collect the vertices reachable from vv following dependency edges.
+        nodes = [sv]
+        seen = {id(sv)}
+        stack = [vv]
+        while stack:
+            cur = stack.pop()
+            if id(cur) in seen:
+                continue
+            seen.add(id(cur))
+            nodes.append(cur)
+            for dep in _vertex_dependencies(cur):
+                if id(dep) not in seen:
+                    stack.append(dep)
+
+        # Build adjacency / in-degrees for the collected subgraph. Every
+        # existing dependency edge is kept except the one currently contributed
+        # by *self* (which the new link supersedes); the proposed edge
+        # sv -> vv is added in its place.
+        adjacency = {id(n): [] for n in nodes}
+        in_degree = {id(n): 0 for n in nodes}
+
+        def add_edge(a, b):
+            if id(b) in adjacency:
+                adjacency[id(a)].append(id(b))
+                in_degree[id(b)] += 1
+
+        for n in nodes:
+            in_ports = getattr(n, "in_", None)
+            if in_ports is not None:  # a Node
+                for p in in_ports.values():
+                    if p is self or p._link is None:
+                        continue
+                    add_edge(n, _dependency_vertex(p._link))
+            else:  # a standalone Port acting as its own vertex
+                if n is self or n._link is None:
+                    continue
+                add_edge(n, _dependency_vertex(n._link))
+        add_edge(sv, vv)  # the proposed link
+
+        # Kahn's algorithm: repeatedly remove zero-in-degree vertices.
+        queue = [k for k, d in in_degree.items() if d == 0]
+        removed = 0
+        while queue:
+            k = queue.pop()
+            removed += 1
+            for m in adjacency[k]:
+                in_degree[m] -= 1
+                if in_degree[m] == 0:
+                    queue.append(m)
+
+        # Leftover vertices retain an incoming edge => the subgraph is cyclic.
+        return removed != len(adjacency)
+
     def set_link(self, v):
         if v is self._link: return
+        if v is not None and self.would_create_cycle(v):
+            raise LinkCycleError(
+                "Linking these ports would create a cycle; "
+                "the chinet graph must remain acyclic."
+            )
         self.unlink()
         if v is None: return
         self._link = v; v._linked_to.append(self); self.update_attached_node()

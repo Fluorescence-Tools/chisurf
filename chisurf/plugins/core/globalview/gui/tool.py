@@ -389,7 +389,14 @@ class GraphWizard(QtWidgets.QMainWindow):
 
     def _validate_and_link(self, source, target) -> bool:
         if Parameter.check_recursive_link(target, source):
-            cs.logging.log(0, f"Cycle detected: cannot link {source.name} -> {target.name}")
+            msg = (
+                f"Cannot link '{source.name}' → '{target.name}': "
+                "this would create a cyclic dependency between parameters."
+            )
+            cs.logging.log(0, "Cycle detected: " + msg)
+            QtWidgets.QMessageBox.warning(
+                self, "Linking Error", msg, QtWidgets.QMessageBox.Ok
+            )
             return False
         fc = get_fitting_client()
         if fc is not None:

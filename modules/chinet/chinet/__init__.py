@@ -2,6 +2,7 @@ from ._version import __version__ as __version__
 from .base import BaseObject as BaseObject
 from .node import Node as Node
 from .port import Port as Port
+from .port import LinkCycleError as LinkCycleError
 from .schema import (
     SCHEMA_NAME as SCHEMA_NAME,
 )

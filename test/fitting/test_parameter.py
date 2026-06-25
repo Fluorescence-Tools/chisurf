@@ -84,6 +84,33 @@ class Tests(unittest.TestCase):
         p2.value = 3
         self.assertEqual(p2.value, 3.0)
 
+    def test_cyclic_link_rejected(self):
+        # The parameter link graph must remain a DAG. check_recursive_link
+        # uses Kahn's algorithm to reject any assignment that would create a
+        # cycle, mirroring chinet's node-graph validation.
+        Parameter = chisurf.core.parameter.Parameter
+        a = Parameter(value=1.0)
+        b = Parameter(value=2.0)
+        c = Parameter(value=3.0)
+
+        # Self-link is a (degenerate) cycle.
+        self.assertTrue(Parameter.check_recursive_link(a, a))
+
+        # Build the chain a <- b <- c (b follows a, c follows b).
+        b.link = a
+        c.link = b
+
+        # Closing the loop a -> c would create a cycle and must be rejected.
+        self.assertTrue(Parameter.check_recursive_link(c, a))
+        with self.assertRaises(ValueError):
+            a.link = c
+
+        # A non-cyclic cross link is still allowed.
+        d = Parameter(value=4.0)
+        self.assertFalse(Parameter.check_recursive_link(d, c))
+        c.link = d  # should not raise
+        self.assertTrue(c.is_linked)
+
     def test_restore_link_from_dict(self):
         p1 = chisurf.core.parameter.Parameter(value=2.0)
         p2 = chisurf.core.parameter.Parameter(value=3.0)
