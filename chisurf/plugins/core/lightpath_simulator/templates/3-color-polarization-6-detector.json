@@ -1,0 +1,27 @@
+{
+  "id": "three_color_polarization_6det",
+  "name": "3 color polarization (6 detector)",
+  "description": "Three-color polarization template with six detector channels.",
+  "config": {
+    "lasers": "488:1.0, 561:1.0, 640:1.0",
+    "excitation_dichroic_probe_id": null,
+    "emission_splitters": [
+      {"type": "Dichroic", "probe_id": null},
+      {"type": "Polarizer", "probe_id": null},
+      {"type": "Dichroic", "probe_id": null},
+      {"type": "Polarizer", "probe_id": null},
+      {"type": "Polarizer", "probe_id": null}
+    ],
+    "detectors": [
+      {"name": "Color 1 Parallel", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Color 1 Perpendicular", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Color 2 Parallel", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Color 2 Perpendicular", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Color 3 Parallel", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Color 3 Perpendicular", "bandpass_probe_id": null, "qe_probe_id": null}
+    ],
+    "dyes": {},
+    "kappa2": 0.6667,
+    "n": 1.33
+  }
+}

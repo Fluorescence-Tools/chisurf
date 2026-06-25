@@ -1,0 +1,19 @@
+{
+  "id": "two_color_2det",
+  "name": "2-color (2 detector)",
+  "description": "Two-color emission split into transmission and reflection detector channels.",
+  "config": {
+    "lasers": "488:1.0, 640:1.0",
+    "excitation_dichroic_probe_id": null,
+    "emission_splitters": [
+      {"type": "Dichroic", "probe_id": null}
+    ],
+    "detectors": [
+      {"name": "Transmission", "bandpass_probe_id": null, "qe_probe_id": null},
+      {"name": "Reflection", "bandpass_probe_id": null, "qe_probe_id": null}
+    ],
+    "dyes": {},
+    "kappa2": 0.6667,
+    "n": 1.33
+  }
+}

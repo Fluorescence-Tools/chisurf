@@ -1,0 +1,51 @@
+{
+  "id": "lightpath_simulator",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Light Path Simulator",
+  "description": "Optical light path simulator to calculate crosstalk and R0 overlap integrals.",
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Spectroscopy"
+  ],
+  "state_namespace": "lightpath_simulator",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.lightpath_simulator.gui.tool:LightPathSimulatorWidget",
+    "cli": "lightpath-simulator=chisurf.plugins.core.lightpath_simulator.cli:cli",
+    "services": "chisurf.plugins.core.lightpath_simulator.rpc.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "lightpath.simulate",
+      "summary": "Run a light-path simulation for a JSON graph."
+    },
+    {
+      "name": "lightpath.save",
+      "summary": "Persist a light-path graph and simulated outputs as MFDB artifacts."
+    },
+    {
+      "name": "lightpath.list",
+      "summary": "List saved light-path simulations from MFDB."
+    },
+    {
+      "name": "lightpath.get",
+      "summary": "Load one saved light-path simulation from MFDB."
+    },
+    {
+      "name": "lightpath.get_probes_info",
+      "summary": "Return probe metadata used by the light-path simulator palette."
+    },
+    {
+      "name": "lightpath.contract.describe",
+      "summary": "Return the light-path simulator workflow contract."
+    }
+  ],
+  "icon": "🔦"
+}
