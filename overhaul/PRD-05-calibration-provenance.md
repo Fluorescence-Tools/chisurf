@@ -487,6 +487,15 @@ only if a typed read-back path needs it.
 - [x] `staleness.py` can find fits using outdated calibrations (`find_stale_calibration_uses`)
 - [x] Headless usage-link API (`record_calibration_use`) creates `calibrated_by` edges
 - [x] All headless tests pass (including user_provided calibration + the PRD-21 loop)
-- [ ] g-factor plugin / PDA-nuisance "Save to MFDB" buttons register calibrations _(GUI)_
-- [ ] Fit archiver auto-links fits + background-curve files via `calibrated_by` _(archiver/GUI)_
+- [x] mfdb-admin **Calibrations view** (`gui/calibrations_view.py`) lists calibrations,
+      registers literature/user-provided values (the "god-given" Task 2b path), and
+      surfaces **stale uses** (`find_stale_calibration_uses`) — PRD-05's goal made visible.
+      Over `mfdb.calibrations.*` handlers + `MFDBClient` methods + `staleness.list_calibrations`.
+      Headless-tested (`test_calibration_handlers.py` 4, `test_calibrations_view.py` 4) and
+      screenshot-verified offscreen.
+- [ ] g-factor plugin / PDA-nuisance per-widget "Save to MFDB" buttons _(GUI; the admin
+      view now covers manual registration, so these are convenience-only)_
+- [ ] Fit archiver auto-links via `calibrated_by` _(deferred — the spec's value-matching
+      heuristic is fragile; the explicit `record_calibration_use` API is the maintainable
+      path, and the admin view surfaces the result)_
 - [ ] `CalibrationRecord` dataclass — deferred (see note; avoids dead code)

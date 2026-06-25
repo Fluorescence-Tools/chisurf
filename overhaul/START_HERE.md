@@ -35,8 +35,13 @@ relationship vocabulary (closing the PRD-21 Task-4 loop — `Lineage.impact_of`/
 follow it) and `chisurf/core/mfdb/staleness.py` (`record_calibration_use` +
 `find_stale_calibration_uses`). `register_calibration` (method/notes), `calibration_data`
 kind and `calibration` op type already existed. Tests: `test_calibration_provenance.py` 6.
-Remaining PRD-05 is GUI/archiver wiring (g-factor plugin + PDA "Save to MFDB" buttons,
-fit-archiver auto-link of calibrations + background curves) — needs Qt/integration.
+The mfdb-admin **Calibrations view** also landed (`gui/calibrations_view.py` + `mfdb.calibrations.*`
+handlers): lists calibrations, registers literature values, and surfaces stale uses
+(`find_stale_calibration_uses`) — PRD-05's goal made visible. Headless-tested + screenshot-verified
+(`test_calibration_handlers.py` 4, `test_calibrations_view.py` 4). Remaining PRD-05 is optional
+convenience GUI (per-widget "Save to MFDB" buttons) — the admin view already covers manual
+registration; the fragile value-matching archiver auto-link stays deferred for the explicit
+`record_calibration_use` API.
 
 **PRD-15 (reagent inventory) COMPLETE.** Dictionary-declared `mfdb_reagent_lot` +
 `mfdb_reagent_usage`; `chisurf/core/mfdb/reagents.py`
