@@ -27,8 +27,11 @@ intersecting producer/consumer port kinds; cycles/unknown ops rejected) executed
 queryable through the lineage API. `store.py` persists definitions + grouped runs in the
 dictionary-declared `mfdb_pipeline*` tables (saveable/shareable document). burst_selection's
 input now accepts `processed_data` so `raw → microtime_shift → burst_selection` type-checks.
-All 3 DoD checkboxes met; Task 5 (node GUI editor) deferred to PRD-29. Tests:
-`test/fio/test_pipeline.py` 11. Commits: pipeline core + persistence on `development`.
+All 3 DoD checkboxes met; Task 5 (node GUI *editor*) deferred to PRD-29. A read-only
+mfdb-admin **Pipelines view** also landed (`gui/pipelines_view.py` + `mfdb.pipelines.*`
+handlers + `store.list_pipeline_runs`): lists pipelines and shows structure (nodes + typed
+wiring) + grouped runs. Headless-tested + screenshot-verified. Tests:
+`test/fio/test_pipeline.py` 11, `test_pipeline_handlers.py` 4, `test_pipelines_view.py` 2.
 
 **PRD-05 (calibration provenance) headless core COMPLETE.** Added `calibrated_by` to the
 relationship vocabulary (closing the PRD-21 Task-4 loop — `Lineage.impact_of`/`what_used`

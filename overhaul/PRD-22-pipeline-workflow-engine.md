@@ -81,7 +81,14 @@ the *fit* level (nodes/ports); this does it at the *data* level.
   (kind mismatch) / unknown op / unknown port / cycle rejected; a real recorded,
   lineage-queryable chain; definition round-trip + grouped run.
 
-Remaining: **Task 5** (node-based GUI editor) — deferred (GUI, PRD-29 territory).
+- **`gui/pipelines_view.py`** (mfdb-admin) — a read-only `PipelinesView`: lists stored
+  pipelines and, on selection, shows the structure (nodes + typed wiring) and the recorded
+  runs (each grouping an operation chain, with op counts), over `mfdb.pipelines.*` handlers
+  + `MFDBClient` methods + `store.list_pipeline_runs`. Headless-tested
+  (`test_pipeline_handlers.py` 4, `test_pipelines_view.py` 2) and screenshot-verified.
+
+Remaining: **Task 5** (node-based *editor* — authoring graphs visually) — deferred (GUI,
+PRD-29 territory). The admin view above is a read-only viewer of stored pipelines/runs.
 
 ## Definition of Done
 
