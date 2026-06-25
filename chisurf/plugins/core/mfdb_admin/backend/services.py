@@ -198,6 +198,9 @@ def register_services(dispatcher_or_context: Any) -> None:
         "reagents.expired": expired_reagent_lots_handler,
         "reagents.usage.list": list_reagent_usage_handler,
         "reagents.usage.add": add_reagent_usage_handler,
+        "calibrations.list": list_calibrations_handler,
+        "calibrations.stale": stale_calibrations_handler,
+        "calibrations.create": create_calibration_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -679,6 +682,57 @@ def add_reagent_usage_handler(
             return {"lots": reagents.list_reagents_for(db, target_type, target_id)}
         except ValueError as exc:
             return {"error": str(exc)}
+
+
+# -- calibration provenance (PRD-05) ----------------------------------------
+
+def list_calibrations_handler(
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List calibration records (type/method/value/notes), newest first."""
+    from chisurf.core.mfdb.staleness import list_calibrations
+
+    with MFDatabase(resolve_database_path()) as db:
+        return {"calibrations": list_calibrations(db)}
+
+
+def stale_calibrations_handler(
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List uses whose calibration is superseded by a newer one of the same type."""
+    from chisurf.core.mfdb.staleness import find_stale_calibration_uses
+
+    with MFDatabase(resolve_database_path()) as db:
+        stale = find_stale_calibration_uses(db)
+        return {"stale": [dataclasses.asdict(s) for s in stale]}
+
+
+def create_calibration_handler(
+    calibration_type: str,
+    value: float,
+    method: str = "user_provided",
+    notes: str = "",
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Register a calibration value (defaults to a user-provided / literature value)."""
+    from chisurf.core.mfdb.result_registry import register_calibration
+
+    if not calibration_type:
+        return {"error": "calibration_type is required"}
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return {"error": f"value {value!r} is not a number"}
+    with MFDatabase(resolve_database_path()) as db:
+        artifact_id = register_calibration(
+            data={calibration_type: numeric},
+            calibration_type=calibration_type,
+            parameters={calibration_type: numeric},
+            method=method,
+            notes=notes,
+            db=db,
+        )
+    return {"artifact_id": artifact_id}
 
 
 # -- lifecycle state machine (PRD-12 Increment 4) ---------------------------

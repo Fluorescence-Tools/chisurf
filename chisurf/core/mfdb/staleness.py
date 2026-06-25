@@ -18,6 +18,52 @@ from dataclasses import dataclass
 from typing import Any
 
 
+#: Calibration classes (the ``calibration_type`` values PRD-05 enumerates).
+CALIBRATION_TYPES: tuple[str, ...] = (
+    "g_factor",
+    "gamma",
+    "crosstalk",
+    "direct_excitation",
+    "donor_lifetime",
+    "forster_radius",
+)
+
+
+def list_calibrations(db: Any) -> list[dict[str, Any]]:
+    """List calibration records (newest first) for display/audit.
+
+    Each row carries ``calibration_type``/``method``/``notes`` (from the artifact
+    metadata) and the recorded ``value`` (from the producing operation's parameter
+    matching the calibration type, when present).
+    """
+    out: list[dict[str, Any]] = []
+    for artifact_id, metadata_json, created_at in db.conn.execute(
+        "SELECT artifact_id, metadata_json, created_at FROM mfdb_artifact "
+        "WHERE artifact_kind = 'calibration_data' AND deleted_at IS NULL "
+        "ORDER BY rowid DESC"
+    ).fetchall():
+        meta = json.loads(metadata_json) if metadata_json else {}
+        cal_type = (meta or {}).get("calibration_type", "") or ""
+        value_row = db.conn.execute(
+            "SELECT p.value FROM mfdb_parameter p "
+            "JOIN mfdb_operation_artifact oa ON oa.operation_id = p.operation_id "
+            "WHERE oa.artifact_id = ? AND oa.direction = 'output' "
+            "AND p.deleted_at IS NULL ORDER BY (p.name = ?) DESC LIMIT 1",
+            (artifact_id, cal_type),
+        ).fetchone()
+        out.append(
+            {
+                "artifact_id": artifact_id,
+                "calibration_type": cal_type,
+                "method": (meta or {}).get("method", "") or "",
+                "notes": (meta or {}).get("notes", "") or "",
+                "value": value_row[0] if value_row else None,
+                "created_at": created_at,
+            }
+        )
+    return out
+
+
 def record_calibration_use(
     db: Any,
     *,

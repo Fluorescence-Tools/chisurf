@@ -227,6 +227,24 @@ class MFDBClient:
              "target_id": target_id, "role": role},
         )
 
+    # -- calibration provenance (PRD-05) -------------------------------------
+
+    def list_calibrations(self) -> list[dict[str, Any]]:
+        return self._call("mfdb.calibrations.list").get("calibrations", [])
+
+    def stale_calibrations(self) -> list[dict[str, Any]]:
+        return self._call("mfdb.calibrations.stale").get("stale", [])
+
+    def create_calibration(
+        self, calibration_type: str, value: float,
+        method: str = "user_provided", notes: str = "",
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.calibrations.create",
+            {"calibration_type": calibration_type, "value": value,
+             "method": method, "notes": notes},
+        )
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 
