@@ -24,6 +24,7 @@ from chisurf.core.mfdb.models import (
     ProbeDefinition,
     SampleDefinition,
 )
+from chisurf.core.mfdb import reagents
 from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.mfdb.sample_manager import (
@@ -192,6 +193,11 @@ def register_services(dispatcher_or_context: Any) -> None:
         "studies.create": create_study_handler,
         "studies.members.add": add_study_member_handler,
         "studies.fields.set": set_study_field_handler,
+        "reagents.list": list_reagent_lots_handler,
+        "reagents.create": create_reagent_lot_handler,
+        "reagents.expired": expired_reagent_lots_handler,
+        "reagents.usage.list": list_reagent_usage_handler,
+        "reagents.usage.add": add_reagent_usage_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -609,6 +615,70 @@ def set_study_field_handler(
     with MFDatabase(resolve_database_path()) as db:
         db.set_study_field(study_id, key, value)
         return {"fields": db.get_study_fields(study_id)}
+
+
+# -- reagents / consumables (PRD-15 LIMS P4) --------------------------------
+
+def list_reagent_lots_handler(
+    kind: str | None = None,
+    include_expired: bool = False,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List reagent lots, optionally filtered by kind and excluding expired ones."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"lots": reagents.list_lots(db, kind, include_expired=include_expired)}
+
+
+def create_reagent_lot_handler(
+    kind: str,
+    name: str,
+    lot_number: str = "",
+    vendor: str = "",
+    expiry: str | None = None,
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create a reagent lot; a bad kind / missing name returns an error."""
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            lot_id = reagents.add_reagent_lot(
+                db, kind=kind, name=name, lot_number=lot_number, vendor=vendor,
+                expiry=expiry or None,
+            )
+            return {"lot_id": lot_id}
+        except ValueError as exc:
+            return {"error": str(exc)}
+
+
+def expired_reagent_lots_handler(
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """List lots whose expiry is in the past (QC)."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"lots": reagents.expired_lots(db)}
+
+
+def list_reagent_usage_handler(
+    target_type: str, target_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List the reagent lots used by an operation/setup/sample."""
+    with MFDatabase(resolve_database_path()) as db:
+        return {"lots": reagents.list_reagents_for(db, target_type, target_id)}
+
+
+def add_reagent_usage_handler(
+    lot_id: str,
+    target_type: str,
+    target_id: str,
+    role: str = "used",
+    auth: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Link a lot to an operation/setup/sample; a bad target_type returns an error."""
+    with MFDatabase(resolve_database_path()) as db:
+        try:
+            reagents.link_reagent(db, lot_id, target_type, target_id, role=role)
+            return {"lots": reagents.list_reagents_for(db, target_type, target_id)}
+        except ValueError as exc:
+            return {"error": str(exc)}
 
 
 # -- lifecycle state machine (PRD-12 Increment 4) ---------------------------

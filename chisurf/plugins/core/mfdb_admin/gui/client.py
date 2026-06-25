@@ -189,6 +189,44 @@ class MFDBClient:
             {"study_id": study_id, "key": key, "value": value},
         )
 
+    # -- reagents / consumables (PRD-15) -------------------------------------
+
+    def list_reagent_lots(
+        self, kind: str | None = None, include_expired: bool = False
+    ) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.reagents.list",
+            {"kind": kind, "include_expired": include_expired},
+        ).get("lots", [])
+
+    def create_reagent_lot(
+        self, kind: str, name: str, lot_number: str = "",
+        vendor: str = "", expiry: str | None = None,
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.reagents.create",
+            {"kind": kind, "name": name, "lot_number": lot_number,
+             "vendor": vendor, "expiry": expiry},
+        )
+
+    def expired_reagent_lots(self) -> list[dict[str, Any]]:
+        return self._call("mfdb.reagents.expired").get("lots", [])
+
+    def list_reagents_for(self, target_type: str, target_id: str) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.reagents.usage.list",
+            {"target_type": target_type, "target_id": target_id},
+        ).get("lots", [])
+
+    def link_reagent(
+        self, lot_id: str, target_type: str, target_id: str, role: str = "used"
+    ) -> dict[str, Any]:
+        return self._call(
+            "mfdb.reagents.usage.add",
+            {"lot_id": lot_id, "target_type": target_type,
+             "target_id": target_id, "role": role},
+        )
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 
