@@ -11,7 +11,7 @@ import numpy as np
 
 
 def test_jordi_roundtrip_split_channels():
-    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "fio" / "jordi.py"
+    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "core" / "fio" / "jordi.py"
     spec = importlib.util.spec_from_file_location("jordi_local", module_path)
     jordi = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
@@ -35,7 +35,7 @@ def test_jordi_roundtrip_split_channels():
 
 
 def test_vv_vh_spectrum_equals_concatenated_components():
-    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "fluorescence" / "anisotropy" / "decay.py"
+    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "core" / "fluorescence" / "anisotropy" / "decay.py"
     spec = importlib.util.spec_from_file_location("anisotropy_decay_local", module_path)
     decay = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
@@ -66,7 +66,7 @@ import numpy as np
 
 
 def test_vv_vh_rebin_reshape_groups_are_stable():
-    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "fio" / "jordi.py"
+    module_path = Path(__file__).resolve().parents[2] / "chisurf" / "core" / "fio" / "jordi.py"
     spec = importlib.util.spec_from_file_location("jordi_local", module_path)
     jordi = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
