@@ -56,12 +56,39 @@ the *fit* level (nodes/ports); this does it at the *data* level.
    (kind mismatch) is rejected.
 5. (Deferred) node-based GUI editor.
 
+## Status — landed (headless core, Tasks 1–4)
+
+`chisurf/core/pipeline/` ships the engine:
+
+- **`model.py`** — pure `Pipeline`/`PipelineNode`/`PipelineEdge`, `validate_pipeline`
+  (resolves each node's `operation_type` to its registered PRD-16 transformer and
+  type-checks every edge by intersecting producer/consumer port kinds; rejects
+  unknown ops/ports and cycles) and `topological_order` (Kahn). No DB, no Qt.
+- **`runner.py`** — `run_pipeline` topologically evaluates the graph, building a
+  `ComputeSpec` per node and dispatching to the PRD-21 **replay-executor seam**, so
+  each step is a recorded operation with full provenance (queryable via the lineage
+  API). Built only on the transformer + replay-executor registries — no
+  transformer-specific glue.
+- **`store.py`** (Task 3) — dictionary-declared `mfdb_pipeline`/`_node`/`_edge`
+  (definition as a saveable, shareable document; structure in tables, only the
+  per-node parameter bag as JSON) and `mfdb_pipeline_run`/`_run_operation` (a run
+  groups its recorded operation chain). `save/get/list_pipelines`,
+  `record/get_pipeline_run`.
+- **Rework:** `burst_selection`'s input port now also accepts `processed_data`, so the
+  canonical `raw → microtime_shift → burst_selection` pipeline type-checks (a shifted
+  TTTR file is a valid burst input). Added `get_transformer_for_operation`.
+- Tests: `test/fio/test_pipeline.py` (11) — canonical pipeline validates; invalid edge
+  (kind mismatch) / unknown op / unknown port / cycle rejected; a real recorded,
+  lineage-queryable chain; definition round-trip + grouped run.
+
+Remaining: **Task 5** (node-based GUI editor) — deferred (GUI, PRD-29 territory).
+
 ## Definition of Done
 
-- [ ] Pipelines compose conformant transformers with type-checked edges.
-- [ ] A headless runner executes a pipeline and records each step as an operation
+- [x] Pipelines compose conformant transformers with type-checked edges.
+- [x] A headless runner executes a pipeline and records each step as an operation
       (full provenance); runs are reproducible and queryable.
-- [ ] Invalid compositions are rejected at definition time.
+- [x] Invalid compositions are rejected at definition time.
 
 ## Definition of Clean
 

@@ -20,12 +20,20 @@ PRD-14 (protocols), and PRD-13 (study/project) all landed** (see snapshot). PRD-
 many-to-many membership + configurable fields + `project_id` backfill, a `browse_datasets`
 study facet, and a standalone admin `StudiesView`.
 
-**▶ START NEXT: Phase 4 — PRD-22 (pipeline/workflow engine).** The keystone: compose the
-conformant transformers (both now replayable) into a type-checked, recorded dataflow graph
-executed via `register_operation`, queryable through the PRD-21 lineage API. All hard
-prereqs (PRD-11/16 spine + PRD-21 lineage) are done. Headless/scripted pipelines first;
-GUI editor later (PRD-29). Other Phase-4 items (PRD-15 reagents, PRD-05 remainder, PRD-06
-fluorophore DB, PRD-08 optics) are independent; Phase-5 is PRD-24 (extract `modules/mfdb`).
+**Phase 4 PRD-22 (pipeline/workflow engine) COMPLETE (headless core).** `chisurf/core/pipeline/`
+composes the conformant transformers into a type-checked DAG (`model.validate_pipeline`,
+intersecting producer/consumer port kinds; cycles/unknown ops rejected) executed by
+`runner.run_pipeline` via the PRD-21 replay-executor seam — each step a recorded operation,
+queryable through the lineage API. `store.py` persists definitions + grouped runs in the
+dictionary-declared `mfdb_pipeline*` tables (saveable/shareable document). burst_selection's
+input now accepts `processed_data` so `raw → microtime_shift → burst_selection` type-checks.
+All 3 DoD checkboxes met; Task 5 (node GUI editor) deferred to PRD-29. Tests:
+`test/fio/test_pipeline.py` 11. Commits: pipeline core + persistence on `development`.
+
+**▶ START NEXT: Phase 4 independent features** — PRD-15 (reagents), PRD-05 remainder
+(gamma/crosstalk/R0), PRD-06 (fluorophore DB), PRD-08 (optics): all independent, slot as
+needed. Phase-5 is PRD-24 (extract `modules/mfdb`). A natural follow-on to PRD-22 is the
+node-based GUI editor (PRD-29 / Task 5) once a Qt env is in play.
 Deferred LIMS threads: wire the standalone `LifecycleView`/`ProtocolsView`/`StudiesView`
 into the admin dock layout once the `OVERHAUL_PLAN.md` dock rewrite lands. Standing
 threads: PRD-23 "one recording path", PRD-26 upsert family. Run tests in `arm64`
