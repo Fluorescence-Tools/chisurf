@@ -15,6 +15,7 @@ from chisurf.core.transform.transformer import (
     TransformerConformanceError,
     check_transformer_conformance,
     get_transformer,
+    get_transformer_for_operation,
     list_transformers,
     register_transformer,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "TransformerConformanceError",
     "check_transformer_conformance",
     "get_transformer",
+    "get_transformer_for_operation",
     "list_transformers",
     "register_transformer",
 ]

@@ -104,6 +104,20 @@ def list_transformers() -> list[Transformer]:
     return sorted(_REGISTRY.values(), key=lambda t: t.transformer_id)
 
 
+def get_transformer_for_operation(operation_type: str) -> Transformer | None:
+    """Return a registered transformer whose ``operation_type`` matches, or ``None``.
+
+    The pipeline engine (PRD-22) resolves a node's ``operation_type`` to the
+    transformer that declares its typed ports, so edges can be type-checked against
+    ``input_spec``/``output_spec``. If several transformers share an operation type,
+    the lowest ``transformer_id`` wins (stable, deterministic).
+    """
+    for transformer in list_transformers():
+        if transformer.operation_type == operation_type:
+            return transformer
+    return None
+
+
 def check_transformer_conformance(transformer: Transformer, conn: Any = None) -> None:
     """Validate a transformer against the PRD-16 contract.
 

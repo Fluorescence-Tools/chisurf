@@ -99,8 +99,12 @@ class BurstSelectionTransformer:
     version = "1.0"
     input_spec = [
         PortSpec(
+            # A TTTR file, whether freshly imported (``raw_measurement``) or already
+            # micro-time shifted (``processed_data``) — both are valid burst inputs,
+            # which lets the canonical raw -> microtime_shift -> burst_selection
+            # pipeline (PRD-22) type-check.
             name="raw",
-            kinds=("raw_measurement",),
+            kinds=("raw_measurement", "processed_data"),
             formats=("ptu", "spc", "ht3", "hdf", "h5"),
         )
     ]
