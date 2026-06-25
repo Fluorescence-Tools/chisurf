@@ -54,15 +54,28 @@ what was used. Reproducibility: "which dye lot, which filter set, which buffer."
    ("what used this lot" / "what lots did this operation use").
 5. Tests: lot CRUD; usage many-to-many; expiry query; dict gate green; GUI smoke.
 
+## Status — headless core landed; admin GUI deferred
+
+`mfdb_reagent_lot` + `mfdb_reagent_usage` are dictionary-declared in `mfdb_flr_ext.dic`
+(auto-created via `reconcile_schema`; audit columns auto-appended). The API lives in
+`chisurf/core/mfdb/reagents.py`: `add_reagent_lot` (validates `kind`), `link_reagent`
+(idempotent, validates `target_type`), `list_reagents_for` (the "what was used" query),
+`list_lots` (kind filter, excludes expired by default), `expired_lots` (QC, `as_of`-aware).
+Tests: `test/fio/test_reagents.py` (6).
+
+Reworked from the original sketch: no `SCHEMA_VERSION` bump (the version chain was removed
+in PRD-19) and no hard `usage → lot` FK (the code key isn't emitted as a PK; the repository
+manages integrity — the same convention as `mfdb_study_member`).
+
 ## Definition of Done
 
-- [ ] `mfdb_reagent_lot` + `mfdb_reagent_usage` exist, dict-declared, generated,
-      gate-covered; lots carry lot_number/expiry.
-- [ ] Lots link to operations/setups/samples (many-to-many) without adding
-      columns to those tables; expiry is queryable.
-- [ ] Admin lists lots and their usage; reproducibility query "what was used"
-      works.
-- [ ] Tests pass.
+- [x] `mfdb_reagent_lot` + `mfdb_reagent_usage` exist, dict-declared, generated; lots
+      carry lot_number/expiry.
+- [x] Lots link to operations/setups/samples (many-to-many) without adding columns to
+      those tables; expiry is queryable.
+- [x] Reproducibility query "what was used" works (`list_reagents_for`).
+- [x] Headless tests pass.
+- [ ] mfdb-admin lists lots and their usage _(GUI — Task 4)_.
 
 ## Definition of Clean
 

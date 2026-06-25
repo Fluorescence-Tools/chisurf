@@ -38,9 +38,15 @@ kind and `calibration` op type already existed. Tests: `test_calibration_provena
 Remaining PRD-05 is GUI/archiver wiring (g-factor plugin + PDA "Save to MFDB" buttons,
 fit-archiver auto-link of calibrations + background curves) — needs Qt/integration.
 
-**▶ START NEXT: Phase 4 independent features** — PRD-15 (reagents), PRD-06 (fluorophore DB),
-PRD-08 (optics): all independent, slot as needed; plus the GUI tails of PRD-05/PRD-22 once a
-Qt env is in play. Phase-5 is PRD-24 (extract `modules/mfdb`).
+**PRD-15 (reagent inventory) headless core COMPLETE.** Dictionary-declared
+`mfdb_reagent_lot` + `mfdb_reagent_usage`; `chisurf/core/mfdb/reagents.py`
+(`add_reagent_lot`/`link_reagent`/`list_reagents_for`/`list_lots`/`expired_lots`). Lots link
+many-to-many to operations/setups/samples with no schema pollution; expiry queryable. Tests:
+`test_reagents.py` 6. Remaining: mfdb-admin Reagent Lots view (GUI).
+
+**▶ START NEXT: Phase 4 independent features** — PRD-06 (fluorophore DB), PRD-08 (optics):
+independent, slot as needed; plus the GUI tails of PRD-05/PRD-15/PRD-22 once a Qt env is in
+play. Phase-5 is PRD-24 (extract `modules/mfdb`).
 Deferred LIMS threads: wire the standalone `LifecycleView`/`ProtocolsView`/`StudiesView`
 into the admin dock layout once the `OVERHAUL_PLAN.md` dock rewrite lands. Standing
 threads: PRD-23 "one recording path", PRD-26 upsert family. Run tests in `arm64`
