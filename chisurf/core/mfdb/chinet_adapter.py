@@ -26,6 +26,37 @@ CHINET_SESSION_ARTIFACT = "chinet_session"
 CHINET_NODE_ARTIFACT = "chinet_node"
 CHINET_PARAMETER_SCHEMA = "chinet.parameter_ref.v1"
 FIT_STATE_SCHEMA = "chisurf.fit_state.v1"
+#: chinet >=0.3 serializes sessions via to_dict()/from_dict() and no longer ships a
+#: schema wrapper (the old Session.to_schema()/session_from_schema()); the adapter now
+#: owns the schema_name/version + software metadata it records for the stored session.
+CHINET_SESSION_SCHEMA = "chinet.session.v1"
+CHINET_SESSION_SCHEMA_VERSION = "1"
+#: chinet >=0.3 replaced the pluggable DB backend (DB.set_backend/get_backend) with an
+#: in-process object registry, so the transparent "MFDB-as-chinet-backend" integration
+#: (connect_to_db("mfdb", …) → write_to_db/read_from_db) is unsupported until it is
+#: redesigned against the new chinet DB API. store_chinet_session/load_chinet_session
+#: (the explicit, supported path) are unaffected.
+_MFDB_BACKEND_UNSUPPORTED = (
+    "The transparent MFDB-as-chinet-backend integration requires chinet's removed "
+    "DB.set_backend API (chinet <0.3); use store_chinet_session/load_chinet_session "
+    "instead, or redesign MFDBChinetBackend against chinet's current DB registry."
+)
+
+
+def _session_to_schema(session: Any) -> dict[str, Any]:
+    """Build the stored chinet-session schema document from a chinet ``Session``.
+
+    Wraps chinet's ``session.to_dict()`` serialization with the schema_name/version +
+    software metadata the MFDB records expect (chinet no longer provides ``to_schema``).
+    """
+    import chinet as _cn
+
+    return {
+        "schema_name": CHINET_SESSION_SCHEMA,
+        "schema_version": CHINET_SESSION_SCHEMA_VERSION,
+        "software": {"package": "chinet", "version": getattr(_cn, "__version__", "")},
+        "session": session.to_dict(),
+    }
 
 
 _PARAMETER_REGISTRY_CACHE: dict[str, dict[str, Any]] | None = None
@@ -807,6 +838,8 @@ def configure_mfdb_backend(
         Configured transparent backend.
     """
     client = _require_chinet()
+    if not hasattr(client.DB, "set_backend"):
+        raise NotImplementedError(_MFDB_BACKEND_UNSUPPORTED)
     backend = MFDBChinetBackend(
         db or MFDatabase(db_path),
         operation_id=operation_id,
@@ -829,6 +862,9 @@ def clear_mfdb_backend(close: bool = False) -> None:
         Whether to close the backend MFDB connection.
     """
     client = _require_chinet()
+    if not hasattr(client.DB, "get_backend"):
+        # chinet >=0.3 removed the pluggable backend; nothing to clear.
+        return
     backend = client.DB.get_backend()
     if close and backend is not None and hasattr(backend, "close"):
         backend.close()
@@ -879,7 +915,7 @@ def store_chinet_session(
     validate_vocabulary("contains", RELATIONSHIP_TYPES, "relationship_type")
     validate_vocabulary("parameter_depends_on", RELATIONSHIP_TYPES, "relationship_type")
 
-    schema = session.to_schema()
+    schema = _session_to_schema(session)
     schema_for_storage = dict(schema)
     if fit_refs is not None:
         schema_for_storage["fit_refs"] = fit_refs
@@ -1031,7 +1067,10 @@ def load_chinet_session(db: MFDatabase, artifact_id: str) -> Any:
     if artifact["artifact_kind"] not in {CHINET_SESSION_ARTIFACT, "analysis_result"}:
         raise ValueError(f"Artifact {artifact_id!r} is not a chinet session artifact")
     payload = _json_loads(artifact.get("data_json"))
-    return client.session_from_schema(payload)
+    # chinet >=0.3: reconstruct from the to_dict() serialization stored under "session"
+    # (older artifacts stored the raw chinet schema directly — fall back to that).
+    session_dict = payload.get("session", payload) if isinstance(payload, dict) else payload
+    return client.Session.from_dict(session_dict)
 
 
 def archive_fit_to_mfdb(
