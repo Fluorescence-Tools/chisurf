@@ -38,11 +38,15 @@ kind and `calibration` op type already existed. Tests: `test_calibration_provena
 Remaining PRD-05 is GUI/archiver wiring (g-factor plugin + PDA "Save to MFDB" buttons,
 fit-archiver auto-link of calibrations + background curves) — needs Qt/integration.
 
-**PRD-15 (reagent inventory) headless core COMPLETE.** Dictionary-declared
-`mfdb_reagent_lot` + `mfdb_reagent_usage`; `chisurf/core/mfdb/reagents.py`
+**PRD-15 (reagent inventory) COMPLETE.** Dictionary-declared `mfdb_reagent_lot` +
+`mfdb_reagent_usage`; `chisurf/core/mfdb/reagents.py`
 (`add_reagent_lot`/`link_reagent`/`list_reagents_for`/`list_lots`/`expired_lots`). Lots link
-many-to-many to operations/setups/samples with no schema pollution; expiry queryable. Tests:
-`test_reagents.py` 6. Remaining: mfdb-admin Reagent Lots view (GUI).
+many-to-many to operations/setups/samples with no schema pollution; expiry queryable. The
+mfdb-admin **Reagent Lots view** landed too (`gui/reagents_view.py` + `mfdb.reagents.*`
+handlers + `MFDBClient` methods), **headless-tested via qtbot and screenshot-verified
+offscreen** — the GUI workflow proven: render `QWidget.grab()` to PNG under
+`QT_QPA_PLATFORM=offscreen` and inspect. Tests: `test_reagents.py` 6,
+`test_reagent_handlers.py` 6, `test_reagents_view.py` 6.
 
 **▶ START NEXT: Phase 4 independent features** — PRD-06 (fluorophore DB), PRD-08 (optics):
 independent, slot as needed; plus the GUI tails of PRD-05/PRD-15/PRD-22 once a Qt env is in

@@ -54,7 +54,7 @@ what was used. Reproducibility: "which dye lot, which filter set, which buffer."
    ("what used this lot" / "what lots did this operation use").
 5. Tests: lot CRUD; usage many-to-many; expiry query; dict gate green; GUI smoke.
 
-## Status — headless core landed; admin GUI deferred
+## Status — complete (headless core + mfdb-admin view)
 
 `mfdb_reagent_lot` + `mfdb_reagent_usage` are dictionary-declared in `mfdb_flr_ext.dic`
 (auto-created via `reconcile_schema`; audit columns auto-appended). The API lives in
@@ -75,7 +75,10 @@ manages integrity — the same convention as `mfdb_study_member`).
       those tables; expiry is queryable.
 - [x] Reproducibility query "what was used" works (`list_reagents_for`).
 - [x] Headless tests pass.
-- [ ] mfdb-admin lists lots and their usage _(GUI — Task 4)_.
+- [x] mfdb-admin lists lots, filters by kind, toggles expired, shows per-lot detail, and
+      creates lots — `gui/reagents_view.py` (`ReagentLotsView`) over `mfdb.reagents.*`
+      handlers + `MFDBClient` methods. Headless-tested (`test_reagent_handlers.py` 6,
+      `test_reagents_view.py` 6) and screenshot-verified offscreen.
 
 ## Definition of Clean
 
