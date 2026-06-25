@@ -3192,6 +3192,7 @@ save__mfdb_edge.relationship_type
       project_contains
       grouped_in
       measured_sample
+      calibrated_by
 
 save_mfdb_parameter
    _category.id              mfdb_parameter
