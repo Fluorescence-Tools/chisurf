@@ -4624,4 +4624,203 @@ save__mfdb_pipeline_run_operation.ordinal
    _chisurf_schema.table_name  mfdb_pipeline_run_operation
    _chisurf_schema.column_name ordinal
 
+########################################
+## mfdb_reagent_lot (PRD-15 LIMS P4)    #
+########################################
+
+save_mfdb_reagent_lot
+   _category.id              mfdb_reagent_lot
+   _category.description
+;     A consumable lot — a fluorophore/buffer/optical-filter/kit with lot number and
+;     expiry — so a result can tie to exactly what was used.  Linked to operations /
+;     setups / samples through mfdb_reagent_usage (orthogonal; no columns added to
+;     those tables).  A fluorophore lot may optionally reference a known probe.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_reagent_lot.lot_id"
+
+save__mfdb_reagent_lot.lot_id
+   _item.name                "_mfdb_reagent_lot.lot_id"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name lot_id
+
+save__mfdb_reagent_lot.kind
+   _item.name                "_mfdb_reagent_lot.kind"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name kind
+    loop_
+    _item_enumeration.value
+      fluorophore
+      buffer
+      optical_filter
+      kit
+      other
+
+save__mfdb_reagent_lot.name
+   _item.name                "_mfdb_reagent_lot.name"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name name
+
+save__mfdb_reagent_lot.vendor
+   _item.name                "_mfdb_reagent_lot.vendor"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name vendor
+
+save__mfdb_reagent_lot.catalog_no
+   _item.name                "_mfdb_reagent_lot.catalog_no"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name catalog_no
+
+save__mfdb_reagent_lot.lot_number
+   _item.name                "_mfdb_reagent_lot.lot_number"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name lot_number
+
+save__mfdb_reagent_lot.concentration
+   _item.name                "_mfdb_reagent_lot.concentration"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           float
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name concentration
+
+save__mfdb_reagent_lot.concentration_units
+   _item.name                "_mfdb_reagent_lot.concentration_units"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name concentration_units
+
+save__mfdb_reagent_lot.received_at
+   _item.name                "_mfdb_reagent_lot.received_at"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name received_at
+
+save__mfdb_reagent_lot.opened_at
+   _item.name                "_mfdb_reagent_lot.opened_at"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name opened_at
+
+save__mfdb_reagent_lot.expiry
+   _item.name                "_mfdb_reagent_lot.expiry"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name expiry
+
+save__mfdb_reagent_lot.probe_id
+   _item.name                "_mfdb_reagent_lot.probe_id"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name probe_id
+   _chisurf_schema.foreign_key  probes(probe_id)
+
+save__mfdb_reagent_lot.created_by_user_id
+   _item.name                "_mfdb_reagent_lot.created_by_user_id"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+
+save__mfdb_reagent_lot.details
+   _item.name                "_mfdb_reagent_lot.details"
+   _item.category_id         mfdb_reagent_lot
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_lot
+   _chisurf_schema.column_name details
+
+########################################
+## mfdb_reagent_usage (PRD-15)          #
+########################################
+
+save_mfdb_reagent_usage
+   _category.id              mfdb_reagent_usage
+   _category.description
+;     Many-to-many link of a reagent lot to what used it — an operation (a measurement
+;     or processing step), a setup (e.g. an installed filter set), or a sample (e.g. a
+;     labeling dye lot).  Orthogonal to those tables.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_reagent_usage.usage_row_id"
+
+save__mfdb_reagent_usage.usage_row_id
+   _item.name                "_mfdb_reagent_usage.usage_row_id"
+   _item.category_id         mfdb_reagent_usage
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_usage
+   _chisurf_schema.column_name usage_row_id
+
+save__mfdb_reagent_usage.lot_id
+   _item.name                "_mfdb_reagent_usage.lot_id"
+   _item.category_id         mfdb_reagent_usage
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_usage
+   _chisurf_schema.column_name lot_id
+   _item_description.description
+;     References mfdb_reagent_lot.lot_id (a logical reference; the dictionary-generated
+;     lot_id code key is not emitted as a PRIMARY KEY, so no hard FK — the repository
+;     manages reagent-usage integrity, as for mfdb_study_member.study_id).
+
+save__mfdb_reagent_usage.target_type
+   _item.name                "_mfdb_reagent_usage.target_type"
+   _item.category_id         mfdb_reagent_usage
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_usage
+   _chisurf_schema.column_name target_type
+    loop_
+    _item_enumeration.value
+      operation
+      setup
+      sample
+
+save__mfdb_reagent_usage.target_id
+   _item.name                "_mfdb_reagent_usage.target_id"
+   _item.category_id         mfdb_reagent_usage
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_reagent_usage
+   _chisurf_schema.column_name target_id
+
+save__mfdb_reagent_usage.role
+   _item.name                "_mfdb_reagent_usage.role"
+   _item.category_id         mfdb_reagent_usage
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_reagent_usage
+   _chisurf_schema.column_name role
+
 # End of vocabulary enumerations
