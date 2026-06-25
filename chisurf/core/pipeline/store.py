@@ -194,3 +194,27 @@ def get_pipeline_run(db: Any, pipeline_run_id: str) -> dict[str, Any] | None:
         ).fetchall()
     ]
     return result
+
+
+def list_pipeline_runs(
+    db: Any, pipeline_id: str | None = None
+) -> list[dict[str, Any]]:
+    """List pipeline runs (newest first), each with its operation count.
+
+    Filtered to one ``pipeline_id`` when given, else all runs.
+    """
+    where = ["r.deleted_at IS NULL"]
+    params: list[Any] = []
+    if pipeline_id is not None:
+        where.append("r.pipeline_id = ?")
+        params.append(pipeline_id)
+    rows = db.conn.execute(
+        "SELECT r.pipeline_run_id, r.pipeline_id, r.name, r.status, r.created_at, "
+        "(SELECT COUNT(*) FROM mfdb_pipeline_run_operation o "
+        " WHERE o.pipeline_run_id = r.pipeline_run_id AND o.deleted_at IS NULL) "
+        "AS operation_count "
+        f"FROM mfdb_pipeline_run r WHERE {' AND '.join(where)} "
+        "ORDER BY r.created_at DESC, r.rowid DESC",
+        params,
+    ).fetchall()
+    return [dict(r) for r in rows]

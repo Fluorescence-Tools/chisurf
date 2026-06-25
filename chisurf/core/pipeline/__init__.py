@@ -19,6 +19,7 @@ from chisurf.core.pipeline.runner import PipelineRun, run_pipeline
 from chisurf.core.pipeline.store import (
     get_pipeline,
     get_pipeline_run,
+    list_pipeline_runs,
     list_pipelines,
     record_pipeline_run,
     save_pipeline,
@@ -36,6 +37,7 @@ __all__ = [
     "save_pipeline",
     "get_pipeline",
     "list_pipelines",
+    "list_pipeline_runs",
     "record_pipeline_run",
     "get_pipeline_run",
 ]

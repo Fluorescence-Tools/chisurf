@@ -201,6 +201,9 @@ def register_services(dispatcher_or_context: Any) -> None:
         "calibrations.list": list_calibrations_handler,
         "calibrations.stale": stale_calibrations_handler,
         "calibrations.create": create_calibration_handler,
+        "pipelines.list": list_pipelines_handler,
+        "pipelines.get": get_pipeline_handler,
+        "pipelines.runs": list_pipeline_runs_handler,
         "entities.list": list_entities_handler,
         "entities.save": save_entity_handler,
         "entities.delete": delete_entity_handler,
@@ -733,6 +736,53 @@ def create_calibration_handler(
             db=db,
         )
     return {"artifact_id": artifact_id}
+
+
+# -- pipelines / workflows (PRD-22) -----------------------------------------
+
+def list_pipelines_handler(
+    scope: str = "all", auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List stored pipeline definitions scoped mine/public/all."""
+    from chisurf.core.pipeline import list_pipelines
+
+    with MFDatabase(resolve_database_path()) as db:
+        return {"pipelines": list_pipelines(db, scope=scope)}
+
+
+def get_pipeline_handler(
+    pipeline_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Return a pipeline's structure (nodes + typed edges), or an error."""
+    from chisurf.core.pipeline import get_pipeline
+
+    with MFDatabase(resolve_database_path()) as db:
+        pipeline = get_pipeline(db, pipeline_id)
+    if pipeline is None:
+        return {"error": f"unknown pipeline_id {pipeline_id!r}"}
+    return {
+        "name": pipeline.name,
+        "version": pipeline.version,
+        "nodes": [
+            {"name": n.name, "operation_type": n.operation_type, "parameters": n.parameters}
+            for n in pipeline.nodes
+        ],
+        "edges": [
+            {"source": e.source, "source_port": e.source_port,
+             "target": e.target, "target_port": e.target_port}
+            for e in pipeline.edges
+        ],
+    }
+
+
+def list_pipeline_runs_handler(
+    pipeline_id: str | None = None, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """List runs (newest first) with operation counts, optionally for one pipeline."""
+    from chisurf.core.pipeline import list_pipeline_runs
+
+    with MFDatabase(resolve_database_path()) as db:
+        return {"runs": list_pipeline_runs(db, pipeline_id)}
 
 
 # -- lifecycle state machine (PRD-12 Increment 4) ---------------------------

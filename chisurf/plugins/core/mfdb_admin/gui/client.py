@@ -245,6 +245,19 @@ class MFDBClient:
              "method": method, "notes": notes},
         )
 
+    # -- pipelines / workflows (PRD-22) --------------------------------------
+
+    def list_pipelines(self, scope: str = "all") -> list[dict[str, Any]]:
+        return self._call("mfdb.pipelines.list", {"scope": scope}).get("pipelines", [])
+
+    def get_pipeline(self, pipeline_id: str) -> dict[str, Any]:
+        return self._call("mfdb.pipelines.get", {"pipeline_id": pipeline_id})
+
+    def list_pipeline_runs(self, pipeline_id: str | None = None) -> list[dict[str, Any]]:
+        return self._call(
+            "mfdb.pipelines.runs", {"pipeline_id": pipeline_id}
+        ).get("runs", [])
+
     def get_sample_condition(self, condition_id: str) -> dict[str, Any]:
         return self._call("mfdb.sample_conditions.get", {"condition_id": condition_id}).get("condition", {})
 
