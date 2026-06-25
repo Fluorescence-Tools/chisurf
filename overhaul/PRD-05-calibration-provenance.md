@@ -456,13 +456,37 @@ def test_calibration_linked_to_reference(db, tmp_path):
     assert row[0] == "derived_from"
 ```
 
+## Status — headless core landed; GUI/archiver wiring deferred
+
+The headless calibration-provenance core is in place and tested; it completes the
+calibration-change impact loop PRD-21 Task 4 left open (`Lineage.impact_of` /
+`what_used` already forward-listed `calibrated_by`).
+
+- `calibrated_by` is now in the `relationship_type` vocabulary (`mfdb_flr_ext.dic`);
+  `add_edge(..., relationship_type="calibrated_by")` validates. The column's CHECK is a
+  *negative* constraint, so no DB migration is needed.
+- `register_calibration` (in `result_registry.py`) already supports `method`/`notes`
+  and the `user_provided` (no-parent) path; the `calibration_data` kind and `calibration`
+  operation type already exist.
+- `chisurf/core/mfdb/staleness.py`: `record_calibration_use` (the consumer→calibration
+  `calibrated_by` edge) and `find_stale_calibration_uses` (a use is stale when a newer
+  calibration of the same `calibration_type` exists; recency by `rowid`).
+- Reworked from the PRD's pre-refactor sketch (`db.con`→`db.conn`,
+  `source_id`→`source_node_id`, `parameter_name`→`name`, `metadata`→`metadata_json`).
+- Tests: `test/fio/test_calibration_provenance.py` (6).
+
+**`CalibrationRecord` dataclass — intentionally not added.** `register_calibration`'s
+signature + the artifact `metadata_json` already capture every field; a standalone,
+unconsumed dataclass would be dead code against the "human maintainable" bar. Revisit
+only if a typed read-back path needs it.
+
 ## Definition of Done
 
-- [ ] `CalibrationRecord` dataclass exists in `models.py` with `method` field supporting `"user_provided"`
-- [ ] g-factor plugin registers calibrations in MFDB
-- [ ] `register_calibration()` supports `method` and `notes` parameters for manual entry
-- [ ] User-provided calibrations (R0 from literature, etc.) can be stored without a parent artifact
-- [ ] Fit archiver links fits to calibration sources via `calibrated_by` edges
-- [ ] Background curve files are registered as artifacts
-- [ ] `staleness.py` can find fits using outdated calibrations
-- [ ] All tests pass (including test for user_provided calibration)
+- [x] `register_calibration()` supports `method` and `notes` parameters for manual entry
+- [x] User-provided calibrations (R0 from literature, etc.) can be stored without a parent
+- [x] `staleness.py` can find fits using outdated calibrations (`find_stale_calibration_uses`)
+- [x] Headless usage-link API (`record_calibration_use`) creates `calibrated_by` edges
+- [x] All headless tests pass (including user_provided calibration + the PRD-21 loop)
+- [ ] g-factor plugin / PDA-nuisance "Save to MFDB" buttons register calibrations _(GUI)_
+- [ ] Fit archiver auto-links fits + background-curve files via `calibrated_by` _(archiver/GUI)_
+- [ ] `CalibrationRecord` dataclass — deferred (see note; avoids dead code)

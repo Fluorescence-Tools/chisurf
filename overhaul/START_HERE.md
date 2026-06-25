@@ -30,10 +30,17 @@ input now accepts `processed_data` so `raw → microtime_shift → burst_selecti
 All 3 DoD checkboxes met; Task 5 (node GUI editor) deferred to PRD-29. Tests:
 `test/fio/test_pipeline.py` 11. Commits: pipeline core + persistence on `development`.
 
-**▶ START NEXT: Phase 4 independent features** — PRD-15 (reagents), PRD-05 remainder
-(gamma/crosstalk/R0), PRD-06 (fluorophore DB), PRD-08 (optics): all independent, slot as
-needed. Phase-5 is PRD-24 (extract `modules/mfdb`). A natural follow-on to PRD-22 is the
-node-based GUI editor (PRD-29 / Task 5) once a Qt env is in play.
+**PRD-05 (calibration provenance) headless core COMPLETE.** Added `calibrated_by` to the
+relationship vocabulary (closing the PRD-21 Task-4 loop — `Lineage.impact_of`/`what_used`
+follow it) and `chisurf/core/mfdb/staleness.py` (`record_calibration_use` +
+`find_stale_calibration_uses`). `register_calibration` (method/notes), `calibration_data`
+kind and `calibration` op type already existed. Tests: `test_calibration_provenance.py` 6.
+Remaining PRD-05 is GUI/archiver wiring (g-factor plugin + PDA "Save to MFDB" buttons,
+fit-archiver auto-link of calibrations + background curves) — needs Qt/integration.
+
+**▶ START NEXT: Phase 4 independent features** — PRD-15 (reagents), PRD-06 (fluorophore DB),
+PRD-08 (optics): all independent, slot as needed; plus the GUI tails of PRD-05/PRD-22 once a
+Qt env is in play. Phase-5 is PRD-24 (extract `modules/mfdb`).
 Deferred LIMS threads: wire the standalone `LifecycleView`/`ProtocolsView`/`StudiesView`
 into the admin dock layout once the `OVERHAUL_PLAN.md` dock rewrite lands. Standing
 threads: PRD-23 "one recording path", PRD-26 upsert family. Run tests in `arm64`
