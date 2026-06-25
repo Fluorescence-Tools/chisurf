@@ -126,7 +126,10 @@ class CodeEditor(QtWidgets.QWidget):
             self.agent_panel.clear_history()
             self._create_editor_tab(filename=filename, language=language)
         self.tab_widget.setTabsClosable(True)
-        self.tab_widget.setNewTabButtonVisible(True)
+        # The '+' new-tab button creates blank "Untitled" tabs, which only makes
+        # sense for the standalone editor. In embedded read/fixed-file hosts
+        # (can_load=False) it has no purpose and rendered as a stray corner box.
+        self.tab_widget.setNewTabButtonVisible(can_load)
         self.tab_widget.setTabBarVisible(show_tab_bar)
         self.tab_widget.setContextMenuEnabled(True)
 
@@ -150,7 +153,12 @@ class CodeEditor(QtWidgets.QWidget):
         )
         self.file_model.setNameFilterDisables(False)
 
-        self.file_tree = QtWidgets.QTreeView(self)
+        # No parent: these are "shared" widgets a host reparents into its own
+        # docks/panels. Parenting them to ``self`` here makes them render as a
+        # stray box at (0, 0) over the tab bar in hosts that never use them
+        # (e.g. the embedded fit-model editor). With no parent they stay hidden
+        # until a host adds them to a layout, which reparents and shows them.
+        self.file_tree = QtWidgets.QTreeView()
         self.file_tree.setObjectName("code_editor_file_tree")
         self.file_tree.setModel(self.file_model)
         self.file_tree.setRootIndex(self.file_model.index(str(self.project_root)))
@@ -160,13 +168,13 @@ class CodeEditor(QtWidgets.QWidget):
         self.file_tree.doubleClicked.connect(self._on_file_tree_activated)
         self.file_tree.clicked.connect(self._on_file_tree_activated)
 
-        self.symbol_tree = QtWidgets.QTreeWidget(self)
+        self.symbol_tree = QtWidgets.QTreeWidget()
         self.symbol_tree.setObjectName("code_editor_symbol_tree")
         self.symbol_tree.setHeaderLabels(["Symbol", "Line"])
         self.symbol_tree.itemActivated.connect(self._on_symbol_item_activated)
         self.symbol_tree.itemClicked.connect(self._on_symbol_item_activated)
 
-        self.diagnostics_list = QtWidgets.QListWidget(self)
+        self.diagnostics_list = QtWidgets.QListWidget()
         self.diagnostics_list.setObjectName("code_editor_diagnostics_list")
         self.diagnostics_list.setMaximumHeight(100)
 
