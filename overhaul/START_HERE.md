@@ -1,7 +1,7 @@
 # START HERE — MFDB / chisurf overhaul
 
 _Branch: `development` (work stays on dev; **no push, no master merge** unless asked).
-Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-24._
+Authoritative plan: `MASTER-ORDER.md`. Last updated 2026-06-25 (see "RESUME HERE" below)._
 
 **Phase 1 (architecture foundations) is functionally complete.** Every bug-class the
 foundations targeted is fixed: vocab drift + the 39-step migration chain (PRD-19),
@@ -56,13 +56,46 @@ offscreen** — the GUI workflow proven: render `QWidget.grab()` to PNG under
 `QT_QPA_PLATFORM=offscreen` and inspect. Tests: `test_reagents.py` 6,
 `test_reagent_handlers.py` 6, `test_reagents_view.py` 6.
 
-**▶ START NEXT: Phase 4 independent features** — PRD-06 (fluorophore DB), PRD-08 (optics):
-independent, slot as needed; plus the GUI tails of PRD-05/PRD-15/PRD-22 once a Qt env is in
-play. Phase-5 is PRD-24 (extract `modules/mfdb`).
-Deferred LIMS threads: wire the standalone `LifecycleView`/`ProtocolsView`/`StudiesView`
-into the admin dock layout once the `OVERHAUL_PLAN.md` dock rewrite lands. Standing
-threads: PRD-23 "one recording path", PRD-26 upsert family. Run tests in `arm64`
-(`-o addopts=""`).
+**PRD-06 (fluorophore DB) Task 1 COMPLETE.** `chisurf/core/fluorescence/fret/forster.py`:
+`overlap_integral` + `forster_radius` + `forster_radius_from_spectra` (R0 = 0.02108·(κ²·Q_D·
+n⁻⁴·J)^(1/6)·10 [Å]); grid-agnostic, fail-loud, 9 tests (`test/fluorescence/test_forster.py`).
+The plugin's grid-specific `lightpath_simulator/backend/crosstalk.py:calculate_r0` (untracked)
+can later delegate here.
+
+---
+
+## ▶ RESUME HERE — MFDB work (paused 2026-06-25)
+
+**State.** PRD-22/05/15 headless cores + their three mfdb-admin views, and PRD-06 Task 1, all
+landed on `development` (not pushed). The three new views — `gui/reagents_view.py`,
+`gui/calibrations_view.py`, `gui/pipelines_view.py` — are **built, headless-tested, and
+screenshot-verified, but NOT yet reachable in-app** (see "blocked" below).
+
+**Pick up next (in rough priority):**
+1. **PRD-06 Tasks 2–6** (fluorophore DB, the natural continuation of Task 1) — real spectral
+   data for ≥20 dyes (Gaussian approx OK first), seed/register into `flr_probe_list`/`spectra`/
+   `optical_properties` with a provenance `source`, precompute pair R0 via `forster.py`, and a
+   `lookup_forster_radius(donor, acceptor)`. Mostly a **data-sourcing** effort; the math
+   primitive is done. Read `chisurf/core/mfdb/seed_data.py` (7 placeholder probes) + PRD-06.
+2. **PRD-08 (optical configuration)** — structured/queryable optical-path tables replacing
+   `mfdb_setup` JSON blobs. Larger schema work; follow the dict-declared-table pattern used by
+   PRD-15 (`mfdb_reagent_lot` in `mfdb_flr_ext.dic` + free-function module + tests).
+3. **Wire the 3 new views into the admin tool** — _blocked_: the view-registration mechanism
+   (`mfdb_admin/gui/entity_registry.py`, `tool.py`) is part of an **in-flight, uncommitted
+   overhaul** (`OVERHAUL_PLAN.md`, untracked `entity_dock.py`/`generic_form.py`/`tool.py.bak`).
+   The existing `StudiesView`/`ProtocolsView`/`LifecycleView` are standalone & un-wired for the
+   same reason. Do this once that overhaul lands, to avoid clobbering it.
+4. **PRD-05 / PRD-22 GUI tails** (optional convenience): per-widget "Save to MFDB" buttons
+   (g-factor/PDA), and the PRD-22 node *editor* (visual graph authoring, PRD-29 — multi-session).
+
+**How to work here (proven this session):**
+- Run everything in the **`arm64`** conda env: `source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate arm64`. Headless tests: `-p no:cov -o addopts=''`. GUI tests: prefix `QT_QPA_PLATFORM=offscreen`. See [[conda-env-arm64]], [[gui-headless-screenshot-verify]].
+- **New admin view recipe** (all 3 done this way): backend handler in `mfdb_admin/backend/services.py` (register in the `HANDLERS` dict) → `MFDBClient` method in `gui/client.py` (`mfdb.<area>.<verb>` dispatch) → standalone view in `gui/<area>_view.py` (mirror `studies_view.py`) → `test_<area>_handlers.py` + `test_<area>s_view.py` (mirror `test_studies_view.py`, `patch_db` + `MFDBClient(inprocess=True)`). Verify visually by rendering `view.grab().save(png)` offscreen and reading the PNG back.
+- **Commit hygiene:** this plugin has a large **untracked in-flight overhaul** — stage ONLY your own files explicitly (`git add -- <paths>`), verify `git diff --cached --diff-filter=D --name-only | wc -l` is 0 and that `git diff` shows pure additions in shared files (`services.py`/`client.py` were clean before my edits). Never `git add -A`. End messages with `Co-Authored-By: Claude Opus 4.8`.
+- **Gotcha:** stale `.pyc` in `chisurf/core/mfdb/orm/__pycache__` can fake a `_persist_external_refs` NameError in `test_admin_handlers.py` — clear `__pycache__` and re-run.
+
+**Standing threads:** PRD-23 "one recording path", PRD-26 upsert family, Phase-5 PRD-24
+(`modules/mfdb` extraction). `MASTER-ORDER.md` is authoritative for ordering.
 
 **⚠️ Concurrency note (2026-06-25):** this branch is edited by multiple workers. A
 concurrent commit reverted `repository.py`/`result_registry.py` to a pre-PRD-12 state
