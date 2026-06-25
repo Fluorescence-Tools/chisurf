@@ -39,6 +39,8 @@ class PipelineRun:
     pipeline_name: str
     node_outputs: dict[str, list[str]] = field(default_factory=dict)
     operation_ids: list[str] = field(default_factory=list)
+    #: Set once the run is persisted (see ``pipeline.store.record_pipeline_run``).
+    pipeline_run_id: str = ""
 
     def outputs(self, node_name: str) -> list[str]:
         return self.node_outputs.get(node_name, [])

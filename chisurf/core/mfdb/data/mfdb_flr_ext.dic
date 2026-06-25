@@ -4337,4 +4337,290 @@ save__mfdb_audit_log.details_json
    _chisurf_schema.table_name  mfdb_audit_log
    _chisurf_schema.column_name details_json
 
+########################################
+## mfdb_pipeline (PRD-22 workflow)      #
+########################################
+
+save_mfdb_pipeline
+   _category.id              mfdb_pipeline
+   _category.description
+;     A saveable, shareable workflow document (PRD-22): a named, versioned graph of
+;     transformer invocations.  The graph structure lives in mfdb_pipeline_node /
+;     mfdb_pipeline_edge (structured, not a blob); ownership + visibility mirror the
+;     study/object pattern.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_pipeline.pipeline_id"
+
+save__mfdb_pipeline.pipeline_id
+   _item.name                "_mfdb_pipeline.pipeline_id"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name pipeline_id
+
+save__mfdb_pipeline.name
+   _item.name                "_mfdb_pipeline.name"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name name
+
+save__mfdb_pipeline.version
+   _item.name                "_mfdb_pipeline.version"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name version
+
+save__mfdb_pipeline.description
+   _item.name                "_mfdb_pipeline.description"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name description
+
+save__mfdb_pipeline.created_by_user_id
+   _item.name                "_mfdb_pipeline.created_by_user_id"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+
+save__mfdb_pipeline.is_public
+   _item.name                "_mfdb_pipeline.is_public"
+   _item.category_id         mfdb_pipeline
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline
+   _chisurf_schema.column_name is_public
+
+########################################
+## mfdb_pipeline_node (PRD-22)          #
+########################################
+
+save_mfdb_pipeline_node
+   _category.id              mfdb_pipeline_node
+   _category.description
+;     One node of a pipeline: a transformer invocation binding an operation_type to
+;     bound parameters.  parameters_json is the leaf parameter bag (schemaless per
+;     operation type, like an operation's metadata) — the graph structure itself is
+;     in the typed node/edge rows, not a blob.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_pipeline_node.node_row_id"
+
+save__mfdb_pipeline_node.node_row_id
+   _item.name                "_mfdb_pipeline_node.node_row_id"
+   _item.category_id         mfdb_pipeline_node
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_node
+   _chisurf_schema.column_name node_row_id
+
+save__mfdb_pipeline_node.pipeline_id
+   _item.name                "_mfdb_pipeline_node.pipeline_id"
+   _item.category_id         mfdb_pipeline_node
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_node
+   _chisurf_schema.column_name pipeline_id
+
+save__mfdb_pipeline_node.node_name
+   _item.name                "_mfdb_pipeline_node.node_name"
+   _item.category_id         mfdb_pipeline_node
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_node
+   _chisurf_schema.column_name node_name
+
+save__mfdb_pipeline_node.operation_type
+   _item.name                "_mfdb_pipeline_node.operation_type"
+   _item.category_id         mfdb_pipeline_node
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_node
+   _chisurf_schema.column_name operation_type
+
+save__mfdb_pipeline_node.parameters_json
+   _item.name                "_mfdb_pipeline_node.parameters_json"
+   _item.category_id         mfdb_pipeline_node
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_node
+   _chisurf_schema.column_name parameters_json
+
+########################################
+## mfdb_pipeline_edge (PRD-22)          #
+########################################
+
+save_mfdb_pipeline_edge
+   _category.id              mfdb_pipeline_edge
+   _category.description
+;     A typed wire of a pipeline: source_node.source_port feeds target_node.target_port.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_pipeline_edge.edge_row_id"
+
+save__mfdb_pipeline_edge.edge_row_id
+   _item.name                "_mfdb_pipeline_edge.edge_row_id"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name edge_row_id
+
+save__mfdb_pipeline_edge.pipeline_id
+   _item.name                "_mfdb_pipeline_edge.pipeline_id"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name pipeline_id
+
+save__mfdb_pipeline_edge.source_node
+   _item.name                "_mfdb_pipeline_edge.source_node"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name source_node
+
+save__mfdb_pipeline_edge.source_port
+   _item.name                "_mfdb_pipeline_edge.source_port"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name source_port
+
+save__mfdb_pipeline_edge.target_node
+   _item.name                "_mfdb_pipeline_edge.target_node"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name target_node
+
+save__mfdb_pipeline_edge.target_port
+   _item.name                "_mfdb_pipeline_edge.target_port"
+   _item.category_id         mfdb_pipeline_edge
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_edge
+   _chisurf_schema.column_name target_port
+
+########################################
+## mfdb_pipeline_run (PRD-22)           #
+########################################
+
+save_mfdb_pipeline_run
+   _category.id              mfdb_pipeline_run
+   _category.description
+;     One execution of a pipeline.  Groups the recorded operation chain (via
+;     mfdb_pipeline_run_operation) so a run is queryable as a unit.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_pipeline_run.pipeline_run_id"
+
+save__mfdb_pipeline_run.pipeline_run_id
+   _item.name                "_mfdb_pipeline_run.pipeline_run_id"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name pipeline_run_id
+
+save__mfdb_pipeline_run.pipeline_id
+   _item.name                "_mfdb_pipeline_run.pipeline_id"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name pipeline_id
+
+save__mfdb_pipeline_run.name
+   _item.name                "_mfdb_pipeline_run.name"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name name
+
+save__mfdb_pipeline_run.status
+   _item.name                "_mfdb_pipeline_run.status"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name status
+
+save__mfdb_pipeline_run.created_by_user_id
+   _item.name                "_mfdb_pipeline_run.created_by_user_id"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name created_by_user_id
+   _chisurf_schema.foreign_key  flr_sample_users(user_id)
+
+save__mfdb_pipeline_run.is_public
+   _item.name                "_mfdb_pipeline_run.is_public"
+   _item.category_id         mfdb_pipeline_run
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run
+   _chisurf_schema.column_name is_public
+
+########################################
+## mfdb_pipeline_run_operation (PRD-22) #
+########################################
+
+save_mfdb_pipeline_run_operation
+   _category.id              mfdb_pipeline_run_operation
+   _category.description
+;     Links a pipeline run to the operations it produced, in execution order — the
+;     run-grouping over the recorded operation chain.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_pipeline_run_operation.row_id"
+
+save__mfdb_pipeline_run_operation.row_id
+   _item.name                "_mfdb_pipeline_run_operation.row_id"
+   _item.category_id         mfdb_pipeline_run_operation
+   _item_type.code           int
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_run_operation
+   _chisurf_schema.column_name row_id
+
+save__mfdb_pipeline_run_operation.pipeline_run_id
+   _item.name                "_mfdb_pipeline_run_operation.pipeline_run_id"
+   _item.category_id         mfdb_pipeline_run_operation
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_run_operation
+   _chisurf_schema.column_name pipeline_run_id
+
+save__mfdb_pipeline_run_operation.operation_id
+   _item.name                "_mfdb_pipeline_run_operation.operation_id"
+   _item.category_id         mfdb_pipeline_run_operation
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_pipeline_run_operation
+   _chisurf_schema.column_name operation_id
+
+save__mfdb_pipeline_run_operation.ordinal
+   _item.name                "_mfdb_pipeline_run_operation.ordinal"
+   _item.category_id         mfdb_pipeline_run_operation
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_pipeline_run_operation
+   _chisurf_schema.column_name ordinal
+
 # End of vocabulary enumerations

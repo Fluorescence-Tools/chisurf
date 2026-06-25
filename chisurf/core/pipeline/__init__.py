@@ -16,6 +16,13 @@ from chisurf.core.pipeline.model import (
     validate_pipeline,
 )
 from chisurf.core.pipeline.runner import PipelineRun, run_pipeline
+from chisurf.core.pipeline.store import (
+    get_pipeline,
+    get_pipeline_run,
+    list_pipelines,
+    record_pipeline_run,
+    save_pipeline,
+)
 
 __all__ = [
     "Pipeline",
@@ -26,4 +33,9 @@ __all__ = [
     "run_pipeline",
     "topological_order",
     "validate_pipeline",
+    "save_pipeline",
+    "get_pipeline",
+    "list_pipelines",
+    "record_pipeline_run",
+    "get_pipeline_run",
 ]

@@ -32,7 +32,12 @@ from chisurf.core.pipeline import (
     PipelineEdge,
     PipelineNode,
     PipelineValidationError,
+    get_pipeline,
+    get_pipeline_run,
+    list_pipelines,
+    record_pipeline_run,
     run_pipeline,
+    save_pipeline,
     topological_order,
     validate_pipeline,
 )
@@ -197,6 +202,57 @@ def test_run_pipeline_records_a_queryable_chain(db, fake_executors, tmp_path):
     assert set(db.lineage.descendants(raw)) == {shifted, burst}
     assert db.lineage.descendants(shifted) == [burst]
     assert db.lineage.ancestors(burst) == [shifted, raw]
+
+
+# -- persistence (saveable, shareable document + grouped runs) ---------------
+
+
+def test_save_and_get_pipeline_round_trips(db):
+    original = _canonical_pipeline()
+    pid = save_pipeline(db, original, description="canonical demo")
+
+    loaded = get_pipeline(db, pid)
+    assert loaded is not None
+    assert loaded.name == original.name
+    assert [n.name for n in loaded.nodes] == ["shift", "burst"]
+    assert loaded.node("shift").operation_type == "microtime_shift"
+    assert loaded.node("shift").parameters == {"global_shift": 5}
+    assert len(loaded.edges) == 1
+    assert loaded.edges[0].source == "shift" and loaded.edges[0].target == "burst"
+    # a stored definition is itself a valid composition
+    validate_pipeline(loaded)
+    assert any(p["pipeline_id"] == pid for p in list_pipelines(db, scope="all"))
+
+
+def test_save_pipeline_replaces_prior_graph(db):
+    pid = save_pipeline(db, _canonical_pipeline())
+    smaller = Pipeline(
+        name="raw->shift->burst",
+        nodes=(PipelineNode("shift", "microtime_shift", {"global_shift": 1}),),
+    )
+    save_pipeline(db, smaller, pipeline_id=pid)
+    loaded = get_pipeline(db, pid)
+    assert [n.name for n in loaded.nodes] == ["shift"]
+    assert loaded.edges == ()
+
+
+def test_record_and_get_pipeline_run_groups_the_chain(db, fake_executors, tmp_path):
+    f = os.path.join(tmp_path, "m3.ptu")
+    with open(f, "wb") as fh:
+        fh.write(b"\x00\x01\x02")
+    raw = register_raw_measurement(f, db=db)
+
+    pid = save_pipeline(db, _canonical_pipeline())
+    run = run_pipeline(_canonical_pipeline(), inputs={"shift": [raw]}, db=db)
+    run_id = record_pipeline_run(db, run, pipeline_id=pid)
+
+    assert run.pipeline_run_id == run_id
+    stored = get_pipeline_run(db, run_id)
+    assert stored["pipeline_id"] == pid
+    assert stored["status"] == "succeeded"
+    # the run groups the recorded operation chain, in execution order
+    assert stored["operation_ids"] == run.operation_ids
+    assert len(stored["operation_ids"]) == 2
 
 
 def test_run_pipeline_missing_executor_raises(db, tmp_path):
