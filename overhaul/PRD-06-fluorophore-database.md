@@ -479,9 +479,20 @@ Gaussian approximations:
 Keep the importers/curation pure-Python (network + spectra parsing); MFDB read/write
 goes through the plugin backend services mirroring the repository methods.
 
+## Status — Task 1 (Förster calculator) landed
+
+`chisurf/core/fluorescence/fret/forster.py` ships the canonical, grid-agnostic primitive:
+`overlap_integral(...) -> J`, `forster_radius(J, *, donor_quantum_yield, kappa2=2/3,
+refractive_index=1.33) -> R0 [Å]` (`R0 = 0.02108·(κ²·Q_D·n⁻⁴·J)^(1/6)·10`), and
+`forster_radius_from_spectra(...) -> (R0, J)`. Donor emission area-normalized internally;
+fail-loud on shape mismatch / non-positive donor area / negative inputs. Tests:
+`test/fluorescence/test_forster.py` (9). The Light Path Simulator's grid-specific
+`calculate_r0` can later delegate here. Remaining: Tasks 2–6 (real spectral data, seed/
+registration, precomputed pair R0, lookups) — larger data-sourcing work.
+
 ## Definition of Done
 
-- [ ] `forster.py` computes overlap integral and R0 correctly
+- [x] `forster.py` computes overlap integral and R0 correctly
 - [ ] At least 20 common dyes have spectral data (Gaussian approximations OK for now)
 - [ ] The `fluorophore_db` plugin's curated probes/spectra/optical-properties are
       registered into MFDB (`flr_probe_list`/`spectra`/`optical_properties`) with a
