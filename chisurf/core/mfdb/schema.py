@@ -69,7 +69,7 @@ def _get_dict_ddl(category_name: str) -> str:
 
 CREATE_TABLES_SQL = [
     "CREATE TABLE IF NOT EXISTS _schema_version (version INTEGER)",
-    "CREATE TABLE IF NOT EXISTS probe_types (type_id INTEGER PRIMARY KEY, type_name TEXT UNIQUE, display_name TEXT)",
+    "CREATE TABLE IF NOT EXISTS probe_types (type_id INTEGER PRIMARY KEY, type_name TEXT UNIQUE, display_name TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT)",
     """CREATE TABLE IF NOT EXISTS chem_descriptors (
         id INTEGER PRIMARY KEY, descriptor_type TEXT, descriptor TEXT,
         program TEXT, program_version TEXT
@@ -432,7 +432,10 @@ CREATE_TABLES_SQL = [
         file_size_bytes INTEGER,
         md5 TEXT,
         uuid TEXT,
-        details TEXT
+        details TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        deleted_at TEXT
     )""",
     """CREATE TABLE IF NOT EXISTS analysis_metadata (
         analysis_id TEXT,
@@ -1272,6 +1275,8 @@ def _ensure_lifecycle_columns(conn: sqlite3.Connection, now: str | None = None) 
         ("mfdb_branch", True, True),
         ("mfdb_audit_log", True, False),
         ("probes", False, False),
+        ("probe_types", False, False),
+        ("ihm_external_files", False, False),
         ("entities", False, False),
         ("entity_poly_seq", False, False),
         ("flr_sample", False, False),

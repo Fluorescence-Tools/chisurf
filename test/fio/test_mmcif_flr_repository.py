@@ -344,22 +344,10 @@ class TestMFDatabaseExperiments:
         db.delete_experiment("experiment_1")
         assert db.get_experiment("experiment_1") is None
 
-    def test_experiment_id_column_repair(self):
-        with tempfile.TemporaryDirectory() as d:
-            db_path = pathlib.Path(d) / "repair.db"
-            db = MFDatabase(db_path)
-            db.close()
-            import sqlite3
-
-            conn = sqlite3.connect(db_path)
-            conn.execute("ALTER TABLE flr_experiment RENAME COLUMN experiment_id TO id")
-            conn.execute("UPDATE _schema_version SET version=12")
-            conn.commit()
-            conn.close()
-            repaired = MFDatabase(db_path)
-            cols = [row[1] for row in repaired.conn.execute("PRAGMA table_info(flr_experiment)")]
-            assert "experiment_id" in cols
-            repaired.close()
+    # Note: the former test_experiment_id_column_repair drove the removed version-chain
+    # migration (`_schema_version=12` + a v12-era column-repair step renaming
+    # flr_experiment.id back to experiment_id). PRD-19 deleted the version chain
+    # (pre-PRD-19 DBs are disposable); a fresh DB has experiment_id by construction.
 
 
 class TestMFDatabaseMigration:

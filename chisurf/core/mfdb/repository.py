@@ -3292,7 +3292,7 @@ class MFDatabase(MFDBClientBase):
             "LEFT JOIN flr_sample_users AS u ON u.user_id = e.measured_by_user_id "
             "LEFT JOIN flr_sample_devices AS d ON d.device_id = e.measured_by_device_id "
             "LEFT JOIN mfdb_setup AS sd ON sd.setup_id = e.setup_definition_id "
-            "WHERE e.experiment_id = ?",
+            "WHERE e.experiment_id = ? AND e.deleted_at IS NULL",
             (experiment_id,)
         ).fetchone()
 
