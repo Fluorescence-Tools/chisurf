@@ -48,6 +48,9 @@
 35. **PRD-31-ndxplorer-headless-cli.md** -- headless ndXplorer burst filtering + imaging CLI.
 36. **PRD-32-acquisition-output-folder.md** -- setup-defined standard acquisition output folder.
 37. **PRD-33-acquisition-mfdb-registration.md** -- direct acquisition registration into MFDB.
+38. **PRD-38-model-view-spec-split.md** -- strict model/UI split: user-editable `<model>.view.json` drives auto-generated model editors. ◄ CURRENT (3/4: data spine + Lifetime pilot done; live wiring next)
+39. **PRD-39-sequence-external-references.md** -- entity ↔ UniProt/PDB cross-references + engineered-mutation provenance (cysteine labeling) via the standard `struct_ref`/`struct_ref_seq`/`struct_ref_seq_dif` categories; live UniProt/SIFTS fetch + auto-diff. *(Builds on PRD-02.)*
+40. **PRD-40-declarative-dataset-editors.md** -- a chisurf-native, guidata-like framework: declare a typed `DataSet` once → auto-generate its editor, replacing the ~5 ad-hoc `type→widget` mappers (settings/metadata/parameter/model editors). Generalises PRD-38's machinery out from under `models/`. *(Builds on PRD-38; complements PRD-23/26.)*
 
 ## ► Authoritative sequence: see **MASTER-ORDER.md**
 

@@ -1,0 +1,61 @@
+{
+  "_comment": "Editor layout for the TCSPC LifetimeModel. User-editable: reorder sections, change titles, add/remove plots. Compute stays in lifetime.py; custom widgets are referenced by key and live in the GUI section registry.",
+  "sections": [
+    {"type": "parameter_group", "target": "convolve", "title": "Convolution"},
+    {"type": "choice", "target": "convolve", "attr": "mode", "label": "Type",
+     "options": ["per", "exp", "full"], "style": "radio"},
+    {"type": "toggle", "target": "convolve", "attr": "do_convolution", "label": "Convolve"},
+    {"type": "curve_input", "target": "convolve", "title": "IRF", "label": "IRF",
+     "select_action": "model.change_irf", "unload_action": "model.unload_irf",
+     "index_key": "irf_idx", "name_key": "irf_name", "name_attr": "irf"},
+    {"type": "parameter_group", "target": "generic", "title": "Generic"},
+    {"type": "parameter_group", "target": "corrections", "title": "Corrections"},
+    {"type": "choice", "target": "corrections", "attr": "window_function", "label": "Smoothing",
+     "options_source": "window_function_types"},
+    {"type": "toggle", "target": "corrections", "attr": "correct_pile_up", "label": "Pile-up"},
+    {"type": "toggle", "target": "corrections", "attr": "correct_dnl", "label": "DNL"},
+    {"type": "toggle", "target": "corrections", "attr": "reverse", "label": "Reverse"},
+    {"type": "curve_input", "target": "corrections", "title": "Linearization", "label": "Lin. table",
+     "select_action": "model.set_linearization", "unload_action": "model.unload_lintable",
+     "index_key": "idx", "name_key": "lin_name"},
+    {
+      "type": "dynamic_group",
+      "target": "lifetimes",
+      "title": "Lifetimes",
+      "row_width": 2,
+      "header_keys": ["lifetime_amplitude_options"]
+    },
+    {"type": "parameter_group", "target": "anisotropy", "title": "Anisotropy"},
+    {"type": "choice", "target": "anisotropy", "attr": "polarization_type", "label": "Polarization",
+     "options": ["vm", "vv", "vh", "vv/vh"]}
+  ],
+  "plots": [
+    {
+      "key": "line",
+      "options": {
+        "scale_x": "lin", "d_scaley": "log", "r_scaley": "lin",
+        "x_label": "time (ns)", "y_label": "counts"
+      }
+    },
+    {"key": "fit_table", "options": {}},
+    {"key": "fit_info", "options": {}},
+    {"key": "parameter_scan", "options": {}},
+    {
+      "key": "distribution",
+      "options": {
+        "distribution_options": {
+          "Lifetime": {
+            "attribute": "lifetime_spectrum",
+            "accessor": "interleaved_to_two_columns",
+            "accessor_kwargs": {"sort": true},
+            "curve_options": {
+              "stepMode": false, "connect": false,
+              "bar_mode": "sticks", "symbol": "o"
+            }
+          }
+        }
+      }
+    },
+    {"key": "residual", "options": {}}
+  ]
+}

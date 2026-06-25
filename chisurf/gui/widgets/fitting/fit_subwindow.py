@@ -153,7 +153,8 @@ class FitSubWindow(CustomMdiSubWindow):
 
         # Lazy plot instantiation: create lightweight tab containers now, build plots on demand
         self._control_layout = control_layout
-        self._plot_specs = list(fit.model.plot_classes)
+        from chisurf.gui.widgets.models.model_editor import model_plot_specs
+        self._plot_specs = model_plot_specs(fit.model)
         self._plot_containers = []
         self._plots_all = [None] * len(self._plot_specs)      # positional storage
         self._created_plots = []                               # actual created plots (shared)
@@ -572,10 +573,29 @@ class FitSubWindow(CustomMdiSubWindow):
             self.flip_to_code_btn.setChecked(False)
             self.stack.setCurrentIndex(0)
 
+    def _model_view_spec_path(self):
+        """Return the model's user-editable ``view.json`` path, or ``None``.
+
+        Resolves the model's ``view_spec_file`` (PRD-38) next to the module that
+        defines the model class, so the code view can open it alongside the
+        model source.
+        """
+        try:
+            from chisurf.gui.devtools.source_jump import resolve_model_view_spec_path
+            target = resolve_model_view_spec_path(self.fit.model)
+            return target[0] if target else None
+        except Exception:
+            return None
+
     def show_code_view(self):
         import inspect
         import pathlib
-        model_class = self.fit.model.__class__
+        from chisurf.gui.devtools.source_jump import resolve_compute_model_class
+        # Resolve the underlying *compute* model class so "Code" opens the pure
+        # model source (e.g. core/models/tcspc/lifetime.py) and its co-located
+        # view.json — not the GUI widget wrapper that multiply-inherits it
+        # (PRD-38).
+        model_class = resolve_compute_model_class(self.fit.model) or self.fit.model.__class__
         try:
             source_file = inspect.getsourcefile(model_class)
             if not source_file:
@@ -584,16 +604,31 @@ class FitSubWindow(CustomMdiSubWindow):
             models_dir = pathlib.Path(source_file).parent
             self.file_combo.blockSignals(True)
             self.file_combo.clear()
-            
+
             py_files = sorted(models_dir.glob("*.py"))
             for p in py_files:
                 self.file_combo.addItem(p.name, str(p))
-            
+            # Also list the model's user-editable view.json editor specs so the
+            # computation and its UI layout are both reachable (PRD-38).
+            for p in sorted(models_dir.glob("*.view.json")):
+                self.file_combo.addItem(p.name, str(p))
+
             idx = self.file_combo.findData(str(pathlib.Path(source_file)))
             if idx >= 0:
                 self.file_combo.setCurrentIndex(idx)
             self.file_combo.blockSignals(False)
-            
+
+            # Open the model's own view.json as a background tab first (when it
+            # has one), then load the model source so the code is the focused
+            # tab. Clicking "Code" thus shows both the computation and its JSON
+            # editor layout (PRD-38).
+            view_json = self._model_view_spec_path()
+            if view_json is not None:
+                try:
+                    self.code_editor.open_file(view_json)
+                except Exception as exc:
+                    cs.logging.debug(f"Failed to open model view.json: {exc}")
+
             self.load_code_file(source_file)
             self.stack.setCurrentIndex(1)
         except Exception as e:
@@ -706,19 +741,29 @@ class FitSubWindow(CustomMdiSubWindow):
                 f.write(code)
             self.updateStatusBar(f"Saved to {target_file}")
             
-            # Check if this is the model file
-            model_class = self.fit.model.__class__
+            # Check if this is the model file. Resolve against the *compute*
+            # model class so an edit to the pure model source (what "Code" now
+            # opens, PRD-38) is recognised even when the live instance is a
+            # legacy widget that multiply-inherits it.
+            from chisurf.gui.devtools.source_jump import resolve_compute_model_class
+            instance_class = self.fit.model.__class__
+            model_class = resolve_compute_model_class(self.fit.model) or instance_class
             if source_file == inspect.getsourcefile(model_class) or target_file != source_file:
                 # dynamically apply the code
                 import sys
                 module = sys.modules.get(model_class.__module__)
                 if module:
                     exec(code, module.__dict__)
-                    
+
                     class_name = model_class.__name__
                     new_class = getattr(module, class_name, None)
                     if new_class:
-                        self.fit.model.__class__ = new_class
+                        # Only swap the instance class when the live object *is*
+                        # the pure compute model. Replacing a legacy widget's
+                        # class with the pure model would strip its Qt behaviour;
+                        # there the redefined module is enough for fresh fits.
+                        if instance_class is model_class:
+                            self.fit.model.__class__ = new_class
                         fc = get_fitting_client()
                         if fc is not None:
                             fc.update_fit(fit_index=getattr(self.fit, "fit_idx", None))

@@ -1,0 +1,471 @@
+"""Built-in registrations mapping view-spec keys to ChiSurf widgets/plots.
+
+Importing this module wires the standard plot keys (``line``, ``residual``,
+``distribution`` ...) and standard custom sections into the registry. The model
+layer references these by string only; the concrete classes live here.
+"""
+from __future__ import annotations
+
+from qtpy import QtWidgets
+
+import chisurf as cs
+import chisurf.core.math.datatools
+from chisurf import logging
+from .registry import register_plot, register_section
+
+
+# --- plots -----------------------------------------------------------------
+# Registered as zero-arg factories so chisurf.gui.plots is only imported when a
+# plot is actually resolved.
+def _plots():
+    import chisurf.gui.plots as _p
+    return _p
+
+
+register_plot("line", lambda: _plots().LinePlot)
+register_plot("residual", lambda: _plots().ResidualPlot)
+register_plot("fit_info", lambda: _plots().FitInfo)
+register_plot("fit_table", lambda: _plots().FitTablePlot)
+register_plot("parameter_scan", lambda: _plots().ParameterScanPlot)
+register_plot("distribution", lambda: _plots().DistributionPlot)
+
+
+def resolve_distribution_options(options: dict) -> dict:
+    """Resolve string accessors in distribution-plot options to callables.
+
+    The view-spec keeps accessors as names (e.g. ``"interleaved_to_two_columns"``)
+    so the model stays GUI-free; here they are mapped back to the actual
+    functions from :mod:`chisurf.core.math.datatools`.
+    """
+    resolved = dict(options)
+    dist = resolved.get("distribution_options")
+    if isinstance(dist, dict):
+        new_dist = {}
+        for name, cfg in dist.items():
+            cfg = dict(cfg)
+            accessor = cfg.get("accessor")
+            if isinstance(accessor, str):
+                cfg["accessor"] = getattr(
+                    chisurf.core.math.datatools, accessor, None
+                )
+            new_dist[name] = cfg
+        resolved["distribution_options"] = new_dist
+    return resolved
+
+
+# --- curve inputs ----------------------------------------------------------
+class CurveInputWidget(QtWidgets.QWidget):
+    """Generic data-curve picker for a :class:`CurveInputSection`.
+
+    Renders a label, a read-only name field, a "Select…" button (opening an
+    :class:`ExperimentalDataSelector`) and an optional "Unload" button. Selecting
+    a curve dispatches ``section.select_action`` with the chosen curve's index
+    and name (under ``section.index_key`` / ``section.name_key``) plus
+    ``fit_index``; unloading dispatches ``section.unload_action``. This is the
+    one widget behind every curve input (IRF, background, linearization table),
+    so those inputs stay authorable in ``.view.json``.
+    """
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._section = section
+        self._selector = None
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        lbl = QtWidgets.QLabel(section.label)
+        layout.addWidget(lbl)
+        self.name_edit = QtWidgets.QLineEdit()
+        self.name_edit.setReadOnly(True)
+        self.name_edit.setPlaceholderText(f"load {section.label} →")
+        layout.addWidget(self.name_edit, 1)
+
+        # compact icon-style buttons matching the hand-written widgets
+        self.select_btn = QtWidgets.QToolButton()
+        self.select_btn.setText("…")  # ellipsis
+        self.select_btn.setToolTip(f"Select {section.label}")
+        self.select_btn.clicked.connect(self._open_selector)
+        layout.addWidget(self.select_btn)
+
+        self.unload_btn = QtWidgets.QToolButton()
+        self.unload_btn.setText("✕")  # ✕
+        self.unload_btn.setToolTip(f"Unload {section.label}")
+        self.unload_btn.clicked.connect(self._unload)
+        self.unload_btn.setVisible(bool(section.unload_action))
+        layout.addWidget(self.unload_btn)
+
+        # inline FWHM readout for the IRF, like the legacy convolve widget
+        self.fwhm_label = None
+        if section.name_attr == "irf":
+            layout.addWidget(QtWidgets.QLabel("FWHM"))
+            self.fwhm_label = QtWidgets.QLineEdit()
+            self.fwhm_label.setReadOnly(True)
+            self.fwhm_label.setMaximumWidth(64)
+            layout.addWidget(self.fwhm_label)
+
+        self._refresh_name()
+        self._refresh_fwhm()
+
+    def _own_fit_index(self) -> int:
+        try:
+            fit = getattr(self._model, "fit", None)
+            for i, fg in enumerate(cs.fits):
+                if fg is fit or fit in list(fg):
+                    return i
+        except Exception:
+            pass
+        return 0
+
+    def _open_selector(self):
+        from chisurf.gui.widgets.experiments import ExperimentalDataSelector
+        fit = getattr(self._model, "fit", None)
+        try:
+            experiment = fit.data.experiment.__class__
+        except Exception:
+            experiment = None
+        self._selector = ExperimentalDataSelector(
+            parent=None, change_event=self._on_change, fit=fit, experiment=experiment
+        )
+        self._selector.show()
+
+    def _on_change(self):
+        sel = self._selector
+        if sel is None:
+            return
+        section = self._section
+        try:
+            idx = int(sel.selected_curve_index)
+            name = str(sel.curve_name)
+        except Exception as exc:
+            logging.warning(f"CurveInputWidget: could not read selection: {exc}")
+            return
+        fit_index = self._own_fit_index()
+        payload = {section.index_key: idx, section.name_key: name, "fit_index": int(fit_index)}
+        try:
+            if section.select_action:
+                cs.core.actions.dispatch(name=section.select_action, payload=payload)
+            cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
+        except Exception as exc:
+            logging.warning(f"CurveInputWidget: select dispatch failed: {exc}")
+        self.name_edit.setText(name)
+        self._refresh_fwhm()
+
+    def _unload(self):
+        section = self._section
+        if not section.unload_action:
+            return
+        fit_index = self._own_fit_index()
+        try:
+            cs.core.actions.dispatch(name=section.unload_action, payload={"fit_index": int(fit_index)})
+            cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
+        except Exception as exc:
+            logging.warning(f"CurveInputWidget: unload dispatch failed: {exc}")
+        self.name_edit.clear()
+        self._refresh_fwhm()
+
+    def _refresh_name(self):
+        section = self._section
+        if not (section.name_attr and section.target):
+            return
+        group = getattr(self._model, section.target, None)
+        curve = getattr(group, section.name_attr, None) if group is not None else None
+        name = getattr(curve, "name", None) or getattr(curve, "filename", None)
+        if name:
+            self.name_edit.setText(str(name))
+
+    def _refresh_fwhm(self):
+        if self.fwhm_label is None:
+            return
+        group = getattr(self._model, self._section.target, None)
+        curve = getattr(group, self._section.name_attr, None) if group is not None else None
+        fwhm = getattr(curve, "fwhm", None)
+        try:
+            self.fwhm_label.setText("%.3f" % float(fwhm) if fwhm is not None else "")
+        except Exception:
+            self.fwhm_label.setText("")
+
+
+# --- choice / toggle inputs ------------------------------------------------
+def _resolve_options_source(name: str):
+    """Resolve a named option list (e.g. ``"window_function_types"``)."""
+    sources = {
+        "window_function_types": lambda: list(
+            chisurf.core.math.signal.window_function_types
+        ),
+    }
+    factory = sources.get(name)
+    if factory is None:
+        logging.warning(f"ChoiceWidget: unknown options_source {name!r}")
+        return []
+    try:
+        return factory()
+    except Exception as exc:  # pragma: no cover - defensive
+        logging.warning(f"ChoiceWidget: options_source {name!r} failed: {exc}")
+        return []
+
+
+class _BoundControlMixin:
+    """Shared get/set/dispatch for attribute- or action-bound controls."""
+
+    def _group(self):
+        target = getattr(self._section, "target", None)
+        return getattr(self._model, target, None) if target else None
+
+    def _own_fit_index(self) -> int:
+        try:
+            fit = getattr(self._model, "fit", None)
+            for i, fg in enumerate(cs.fits):
+                if fg is fit or fit in list(fg):
+                    return i
+        except Exception:
+            pass
+        return 0
+
+    def _current_value(self):
+        section = self._section
+        if section.attr:
+            group = self._group()
+            if group is not None:
+                try:
+                    return getattr(group, section.attr)
+                except Exception:
+                    return None
+        return None
+
+    def _commit(self, value):
+        """Apply a new value via action dispatch or direct attribute set."""
+        section = self._section
+        fit_index = self._own_fit_index()
+        try:
+            if section.set_action:
+                payload = dict(section.action_fixed)
+                payload[section.value_key] = value
+                payload["fit_index"] = int(fit_index)
+                cs.core.actions.dispatch(name=section.set_action, payload=payload)
+            elif section.attr:
+                group = self._group()
+                if group is not None:
+                    setattr(group, section.attr, value)
+            cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
+        except Exception as exc:
+            logging.warning(f"bound control commit failed ({section.label}): {exc}")
+
+
+class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
+    """One-of-N selector for a :class:`ChoiceSection`.
+
+    Renders inline radio buttons when ``section.style == "radio"`` (compact, like
+    the hand-written convolution-type control), otherwise a combo box.
+    """
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._section = section
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        layout.addWidget(QtWidgets.QLabel(section.label))
+
+        options = list(section.options)
+        if not options and section.options_source:
+            options = _resolve_options_source(section.options_source)
+        current = self._current_value()
+
+        self.combo = None
+        self._radios = []
+        if section.style == "radio":
+            self._button_group = QtWidgets.QButtonGroup(self)
+            for opt in options:
+                rb = QtWidgets.QRadioButton(str(opt))
+                if current is not None and str(opt) == str(current):
+                    rb.setChecked(True)
+                rb.toggled.connect(
+                    lambda checked, v=str(opt): self._commit(v) if checked else None
+                )
+                self._button_group.addButton(rb)
+                self._radios.append(rb)
+                layout.addWidget(rb)
+            layout.addStretch(1)
+        else:
+            self.combo = QtWidgets.QComboBox()
+            self.combo.addItems([str(o) for o in options])
+            if current is not None:
+                idx = self.combo.findText(str(current))
+                if idx >= 0:
+                    self.combo.setCurrentIndex(idx)
+            self.combo.currentTextChanged.connect(self._commit)
+            layout.addWidget(self.combo, 1)
+
+
+class ToggleWidget(_BoundControlMixin, QtWidgets.QWidget):
+    """Boolean checkbox for a :class:`ToggleSection`."""
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._section = section
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.checkbox = QtWidgets.QCheckBox(section.label)
+        current = self._current_value()
+        if current is not None:
+            self.checkbox.setChecked(bool(current))
+        self.checkbox.toggled.connect(lambda checked: self._commit(bool(checked)))
+        layout.addWidget(self.checkbox)
+        layout.addStretch(1)
+
+
+# --- custom sections -------------------------------------------------------
+@register_section("lifetime_amplitude_options")
+class LifetimeAmplitudeOptions(QtWidgets.QWidget):
+    """Header controls for a lifetime group: normalize / absolute amplitudes.
+
+    This is the bespoke escape-hatch widget for the dynamic lifetime section.
+    It edits the model's amplitude options through the action dispatcher, so the
+    model remains the single source of truth and no widget reaches into compute.
+    """
+
+    def __init__(self, model=None, target: str = "lifetimes", parent=None, **options):
+        super().__init__(parent)
+        self._model = model
+        self._group = getattr(model, target, None)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.absolute = QtWidgets.QCheckBox("Abs.")
+        self.absolute.setToolTip("Take absolute value of amplitudes (no negative amplitudes).")
+        self.absolute.setChecked(bool(getattr(self._group, "absolute_amplitudes", True)))
+        self.absolute.clicked.connect(self._on_changed)
+
+        self.normalize = QtWidgets.QCheckBox("Norm.")
+        self.normalize.setToolTip("Normalize amplitudes so they sum to one.")
+        self.normalize.setChecked(bool(getattr(self._group, "normalize_amplitudes", True)))
+        self.normalize.clicked.connect(self._on_changed)
+
+        # read/link menus (port of the legacy LifetimeWidget header controls).
+        self.read_btn = QtWidgets.QToolButton()
+        self.read_btn.setText("read")
+        self.read_btn.setToolTip("Copy parameter values from another lifetime group.")
+        self.read_menu = QtWidgets.QMenu(self.read_btn)
+        self.read_menu.aboutToShow.connect(lambda: self._build_target_menu(self.read_menu, self._read_values))
+        self.read_btn.setMenu(self.read_menu)
+        self.read_btn.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+        self.link_btn = QtWidgets.QToolButton()
+        self.link_btn.setText("link")
+        self.link_btn.setToolTip("Link this lifetime group to another (shared spectrum).")
+        self.link_menu = QtWidgets.QMenu(self.link_btn)
+        self.link_menu.aboutToShow.connect(lambda: self._build_target_menu(self.link_menu, self._link_to))
+        self.link_btn.setMenu(self.link_menu)
+        self.link_btn.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+        layout.addWidget(self.absolute)
+        layout.addWidget(self.normalize)
+        layout.addWidget(self.read_btn)
+        layout.addWidget(self.link_btn)
+
+    # -- read / link ---------------------------------------------------------
+    def _lifetime_groups(self):
+        """Yield ``(fit_index, fit, group)`` for every lifetime group in all fits.
+
+        Operates on core :class:`Lifetime` groups (not widgets), so it works for
+        both legacy and auto-rendered models.
+        """
+        from chisurf.core.models.tcspc.lifetime import Lifetime
+        try:
+            from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+            fit_groups = get_fitting_client().get_fit_objects()
+        except Exception:
+            fit_groups = []
+        idx = 0
+        for fg in fit_groups:
+            for fit in fg:
+                for a in getattr(fit.model, "aggregated_parameters", []):
+                    if isinstance(a, Lifetime):
+                        yield idx, fit, a
+            idx += 1
+
+    def _build_target_menu(self, menu, on_pick):
+        """Populate ``menu`` with selectable target lifetime groups."""
+        menu.clear()
+        for _idx, fit, group in self._lifetime_groups():
+            if group is self._group:
+                continue
+            action = menu.addAction(f"{fit.name}: {group.name}")
+            action.triggered.connect(lambda _checked=False, g=group: on_pick(g))
+
+    def _own_fit_index(self):
+        """Best-effort fit index of this section's model for dispatching."""
+        try:
+            fit = getattr(self._model, "fit", None)
+            for i, fg in enumerate(cs.fits):
+                if fg is fit or fit in list(fg):
+                    return i
+        except Exception:
+            pass
+        return 0
+
+    def _read_values(self, target):
+        """Copy parameter values from ``target`` into this group via dispatch."""
+        group = self._group
+        if group is None:
+            return
+        fit_index = self._own_fit_index()
+        try:
+            target_params = target.parameters_all_dict
+            for key in group.parameter_dict:
+                if key in target_params:
+                    cs.core.actions.dispatch(
+                        name="parameter.value",
+                        payload={
+                            "parameter_name": str(key),
+                            "value": float(target_params[key].value),
+                            "fit_index": int(fit_index),
+                        },
+                    )
+            cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
+        except Exception as exc:
+            logging.warning(f"Failed to read lifetime values: {exc}")
+
+    def _link_to(self, target):
+        """Link this group's spectrum to ``target`` and refresh the fit."""
+        group = self._group
+        if group is None:
+            return
+        try:
+            group.link = target
+            cs.core.actions.dispatch(
+                name="fit.update", payload={"fit_index": int(self._own_fit_index())}
+            )
+        except Exception as exc:
+            logging.warning(f"Failed to link lifetime group: {exc}")
+
+    def _on_changed(self, *_):
+        """Push amplitude-option changes to the model via the dispatcher."""
+        group = self._group
+        if group is None:
+            return
+        name = str(getattr(group, "name", "lifetimes"))
+        try:
+            cs.core.actions.dispatch(
+                name="model.normalize_amplitudes",
+                payload={"component_name": name, "normalize": bool(self.normalize.isChecked())},
+            )
+            cs.core.actions.dispatch(
+                name="model.absolute_amplitudes",
+                payload={"component_name": name, "absolute": bool(self.absolute.isChecked())},
+            )
+        except Exception as exc:  # pragma: no cover - dispatcher optional in tests
+            logging.warning(f"Failed to dispatch amplitude options: {exc}")
+            # Fallback: set directly on the model group.
+            group.normalize_amplitudes = bool(self.normalize.isChecked())
+            group.absolute_amplitudes = bool(self.absolute.isChecked())

@@ -62,9 +62,9 @@ from chisurf.gui.widgets.models.tcspc.generic import GenericWidget
 from chisurf.gui.widgets.models.tcspc.anisotropy import AnisotropyWidget
 from chisurf.gui.widgets.models.tcspc.pddem import PDDEMWidget, PDDEMModelWidget
 from chisurf.gui.widgets.models.tcspc.lifetime import (
-    LifetimeWidget, 
-    LifetimeModelWidgetBase, 
-    LifetimeModelWidget, 
+    LifetimeWidget,
+    LifetimeModelWidgetBase,
+    LifetimeModelWidget,  # back-compat alias of the pure LifetimeModel (PRD-38)
     LifetimeMixtureModelWidget
 )
 from chisurf.gui.widgets.models.tcspc.gaussian import GaussianWidget, GaussianModelWidget

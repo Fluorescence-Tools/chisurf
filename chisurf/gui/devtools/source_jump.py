@@ -132,6 +132,65 @@ def resolve_fit_window_source(fit_window: QtWidgets.QWidget) -> Optional[Tuple[s
     return resolve_widget_source(fit_window)
 
 
+def resolve_compute_model_class(model: Any) -> Optional[type]:
+    """Return the underlying *computational* model class for ``model``.
+
+    Legacy model editors are widgets that multiply-inherit the compute model and
+    a Qt widget (e.g. ``LifetimeModelWidget(ModelWidget, LifetimeModel)``). The
+    "Code" view and view-spec lookup should target the pure compute model
+    (``LifetimeModel``) — its ``.py`` and co-located ``.view.json`` — not the GUI
+    wrapper. This walks the MRO and returns the most-derived class that is a
+    :class:`chisurf.core.models.model.Model` but **not** a Qt widget. For a pure
+    model it returns the class itself.
+
+    Args:
+        model: A model instance (pure model or legacy model-widget).
+
+    Returns:
+        The compute model class, or ``None`` if not determinable.
+    """
+    if model is None:
+        return None
+    try:
+        from chisurf.core.models.model import Model
+    except Exception:
+        return type(model)
+    for cls in type(model).__mro__:
+        if issubclass(cls, Model) and not issubclass(cls, QtWidgets.QWidget):
+            return cls
+    return type(model)
+
+
+def resolve_model_view_spec_path(model: Any) -> Optional[Tuple[str, int]]:
+    """Resolve the user-editable ``.view.json`` file for a model, if any.
+
+    A pure model declares its editor layout via the ``view_spec_file`` class
+    attribute (see PRD-38), resolved next to the module that defines the
+    *compute* model class (see :func:`resolve_compute_model_class`), so it works
+    for both pure models and legacy model-widgets.
+
+    Args:
+        model: A model instance (or model-widget) that may carry ``view_spec_file``.
+
+    Returns:
+        ``(json_path, 1)`` if the file exists, otherwise ``None``.
+    """
+    cls = resolve_compute_model_class(model)
+    if cls is None:
+        return None
+    spec_file = getattr(cls, "view_spec_file", None)
+    if not spec_file:
+        return None
+    try:
+        module_file = inspect.getfile(cls)
+        path = pathlib.Path(module_file).parent / spec_file
+        if path.exists():
+            return (str(path), 1)
+    except (TypeError, OSError):
+        pass
+    return None
+
+
 def resolve_parameter_group_source(
     param_widget: QtWidgets.QWidget,
 ) -> Optional[Tuple[str, int]]:

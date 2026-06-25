@@ -48,7 +48,13 @@ tcspc:
         name: Simulator
       controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCSimulatorSetupWidget
   models:
+    # Proven hand-written Lifetime editor (unchanged, daily driver).
     - chisurf.gui.widgets.models.tcspc.LifetimeModelWidget
+    # PRD-38/PRD-40: additive prototype. Pure compute model whose editor is
+    # auto-generated from lifetime.view.json by AutoModelWidget. Lives ALONGSIDE
+    # the proven widget above as the "Lifetime (new)" entry to exercise the new
+    # typed-widget framework without risking the working Lifetime fit.
+    - chisurf.core.models.tcspc.lifetime.LifetimeNewModel
     - chisurf.gui.widgets.models.tcspc.FRETrateModelWidget
     - chisurf.gui.widgets.models.tcspc.GaussianModelWidget
     - chisurf.gui.widgets.models.tcspc.PDDEMModelWidget

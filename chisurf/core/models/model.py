@@ -26,6 +26,11 @@ class Model(FittingParameterGroup):
 
     name = "Model name not available"
 
+    #: Optional filename of a user-editable ``.view.json`` describing this
+    #: model's editor, resolved relative to the module that defines the class.
+    #: When set, :meth:`view_spec` loads it instead of auto-deriving.
+    view_spec_file: typing.Optional[str] = None
+
     @property
     def n_free(self) -> int:
         """Number of free (non-linked or fixed) fitting parameters.
@@ -49,6 +54,75 @@ class Model(FittingParameterGroup):
             xmin=self.fit.xmin,
             xmax=self.fit.xmax
         )
+
+    def view_spec(self) -> "chisurf.core.models.view_spec.ModelView":
+        """Return a UI-agnostic description of this model's editor.
+
+        Resolution order:
+
+        1. If :attr:`view_spec_file` is set, load that user-editable
+           ``.view.json`` (resolved next to the module defining the class).
+        2. Otherwise auto-derive one
+           :class:`~chisurf.core.models.view_spec.ParameterGroupSection` per
+           nested :class:`~chisurf.core.fitting.parameter.FittingParameterGroup`
+           attribute plus a standard plot set.
+
+        Never import a GUI toolkit here: the result is plain data the GUI
+        renderer consumes, and the JSON file is meant to be hand-edited.
+
+        Returns
+        -------
+        chisurf.core.models.view_spec.ModelView
+            Ordered sections and plot specifications. Pure data; no Qt.
+        """
+        import inspect
+        import pathlib
+        from chisurf.core.models import view_spec as _vs
+        from chisurf.core.fitting.parameter import FittingParameterGroup
+
+        # Resolve ``view_spec_file`` relative to the module of the class that
+        # *declares* it, not ``type(self)``. Legacy model-widgets (e.g. the
+        # FRET widgets) multiply-inherit a pure model that carries
+        # ``view_spec_file``; resolving against the widget's own module would
+        # look for the JSON in the wrong directory.
+        decl_cls = next(
+            (c for c in type(self).__mro__ if "view_spec_file" in c.__dict__
+             and c.__dict__["view_spec_file"]),
+            None,
+        )
+        spec_file = decl_cls.__dict__["view_spec_file"] if decl_cls else None
+        if spec_file:
+            try:
+                module_file = inspect.getfile(decl_cls)
+                path = pathlib.Path(module_file).parent / spec_file
+                return _vs.load_view_spec(path)
+            except Exception as exc:
+                import chisurf.logging
+                chisurf.logging.error(
+                    f"Failed to load view spec {spec_file!r} for {type(self).__name__}: {exc}"
+                )
+                # fall through to auto-derived spec
+
+        sections = []
+        seen = set()
+        for attr_name, value in self.__dict__.items():
+            if attr_name.startswith("_") or value is self:
+                continue
+            if isinstance(value, FittingParameterGroup) and id(value) not in seen:
+                seen.add(id(value))
+                sections.append(
+                    _vs.ParameterGroupSection(
+                        target=attr_name,
+                        title=getattr(value, "name", attr_name),
+                    )
+                )
+        plots = (
+            _vs.PlotSpec("line", {"x_label": "x", "y_label": "y"}),
+            _vs.PlotSpec("fit_info"),
+            _vs.PlotSpec("parameter_scan"),
+            _vs.PlotSpec("residual"),
+        )
+        return _vs.ModelView(sections=tuple(sections), plots=plots)
 
     @abc.abstractmethod
     def update_model(self, **kwargs):
@@ -81,8 +155,15 @@ class Model(FittingParameterGroup):
             searched_object_type=chisurf.core.fitting.parameter.FittingParameterGroup
         )
         for pg in pgs:
+            # ``update`` historically existed only on the GUI widget groups
+            # (it refreshed displayed values). Pure parameter groups don't have
+            # it — their controllers refresh via ``finalize()`` — so skip them
+            # quietly instead of logging a warning on every fit iteration.
+            pg_update = getattr(pg, "update", None)
+            if not callable(pg_update):
+                continue
             try:
-                pg.update()
+                pg_update()
             except Exception as e:
                 import logging
                 logging.warning(f"Failed to update parameter group {pg}: {e}")

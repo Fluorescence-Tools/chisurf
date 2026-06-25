@@ -1191,8 +1191,14 @@ def add_fit(
                         header_layout.addWidget(fit_control_widget)
                     else:
                         gui.modelLayout.addWidget(fit_control_widget)
+                    from chisurf.gui.widgets.models.model_editor import (
+                        build_model_editor,
+                    )
                     for fit in fit_group:
-                        gui.modelLayout.addWidget(fit.model)
+                        # A pure model is not a widget; build_model_editor returns
+                        # the legacy model-widget unchanged or an AutoModelWidget
+                        # bound to the pure model (PRD-38).
+                        gui.modelLayout.addWidget(build_model_editor(fit.model))
 
                     fit_window = FitSubWindow(
                         fit=fit_group,
@@ -1353,11 +1359,14 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
             log.debug("Adding screenshots for fit #%d", i + 1)
             document.add_paragraph(f"Fit #{i + 1}", style="ListNumber")
 
+            from chisurf.gui.widgets.models.model_editor import model_editor_widget
             for suffix, source in (
                 ("_screenshot_fit.png", fit_window),
-                ("_screenshot_model.png", f.model),
+                ("_screenshot_model.png", model_editor_widget(f.model)),
             ):
                 png_path = basename + suffix
+                if source is None:  # pure model with no built editor widget
+                    continue
                 log.debug(" Grabbing %r → %r", source, png_path)
 
                 pix = source.grab()
@@ -1798,7 +1807,8 @@ def change_selected_fit_of_group(selected_fit: int) -> None:
     # Ensure any derived output parameters are recomputed and the parameter
     # widgets refresh accordingly.
     try:
-        gui.current_fit.model.hide()
+        from chisurf.gui.widgets.models.model_editor import hide_model_editor
+        hide_model_editor(gui.current_fit.model)
     except Exception:
         pass
 
@@ -1826,7 +1836,8 @@ def change_selected_fit_of_group(selected_fit: int) -> None:
         pass
 
     try:
-        gui.current_fit.model.show()
+        from chisurf.gui.widgets.models.model_editor import show_model_editor
+        show_model_editor(gui.current_fit.model)
     except Exception:
         pass
 
@@ -2151,11 +2162,14 @@ def _write_fit_docx(
     except Exception:
         pass
 
+    from chisurf.gui.widgets.models.model_editor import model_editor_widget
     for suffix, source in (
         ("_screenshot_fit.png", fit_window),
-        ("_screenshot_model.png", local_fit.model),
+        ("_screenshot_model.png", model_editor_widget(local_fit.model)),
     ):
         png_path = basename.parent / f"{basename.name}{suffix}"
+        if source is None:
+            continue
         try:
             pix = source.grab()
             pix.save(str(png_path))
