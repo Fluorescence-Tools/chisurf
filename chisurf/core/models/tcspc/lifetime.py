@@ -140,6 +140,18 @@ class Lifetime(FittingParameterGroup):
         n_t = len([name for name in params if name.startswith(t_prefix)])
         return max(n_x, n_t, 0)
 
+    def _lifetime_parameter_rows(self) -> list:
+        """Return lifetime parameters interleaved as (amplitude_i, lifetime_i) pairs.
+
+        Used by the data-driven editor's dynamic group so each row pairs an
+        amplitude with its lifetime (x1, tau1, x2, tau2, ...).
+        """
+        rows = []
+        for amplitude, lifetime in zip(self._amplitudes, self._lifetimes):
+            rows.append(amplitude)
+            rows.append(lifetime)
+        return rows
+
     @property
     def link(self) -> chisurf.core.fitting.parameter.FittingParameter:
         """Linked Lifetime object for spectrum sharing."""

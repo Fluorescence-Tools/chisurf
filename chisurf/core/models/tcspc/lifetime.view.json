@@ -43,10 +43,10 @@
         {
           "type": "dynamic_group",
           "target": "lifetimes",
+          "rows_source": "_lifetime_parameter_rows",
           "row_width": 2,
           "header_keys": ["lifetime_amplitude_options"],
-          "collapsible": false,
-          "component_title": "Component"
+          "collapsible": false
         }
       ]
     },
