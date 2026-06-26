@@ -96,7 +96,7 @@ class ZmqServer:
         try:
             while self._running:
                 try:
-                    socks = dict(poller.poll(timeout=500))
+                    socks = dict(poller.poll(timeout=50))
                 except zmq.ZMQError:
                     if not self._running:
                         break

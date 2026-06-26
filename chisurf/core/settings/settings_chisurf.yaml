@@ -39,6 +39,7 @@ fret:
   forster_radius: 52
   kappa2: 0.667
   lifetime_bins: 101
+  n: 1.33
   orientation_mode: fast
   rda_max: 130
   rda_min: 1
@@ -125,6 +126,8 @@ gui:
   memory_widget_update_interval_ms: 5000 # Memory usage widget update interval in milliseconds
   start_jupyter_on_startup: true
   # mcp_autostart removed — server is always auto-started on a dynamic port
+  collapsible_box:
+    auto_fold_timeout_ms: 1500  # -1 disables auto-fold globally
   ribbon:
     auto_fold: true # Enable automatic ribbon folding after inactivity
     auto_fold_delay_ms: 1000 # Delay before auto-folding starts (milliseconds)
@@ -212,6 +215,7 @@ mc_settings:
   scale: 0.0025
   update_rmsd: false
 mfdb:
+  fitting_timeout_ms: 5000  # max ms to wait for a fit.run RPC response; raise for slow models
   default_user_id: user_default
   save_login: true
   autologin: false

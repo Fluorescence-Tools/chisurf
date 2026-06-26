@@ -194,7 +194,7 @@ class FittingClient:
             host = str(mfdb_cfg.get("rpc_host", mfdb_cfg.get("last_server", "127.0.0.1")))
             cmd_port = int(mfdb_cfg.get("cmd_port", mfdb_cfg.get("last_port", 8765)))
             pub_port = int(mfdb_cfg.get("pub_port", cmd_port + 1))
-            timeout_ms = int(mfdb_cfg.get("fitting_timeout_ms", 300))
+            timeout_ms = int(mfdb_cfg.get("fitting_timeout_ms", 5000))
 
             server = (
                 getattr(chisurf, "__chisurf_rpc_server__", None)
@@ -208,10 +208,13 @@ class FittingClient:
                             break
                         time.sleep(0.05)
                     else:
+                        old_thread = getattr(chisurf, "__chisurf_rpc_server_thread__", None)
                         try:
                             server.stop()
                         except Exception:
                             pass
+                        if old_thread is not None:
+                            old_thread.join(timeout=2.0)
                         server = None
                         chisurf.__chisurf_rpc_server__ = None
                         chisurf.__chisurf_rpc_server_thread__ = None
