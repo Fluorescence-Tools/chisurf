@@ -489,6 +489,129 @@ DYE_DATA: Dict[str, Dict] = {
 }
 
 # ========= GUI =========
+import pathlib
+
+_VIEW_JSON = pathlib.Path(__file__).parent / "fcs_calculator.view.json"
+
+
+class _ConfocalModel:
+    """Backing model for the declarative editor (fields in fcs_calculator.view.json).
+
+    AutoForm reads the initial values from these attributes; the calculator's
+    compute logic operates on the grabbed editor widgets, so the model only
+    provides defaults and the view-spec.
+    """
+
+    def __init__(self) -> None:
+        self.tau_us = 70.0
+        self.D_um2_s = 400.0
+        self.rh_nm = 0.5
+        self.S = 5.0
+        self.veff_fL = 0.4
+        self.temp_C = 20.0
+        self.eta_mPa_s = 0.890
+        self.use_water_eta = True
+        self.invN = 0.0
+        self.num_mols = 0.602214 * 0.4
+        self.conc_nM = 1.0
+
+    def view_spec(self):
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
+
+
+class _ConstraintSection(QWidget):
+    """Exclusive Fix-D / Fix-rₕ / Fix-Veff radios (a declarative custom section)."""
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self.rb_fix_D = QRadioButton("Fix D")
+        self.rb_fix_rh = QRadioButton("Fix rₕ")
+        self.rb_fix_V = QRadioButton("Fix Veff")
+        self.rb_fix_D.setChecked(True)
+        self.fix_group = QButtonGroup(self)
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(0, 2, 0, 2)
+        for rb in (self.rb_fix_D, self.rb_fix_rh, self.rb_fix_V):
+            self.fix_group.addButton(rb)
+            lay.addWidget(rb)
+        lay.addStretch(1)
+
+
+class _DyeSection(QWidget):
+    """Reference-dye combo + apply button + scaling radios."""
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self.dye_combo = QComboBox()
+        self.dye_combo.addItems(list(DYE_DATA.keys()))
+        self.btn_apply_dref = QPushButton("Apply Dref")
+        self.scale_dref = QRadioButton("Apply with Temp/η scaling")
+        self.scale_dref.setChecked(True)
+        self.scale_dref_none = QRadioButton("Apply at 25 °C (no scaling)")
+        self.scale_group = QButtonGroup(self)
+        self.scale_group.addButton(self.scale_dref)
+        self.scale_group.addButton(self.scale_dref_none)
+        v = QVBoxLayout(self)
+        v.setContentsMargins(0, 2, 0, 2)
+        row = QHBoxLayout()
+        row.addWidget(self.dye_combo)
+        row.addWidget(self.btn_apply_dref)
+        row.addStretch(1)
+        v.addLayout(row)
+        v.addWidget(self.scale_dref)
+        v.addWidget(self.scale_dref_none)
+
+
+class _ShapeSection(QWidget):
+    """Molecular-shape estimator (type / size / aspect + apply→D)."""
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self.shape_combo = QComboBox()
+        self.shape_combo.addItems(["Sphere", "Ellipsoid", "Cylinder"])
+        self.shape_size_nm = QDoubleSpinBox()
+        self.shape_size_nm.setRange(0.1, 1e9)
+        self.shape_size_nm.setDecimals(3)
+        self.shape_size_nm.setValue(5.0)
+        self.shape_aspect = QDoubleSpinBox()
+        self.shape_aspect.setRange(0.1, 1e3)
+        self.shape_aspect.setDecimals(3)
+        self.shape_aspect.setValue(1.0)
+        self.btn_apply_shape = QPushButton("Apply shape→D")
+        g = QGridLayout(self)
+        g.setContentsMargins(0, 2, 0, 2)
+        g.addWidget(QLabel("Type"), 0, 0)
+        g.addWidget(self.shape_combo, 0, 1)
+        g.addWidget(QLabel("Size (nm)"), 1, 0)
+        g.addWidget(self.shape_size_nm, 1, 1)
+        g.addWidget(QLabel("Aspect"), 2, 0)
+        g.addWidget(self.shape_aspect, 2, 1)
+        g.addWidget(self.btn_apply_shape, 3, 0, 1, 2)
+
+
+class _JsonSection(QWidget):
+    """Export / import settings buttons."""
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self.btn_export_json = QPushButton("Export JSON")
+        self.btn_import_json = QPushButton("Import JSON")
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 2, 0, 2)
+        row.addWidget(self.btn_export_json)
+        row.addWidget(self.btn_import_json)
+        row.addStretch(1)
+
+
+def _register_confocal_sections() -> None:
+    from chisurf.gui.autoform.sections.registry import register_section
+    register_section("confocal_constraint")(_ConstraintSection)
+    register_section("confocal_dye")(_DyeSection)
+    register_section("confocal_shape")(_ShapeSection)
+    register_section("confocal_json")(_JsonSection)
+
+
 @persist_plugin_state("fcs_calculator")
 class ConfocalCalcWidget(QWidget):
     """Interactive FCS confocal diffusion/volume calculator.
@@ -515,115 +638,69 @@ class ConfocalCalcWidget(QWidget):
         self._recompute()
 
     def _setup_ui(self):
-        """Build all spin boxes, buttons, and layouts of the calculator widget."""
-        # Spin boxes
-        self.tau_us = QDoubleSpinBox(); self._cfg(self.tau_us, 1e-3, 1e9, 3, 70.0)
-        self.D_um2_s = QDoubleSpinBox(); self._cfg(self.D_um2_s, 1e-4, 1e6, 6, 400.0)
-        self.rh_nm = QDoubleSpinBox(); self._cfg(self.rh_nm, 1e-3, 1e6, 6, 0.5)
-        self.S = QDoubleSpinBox(); self._cfg(self.S, 0.1, 20.0, 4, 5.0)
-        self.veff_fL = QDoubleSpinBox(); self._cfg(self.veff_fL, 1e-6, 1e9, 6, 0.4)
-        self.temp_C = QDoubleSpinBox(); self._cfg(self.temp_C, -50.0, 200.0, 2, 20.0)
-        self.eta_mPa_s = QDoubleSpinBox(); self._cfg(self.eta_mPa_s, 0.01, 10000.0, 4, 0.890)
-        self.conc_nM = QDoubleSpinBox(); self._cfg(self.conc_nM, 0.0, 1e9, 6, 1.0)
-        self.num_mols = QDoubleSpinBox(); self._cfg(self.num_mols, 0.0, 1e12, 3, 0.602214*0.4)
+        """Render the editor from fcs_calculator.view.json via AutoForm.
 
-        # Make large steps comfortable
-        self.num_mols.setSingleStep(0.1)
-        self.conc_nM.setSingleStep(0.01)
+        The numeric fields, the water-η toggle, and the constraint / dye / shape
+        / JSON blocks are declared in the view-spec; here we grab the live editor
+        widgets (and the custom-section children) into ``self.*`` under the same
+        names the compute logic already uses, so that logic is unchanged.
+        """
+        _register_confocal_sections()
+        self._model = _ConfocalModel()
 
-        # Water η(T)
-        self.use_water_eta = QCheckBox("Use water η(T)")
-        self.use_water_eta.setChecked(True)
+        from chisurf.gui.autoform import AutoForm
+        from chisurf.gui.autoform.sections.builtin import ToggleWidget, ValueWidget
 
-        # Dye block
-        self.dye_combo = QComboBox(); self.dye_combo.addItems(list(DYE_DATA.keys()))
-        self.scale_dref = QRadioButton("Apply with Temp/η scaling")
-        self.scale_dref.setChecked(True)
-        self.scale_dref_none = QRadioButton("Apply at 25 °C (no scaling)")
-        self.scale_group = QButtonGroup(self); self.scale_group.addButton(self.scale_dref); self.scale_group.addButton(self.scale_dref_none)
-        self.btn_apply_dref = QPushButton("Apply Dref")
-        # Remove refs/help per optimization
-        # (buttons kept not created)
+        form = AutoForm(self._model, parent=self)
+        self._form = form
+
+        editors = {}
+        for vw in form.findChildren(ValueWidget):
+            attr = getattr(getattr(vw, "_section", None), "attr", None)
+            if attr:
+                editors[attr] = vw.editor
+        self.tau_us = editors["tau_us"]
+        self.D_um2_s = editors["D_um2_s"]
+        self.rh_nm = editors["rh_nm"]
+        self.S = editors["S"]
+        self.veff_fL = editors["veff_fL"]
+        self.temp_C = editors["temp_C"]
+        self.eta_mPa_s = editors["eta_mPa_s"]
+        self.invN = editors["invN"]
+        self.num_mols = editors["num_mols"]
+        self.conc_nM = editors["conc_nM"]
+
+        for tw in form.findChildren(ToggleWidget):
+            if getattr(getattr(tw, "_section", None), "attr", None) == "use_water_eta":
+                self.use_water_eta = tw.checkbox
+
+        cw = form.findChildren(_ConstraintSection)[0]
+        self.rb_fix_D, self.rb_fix_rh, self.rb_fix_V = cw.rb_fix_D, cw.rb_fix_rh, cw.rb_fix_V
+        self.fix_group = cw.fix_group
+
+        dw = form.findChildren(_DyeSection)[0]
+        self.dye_combo = dw.dye_combo
+        self.btn_apply_dref = dw.btn_apply_dref
+        self.scale_dref, self.scale_dref_none = dw.scale_dref, dw.scale_dref_none
+        self.scale_group = dw.scale_group
+
+        sw = form.findChildren(_ShapeSection)[0]
+        self.shape_combo = sw.shape_combo
+        self.shape_size_nm, self.shape_aspect = sw.shape_size_nm, sw.shape_aspect
+        self.btn_apply_shape = sw.btn_apply_shape
+
+        jw = form.findChildren(_JsonSection)[0]
+        self.btn_export_json, self.btn_import_json = jw.btn_export_json, jw.btn_import_json
+
+        # Removed buttons that the handlers tolerate being absent.
         self.btn_show_refs = None
         self.btn_help = None
 
-        # Layout: numeric grid
-        grid = QGridLayout(); r = 0
-        grid.addWidget(QLabel("τ (µs)"), r, 0); grid.addWidget(self.tau_us, r, 1); r+=1
-        grid.addWidget(QLabel("D (µm²/s)"), r, 0); grid.addWidget(self.D_um2_s, r, 1); r+=1
-        grid.addWidget(QLabel("rₕ (nm)"), r, 0); grid.addWidget(self.rh_nm, r, 1); r+=1
-        grid.addWidget(QLabel("S (wz/wxy)"), r, 0); grid.addWidget(self.S, r, 1); r+=1
-        grid.addWidget(QLabel("Veff (fL)"), r, 0); grid.addWidget(self.veff_fL, r, 1); r+=1
-        grid.addWidget(QLabel("T (°C)"), r, 0); grid.addWidget(self.temp_C, r, 1); r+=1
-        grid.addWidget(QLabel("η (mPa·s)"), r, 0); grid.addWidget(self.eta_mPa_s, r, 1); r+=1
-        grid.addWidget(self.use_water_eta, r, 0, 1, 2); r+=1
-        # 1/N and N
-        self.invN = QDoubleSpinBox(); self._cfg(self.invN, 0.0, 1.0, 9, 0.0)
-        grid.addWidget(QLabel("1/N"), r, 0); grid.addWidget(self.invN, r, 1); r+=1
-        grid.addWidget(QLabel("N"), r, 0); grid.addWidget(self.num_mols, r, 1); r+=1
-        grid.addWidget(QLabel("Conc (nM)"), r, 0); grid.addWidget(self.conc_nM, r, 1); r+=1
-
-        # Constraint group (exclusive)
-        self.rb_fix_D = QRadioButton("Fix D")
-        self.rb_fix_rh = QRadioButton("Fix rₕ")
-        self.rb_fix_V = QRadioButton("Fix Veff")
-        self.rb_fix_D.setChecked(True)
-        self.fix_group = QButtonGroup(self)
-        for rb in (self.rb_fix_D, self.rb_fix_rh, self.rb_fix_V): self.fix_group.addButton(rb)
-        fix_box = QGroupBox("Constraint (choose one)")
-        fix_layout = QHBoxLayout();
-        for rb in (self.rb_fix_D, self.rb_fix_rh, self.rb_fix_V): fix_layout.addWidget(rb)
-        fix_layout.addItem(QSpacerItem(10,10,QSizePolicy.Expanding,QSizePolicy.Minimum))
-        fix_box.setLayout(fix_layout)
-
-        # Dye box
-        dye_box = QGroupBox("Reference dye (D @ 25 °C, water)")
-        v = QVBoxLayout()
-        # Place combo and apply button on one line
-        combo_row = QHBoxLayout()
-        combo_row.addWidget(self.dye_combo)
-        combo_row.addWidget(self.btn_apply_dref)
-        combo_row.addItem(QSpacerItem(10,10,QSizePolicy.Expanding,QSizePolicy.Minimum))
-        v.addLayout(combo_row)
-        v.addWidget(self.scale_dref)
-        v.addWidget(self.scale_dref_none)
-        dye_box.setLayout(v)
-
-        # Place constraint group box at top of widget
-        root = QVBoxLayout()
-        root.addWidget(fix_box)
-        root.addLayout(grid)
-        root.addWidget(dye_box)
-
-        self.shape_combo = QComboBox()
-        self.shape_combo.addItems(["Sphere", "Ellipsoid", "Cylinder"])
-        self.shape_size_nm = QDoubleSpinBox(); self._cfg(self.shape_size_nm, 0.1, 1e9, 3, 5.0)
-        self.shape_aspect = QDoubleSpinBox(); self._cfg(self.shape_aspect, 0.1, 1e3, 3, 1.0)
-        self.btn_apply_shape = QPushButton("Apply shape→D")
-
-        shape_box = QGroupBox("Molecular shape")
-        shape_layout = QGridLayout()
-        shape_layout.addWidget(QLabel("Type"), 0, 0)
-        shape_layout.addWidget(self.shape_combo, 0, 1)
-        shape_layout.addWidget(QLabel("Size (nm)"), 1, 0)
-        shape_layout.addWidget(self.shape_size_nm, 1, 1)
-        shape_layout.addWidget(QLabel("Aspect"), 2, 0)
-        shape_layout.addWidget(self.shape_aspect, 2, 1)
-        shape_layout.addWidget(self.btn_apply_shape, 3, 0, 1, 2)
-        shape_box.setLayout(shape_layout)
-        root.addWidget(shape_box)
-
-        self.btn_export_json = QPushButton("Export JSON")
-        self.btn_import_json = QPushButton("Import JSON")
-        json_box = QGroupBox("Settings JSON")
-        json_layout = QHBoxLayout()
-        json_layout.addWidget(self.btn_export_json)
-        json_layout.addWidget(self.btn_import_json)
-        json_layout.addItem(QSpacerItem(10,10,QSizePolicy.Expanding,QSizePolicy.Minimum))
-        json_box.setLayout(json_layout)
-        root.addWidget(json_box)
-
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(form)
         self.setLayout(root)
+
         self._update_field_enable()
         # Initialize water viscosity mode default
         self._on_use_water_eta(self.use_water_eta.isChecked())

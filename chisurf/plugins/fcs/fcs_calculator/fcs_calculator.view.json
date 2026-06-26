@@ -1,0 +1,82 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Constraint (choose one)",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "confocal_constraint"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Diffusion / volume",
+      "collapsed": false,
+      "sections": [
+        {"type": "value", "attr": "tau_us", "label": "τ (µs)", "kind": "float",
+         "decimals": 3, "minimum": 0.001, "maximum": 1000000000.0,
+         "description": "Diffusion correlation time τ_D."},
+        {"type": "value", "attr": "D_um2_s", "label": "D (µm²/s)", "kind": "float",
+         "decimals": 6, "minimum": 0.0001, "maximum": 1000000.0,
+         "description": "Translational diffusion coefficient (read-only unless 'Fix D')."},
+        {"type": "value", "attr": "rh_nm", "label": "rₕ (nm)", "kind": "float",
+         "decimals": 6, "minimum": 0.001, "maximum": 1000000.0,
+         "description": "Hydrodynamic radius (read-only unless 'Fix rₕ')."},
+        {"type": "value", "attr": "S", "label": "S (wz/wxy)", "kind": "float",
+         "decimals": 4, "minimum": 0.1, "maximum": 20.0,
+         "description": "Confocal aspect ratio (axial / lateral beam waist)."},
+        {"type": "value", "attr": "veff_fL", "label": "Veff (fL)", "kind": "float",
+         "decimals": 6, "minimum": 0.000001, "maximum": 1000000000.0,
+         "description": "Effective confocal volume (read-only unless 'Fix Veff')."},
+        {"type": "value", "attr": "temp_C", "label": "T (°C)", "kind": "float",
+         "decimals": 2, "minimum": -50.0, "maximum": 200.0,
+         "description": "Temperature."},
+        {"type": "value", "attr": "eta_mPa_s", "label": "η (mPa·s)", "kind": "float",
+         "decimals": 4, "minimum": 0.01, "maximum": 10000.0,
+         "description": "Solvent viscosity; computed from the water model when 'Use water η(T)' is enabled."},
+        {"type": "toggle", "attr": "use_water_eta", "label": "Use water η(T)",
+         "description": "Use the temperature-dependent viscosity of water (Kapusta 2010 app note)."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Occupancy",
+      "collapsed": false,
+      "sections": [
+        {"type": "value", "attr": "invN", "label": "1/N", "kind": "float",
+         "decimals": 9, "minimum": 0.0, "maximum": 1.0,
+         "description": "Inverse occupancy G(0) = 1/N."},
+        {"type": "value", "attr": "num_mols", "label": "N", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 1000000000000.0, "step": 0.1,
+         "description": "Average number of molecules in Veff."},
+        {"type": "value", "attr": "conc_nM", "label": "Conc (nM)", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 1000000000.0, "step": 0.01,
+         "description": "Concentration; N = 0.602214 × c_nM × Veff_fL."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Reference dye (D @ 25 °C, water)",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "confocal_dye"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Molecular shape",
+      "collapsed": true,
+      "sections": [
+        {"type": "custom", "key": "confocal_shape"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Settings JSON",
+      "collapsed": true,
+      "sections": [
+        {"type": "custom", "key": "confocal_json"}
+      ]
+    }
+  ]
+}
