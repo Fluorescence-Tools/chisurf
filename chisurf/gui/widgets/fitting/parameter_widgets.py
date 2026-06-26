@@ -6,8 +6,8 @@ import pathlib
 import textwrap
 
 import numpy as np
-import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
+from chisurf.gui.widgets.fitting.scientific_spinbox import ScientificDoubleSpinBox
 import matplotlib.colors as mcolors
 
 import chisurf as cs
@@ -75,7 +75,7 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         # Value editor
         val_row = QtWidgets.QHBoxLayout()
         val_row.addWidget(QtWidgets.QLabel("Value:"))
-        self.sb_value = pg.SpinBox(dec=True, decimals=self.controller.widget_value.opts.get('decimals', 6), finite=False)
+        self.sb_value = ScientificDoubleSpinBox(dec=True, decimals=self.controller.widget_value.opts.get('decimals', 6), finite=False)
         val_row.addWidget(self.sb_value)
         layout.addLayout(val_row)
 
@@ -89,10 +89,10 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         self.cb_bounds_on = QtWidgets.QCheckBox("Enable bounds")
         b_layout.addWidget(self.cb_bounds_on, 0, 0, 1, 2)
         b_layout.addWidget(QtWidgets.QLabel("Lower:"), 1, 0)
-        self.sb_lb = pg.SpinBox(dec=True, decimals=self.controller.widget_lower_bound.opts.get('decimals', 6))
+        self.sb_lb = ScientificDoubleSpinBox(dec=True, decimals=self.controller.widget_lower_bound.opts.get('decimals', 6))
         b_layout.addWidget(self.sb_lb, 1, 1)
         b_layout.addWidget(QtWidgets.QLabel("Upper:"), 2, 0)
-        self.sb_ub = pg.SpinBox(dec=True, decimals=self.controller.widget_upper_bound.opts.get('decimals', 6))
+        self.sb_ub = ScientificDoubleSpinBox(dec=True, decimals=self.controller.widget_upper_bound.opts.get('decimals', 6))
         b_layout.addWidget(self.sb_ub, 2, 1)
         layout.addWidget(bounds_group)
 
@@ -661,7 +661,60 @@ class FittingParameterWidget(Controller):
     def __str__(self):
         return ""
 
-    @chisurf.gui.decorators.init_with_ui("variable_widget.ui")
+    def _build_layout(self) -> None:
+        """Build the two-row compact layout in Python (replaces variable_widget.ui)."""
+        outer = QtWidgets.QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        main_row = QtWidgets.QHBoxLayout()
+        main_row.setContentsMargins(0, 0, 0, 0)
+        main_row.setSpacing(1)
+
+        self.label = QtWidgets.QLabel("name")
+        self.label.setMinimumWidth(40)
+        self.label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        main_row.addWidget(self.label)
+
+        self.widget_fix = QtWidgets.QCheckBox()
+        self.widget_fix.setToolTip("fix value")
+        self.widget_fix.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        main_row.addWidget(self.widget_fix)
+
+        self.widget_link = QtWidgets.QCheckBox()
+        self.widget_link.setTristate(True)
+        self.widget_link.setToolTip("link — right-click to link, uncheck to unlink")
+        self.widget_link.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        main_row.addWidget(self.widget_link)
+
+        self.widget_bounds_on = QtWidgets.QCheckBox()
+        self.widget_bounds_on.setToolTip("enable bounds")
+        self.widget_bounds_on.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        main_row.addWidget(self.widget_bounds_on)
+
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout.setSpacing(0)
+        main_row.addLayout(self.horizontalLayout, 1)
+
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.lineEdit.setMaximumWidth(36)
+        self.lineEdit.setReadOnly(True)
+        self.lineEdit.setPlaceholderText("NA")
+        self.lineEdit.setToolTip("estimated error of fit — click to run support-plane analysis")
+        self.lineEdit.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        main_row.addWidget(self.lineEdit)
+        outer.addLayout(main_row)
+
+        self.widget = QtWidgets.QWidget()
+        self.widget.setVisible(False)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_2.setSpacing(2)
+        outer.addWidget(self.widget)
+
+        self.widget_bounds_on.toggled.connect(self.widget.setVisible)
+
     def __init__(
             self,
             fitting_parameter: chisurf.core.fitting.parameter.FittingParameter,
@@ -677,6 +730,12 @@ class FittingParameterWidget(Controller):
             suffix: str = "",
             callback: typing.Callable = None
     ):
+        super().__init__()
+        try:
+            cs.core.base.Base.__init__(self)
+        except Exception:
+            pass
+        self._build_layout()
         if hide_link is None:
             hide_link = parameter_settings.get('hide_link', False)
         if hide_bounds is None:
@@ -720,35 +779,28 @@ class FittingParameterWidget(Controller):
         except Exception:
             pass
 
-        self.widget_value = pg.SpinBox(
+        self.widget_value = ScientificDoubleSpinBox(
             dec=True,
             decimals=decimals,
             suffix=suffix,
-            finite=False
+            finite=False,
         )
-        self.widget_value.opts['compactHeight'] = False
         self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         self.horizontalLayout.addWidget(self.widget_value)
 
-        self.widget_lower_bound = pg.SpinBox(
-            dec=True,
-            decimals=decimals
-        )
+        self.widget_lower_bound = ScientificDoubleSpinBox(dec=True, decimals=decimals)
         self.horizontalLayout_2.addWidget(self.widget_lower_bound)
 
-        self.widget_upper_bound = pg.SpinBox(
-            dec=True,
-            decimals=decimals
-        )
+        self.widget_upper_bound = ScientificDoubleSpinBox(dec=True, decimals=decimals)
         self.horizontalLayout_2.addWidget(self.widget_upper_bound)
 
         # Hide and disable widgets
         self.label.setVisible(not hide_label)
         self.lineEdit.setVisible(not hide_error)
+        self._hide_bounds = bool(hide_bounds)
         self.widget_bounds_on.setDisabled(hide_bounds)
         self.widget_bounds_on.setVisible(not hide_bounds)
         self.widget_fix.setVisible(fixable)
-        self.widget.setHidden(hide_bounds)
         self.widget_link.setDisabled(hide_link)
         self.widget_link.setVisible(not hide_link)
 
@@ -782,18 +834,7 @@ class FittingParameterWidget(Controller):
                 self.label.setSizePolicy(sp)
             except Exception:
                 pass
-            try:
-                # Try to hide spin buttons directly on the SpinBox.
-                self.widget_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            except Exception:
-                # Fallback for pyqtgraph.SpinBox implementations that expose
-                # an inner "spin" widget.
-                try:
-                    spin = getattr(self.widget_value, "spin", None)
-                    if spin is not None and hasattr(spin, "setButtonSymbols"):
-                        spin.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-                except Exception:
-                    pass
+            self.widget_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
             try:
                 self.widget_value.setReadOnly(True)
             except Exception:
@@ -815,10 +856,6 @@ class FittingParameterWidget(Controller):
                 self.widget_link.setEnabled(False)
             except Exception:
                 pass
-            # Hide the lower/upper bound spin boxes for outputs; only keep
-            # the (disabled) bounds checkbox for alignment.
-            self.widget.setHidden(True)
-
         # Make label interactive: clicking opens a details popup
         try:
             self.label.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -856,18 +893,23 @@ class FittingParameterWidget(Controller):
         except Exception:
             self.label.setText(label_text)
 
-        # variable bounds
-        if not fitting_parameter.bounds_on:
-            self.widget_bounds_on.setCheckState(QtCore.Qt.Unchecked)
-        else:
-            self.widget_bounds_on.setCheckState(QtCore.Qt.Checked)
+        # variable bounds — reflect bounds_on in the checkbox, but keep the
+        # second (bounds-editing) row collapsed at init to stay compact. The
+        # row only expands when the user clicks the checkbox; we block signals
+        # here so programmatic setCheckState does not auto-expand it.
+        bounds_on_init = bool(fitting_parameter.bounds_on) and not hide_bounds
+        self.widget_bounds_on.blockSignals(True)
+        self.widget_bounds_on.setCheckState(
+            QtCore.Qt.Checked if bounds_on_init else QtCore.Qt.Unchecked
+        )
+        self.widget_bounds_on.blockSignals(False)
+        self.widget.setVisible(False)
 
         # variable fixed
         if fitting_parameter.fixed:
             self.widget_fix.setCheckState(QtCore.Qt.Checked)
         else:
             self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
-        self.widget.hide()
 
         # The variable value
         self.widget_value.editingFinished.connect(self._on_main_value_changed)
@@ -1298,6 +1340,10 @@ class FittingParameterWidget(Controller):
         value = self.widget_value.value()
         old_value = float(fp.value)
         source = self._parameter_context(fp)
+        try:
+            fp.value = value
+        except Exception:
+            pass
         fc = get_fitting_client()
         if fc is not None:
             fc.set_parameter_value(
@@ -1350,6 +1396,10 @@ class FittingParameterWidget(Controller):
         fp = self.fitting_parameter
         checked = self.widget_bounds_on.isChecked()
         source = self._parameter_context(fp)
+        try:
+            fp.bounds_on = checked
+        except Exception:
+            pass
         fc = get_fitting_client()
         if fc is not None:
             fc.set_parameter_bounds_on(
@@ -1414,6 +1464,10 @@ class FittingParameterWidget(Controller):
         fp = self.fitting_parameter
         new_fixed = self.widget_fix.isChecked()
         source = self._parameter_context(fp)
+        try:
+            fp.fixed = new_fixed
+        except Exception:
+            pass
         fc = get_fitting_client()
         if fc is not None:
             fc.set_parameter_fixed(
@@ -1438,6 +1492,10 @@ class FittingParameterWidget(Controller):
         fp = self.fitting_parameter
         source = self._parameter_context(fp)
         fc = get_fitting_client()
+        try:
+            fp.bounds = (self.widget_lower_bound.value(), self.widget_upper_bound.value())
+        except Exception:
+            pass
         if fc is not None:
             fc.set_parameter_bounds(
                 parameter_name=str(fp.name),
@@ -1495,6 +1553,8 @@ class FittingParameterWidget(Controller):
             self.widget_upper_bound.blockSignals(True)
             bounds_on = bool(getattr(self.fitting_parameter, 'bounds_on', False))
             self.widget_bounds_on.setCheckState(QtCore.Qt.Checked if bounds_on else QtCore.Qt.Unchecked)
+            # Do not force the bounds-editing row open here: its visibility is
+            # driven by the user toggling the checkbox (compact by default).
 
             # Default to current UI values; replace with model values only if valid
             lb_val = self.widget_lower_bound.value()

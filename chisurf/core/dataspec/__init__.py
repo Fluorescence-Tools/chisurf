@@ -504,6 +504,33 @@ def load_view_spec(data: typing.Union[str, pathlib.Path, typing.Mapping]) -> Mod
     return ModelView(sections=sections, plots=plots)
 
 
+@dataclasses.dataclass(frozen=True)
+class FittingParameterSection(Section):
+    """A single FittingParameter control: value spinbox + fix/link/bounds row.
+
+    The AutoForm renderer resolves ``target`` to a ``FittingParameter`` attribute
+    on the model, then builds a ``FittingParameterWidget`` for it.
+    Per-parameter display options mirror ``FittingParameterWidget`` kwargs.
+    """
+
+    #: Display label; falls back to the parameter's own name when empty.
+    label: str = ""
+    #: Hide the name label (useful when the name is shown in a surrounding grid).
+    hide_label: bool = False
+    #: Hide the error estimate field.
+    hide_error: bool = False
+    #: Disable bounds controls entirely.
+    hide_bounds: bool = False
+    #: Hide the link checkbox.
+    hide_link: bool = False
+    #: Whether the fix checkbox is shown.
+    fixable: bool = True
+    #: Significant digits shown in the value spinbox.
+    decimals: int = 4
+    #: Unit suffix appended to the displayed value.
+    suffix: str = ""
+
+
 __all__ = [
     "Section",
     "ParameterGroupSection",
@@ -514,6 +541,7 @@ __all__ = [
     "ToggleSection",
     "ValueSection",
     "CustomSection",
+    "FittingParameterSection",
     "PlotSpec",
     "ModelView",
     "ParameterGroupView",

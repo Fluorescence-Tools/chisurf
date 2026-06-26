@@ -69,3 +69,11 @@ def resolve_plot_specs(view) -> typing.List[typing.Tuple[type, dict]]:
         if plot_class is not None:
             specs.append((plot_class, dict(plot.options)))
     return specs
+
+
+@register_section("fitting_parameter")
+def _fitting_parameter_section_factory(model, target: str, **opts):
+    """Render a single FittingParameter as a FittingParameterWidget."""
+    from chisurf.gui.widgets.fitting.parameter_widgets import FittingParameterWidget
+    fp = getattr(model, target)
+    return FittingParameterWidget(fitting_parameter=fp, **opts)

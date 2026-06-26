@@ -573,7 +573,7 @@ def make_widget_from_yaml(
     :return: 
     """
     
-    import pyqtgraph as pg
+    from chisurf.gui.widgets.fitting.scientific_spinbox import ScientificDoubleSpinBox
 
     def make_group(
             d,
@@ -595,7 +595,7 @@ def make_widget_from_yaml(
                     wd = QtWidgets.QCheckBox()
                     wd.setChecked(value)
                 elif isinstance(value, numbers.Real):
-                    wd = pg.SpinBox(value=value)
+                    wd = ScientificDoubleSpinBox(value=float(value))
                 else:
                     wd = QtWidgets.QLineEdit()
                     wd.setText(str(value))

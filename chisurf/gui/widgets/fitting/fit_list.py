@@ -6,7 +6,6 @@ import pathlib
 import textwrap
 
 import numpy as np
-import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
