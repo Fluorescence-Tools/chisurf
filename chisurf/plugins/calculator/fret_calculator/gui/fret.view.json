@@ -1,0 +1,47 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Parameters",
+      "collapsed": false,
+      "sections": [
+        {"type": "value", "attr": "tau0", "label": "Lifetime D0", "kind": "float",
+         "decimals": 4, "minimum": 0.001, "maximum": 9999.0, "suffix": " ns",
+         "description": "Donor-only fluorescence lifetime (no acceptor)."},
+        {"type": "value", "attr": "R0", "label": "Förster R0", "kind": "float",
+         "decimals": 2, "minimum": 0.1, "maximum": 999.0, "suffix": " A",
+         "description": "Förster radius R0."},
+        {"type": "value", "attr": "R", "label": "Distance DA", "kind": "float",
+         "decimals": 2, "minimum": 0.1, "maximum": 9999.0, "suffix": " A",
+         "description": "Donor-acceptor distance. Any of distance, lifetime, efficiency or rate may be entered; the others are recomputed."},
+        {"type": "value", "attr": "tau", "label": "Lifetime DA", "kind": "float",
+         "decimals": 4, "minimum": 0.0, "maximum": 9999.0, "suffix": " ns",
+         "description": "Donor lifetime in the presence of acceptor (D in DA). Editable input that back-computes the distance."},
+        {"type": "value", "attr": "E", "label": "Efficiency", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 1.0,
+         "description": "FRET efficiency. Editable input that back-computes the distance."},
+        {"type": "value", "attr": "kFRET", "label": "kFRET", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 9999.0,
+         "description": "FRET rate constant. Editable input that back-computes the distance."},
+        {"type": "value", "attr": "sigma", "label": "Sigma", "kind": "float",
+         "decimals": 2, "minimum": 0.1, "maximum": 999.0, "suffix": " A",
+         "description": "Width of the donor-acceptor distance distribution."},
+        {"type": "toggle", "attr": "use_chi", "label": "chi distribution",
+         "description": "Use a 3D non-central chi distance distribution instead of a Gaussian. Distances are never Gaussian: a Gaussian assigns weight to negative / near-zero distances, while the chi distribution is non-negative and vanishes at contact (R=0)."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Distributions",
+      "collapsed": false,
+      "sections": [
+        {"type": "plot", "source": "distance_plot_series",
+         "x_label": "R (Å)", "y_label": "p(R)", "height": 140,
+         "description": "Donor-acceptor distance distribution: Gaussian vs the non-negative chi distribution (active one solid)."},
+        {"type": "plot", "source": "rate_plot_series",
+         "x_label": "k_FRET (1/ns)", "y_label": "p(k)", "height": 140,
+         "description": "FRET-rate-constant distribution induced by the distance distribution."}
+      ]
+    }
+  ]
+}

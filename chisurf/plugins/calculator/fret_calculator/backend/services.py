@@ -70,6 +70,7 @@ def fret_compute_handler(
     tau0: float,
     kappa2: float = 0.667,
     sigma: float = 0.0,
+    distribution: str = "gaussian",
 ) -> dict[str, Any]:
     """Compute FRET parameters from distance.
 
@@ -84,7 +85,9 @@ def fret_compute_handler(
     kappa2 : float
         Orientation factor.
     sigma : float
-        Width of Gaussian distance distribution.
+        Width of the distance distribution.
+    distribution : str
+        ``"gaussian"`` or ``"chi"`` (non-negative, physical near zero distance).
 
     Returns
     -------
@@ -92,7 +95,7 @@ def fret_compute_handler(
         JSON-serializable result.
     """
     try:
-        result = compute_fret_from_distance(R, R0, tau0, kappa2, sigma)
+        result = compute_fret_from_distance(R, R0, tau0, kappa2, sigma, distribution)
         return {"ok": True, "result": result}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}

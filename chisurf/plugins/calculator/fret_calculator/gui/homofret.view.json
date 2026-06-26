@@ -1,0 +1,47 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Parameters",
+      "collapsed": false,
+      "sections": [
+        {"type": "value", "attr": "tau0", "label": "tau0", "kind": "float",
+         "decimals": 4, "minimum": 0.001, "maximum": 9999.0, "suffix": " ns",
+         "description": "Donor-only fluorescence lifetime."},
+        {"type": "value", "attr": "R0", "label": "R0", "kind": "float",
+         "decimals": 2, "minimum": 0.1, "maximum": 999.0, "suffix": " A",
+         "description": "Förster radius R0."},
+        {"type": "value", "attr": "t_RM", "label": "t_RM", "kind": "float",
+         "decimals": 4, "minimum": 0.001, "maximum": 9999.0, "suffix": " ns",
+         "description": "Anisotropy decay (energy-migration) time t_RM."},
+        {"type": "value", "attr": "rho", "label": "rho", "kind": "float",
+         "decimals": 4, "minimum": 0.001, "maximum": 9999.0, "suffix": " ns",
+         "description": "Rotational correlation time rho."},
+        {"type": "value", "attr": "k_homo", "label": "k_homo", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 9999.0, "read_only": true,
+         "description": "Homo-FRET (energy-migration) rate constant (derived from t_RM / rho)."},
+        {"type": "value", "attr": "R_DA", "label": "R_DA", "kind": "float",
+         "decimals": 2, "minimum": 0.0, "maximum": 9999.0, "suffix": " A",
+         "description": "Donor-acceptor distance implied by the homo-FRET rate. Editable input that back-maps to the anisotropy relaxation time."},
+        {"type": "value", "attr": "sigma", "label": "Sigma", "kind": "float",
+         "decimals": 2, "minimum": 0.1, "maximum": 999.0, "suffix": " A",
+         "description": "Width of the distance distribution shown in the plot below."},
+        {"type": "toggle", "attr": "use_chi", "label": "chi distribution",
+         "description": "Use a 3D non-central chi distance distribution (non-negative, vanishes at contact) instead of a Gaussian."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Distributions",
+      "collapsed": false,
+      "sections": [
+        {"type": "plot", "source": "distance_plot_series",
+         "x_label": "R (Å)", "y_label": "p(R)", "height": 150,
+         "description": "Distance distribution around R_DA: Gaussian vs the non-negative chi distribution (active one solid)."},
+        {"type": "plot", "source": "aniso_time_plot_series",
+         "x_label": "τ_aniso (ns)", "y_label": "p(τ)", "height": 150,
+         "description": "Characteristic anisotropy-decay time distribution: rotational depolarisation (rho) in parallel with energy-transfer depolarisation (2·k_FRET)."}
+      ]
+    }
+  ]
+}

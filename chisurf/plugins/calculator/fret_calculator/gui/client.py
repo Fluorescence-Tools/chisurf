@@ -27,6 +27,7 @@ class FretCalculatorClient:
         tau0: float,
         kappa2: float = 0.667,
         sigma: float = 0.0,
+        distribution: str = "gaussian",
     ) -> dict[str, Any]:
         """Compute FRET parameters from distance.
 
@@ -43,6 +44,7 @@ class FretCalculatorClient:
                 "tau0": tau0,
                 "kappa2": kappa2,
                 "sigma": sigma,
+                "distribution": distribution,
             },
         )
 
