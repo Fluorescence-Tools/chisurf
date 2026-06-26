@@ -31,48 +31,11 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
     @staticmethod
     def compute_average_correlations(correlations: typing.List[dict]) -> dict:
-        taus = []
-        cors = []
-        ws = []
-        acquisition_time = 0.0
-        weighted_count_rate_sum = 0.0
-        n_curves = len(correlations)
-        
-        for correlation in correlations:
-            tau = np.array(correlation['x'])
-            cor = np.array(correlation['y'])
-            duration = correlation['duration']
-            acquisition_time += duration
-            counts = correlation['channel_a']['counts'] + correlation['channel_b']['counts']
-            # Average count rate per channel in kHz: (total_counts / 2) / duration / 1000
-            cr = (counts / 2.0) / duration / 1000.0
-            # Weighted sum for proper averaging: sum(duration * count_rate)
-            weighted_count_rate_sum += duration * cr
-            taus.append(tau)
-            cors.append(cor)
-            # Only compute weights if merging multiple curves
-            if n_curves > 1:
-                w = cs.core.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
-                ws.append(w)
-        
-        ys = np.array(cors)
-        # Weighted average count rate: sum(duration * count_rate) / sum(duration)
-        avg_count_rate = weighted_count_rate_sum / acquisition_time if acquisition_time > 0 else 0.0
-        
-        # For single curve, use zeros for error; for multiple curves, compute standard error
-        if n_curves == 1:
-            ey = np.zeros_like(ys[0])
-        else:
-            ey = np.std(ys, axis=0) / np.sqrt(n_curves)
-        
-        correlation = {
-            'x': np.array(taus).mean(axis=0)[1:],
-            'y': ys.mean(axis=0)[1:],
-            'ey': ey[1:],
-            'duration': acquisition_time,
-            'count_rate': avg_count_rate
-        }
-        return correlation
+        # Single source of truth: the Qt-free core merge primitive.
+        from chisurf.core.fluorescence.fcs.merge import (
+            compute_average_correlations as _avg,
+        )
+        return _avg(correlations)
 
     @property
     def mean_correlation(self) -> dict:
