@@ -1694,20 +1694,51 @@ def link_fit_group(fitting_parameter_name: str, csi: int = 0) -> None:
     linked_count = 0
     unlinked_count = 0
     master_uid = None
-    if csi == 2:
-        # Establish a fit-group link with a stable master: always use the
-        # first local fit in the group as the master parameter source.
-        current_fit = gui.current_fit
-        grouped_fits = list(getattr(current_fit, "grouped_fits", []))
-        if grouped_fits:
-            master_fit = grouped_fits[0]
-        else:
-            master_fit = current_fit
+
+    # Only the currently displayed fit in a group has its model parameters
+    # discovered; the other members keep a stale (possibly empty)
+    # ``parameters_all_dict`` until they are rendered. Refresh every member so
+    # the master lookup and the per-fit linking below see all parameters (e.g.
+    # linking lifetimes across a VV/VH group where the master VV fit was never
+    # the displayed one).
+    current_fit = gui.current_fit
+    for f in current_fit:
         try:
-            parameter = master_fit.model.parameters_all_dict[fitting_parameter_name]
+            f.model.find_parameters()
         except Exception:
+            continue
+
+    if csi == 2:
+        # Establish a fit-group link. Prefer the first local fit in the group
+        # as the master, but tolerate a heterogeneous group (e.g. VV/VH
+        # anisotropy fits where the first member may transiently lack the
+        # parameter): fall back to the first member that actually exposes it.
+        grouped_fits = list(getattr(current_fit, "grouped_fits", []))
+        if not grouped_fits:
+            grouped_fits = [current_fit]
+
+        parameter = None
+        for f in grouped_fits:
+            try:
+                parameter = f.model.parameters_all_dict[fitting_parameter_name]
+            except Exception:
+                continue
+            else:
+                break
+
+        if parameter is None:
+            # No member of the group carries this parameter; report which
+            # parameters the members do have so the cause is visible.
+            try:
+                avail = {
+                    getattr(f, "name", "?"): sorted(f.model.parameters_all_dict.keys())
+                    for f in grouped_fits
+                }
+            except Exception:
+                avail = {}
             cs.logging.warning(
-                f"link_fit_group: first fit has no parameter '{fitting_parameter_name}', cannot link group"
+                f"link_fit_group: no fit in the group has parameter "
+                f"'{fitting_parameter_name}', cannot link group; available={avail}"
             )
             return
         try:
