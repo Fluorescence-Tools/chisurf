@@ -2,14 +2,225 @@ from __future__ import annotations
 
 import pathlib
 
+import numpy as np
 import pyqtgraph as pg
-from qtpy import QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
 import chisurf.gui.widgets
 from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
+
+
+class _PchDetectorWidget(QtWidgets.QWidget):
+    """Detector cascade for PCH: Setup → Detector → Routine + editable channels.
+
+    Binds directly to the reader (``model``). Selecting a detector writes the
+    routing channels, micro-time window, reading routine and the chosen
+    setup/detector names back onto the reader so the editor can be rebuilt
+    idempotently.
+    """
+
+    changed = QtCore.Signal()
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self._model = model
+        self._detector_setups: dict = {}
+
+        grid = QtWidgets.QGridLayout(self)
+        grid.setContentsMargins(0, 2, 0, 2)
+        grid.setSpacing(3)
+
+        grid.addWidget(QtWidgets.QLabel("Setup:"), 0, 0)
+        self.combo_setup = QtWidgets.QComboBox()
+        grid.addWidget(self.combo_setup, 0, 1)
+
+        grid.addWidget(QtWidgets.QLabel("Detector:"), 0, 2)
+        self.combo_detector = QtWidgets.QComboBox()
+        grid.addWidget(self.combo_detector, 0, 3)
+
+        grid.addWidget(QtWidgets.QLabel("Routine:"), 1, 0)
+        self.combo_routine = QtWidgets.QComboBox()
+        try:
+            import tttrlib  # type: ignore[import]
+            supported = list(tttrlib.TTTR.get_supported_container_names()) or ["PTU", "HT3", "SPC"]
+            self.combo_routine.addItems([str(s) for s in supported])
+        except Exception:
+            self.combo_routine.addItems(["PTU", "HT3", "SPC"])
+        grid.addWidget(self.combo_routine, 1, 1)
+
+        grid.addWidget(QtWidgets.QLabel("Routing chs:"), 1, 2)
+        self.lineedit_channels = QtWidgets.QLineEdit()
+        self.lineedit_channels.setPlaceholderText("e.g. 0,2")
+        grid.addWidget(self.lineedit_channels, 1, 3)
+
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(3, 1)
+
+        self.combo_setup.currentIndexChanged.connect(self._on_setup_changed)
+        self.combo_detector.currentIndexChanged.connect(self._on_detector_changed)
+        self.combo_routine.currentTextChanged.connect(self._on_routine_changed)
+        self.lineedit_channels.editingFinished.connect(self._on_channels_edited)
+
+        self._reload_setups()
+
+    def _reload_setups(self) -> None:
+        try:
+            data = load_detector_setups()
+            setups = data.get("setups", {}) if isinstance(data, dict) else {}
+        except Exception:
+            setups = {}
+        self._detector_setups = setups if isinstance(setups, dict) else {}
+
+        self.combo_setup.blockSignals(True)
+        self.combo_setup.clear()
+        for name in sorted(self._detector_setups.keys()):
+            self.combo_setup.addItem(str(name))
+        # Restore previously selected setup from the model when present
+        prev = str(getattr(self._model, "detector_setup", "") or "")
+        if prev:
+            idx = self.combo_setup.findText(prev)
+            if idx >= 0:
+                self.combo_setup.setCurrentIndex(idx)
+        self.combo_setup.blockSignals(False)
+
+        if self.combo_setup.count() > 0:
+            self._on_setup_changed(self.combo_setup.currentIndex(), restore=True)
+
+    def _on_setup_changed(self, _idx: int, restore: bool = False) -> None:
+        setup_name = self.combo_setup.currentText().strip()
+        sd = self._detector_setups.get(setup_name) if setup_name else None
+        dets = sd.get("detectors", {}) if isinstance(sd, dict) else {}
+
+        self.combo_detector.blockSignals(True)
+        self.combo_detector.clear()
+        for det_name in sorted(dets.keys()):
+            self.combo_detector.addItem(str(det_name))
+        if restore:
+            prev = str(getattr(self._model, "detector_name", "") or "")
+            if prev:
+                idx = self.combo_detector.findText(prev)
+                if idx >= 0:
+                    self.combo_detector.setCurrentIndex(idx)
+        self.combo_detector.blockSignals(False)
+
+        # Sync reading routine from the setup's tttr_reading.file_type
+        try:
+            reading = sd.get("tttr_reading", {}) if isinstance(sd, dict) else {}
+            routine_name = reading.get("file_type") if isinstance(reading, dict) else None
+        except Exception:
+            routine_name = None
+        if isinstance(routine_name, str) and routine_name:
+            self.combo_routine.blockSignals(True)
+            ri = self.combo_routine.findText(routine_name)
+            if ri >= 0:
+                self.combo_routine.setCurrentIndex(ri)
+            self.combo_routine.blockSignals(False)
+
+        if self.combo_detector.count() > 0:
+            self._apply_detector(emit=not restore)
+        elif not restore:
+            self.changed.emit()
+
+    def _on_detector_changed(self, _idx: int) -> None:
+        self._apply_detector(emit=True)
+
+    def _apply_detector(self, emit: bool = True) -> None:
+        setup_name = self.combo_setup.currentText().strip()
+        det_name = self.combo_detector.currentText().strip()
+        sd = self._detector_setups.get(setup_name) if setup_name else None
+        dets = sd.get("detectors", {}) if isinstance(sd, dict) else {}
+        info = dets.get(det_name) if det_name else None
+
+        if isinstance(info, dict):
+            chs = info.get("chs", [])
+            try:
+                text = ", ".join(str(int(c)) for c in chs)
+            except Exception:
+                text = ""
+            self.lineedit_channels.blockSignals(True)
+            self.lineedit_channels.setText(text)
+            self.lineedit_channels.blockSignals(False)
+
+            # Micro-time window from the first defined range
+            mtr = info.get("micro_time_ranges", None)
+            if isinstance(mtr, (list, tuple)) and mtr:
+                first = mtr[0]
+                if isinstance(first, dict):
+                    first = first.get("range", first.get("values", first))
+                if isinstance(first, (list, tuple)) and len(first) >= 2:
+                    try:
+                        self._model.micro_time_range = (int(first[0]), int(first[1]))
+                    except Exception:
+                        pass
+
+        self._write_channels_to_model()
+        try:
+            self._model.detector_setup = setup_name
+            self._model.detector_name = det_name
+        except Exception:
+            pass
+        if emit:
+            self.changed.emit()
+
+    def _on_routine_changed(self, text: str) -> None:
+        try:
+            self._model.reading_routine = text
+        except Exception:
+            pass
+        self.changed.emit()
+
+    def _on_channels_edited(self) -> None:
+        self._write_channels_to_model()
+        self.changed.emit()
+
+    def _write_channels_to_model(self) -> None:
+        channels = self.get_channels()
+        try:
+            self._model.channel_numbers = np.array(channels, dtype=np.int8)
+            self._model.channel = int(channels[0])
+        except Exception:
+            pass
+
+    def get_channels(self) -> list[int]:
+        text = self.lineedit_channels.text().strip()
+        channels: list[int] = []
+        for part in text.replace(";", ",").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                channels.append(int(part))
+            except Exception:
+                continue
+        return channels if channels else [0]
+
+    def sync_from_reader(self, setup) -> None:
+        """Refresh routine/channels display from a reader/setup object."""
+        rr = getattr(setup, 'reading_routine', None)
+        if isinstance(rr, str) and rr:
+            idx = self.combo_routine.findText(rr)
+            if idx >= 0:
+                self.combo_routine.blockSignals(True)
+                self.combo_routine.setCurrentIndex(idx)
+                self.combo_routine.blockSignals(False)
+        chs = getattr(setup, 'channel_numbers', None)
+        if chs is None:
+            chs = [getattr(setup, 'channel', 0)]
+        try:
+            seq = list(chs)
+        except TypeError:
+            seq = [chs]
+        self.lineedit_channels.blockSignals(True)
+        self.lineedit_channels.setText(", ".join(str(int(c)) for c in seq))
+        self.lineedit_channels.blockSignals(False)
+
+
+def _register_pch_sections() -> None:
+    from chisurf.gui.autoform.sections.registry import register_section
+    register_section("pch_detector")(_PchDetectorWidget)
 
 
 class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
@@ -39,82 +250,25 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         return pathlib.Path(fn) if fn else pathlib.Path("")
 
     def __init__(self, *args, **kwargs):
+        _register_pch_sections()
         super().__init__(*args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
 
-        label = QtWidgets.QLabel(
-            "PCH loader (TTTR → P(k))\n"
-            "Drop TTTR files (e.g. PTU/HT3) here. The reader will compute a\n"
-            "photon-count histogram P(k) suitable for PCH fitting."
-        )
-        label.setWordWrap(True)
-        layout.addWidget(label)
+        layout.addWidget(QtWidgets.QLabel("PCH: Drop TTTR (PTU/HT3) here."))
 
-        # Detector setup + logical detector selection (from channel wizard JSON)
-        file_params_layout = QtWidgets.QGridLayout()
-        file_params_layout.setContentsMargins(0, 0, 0, 0)
-        file_params_layout.setSpacing(4)
-
-        file_params_layout.addWidget(QtWidgets.QLabel("Setup:"), 0, 0)
-        self.combo_setup = QtWidgets.QComboBox(self)
-        file_params_layout.addWidget(self.combo_setup, 0, 1)
-
-        file_params_layout.addWidget(QtWidgets.QLabel("Detector:"), 0, 2)
-        self.combo_detector = QtWidgets.QComboBox(self)
-        file_params_layout.addWidget(self.combo_detector, 0, 3)
-
-        file_params_layout.addWidget(QtWidgets.QLabel("Routine:"), 1, 0)
-        self.combo_routine = QtWidgets.QComboBox(self)
-        try:
-            import tttrlib  # type: ignore[import]
-
-            supported = []
-            try:
-                supported = list(tttrlib.TTTR.get_supported_container_names())
-            except Exception:
-                supported = []
-            if not supported:
-                supported = ["PTU", "HT3", "SPC"]
-            self.combo_routine.addItems([str(s) for s in supported])
-        except Exception:
-            self.combo_routine.addItems(["PTU", "HT3", "SPC"])
-        file_params_layout.addWidget(self.combo_routine, 1, 1)
-
-        file_params_layout.addWidget(QtWidgets.QLabel("Routing chs:"), 1, 2)
-        self.lineedit_channels = QtWidgets.QLineEdit(self)
-        self.lineedit_channels.setPlaceholderText("e.g. 0,2")
-        file_params_layout.addWidget(self.lineedit_channels, 1, 3)
-
-        layout.addLayout(file_params_layout)
-
-        # Timing / micro-time controls
-        opts = QtWidgets.QGridLayout()
-        opts.setContentsMargins(0, 0, 0, 0)
-        opts.setSpacing(0)
-
-        opts.addWidget(QtWidgets.QLabel("Bin time [µs]"), 0, 0)
-        self.spin_bin = QtWidgets.QDoubleSpinBox(self)
-        self.spin_bin.setDecimals(3)
-        self.spin_bin.setRange(0.1, 1.0e6)
-        self.spin_bin.setValue(100.0)
-        opts.addWidget(self.spin_bin, 0, 1, 1, 2)
-
-        opts.addWidget(QtWidgets.QLabel("Micro time min"), 1, 0)
-        self.spin_mt_min = QtWidgets.QSpinBox(self)
-        self.spin_mt_min.setRange(0, 65535)
-        self.spin_mt_min.setValue(0)
-        opts.addWidget(self.spin_mt_min, 1, 1)
-
-        opts.addWidget(QtWidgets.QLabel("max"), 1, 2)
-        self.spin_mt_max = QtWidgets.QSpinBox(self)
-        self.spin_mt_max.setRange(0, 65535)
-        self.spin_mt_max.setValue(65535)
-        opts.addWidget(self.spin_mt_max, 1, 3)
-
-        layout.addLayout(opts)
+        # AutoForm covers the Detector and Acquisition panels (declarative spec)
+        reader_obj = getattr(self, "experiment_reader", None)
+        self._settings_form = None
+        self._detector_widget: _PchDetectorWidget | None = None
+        self._refresh_pending = False
+        if reader_obj is not None and hasattr(reader_obj, "view_spec"):
+            from chisurf.gui.autoform import AutoForm
+            self._settings_form = AutoForm(reader_obj, parent=self)
+            layout.addWidget(self._settings_form)
+            self._bind_detector_widget()
 
         # P(k) preview
         preview_group = QtWidgets.QGroupBox("Preview (drop TTTR here)")
@@ -164,56 +318,50 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         self._preview_p = None
         self._preview_file_list = None
 
-        # Cache of detector setups loaded from the central JSON
-        self._detector_setups = {}
-
-        # Enable drag-and-drop of TTTR files at the controller level. We rely
-        # on Qt's default propagation so drops anywhere inside the controller
-        # (including on the plot) are handled by dragEnterEvent/dropEvent
-        # implemented on this widget, mirroring the RICS controller.
+        # Enable drag-and-drop of TTTR files at the controller level.
         self.setAcceptDrops(True)
 
-        # Wire parameter changes
-        try:
-            self.combo_routine.currentTextChanged.connect(self.onParametersChanged)
-        except Exception:
-            pass
-        try:
-            self.lineedit_channels.editingFinished.connect(self.onParametersChanged)
-        except Exception:
-            pass
-        for w in (self.spin_bin, self.spin_mt_min, self.spin_mt_max):
-            try:
-                w.valueChanged.connect(self.onParametersChanged)
-            except Exception:
-                pass
+        # Preview buttons
+        self.toolbtn_clear_preview.clicked.connect(self._on_clear_preview_clicked)
+        self.toolbtn_add_pch.clicked.connect(self._on_add_pch_clicked)
+        self.toolbtn_compute_pch.clicked.connect(self._on_compute_pch_clicked)
 
-        # Add / Clear / Compute preview
-        try:
-            self.toolbtn_clear_preview.clicked.connect(self._on_clear_preview_clicked)
-        except Exception:
-            pass
-        try:
-            self.toolbtn_add_pch.clicked.connect(self._on_add_pch_clicked)
-        except Exception:
-            pass
-        try:
-            self.toolbtn_compute_pch.clicked.connect(self._on_compute_pch_clicked)
-        except Exception:
-            pass
+    def _bind_detector_widget(self) -> None:
+        """Grab the AutoForm-built detector widget and expose its child refs.
 
-        # Detector setup / detector combos
-        try:
-            self.combo_setup.currentIndexChanged.connect(self._on_setup_combo_changed)
-            self.combo_detector.currentIndexChanged.connect(self._on_detector_combo_changed)
-        except Exception:
-            pass
+        Keeps ``self.combo_routine`` / ``self.lineedit_channels`` available so
+        the load/preview paths can read the current routine and channels.
+        """
+        if self._settings_form is None:
+            return
+        widgets = self._settings_form.findChildren(_PchDetectorWidget)
+        if not widgets:
+            return
+        self._detector_widget = widgets[0]
+        self.combo_routine = self._detector_widget.combo_routine
+        self.lineedit_channels = self._detector_widget.lineedit_channels
+        self._detector_widget.changed.connect(self._on_detector_changed)
 
-        # Load available detector setups once at construction
+    def _on_detector_changed(self) -> None:
+        """Detector selection changed: push to setup and refresh value fields.
+
+        The detector may have rewritten ``micro_time_range`` on the reader; a
+        deferred rebuild keeps the Acquisition value fields in sync without
+        deleting the widget that emitted the signal mid-callback.
+        """
+        self.onParametersChanged()
+        if not self._refresh_pending and self._settings_form is not None:
+            self._refresh_pending = True
+            QtCore.QTimer.singleShot(0, self._rebuild_settings_form)
+
+    def _rebuild_settings_form(self) -> None:
+        self._refresh_pending = False
+        if self._settings_form is None:
+            return
         try:
-            self._reload_detector_setups()
-        except Exception:
-            pass
+            self._settings_form.rebuild()
+        finally:
+            self._bind_detector_widget()
 
     @property
     def filename(self) -> str:
@@ -221,236 +369,42 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         return str(fn) if fn is not None else ""
 
     def updateUI(self):
-        try:
-            setup = cs.cs.current_setup
-        except Exception:
+        reader_obj = getattr(self, "experiment_reader", None)
+        if reader_obj is None:
             return
-
-        # reading routine
-        try:
-            rr = getattr(setup, 'reading_routine', None)
-            if isinstance(rr, str) and rr:
-                idx = self.combo_routine.findText(rr)
-                if idx >= 0:
-                    self.combo_routine.setCurrentIndex(idx)
-        except Exception:
-            pass
-
-        # channels
-        try:
-            chs = getattr(setup, 'channel_numbers', None)
-            if chs is None:
-                chs = [getattr(setup, 'channel', 0)]
+        if self._detector_widget is not None:
             try:
-                seq = list(chs)
-            except TypeError:
-                seq = [chs]
-            text = ", ".join(str(int(c)) for c in seq)
-            self.lineedit_channels.setText(text)
-        except Exception:
-            pass
-
-        # bin time
-        try:
-            bt = float(getattr(setup, 'bin_time_us', self.spin_bin.value()))
-            if bt > 0.0:
-                self.spin_bin.setValue(bt)
-        except Exception:
-            pass
-
-        # micro time range
-        try:
-            mtr = getattr(setup, 'micro_time_range', None)
-            if isinstance(mtr, (tuple, list)) and len(mtr) >= 2:
-                self.spin_mt_min.setValue(int(mtr[0]))
-                self.spin_mt_max.setValue(int(mtr[1]))
-        except Exception:
-            pass
+                self._detector_widget.sync_from_reader(reader_obj)
+            except Exception:
+                pass
+        if self._settings_form is not None:
+            try:
+                self._settings_form.rebuild()
+                self._bind_detector_widget()
+            except Exception:
+                pass
 
     def onParametersChanged(self):
-        routine = self.combo_routine.currentText()
+        """Ensure the bound reader reflects the current detector selection.
 
-        try:
-            ch_text = self.lineedit_channels.text().strip()
-        except Exception:
-            ch_text = ""
-        channels: list[int] = []
-        if ch_text:
-            for part in ch_text.replace(";", ",").split(","):
-                part = part.strip()
-                if not part:
-                    continue
-                try:
-                    channels.append(int(part))
-                except Exception:
-                    continue
-        if not channels:
-            channels = [0]
-        first_channel = int(channels[0])
-        channel_numbers_expr = ", ".join(str(int(c)) for c in channels)
-
-        bt = float(self.spin_bin.value())
-        mt_min = int(self.spin_mt_min.value())
-        mt_max = int(self.spin_mt_max.value())
-
-        try:
-            cs.run(
-                "\n".join(
-                    [
-                        f"cs.current_setup.reading_routine = '{routine}'",
-                        f"cs.current_setup.channel_numbers = np.array([{channel_numbers_expr}], dtype=np.int8)",
-                        f"cs.current_setup.channel = {first_channel}",
-                        f"cs.current_setup.bin_time_us = {bt}",
-                        f"cs.current_setup.micro_time_range = ({mt_min}, {mt_max})",
-                    ]
-                )
-            )
-        except Exception:
-            pass
-
-    # ------------------------------------------------------------------
-    # Detector setup / detector selection based on detector_setups.json
-    # ------------------------------------------------------------------
-
-    def _reload_detector_setups(self) -> None:
-        """Load detector setups from the central JSON and populate combo_setup.
-
-        This mirrors the behaviour of the RICS loader but only exposes setup
-        name and detector name, which are used to derive routing channels and
-        optional micro-time windows for PCH.
+        The Acquisition fields (bin time, micro-time window) are already
+        live-bound to the reader through AutoForm; this pushes the detector
+        widget's routine and routing channels so a load reads consistent state.
         """
-
-        try:
-            data = load_detector_setups()
-            setups = data.get("setups", {}) if isinstance(data, dict) else {}
-        except Exception:
-            setups = {}
-
-        self._detector_setups = setups if isinstance(setups, dict) else {}
-
-        try:
-            self.combo_setup.blockSignals(True)
-        except Exception:
-            pass
-        self.combo_setup.clear()
-        for name in sorted(self._detector_setups.keys()):
-            self.combo_setup.addItem(str(name))
-        try:
-            self.combo_setup.blockSignals(False)
-        except Exception:
-            pass
-
-        if self.combo_setup.count() > 0:
-            self._on_setup_combo_changed(0)
-
-    def _on_setup_combo_changed(self, _idx: int) -> None:
-        """Populate detector combo when the setup changes.
-
-        Additionally, try to synchronize the TTTR reading routine combo with
-        the setup's stored ``tttr_reading.file_type`` when available.
-        """
-
-        try:
-            setup_name = self.combo_setup.currentText().strip()
-        except Exception:
-            setup_name = ""
-        sd = self._detector_setups.get(setup_name) if setup_name else None
-        dets = sd.get("detectors", {}) if isinstance(sd, dict) else {}
-
-        try:
-            self.combo_detector.blockSignals(True)
-        except Exception:
-            pass
-        self.combo_detector.clear()
-        for det_name in sorted(dets.keys()):
-            self.combo_detector.addItem(str(det_name))
-        try:
-            self.combo_detector.blockSignals(False)
-        except Exception:
-            pass
-
-        # Update reading routine from tttr_reading.file_type when available
-        try:
-            reading = sd.get("tttr_reading", {}) if isinstance(sd, dict) else {}
-            routine_name = reading.get("file_type") if isinstance(reading, dict) else None
-        except Exception:
-            routine_name = None
-        if isinstance(routine_name, str) and routine_name:
-            try:
-                self.combo_routine.blockSignals(True)
-            except Exception:
-                pass
-            try:
-                idx = self.combo_routine.findText(routine_name)
-                if idx >= 0:
-                    self.combo_routine.setCurrentIndex(idx)
-            finally:
-                try:
-                    self.combo_routine.blockSignals(False)
-                except Exception:
-                    pass
-
-        if self.combo_detector.count() > 0:
-            self._on_detector_combo_changed(0)
-        else:
-            # Even without a detector, propagate setup/routine changes.
-            try:
-                self.onParametersChanged()
-            except Exception:
-                pass
-
-    def _on_detector_combo_changed(self, _idx: int) -> None:
-        """Update routing channels and micro-time range from detector definition."""
-
-        try:
-            setup_name = self.combo_setup.currentText().strip()
-        except Exception:
-            setup_name = ""
-        try:
-            det_name = self.combo_detector.currentText().strip()
-        except Exception:
-            det_name = ""
-
-        sd = self._detector_setups.get(setup_name) if setup_name else None
-        dets = sd.get("detectors", {}) if isinstance(sd, dict) else {}
-        info = dets.get(det_name) if det_name else None
-        if not isinstance(info, dict):
+        reader_obj = getattr(self, "experiment_reader", None)
+        if reader_obj is None:
             return
-
-        chs = info.get("chs", [])
-        mtr = info.get("micro_time_ranges", None)
-
-        # Update routing channels text box
-        try:
-            text = ", ".join(str(int(c)) for c in chs)
-        except Exception:
-            text = ""
-        try:
-            self.lineedit_channels.setText(text)
-        except Exception:
-            pass
-
-        # Optionally update micro-time spin boxes from the first defined range
-        try:
-            ranges = mtr
-            if isinstance(ranges, (list, tuple)) and ranges:
-                first = ranges[0]
-                if isinstance(first, dict):
-                    # Support structures like {"range": [start, end]}
-                    first = first.get("range", first.get("values", first))
-                if isinstance(first, (list, tuple)) and len(first) >= 2:
-                    mt_min = int(first[0])
-                    mt_max = int(first[1])
-                    self.spin_mt_min.setValue(mt_min)
-                    self.spin_mt_max.setValue(mt_max)
-        except Exception:
-            pass
-
-        # Propagate updated detector selection into current_setup
-        try:
-            self.onParametersChanged()
-        except Exception:
-            pass
+        if self._detector_widget is not None:
+            try:
+                reader_obj.reading_routine = self._detector_widget.combo_routine.currentText()
+            except Exception:
+                pass
+            try:
+                channels = self._detector_widget.get_channels()
+                reader_obj.channel_numbers = np.array(channels, dtype=np.int8)
+                reader_obj.channel = int(channels[0])
+            except Exception:
+                pass
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
@@ -490,10 +444,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         except Exception:
             pass
 
-        try:
-            reader_obj = cs.cs.current_setup
-        except Exception:
-            reader_obj = None
+        reader_obj = getattr(self, "experiment_reader", None)
         if reader_obj is None:
             return
 
@@ -541,10 +492,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         except Exception:
             pass
 
-        try:
-            reader_obj = cs.cs.current_setup
-        except Exception:
-            reader_obj = None
+        reader_obj = getattr(self, "experiment_reader", None)
         if reader_obj is None:
             return
 
@@ -725,11 +673,8 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             return None
 
     def _reader_for_current_setup(self):
-        """Return the current setup reader/controller when available."""
-        try:
-            return cs.cs.current_setup
-        except Exception:
-            return None
+        """Return the reader this controller is bound to."""
+        return getattr(self, "experiment_reader", None)
 
     def _set_reader_sample_id(self, sample_id: str | None) -> None:
         """Store the selected sample ID on the current setup reader."""

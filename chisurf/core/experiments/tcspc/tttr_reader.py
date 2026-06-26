@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os.path
+import pathlib
 
 import numpy as np
 import tttrlib
@@ -11,6 +12,8 @@ import chisurf.core.fluorescence.tcspc
 from chisurf import typing
 
 from .reader import TCSPCReader
+
+_VIEW_JSON = pathlib.Path(__file__).parent / "tcspc_tttr.view.json"
 
 
 class TCSPCTTTRReader(TCSPCReader):
@@ -64,6 +67,39 @@ class TCSPCTTTRReader(TCSPCReader):
             self.micro_time_shift = int(micro_time_shift)
         except Exception:
             self.micro_time_shift = 0
+
+    # -- declarative editor adapters ---------------------------------------
+    @property
+    def channel_numbers_str(self) -> str:
+        """Comma-separated routing channels; mirrors ``channel_numbers``."""
+        chs = getattr(self, "channel_numbers", None)
+        if chs is None:
+            chs = [getattr(self, "channel", 0)]
+        try:
+            return ", ".join(str(int(c)) for c in chs)
+        except Exception:
+            return ""
+
+    @channel_numbers_str.setter
+    def channel_numbers_str(self, value: str) -> None:
+        chs = []
+        for part in str(value).replace(";", ",").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                chs.append(int(part))
+            except Exception:
+                continue
+        if not chs:
+            chs = [0]
+        self.channel_numbers = np.array(chs, dtype=np.int8)
+        self.channel = int(chs[0])
+
+    def view_spec(self):
+        """Return the declarative editor spec for the TCSPC-TTTR reader."""
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
 
     def _get_channels(self) -> typing.Tuple[int, ...]:
         """Return the sorted tuple of routing channel numbers.

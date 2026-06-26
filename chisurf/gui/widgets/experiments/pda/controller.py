@@ -1,20 +1,113 @@
 import pathlib
+
 import tttrlib
 
-import chisurf.gui
-from chisurf.core.experiments.core import reader
-
-from chisurf.gui import QtWidgets, QtGui, QtCore
 import chisurf as cs
 from chisurf import logging
-from chisurf.macros import core_data as core_data_macros
+from chisurf.core.experiments.core import reader
 from chisurf.core.experiments.pda import PdaReader
+from chisurf.gui import QtCore, QtWidgets
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
-
-# Reuse the setups loader from the DetectorWizard
+from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
+from chisurf.macros import core_data as core_data_macros
 
 _TTTR_INDEX_CACHE = {}
+
+
+class _PdaDetectorWidget(QtWidgets.QWidget):
+    """Container for the PDA two-detector cascade (Setup / Routine / Ch0 / Ch1).
+
+    This is a pure layout widget: it builds and exposes the combo boxes and
+    line edits. All wiring and business logic live on the controller, which
+    grabs the child widgets via ``findChildren`` after AutoForm builds this.
+    """
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self._model = model
+
+        grid = QtWidgets.QGridLayout(self)
+        grid.setContentsMargins(0, 2, 0, 2)
+        grid.setSpacing(3)
+
+        grid.addWidget(QtWidgets.QLabel("Setup:"), 0, 0)
+        self.comboBox_setup = QtWidgets.QComboBox()
+        grid.addWidget(self.comboBox_setup, 0, 1, 1, 3)
+
+        grid.addWidget(QtWidgets.QLabel("Routine:"), 1, 0)
+        self.comboBox = QtWidgets.QComboBox()
+        self.comboBox.insertItems(0, tttrlib.TTTR.get_supported_container_names())
+        grid.addWidget(self.comboBox, 1, 1, 1, 3)
+
+        grid.addWidget(QtWidgets.QLabel("Detector"), 2, 1)
+        grid.addWidget(QtWidgets.QLabel("Channels"), 2, 2)
+        grid.addWidget(QtWidgets.QLabel("Micro time"), 2, 3)
+
+        grid.addWidget(QtWidgets.QLabel("Ch0:"), 3, 0)
+        self.comboBox_det1 = QtWidgets.QComboBox()
+        grid.addWidget(self.comboBox_det1, 3, 1)
+        self.lineEdit = QtWidgets.QLineEdit("0,3")
+        grid.addWidget(self.lineEdit, 3, 2)
+        self.lineEdit_2 = QtWidgets.QLineEdit("1-16000")
+        self.lineEdit_2.setToolTip(
+            "Microtime ranges for Ch0: start-end; separate multiple ranges with ';'."
+        )
+        grid.addWidget(self.lineEdit_2, 3, 3)
+
+        grid.addWidget(QtWidgets.QLabel("Ch1:"), 4, 0)
+        self.comboBox_det2 = QtWidgets.QComboBox()
+        grid.addWidget(self.comboBox_det2, 4, 1)
+        self.lineEdit_4 = QtWidgets.QLineEdit("1,2")
+        grid.addWidget(self.lineEdit_4, 4, 2)
+        self.lineEdit_3 = QtWidgets.QLineEdit("1-16000")
+        self.lineEdit_3.setToolTip(
+            "Microtime ranges for Ch1: start-end; separate multiple ranges with ';'."
+        )
+        grid.addWidget(self.lineEdit_3, 4, 3)
+
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(2, 1)
+        grid.setColumnStretch(3, 1)
+
+
+class _PdaTimeWindowWidget(QtWidgets.QWidget):
+    """Container for the PDA time-window controls (TW spin, add, list, auto-load)."""
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self._model = model
+
+        grid = QtWidgets.QGridLayout(self)
+        grid.setContentsMargins(0, 2, 0, 2)
+        grid.setSpacing(3)
+
+        grid.addWidget(QtWidgets.QLabel("TW [ms]:"), 0, 0)
+        self.toolButton_add_tw = QtWidgets.QToolButton()
+        self.toolButton_add_tw.setText("+")
+        grid.addWidget(self.toolButton_add_tw, 0, 1)
+        self.doubleSpinBox = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox.setRange(0.01, 9999.0)
+        self.doubleSpinBox.setValue(2.0)
+        grid.addWidget(self.doubleSpinBox, 0, 2)
+        self.checkBox = QtWidgets.QCheckBox("Auto load")
+        self.checkBox.setChecked(True)
+        grid.addWidget(self.checkBox, 0, 3)
+
+        self.listWidget_tw = QtWidgets.QListWidget()
+        self.listWidget_tw.setMaximumHeight(80)
+        self.listWidget_tw.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
+        )
+        grid.addWidget(self.listWidget_tw, 1, 0, 1, 4)
+
+        grid.setColumnStretch(2, 1)
+
+
+def _register_pda_sections() -> None:
+    from chisurf.gui.autoform.sections.registry import register_section
+    register_section("pda_detector")(_PdaDetectorWidget)
+    register_section("pda_tw")(_PdaTimeWindowWidget)
 
 
 class PdaTTTRWidget(
@@ -278,67 +371,111 @@ class PdaTTTRWidget(
             elif chosen == act_clear:
                 self.clear_all()
 
-    @cs.gui.decorators.init_with_ui("pda_tttr.ui")
     def __init__(self, *args, **kwargs):
-        # super().__init__(parent=parent)
+        _register_pda_sections()
+        super().__init__(*args, **kwargs)
+
         # Internal cache for current setup data
         self._setup_name = None
         self._windows = {}
         self._detectors = {}
         self._tttr_reading = {}
-        # Optional list of extra (min_photons, tw_seconds) configurations
-        # used for multi-TW PDA loading. The base TW from the main spin box
-        # is always included implicitly when building the final list.
         self._tw_configs = []
 
-        # Wire UI
-        if hasattr(self, 'label_10'):
-            self.label_10.setText("Setup")
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(2)
 
-        # Add file drop area into verticalLayout
-        self._init_filedrop_area()
-
-        # Action trigger on parameter changes
+        # QAction keeps backward compat with .ui-based signal wiring
+        self.actionParametersChanged = QtWidgets.QAction(self)
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
 
-        # Populate reading routine combo with supported containers
-        self.comboBox.clear()
-        self.comboBox.insertItems(0, tttrlib.TTTR.get_supported_container_names())
+        # AutoForm renders the Detector + Acquisition panels from pda.view.json.
+        # The detector cascade and the time-window controls are custom sections;
+        # nPh min/max are declarative ValueSections bound to the reader.
+        reader_obj = getattr(self, "experiment_reader", None)
+        self._settings_form = None
+        if reader_obj is not None and hasattr(reader_obj, "view_spec"):
+            from chisurf.gui.autoform import AutoForm
+            self._settings_form = AutoForm(reader_obj, parent=self)
+            main_layout.addWidget(self._settings_form)
 
-        # Populate setups and connect signals
-        self._load_available_setups_into_combobox()
+        self._grab_section_refs()
+
+        # File drop area (kept below the AutoForm panels)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setSpacing(2)
+        main_layout.addLayout(self.verticalLayout)
+
+        # Wire signal connections on the grabbed child widgets
+        self.comboBox.currentTextChanged.connect(self.actionParametersChanged.trigger)
         self.comboBox_setup.currentTextChanged.connect(self._on_setup_changed)
         self.comboBox_det1.currentTextChanged.connect(self._on_detector_combo_changed)
         self.comboBox_det2.currentTextChanged.connect(self._on_detector_combo_changed)
+        self.lineEdit.editingFinished.connect(self.actionParametersChanged.trigger)
+        self.lineEdit_2.editingFinished.connect(self.actionParametersChanged.trigger)
+        self.lineEdit_3.editingFinished.connect(self.actionParametersChanged.trigger)
+        self.lineEdit_4.editingFinished.connect(self.actionParametersChanged.trigger)
+        self.doubleSpinBox.valueChanged.connect(self.actionParametersChanged.trigger)
 
-        # Multi-TW controls: the "+" toolbutton appends a new TW entry using
-        # the current minimum-photons value and the main TW spinbox. Entries
-        # are stored as (n_photons, tw_seconds) and mirrored into the
-        # listWidget_tw for user feedback.
-        if hasattr(self, "toolButton_add_tw") and hasattr(self, "listWidget_tw"):
-            try:
-                self.toolButton_add_tw.clicked.connect(self._on_add_tw_clicked)
-                self.listWidget_tw.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-                self.listWidget_tw.customContextMenuRequested.connect(self._on_tw_list_context_menu)
-                self.listWidget_tw.itemDoubleClicked.connect(self._on_tw_item_double_clicked)
-            except Exception:
-                logging.warning("PDA: Failed to connect multi-TW controls.")
-            try:
-                if self.listWidget_tw.count() == 0:
-                    for n_ph, tw_ms in ((10, 1.0), (20, 2.0), (30, 3.0)):
-                        item = QtWidgets.QListWidgetItem(f"{n_ph} ph @ {tw_ms:g} ms")
-                        try:
-                            item.setData(QtCore.Qt.UserRole, (n_ph, tw_ms / 1000.0))
-                        except Exception:
-                            pass
-                        self.listWidget_tw.addItem(item)
-                    self._sync_tw_configs_from_list()
-            except Exception:
-                pass
+        # Multi-TW controls
+        self.toolButton_add_tw.clicked.connect(self._on_add_tw_clicked)
+        self.listWidget_tw.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listWidget_tw.customContextMenuRequested.connect(self._on_tw_list_context_menu)
+        self.listWidget_tw.itemDoubleClicked.connect(self._on_tw_item_double_clicked)
 
-        # Initialize from current selections
+        for n_ph, tw_ms in ((10, 1.0), (20, 2.0), (30, 3.0)):
+            item = QtWidgets.QListWidgetItem(f"{n_ph} ph @ {tw_ms:g} ms")
+            item.setData(QtCore.Qt.UserRole, (n_ph, tw_ms / 1000.0))
+            self.listWidget_tw.addItem(item)
+        self._sync_tw_configs_from_list()
+
+        # File drop area
+        self._init_filedrop_area()
+
+        # Initialize from current detector setup selections
+        self._load_available_setups_into_combobox()
         self._apply_current_setup_and_detectors()
         self.onParametersChanged()
+
+    def _grab_section_refs(self) -> None:
+        """Expose the AutoForm-built custom-section child widgets as attributes.
+
+        Keeps the existing handler/load logic working unchanged: it still reads
+        ``self.comboBox_setup`` / ``self.lineEdit`` / ``self.listWidget_tw`` etc.
+        """
+        if self._settings_form is None:
+            return
+        det = self._settings_form.findChildren(_PdaDetectorWidget)
+        if det:
+            d = det[0]
+            self.comboBox_setup = d.comboBox_setup
+            self.comboBox = d.comboBox
+            self.comboBox_det1 = d.comboBox_det1
+            self.comboBox_det2 = d.comboBox_det2
+            self.lineEdit = d.lineEdit
+            self.lineEdit_2 = d.lineEdit_2
+            self.lineEdit_3 = d.lineEdit_3
+            self.lineEdit_4 = d.lineEdit_4
+        tw = self._settings_form.findChildren(_PdaTimeWindowWidget)
+        if tw:
+            t = tw[0]
+            self.doubleSpinBox = t.doubleSpinBox
+            self.toolButton_add_tw = t.toolButton_add_tw
+            self.checkBox = t.checkBox
+            self.listWidget_tw = t.listWidget_tw
+
+    def _db(self):
+        """Return the MFDB connection from the current reader when available."""
+        try:
+            return self.db
+        except Exception:
+            return None
+
+    def _select_sample_id(self) -> str | None:
+        """Prompt the user for a sample before loading dropped files."""
+        return show_sample_picker_dialog(db=self._db(), parent=self)
 
     def _get_tttr_supported_exts(self):
         exts = set()
@@ -801,7 +938,6 @@ class PdaTTTRWidget(
                 # This covers less common layouts where a BUR file may reference
                 # multiple TTTR files.
                 resolved_cache = {}
-                missing_logged = set()
                 for name_str in file_series.unique():
                     if not name_str:
                         resolved_cache[name_str] = None
@@ -1058,10 +1194,9 @@ class PdaTTTRWidget(
             self.comboBox.setCurrentText(file_type)
 
     def updateUI(self):
-        """Update UI elements based on current_setup properties."""
-        try:
-            setup = cs.cs.current_setup
-        except Exception:
+        """Update UI elements based on the bound reader's properties."""
+        setup = getattr(self, "experiment_reader", None)
+        if setup is None:
             return
 
         # reading routine
@@ -1094,19 +1229,8 @@ class PdaTTTRWidget(
         except Exception:
             pass
 
-        # minimum/maximum number of photons
-        try:
-            min_photons = int(getattr(setup, 'minimum_number_of_photons', 0) or 0)
-            if min_photons > 0:
-                self.spinBox.setValue(min_photons)
-        except Exception:
-            pass
-        try:
-            max_photons = int(getattr(setup, 'maximum_number_of_photons', 0) or 0)
-            if max_photons > 0:
-                self.spinBox_2.setValue(max_photons)
-        except Exception:
-            pass
+        # nPh min/max are AutoForm ValueWidgets bound to the reader; they read
+        # the reader's current value when (re)built, so nothing to push here.
 
         # base time window (convert from seconds to ms)
         try:
@@ -1140,8 +1264,8 @@ class PdaTTTRWidget(
         mt1 = parse_mtr(self.lineEdit_3.text())
         micro_time_ranges = [mt0, mt1]
         channels = [ch0, ch1]
-        minimum_number_of_photons = int(self.spinBox.value())
-        maximum_number_of_photons = int(self.spinBox_2.value())
+        minimum_number_of_photons = int(getattr(self.experiment_reader, 'minimum_number_of_photons', 15) or 15)
+        maximum_number_of_photons = int(getattr(self.experiment_reader, 'maximum_number_of_photons', 500) or 500)
         base_tw_ms = float(self.doubleSpinBox.value())
         base_tw_s = base_tw_ms / 1000.0 if base_tw_ms > 0.0 else 0.0
 
@@ -1155,17 +1279,12 @@ class PdaTTTRWidget(
 
         reading_routine = self.comboBox.currentText()
 
-        # Apply settings directly to the current setup instead of routing
+        # Apply settings directly to the bound reader instead of routing
         # through the embedded IPython console. This avoids spamming the
         # console (especially when many files are dropped) and removes a
         # potential source of instability from repeatedly executing CLI
         # strings.
-        try:
-            gui = getattr(cs, "cs", None)
-            setup = getattr(gui, "current_setup", None) if gui is not None else None
-        except Exception:
-            setup = None
-
+        setup = getattr(self, "experiment_reader", None)
         if setup is None:
             return
 
@@ -1216,7 +1335,7 @@ class PdaTTTRWidget(
         if lw is None:
             return
         try:
-            n_ph = int(self.spinBox.value())
+            n_ph = int(getattr(self.experiment_reader, 'minimum_number_of_photons', 15) or 15)
             tw_ms = float(self.doubleSpinBox.value())
         except Exception:
             return
@@ -1480,8 +1599,8 @@ class PdaTTTRWidget(
                 mt0 = parse_mtr(self.lineEdit_2.text())
                 mt1 = parse_mtr(self.lineEdit_3.text())
                 micro_time_ranges = [mt0, mt1]
-                maximum_number_of_photons = int(self.spinBox_2.value())
-                minimum_number_of_photons = int(self.spinBox.value())
+                maximum_number_of_photons = int(getattr(self.experiment_reader, 'maximum_number_of_photons', 500) or 500)
+                minimum_number_of_photons = int(getattr(self.experiment_reader, 'minimum_number_of_photons', 15) or 15)
                 base_tw_ms = float(self.doubleSpinBox.value())
                 minimum_time_window_length = base_tw_ms / 1000.0  # UI is ms, reader expects seconds
                 reading_routine = self.comboBox.currentText()
@@ -1514,12 +1633,19 @@ class PdaTTTRWidget(
                 )
                 # Attach the correct experiment to the reader so get_data can set d.experiment
                 try:
-                    pda_reader.experiment = cs.core.experiments.types.get('pda') or cs.cs.current_experiment
+                    bound_experiment = getattr(self.experiment_reader, 'experiment', None)
+                    pda_reader.experiment = cs.core.experiments.types.get('pda') or bound_experiment
                 except Exception:
-                    # Fallback to current experiment if types lookup fails
-                    pda_reader.experiment = getattr(cs.cs, 'current_experiment', None)
+                    # Fallback to the bound reader's experiment if types lookup fails
+                    pda_reader.experiment = getattr(self.experiment_reader, 'experiment', None)
                 try:
                     pda_reader.controller = self
+                except Exception:
+                    pass
+
+                sample_id = self._select_sample_id()
+                try:
+                    pda_reader.sample_id = sample_id
                 except Exception:
                     pass
 

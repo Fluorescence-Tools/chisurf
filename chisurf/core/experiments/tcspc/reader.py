@@ -17,6 +17,8 @@ import chisurf.core.data
 
 from chisurf.core.experiments.core.reader import ExperimentReader
 
+_VIEW_JSON = pathlib.Path(__file__).parent / "tcspc_csv.view.json"
+
 
 class TCSPCReader(ExperimentReader):
     operation_type = "tcspc_curve_load"
@@ -228,7 +230,12 @@ class TCSPCReader(ExperimentReader):
             fit_start_fraction = chisurf.core.settings.tcspc['fit_start_fraction']
         self.dt = dt
         self.excitation_repetition_rate = rep_rate
-        self.is_jordi = is_jordi
+        # ``dt_scaled`` mirrors the legacy "dt[ns]" checkbox: when True the
+        # per-channel ``dt`` is multiplied by the y-rebin factor at read time.
+        # Setting ``is_jordi`` updates ``use_header``/``dt_scaled`` (see setter),
+        # so initialise the backing field before the explicit ``use_header``.
+        self.dt_scaled = bool(is_jordi)
+        self._is_jordi = bool(is_jordi)
         # Use mode parameter, but allow polarization as alias for backward compatibility
         self.polarization = mode if mode != 'vm' else polarization
         self.g_factor = self._safe_float(g_factor, calibration_defaults['g_factor'])
@@ -240,11 +247,78 @@ class TCSPCReader(ExperimentReader):
         self.skiprows = skiprows
         self.use_header = use_header
         self.matrix_columns = matrix_columns
+        # Column selection is owned by the generic CSV parameters (the CsvWidget
+        # writes ``col_x``/``col_y`` onto the reader). They default to the first
+        # two columns and drive which columns the CSV-TCSPC read uses.
+        self.col_x = 0
+        self.col_y = 1
         self.fit_area = fit_area
         self.fit_count_threshold = fit_count_threshold
         self.fit_start_fraction = fit_start_fraction
         self.reading_routine = reading_routine
         self.vh_shift = int(vh_shift) if vh_shift is not None else 0
+
+    # -- declarative editor adapters ---------------------------------------
+    @property
+    def is_jordi(self) -> bool:
+        """Whether the file is a stacked VV/VH ("Jordi") file.
+
+        Toggling this mirrors the legacy UI coupling: a Jordi file has no header
+        row (``use_header = False``) and uses the rebin-scaled ``dt``.
+        """
+        return self._is_jordi
+
+    @is_jordi.setter
+    def is_jordi(self, value) -> None:
+        self._is_jordi = bool(value)
+        self.use_header = not bool(value)
+        self.dt_scaled = bool(value)
+
+    @property
+    def matrix_columns_str(self) -> str:
+        """Space-separated column indices; mirrors ``matrix_columns``."""
+        cols = getattr(self, "matrix_columns", ()) or ()
+        try:
+            return " ".join(str(int(c)) for c in cols)
+        except Exception:
+            return ""
+
+    @matrix_columns_str.setter
+    def matrix_columns_str(self, value: str) -> None:
+        try:
+            self.matrix_columns = tuple(int(p) for p in str(value).split() if p.strip())
+        except Exception:
+            self.matrix_columns = ()
+
+    @property
+    def rebin_x_key(self) -> str:
+        """X-rebin factor as a string key for the choice control."""
+        return str(int(self.rebin[0]))
+
+    @rebin_x_key.setter
+    def rebin_x_key(self, value: str) -> None:
+        self.rebin = (int(value), int(self.rebin[1]))
+
+    @property
+    def rebin_y_key(self) -> str:
+        """Y-rebin factor as a string key for the choice control."""
+        return str(int(self.rebin[1]))
+
+    @rebin_y_key.setter
+    def rebin_y_key(self, value: str) -> None:
+        self.rebin = (int(self.rebin[0]), int(value))
+
+    @property
+    def effective_dt(self) -> float:
+        """The ``dt`` actually used for reading (scaled by y-rebin if enabled)."""
+        if getattr(self, "dt_scaled", False):
+            return float(self.dt) * int(self.rebin[1])
+        return float(self.dt)
+
+    def view_spec(self):
+        """Return the declarative editor spec for the CSV-TCSPC reader."""
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
 
     def autofitrange(self, data, **kwargs) -> typing.Tuple[int, int]:
         """Determine the default fit range for TCSPC data.
@@ -354,12 +428,19 @@ class TCSPCReader(ExperimentReader):
             reading_routine = self._guess_reading_routine(filename)
 
         if reading_routine == 'csv':
+            # Columns come from the generic CSV parameters (col_x/col_y) when
+            # available, falling back to the historical ``matrix_columns``.
+            mc = self.matrix_columns
+            col_x = getattr(self, 'col_x', None)
+            col_y = getattr(self, 'col_y', None)
+            if col_x is not None and col_y is not None:
+                mc = (int(col_x), int(col_y))
             data_group = tcspc_io.read_tcspc_csv(
                 filename=filename,
                 skiprows=self.skiprows,
                 rebin=self.rebin,
-                dt=self.dt,
-                matrix_columns=self.matrix_columns,
+                dt=self.effective_dt,
+                matrix_columns=mc,
                 use_header=self.use_header,
                 is_jordi=self.is_jordi,
                 polarization=self.polarization,

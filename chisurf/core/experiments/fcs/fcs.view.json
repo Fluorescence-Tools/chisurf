@@ -1,0 +1,35 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Columns (CSV only)",
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "custom",
+          "key": "fcs_columns"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Noise model",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "weight_mode_key",
+          "label": "Mode",
+          "options": ["", "none", "photon_noise", "starchev", "spline5"],
+          "labels": [
+            "From file (default)",
+            "None / uniform",
+            "Photon-noise (Suren)",
+            "Starchev",
+            "Spline local variance (5 knots)"
+          ]
+        }
+      ]
+    }
+  ]
+}

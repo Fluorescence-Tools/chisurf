@@ -6,9 +6,67 @@ from qtpy import QtWidgets
 
 import chisurf as cs
 import chisurf.gui.widgets
-import chisurf.gui.widgets.fio
 from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
+
+
+class _FcsColumnsWidget(QtWidgets.QWidget):
+    """Compact grid widget for x/y column index + error toggle settings."""
+
+    is_form_field = False
+
+    def __init__(self, model, target=None, parent=None, **kwargs):
+        super().__init__(parent)
+        self._model = model
+
+        grid = QtWidgets.QGridLayout(self)
+        grid.setContentsMargins(0, 2, 0, 2)
+        grid.setSpacing(4)
+
+        # Row 0: x col | y col
+        grid.addWidget(QtWidgets.QLabel("x col"), 0, 0)
+        self._col_x = QtWidgets.QSpinBox()
+        self._col_x.setRange(0, 99)
+        self._col_x.setValue(getattr(model, "col_x", 0))
+        grid.addWidget(self._col_x, 0, 1)
+
+        grid.addWidget(QtWidgets.QLabel("y col"), 0, 2)
+        self._col_y = QtWidgets.QSpinBox()
+        self._col_y.setRange(0, 99)
+        self._col_y.setValue(getattr(model, "col_y", 1))
+        grid.addWidget(self._col_y, 0, 3)
+
+        # Row 1: x-error toggle + col | y-error toggle + col
+        self._err_x = QtWidgets.QCheckBox("x-error")
+        self._err_x.setChecked(getattr(model, "error_x_on", False))
+        grid.addWidget(self._err_x, 1, 0)
+        self._col_ex = QtWidgets.QSpinBox()
+        self._col_ex.setRange(0, 99)
+        self._col_ex.setValue(getattr(model, "col_ex", 2))
+        grid.addWidget(self._col_ex, 1, 1)
+
+        self._err_y = QtWidgets.QCheckBox("y-error")
+        self._err_y.setChecked(getattr(model, "error_y_on", True))
+        grid.addWidget(self._err_y, 1, 2)
+        self._col_ey = QtWidgets.QSpinBox()
+        self._col_ey.setRange(0, 99)
+        self._col_ey.setValue(getattr(model, "col_ey", 3))
+        grid.addWidget(self._col_ey, 1, 3)
+
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(3, 1)
+
+        self._col_x.valueChanged.connect(lambda v: setattr(model, "col_x", v))
+        self._col_y.valueChanged.connect(lambda v: setattr(model, "col_y", v))
+        self._col_ex.valueChanged.connect(lambda v: setattr(model, "col_ex", v))
+        self._col_ey.valueChanged.connect(lambda v: setattr(model, "col_ey", v))
+        self._err_x.toggled.connect(lambda v: setattr(model, "error_x_on", v))
+        self._err_y.toggled.connect(lambda v: setattr(model, "error_y_on", v))
+
+
+def _register_fcs_sections():
+    from chisurf.gui.autoform.sections.registry import register_section
+    register_section("fcs_columns")(_FcsColumnsWidget)
 
 
 class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
@@ -43,6 +101,7 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
             *args,
             **kwargs
     ):
+        _register_fcs_sections()
         super().__init__(*args, **kwargs)
         self.file_type = file_type
 
@@ -51,98 +110,29 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         layout.setSpacing(0)
         self.layout = layout
 
-        # Noise / weighting model selector for FCS correlation amplitudes.
-        # This controls the ExperimentReader.weight_mode attribute so that
-        # read_fcs can recompute correlation_amplitude_weights using the
-        # selected noise model.
-        noise_layout = QtWidgets.QHBoxLayout()
-        noise_layout.setContentsMargins(0, 0, 0, 0)
-        noise_layout.setSpacing(4)
-
-        noise_label = QtWidgets.QLabel("Noise model:")
-        self.noise_model_combo = QtWidgets.QComboBox()
-
-        # First entry: keep whatever the file/reader provides (no re-weighting
-        # in read_fcs, i.e. weight_mode=None).
-        self.noise_model_combo.addItem("From file (default)", userData=None)
-        # Uniform weights (no noise model).
-        self.noise_model_combo.addItem("None / uniform", userData="none")
-        # Photon-noise model using the Suren estimate.
-        self.noise_model_combo.addItem("Photon-noise (Suren)", userData="photon_noise")
-        # Starchev variance model.
-        self.noise_model_combo.addItem("Starchev", userData="starchev")
-        # PyCorrFit-style spline local-variance weights (default 5 knots).
-        self.noise_model_combo.addItem("Spline local variance (5 knots)", userData="spline5")
-
-        self.noise_model_combo.currentIndexChanged.connect(self._on_noise_model_changed)
-
-        noise_layout.addWidget(noise_label)
-        noise_layout.addWidget(self.noise_model_combo, 1)
-        self.layout.addLayout(noise_layout)
-
-        # CSV-style format controls (header, skiprows, columns, etc.).
-        self.csv_widget = cs.gui.widgets.fio.CsvWidget()
-        self.layout.addWidget(self.csv_widget)
-
-        # Sync initial combobox selection with the underlying reader, if
-        # available. By default FCS.weight_mode is None, which corresponds to
-        # "From file (default)".
-        try:
-            current_mode = getattr(self.experiment_reader, 'weight_mode', None)
-        except Exception:
-            current_mode = None
-
-        try:
-            for i in range(self.noise_model_combo.count()):
-                if self.noise_model_combo.itemData(i) == current_mode:
-                    self.noise_model_combo.setCurrentIndex(i)
-                    break
-        except Exception:
-            pass
-
-    def _on_noise_model_changed(self, index: int) -> None:
-        """Qt slot: update the FCS reader's noise/weighting mode."""
-
-        try:
-            mode = self.noise_model_combo.itemData(index)
-        except Exception:
-            mode = None
-
-        reader_obj = getattr(self, 'experiment_reader', None)
-        if reader_obj is None:
-            return
-
-        try:
-            reader_obj.weight_mode = mode
-        except Exception:
-            pass
+        # AutoForm covers Format, Columns, and Noise model panels.
+        reader_obj = getattr(self, "experiment_reader", None)
+        self._settings_form = None
+        if reader_obj is not None and hasattr(reader_obj, "view_spec"):
+            from chisurf.gui.autoform import AutoForm
+            self._settings_form = AutoForm(reader_obj, parent=self)
+            self.layout.addWidget(self._settings_form)
 
     def updateUI(self):
-        """Update UI elements based on current_setup properties."""
-        try:
-            setup = cs.cs.current_setup
-        except Exception:
-            return
-
-        # Sync noise model combo from reader's weight_mode
-        try:
-            weight_mode = getattr(setup, 'weight_mode', None)
-            for i in range(self.noise_model_combo.count()):
-                if self.noise_model_combo.itemData(i) == weight_mode:
-                    self.noise_model_combo.blockSignals(True)
-                    self.noise_model_combo.setCurrentIndex(i)
-                    self.noise_model_combo.blockSignals(False)
-                    break
-        except Exception:
-            pass
+        """Refresh UI from current reader state."""
+        if self._settings_form is not None:
+            try:
+                self._settings_form.rebuild()
+            except Exception:
+                pass
 
     def onParametersChanged(self):
-        """Push current parameters into cs.current_setup.
+        """Push current GUI parameters into cs.current_setup.
 
-        This is a pass-through to _on_noise_model_changed since the FCS
-        controller only has one interactive parameter.
+        The noise model is already live-bound via AutoForm; this is a no-op
+        kept for API compatibility with the base class call sites.
         """
-        self._on_noise_model_changed(self.noise_model_combo.currentIndex())
+        pass
 
 
 __all__ = ["FCSController"]

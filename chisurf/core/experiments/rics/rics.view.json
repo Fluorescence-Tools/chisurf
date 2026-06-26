@@ -1,0 +1,60 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Detector",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "rics_detector"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Acquisition",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "rics_roi"},
+        {
+          "type": "choice",
+          "attr": "subtract_average",
+          "label": "Subtract avg",
+          "options": ["", "frame", "stack"],
+          "labels": ["None", "Frame", "Stack"]
+        },
+        {
+          "type": "value",
+          "attr": "frame_shift",
+          "label": "Frame shift",
+          "kind": "int",
+          "minimum": -9999,
+          "maximum": 9999
+        },
+        {
+          "type": "toggle_row",
+          "items": [
+            {"attr": "fftshift", "label": "Center zero lag"},
+            {"attr": "framewise_rics", "label": "Framewise RICS"}
+          ]
+        },
+        {
+          "type": "value",
+          "attr": "pixel_duration_us",
+          "label": "Pixel dur [µs]",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.0,
+          "maximum": 1000000.0
+        },
+        {
+          "type": "value",
+          "attr": "line_duration_ms",
+          "label": "Line dur [ms]",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.0,
+          "maximum": 1000000.0
+        }
+      ]
+    }
+  ]
+}

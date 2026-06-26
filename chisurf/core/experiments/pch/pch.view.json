@@ -1,0 +1,44 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Detector",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "pch_detector"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Acquisition",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "bin_time_us",
+          "label": "Bin time [µs]",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.1,
+          "maximum": 1000000.0
+        },
+        {
+          "type": "value",
+          "attr": "micro_time_min",
+          "label": "µtime min",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        {
+          "type": "value",
+          "attr": "micro_time_max",
+          "label": "µtime max",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      ]
+    }
+  ]
+}

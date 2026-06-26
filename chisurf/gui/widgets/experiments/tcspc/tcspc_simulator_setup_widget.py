@@ -197,7 +197,10 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
         # Get the current setup
-        setup = cs.cs.current_setup
+        try:
+            setup = cs.current_setup
+        except Exception:
+            return
 
         # Update sample_name line edit
         if hasattr(setup, 'sample_name'):
@@ -213,29 +216,36 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Update p0 spin box
         if hasattr(setup, 'p0'):
-            self.spinBox_2.setValue(setup.p0)
+            self.spinBox_2.setValue(int(setup.p0))
 
         # Update lifetime_spectrum line edit
         if hasattr(setup, 'lifetime_spectrum'):
-            self.lineEdit_2.setText(', '.join(map(str, setup.lifetime_spectrum)) if setup.lifetime_spectrum.size > 0 else '')
+            lt = setup.lifetime_spectrum
+            if isinstance(lt, np.ndarray):
+                text = ', '.join(map(str, lt)) if lt.size > 0 else ''
+            elif isinstance(lt, (list, tuple)):
+                text = ', '.join(map(str, lt))
+            elif lt is None:
+                text = ''
+            else:
+                text = str(lt)
+            self.lineEdit_2.setText(text)
 
     def onParametersChanged(self):
-        dt = self.doubleSpinBox.value()
-        n_tac = self.spinBox.value()
-        p0 = self.spinBox_2.value()
-        sample_name = str(self.lineEdit.text())
-        lt_text = self.lineEdit_2.text()
-        cs.run(
-            "\n".join(
-                [
-                    f"gui.current_setup.sample_name = '{sample_name}'",
-                    f"gui.current_setup.dt = {dt}",
-                    f"gui.current_setup.lifetime_spectrum = np.array([{lt_text}], dtype=np.float64)",
-                    f"gui.current_setup.n_tac = {n_tac}",
-                    f"gui.current_setup.p0 = {p0}"
-                ]
-            )
-        )
+        try:
+            setup = cs.current_setup
+        except Exception:
+            return
+        if setup is None:
+            return
+        try:
+            setup.sample_name = str(self.lineEdit.text())
+            setup.dt = float(self.doubleSpinBox.value())
+            setup.lifetime_spectrum = self._parse_lifetime_spectrum().astype(np.float64)
+            setup.n_tac = int(self.spinBox.value())
+            setup.p0 = int(self.spinBox_2.value())
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Simulation & IRF handling
@@ -598,10 +608,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
             name = "TCSPC-Simulated"
 
         # Resolve experiment, setup and reader from the global ChiSurf state
-        try:
-            gui = cs.cs
-        except Exception:
-            gui = None
+        gui = getattr(cs, "cs", None)
 
         try:
             experiment = getattr(gui, 'current_experiment', None) if gui is not None else None

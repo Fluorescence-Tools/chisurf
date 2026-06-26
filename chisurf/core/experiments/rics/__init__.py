@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import pathlib
 
+_VIEW_JSON = pathlib.Path(__file__).parent / "rics.view.json"
+
+import pathlib
+
 import numpy as np
 import tttrlib
 
@@ -126,6 +130,31 @@ class RICSReader(ExperimentReader):
             return 0, len(y)
         except Exception:
             return 0, 0
+
+    @property
+    def pixel_duration_us(self) -> float:
+        """Pixel dwell time in µs; 0.0 means auto-detect from TTTR header."""
+        v = self.pixel_duration
+        return float(v) if v is not None else 0.0
+
+    @pixel_duration_us.setter
+    def pixel_duration_us(self, value: float) -> None:
+        self.pixel_duration = float(value) if float(value) > 0.0 else None
+
+    @property
+    def line_duration_ms(self) -> float:
+        """Line scan time in ms; 0.0 means auto-detect from TTTR header."""
+        v = self.line_duration
+        return float(v) if v is not None else 0.0
+
+    @line_duration_ms.setter
+    def line_duration_ms(self, value: float) -> None:
+        self.line_duration = float(value) if float(value) > 0.0 else None
+
+    def view_spec(self):
+        """Return the declarative editor spec for RICS reader settings."""
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
 
     def read(
             self,

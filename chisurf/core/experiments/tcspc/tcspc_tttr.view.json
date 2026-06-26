@@ -1,0 +1,73 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Detector",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "tcspc_tttr_detector"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Acquisition",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "micro_time_coarsening",
+          "label": "coarsen",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 4096,
+          "description": "Micro-time coarsening (binning) factor: neighbouring micro-time bins are summed before histogramming."
+        },
+        {
+          "type": "value",
+          "attr": "micro_time_shift",
+          "label": "shift [bins]",
+          "kind": "int",
+          "minimum": -1000000,
+          "maximum": 1000000,
+          "description": "Integer micro-time shift in bins applied to the decay histogram."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Anisotropy (VV/VH)",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "polarization",
+          "label": "pol.",
+          "style": "radio",
+          "options": ["vm", "vv", "vh", "vv/vh"],
+          "labels": ["VM", "VV", "VH", "VV,VH"],
+          "description": "Polarization channel(s) to read when multiple routing channels are selected."
+        },
+        {
+          "type": "value",
+          "attr": "g_factor",
+          "label": "g-factor",
+          "kind": "float",
+          "decimals": 4,
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "step": 0.01,
+          "description": "Detection-efficiency ratio (g-factor) between the parallel and perpendicular channels."
+        },
+        {
+          "type": "value",
+          "attr": "vh_shift",
+          "label": "VH shift [bins]",
+          "kind": "int",
+          "minimum": -1000000,
+          "maximum": 1000000,
+          "description": "Channel shift applied to the VH decay relative to VV."
+        }
+      ]
+    }
+  ]
+}

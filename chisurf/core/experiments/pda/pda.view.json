@@ -1,0 +1,36 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Detector",
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "pda_detector"}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Acquisition",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "minimum_number_of_photons",
+          "label": "nPh min",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        {
+          "type": "value",
+          "attr": "maximum_number_of_photons",
+          "label": "nPh max",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        {"type": "custom", "key": "pda_tw"}
+      ]
+    }
+  ]
+}

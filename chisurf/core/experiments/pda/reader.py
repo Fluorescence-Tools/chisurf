@@ -39,6 +39,8 @@ from chisurf.core.experiments.core.reader import ExperimentReader
 
 from .index_map import build_idx_map
 
+_VIEW_JSON = pathlib.Path(__file__).parent / "pda.view.json"
+
 
 class PdaReader(ExperimentReader):
     operation_type = "pda_histogram_computation"
@@ -86,7 +88,7 @@ class PdaReader(ExperimentReader):
             channels: typing.Tuple[typing.List[int], typing.List[int]],
             micro_time_ranges: typing.List[typing.Tuple[int, int]],
             reading_routine: str = 'PTU',
-            maximum_number_of_photons: int = 150,
+            maximum_number_of_photons: int = 500,
             minimum_number_of_photons: int = 5,
             minimum_time_window_length: float = 2e-3,
             tw_configs=None,
@@ -120,6 +122,11 @@ class PdaReader(ExperimentReader):
         self.minimum_time_window_length = minimum_time_window_length
         self.tw_configs = tw_configs
         self.channels = channels
+
+    def view_spec(self):
+        """Return the declarative editor spec for PDA reader settings."""
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
 
     def autofitrange(self, data, **kwargs) -> typing.Tuple[int, int]:
         """Return the full flattened data range as the default fit interval.

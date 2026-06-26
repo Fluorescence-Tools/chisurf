@@ -34,6 +34,8 @@ def _to_basic(v: Any) -> Any:
     if isinstance(v, np.floating):
         return float(v)
     if isinstance(v, np.ndarray):
+        if v.ndim == 0:
+            return [v.item()]
         return v.tolist()
     if isinstance(v, (list, tuple)):
         out = []

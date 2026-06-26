@@ -10,6 +10,8 @@ import tttrlib
 import chisurf.core.data
 from chisurf.core.experiments.core.reader import ExperimentReader
 
+_VIEW_JSON = pathlib.Path(__file__).parent / "pch.view.json"
+
 
 class PCHReader(ExperimentReader):
     """Experiment reader for photon counting histograms (PCH).
@@ -87,6 +89,38 @@ class PCHReader(ExperimentReader):
             return 0, len(y)
         except Exception:
             return 0, 0
+
+    # -- declarative editor adapters ---------------------------------------
+    @property
+    def micro_time_min(self) -> int:
+        """Lower micro-time bound; mirrors ``micro_time_range[0]``."""
+        mtr = getattr(self, "micro_time_range", None)
+        if isinstance(mtr, (tuple, list)) and len(mtr) >= 2:
+            return int(mtr[0])
+        return 0
+
+    @micro_time_min.setter
+    def micro_time_min(self, value: int) -> None:
+        hi = self.micro_time_max
+        self.micro_time_range = (int(value), int(hi))
+
+    @property
+    def micro_time_max(self) -> int:
+        """Upper micro-time bound; mirrors ``micro_time_range[1]``."""
+        mtr = getattr(self, "micro_time_range", None)
+        if isinstance(mtr, (tuple, list)) and len(mtr) >= 2:
+            return int(mtr[1])
+        return 65535
+
+    @micro_time_max.setter
+    def micro_time_max(self, value: int) -> None:
+        lo = self.micro_time_min
+        self.micro_time_range = (int(lo), int(value))
+
+    def view_spec(self):
+        """Return the declarative editor spec for PCH reader settings."""
+        from chisurf.core.dataspec import load_view_spec
+        return load_view_spec(_VIEW_JSON)
 
     def _get_channels(self) -> Tuple[int, ...]:
         """Return the sorted tuple of routing channel numbers.

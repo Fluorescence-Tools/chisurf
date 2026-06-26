@@ -1,0 +1,87 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Timing",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "dt",
+          "label": "dt [ns/ch]",
+          "kind": "float",
+          "decimals": 6,
+          "minimum": 0.0,
+          "maximum": 120.0,
+          "step": 0.0001,
+          "description": "Time resolution per channel in nanoseconds."
+        },
+        {
+          "type": "toggle",
+          "attr": "dt_scaled",
+          "label": "scale dt",
+          "description": "If enabled, the time-axis dt is multiplied by the y-rebin factor (set automatically for stacked VV/VH files)."
+        },
+        {
+          "type": "choice",
+          "attr": "rebin_x_key",
+          "label": "rebin x",
+          "options": ["1", "2", "4", "8"],
+          "description": "Rebin factor along the x-axis: neighbouring channels are summed, e.g. a value of 2 turns '1,2,3,4' into '3,7'."
+        },
+        {
+          "type": "choice",
+          "attr": "rebin_y_key",
+          "label": "rebin y",
+          "options": ["1", "2", "4", "8"],
+          "description": "Rebin factor along the y-axis: neighbouring counts are summed, e.g. a value of 2 turns '1,2,3,4' into '3,7'."
+        },
+        {
+          "type": "value",
+          "attr": "rep_rate",
+          "label": "rep. [MHz]",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.0,
+          "maximum": 120.0,
+          "step": 0.1,
+          "description": "The repetition rate of the laser in MHz."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Anisotropy (VV/VH)",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "toggle",
+          "attr": "is_jordi",
+          "label": "stacked",
+          "description": "Treat the file as stacked VV/VH: the parallel and perpendicular detection channels are stored vertically one after another. Disables the header row and scales dt by the rebin factor."
+        },
+        {
+          "type": "choice",
+          "attr": "polarization",
+          "label": "pol.",
+          "style": "radio",
+          "options": ["vm", "vv", "vh", "vv/vh"],
+          "labels": ["VM", "VV", "VH", "VV,VH"],
+          "description": "Polarization channel(s) to read: magic-angle, parallel, perpendicular, or stacked VV,VH."
+        },
+        {
+          "type": "value",
+          "attr": "g_factor",
+          "label": "g-factor",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "step": 0.01,
+          "description": "Detection-efficiency ratio (g-factor) between the parallel and perpendicular channels."
+        },
+        {"type": "custom", "key": "tcspc_l1l2"}
+      ]
+    }
+  ]
+}
