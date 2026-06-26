@@ -1,0 +1,47 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Correlator",
+      "collapsed": false,
+      "sections": [
+        {"type": "value", "attr": "n_bins", "label": "FCS bins (B)", "kind": "int",
+         "minimum": 1, "maximum": 65535,
+         "description": "Number of linear correlation bins per cascade."},
+        {"type": "value", "attr": "n_casc", "label": "cascades", "kind": "int",
+         "minimum": 1, "maximum": 64,
+         "description": "Number of multi-tau cascades (n_casc)."},
+        {"type": "toggle", "attr": "make_fine", "label": "Fine grid",
+         "description": "Use the fine (micro-time-resolved) correlation grid."},
+        {"type": "value", "attr": "padding_ms", "label": "Padding ±[ms]", "kind": "float",
+         "decimals": 1, "minimum": 0.0, "maximum": 1000000.0, "step": 0.1,
+         "description": "Photon time padding added around each burst before correlation."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Fitting",
+      "collapsed": false,
+      "sections": [
+        {"type": "choice", "attr": "fit_mode", "label": "Mode", "style": "radio",
+         "options": ["none", "simple", "maxent"], "labels": ["None", "Simple", "MaxEnt"],
+         "description": "Per-curve fit: none, single-component diffusion, or MaxEnt distribution."},
+        {"type": "value", "attr": "maxent_log10_reg", "label": "MaxEnt reg (log10)", "kind": "float",
+         "decimals": 2, "minimum": -12.0, "maximum": 6.0, "step": 0.5,
+         "description": "MaxEnt regularisation strength as log10(reg)."},
+        {"type": "value", "attr": "maxent_td_min", "label": "τ_D min [ms]", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 1000000.0,
+         "description": "Lower diffusion-time bound for the MaxEnt grid (0 = auto)."},
+        {"type": "value", "attr": "maxent_td_max", "label": "τ_D max [ms]", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 1000000000.0,
+         "description": "Upper diffusion-time bound for the MaxEnt grid (0 = auto)."},
+        {"type": "value", "attr": "tmin_fit", "label": "t_min [ms]", "kind": "float",
+         "decimals": 6, "minimum": 0.0, "maximum": 1000000000.0,
+         "description": "Lower correlation-time bound of the fit window (0 = full)."},
+        {"type": "value", "attr": "tmax_fit", "label": "t_max [ms]", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 1000000000.0,
+         "description": "Upper correlation-time bound of the fit window (0 = full)."}
+      ]
+    }
+  ]
+}

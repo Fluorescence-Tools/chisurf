@@ -1,0 +1,17 @@
+{
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Browser plots",
+      "height": 260,
+      "sections": [
+        {"type": "plot", "source": "corr_plot_series", "title": "Correlation",
+         "x_label": "Correlation time t_c (ms)", "y_label": "G", "log_x": true,
+         "description": "Per-burst correlation curve (points) and its fit (line)."},
+        {"type": "plot", "source": "dist_plot_series", "title": "Diffusion-time distribution",
+         "x_label": "Diffusion time τ_D (ms)", "y_label": "P(τ_D)", "log_x": true,
+         "description": "MaxEnt diffusion-time distribution (shown for MaxEnt fits)."}
+      ]
+    }
+  ]
+}
