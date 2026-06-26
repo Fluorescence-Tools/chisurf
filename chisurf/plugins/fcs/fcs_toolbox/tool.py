@@ -1,71 +1,99 @@
-"""FCS Tools — a meta tool that hosts several FCS tools behind a left icon rail.
+"""FCS Tools — a unified FCS toolbox built on the shared navigation shell.
 
-Built on the reusable :class:`chisurf.gui.widgets.meta_tool.MetaToolWindow`
-(the rail + lazy-loaded stack + separators), so it shares the exact construction
-of the other category tool windows.
+Uses :class:`chisurf.gui.widgets.navigation.NavigationPanelTool` — the same base
+the Burst Analysis, Decay Analysis and Imaging Tools windows use — so FCS Tools
+shares their look and codebase instead of a bespoke layout.
 """
 
 from __future__ import annotations
 
 from qtpy import QtWidgets
 
-from chisurf.gui.widgets.meta_tool import SEPARATOR, MetaToolWindow
+from chisurf.gui.widgets.navigation import NavigationPanelTool
 
 
-def _make_detector_def() -> QtWidgets.QWidget:
+def _make_detector_def(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.core.setup_channel_definition.gui.tool import (
         SetupChannelDefinitionWidget,
     )
-    return SetupChannelDefinitionWidget()
+    w = SetupChannelDefinitionWidget()
+    w.setParent(parent)
+    return w
 
 
-def _make_correlation_def() -> QtWidgets.QWidget:
+def _make_correlation_def(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.fcs_channel_preset.gui.tool import FCSChannelWidget
-    return FCSChannelWidget()
+    w = FCSChannelWidget()
+    w.setParent(parent)
+    return w
 
 
-def _make_2dflcs() -> QtWidgets.QWidget:
+def _make_2dflcs(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.flc_2d import TwoDFCSPlugin
-    return TwoDFCSPlugin()
+    w = TwoDFCSPlugin()
+    w.setParent(parent)
+    return w
 
 
-def _make_burst_fcs() -> QtWidgets.QWidget:
+def _make_burst_fcs(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.burst.burst_fcs_correlator.gui.tool import BurstFcsTool
-    return BurstFcsTool()
+    w = BurstFcsTool()
+    w.setParent(parent)
+    return w
 
 
-def _make_diffusion_calc() -> QtWidgets.QWidget:
+def _make_diffusion_calc(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.fcs_calculator.wizard import ConfocalCalcWidget
-    return ConfocalCalcWidget()
+    w = ConfocalCalcWidget()
+    w.setParent(parent)
+    return w
 
 
-def _make_filter_calc() -> QtWidgets.QWidget:
+def _make_filter_calc(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.fcs_filter_calculator.gui_parts.main_window import (
         FcsFilterCalculatorWidget,
     )
-    return FcsFilterCalculatorWidget()
+    w = FcsFilterCalculatorWidget()
+    w.setParent(parent)
+    return w
 
 
-def _make_merger() -> QtWidgets.QWidget:
+def _make_merger(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.fcs_merger.wizard import ChisurfWizard
-    return ChisurfWizard()
+    w = ChisurfWizard()
+    w.setParent(parent)
+    return w
 
 
-# (emoji, label, factory); SEPARATOR rows render a horizontal divider.
-TOOLS = [
-    ("🎛️", "Detector\nDef", _make_detector_def),
-    ("🎚️", "Correlation\nCh Def", _make_correlation_def),
-    ("🟦", "2D-FLCS", _make_2dflcs),
-    ("🔬", "Burst-wise\nFCS", _make_burst_fcs),
-    SEPARATOR,
-    ("🧮", "Diffusion\nCalc", _make_diffusion_calc),
-    ("🧪", "Filter\nCalc", _make_filter_calc),
-    ("🔗", "FCS\nMerger", _make_merger),
+FCS_PANELS = [
+    {"name": "Detector Def", "icon": "🎛️", "factory": _make_detector_def,
+     "role": "detector_def",
+     "description": "Define detector setups (routing channels, PIE windows)."},
+    {"name": "Correlation Ch Def", "icon": "🎚️", "factory": _make_correlation_def,
+     "role": "correlation_def",
+     "description": "Define FCS correlation channel presets."},
+    {"name": "2D-FLCS", "icon": "🟦", "factory": _make_2dflcs,
+     "role": "flc_2d", "description": "Two-dimensional fluorescence lifetime correlation."},
+    {"name": "Burst-wise FCS", "icon": "🔬", "factory": _make_burst_fcs,
+     "role": "burst_fcs", "description": "Per-burst fluorescence correlation."},
+    {"name": "Diffusion Calc", "icon": "🧮", "factory": _make_diffusion_calc,
+     "role": "diffusion_calc", "description": "Confocal diffusion / volume calculator."},
+    {"name": "Filter Calc", "icon": "🧪", "factory": _make_filter_calc,
+     "role": "filter_calc", "description": "Filtered-FCS lifetime filter calculator."},
+    {"name": "FCS Merger", "icon": "🔗", "factory": _make_merger,
+     "role": "merger", "description": "Merge / average FCS correlation curves."},
 ]
 
 
-class FcsToolboxTool(MetaToolWindow):
-    """FCS Tools window (left icon rail + the selected tool on the right)."""
+class FcsToolboxTool(NavigationPanelTool):
+    """FCS Tools window (left navigation panel + the selected tool on the right)."""
 
     def __init__(self, parent=None):
-        super().__init__("🧰 FCS Tools", TOOLS, parent=parent)
+        super().__init__(
+            title="FCS Tools",
+            panels=FCS_PANELS,
+            parent=parent,
+            minimum_size=(950, 600),
+            initial_size=(1180, 740),
+            navigation_width=210,
+        )

@@ -94,9 +94,9 @@ def parse_correlation_folder(folder: pathlib.Path) -> List[Dict[str, Any]]:
         try:
             import json
 
-            import chisurf.core.fio as io
+            from chisurf.core.fio.zipped import open_maybe_zipped
 
-            with io.open_maybe_zipped(file) as fp:
+            with open_maybe_zipped(file) as fp:
                 out.append(json.load(fp))
         except Exception:
             continue

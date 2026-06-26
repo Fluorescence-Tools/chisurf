@@ -1,37 +1,34 @@
-"""Tests for the FCS Toolbox meta tool."""
+"""Tests for the FCS Tools window (shared NavigationPanelTool shell)."""
 
 
-def test_toolbox_builds_with_rail_and_lazy_tools(qapp, qtbot):
-    from chisurf.plugins.fcs.fcs_toolbox.tool import TOOLS, FcsToolboxTool
+def test_fcs_tools_uses_shared_navigation_shell(qapp, qtbot):
+    from chisurf.gui.widgets.navigation import NavigationPanelTool
+    from chisurf.plugins.fcs.fcs_toolbox.tool import FCS_PANELS, FcsToolboxTool
 
     w = FcsToolboxTool()
     qtbot.addWidget(w)
 
-    # one rail button per real tool (SEPARATOR rows have no factory/button)
-    n_tools = sum(1 for *_, factory in TOOLS if factory is not None)
-    assert len(w._group.buttons()) == n_tools == 7
-    assert len(w._factories) == n_tools
-    # there is exactly one separator in the spec
-    assert sum(1 for *_, factory in TOOLS if factory is None) == 1
+    # same base / look as Burst Analysis, Decay Analysis, Imaging Tools
+    assert isinstance(w, NavigationPanelTool)
+    assert w.windowTitle() == "FCS Tools"
 
-    # the stack has one page per tool; the first is instantiated, the rest lazy
-    assert w._stack.count() == n_tools
-    assert w._instances[0] is not None
-    assert all(inst is None for inst in w._instances[1:])
+    # one navigation entry per FCS panel
+    assert len(FCS_PANELS) == 7
+    assert w.nav_list.count() == len(FCS_PANELS)
+    names = [w.nav_list.item(i).text() for i in range(w.nav_list.count())]
+    assert any("Diffusion Calc" in n for n in names)
 
-    # selecting the Diffusion Calc (tool index 4 after the two setup tools,
-    # 2D-FLCS and Burst-wise FCS) instantiates it on demand
-    w._select_tool(4)
-    from chisurf.plugins.fcs.fcs_calculator.wizard import ConfocalCalcWidget
-    assert isinstance(w._instances[4], ConfocalCalcWidget)
-    assert w._stack.currentIndex() == 4
+    # panels load lazily: only the default (first) panel is instantiated initially
+    assert all(p.get("instance") is None for p in w.panels[1:])
+    w.nav_list.setCurrentRow(4)  # Diffusion Calc
+    assert w.panels[4].get("instance") is not None
 
 
 def test_included_plugins_are_menu_hidden():
     import importlib
 
     for mod in (
-        "chisurf.plugins.fcs.fcs_2d",
+        "chisurf.plugins.fcs.flc_2d",
         "chisurf.plugins.fcs.fcs_calculator",
         "chisurf.plugins.fcs.fcs_filter_calculator",
         "chisurf.plugins.fcs.fcs_merger",
