@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import sys
 
+from qtpy import QtCore
 from chisurf.gui import QtWidgets
 
 from scipy.stats import f as fdist
 
 import chisurf.core.decorators
-import chisurf.gui.decorators
 import chisurf.core.models
 import chisurf.core.fitting.fit
 import chisurf.core.math.statistics
@@ -104,33 +104,149 @@ class FTestWidget(QtWidgets.QWidget):
                 )
         self.toolButton_2.setMenu(menu)
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="F-Calculator.ui"
-    )
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        """Initialize the F-Calculator widget and connect UI actions."""
+    def __init__(self, *args, **kwargs):
+        """Initialize the F-Calculator widget with a compact grid layout."""
+        super().__init__(*args, **kwargs)
         self._selected_fit = None
+        self._build_ui()
 
-        # Upper part of F-Calculator
-        self.actionN1Changed.triggered.connect(self.onN1Changed)
-        self.actionN2Changed.triggered.connect(self.onN2Changed)
-        self.actionConf_F_Changed.triggered.connect(self.onConfChanged)
-        self.actionChi2_1_F_Changed.triggered.connect(self.onChi2_1_Changed)
-        self.actionChi2_2_F_Changed.triggered.connect(self.onChi2_2_Changed)
+        # Upper part: F-test comparison of two models
+        self.spinBox.valueChanged.connect(self.onN1Changed)
+        self.spinBox_2.valueChanged.connect(self.onN2Changed)
+        self.doubleSpinBox_2.valueChanged.connect(self.onConfChanged)
+        self.doubleSpinBox.valueChanged.connect(self.onChi2_1_Changed)
+        self.doubleSpinBox_3.valueChanged.connect(self.onChi2_2_Changed)
 
-        # Lower part of F-Calculator
-        self.actionChi2MinChanged.triggered.connect(self.calculate_chi2_max)
-        self.actionNParameterChanged.triggered.connect(self.calculate_chi2_max)
-        self.actionDofChanged.triggered.connect(self.calculate_chi2_max)
-        self.actionOnConf_2_Changed.triggered.connect(self.calculate_chi2_max)
+        # Lower part: chi2-max upper limit from a fit
+        self.doubleSpinBox_5.valueChanged.connect(self.calculate_chi2_max)
+        self.spinBox_4.valueChanged.connect(self.calculate_chi2_max)
+        self.spinBox_3.valueChanged.connect(self.calculate_chi2_max)
+        self.doubleSpinBox_4.valueChanged.connect(self.calculate_chi2_max)
 
         self.toolButton.clicked.connect(self.read_n1)
         self.toolButton_2.clicked.connect(self.read_n2)
         self.toolButton_3.clicked.connect(self.read_n)
+
+    @staticmethod
+    def _label(text: str, tip: str = "") -> QtWidgets.QLabel:
+        lbl = QtWidgets.QLabel(text)
+        lbl.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        if tip:
+            lbl.setToolTip(tip)
+        return lbl
+
+    def _build_ui(self) -> None:
+        """Build the compact two-section grid (replaces F-Calculator.ui)."""
+        self.setWindowTitle("F-Calculator")
+        root = QtWidgets.QVBoxLayout(self)
+        root.setContentsMargins(6, 6, 6, 6)
+        root.setSpacing(6)
+
+        # ── F-test: compare two models ───────────────────────────────
+        box_f = QtWidgets.QGroupBox("F-test (compare two models)")
+        g = QtWidgets.QGridLayout(box_f)
+        g.setContentsMargins(6, 4, 6, 4)
+        g.setHorizontalSpacing(6)
+        g.setVerticalSpacing(3)
+
+        self.doubleSpinBox = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox.setDecimals(4)
+        self.doubleSpinBox.setRange(0.0, 1.0e6)
+        self.doubleSpinBox.setSingleStep(0.001)
+        self.doubleSpinBox.setValue(1.0)
+        self.doubleSpinBox.setToolTip("The chi2 of the first (simpler) model.")
+        self.spinBox = QtWidgets.QSpinBox()
+        self.spinBox.setRange(1, 1000000)
+        self.spinBox.setValue(100)
+        self.spinBox.setToolTip("Number of data points (n1) of the first model fit.")
+        self.toolButton = QtWidgets.QPushButton(">")
+        self.toolButton.setToolTip("Load n1 / chi2 from an open fit.")
+        self.toolButton.setFixedWidth(22)
+
+        self.doubleSpinBox_3 = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox_3.setDecimals(4)
+        self.doubleSpinBox_3.setRange(0.0, 1.0e6)
+        self.doubleSpinBox_3.setSingleStep(0.001)
+        self.doubleSpinBox_3.setValue(1.5)
+        self.doubleSpinBox_3.setToolTip("The chi2 of the second (more complex) model.")
+        self.spinBox_2 = QtWidgets.QSpinBox()
+        self.spinBox_2.setRange(1, 1000000)
+        self.spinBox_2.setValue(5)
+        self.spinBox_2.setToolTip("Number of free parameters added by the second model (n2).")
+        self.toolButton_2 = QtWidgets.QPushButton(">")
+        self.toolButton_2.setToolTip("Load n2 / chi2 from an open fit.")
+        self.toolButton_2.setFixedWidth(22)
+
+        self.doubleSpinBox_2 = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox_2.setDecimals(5)
+        self.doubleSpinBox_2.setRange(0.0, 1.0)
+        self.doubleSpinBox_2.setSingleStep(0.001)
+        self.doubleSpinBox_2.setValue(0.95)
+        self.doubleSpinBox_2.setToolTip("Confidence level of the F-test.")
+
+        g.addWidget(self._label("χ²(1)"), 0, 0)
+        g.addWidget(self.doubleSpinBox, 0, 1)
+        g.addWidget(self._label("n1"), 0, 2)
+        g.addWidget(self.spinBox, 0, 3)
+        g.addWidget(self.toolButton, 0, 4)
+        g.addWidget(self._label("χ²(2)"), 1, 0)
+        g.addWidget(self.doubleSpinBox_3, 1, 1)
+        g.addWidget(self._label("n2"), 1, 2)
+        g.addWidget(self.spinBox_2, 1, 3)
+        g.addWidget(self.toolButton_2, 1, 4)
+        g.addWidget(self._label("conf"), 2, 0)
+        g.addWidget(self.doubleSpinBox_2, 2, 1)
+        g.setColumnStretch(1, 1)
+        g.setColumnStretch(3, 1)
+        root.addWidget(box_f)
+
+        # ── chi2-max: upper limit from a fit ─────────────────────────
+        box_c = QtWidgets.QGroupBox("χ²-max (upper limit from a fit)")
+        c = QtWidgets.QGridLayout(box_c)
+        c.setContentsMargins(6, 4, 6, 4)
+        c.setHorizontalSpacing(6)
+        c.setVerticalSpacing(3)
+
+        self.doubleSpinBox_5 = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox_5.setDecimals(5)
+        self.doubleSpinBox_5.setRange(0.0, 10000.0)
+        self.doubleSpinBox_5.setSingleStep(0.01)
+        self.doubleSpinBox_5.setToolTip("The reduced chi2 (minimum) of the fit.")
+        self.toolButton_3 = QtWidgets.QPushButton(">")
+        self.toolButton_3.setToolTip("Load chi2-min / parameters / dof from an open fit.")
+        self.toolButton_3.setFixedWidth(22)
+
+        self.spinBox_4 = QtWidgets.QSpinBox()
+        self.spinBox_4.setRange(0, 1000000)
+        self.spinBox_4.setToolTip("Number of free parameters of the model.")
+        self.spinBox_3 = QtWidgets.QSpinBox()
+        self.spinBox_3.setRange(0, 1000000)
+        self.spinBox_3.setToolTip("Degrees of freedom (number of data points).")
+        self.doubleSpinBox_4 = QtWidgets.QDoubleSpinBox()
+        self.doubleSpinBox_4.setDecimals(5)
+        self.doubleSpinBox_4.setRange(0.0, 1.0)
+        self.doubleSpinBox_4.setSingleStep(0.01)
+        self.doubleSpinBox_4.setValue(0.95)
+        self.doubleSpinBox_4.setToolTip("Confidence level for the chi2 upper limit.")
+        self.lineEdit = QtWidgets.QLineEdit()
+        self.lineEdit.setReadOnly(True)
+        self.lineEdit.setToolTip("Resulting chi2 upper limit at the chosen confidence level.")
+
+        c.addWidget(self._label("χ² min"), 0, 0)
+        c.addWidget(self.doubleSpinBox_5, 0, 1)
+        c.addWidget(self.toolButton_3, 0, 2)
+        c.addWidget(self._label("params"), 1, 0)
+        c.addWidget(self.spinBox_4, 1, 1)
+        c.addWidget(self._label("dof"), 1, 2)
+        c.addWidget(self.spinBox_3, 1, 3)
+        c.addWidget(self._label("conf"), 2, 0)
+        c.addWidget(self.doubleSpinBox_4, 2, 1)
+        c.addWidget(self._label("χ² max"), 3, 0)
+        c.addWidget(self.lineEdit, 3, 1, 1, 3)
+        c.setColumnStretch(1, 1)
+        c.setColumnStretch(3, 1)
+        root.addWidget(box_c)
+        root.addStretch(1)
 
     def calculate_chi2_max(self):
         """Compute the upper chi2 limit from the selected fit and current parameters."""
