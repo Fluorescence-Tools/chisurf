@@ -12,6 +12,18 @@ from typing import Callable, List, Optional, Tuple
 from qtpy import QtCore, QtWidgets
 
 
+def _make_detector_def() -> QtWidgets.QWidget:
+    from chisurf.plugins.core.setup_channel_definition.gui.tool import (
+        SetupChannelDefinitionWidget,
+    )
+    return SetupChannelDefinitionWidget()
+
+
+def _make_correlation_def() -> QtWidgets.QWidget:
+    from chisurf.plugins.fcs.fcs_channel_preset.gui.tool import FCSChannelWidget
+    return FCSChannelWidget()
+
+
 def _make_2dflcs() -> QtWidgets.QWidget:
     from chisurf.plugins.fcs.fcs_2d import TwoDFCSPlugin
     return TwoDFCSPlugin()
@@ -39,10 +51,16 @@ def _make_merger() -> QtWidgets.QWidget:
     return ChisurfWizard()
 
 
-# (emoji, label, factory)
-TOOLS: List[Tuple[str, str, Callable[[], QtWidgets.QWidget]]] = [
+#: Sentinel marking a visual separator in the rail (setup tools vs. analysis).
+SEPARATOR = ("—", "", None)
+
+# (emoji, label, factory); SEPARATOR rows render a horizontal divider.
+TOOLS: List[Tuple[str, str, Optional[Callable[[], QtWidgets.QWidget]]]] = [
+    ("🎛️", "Detector\nDef", _make_detector_def),
+    ("🎚️", "Correlation\nCh Def", _make_correlation_def),
     ("🟦", "2D-FLCS", _make_2dflcs),
     ("🔬", "Burst-wise\nFCS", _make_burst_fcs),
+    SEPARATOR,
     ("🧮", "Diffusion\nCalc", _make_diffusion_calc),
     ("🧪", "Filter\nCalc", _make_filter_calc),
     ("🔗", "FCS\nMerger", _make_merger),
@@ -75,7 +93,14 @@ class FcsToolboxTool(QtWidgets.QMainWindow):
 
         self._group = QtWidgets.QButtonGroup(self)
         self._group.setExclusive(True)
-        for i, (emoji, label, factory) in enumerate(TOOLS):
+        for emoji, label, factory in TOOLS:
+            if factory is None:  # SEPARATOR
+                line = QtWidgets.QFrame()
+                line.setFrameShape(QtWidgets.QFrame.HLine)
+                line.setFrameShadow(QtWidgets.QFrame.Sunken)
+                rail_l.addWidget(line)
+                continue
+            tool_index = len(self._factories)
             btn = QtWidgets.QToolButton()
             btn.setText(f"{emoji}\n{label}")
             btn.setCheckable(True)
@@ -85,7 +110,7 @@ class FcsToolboxTool(QtWidgets.QMainWindow):
             btn.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
             btn.setMinimumHeight(64)
             btn.setStyleSheet("QToolButton { font-size: 11px; } ")
-            self._group.addButton(btn, i)
+            self._group.addButton(btn, tool_index)
             rail_l.addWidget(btn)
             self._factories.append(factory)
             self._instances.append(None)
@@ -94,7 +119,7 @@ class FcsToolboxTool(QtWidgets.QMainWindow):
 
         # ── right content stack ───────────────────────────────────────
         self._stack = QtWidgets.QStackedWidget()
-        for _ in TOOLS:
+        for _ in self._factories:
             self._stack.addWidget(QtWidgets.QWidget())  # lazy placeholder
         layout.addWidget(self._stack, 1)
 
