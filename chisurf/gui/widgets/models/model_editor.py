@@ -68,8 +68,8 @@ def build_model_editor(model) -> QtWidgets.QWidget:
     existing = getattr(model, _EDITOR_ATTR, None)
     if _is_alive(existing):
         return existing
-    from chisurf.gui.widgets.models.auto_model_widget import AutoModelWidget
-    widget = AutoModelWidget(model)
+    from chisurf.gui.autoform import AutoForm
+    widget = AutoForm(model)
     try:
         setattr(model, _EDITOR_ATTR, widget)
     except Exception:  # pragma: no cover - defensive
@@ -124,10 +124,10 @@ def model_plot_specs(model):
 
     if view is not None:
         try:
-            from chisurf.gui.widgets.models.sections.registry import resolve_plot_specs
-            from chisurf.gui.widgets.models.sections.builtin import (
+            from chisurf.gui.autoform.sections.builtin import (
                 resolve_distribution_options,
             )
+            from chisurf.gui.autoform.sections.registry import resolve_plot_specs
             specs = resolve_plot_specs(view)
             if specs:
                 # resolve string accessors (e.g. distribution plots) to callables

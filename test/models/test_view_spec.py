@@ -54,7 +54,7 @@ def test_lifetime_model_view_spec_structure():
         assert expected in targets, f"missing section target {expected!r}"
 
     # the lifetimes section is dynamic with paired (amplitude, lifetime) rows
-    lifetimes = next(s for s in spec.sections if s.target == "lifetimes")
+    lifetimes = next(s for s in spec.flat_sections() if s.target == "lifetimes")
     assert isinstance(lifetimes, vs.DynamicGroupSection)
     assert lifetimes.row_width == 2
     assert "lifetime_amplitude_options" in lifetimes.header_keys
@@ -95,7 +95,7 @@ def test_lifetime_view_has_irf_curve_input():
     given an instrument response and actually compute a convolved fit."""
     model = _make_lifetime_model()
     spec = model.view_spec()
-    curve_inputs = [s for s in spec.sections if isinstance(s, vs.CurveInputSection)]
+    curve_inputs = [s for s in spec.flat_sections() if isinstance(s, vs.CurveInputSection)]
     irf = next((s for s in curve_inputs if s.select_action == "model.change_irf"), None)
     assert irf is not None, "Lifetime view spec must expose an IRF curve input"
     assert irf.target == "convolve"
@@ -125,10 +125,61 @@ def test_lifetime_view_exposes_bespoke_controls():
     """The Lifetime view declares the bespoke controls the hand-written widget
     had: convolution type + on/off, smoothing, correction toggles, polarization."""
     spec = _make_lifetime_model().view_spec()
-    choices = [s for s in spec.sections if isinstance(s, vs.ChoiceSection)]
-    toggles = [s for s in spec.sections if isinstance(s, vs.ToggleSection)]
+    choices = [s for s in spec.flat_sections() if isinstance(s, vs.ChoiceSection)]
+    toggles = [s for s in spec.flat_sections() if isinstance(s, vs.ToggleSection)]
     choice_attrs = {s.attr for s in choices}
     toggle_attrs = {s.attr for s in toggles}
     assert {"mode", "window_function", "polarization_type"} <= choice_attrs
     assert "do_convolution" in toggle_attrs
-    assert {"correct_pile_up", "correct_dnl", "reverse"} <= toggle_attrs
+    # Pile-up / DNL / Reverse are now in a ToggleRowSection (all on one line)
+    toggle_row_attrs = {
+        item["attr"]
+        for s in spec.flat_sections()
+        if isinstance(s, vs.ToggleRowSection)
+        for item in s.items
+    }
+    assert {"correct_pile_up", "correct_dnl", "reverse"} <= toggle_row_attrs
+
+
+def test_parameter_group_view_adapter_builds_a_section():
+    """PRD-40 Task 4: a FittingParameterGroup renders via ParameterGroupView with
+    no JSON — the adapter yields a one-section ModelView targeting the group."""
+    from chisurf.core import dataspec as ds
+    from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
+
+    group = FittingParameterGroup(
+        name="kinetics",
+        parameters=[
+            FittingParameter(name="k1", value=1.0),
+            FittingParameter(name="k2", value=2.0),
+        ],
+    )
+
+    view = ds.ParameterGroupView(group, collapsed=True).view_spec()
+    assert isinstance(view, ds.ModelView)
+    assert len(view.sections) == 1
+    section = view.sections[0]
+    assert isinstance(section, ds.ParameterGroupSection)
+    assert section.target == "group"        # resolved by AutoForm via getattr
+    assert section.title == "kinetics"       # defaults to the group's name
+    assert section.collapsed is True
+    # the adapter exposes the group at the resolved attribute name
+    assert ds.ParameterGroupView(group).group is group
+
+
+def test_value_section_loads_from_json():
+    """PRD-40: the generic scalar field (int/float/str) parses from JSON."""
+    spec = vs.load_view_spec({
+        "sections": [
+            {"type": "value", "label": "N bins", "kind": "int",
+             "target": "setup", "attr": "n_bins", "minimum": 1, "maximum": 64},
+            {"type": "value", "label": "Name", "kind": "str",
+             "target": "setup", "attr": "name", "placeholder": "untitled"},
+        ],
+        "plots": [],
+    })
+    n_bins, name = spec.sections
+    assert isinstance(n_bins, vs.ValueSection)
+    assert n_bins.kind == "int" and n_bins.attr == "n_bins"
+    assert (n_bins.minimum, n_bins.maximum) == (1, 64)
+    assert name.kind == "str" and name.placeholder == "untitled"

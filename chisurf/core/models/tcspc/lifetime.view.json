@@ -1,61 +1,81 @@
 {
   "_comment": "Editor layout for the TCSPC LifetimeModel. User-editable: reorder sections, change titles, add/remove plots. Compute stays in lifetime.py; custom widgets are referenced by key and live in the GUI section registry.",
   "sections": [
-    {"type": "parameter_group", "target": "convolve", "title": "Convolution"},
-    {"type": "choice", "target": "convolve", "attr": "mode", "label": "Type",
-     "options": ["per", "exp", "full"], "style": "radio"},
-    {"type": "toggle", "target": "convolve", "attr": "do_convolution", "label": "Convolve"},
-    {"type": "curve_input", "target": "convolve", "title": "IRF", "label": "IRF",
-     "select_action": "model.change_irf", "unload_action": "model.unload_irf",
-     "index_key": "irf_idx", "name_key": "irf_name", "name_attr": "irf"},
-    {"type": "parameter_group", "target": "generic", "title": "Generic"},
-    {"type": "parameter_group", "target": "corrections", "title": "Corrections"},
-    {"type": "choice", "target": "corrections", "attr": "window_function", "label": "Smoothing",
-     "options_source": "window_function_types"},
-    {"type": "toggle", "target": "corrections", "attr": "correct_pile_up", "label": "Pile-up"},
-    {"type": "toggle", "target": "corrections", "attr": "correct_dnl", "label": "DNL"},
-    {"type": "toggle", "target": "corrections", "attr": "reverse", "label": "Reverse"},
-    {"type": "curve_input", "target": "corrections", "title": "Linearization", "label": "Lin. table",
-     "select_action": "model.set_linearization", "unload_action": "model.unload_lintable",
-     "index_key": "idx", "name_key": "lin_name"},
     {
-      "type": "dynamic_group",
-      "target": "lifetimes",
-      "title": "Lifetimes",
-      "row_width": 2,
-      "header_keys": ["lifetime_amplitude_options"]
+      "type": "panel",
+      "title": "Convolution",
+      "sections": [
+        {"type": "curve_input", "target": "convolve", "label": "IRF", "select_action": "model.change_irf", "unload_action": "model.unload_irf", "index_key": "irf_idx", "name_key": "irf_name", "name_attr": "irf"},
+        {"type": "choice", "target": "convolve", "attr": "mode", "label": "Type", "options": ["per", "exp", "full"], "style": "radio"},
+        {"type": "toggle", "target": "convolve", "attr": "do_convolution", "label": "Convolve"},
+        {"type": "parameter_group", "target": "convolve", "collapsible": false}
+      ]
     },
-    {"type": "parameter_group", "target": "anisotropy", "title": "Anisotropy"},
-    {"type": "choice", "target": "anisotropy", "attr": "polarization_type", "label": "Polarization",
-     "options": ["vm", "vv", "vh", "vv/vh"]}
+    {
+      "type": "panel",
+      "title": "Generic",
+      "sections": [
+        {"type": "parameter_group", "target": "generic", "collapsible": false}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Corrections",
+      "collapsed": true,
+      "sections": [
+        {"type": "curve_input", "target": "corrections", "label": "Lin. table", "select_action": "model.set_linearization", "unload_action": "model.unload_lintable", "index_key": "idx", "name_key": "lin_name"},
+        {"type": "choice", "target": "corrections", "attr": "window_function", "label": "Smoothing", "options_source": "window_function_types"},
+        {
+          "type": "toggle_row",
+          "items": [
+            {"target": "corrections", "attr": "correct_pile_up", "label": "Pile-up"},
+            {"target": "corrections", "attr": "correct_dnl", "label": "DNL"},
+            {"target": "corrections", "attr": "reverse", "label": "Reverse"}
+          ]
+        },
+        {"type": "parameter_group", "target": "corrections", "collapsible": false}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Lifetimes",
+      "sections": [
+        {
+          "type": "dynamic_group",
+          "target": "lifetimes",
+          "row_width": 2,
+          "header_keys": ["lifetime_amplitude_options"],
+          "collapsible": false,
+          "component_title": "Component"
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Anisotropy",
+      "collapsed_when": {"target": "anisotropy", "attr": "polarization_type", "equals": "vm"},
+      "sections": [
+        {"type": "choice", "target": "anisotropy", "attr": "polarization_type", "label": "Polarization", "options": ["vm", "vv", "vh", "vv/vh"]},
+        {"type": "parameter_group", "target": "anisotropy", "exclude_source": "_rotation_parameters", "collapsible": false},
+        {
+          "type": "dynamic_group",
+          "target": "anisotropy",
+          "append_method": "add_rotation",
+          "remove_method": "remove_rotation",
+          "rows_source": "_rotation_parameter_rows",
+          "row_width": 2,
+          "min_rows": 0,
+          "collapsible": false
+        }
+      ]
+    }
   ],
   "plots": [
-    {
-      "key": "line",
-      "options": {
-        "scale_x": "lin", "d_scaley": "log", "r_scaley": "lin",
-        "x_label": "time (ns)", "y_label": "counts"
-      }
-    },
+    {"key": "line", "options": {"scale_x": "lin", "d_scaley": "log", "r_scaley": "lin", "x_label": "time (ns)", "y_label": "counts"}},
     {"key": "fit_table", "options": {}},
     {"key": "fit_info", "options": {}},
     {"key": "parameter_scan", "options": {}},
-    {
-      "key": "distribution",
-      "options": {
-        "distribution_options": {
-          "Lifetime": {
-            "attribute": "lifetime_spectrum",
-            "accessor": "interleaved_to_two_columns",
-            "accessor_kwargs": {"sort": true},
-            "curve_options": {
-              "stepMode": false, "connect": false,
-              "bar_mode": "sticks", "symbol": "o"
-            }
-          }
-        }
-      }
-    },
+    {"key": "distribution", "options": {"distribution_options": {"Lifetime": {"attribute": "lifetime_spectrum", "accessor": "interleaved_to_two_columns", "accessor_kwargs": {"sort": true}, "curve_options": {"stepMode": false, "connect": false, "bar_mode": "sticks", "symbol": "o"}}}}},
     {"key": "residual", "options": {}}
   ]
 }

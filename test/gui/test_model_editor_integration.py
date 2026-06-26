@@ -130,7 +130,7 @@ def test_lifetime_pure_model_editor_is_populated_and_computes(qapp):
 
     # (c) every ParameterGroupSection resolves to a group that actually has params
     spec = model.view_spec()
-    for section in spec.sections:
+    for section in spec.flat_sections():
         if isinstance(section, vs.ParameterGroupSection):
             group = getattr(model, section.target)
             if hasattr(group, "find_parameters") and not list(group.parameters_all):
@@ -138,17 +138,25 @@ def test_lifetime_pure_model_editor_is_populated_and_computes(qapp):
             assert list(group.parameters_all), f"group {section.target!r} has no parameters"
 
     # (d) the IRF curve input is present so the model can be given an instrument response
-    curve_inputs = [s for s in spec.sections if isinstance(s, vs.CurveInputSection)]
+    curve_inputs = [s for s in spec.flat_sections() if isinstance(s, vs.CurveInputSection)]
     assert any(s.select_action == "model.change_irf" for s in curve_inputs), "no IRF curve input"
 
     # (d2) the bespoke enum/bool controls the hand-written widget had are present
     # (convolution type + on/off, smoothing, correction toggles, polarization).
-    choice_attrs = {s.attr for s in spec.sections if isinstance(s, vs.ChoiceSection)}
-    toggle_attrs = {s.attr for s in spec.sections if isinstance(s, vs.ToggleSection)}
+    choice_attrs = {s.attr for s in spec.flat_sections() if isinstance(s, vs.ChoiceSection)}
+    toggle_attrs = {s.attr for s in spec.flat_sections() if isinstance(s, vs.ToggleSection)}
+    toggle_row_attrs = {
+        item["attr"]
+        for s in spec.flat_sections()
+        if isinstance(s, vs.ToggleRowSection)
+        for item in s.items
+    }
+    all_toggle_attrs = toggle_attrs | toggle_row_attrs
     assert {"mode", "window_function", "polarization_type"} <= choice_attrs, (
         f"missing choice controls; have {choice_attrs}")
-    assert {"do_convolution", "correct_pile_up"} <= toggle_attrs, (
-        f"missing toggle controls; have {toggle_attrs}")
+    assert "do_convolution" in toggle_attrs, f"missing do_convolution toggle; have {toggle_attrs}"
+    assert {"correct_pile_up", "correct_dnl", "reverse"} <= all_toggle_attrs, (
+        f"missing toggle controls; have {all_toggle_attrs}")
 
     # (e) plots resolve and the model computes a finite, non-empty curve
     assert model_plot_specs(model), "no plot specs resolved"

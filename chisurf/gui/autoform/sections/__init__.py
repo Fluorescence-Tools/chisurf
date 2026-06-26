@@ -6,14 +6,14 @@ resolve a model's :class:`~chisurf.core.models.view_spec.ModelView`.
 """
 from __future__ import annotations
 
+from . import builtin  # noqa: F401  (side effect: populate the registry)
 from .registry import (
-    register_plot,
-    register_section,
     get_plot_class,
     get_section_factory,
+    register_plot,
+    register_section,
     resolve_plot_specs,
 )
-from . import builtin  # noqa: F401  (side effect: populate the registry)
 
 __all__ = [
     "register_plot",

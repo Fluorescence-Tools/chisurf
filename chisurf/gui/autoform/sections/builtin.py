@@ -6,11 +6,12 @@ layer references these by string only; the concrete classes live here.
 """
 from __future__ import annotations
 
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import chisurf as cs
 import chisurf.core.math.datatools
 from chisurf import logging
+
 from .registry import register_plot, register_section
 
 
@@ -210,6 +211,19 @@ def _resolve_options_source(name: str):
 class _BoundControlMixin:
     """Shared get/set/dispatch for attribute- or action-bound controls."""
 
+    def _apply_tooltip(self, *widgets):
+        """Set the section's ``description`` as the tooltip on the given widgets.
+
+        Qt does not propagate a parent widget's tooltip to its children, so the
+        interactive editor needs its own copy for the help to show on hover.
+        """
+        desc = getattr(self._section, "description", "")
+        if not desc:
+            return
+        for w in widgets:
+            if w is not None:
+                w.setToolTip(desc)
+
     def _group(self):
         target = getattr(self._section, "target", None)
         return getattr(self._model, target, None) if target else None
@@ -228,9 +242,10 @@ class _BoundControlMixin:
         section = self._section
         if section.attr:
             group = self._group()
-            if group is not None:
+            obj = group if group is not None else self._model
+            if obj is not None:
                 try:
-                    return getattr(group, section.attr)
+                    return getattr(obj, section.attr)
                 except Exception:
                     return None
         return None
@@ -247,9 +262,14 @@ class _BoundControlMixin:
                 cs.core.actions.dispatch(name=section.set_action, payload=payload)
             elif section.attr:
                 group = self._group()
-                if group is not None:
-                    setattr(group, section.attr, value)
-            cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
+                obj = group if group is not None else self._model
+                if obj is not None:
+                    setattr(obj, section.attr, value)
+            # Only nudge the fit machinery when the bound object actually belongs
+            # to a fit. Generic AutoForm consumers (settings/tool dialogs) have no
+            # ``fit`` and must not trigger a recompute.
+            if getattr(self._model, "fit", None) is not None:
+                cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
         except Exception as exc:
             logging.warning(f"bound control commit failed ({section.label}): {exc}")
 
@@ -261,65 +281,175 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
     the hand-written convolution-type control), otherwise a combo box.
     """
 
+    is_form_field = True
+
     def __init__(self, model, section, parent=None):
         super().__init__(parent)
         self._model = model
         self._section = section
+        self.form_label = section.label
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
-        layout.addWidget(QtWidgets.QLabel(section.label))
 
         options = list(section.options)
         if not options and section.options_source:
             options = _resolve_options_source(section.options_source)
+        _labels = list(getattr(section, "labels", ()))
+        _has_labels = bool(_labels) and len(_labels) == len(options)
         current = self._current_value()
 
         self.combo = None
         self._radios = []
         if section.style == "radio":
             self._button_group = QtWidgets.QButtonGroup(self)
-            for opt in options:
-                rb = QtWidgets.QRadioButton(str(opt))
+            for i, opt in enumerate(options):
+                display = _labels[i] if _has_labels else str(opt)
+                rb = QtWidgets.QRadioButton(display)
                 if current is not None and str(opt) == str(current):
                     rb.setChecked(True)
                 rb.toggled.connect(
-                    lambda checked, v=str(opt): self._commit(v) if checked else None
+                    lambda checked, v=opt: self._commit(v) if checked else None
                 )
                 self._button_group.addButton(rb)
                 self._radios.append(rb)
                 layout.addWidget(rb)
             layout.addStretch(1)
+            self._apply_tooltip(self, *self._radios)
         else:
             self.combo = QtWidgets.QComboBox()
-            self.combo.addItems([str(o) for o in options])
+            for i, opt in enumerate(options):
+                display = _labels[i] if _has_labels else str(opt)
+                self.combo.addItem(display)
+            # Match initial selection by option value, not displayed text
             if current is not None:
-                idx = self.combo.findText(str(current))
-                if idx >= 0:
-                    self.combo.setCurrentIndex(idx)
-            self.combo.currentTextChanged.connect(self._commit)
+                for i, opt in enumerate(options):
+                    if str(opt) == str(current):
+                        self.combo.setCurrentIndex(i)
+                        break
+
+            def _on_index_changed(idx, _opts=options):
+                if 0 <= idx < len(_opts):
+                    self._commit(_opts[idx])
+
+            self.combo.currentIndexChanged.connect(_on_index_changed)
             layout.addWidget(self.combo, 1)
+            self._apply_tooltip(self, self.combo)
 
 
 class ToggleWidget(_BoundControlMixin, QtWidgets.QWidget):
     """Boolean checkbox for a :class:`ToggleSection`."""
 
+    is_form_field = True
+
     def __init__(self, model, section, parent=None):
         super().__init__(parent)
         self._model = model
         self._section = section
+        self.form_label = section.label
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.checkbox = QtWidgets.QCheckBox(section.label)
+        # label moves to the form's label column; checkbox sits in the field column
+        self.checkbox = QtWidgets.QCheckBox()
         current = self._current_value()
         if current is not None:
             self.checkbox.setChecked(bool(current))
         self.checkbox.toggled.connect(lambda checked: self._commit(bool(checked)))
         layout.addWidget(self.checkbox)
         layout.addStretch(1)
+        self._apply_tooltip(self, self.checkbox)
+
+
+class ToggleRowWidget(QtWidgets.QWidget):
+    """Multiple boolean checkboxes on a single horizontal line.
+
+    Used for ``ToggleRowSection`` (e.g. Pile-up / DNL / Reverse in corrections).
+    Each item dict has keys ``target``, ``attr``, ``label``.
+    """
+
+    is_form_field = False
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+        for item in section.items:
+            target = item.get("target")
+            attr = item.get("attr", "")
+            label = item.get("label", attr)
+            group = getattr(model, target, model) if target else model
+            cb = QtWidgets.QCheckBox(label)
+            desc = item.get("description", "")
+            if desc:
+                cb.setToolTip(desc)
+            cb.setChecked(bool(getattr(group, attr, False)))
+            def _on_toggle(checked, g=group, a=attr, m=model):
+                setattr(g, a, bool(checked))
+                try:
+                    m.update()
+                except Exception:
+                    pass
+            cb.toggled.connect(_on_toggle)
+            layout.addWidget(cb)
+        layout.addStretch(1)
+
+
+class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
+    """Scalar int / float / string field for a :class:`ValueSection`."""
+
+    is_form_field = True
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._section = section
+        self.form_label = section.label
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+        current = self._current_value()
+        if section.kind == "int":
+            self.editor = QtWidgets.QSpinBox()
+            self.editor.setMinimum(int(section.minimum) if section.minimum is not None else -2_147_483_648)
+            self.editor.setMaximum(int(section.maximum) if section.maximum is not None else 2_147_483_647)
+            if section.step:
+                self.editor.setSingleStep(int(section.step))
+            if section.suffix:
+                self.editor.setSuffix(section.suffix)
+            if current is not None:
+                self.editor.setValue(int(current))
+            self.editor.valueChanged.connect(lambda v: self._commit(int(v)))
+        elif section.kind == "float":
+            self.editor = QtWidgets.QDoubleSpinBox()
+            self.editor.setDecimals(int(section.decimals))
+            self.editor.setMinimum(float(section.minimum) if section.minimum is not None else -1e308)
+            self.editor.setMaximum(float(section.maximum) if section.maximum is not None else 1e308)
+            if section.step:
+                self.editor.setSingleStep(float(section.step))
+            if section.suffix:
+                self.editor.setSuffix(section.suffix)
+            if current is not None:
+                self.editor.setValue(float(current))
+            self.editor.valueChanged.connect(lambda v: self._commit(float(v)))
+        else:  # "str"
+            self.editor = QtWidgets.QLineEdit()
+            if section.placeholder:
+                self.editor.setPlaceholderText(section.placeholder)
+            if current is not None:
+                self.editor.setText(str(current))
+            self.editor.editingFinished.connect(lambda: self._commit(self.editor.text()))
+        if getattr(section, "read_only", False):
+            self.editor.setReadOnly(True)
+            if isinstance(self.editor, QtWidgets.QAbstractSpinBox):
+                self.editor.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        layout.addWidget(self.editor, 1)
+        self._apply_tooltip(self, self.editor)
 
 
 # --- custom sections -------------------------------------------------------
@@ -469,3 +599,76 @@ class LifetimeAmplitudeOptions(QtWidgets.QWidget):
             # Fallback: set directly on the model group.
             group.normalize_amplitudes = bool(self.normalize.isChecked())
             group.absolute_amplitudes = bool(self.absolute.isChecked())
+
+
+class PlotWidget(QtWidgets.QWidget):
+    """Inline plot section rendered from a declarative :class:`PlotSection`.
+
+    Reads the data by calling ``getattr(model, section.source)()``, which must
+    return a list of series mappings (``{"x", "y", "name", "color", "width",
+    "style"}``). Call :meth:`refresh` (e.g. via ``AutoForm.refresh_plots``) to
+    re-read the source after the model changes.
+    """
+
+    is_form_field = False
+
+    _STYLES = {
+        "solid": QtCore.Qt.SolidLine,
+        "dash": QtCore.Qt.DashLine,
+        "dot": QtCore.Qt.DotLine,
+    }
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        import pyqtgraph as pg
+
+        self._model = model
+        self._section = section
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.plot = pg.PlotWidget()
+        if section.height:
+            self.plot.setMaximumHeight(int(section.height))
+        if section.x_label:
+            self.plot.setLabel("bottom", section.x_label)
+        if section.y_label:
+            self.plot.setLabel("left", section.y_label)
+        if section.log_y:
+            try:
+                self.plot.setLogMode(y=True)
+            except Exception:
+                pass
+        if section.legend:
+            try:
+                self.plot.addLegend(offset=(-5, 5))
+            except Exception:
+                pass
+        try:
+            self.plot.getPlotItem().getViewBox().setMenuEnabled(False)
+        except Exception:
+            pass
+        layout.addWidget(self.plot)
+        if getattr(section, "description", ""):
+            self.setToolTip(section.description)
+        self.refresh()
+
+    def refresh(self) -> None:
+        import pyqtgraph as pg
+
+        source = getattr(self._model, self._section.source, None)
+        if not callable(source):
+            return
+        try:
+            series = source() or []
+        except Exception as exc:  # pragma: no cover - source is model-defined
+            logging.warning(f"PlotWidget: source {self._section.source!r} failed: {exc}")
+            return
+        self.plot.clear()
+        for s in series:
+            pen = pg.mkPen(
+                s.get("color", "y"),
+                width=int(s.get("width", 1)),
+                style=self._STYLES.get(s.get("style", "solid"), QtCore.Qt.SolidLine),
+            )
+            self.plot.plot(s.get("x", []), s.get("y", []), pen=pen, name=s.get("name", ""))

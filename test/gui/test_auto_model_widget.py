@@ -45,7 +45,8 @@ def test_auto_model_widget_renders_sections(qapp, lifetime_model):
     w = AutoModelWidget(lifetime_model)
     # one top-level widget per section in the view-spec
     spec = lifetime_model.view_spec()
-    assert w._layout.count() == len(spec.sections)
+    # count includes one trailing stretch item added by rebuild()
+    assert w._layout.count() == len(spec.sections) + 1
     # parameter widgets were created for the resolvable groups
     assert len(w.parameter_widgets) > 0
 
@@ -59,7 +60,7 @@ def test_dynamic_group_add_remove_drives_model(qapp, lifetime_model):
     n0 = len(group)
 
     # find the dynamic section's add/del buttons by walking the built tree
-    section = next(s for s in lifetime_model.view_spec().sections
+    section = next(s for s in lifetime_model.view_spec().flat_sections()
                    if isinstance(s, vs.DynamicGroupSection))
     assert section.target == "lifetimes"
 
@@ -72,13 +73,13 @@ def test_dynamic_group_add_remove_drives_model(qapp, lifetime_model):
 
 
 def test_custom_section_registered(qapp):
-    from chisurf.gui.widgets.models.sections.registry import get_section_factory
+    from chisurf.gui.autoform.sections.registry import get_section_factory
     assert get_section_factory("lifetime_amplitude_options") is not None
 
 
 def test_lifetime_header_has_read_link_controls(qapp, lifetime_model):
     """The ported header exposes abs/norm + read/link, wired to the core group."""
-    from chisurf.gui.widgets.models.sections.registry import get_section_factory
+    from chisurf.gui.autoform.sections.registry import get_section_factory
 
     factory = get_section_factory("lifetime_amplitude_options")
     header = factory(model=lifetime_model, target="lifetimes")
@@ -94,7 +95,7 @@ def test_lifetime_header_has_read_link_controls(qapp, lifetime_model):
 
 
 def test_plot_keys_resolve(qapp):
-    from chisurf.gui.widgets.models.sections.registry import get_plot_class
+    from chisurf.gui.autoform.sections.registry import get_plot_class
     for key in ("line", "residual", "fit_info", "distribution"):
         assert get_plot_class(key) is not None, f"plot key {key} unresolved"
 
@@ -221,7 +222,7 @@ def test_curve_input_widget_renders_and_dispatches(qapp, lifetime_model, monkeyp
     """The IRF curve_input renders as a CurveInputWidget and its selection
     dispatches the configured action with the index/name payload keys."""
     from chisurf.gui.widgets.models.auto_model_widget import AutoModelWidget
-    from chisurf.gui.widgets.models.sections.builtin import CurveInputWidget
+    from chisurf.gui.autoform.sections.builtin import CurveInputWidget
     import chisurf as cs
 
     w = AutoModelWidget(lifetime_model)
@@ -254,7 +255,7 @@ def test_choice_and_toggle_controls_mutate_the_model(qapp, lifetime_model):
     """choice/toggle sections render and their changes write through to the
     bound model attribute (convolution type, do_convolution, polarization)."""
     from chisurf.gui.widgets.models.auto_model_widget import AutoModelWidget
-    from chisurf.gui.widgets.models.sections.builtin import ChoiceWidget, ToggleWidget
+    from chisurf.gui.autoform.sections.builtin import ChoiceWidget, ToggleWidget
 
     w = AutoModelWidget(lifetime_model)
     choices = {c._section.attr: c for c in w.findChildren(ChoiceWidget)}
@@ -379,3 +380,48 @@ def test_build_model_editor_legacy_widget_is_identity(qapp):
     assert build_model_editor(m) is m
     # falls back to plot_classes when view_spec raises / yields nothing
     assert model_plot_specs(m) == [(QtWidgets.QWidget, {"a": 1})]
+
+
+def test_autoform_renders_a_parameter_group_without_json(qapp):
+    """PRD-40 Task 4: AutoForm.from_parameter_group renders a bare param group
+    (no view.json, no Model) into real parameter widgets."""
+    from chisurf.gui.autoform import AutoForm
+    from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
+
+    group = FittingParameterGroup(
+        name="kinetics",
+        parameters=[
+            FittingParameter(name="k1", value=1.0),
+            FittingParameter(name="k2", value=2.0),
+        ],
+    )
+    w = AutoForm.from_parameter_group(group)
+    # one section widget + one trailing stretch = 2 items
+    assert w._layout.count() >= 1
+    assert len(w.parameter_widgets) >= 2
+
+
+def test_value_section_binds_scalar_attributes(qapp):
+    """PRD-40 Task 5 primitive: ValueSection int/str fields read and write the
+    bound object's attributes (the generic typed-field renderer)."""
+    from types import SimpleNamespace
+
+    from chisurf.core import dataspec as ds
+    from chisurf.gui.autoform.sections.builtin import ValueWidget
+
+    class _M:
+        def __init__(self):
+            self.grp = SimpleNamespace(count=5, label="hi")
+
+    m = _M()
+
+    wi = ValueWidget(m, ds.ValueSection(target="grp", attr="count", kind="int", label="Count"))
+    assert wi.editor.value() == 5
+    wi.editor.setValue(9)  # valueChanged -> _commit -> setattr
+    assert m.grp.count == 9
+
+    ws = ValueWidget(m, ds.ValueSection(target="grp", attr="label", kind="str", label="Label"))
+    assert ws.editor.text() == "hi"
+    ws.editor.setText("bye")
+    ws.editor.editingFinished.emit()
+    assert m.grp.label == "bye"
