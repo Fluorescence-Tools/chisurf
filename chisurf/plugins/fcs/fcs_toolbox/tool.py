@@ -27,11 +27,25 @@ def _make_diffusion_calc() -> QtWidgets.QWidget:
     return ConfocalCalcWidget()
 
 
+def _make_filter_calc() -> QtWidgets.QWidget:
+    from chisurf.plugins.fcs.fcs_filter_calculator.gui_parts.main_window import (
+        FcsFilterCalculatorWidget,
+    )
+    return FcsFilterCalculatorWidget()
+
+
+def _make_merger() -> QtWidgets.QWidget:
+    from chisurf.plugins.fcs.fcs_merger.wizard import ChisurfWizard
+    return ChisurfWizard()
+
+
 # (emoji, label, factory)
 TOOLS: List[Tuple[str, str, Callable[[], QtWidgets.QWidget]]] = [
     ("🟦", "2D-FLCS", _make_2dflcs),
     ("🔬", "Burst-wise\nFCS", _make_burst_fcs),
     ("🧮", "Diffusion\nCalc", _make_diffusion_calc),
+    ("🧪", "Filter\nCalc", _make_filter_calc),
+    ("🔗", "FCS\nMerger", _make_merger),
 ]
 
 

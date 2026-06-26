@@ -15,4 +15,7 @@ combining data from multiple measurements.
 
 name = "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS-Merger"
 
+# Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
+menu_hidden = True
+
 

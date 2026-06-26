@@ -35,6 +35,9 @@ except ImportError:
 
 name = "Spectroscopy:Fluorescence Correlation Spectroscopy:2D-FLCS"
 
+# Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
+menu_hidden = True
+
 # Plugin icon
 try:
     _plugin_dir = Path(__file__).parent

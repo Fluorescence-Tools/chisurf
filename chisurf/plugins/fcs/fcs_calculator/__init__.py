@@ -23,3 +23,6 @@ Units: τ [ms], D [µm²/s], r_h [nm], η [mPa·s], Veff [fL]
 
 name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator"
 
+# Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
+menu_hidden = True
+

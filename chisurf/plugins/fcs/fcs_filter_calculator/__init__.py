@@ -60,6 +60,9 @@ __all__ = [
 # Define the plugin name - this will appear in the Plugins menu
 name = "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS Filter Calculator"
 
+# Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
+menu_hidden = True
+
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed by the ChiSurf plugin system.

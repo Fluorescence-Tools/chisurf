@@ -24,7 +24,10 @@ if _manifest is not None:
 else:
     name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Burst-wise FCS"
 
-__all__ = ["BurstFcsTool", "BurstWiseFCSWizard", "name"]
+# Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
+menu_hidden = True
+
+__all__ = ["BurstFcsTool", "BurstWiseFCSWizard", "menu_hidden", "name"]
 
 
 if __name__ == "plugin":  # pragma: no cover
