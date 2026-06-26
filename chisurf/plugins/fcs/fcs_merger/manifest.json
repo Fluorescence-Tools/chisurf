@@ -1,0 +1,33 @@
+{
+  "id": "fcs_merger",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS-Merger",
+  "description": "Merge / average multiple FCS correlation curves to improve signal-to-noise.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence Correlation Spectroscopy"],
+  "icon": "icon.png",
+  "state_namespace": "fcs_merger",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {"correlation_folder": {"type": "string"}}
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {"enabled": true, "settings_key": null}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fcs.fcs_merger.wizard:ChisurfWizard",
+    "cli": "chisurf.plugins.fcs.fcs_merger.cli.main:main",
+    "services": "chisurf.plugins.fcs.fcs_merger.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "fcs_merger.merge_folder", "summary": "Parse, average and optionally save the correlations in a folder.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_merger.average", "summary": "Weighted-average a list of correlation dicts.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_merger.parse_folder", "summary": "Load .cor / .json.gz correlation chunks from a folder.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false}
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": true,
+  "deprecated": false
+}
