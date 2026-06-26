@@ -1,14 +1,11 @@
-"""Backward-compatible shim.
+"""Qt-free core for the burst-wise FCS correlator."""
 
-The burst-wise FCS compute primitives now live in :mod:`.core.algorithms`; this
-module re-exports them so existing imports (e.g. the legacy ``wizard.py``) keep
-working.
-"""
-
-from __future__ import annotations
-
-from .core.algorithms import (  # noqa: F401
+from .algorithms import (
+    BurstFcsSettings,
+    PairConfig,
+    correlate_burst_file,
     correlate_single_burst,
+    fit_curve,
     fit_diffusion_time,
     fit_simple_diffusion,
     open_tttr,
@@ -18,7 +15,11 @@ from .core.algorithms import (  # noqa: F401
 )
 
 __all__ = [
+    "BurstFcsSettings",
+    "PairConfig",
+    "correlate_burst_file",
     "correlate_single_burst",
+    "fit_curve",
     "fit_diffusion_time",
     "fit_simple_diffusion",
     "open_tttr",

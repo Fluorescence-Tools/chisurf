@@ -1,0 +1,43 @@
+{
+  "id": "burst_fcs_correlator",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence Correlation Spectroscopy:Burst-wise FCS",
+  "description": "Compute fluorescence correlation functions on a per-burst basis from Burst-ID (.bst) / BUR files.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence Correlation Spectroscopy"],
+  "icon": "icon.png",
+  "state_namespace": "burst_fcs_correlator",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "settings": {"type": "object"},
+      "selected_pairs": {"type": "array"},
+      "detector_setup": {"type": "string"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_fcs_correlator.wizard:BurstWiseFCSWizard",
+    "cli": null,
+    "services": "chisurf.plugins.burst.burst_fcs_correlator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "burst_fcs.parse_bst", "summary": "Parse a Burst-ID .bst file into TTTR path + burst ranges.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "burst_fcs.parse_bur", "summary": "Parse a BUR file into TTTR path + burst ranges.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "burst_fcs.fit_curve", "summary": "Fit a correlation curve (simple/MaxEnt) per settings.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "burst_fcs.fit_diffusion", "summary": "MaxEnt diffusion-time summary of a correlation curve.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "burst_fcs.fit_simple", "summary": "Single-component diffusion-time fit of a correlation curve.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "burst_fcs.correlate_file", "summary": "Correlate every burst x pair for one TTTR file.", "params_schema": {}, "result_schema": {}, "long_running": true, "cancelable": false}
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}
