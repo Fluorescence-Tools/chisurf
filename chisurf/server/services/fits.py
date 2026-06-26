@@ -899,8 +899,10 @@ def fit_group_select_member(
                 f"member index {member_index} out of range (0-{len(grouped) - 1})",
                 error_code=INVALID_INPUT,
             )
-        fit.selected_index = member_index
-        fit.selected_fit = grouped[member_index]
+        # ``selected_fit`` stores the *index* of the active member (see
+        # FitGroup.selected_fit). Assigning the Fit object here corrupted
+        # ``_selected_fit_index`` and broke later ``grouped_fits[index]`` lookups.
+        fit.selected_fit = member_index
         if event_bus is not None:
             event_bus.publish(
                 "fit.group.member_selected",

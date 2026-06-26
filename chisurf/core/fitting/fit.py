@@ -982,10 +982,18 @@ class FitGroup(Fit):
 
         Parameters
         ----------
-        v : int
-            New selection index.
+        v : int or Fit
+            New selection index. A :class:`Fit` member is accepted for
+            convenience and converted to its index; passing one used to corrupt
+            ``_selected_fit_index`` and break later ``grouped_fits[index]``
+            lookups.
         """
-        self._selected_fit_index = v
+        if isinstance(v, Fit):
+            try:
+                v = self.grouped_fits.index(v)
+            except ValueError:
+                raise ValueError("selected_fit: Fit is not a member of this group")
+        self._selected_fit_index = int(v)
 
     @property
     def data(self) -> cs.core.data.DataCurve:
