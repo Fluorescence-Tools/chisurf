@@ -7,6 +7,7 @@ from chisurf import typing
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.general
+import chisurf.core.actions
 import chisurf.core.math.datatools
 import chisurf.core.plot_transforms as plot_transforms
 import chisurf.gui.plots
@@ -274,14 +275,24 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     # TODO: needs docstring
     def onAddLifetime(self):
-        """Handle add lifetime button click."""
-        self.append()
+        """Add a lifetime component to every member of the fit group.
+
+        Routed through the ``model.add_component`` action (like the anisotropy
+        rotation controls) so it applies to all grouped fits and works over the
+        RPC/server path, not only the locally displayed member.
+        """
+        cs.core.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": "lifetimes"},
+        )
 
     # TODO: needs docstring
     def onRemoveLifetime(self):
-        """Handle remove lifetime button click."""
-        if len(self._lifetimes) > 1:
-            self.pop()
+        """Remove the last lifetime component from every member of the group."""
+        cs.core.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": "lifetimes"},
+        )
 
     # TODO: needs docstring
     def append(self, *args, **kwargs):

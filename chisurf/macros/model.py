@@ -141,6 +141,13 @@ def remove_component(
         pop = getattr(target, "pop", None)
         if not callable(pop):
             continue
+        # Keep at least one component so the model stays valid (mirrors the
+        # old per-widget ``len > 1`` guard); applies to every group member.
+        try:
+            if len(target) <= 1:
+                continue
+        except TypeError:
+            pass
         try:
             pop()
         except Exception:
