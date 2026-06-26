@@ -44,6 +44,13 @@ from .api import (
     DetectionMode,
 )
 
+from pathlib import Path as _Path
+
+from chisurf.core.plugin import load_manifest as _load_manifest
+
+from .gui.client import FilterCalcClient  # noqa: F401
+from .gui_parts.main_window import FcsFilterCalculatorWidget  # noqa: F401
+
 __all__ = [
     "compute_filters",
     "compute_filters_from_files",
@@ -54,11 +61,17 @@ __all__ = [
     "FilterResultMFD",
     "DetectionMode",
     "FcsFilterCalculatorWidget",
+    "FilterCalcClient",
+    "menu_hidden",
+    "name",
 ]
 
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS Filter Calculator"
+_manifest = _load_manifest(_Path(__file__).with_name("manifest.json"))
+name = (
+    _manifest.display_name if _manifest is not None
+    else "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS Filter Calculator"
+)
 
 # Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
 menu_hidden = True

@@ -9,6 +9,11 @@ import pyqtgraph as pg
 
 import chisurf as cs
 from ..api import compute_filters, FilterResult
+
+
+def _build_filter_client():
+    from ..gui.client import FilterCalcClient
+    return FilterCalcClient()
 from .widgets import SpeciesListWidget
 from .data_loading import load_vector
 
@@ -286,6 +291,34 @@ class FcsFilterCalculatorWidget(QtWidgets.QWidget):
                 msg = f"Ready to compute ({n_species} species)."
         self.status_label.setText(msg)
 
+    @property
+    def _filter_client(self):
+        """Lazily-created backend RPC client (in-process)."""
+        client = getattr(self, "_filter_client_obj", None)
+        if client is None:
+            client = _build_filter_client()
+            self._filter_client_obj = client
+        return client
+
+    def _compute_filters_rpc(self, total_data, species_data, *, total_path=None,
+                             species_patterns=None) -> "FilterResult":
+        """Compute single-channel filters through the backend RPC client.
+
+        Falls back to the direct API on any transport/serialization issue so the
+        GUI stays robust.
+        """
+        try:
+            r = self._filter_client.compute(total_data, species_data)
+            if r.get("ok"):
+                result = FilterResult.from_dict(r["result"])
+                result.total_path = total_path
+                result.species_patterns = species_patterns
+                return result
+        except Exception:
+            pass
+        return compute_filters(total_data, species_data, total_path=total_path,
+                               species_patterns=species_patterns)
+
     def _compute_filters(self) -> None:
         if not self._total_paths or self.lw_species.count() == 0:
             return
@@ -342,11 +375,11 @@ class FcsFilterCalculatorWidget(QtWidgets.QWidget):
                         padded[:sd.size] = sd
                         species_data[i] = padded
 
-            self._result = compute_filters(
-                total_data, 
-                species_data, 
+            self._result = self._compute_filters_rpc(
+                total_data,
+                species_data,
                 total_path=[str(p.absolute()) for p in self._total_paths],
-                species_patterns=species_patterns
+                species_patterns=species_patterns,
             )
             self._result_anisotropy = None  # Clear Anisotropy result
             self._result_multi_detector = None  # Clear multi-detector result

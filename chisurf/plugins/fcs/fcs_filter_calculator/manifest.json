@@ -1,0 +1,37 @@
+{
+  "id": "fcs_filter_calculator",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS Filter Calculator",
+  "description": "Compute filtered-FCS (fFCS) lifetime filters from microtime decay patterns.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence Correlation Spectroscopy"],
+  "icon": "icon.png",
+  "state_namespace": "fcs_filter_calculator",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "total_path": {"type": "string"},
+      "species_paths": {"type": "array"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {"enabled": true, "settings_key": null}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fcs.fcs_filter_calculator.gui_parts.main_window:FcsFilterCalculatorWidget",
+    "cli": "chisurf.plugins.fcs.fcs_filter_calculator.cli.main:main",
+    "services": "chisurf.plugins.fcs.fcs_filter_calculator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "fcs_filter.compute", "summary": "Compute fFCS filters from arrays.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_filter.compute_from_files", "summary": "Compute fFCS filters from histogram files.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_filter.compute_mfd", "summary": "Compute MFD fFCS filters from arrays.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_filter.compute_mfd_from_files", "summary": "Compute MFD fFCS filters from files.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false}
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": true,
+  "deprecated": false
+}

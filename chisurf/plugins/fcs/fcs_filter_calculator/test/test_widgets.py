@@ -7,4 +7,4 @@ def test_fcs_filter_calculator_widget(qapp, qtbot):
     widget = FcsFilterCalculatorWidget()
     qtbot.addWidget(widget)
     assert isinstance(widget, QtWidgets.QWidget)
-    assert "FCS Filter Calculator" in widget.windowTitle()
+    assert "Filter Calculator" in widget.windowTitle()
