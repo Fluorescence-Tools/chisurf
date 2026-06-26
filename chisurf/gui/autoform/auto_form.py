@@ -185,6 +185,8 @@ class AutoForm(QtWidgets.QWidget):
         if isinstance(section, vs.PlotSection):
             from .sections.builtin import PlotWidget
             return PlotWidget(self.model, section)
+        if isinstance(section, vs.DockAreaSection):
+            return self._build_dock_area(section)
         if isinstance(section, vs.ParameterGroupSection):
             return self._build_parameter_group(section)
         if isinstance(section, vs.CustomSection):
@@ -271,6 +273,35 @@ class AutoForm(QtWidgets.QWidget):
         box = self._make_fold_box(section)
         self._emit_sections(section.sections, box.add_widget)
         return box
+
+    def _build_dock_area(self, section: vs.DockAreaSection):
+        """Render a declarative dock area: each child section becomes a dock tab.
+
+        Uses the same ChiSurf ``DockArea`` the fit windows use, so the panels are
+        rearrangeable / floatable but the layout is authored in the ``.view.json``.
+        """
+        from chisurf.gui.widgets.dock_area import DockArea
+
+        area = DockArea()
+        if getattr(section, "height", 0):
+            area.setMinimumHeight(int(section.height))
+        for i, child in enumerate(section.sections):
+            try:
+                widget = self._build_section(child)
+            except Exception:
+                widget = None
+            if widget is None:
+                continue
+            name = (
+                getattr(child, "title", None)
+                or getattr(child, "label", None)
+                or f"Panel {i + 1}"
+            )
+            try:
+                area.add_panel(widget, str(name))
+            except Exception:
+                pass
+        return area
 
     def _collapsed_when(self, cond) -> bool:
         """Evaluate a ``{target, attr, equals}`` fold condition against the model."""

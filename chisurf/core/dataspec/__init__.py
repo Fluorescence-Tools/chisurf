@@ -313,8 +313,24 @@ class PlotSection(Section):
     y_label: str = ""
     #: Maximum plot height in pixels (0 = unconstrained).
     height: int = 0
+    log_x: bool = False
     log_y: bool = False
     legend: bool = True
+
+
+@dataclasses.dataclass(frozen=True)
+class DockAreaSection(Section):
+    """A rearrangeable/floatable dock area hosting child sections as panels.
+
+    Each child section (typically a :class:`PlotSection` or a panel) becomes a
+    drag-and-drop dock tab in a ChiSurf ``DockArea`` — the same mechanism the fit
+    windows use for their plots, but declared entirely in the ``.view.json``.
+    """
+
+    #: Child sections, each rendered as one dock panel.
+    sections: typing.Tuple["Section", ...] = ()
+    #: Optional minimum height (pixels) for the dock area (0 = unconstrained).
+    height: int = 0
 
 
 @dataclasses.dataclass(frozen=True)
@@ -377,6 +393,7 @@ _SECTION_TYPES = {
     "value": ValueSection,
     "custom": CustomSection,
     "plot": PlotSection,
+    "dock_area": DockAreaSection,
 }
 
 

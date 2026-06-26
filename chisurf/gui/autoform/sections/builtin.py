@@ -634,9 +634,11 @@ class PlotWidget(QtWidgets.QWidget):
             self.plot.setLabel("bottom", section.x_label)
         if section.y_label:
             self.plot.setLabel("left", section.y_label)
-        if section.log_y:
+        if getattr(section, "log_x", False) or section.log_y:
             try:
-                self.plot.setLogMode(y=True)
+                self.plot.setLogMode(
+                    bool(getattr(section, "log_x", False)), bool(section.log_y)
+                )
             except Exception:
                 pass
         if section.legend:
