@@ -62,20 +62,16 @@ class FcsFilterCalculatorWidget(QtWidgets.QWidget):
         self.tabs = QtWidgets.QTabWidget()
         main_vbox.addWidget(self.tabs)
 
-        # Tab 1: Detector Setup (Swapped to first)
+        # Tab 1: Detector Setup — a read-only *selector* of saved detector
+        # setups. The single authoritative detector editor is the toolbox's
+        # "Detector Def" tool; here we only consume its saved setups.
         self.setup_tab = QtWidgets.QWidget()
         self.tabs.addTab(self.setup_tab, "Detector Setup")
         setup_layout = QtWidgets.QVBoxLayout(self.setup_tab)
-        
-        if self._has_detector_wizard:
-            from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
-            self.detector_wizard_page = DetectorWizardPage()
-            setup_layout.addWidget(self.detector_wizard_page)
-            
-            # Connect wizard signals to update checkboxes in Filter tab
-            self._connect_setup_signals()
-        else:
-            setup_layout.addWidget(QtWidgets.QLabel("Detector wizard not available."))
+
+        # The embedded editor is intentionally not used (one authoritative wizard).
+        self.detector_wizard_page = None
+        self._build_detector_setup_selector(setup_layout)
 
         # Tab 2: Filters (Swapped to second)
         self.filter_tab = QtWidgets.QWidget()
@@ -867,6 +863,71 @@ class FcsFilterCalculatorWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Multi-Detector Computation Error", str(e))
             self._update_status(f"Multi-Detector Error: {e}")
 
+    def _build_detector_setup_selector(self, layout) -> None:
+        """Read-only selector of saved detector setups.
+
+        Detector setups are edited in the toolbox's authoritative "Detector Def"
+        tool; here the user only picks one, whose detectors populate the filter
+        channel checkboxes.
+        """
+        hint = QtWidgets.QLabel(
+            "Detector setups are edited in the toolbox's ‘Detector Def’ tool.\n"
+            "Select a saved setup to use its detectors here."
+        )
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(QtWidgets.QLabel("Setup:"))
+        self.combo_detector_setup = QtWidgets.QComboBox()
+        row.addWidget(self.combo_detector_setup, 1)
+        self.btn_reload_setups = QtWidgets.QToolButton()
+        self.btn_reload_setups.setText("↻")  # reload
+        self.btn_reload_setups.setToolTip("Reload detector setups")
+        self.btn_reload_setups.clicked.connect(self._reload_detector_setup_combo)
+        row.addWidget(self.btn_reload_setups)
+        layout.addLayout(row)
+
+        self.detector_detail = QtWidgets.QLabel("")
+        self.detector_detail.setWordWrap(True)
+        self.detector_detail.setStyleSheet("color: palette(mid);")
+        layout.addWidget(self.detector_detail)
+        layout.addStretch(1)
+
+        self.combo_detector_setup.currentTextChanged.connect(self._on_detector_setup_selected)
+        self._reload_detector_setup_combo()
+
+    def _reload_detector_setup_combo(self) -> None:
+        try:
+            data = self._load_detector_setups() if self._load_detector_setups else {}
+        except Exception:
+            data = {}
+        setups = (data or {}).get("setups", {}) if isinstance(data, dict) else {}
+        last_used = (data or {}).get("last_used") if isinstance(data, dict) else None
+        combo = self.combo_detector_setup
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItem("")
+        for name in sorted(setups.keys()):
+            combo.addItem(str(name))
+        if last_used and combo.findText(str(last_used)) >= 0:
+            combo.setCurrentText(str(last_used))
+        combo.blockSignals(False)
+        self._on_detector_setup_selected(combo.currentText())
+
+    def _on_detector_setup_selected(self, name: str) -> None:
+        data = {}
+        try:
+            data = self._load_detector_setups() if self._load_detector_setups else {}
+        except Exception:
+            data = {}
+        setup = (data or {}).get("setups", {}).get(name) if name else None
+        self._detector_settings = setup if isinstance(setup, dict) else None
+        dets = list((self._detector_settings or {}).get("detectors", {}).keys())
+        if hasattr(self, "detector_detail"):
+            self.detector_detail.setText("Detectors: " + (", ".join(dets) if dets else "—"))
+        self._refresh_detector_checkboxes()
+
     def _connect_setup_signals(self):
         if not hasattr(self, 'detector_wizard_page') or not self.detector_wizard_page: return
         for widget in self.detector_wizard_page.findChildren(QtWidgets.QWidget):
@@ -882,6 +943,10 @@ class FcsFilterCalculatorWidget(QtWidgets.QWidget):
         self._refresh_detector_checkboxes()
 
     def _refresh_detector_checkboxes(self):
+        # The Detector Setup tab is built before the Filter tab's selector
+        # widget; skip until it exists (a later refresh covers it).
+        if not hasattr(self, "detector_selection"):
+            return
         detector_names = []
         if self._detector_settings:
             detector_names = list(self._detector_settings.get("detectors", {}).keys())
