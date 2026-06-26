@@ -438,12 +438,41 @@ class FittingControllerWidget(Controller):
             )
 
     def onDatasetChanged(self):
+        index = self.selected_fit
+
+        # Switch the locally selected group member so the model, data and
+        # plots follow the combobox. We update the local object directly
+        # instead of relying on the server round-trip, which may time out and
+        # would otherwise leave the GUI showing the previous dataset.
+        try:
+            self.fit.selected_fit = index
+            self.fit.update()
+            try:
+                self.fit.model.finalize()
+            except Exception:
+                pass
+        except Exception:
+            cs.logging.exception("onDatasetChanged: failed to select member %s", index)
+
+        # Refresh plots, the model editor and the parameter widgets in the
+        # active fit window so the change is visible.
+        try:
+            gui = getattr(cs, "cs", None)
+            if gui is not None and hasattr(gui, "_refresh_selected_member_display"):
+                gui._refresh_selected_member_display(self.fit)
+        except Exception:
+            pass
+
+        # Keep the server session state in sync (best-effort).
         fc = get_fitting_client()
         if fc is not None:
-            fc.group_select_member(
-                fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
-                member_index=self.selected_fit,
-            )
+            try:
+                fc.group_select_member(
+                    fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
+                    member_index=index,
+                )
+            except Exception:
+                pass
 
     def onErrorEstimate(self):
         sampling_handler = self._model_sampling_handler()
