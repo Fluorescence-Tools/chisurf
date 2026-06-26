@@ -40,81 +40,6 @@ import chisurf.gui.widgets as _gw
 import chisurf.gui.resources
 
 
-class _MdiDropEventFilter(QtCore.QObject):
-    def __init__(self, mdiarea):
-        super().__init__(mdiarea)
-        self.mdiarea = mdiarea
-        self._in_filter = False
-
-    def eventFilter(self, obj, event):
-        if self._in_filter:
-            return False
-        self._in_filter = True
-        try:
-            event_types = (3, 175)
-            if hasattr(QtCore.QEvent, 'NonClientAreaMouseButtonRelease'):
-                event_types = event_types + (QtCore.QEvent.NonClientAreaMouseButtonRelease,)
-                
-            if event.type() in event_types:
-                if isinstance(obj, QtWidgets.QDockWidget) and obj.isFloating():
-                    pos = QtGui.QCursor.pos()
-                    try:
-                        mdi_rect = self.mdiarea.rect()
-                        top_left = self.mdiarea.mapToGlobal(mdi_rect.topLeft())
-                        bottom_right = self.mdiarea.mapToGlobal(mdi_rect.bottomRight())
-                        global_rect = QtCore.QRect(top_left, bottom_right)
-                    except Exception:
-                        global_rect = None
-                    
-                    if global_rect is not None and global_rect.contains(pos):
-                        widget = obj.widget()
-                        if widget is not None:
-                            title = obj.windowTitle()
-                            size = obj.size()
-                            
-                            # Tag widget with original dock name for re-docking
-                            widget.setProperty("_original_dock_name", obj.objectName())
-                            
-                            # Unparent carefully to prevent deletion on dock close
-                            widget.setParent(None)
-                            obj.close()
-                            
-                            try:
-                                cs.logging.info(f"Converting dock '{title}' to MDI subwindow")
-                            except Exception:
-                                pass
-                            
-                            sub = self.mdiarea.addSubWindow(widget)
-                            sub.setWindowTitle(title)
-                            sub.resize(size)
-                            
-                            # Explicitly show both the inner widget and the subwindow wrapper
-                            widget.show()
-                            sub.show()
-                            return True
-            
-            # Handle re-docking when the dock is re-enabled/shown
-            if event.type() == 17: # QEvent.Show
-                if isinstance(obj, QtWidgets.QDockWidget) and obj.widget() is None:
-                    dock_name = obj.objectName()
-                    if dock_name:
-                        for sub in self.mdiarea.subWindowList():
-                            w = sub.widget()
-                            if w and w.property("_original_dock_name") == dock_name:
-                                try:
-                                    cs.logging.info(f"Restoring dock '{dock_name}' from MDI")
-                                except Exception:
-                                    pass
-                                # Move back to dock
-                                sub.setWidget(None)
-                                sub.close()
-                                obj.setWidget(w)
-                                w.show()
-                                return True
-            return super().eventFilter(obj, event)
-        finally:
-            self._in_filter = False
-
 
 from chisurf.gui.main_helper import (
     ProjectMixin,
@@ -409,7 +334,8 @@ class Main(
                 window_title = cs.__name__ + "(" + cs.__version__ + "): " + self.current_fit.name
                 self.setWindowTitle(window_title)
 
-                self.current_fit.model.show()
+                # Show only the selected member's editor for this group.
+                self._show_only_selected_member_editor(self.current_fit)
                 self.current_fit_widget.show()
                 sub_window.current_plot_controller.show()
             # Handle plugin windows with plot controllers (like sm_acquisition)
@@ -959,11 +885,6 @@ class Main(
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
         
-        try:
-            self._mdi_drop_filter = _MdiDropEventFilter(self.mdiarea)
-            QtWidgets.QApplication.instance().installEventFilter(self._mdi_drop_filter)
-        except Exception:
-            pass
 
 
         # Set window icon to ChiSurf logo
@@ -1556,6 +1477,8 @@ class Main(
                 self._refresh_active_parameter_display(payload)
             elif topic in ("fit.ran", "fit.updated"):
                 self._refresh_fit_display(payload)
+            elif topic == "fit.group.member_selected":
+                self._refresh_selected_member_display(payload)
             elif topic in ("fit.added", "fit.created"):
                 self._open_fit_subwindow_for_event(payload)
             elif topic == "fit.removed":
@@ -1612,6 +1535,86 @@ class Main(
         except Exception:
             pass
 
+    def _show_only_selected_member_editor(self, fit_group) -> None:
+        """Show only the selected group member's model editor; hide the rest.
+
+        A :class:`FitGroup` builds one model editor per member (e.g. VV and VH).
+        All of them live in the Analysis dock's ``modelLayout``; without this
+        only-show-selected logic every member's controls render at once and the
+        dock looks cluttered. Mirror the active fit by showing the selected
+        member and hiding its siblings.
+        """
+        try:
+            from chisurf.gui.widgets.models.model_editor import model_editor_widget
+            grouped = list(getattr(fit_group, "grouped_fits", []) or [])
+            if not grouped:
+                return
+            try:
+                sel = int(getattr(fit_group, "selected_fit_index", 0) or 0)
+            except Exception:
+                sel = 0
+            for i, f in enumerate(grouped):
+                widget = model_editor_widget(getattr(f, "model", None))
+                if widget is None:
+                    continue
+                widget.setVisible(i == sel)
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Error toggling member editor visibility")
+
+    def _refresh_selected_member_display(self, payload=None) -> None:
+        """Refresh the active fit window after its selected group member changed.
+
+        Switching the selected member of a :class:`FitGroup` (e.g. VV → VH via
+        the dataset combobox) changes the model, data and parameters that the
+        window shows. Refresh the plots, the model editor and the parameter
+        widgets so the displayed dataset follows the selection.
+
+        Parameters
+        ----------
+        payload : dict or FitGroup, optional
+            Event payload or the fit object whose member changed. Unused beyond
+            documentation; the active subwindow is refreshed.
+        """
+        try:
+            sub = self.mdiarea.activeSubWindow()
+            if sub is None:
+                return
+
+            # Refresh the plots of the currently visible tab.
+            ptw = getattr(sub, "plot_tab_widget", None)
+            if ptw is not None:
+                try:
+                    page = ptw.widget(ptw.currentIndex())
+                    update_all = getattr(page, "update_all", None)
+                    if callable(update_all):
+                        update_all()
+                    elif hasattr(page, "update"):
+                        page.update()
+                    if hasattr(ptw, "update"):
+                        ptw.update()
+                except Exception:
+                    pass
+
+            # Show only the newly selected member's model editor.
+            try:
+                cf = getattr(self, "current_fit", None)
+                if cf is not None:
+                    self._show_only_selected_member_editor(cf)
+            except Exception:
+                pass
+
+            # Refresh parameter widgets for the now-selected member.
+            fw = getattr(sub, "fit_widget", None)
+            if fw is not None and hasattr(fw, "refresh_parameters"):
+                try:
+                    fw.refresh_parameters()
+                except Exception:
+                    pass
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Error refreshing selected member display")
+
     def _refresh_dataset_selector(self) -> None:
         """Repopulate the dataset selector combo-box from cs.imported_datasets."""
         try:
@@ -1650,8 +1653,12 @@ class Main(
                 header_layout.addWidget(fit_control_widget)
             else:
                 self.modelLayout.addWidget(fit_control_widget)
+            from chisurf.gui.widgets.models.model_editor import build_model_editor
             for fit in fit_obj:
-                self.modelLayout.addWidget(fit.model)
+                self.modelLayout.addWidget(build_model_editor(fit.model))
+            # Only the selected member's editor should be visible; otherwise
+            # every member (e.g. VV and VH) clutters the Analysis dock.
+            self._show_only_selected_member_editor(fit_obj)
             fit_window = FitSubWindow(
                 fit=fit_obj,
                 control_layout=self.plotOptionsLayout,
