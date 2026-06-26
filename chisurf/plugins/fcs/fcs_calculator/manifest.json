@@ -1,0 +1,32 @@
+{
+  "id": "fcs_calculator",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator",
+  "description": "FCS confocal diffusion/volume calculator (tau, D, r_h, Veff, concentration).",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence Correlation Spectroscopy"],
+  "icon": "icon.png",
+  "state_namespace": "fcs_calculator",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {"settings": {"type": "object"}}
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {"enabled": true, "settings_key": null}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fcs.fcs_calculator.wizard:ConfocalCalcWidget",
+    "cli": "chisurf.plugins.fcs.fcs_calculator.cli.main:main",
+    "services": "chisurf.plugins.fcs.fcs_calculator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "fcs_calculator.compute", "summary": "Solve the linked confocal-FCS quantities for one constraint.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false},
+    {"name": "fcs_calculator.water_viscosity", "summary": "Water viscosity (mPa·s) at a temperature.", "params_schema": {}, "result_schema": {}, "long_running": false, "cancelable": false}
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": true,
+  "deprecated": false
+}

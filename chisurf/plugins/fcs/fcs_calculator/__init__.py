@@ -21,8 +21,21 @@ Core model (same as spec)
 Units: τ [ms], D [µm²/s], r_h [nm], η [mPa·s], Veff [fL]
 """
 
-name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator"
+from pathlib import Path as _Path
+
+from chisurf.core.plugin import load_manifest as _load_manifest
+
+from .core import compute_confocal  # noqa: F401  (public core entry)
+from .gui.client import ConfocalCalcClient  # noqa: F401
+
+_manifest = _load_manifest(_Path(__file__).with_name("manifest.json"))
+name = (
+    _manifest.display_name if _manifest is not None
+    else "Spectroscopy:Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator"
+)
 
 # Hidden from the menu: surfaced inside the FCS Toolbox meta tool.
 menu_hidden = True
+
+__all__ = ["ConfocalCalcClient", "compute_confocal", "menu_hidden", "name"]
 
