@@ -1644,9 +1644,13 @@ class BurstWiseFCSWizard(QtWidgets.QDialog):
 
 
 if __name__ == "plugin":  # pragma: no cover
-    # Invoked by the ChiSurf plugin manager
-    wizard = BurstWiseFCSWizard()
-    wizard.show()
+    # Invoked by the ChiSurf plugin manager (the ribbon execs this file). Launch
+    # the modern declarative tool; the legacy BurstWiseFCSWizard above is kept
+    # for reference / fallback.
+    from chisurf.plugins.burst.burst_fcs_correlator.gui.tool import BurstFcsTool
+
+    _burst_fcs_window = BurstFcsTool()
+    _burst_fcs_window.show()
 
 
 if __name__ == "__main__":  # pragma: no cover
