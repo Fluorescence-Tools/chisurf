@@ -178,7 +178,7 @@ def calculcate_spectrum(
     ...     l1=0.1,
     ...     l2=0.0
     ... )
-    array([ 0.9 ,  4.  ,  1.8 ,  0.8 ,  0.15,  4.  , -0.3 ,  0.8 ])
+    array([ 0.9 ,  4.  ,  1.8 ,  0.8 ,  0.15,  4.  , -0.15,  0.8 ])
     >>> calculcate_spectrum(
     ...     lifetime_spectrum=lifetime_spectrum,
     ...     anisotropy_spectrum=anisotropy_spectrum,
@@ -187,7 +187,7 @@ def calculcate_spectrum(
     ...     l1=0.0,
     ...     l2=0.0
     ... )
-    array([ 0. ,  4. ,  0. ,  0.8,  1.5,  4. , -3. ,  0.8])
+    array([ 0. ,  4. ,  0. ,  0.8,  1.5,  4. , -1.5,  0.8])
     >>> out = calculcate_spectrum(
     ...     lifetime_spectrum=lifetime_spectrum,
     ...     anisotropy_spectrum=anisotropy_spectrum,
@@ -197,7 +197,7 @@ def calculcate_spectrum(
     ...     l2=0.1
     ... )
     >>> out.tolist()
-    [0.1, 4.0, 0.2, 0.8, 1.35, 4.0, -2.7, 0.8]
+    [0.1, 4.0, 0.2, 0.8, 1.35, 4.0, -1.35, 0.8]
 
     Notes
     -----
@@ -212,20 +212,28 @@ def calculcate_spectrum(
     .. [2] Same as [1].
     """
     polarization_type = polarization_type.upper()
-    f = lifetime_spectrum
-    a = anisotropy_spectrum
+    f = np.asarray(lifetime_spectrum, dtype=np.float64)
+    a = np.asarray(anisotropy_spectrum, dtype=np.float64)
     if (polarization_type == "VV") or (polarization_type == "VH") or (polarization_type == "VV/VH"):
+        e1tn = chisurf.core.math.datatools.e1tn
+        # ``e1tn`` scales amplitudes *in place*. Always feed it a fresh copy,
+        # otherwise the unmixed VV/VH spectra (which share ``d``) and the two
+        # mixed channels (which share ``vv``/``vh``) corrupt one another — the
+        # original code reused the same arrays, which collapsed the VH decay to
+        # near-zero (only the scatter peak remained).
         d = chisurf.core.math.datatools.elte2(a, f)
-        vv = np.hstack([f, chisurf.core.math.datatools.e1tn(d, 2)])
-        vh = chisurf.core.math.datatools.e1tn(
-            np.hstack([f, chisurf.core.math.datatools.e1tn(d, -1)]),
-            g_factor
+        vv = np.hstack([f, e1tn(d.copy(), 2.0)])          # f_VV = f * (1 + 2 r)
+        vh = e1tn(
+            np.hstack([f, e1tn(d.copy(), -1.0)]),         # f_VH = g * f * (1 - r)
+            g_factor,
         )
-        
-        # Apply mixing
-        vv_mixed = chisurf.core.math.datatools.e1tn(vv, 1 - l1) + chisurf.core.math.datatools.e1tn(vh, l1)
-        vh_mixed = chisurf.core.math.datatools.e1tn(vv, l2) + chisurf.core.math.datatools.e1tn(vh, 1 - l2)
-        
+
+        # A mixed channel is the *union* of the scaled VV and VH components, so
+        # concatenate them. Element-wise addition (the previous behaviour) also
+        # summed the lifetime columns, doubling the decay times.
+        vv_mixed = np.hstack([e1tn(vv.copy(), 1.0 - l1), e1tn(vh.copy(), l1)])
+        vh_mixed = np.hstack([e1tn(vv.copy(), l2), e1tn(vh.copy(), 1.0 - l2)])
+
         if polarization_type == 'VH':
             return vh_mixed
         elif polarization_type == 'VV':
