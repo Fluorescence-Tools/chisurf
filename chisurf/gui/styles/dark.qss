@@ -89,10 +89,14 @@ QToolTip {
 
 QLineEdit {
     background-color: #2c2c2c;
-    border: 1px solid #202020;
+    border: 1px solid #555555;
     border-radius: 2px;
     color: #e0e0e0;
     padding: 1px 3px;
+}
+
+QLineEdit:focus {
+    border: 1px solid #5680c2;
 }
 
 /* ===== Generic buttons (abstract) ===== */
@@ -144,10 +148,14 @@ QComboBox {
     selection-background-color: #ffaa00;
     background-color: #3b3b3b;
     border-style: solid;
-    border: 1px solid #202020;
+    border: 1px solid #555555;
     border-radius: 2px;
     padding: 1px 18px 1px 4px;
     color: #e0e0e0;
+}
+
+QComboBox:focus {
+    border: 1px solid #5680c2;
 }
 
 QComboBox:disabled {
@@ -164,7 +172,7 @@ QComboBox::drop-down {
     subcontrol-position: top right;
     width: 14px;
     border-left-width: 1px;
-    border-left-color: #202020;
+    border-left-color: #555555;
     border-left-style: solid;
     border-top-right-radius: 2px;
     border-bottom-right-radius: 2px;
@@ -189,12 +197,18 @@ QComboBox QAbstractItemView {
 SpinBox,
 QSpinBox,
 QDoubleSpinBox {
-    background: #595959;
-    border: 1px solid #404040;
+    background: #2c2c2c;
+    border: 1px solid #555555;
     border-radius: 3px;
     text-align: center;
     min-height: 13px;
     padding: 0 2px;
+}
+
+SpinBox:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 1px solid #5680c2;
 }
 
 SpinBox::up-button,
@@ -204,7 +218,7 @@ QDoubleSpinBox::up-button {
     width: 4px;
     height: 6px;
     background-color: #3b3b3b;
-    border-left: 1px solid #404040;
+    border-left: 1px solid #555555;
 }
 
 SpinBox::down-button,
@@ -214,7 +228,7 @@ QDoubleSpinBox::down-button {
     width: 4px;
     height: 6px;
     background-color: #3b3b3b;
-    border-left: 1px solid #404040;
+    border-left: 1px solid #555555;
 }
 
 /* ===== Group boxes ===== */

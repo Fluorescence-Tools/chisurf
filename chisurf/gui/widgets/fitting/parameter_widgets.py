@@ -669,10 +669,10 @@ class FittingParameterWidget(Controller):
 
         main_row = QtWidgets.QHBoxLayout()
         main_row.setContentsMargins(0, 0, 0, 0)
-        main_row.setSpacing(1)
+        main_row.setSpacing(5)
 
         self.label = QtWidgets.QLabel("name")
-        self.label.setMinimumWidth(40)
+        self.label.setMinimumWidth(60)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_row.addWidget(self.label)
 
@@ -728,6 +728,7 @@ class FittingParameterWidget(Controller):
             label_text: str = None,
             hide_link: bool = None,
             suffix: str = "",
+            label_width: int = None,
             callback: typing.Callable = None
     ):
         super().__init__()
@@ -796,6 +797,8 @@ class FittingParameterWidget(Controller):
 
         # Hide and disable widgets
         self.label.setVisible(not hide_label)
+        if label_width is not None:
+            self.label.setMinimumWidth(label_width)
         self.lineEdit.setVisible(not hide_error)
         self._hide_bounds = bool(hide_bounds)
         self.widget_bounds_on.setDisabled(hide_bounds)
@@ -1764,6 +1767,7 @@ def make_fitting_parameter_widget(
         name: str = None,
         hide_link: bool = None,
         suffix: str = "",
+        label_width: int = None,
         callback: typing.Callable = None
 ) -> FittingParameterWidget:
     if label_text is None:
@@ -1801,6 +1805,7 @@ def make_fitting_parameter_widget(
         hide_link=hide_link,
         label_text=label_text,
         suffix=auto_suffix,
+        label_width=label_width,
         callback=callback
     )
     fitting_parameter.controller = widget
