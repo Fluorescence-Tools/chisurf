@@ -133,6 +133,80 @@ def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
     # Unknown YAML file: no mapping
     return {}
 
+def _build_documentation_dict() -> dict:
+    """Build a mapping from setting keys to their descriptions from the markdown docs."""
+    try:
+        base = pathlib.Path(cs.__file__).resolve().parent
+        root = base.parent
+        md_path = root / SETTINGS_DOC_REL_PATH
+        if not md_path.exists():
+            return {}
+        text = md_path.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+    
+    doc_dict = {}
+    current_root = None
+    current_keys = []
+    current_desc = []
+    
+    def save_current():
+        if not current_keys: return
+        desc = " ".join(current_desc).strip()
+        if not desc: return
+        for k in current_keys:
+            if current_root:
+                doc_dict[f"{current_root}.{k}"] = desc
+            else:
+                doc_dict[k] = desc
+
+    for line in text.splitlines():
+        m_root = re.match(r'^###\s+[\d\.]+\s+`([^`]+)`(.*)', line)
+        if m_root:
+            save_current()
+            current_root = m_root.group(1)
+            cat_desc = m_root.group(2).strip()
+            if cat_desc:
+                cat_desc = cat_desc.strip("()")
+                if cat_desc:
+                    cat_desc = cat_desc[0].upper() + cat_desc[1:]
+                doc_dict[current_root] = cat_desc
+            current_keys = []
+            current_desc = []
+            continue
+            
+        if re.match(r'^###\s+[\d\.]+\s+Top', line, re.IGNORECASE):
+            save_current()
+            current_root = None
+            current_keys = []
+            current_desc = []
+            continue
+            
+        if re.match(r'^- \*\*', line):
+            save_current()
+            keys_raw = re.findall(r'\*\*`?([^`\*]+)`?\*\*', line)
+            if keys_raw:
+                current_keys = keys_raw
+            current_desc = []
+            
+            after_keys = line
+            for kr in keys_raw:
+                after_keys = after_keys.replace(f"**`{kr}`**", "").replace(f"**{kr}**", "")
+            after_keys = after_keys.replace("-", "").replace(",", "").replace("/", "").strip()
+            if after_keys:
+                current_desc.append(after_keys)
+            continue
+            
+        if current_keys:
+            if line.startswith("###"):
+                pass
+            elif not line.strip() and not current_desc:
+                continue
+            else:
+                current_desc.append(line.strip())
+                
+    save_current()
+    return doc_dict
 
 # Custom YAML representer for floats to preserve scientific notation
 def float_representer(dumper, value):
@@ -639,21 +713,29 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
 
             # Add tooltip if documentation exists
             current_path = f"{path}.{key}" if path else key
-            if current_path in self.documentation_dict:
-                tooltip = self.documentation_dict[current_path]
-                key_item.setToolTip(tooltip)
-                value_item.setToolTip(tooltip)
+            desc = self.documentation_dict.get(current_path)
+            if desc:
+                key_item.setToolTip(desc)
+                value_item.setToolTip(desc)
 
             # Create help item with optional topic mapping
             help_item = QtGui.QStandardItem()
             help_item.setEditable(False)
             topic = get_help_topic_for_setting(current_path, getattr(self, "source_filename", None))
-            if topic:
-                help_item.setText("?")
+            
+            if desc:
+                import textwrap
+                wrapped_desc = textwrap.fill(desc, width=60)
+                help_item.setText(wrapped_desc)
+                help_item.setToolTip(desc)
+                # Ensure tooltip is on all columns
+                key_item.setToolTip(desc)
+                value_item.setToolTip(desc)
+                if topic:
+                    help_item.setData(topic, QtCore.Qt.UserRole)
+            elif topic:
+                help_item.setText("")
                 help_item.setData(topic, QtCore.Qt.UserRole)
-                # Use the same tooltip if available
-                if current_path in self.documentation_dict:
-                    help_item.setToolTip(self.documentation_dict[current_path])
             else:
                 help_item.setText("")
 
@@ -792,7 +874,7 @@ class SettingsEditor(QtWidgets.QWidget):
 
         self.filename = filename
         self.settings_dict = {}
-        self.documentation_dict = documentation_dict or {}
+        self.documentation_dict = documentation_dict or _build_documentation_dict()
         self.window_title = window_title
 
         self.setup_ui()
@@ -822,6 +904,7 @@ class SettingsEditor(QtWidgets.QWidget):
         self.tree_view.setSortingEnabled(False)
         self.tree_view.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | 
                                        QtWidgets.QAbstractItemView.EditKeyPressed)
+        self.tree_view.setWordWrap(True)
 
         # Create model
         self.model = self.create_model()
@@ -921,8 +1004,9 @@ class SettingsEditor(QtWidgets.QWidget):
             # Expand all items
             self.tree_view.expandAll()
 
-            # Resize columns to content
+            # Resize columns and rows to content
             self.tree_view.resizeColumnToContents(0)
+            self.tree_view.resizeRowsToContents()
 
             # Clear search bar to show all items
             if hasattr(self, 'search_bar'):

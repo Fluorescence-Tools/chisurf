@@ -1,8 +1,8 @@
-Fitting-parameter registry and helper scripts
-=============================================
+Parameter registry and helper scripts
+======================================
 
 This page documents the small command-line tools that maintain the
-*fitting-parameter registry* used by the chisurf GUI to display
+*parameter registry* used by the chisurf GUI to display
 consistent parameter descriptions.
 
 Overview
@@ -10,7 +10,7 @@ Overview
 
 The registry lives in::
 
-    chisurf/settings/constants/fitting_parameters.json
+    chisurf/settings/constants/parameter_registry.json
 
 The JSON structure is::
 
@@ -55,7 +55,7 @@ Purpose:
 
 - Scan the Python codebase for calls to ``FittingParameter(...)``.
 - Collect basic metadata (name, location, bounds, inline description, label_text).
-- Merge this information into ``fitting_parameters.json`` using the
+- Merge this information into ``parameter_registry.json`` using the
   *plain* parameter name as key (for example ``"n0"``).
 
 Typical usage (from the project root)::
@@ -137,7 +137,7 @@ Typical usage::
 This is meant as a bootstrap tool: it provides reasonable default
 texts and keywords for common FCS parameters (``N``, ``b``, ``td1``,
 triplet fractions, antibunching terms, etc.), while still allowing
-manual refinement directly in ``fitting_parameters.json``.
+manual refinement directly in ``parameter_registry.json``.
 
 TCSPC description filler: fill_tcspc_descriptions
 -------------------------------------------------
@@ -222,7 +222,7 @@ A few typical maintenance workflows for developers:
 Manual edits
 ------------
 
-You can always edit ``fitting_parameters.json`` by hand to refine
+You can always edit ``parameter_registry.json`` by hand to refine
 texts or add aliases/keywords. The helper scripts are designed to be
 *additive*:
 

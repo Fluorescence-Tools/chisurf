@@ -84,6 +84,10 @@ These make everything after cheaper and safer; do them right after 03/04.
     optical configuration (now also folds in the **Light Path Simulator** as the
     optics authoring/visualization tool + a computed crosstalk/R₀ source feeding
     PRD-05) — independent; slot as needed.
+- **PRD-39** sequence provenance & external references — entity ↔ UniProt/PDB
+  cross-refs + engineered-mutation (cysteine labeling) provenance via the standard
+  `struct_ref*` categories; live UniProt/SIFTS fetch + auto-diff. Depends on
+  PRD-02/02a/02c; independent feature, slot as needed.
 
 ## Phase 5 — Capstone
 
