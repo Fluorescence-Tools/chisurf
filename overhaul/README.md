@@ -51,6 +51,10 @@
 38. **PRD-38-model-view-spec-split.md** -- strict model/UI split: user-editable `<model>.view.json` drives auto-generated model editors. ◄ CURRENT (3/4: data spine + Lifetime pilot done; live wiring next)
 39. **PRD-39-sequence-external-references.md** -- entity ↔ UniProt/PDB cross-references + engineered-mutation provenance (cysteine labeling) via the standard `struct_ref`/`struct_ref_seq`/`struct_ref_seq_dif` categories; live UniProt/SIFTS fetch + auto-diff. *(Builds on PRD-02.)*
 40. **PRD-40-declarative-dataset-editors.md** -- a chisurf-native, guidata-like framework: declare a typed `DataSet` once → auto-generate its editor, replacing the ~5 ad-hoc `type→widget` mappers (settings/metadata/parameter/model editors). Generalises PRD-38's machinery out from under `models/`. *(Builds on PRD-38; complements PRD-23/26.)*
+41. **PRD-41-fdb4chembio-access-layer-strategy.md** -- FDB4ChemBio Access-Layer & Interoperability Strategy: design note setting architectural boundaries and the GraphQL api core strategy.
+42. **PRD-42-drop-pyqtgraph-fitting-widgets.md** -- Confine pyqtgraph to plot-only widgets: replaces non-plot uses of pyqtgraph like SpinBox and ParameterTree with Qt-native equivalents.
+43. **PRD-43-history-mfdb-alignment.md** -- Align GUI Operation History with MFDB Provenance: strategy to persist and synchronize client-side interactive session history with the database.
+44. **PRD-44-vendor-neutral-dictionary-schema-namespace.md** -- De-brand the MFDB dictionary's local extension tags (`_chisurf_schema.*` → `_mfdb_schema.*`) so MFDB is a software-agnostic store usable beyond ChiSurf. *(Precondition for PRD-41 dissemination.)*
 
 ## ► Authoritative sequence: see **MASTER-ORDER.md**
 
