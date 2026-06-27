@@ -672,7 +672,7 @@ class FittingParameterWidget(Controller):
         main_row.setSpacing(5)
 
         self.label = QtWidgets.QLabel("name")
-        self.label.setMinimumWidth(60)
+        self.label.setMinimumWidth(40)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_row.addWidget(self.label)
 

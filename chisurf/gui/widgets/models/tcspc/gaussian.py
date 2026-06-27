@@ -163,21 +163,25 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianMeans[-1],
             label_text=f'R<sub>DA,{n_gauss}</sub>',
+            label_width=55,
             layout=layout
         )
         cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianSigma[-1],
             label_text=f'w<sub>{n_gauss}</sub>',
+            label_width=55,
             layout=layout
         )
         cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianShape[-1],
             label_text=f'k<sub>{n_gauss}</sub>',
+            label_width=55,
             layout=layout
         )
         cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianAmplitudes[-1],
             label_text=f'x<sub>{n_gauss}</sub>',
+            label_width=55,
             layout=layout
         )
 

@@ -904,12 +904,12 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
         params_layout.setSpacing(0)
 
         widgets = [
-            fitting_widgets.make_fitting_parameter_widget(self._reg),
-            fitting_widgets.make_fitting_parameter_widget(self._td_min, label_text="t<sub>d,min</sub>"),
-            fitting_widgets.make_fitting_parameter_widget(self._td_max, label_text="t<sub>d,max</sub>"),
-            fitting_widgets.make_fitting_parameter_widget(self._n_td, label_text="n<sub>td</sub>"),
-            fitting_widgets.make_fitting_parameter_widget(self._s),
-            fitting_widgets.make_fitting_parameter_widget(self._b),
+            fitting_widgets.make_fitting_parameter_widget(self._reg, label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._td_min, label_text="t<sub>d,min</sub>", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._td_max, label_text="t<sub>d,max</sub>", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._n_td, label_text="n<sub>td</sub>", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._s, label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._b, label_width=65),
         ]
         for w in widgets:
             params_layout.addWidget(w)
@@ -1380,14 +1380,14 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
         params_layout.setSpacing(0)
 
         widgets = [
-            fitting_widgets.make_fitting_parameter_widget(self._reg),
-            fitting_widgets.make_fitting_parameter_widget(self._rh_min, label_text="r<sub>h,min</sub>", suffix=" nm"),
-            fitting_widgets.make_fitting_parameter_widget(self._rh_max, label_text="r<sub>h,max</sub>", suffix=" nm"),
-            fitting_widgets.make_fitting_parameter_widget(self._n_rh, label_text="n<sub>rh</sub>"),
-            fitting_widgets.make_fitting_parameter_widget(self._s),
-            fitting_widgets.make_fitting_parameter_widget(self._b),
-            fitting_widgets.make_fitting_parameter_widget(self._w0, label_text="w<sub>0</sub>", suffix=" nm"),
-            fitting_widgets.make_fitting_parameter_widget(self._temp, suffix=" °C"),
+            fitting_widgets.make_fitting_parameter_widget(self._reg, label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._rh_min, label_text="r<sub>h,min</sub>", suffix=" nm", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._rh_max, label_text="r<sub>h,max</sub>", suffix=" nm", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._n_rh, label_text="n<sub>rh</sub>", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._s, label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._b, label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._w0, label_text="w<sub>0</sub>", suffix=" nm", label_width=65),
+            fitting_widgets.make_fitting_parameter_widget(self._temp, suffix=" °C", label_width=65),
         ]
         for w in widgets:
             params_layout.addWidget(w)
