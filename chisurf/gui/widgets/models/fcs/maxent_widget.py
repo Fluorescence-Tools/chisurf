@@ -905,9 +905,9 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
 
         widgets = [
             fitting_widgets.make_fitting_parameter_widget(self._reg),
-            fitting_widgets.make_fitting_parameter_widget(self._td_min),
-            fitting_widgets.make_fitting_parameter_widget(self._td_max),
-            fitting_widgets.make_fitting_parameter_widget(self._n_td),
+            fitting_widgets.make_fitting_parameter_widget(self._td_min, label_text="t<sub>d,min</sub>"),
+            fitting_widgets.make_fitting_parameter_widget(self._td_max, label_text="t<sub>d,max</sub>"),
+            fitting_widgets.make_fitting_parameter_widget(self._n_td, label_text="n<sub>td</sub>"),
             fitting_widgets.make_fitting_parameter_widget(self._s),
             fitting_widgets.make_fitting_parameter_widget(self._b),
         ]
@@ -1381,12 +1381,12 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
 
         widgets = [
             fitting_widgets.make_fitting_parameter_widget(self._reg),
-            fitting_widgets.make_fitting_parameter_widget(self._rh_min, suffix=" nm"),
-            fitting_widgets.make_fitting_parameter_widget(self._rh_max, suffix=" nm"),
-            fitting_widgets.make_fitting_parameter_widget(self._n_rh),
+            fitting_widgets.make_fitting_parameter_widget(self._rh_min, label_text="r<sub>h,min</sub>", suffix=" nm"),
+            fitting_widgets.make_fitting_parameter_widget(self._rh_max, label_text="r<sub>h,max</sub>", suffix=" nm"),
+            fitting_widgets.make_fitting_parameter_widget(self._n_rh, label_text="n<sub>rh</sub>"),
             fitting_widgets.make_fitting_parameter_widget(self._s),
             fitting_widgets.make_fitting_parameter_widget(self._b),
-            fitting_widgets.make_fitting_parameter_widget(self._w0, suffix=" nm"),
+            fitting_widgets.make_fitting_parameter_widget(self._w0, label_text="w<sub>0</sub>", suffix=" nm"),
             fitting_widgets.make_fitting_parameter_widget(self._temp, suffix=" °C"),
         ]
         for w in widgets:
