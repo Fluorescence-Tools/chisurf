@@ -34,6 +34,63 @@ headless-tested increments (all degrade to a no-op without a database):
 events inside the dispatcher (the `operation_id` column + dic mapping are ready;
 the linking belongs with the PRD-11/16 operation-creation channels).
 
+## ⚑ UNDO/REDO via the History Browser (2026-06-27) — now functional
+
+Making the projection record again exposed that the **interactive undo/redo**
+replay path (history-browser cursor → `_on_history_cursor_changed` →
+`build_target_state` → `sync_domain_entities` + `_apply_*`) had **never actually
+run**: nothing recorded, so it was never exercised. Three stacked, latent bugs,
+each hidden by the previous one, are now fixed (commits `d409c8c2`, `9f205d89`):
+
+1. **Recording was dead** — `chisurf.history` (the singleton attribute) was shadowed
+   by the `chisurf/history/` *subpackage*: once any `from chisurf.history import …`
+   ran, `cs.history` resolved to the module, so `record_action` / the dispatcher
+   silently no-op'd. Fixed by housing the singleton in
+   `chisurf/history/__init__.py` (`get_history()` + a delegating module
+   `__getattr__`); `chisurf/__init__.py` returns that instance. The collision is now
+   benign whether `cs.history` resolves to the module or the instance.
+2. **Undo crashed** — `replay.py` had no module-level `import chisurf as cs`, so
+   `sync_domain_entities` raised `NameError` on its first line, swallowed by a bare
+   `except` in the cursor handler → undo appeared to "do nothing". Fixed; the
+   handler now *logs* replay-apply failures instead of swallowing them.
+3. **Redo didn't re-create fits** — `sync_domain_entities` keyed its `creation_map`
+   for `fit.add` on `target_uid`, while `reconstruct_navigation_state` reads the fit
+   UID from `source_uid`; the lookup always missed. Fixed (key on `source_uid`).
+
+**UID remapping (redo of UID-keyed state).** Re-creating an entity on redo yields a
+*fresh* UID, but `model_state` is keyed by the recorded (old) fit-group UID.
+`sync_domain_entities` now returns a `{old_uid: new_uid}` map for re-created fits;
+the cursor handler rewrites `model_state` keys through it before applying.
+Parameter and fit-range state are **name-keyed** (fit-group name is stable) and need
+no remap, so they already restore.
+
+### Remaining undo/redo work (tracked)
+
+- **Local-fit UID remap.** Only the top-level fit-group UID is remapped; the
+  `local_fit_uid` keys *inside* `model_state` are not, so deep multi-local-fit
+  *model-component* redo may be partial.
+- **Dataset UID remap.** Only re-created fits are captured in the remap; re-created
+  datasets also get fresh UIDs (datasets mostly resolve by name elsewhere, so this
+  is usually harmless — verify).
+- **Dataset re-add fidelity.** Redo re-adds datasets by dispatching `dataset.add`
+  with the recorded payload (`experiment_reader` forced to `None`); reload fidelity
+  for all reader types is unverified.
+- **Duplicate recording.** Every operation records *twice* with inconsistent vocab:
+  `dataset_add` / `fit_add` (from `core_fit._record_history`, rich payload with
+  UIDs) **and** `dataset.add` / `fit.add` (from the dispatcher, payload without
+  UIDs). Reconstruction tolerates it (canonicalized + reads the rich one) but it is
+  noisy and ambiguous — consolidate to a single record path per operation.
+- **Multi-entity remap ordering.** The fit remap assumes the last-added fit
+  corresponds to the missing UID being replayed; correct for the common single-fit
+  case, best-effort for batch re-creation.
+- **GUI-window refresh.** When a fit closes/opens during replay, confirm the fit
+  windows / model layout refresh (the apply mutates `cs.fits`; widget sync is the
+  GUI adapter's job).
+
+**Status:** recording ✓, undo ✓, redo re-creates fits + restores name-keyed state +
+remaps model-state fit groups ✓. Not yet exhaustively tested in the live GUI; the
+items above are the known edges.
+
 The sections below are the original analysis that motivated this work.
 
 ## Goal
