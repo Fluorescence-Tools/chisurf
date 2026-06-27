@@ -16,12 +16,50 @@ Read these files before starting:
 
 ## Current State
 
-The seed database has 7 probes with placeholder spectra (3 wavelength points each):
-- Alexa488, Alexa594, Cy3, Cy5, ATTO647N, Trp, 2-aminopurine
+Two parallel realities exist:
 
-The `spectra` table stores wavelength/intensity arrays as BLOBs.
-The `flr_fret_forster_radius` table stores R0 for donor-acceptor pairs.
-Neither table is populated with real data.
+**1. The shipped seed (`chisurf/core/mfdb/seed_data.py`)** — 7 probes with placeholder
+spectra (3 wavelength points each): Alexa488, Alexa594, Cy3, Cy5, ATTO647N, Trp,
+2-aminopurine. The `spectra` table stores wavelength/intensity arrays as BLOBs; the
+`flr_fret_forster_radius` table stores R0 for donor-acceptor pairs. Neither table is
+populated with real data in the shipped DB.
+
+**2. Two un-integrated `_dev` plugins with a large scraped dataset (the real story).**
+A working fluorophore-curation engine and a scraper already exist under
+`chisurf/plugins/_dev/` and are NOT wired into the app:
+
+- **`_dev/fluorophore_db/`** — the curation engine. `mfdb_adapter.py`
+  (`FluorophoreDatabase(MFDatabase)`) already speaks the **canonical MFDB schema**
+  (`probes`/`optical_properties`/`spectra`/`probe_types`/`images`), with `add_probe`,
+  `add_spectrum`, `add_optical_property`, `get_probe_full`, `search_probes`,
+  `validate_probe`, and `get_standardized_items(include_uncurated=…)`. A curation GUI
+  (`db_manager_widget.py`, `editor.py`) browses/plots spectra and toggles
+  `is_curated`/`quality_flag`.
+- **`_dev/spectra_downloader/`** — the scraper. `download_manager.py` runs per-source
+  importer scripts (`download/`: `fpbase.py`, `atto.py`, `chroma.py`, `omega_optical.py`,
+  `thorlabs.py`, `photochemcad_common_compounds.py`, `import_qfe_spectra.py`, …) as
+  subprocesses against a `--db` path, writing into a `FluorophoreDatabase`.
+- **`_dev/fluorophore_db/spectra.db`** — already a full canonical-schema MFDB carrying
+  **~1,954 probes, ~3,226 spectra, ~15,456 optical-property rows** scraped from those
+  sources.
+
+**Why this is "not properly integrated" (the problems this PRD now owns):**
+
+1. **Separate store.** The scraped data lives in a plugin-local `spectra.db`, not the
+   user's working MFDB. The curation GUI and scraper both point only at that file.
+2. **In `_dev/`.** Neither plugin is discoverable/shipped.
+3. **Unverified, low quality.** Only **~35 of 1,954** probes are marked
+   `is_curated=1`; `quality_flag` is uniformly the default `1` (never graded);
+   `category` is mostly `other`/NULL. The data is a useful **initial reference set**
+   but must be treated as **unverified / provisional until reviewed and approved**.
+4. **No source provenance.** The `probes` table has no `source` column, so an entry
+   can't say it came from FPbase vs ATTO vs user entry, nor carry a source URL /
+   retrieval date.
+5. **Downstream not wired.** `forster.py` (Task 1, done), the seed, and
+   `lookup_forster_radius` don't consume this curated data.
+
+This PRD now treats those two tools — and the verification/approval workflow that
+makes their scraped data trustworthy — as first-class deliverables (Tasks 7–9).
 
 ## Tasks
 
@@ -446,38 +484,145 @@ def test_forster_radius_zero_quantum_yield():
     assert R0 == 0.0
 ```
 
-## Task 7: Fold in the Fluorophore-DB plugin as the real-data source of truth
+## Task 7: Integrate the Fluorophore-DB + Spectra-Downloader tools with MFDB
 
-A working prototype already exists: **`chisurf/plugins/_dev/fluorophore_db/`**. It is
-the real-data engine this PRD's Task 2 ("add real spectral data") was going to
-hand-roll — but sourced from authoritative databases and curated, not embedded
-Gaussian approximations:
+The two `_dev` tools (see Current State) are the real-data engine. They supersede the
+embedded-Gaussian approach of Task 2 — the data is sourced from authoritative
+databases, not hand-rolled. The work is **integration + curation**, not building from
+scratch. Subtasks:
 
-- **Importers** (`download/`): FPbase (`fpbase.py`, `probe_fpbase.py`), ATTO
-  (`atto.py`), PhotochemCAD (`photochemcad_common_compounds.py`), QFE
-  (`import_qfe_spectra.py`), plus bulk/dye spectra helpers.
-- **Store** (`spectra.db`): per-fluorophore `chromophore_name`, `category`, `source`,
-  `curated`, `quality`, `abs_max`, `em_max`, `QY`, `lifetime`, `extinction`, and
-  absorption/emission spectra (`db.get_spectrum(probe_id, 'absorption'|'emission')`).
-- **Curation GUI** (`db_manager_widget.py`, `editor.py`, `download_manager.py`):
-  browse/edit/plot spectra, mark curated + quality, download from sources.
+**7.1 Promote both plugins out of `_dev/`.** Move `fluorophore_db` and
+`spectra_downloader` to shipped plugins (manifest-discovered). Mark them
+**experimental** initially (see the experimental-tool mechanism) since the data is
+unverified.
 
-**Integration plan (supersedes the embedded-array approach of Task 2):**
-1. **Promote** the plugin out of `_dev/` to a shipped plugin once reconciled.
-2. **Reconcile its store with MFDB**: map the `spectra.db` schema onto the MFDB
-   fluorophore tables — `flr_probe_list` (probe + category), `spectra` (abs/em BLOBs),
-   `optical_properties` (QY, lifetime, extinction, abs/em maxima), with a **provenance
-   `source`** (FPbase / ATTO / PhotochemCAD / QFE / user) and the `curated`/`quality`
-   flags carried as provenance, not a parallel sqlite file. Either back the plugin
-   directly by MFDB or register curated entries into MFDB on save.
-3. **Feed downstream**: curated spectra drive Task 1's `forster.py` overlap integral
-   (R0), the **Light Path Simulator** crosstalk/R₀ computation (**PRD-08** Task 8),
-   and the *computed-from-spectra* calibration source (**PRD-05**).
-4. **Seed**: replace/augment the 7-probe placeholder seed (Task 3) with curated
-   real entries exported from this plugin.
+**7.2 Make MFDB the single store (no parallel `spectra.db`).** The plugin already
+subclasses `MFDatabase` on the canonical schema, so the gap is *which database* it
+opens. Point the curation GUI and the scraper at the active MFDB resolved through
+`ChiSurfAPI`/`resolve_database_path` (the configured DB, or an explicit `--db`),
+instead of the hardcoded plugin-local `spectra.db`. Keep `spectra.db` only as an
+*import source* — a one-time `import_reference_set` that copies its
+probes/spectra/optical-properties into the target MFDB (idempotent, dedup by
+name+source), stamping every imported row as unverified (Task 8). No second
+source-of-truth.
+
+**7.3 Add `source` provenance.** Add a `source` column to `probes` (e.g. `fpbase`,
+`atto`, `chroma`, `photochemcad`, `qfe`, `thorlabs`, `omega`, `user`, `literature`)
+plus `source_ref` (URL/accession) and `retrieved_at`. Follow the **`.dic`-driven
+schema rule** (PRD-19): if `probes` becomes a `.dic`-declared table, add these via the
+dictionary + `reconcile_schema`; if it stays hand-DDL in `schema.py`, add the columns
+there and in the adapter's INSERT/UPDATE. Each scraper records its own `source` +
+`source_ref` when it writes a row.
+
+**7.4 Wire downstream consumers to *approved* data only.** `lookup_forster_radius`
+(Task 5), the seed (Task 3/4 precompute), the Light Path Simulator crosstalk/R₀
+(PRD-08 Task 8), and the PRD-05 computed-from-spectra calibration must read
+**only verification_status=approved** probes by default (Task 8), so unverified
+scraped rows never silently feed a published R₀.
+
+**7.5 Headless path.** Importer + reconcile + approval transitions must be runnable
+without the GUI (`csc fluorophore import-reference-set`, `… approve <probe>`,
+`… list --status unverified`), per the project's headless-feature rule. The
+curation GUI is thin wiring over these.
 
 Keep the importers/curation pure-Python (network + spectra parsing); MFDB read/write
 goes through the plugin backend services mirroring the repository methods.
+
+## Task 8: Verification / approval / quality workflow (provenance)
+
+The scraped 1,954 entries are an **initial reference set of unverified, low-quality
+data** — usable as a starting point, but nothing downstream should trust them until a
+human approves. Model this explicitly rather than via the current binary
+`is_curated` flag.
+
+**8.1 Verification + quality vocabulary.** Introduce:
+- `verification_status` ∈ {`unverified`, `under_review`, `approved`, `rejected`,
+  `superseded`} (sourced from the `.dic` enumeration per PRD-19 — never a hand Python
+  list). `approved` ⟺ the existing `is_curated=1`; keep `is_curated` as a generated
+  mirror for back-compat or migrate callers.
+- `quality` grade ∈ {`unknown`, `low`, `medium`, `high`} (replaces the meaningless
+  uniform `quality_flag`).
+- `verified_by` / `verified_at` (who approved, when) — provenance, reusing the PRD-17
+  identity resolver.
+
+**8.2 On import, everything enters `unverified` / `quality=unknown`.** The reference
+set from `spectra.db` and every fresh scrape land provisional. This is the concrete
+"unverified, low quality till updated and approved" requirement.
+
+**8.3 Approval transitions.** `approve` / `reject` / `mark_under_review` /
+`set_quality` API + CLI, validated and recorded. Consider modeling these as the
+PRD-12 lifecycle state machine (states + transitions already `.dic`-declared) and the
+approval action as a PRD-21 provenance operation, so curation history is queryable —
+but a small set of status columns + an audit row is an acceptable minimum if the
+lifecycle wiring is heavier than warranted.
+
+**8.4 Downstream filter.** Default every consumer (Task 7.4) to approved-only; allow
+an explicit `include_unverified=True` escape hatch for power users.
+
+## Task 9: AI-assisted triage and curation (human-in-the-loop)
+
+1,954 mostly-unverified entries are too many to hand-curate cold. Add an **AI triage
+pass that proposes** category, quality grade, canonical name, duplicate clusters, and
+an approve/flag recommendation **with rationale** — the human (or a downstream rule)
+makes the final `approve`/`reject` call (Task 8). **AI proposes, human disposes** —
+the AI must never auto-set `verification_status=approved`; it writes proposals to a
+review queue.
+
+**What the AI does per probe (or duplicate cluster):**
+- **Classify** `category` (organic_dye / protein / nucleic_acid / quantum_dot /
+  nanoparticle / other) and `fluorophore_type`.
+- **Canonicalize names** (e.g. `ATTO-647N` / `Atto647N` / `ATTO 647N` → one canonical
+  name) and **cluster duplicates** across sources.
+- **Sanity-grade quality**: flag implausible values — `QY` outside (0,1], `em_max <
+  abs_max` (negative Stokes shift), abs/em maxima outside ~[200,1000] nm, extinction
+  coefficient out of range, spectra whose peak disagrees with the stated max, missing
+  abs/em — and propose `quality` ∈ {low,medium,high}.
+- **Recommend** `approve` / `needs_review` / `reject` with a short rationale string.
+
+**Implementation — use the EXISTING AI settings; provider-neutral, local-first
+(`chisurf/core/fluorescence/curation/ai_triage.py`):**
+- **Reuse `chisurf/core/settings/ai_settings.py`** — do NOT add a new provider config
+  or any vendor SDK. It already supports **OpenAI, Mistral, Local (Ollama / LMStudio),
+  and Custom (OpenAI-compatible)** via `get_api_settings(provider)` →
+  `{base_url, api_key, text_model/model, temperature, top_p, max_tokens}`. The default
+  provider is whatever the user configured (a **local LLM or Mistral** is the intended
+  target — no Anthropic/Claude dependency).
+- **Call the OpenAI-compatible `/chat/completions` endpoint** with the same thin
+  `requests.post(base_url + "/chat/completions", headers={"Authorization": f"Bearer
+  {api_key}"}, json=payload)` pattern already used in
+  `plugins/core/code_editor/agent_panel.py:_llm_call` (model/temperature/max_tokens
+  from `ai_settings`). No `anthropic`/`openai` package — keep it to `requests` like the
+  rest of the codebase. Factor the shared call into a small helper if it's worth it.
+- **Structured output without vendor features:** request `response_format={"type":
+  "json_object"}` when the endpoint supports it (OpenAI/Mistral do; many local servers
+  do too), but **don't rely on it** — local models vary. Put the exact JSON schema in
+  the prompt, parse the reply with `json.loads`, and on parse failure retry once with a
+  "return valid JSON only" reminder, then fall back to `needs_review` with the raw text
+  kept. Validate the parsed object against the expected fields in Python.
+- **Deterministic checks run first, in plain Python** (8.3 ranges, peak-vs-max, Stokes
+  sign). The LLM only does the fuzzy parts — name canonicalization, duplicate
+  clustering across sources, category from a messy name/description, an overall
+  judgement. Don't ask a local model to do arithmetic the code does exactly; this also
+  keeps the prompt small for smaller local models.
+- **Batch by iterating** — there is no provider-agnostic batch endpoint. Process rows
+  in a loop (optionally a bounded thread pool for remote providers; serial for a local
+  server). Keep per-call prompts small so an 8B-class local model can handle them.
+- **Offline/degrade-safe and opt-in:** if no provider is configured (`base_url`/`model`
+  empty), the deterministic checks still run and populate the review queue; the LLM
+  step is skipped with a logged note. Network failures never block import or approval.
+  Gate behind a setting; the existing **AI Settings** GUI/plugin already lets the user
+  pick the provider and model.
+- **Provenance:** AI proposals are recorded as a distinct `source`/operation
+  (`ai_triage`) with the resolved provider + model id + timestamp, so an approved
+  value's lineage shows it was AI-proposed (by which model) then human-approved.
+  Headless: `csc fluorophore ai-triage [--status unverified] [--provider <key>]`
+  writes proposals; `… review-queue` lists them.
+
+**Acceptance:** on a sample of the scraped set, the deterministic checks catch the
+obvious bad rows, the AI proposals are written to the queue with rationales, and no
+row is auto-approved. Tests **mock the `/chat/completions` HTTP call** (no live
+network, no real provider), and the no-provider-configured path is covered. Works
+end-to-end against a **local Ollama/LMStudio** model with no cloud key.
 
 ## Status — Task 1 (Förster calculator) landed
 
@@ -487,19 +632,40 @@ refractive_index=1.33) -> R0 [Å]` (`R0 = 0.02108·(κ²·Q_D·n⁻⁴·J)^(1/6)
 `forster_radius_from_spectra(...) -> (R0, J)`. Donor emission area-normalized internally;
 fail-loud on shape mismatch / non-positive donor area / negative inputs. Tests:
 `test/fluorescence/test_forster.py` (9). The Light Path Simulator's grid-specific
-`calculate_r0` can later delegate here. Remaining: Tasks 2–6 (real spectral data, seed/
-registration, precomputed pair R0, lookups) — larger data-sourcing work.
+`calculate_r0` can later delegate here.
+
+**Reworked 2026-06-27 (Tasks 7–9):** the real data is the ~1,954-entry scraped set in
+the two `_dev` plugins (`fluorophore_db` curation engine + `spectra_downloader`
+scraper), not hand-rolled Gaussians. Remaining work is: integrate both tools with the
+live MFDB (Task 7), add a verification/approval/quality + `source` provenance workflow
+that treats all scraped data as unverified until human-approved (Task 8), and an
+AI-assisted triage pass that proposes category/quality/dedup/approval with rationale
+for human sign-off (Task 9, **provider-neutral via the existing
+`chisurf/core/settings/ai_settings.py` — local LLM / Mistral / OpenAI-compatible, no
+vendor SDK**). Tasks 2–3 (hand-authored Gaussian data) become a fallback only.
 
 ## Definition of Done
 
 - [x] `forster.py` computes overlap integral and R0 correctly
-- [ ] At least 20 common dyes have spectral data (Gaussian approximations OK for now)
-- [ ] The `fluorophore_db` plugin's curated probes/spectra/optical-properties are
-      registered into MFDB (`flr_probe_list`/`spectra`/`optical_properties`) with a
-      provenance `source`; the standalone `spectra.db` is reconciled (no parallel
-      source of truth), and the plugin is promoted out of `_dev/`
-- [ ] R0 is precomputed for at least 5 common FRET pairs
-- [ ] `lookup_forster_radius()` can retrieve R0 by dye names
+- [ ] At least 20 common dyes have **approved** spectral data in MFDB (the curated
+      real entries; Gaussian approximations only as a fallback)
+- [ ] Both `_dev` plugins (`fluorophore_db`, `spectra_downloader`) are promoted out of
+      `_dev/` and operate on the **live MFDB** (no parallel `spectra.db` source of
+      truth; `spectra.db` used only as a one-time reference import)
+- [ ] `probes` carries `source` / `source_ref` / `retrieved_at` provenance, and each
+      scraper records its source
+- [ ] Verification/approval workflow exists: `verification_status`
+      {unverified…approved/rejected}, a `quality` grade, `verified_by`/`verified_at`;
+      imported/scraped rows enter **unverified**; approve/reject API **and** CLI
+- [ ] Downstream consumers (`lookup_forster_radius`, seed precompute, PRD-08 R₀,
+      PRD-05 calibration) read **approved-only** by default
+- [ ] AI triage pass (`ai_triage.py`) proposes category/quality/canonical-name/
+      duplicate-cluster/approval-recommendation with rationale to a review queue;
+      **never auto-approves**; uses the existing `ai_settings` (local LLM / Mistral /
+      OpenAI-compatible via `/chat/completions`, no vendor SDK); deterministic numeric
+      checks run with no provider configured; tests mock the HTTP call (no live network)
+- [ ] R0 is precomputed for at least 5 common FRET pairs from approved spectra
+- [ ] `lookup_forster_radius()` retrieves R0 by dye names (approved-only)
 - [ ] R0 lookup is optional -- user can enter R0 directly (stored as `method="user_provided"`)
 - [ ] Known-pair test gives reasonable R0 value (within 20% of literature)
-- [ ] All tests pass
+- [ ] All tests pass (headless paths for import / approve / ai-triage included)
