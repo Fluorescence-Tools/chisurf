@@ -249,7 +249,7 @@ QDoubleSpinBox::down-button {
 
 /* Adjust hover border color */
 QComboBox::down-arrow {
-    image: url(:/icons/down_arrow.png);
+    image: url(:/icons/icons/down_arrow.png);
 }
 
 QComboBox:hover,

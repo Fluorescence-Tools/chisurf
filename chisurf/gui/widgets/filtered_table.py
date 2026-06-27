@@ -45,14 +45,8 @@ class FilteredTableWidget(QtWidgets.QWidget):
         layout.addWidget(self.search_edit)
 
         self.table = QtWidgets.QTableWidget()
-        self.table.setStyleSheet("""
-            QTableWidget { background: #1a1a1a; border: 1px solid #444; color: #eee;
-                          gridline-color: #333; font-size: 9px; }
-            QHeaderView::section { background: #2a2a2a; padding: 1px; border: 1px solid #444;
-                                   font-size: 9px; color: #999; }
-            QTableWidget::item { padding: 0px; }
-            QTableWidget::item:selected { background: #3a6ea5; }
-        """)
+        from chisurf.gui.widgets.general import apply_compact_table_style
+        apply_compact_table_style(self.table)
         self.table.setColumnCount(1)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

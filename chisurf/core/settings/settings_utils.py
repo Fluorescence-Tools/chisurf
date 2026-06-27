@@ -58,7 +58,7 @@ def copy_settings_to_user_folder():
 
 def copy_styles_to_user_folder():
     """Copies all style files from the gui/styles directory to the user folder,
-    ensuring that existing files are not overwritten."""
+    updating existing files if their content differs from the package version."""
     # Navigate from core/settings/settings_utils.py up to chisurf/ then gui/styles
     package_path = pathlib.Path(__file__).resolve().parent.parent.parent / 'gui' / 'styles'
     user_settings_path = get_path('settings') / 'styles'
@@ -67,7 +67,15 @@ def copy_styles_to_user_folder():
     for file in package_path.iterdir():
         if file.is_file() and file.suffix == '.qss':
             destination_file = user_settings_path / file.name
-            if not destination_file.exists():  # Avoid overwriting existing files
+            if destination_file.exists():
+                try:
+                    src_text = file.read_text(encoding="utf-8")
+                    dst_text = destination_file.read_text(encoding="utf-8")
+                    if src_text != dst_text:
+                        shutil.copyfile(file, destination_file)
+                except Exception:
+                    pass
+            else:
                 shutil.copyfile(file, destination_file)
 
 
@@ -272,6 +280,60 @@ def set_use_ribbon_interface(use_ribbon: bool) -> bool:
         gui_cfg['use_ribbon_interface'] = bool(use_ribbon)
         with open(settings_file, 'w', encoding='utf-8') as fh:
             yaml.safe_dump(data, fh, default_flow_style=False)
+        return True
+    except Exception:
+        return False
+
+
+def set_acquisition_settings(acquisition_settings: dict) -> bool:
+    """Persist acquisition settings in the user's settings YAML.
+
+    Writes the full ``gui.acquisition`` section to ``settings_chisurf.yaml``
+    and updates the in-memory ``cs_settings`` / ``gui`` dicts so changes
+    take effect immediately without a restart.
+
+    Parameters
+    ----------
+    acquisition_settings : dict
+        Acquisition settings dict to store under ``gui.acquisition``.
+
+    Returns
+    -------
+    bool
+        ``True`` when the settings file was written successfully.
+    """
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+
+        # Ensure gui section exists
+        gui_cfg = data.get('gui', {})
+        if not isinstance(gui_cfg, dict):
+            gui_cfg = {}
+            data['gui'] = gui_cfg
+
+        gui_cfg['acquisition'] = acquisition_settings
+
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+
+        # Also update the in-memory dicts so the change is immediate
+        try:
+            import chisurf.core.settings as _cs
+            # gui is the same object as cs_settings['gui'], so updating one
+            # updates both.  Use direct assignment to ensure the dict reference
+            # is preserved.
+            _cs.gui['acquisition'] = acquisition_settings
+        except Exception:
+            pass
+
         return True
     except Exception:
         return False
