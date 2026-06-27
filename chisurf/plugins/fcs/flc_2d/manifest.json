@@ -1,0 +1,88 @@
+{
+  "id": "flc-2d",
+  "version": "1.1.0",
+  "display_name": "Spectroscopy:Fluorescence Correlation Spectroscopy:2D-FLCS",
+  "description": "Two-dimensional fluorescence lifetime correlation spectroscopy (2D-FLCS): build 2D fluorescence-decay correlation maps from TTTR photon streams and resolve lifetime species and exchange dynamics.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence Correlation Spectroscopy"],
+  "icon": "icon.png",
+  "state_namespace": "flc_2d",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "tttr_path": {"type": ["string", "null"]},
+      "irf_path": {"type": ["string", "null"]},
+      "settings": {"type": "object"},
+      "last_result_summary": {"type": ["object", "null"]}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fcs.flc_2d.gui.tool:FlcTwoDTool",
+    "cli": "flc-2d=chisurf.plugins.fcs.flc_2d.cli:cli",
+    "services": "chisurf.plugins.fcs.flc_2d.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "flc2d.load_tttr",
+      "summary": "Load TTTR metadata and optionally photon arrays.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "flc2d.correlate",
+      "summary": "Build a 2D-FDC matrix from TTTR macro/micro times.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "flc2d.fit",
+      "summary": "Fit a 2D-FDC matrix to lifetime species.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "flc2d.lifetime_spectrum",
+      "summary": "Resolve a 1D lifetime spectrum from microtimes.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "flc2d.lifetime_lcurve",
+      "summary": "Compute 1D lifetime inversion L-curve diagnostics.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "flc2d.contract.describe",
+      "summary": "Describe the 2D-FLCS RPC namespace.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [],
+  "dependencies": {},
+  "experimental": true,
+  "experimental_message": "2D-FLCS is experimental; validate settings and results on known controls before using it for production analysis.",
+  "menu_hidden": true,
+  "deprecated": false
+}

@@ -1,145 +1,194 @@
+"""Global (multi-lag) 2D maximum-entropy method for 2D-FLC.
+
+Port of the idea behind ``TK_GFitF_2DMEM``: invert several 2D-FDC matrices, measured at
+different macro-time lags ``dT``, **jointly** with a single shared lifetime distribution.
+
+Each lag matrix is modelled as ``M_k = E A G_k A^T E^T`` with
+
+* ``A`` (``n_comp x n_states``, >= 0) — the lifetime amplitudes of each kinetic state,
+  **shared across all lags**;
+* ``G_k`` (``n_states x n_states``) — the inter-state correlation at lag ``k`` (its
+  evolution with lag is the kinetics; off-diagonal terms grow as the states interconvert).
+
+``A`` is parameterized as ``exp(a)`` (non-negative, entropy well-defined); the ``G_k`` are
+free (correlations may be negative). The objective is the summed Poisson chi-square plus a
+Skilling-Gull entropy on the shared ``A``, minimized by L-BFGS-B with an analytic gradient.
+By default the fit targets the *correlation residual* of each matrix (independence baseline
+removed) so the small lifetime cross-peaks drive the solution.
+
+.. note::
+   Cleanly *separating* the per-state lifetime distributions from weakly-correlated or
+   equal-brightness data is an ill-conditioned inverse problem; the shared marginal and the
+   per-lag correlation magnitudes are robust, but for quantitative per-state rate constants
+   prefer the rate-matrix fit on the lifetime-filtered correlation
+   (:func:`chisurf.plugins.fcs.flc_2d.fit.kinetics.fit_rate_matrix`).
 """
-Global 2D-MEM fitting functions for 2D-FLCS analysis.
-"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
 
 import numpy as np
-from typing import Dict, List, Any
-from scipy.optimize import minimize
-import logging
 
-class GlobalTwoDMEMFitter:
+from .ilt import ilt_2d
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["solve_global_mem_2d", "GlobalMEMResult"]
+
+
+@dataclass
+class GlobalMEMResult:
+    """Result of a global multi-lag 2D-MEM fit."""
+
+    amplitudes: np.ndarray  # (n_comp, n_states) shared lifetime amplitudes A
+    correlations: np.ndarray  # (n_lags, n_states, n_states) per-lag G_k
+    tau_grid: np.ndarray  # (n_comp,) lifetimes (ns)
+    marginal: np.ndarray  # (n_comp,) shared lifetime distribution = A.sum(axis=1)
+    chi2: float
+
+    def state_lifetimes(self) -> np.ndarray:
+        """Amplitude-weighted mean lifetime of each kinetic state (ns)."""
+        w = self.amplitudes / np.clip(self.amplitudes.sum(axis=0, keepdims=True), 1e-300, None)
+        return self.tau_grid @ w
+
+
+def _correlation_residual(M: np.ndarray) -> np.ndarray:
+    """Return the 2D-FLC correlation matrix: M minus its independence (outer-product) baseline.
+
+    ``M_cor = M - r c^T / N`` (``r``/``c`` row/column sums, ``N`` total) removes the large
+    *uncorrelated* part of the 2D-FDC so the small lifetime cross-peaks (the kinetics) drive
+    the fit, mirroring the MATLAB 2D-FLC normalization.
     """
-    Performs Global 2D-MEM fitting across multiple dT datasets.
-    
-    Based on TK_GFitF_2DMEM_05.m.
+    r = M.sum(axis=1)
+    c = M.sum(axis=0)
+    N = M.sum()
+    if N <= 0:
+        return M.copy()
+    return M - np.outer(r, c) / N
+
+
+def solve_global_mem_2d(
+    matrices,
+    basis: np.ndarray,
+    tau_grid: np.ndarray,
+    *,
+    n_states: int = 2,
+    regulator: float = 1.0,
+    weights=None,
+    subtract_baseline: bool = True,
+    max_iter: int = 800,
+) -> GlobalMEMResult:
+    """Jointly invert several lag matrices with a shared lifetime distribution.
+
+    Parameters
+    ----------
+    matrices
+        Sequence of square 2D-FDC matrices (one per lag), all ``n_data x n_data``.
+    basis
+        IRF-convolved exponential basis ``E`` (``n_data x n_comp``).
+    tau_grid
+        Lifetimes for the basis columns (ns).
+    n_states
+        Number of kinetic states (columns of the shared ``A``).
+    regulator
+        Entropy weight ``lambda`` on the shared amplitudes.
+    weights
+        Optional per-lag weight matrices (default Poisson per matrix).
+    subtract_baseline
+        Fit the correlation residual (independence baseline removed) so the lifetime
+        cross-peaks drive the solution (recommended).
+    max_iter
+        Maximum L-BFGS-B iterations.
     """
-    
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+    from scipy.optimize import minimize
 
-    def fit_global_2d_mem(
-        self,
-        initial_mat_a: np.ndarray,      # Global (n_tau x n_states)
-        initial_mat_g_list: list,      # dT-specific [n_states x n_states]
-        initial_y0_list: list,         # dT-specific
-        fix_mat_a: int,
-        fix_mat_g: int,
-        fix_y0: int,
-        regulator_const: float,
-        mat_2dfdc_it: np.ndarray,
-        mat_2dfdc_list: list,
-        mat_2dfdc_cor_list: list,
-        tau_values: np.ndarray,
-        exp_curve: np.ndarray,
-        mi_matrix: np.ndarray,
-        max_iterations: int = 10000,
-        tolerance: float = 1e-6
-    ) -> Dict:
-        """
-        Globally fit multiple 2D-FDC matrices with a shared state distribution (Mat_A).
-        """
-        n_dt = len(mat_2dfdc_list)
-        n_tau, n_states = initial_mat_a.shape
-        
-        # Prepare diff matrix
-        diff_mat_it = np.zeros_like(mat_2dfdc_it)
-        diff_mat_it[1:] = mat_2dfdc_it[1:] - mat_2dfdc_it[:-1]
-        diff_mat_it[0] = diff_mat_it[1]
-        diff_mat_it_kron = np.kron(diff_mat_it, diff_mat_it.reshape(-1, 1))
+    E = np.asarray(basis, dtype=float)
+    n_data, n_comp = E.shape
+    raw = [np.asarray(M, dtype=float) for M in matrices]
+    n_lags = len(raw)
+    for M in raw:
+        if M.shape != (n_data, n_data):
+            raise ValueError("all matrices must be square and match the basis rows")
 
-        # Build initial parameters
-        params = []
-        # 1. Global Mat_A
-        if fix_mat_a != 1:
-            for k in range(n_states):
-                for i in range(n_tau):
-                    params.append(abs(initial_mat_a[i, k]) if fix_mat_a == 2 else initial_mat_a[i, k])
-        
-        # 2. Local Mat_G and y0 for each dT
-        for t in range(n_dt):
-            if fix_mat_g != 1:
-                for i in range(n_states):
-                    for k in range(n_states):
-                        if fix_mat_g == 3: # symmetric
-                            if i <= k: params.append(abs(initial_mat_g_list[t][i, k]))
-                        else:
-                            params.append(abs(initial_mat_g_list[t][i, k]) if fix_mat_g == 2 else initial_mat_g_list[t][i, k])
-            
-            if fix_y0 != 1:
-                params.append(abs(initial_y0_list[t]) if fix_y0 == 2 else initial_y0_list[t])
+    # Poisson weights come from the raw counts; fit the correlation residual.
+    if weights is None:
+        W = [1.0 / (M + M.mean() + 1.0) for M in raw]
+    else:
+        W = [np.asarray(w, dtype=float) for w in weights]
+    mats = [_correlation_residual(M) for M in raw] if subtract_baseline else raw
 
-        params = np.array(params)
+    # Warm start: the shared lifetime amplitudes A come from the RAW data (the correlation
+    # residual has zero marginals), G_k starts near identity and the fit shapes it.
+    P_avg = np.zeros((n_comp, n_comp))
+    for M in raw:
+        P_avg += np.clip(ilt_2d(M, E, tau_grid, method="tikhonov").spectrum, 0, None)
+    P_avg /= n_lags
+    marg = P_avg.sum(axis=1)
+    marg = np.maximum(marg, marg.max() * 1e-6 + 1e-12)
+    A0 = np.tile((marg / n_states)[:, None], (1, n_states))
+    # break state symmetry by tilting columns towards short/long lifetimes
+    tilt = np.linspace(0.5, 1.5, n_states)
+    A0 = A0 * tilt[None, :]
+    za0 = np.log(A0).ravel()
+    G0 = np.tile(np.eye(n_states)[None, :, :], (n_lags, 1, 1)) * 0.5
+    g0 = G0.ravel()
+    x0 = np.concatenate([za0, g0])
 
-        def objective(p):
-            idx = 0
-            # Extract Mat_A
-            if fix_mat_a != 1:
-                mat_a = np.zeros((n_tau, n_states))
-                for k in range(n_states):
-                    for i in range(n_tau):
-                        mat_a[i, k] = abs(p[idx]) if fix_mat_a == 2 else p[idx]
-                        idx += 1
-            else:
-                mat_a = initial_mat_a
-            
-            # Avoid log(0)
-            range_a = np.max(mat_a) - np.min(mat_a)
-            if range_a < 1e-10: range_a = 1.0
-            mat_a_safe = mat_a + (mat_a == 0) * (range_a * 1e-7)
-            
-            total_chi2 = 0
-            # For each dT
-            for t in range(n_dt):
-                if fix_mat_g != 1:
-                    mat_g = np.zeros((n_states, n_states))
-                    for i in range(n_states):
-                        for k in range(n_states):
-                            if fix_mat_g == 3:
-                                if i <= k:
-                                    val = abs(p[idx])
-                                    mat_g[i, k] = val
-                                    mat_g[k, i] = val
-                                    idx += 1
-                            else:
-                                mat_g[i, k] = abs(p[idx]) if fix_mat_g == 2 else p[idx]
-                                idx += 1
-                else:
-                    mat_g = initial_mat_g_list[t]
-                
-                if fix_y0 != 1:
-                    y0 = abs(p[idx]) if fix_y0 == 2 else p[idx]
-                    idx += 1
-                else:
-                    y0 = initial_y0_list[t]
-                
-                # Model
-                mat_m_2dflc = mat_a_safe @ mat_g @ mat_a_safe.T
-                mat_model = exp_curve @ mat_m_2dflc @ exp_curve.T + y0 * diff_mat_it_kron
-                
-                # Local Chi2
-                m_data = mat_2dfdc_list[t]
-                m_cor = mat_2dfdc_cor_list[t]
-                var1 = np.mean(m_data)
-                if var1 <= 0: var1 = 1.0
-                err = ((m_cor - mat_model) ** 2) / (m_data + var1)
-                total_chi2 += np.sum(err) / (m_data.shape[0]**2)
-            
-            # Global Entropy
-            entropy = 0
-            for k in range(n_states):
-                v_a = mat_a_safe[:, k]
-                v_mi = mi_matrix[:, k]
-                v_sum = np.sum(v_a)
-                v_safe = v_a / (v_mi + np.max(v_mi)*1e-10)
-                v_log = v_a * np.log(v_safe)
-                entropy += (v_sum - np.sum(v_mi) - np.sum(v_log))
-                
-            q_val = (total_chi2 / n_dt) - 2 * entropy / regulator_const
-            return q_val
+    n_a = n_comp * n_states
+    m_prior = A0.copy()
+    log_m = np.log(m_prior).ravel()
+    lam = float(regulator)
 
-        res = minimize(
-            objective, params, method='Nelder-Mead',
-            options={'maxiter': max_iterations, 'xatol': tolerance}
-        )
+    def unpack(x):
+        A = np.exp(x[:n_a]).reshape(n_comp, n_states)
+        G = x[n_a:].reshape(n_lags, n_states, n_states)
+        return A, G
 
-        return {'success': res.success, 'q_value': res.fun, 'params': res.x}
+    def objective(x):
+        A, G = unpack(x)
+        B = E @ A  # (n_data, n_states)
+        grad_B = np.zeros_like(B)
+        grad_g = np.empty((n_lags, n_states, n_states))
+        chi2 = 0.0
+        for k in range(n_lags):
+            model = B @ G[k] @ B.T
+            diff = model - mats[k]
+            D = W[k] * diff
+            chi2 += 0.5 * float(np.sum(D * diff))
+            grad_g[k] = B.T @ D @ B
+            grad_B += D @ B @ G[k].T + D.T @ B @ G[k]
+        grad_A = E.T @ grad_B  # (n_comp, n_states)
+        za = x[:n_a]
+        logterm = za - log_m
+        Avec = np.exp(za)
+        S = float(np.sum(Avec - m_prior.ravel() - Avec * logterm))
+        Q = chi2 - S / lam
+        dQ_dA = grad_A + (logterm.reshape(n_comp, n_states)) / lam
+        dQ_dza = (dQ_dA * A).ravel()
+        return Q, np.concatenate([dQ_dza, grad_g.ravel()])
+
+    res = minimize(
+        objective,
+        x0,
+        jac=True,
+        method="L-BFGS-B",
+        options={"maxiter": max_iter, "ftol": 1e-10, "gtol": 1e-8},
+    )
+    A, G = unpack(res.x)
+
+    chi2 = 0.0
+    for k in range(n_lags):
+        B = E @ A
+        diff = (B @ G[k] @ B.T) - mats[k]
+        chi2 += float(np.sum(W[k] * diff * diff))
+    chi2 /= max(n_lags * n_data * n_data - n_a, 1)
+    logger.info("[global-MEM] %d lags, %d states, Q=%.4g", n_lags, n_states, res.fun)
+    return GlobalMEMResult(
+        amplitudes=A,
+        correlations=G,
+        tau_grid=np.asarray(tau_grid, float),
+        marginal=A.sum(axis=1),
+        chi2=chi2,
+    )

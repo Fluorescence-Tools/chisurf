@@ -1,1 +1,3 @@
-from .wizard import TwoDFCSWizard
+from .tool import FlcTwoDTool
+
+__all__ = ["FlcTwoDTool"]
