@@ -257,7 +257,7 @@ class Main(
             self.restoreState(state)
 
     def _apply_read_data_dock_width(self) -> None:
-        """Apply the startup width for the left read-data dock."""
+        """Apply the startup width and raise the left read-data dock to active."""
         dock = getattr(self, "dockWidgetReadData", None)
         if dock is None:
             return
@@ -265,6 +265,11 @@ class Main(
             self.resizeDocks([dock], [self._READ_DATA_DOCK_WIDTH], QtCore.Qt.Horizontal)
         except Exception:
             dock.resize(self._READ_DATA_DOCK_WIDTH, dock.height())
+        try:
+            dock.raise_()
+        except Exception:
+            pass
+
 
     def closeEvent(self, event: QtGui.QCloseEvent):
         # Always save window state regardless of confirmation
