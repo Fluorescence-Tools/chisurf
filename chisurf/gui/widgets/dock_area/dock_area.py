@@ -144,6 +144,10 @@ class DockTabWidget(QtWidgets.QTabWidget):
 
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         """Show dock-area context actions when right-clicking the tab pane."""
+        if self.dock_area is not None and self.dock_area.is_inside_client_content(event.globalPos()):
+            event.accept()
+            return
+
         if self.dock_area._show_area_context_menu(event.globalPos()):
             event.accept()
             return
@@ -1678,6 +1682,30 @@ class DockArea(QtWidgets.QWidget):
 
         menu.exec_(global_pos)
 
+    def is_inside_client_content(self, global_pos: QtCore.QPoint) -> bool:
+        """Check if the global position is inside a registered client page widget.
+
+        Parameters
+        ----------
+        global_pos : QtCore.QPoint
+            Global screen position.
+
+        Returns
+        -------
+        bool
+            True if position is inside client content, False otherwise.
+        """
+        for client_widget in self._all_widgets:
+            try:
+                if not client_widget.isVisible():
+                    continue
+                local_pos = client_widget.mapFromGlobal(global_pos)
+                if client_widget.rect().contains(local_pos):
+                    return True
+            except RuntimeError:
+                pass
+        return False
+
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         """Show dock-area context menu actions outside the tab bar.
 
@@ -1685,6 +1713,10 @@ class DockArea(QtWidgets.QWidget):
         by tab context menus so callers can expose actions such as reopening
         closed dock panes from any empty dock area.
         """
+        if self.is_inside_client_content(event.globalPos()):
+            event.accept()
+            return
+
         if self._show_area_context_menu(event.globalPos()):
             event.accept()
             return

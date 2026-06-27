@@ -60,7 +60,7 @@ except Exception:
 _PYMOL_MISSING_HINT = (
     "PyMOL is not available in this ChiSurf environment, so the 3D view is disabled.\n\n"
     "To enable the 3D viewer, install ChiSurf (which bundles PyMOL) via the ChiSurf "
-    "Package Manager (Help → Updates and Packages → Package Manager) or through "
+    "Package Manager (Settings → Packages) or through "
     "`conda install cs -c conda-forge -c tpeulen` on the command line."
 )
 

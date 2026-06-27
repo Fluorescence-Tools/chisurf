@@ -281,6 +281,10 @@ class DockStackedTabWidget(QtWidgets.QWidget):
 
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         """Show dock-area context actions when right-clicking the tab pane."""
+        if self.dock_area is not None and self.dock_area.is_inside_client_content(event.globalPos()):
+            event.accept()
+            return
+
         if self.dock_area._show_area_context_menu(event.globalPos()):
             event.accept()
             return

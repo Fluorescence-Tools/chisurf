@@ -9,7 +9,26 @@ Usage::
 """
 from __future__ import annotations
 
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtWidgets
+
+
+def _resolve_auto_fold_delay(delay: int | None = None) -> int:
+    """Resolve auto-fold delay from central settings if not explicitly given.
+
+    Returns
+    -------
+    int
+        Delay in milliseconds.  A value < 0 means auto-fold is globally
+        disabled.
+    """
+    if delay is not None:
+        return delay
+    try:
+        from chisurf.core.settings import cs_settings
+        cfg = cs_settings.get("gui", {}).get("collapsible_box", {})
+        return int(cfg.get("auto_fold_timeout_ms", 1200))
+    except Exception:
+        return 1200
 
 
 class CollapsibleBox(QtWidgets.QWidget):
@@ -24,8 +43,11 @@ class CollapsibleBox(QtWidgets.QWidget):
     auto_fold : bool
         When True, the section automatically folds after the mouse leaves
         it and the fold timer expires.
-    auto_fold_delay_ms : int
-        Milliseconds of inactivity before auto-fold fires (default 1200 ms).
+    auto_fold_delay_ms : int or None
+        Milliseconds of inactivity before auto-fold fires.  ``None`` (the
+        default) reads the value from the global setting
+        ``gui.collapsible_box.auto_fold_timeout_ms`` in
+        ``settings_chisurf.yaml``.  A value < 0 disables auto-fold.
     """
 
     toggled = QtCore.Signal(bool)  # True = expanded, False = collapsed
@@ -37,13 +59,15 @@ class CollapsibleBox(QtWidgets.QWidget):
         *,
         expanded: bool = True,
         auto_fold: bool = False,
-        auto_fold_delay_ms: int = 1200,
+        auto_fold_delay_ms: int | None = None,
     ) -> None:
         super().__init__(parent)
         self._title = title
         self._expanded = expanded
-        self._auto_fold_enabled = auto_fold
-        self._auto_fold_delay = auto_fold_delay_ms
+
+        delay = _resolve_auto_fold_delay(auto_fold_delay_ms)
+        self._auto_fold_enabled = auto_fold and delay >= 0
+        self._auto_fold_delay = max(delay, 0)  # non-negative timer interval
 
         self._fold_timer = QtCore.QTimer(self)
         self._fold_timer.setSingleShot(True)
@@ -53,58 +77,38 @@ class CollapsibleBox(QtWidgets.QWidget):
         self._build_ui()
         self._apply_state(animate=False)
 
-    # ------------------------------------------------------------------
-    # Construction
-    # ------------------------------------------------------------------
-
     def _build_ui(self) -> None:
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Header button — arrow lives on the very left via text alignment
-        self._btn = QtWidgets.QToolButton(self)
+        # QPushButton (not QToolButton) correctly honours CSS text-align:left.
+        # Styled via gui/styles/widgets/collapsible_box.qss (objectName target).
+        self._btn = QtWidgets.QPushButton(self)
+        self._btn.setObjectName("CollapsibleBoxHeader")
         self._btn.setCheckable(True)
         self._btn.setChecked(self._expanded)
-        self._btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self._btn.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
-        )
-        self._btn.setStyleSheet(
-            "QToolButton {"
-            "  background: #272b33;"
-            "  color: #c8ccd4;"
-            "  border: none;"
-            "  border-bottom: 1px solid #1a1d22;"
-            "  font-size: 10px;"
-            "  font-weight: bold;"
-            "  text-align: left;"
-            "  padding: 4px 6px 4px 0px;"
-            "}"
-            "QToolButton:hover { background: #32363f; }"
-            "QToolButton:checked { color: #7eb8f7; }"
         )
         self._btn.clicked.connect(self._on_header_clicked)
         self._update_header_text()
         root.addWidget(self._btn)
 
-        # Content container
         self._content = QtWidgets.QWidget(self)
+        # Preferred (not Expanding) so the box takes exactly the space it needs;
+        # Expanding caused equal height distribution among all sibling panels.
         self._content.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
         )
         self._content_layout = QtWidgets.QVBoxLayout(self._content)
-        self._content_layout.setContentsMargins(6, 4, 6, 6)
-        self._content_layout.setSpacing(3)
-        root.addWidget(self._content, 1)  # stretch=1: fills available vertical space
+        self._content_layout.setContentsMargins(2, 2, 2, 2)
+        self._content_layout.setSpacing(1)
+        root.addWidget(self._content)  # no stretch — parent decides allocation
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def add_widget(self, widget: QtWidgets.QWidget) -> None:
+    def add_widget(self, widget: QtWidgets.QWidget, stretch: int = 0) -> None:
         """Append *widget* to the content area."""
-        self._content_layout.addWidget(widget)
+        self._content_layout.addWidget(widget, stretch)
 
     def add_row(self, label: str, widget: QtWidgets.QWidget) -> None:
         """Append a label + widget row to the content area."""
@@ -139,10 +143,6 @@ class CollapsibleBox(QtWidgets.QWidget):
         if not self._auto_fold_enabled:
             self._fold_timer.stop()
 
-    # ------------------------------------------------------------------
-    # Internal slots & event handlers
-    # ------------------------------------------------------------------
-
     def _on_header_clicked(self) -> None:
         self._expanded = not self._expanded
         self._btn.setChecked(self._expanded)
@@ -151,11 +151,9 @@ class CollapsibleBox(QtWidgets.QWidget):
     def _apply_state(self, *, animate: bool = True) -> None:
         self._content.setVisible(self._expanded)
         self._update_header_text()
-        # Switch size policy so the parent layout can give us vertical space when
-        # expanded and treat us as fixed-height when collapsed.
         if self._expanded:
             self.setSizePolicy(
-                QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+                QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
             )
         else:
             self.setSizePolicy(
@@ -163,7 +161,7 @@ class CollapsibleBox(QtWidgets.QWidget):
             )
         if self.parent() is not None:
             try:
-                self.parent().updateGeometry()  # type: ignore[union-attr]
+                self.parent().updateGeometry()
             except Exception:
                 pass
         self.updateGeometry()
@@ -173,14 +171,12 @@ class CollapsibleBox(QtWidgets.QWidget):
         arrow = "▼" if self._expanded else "▶"
         self._btn.setText(f"{arrow}  {self._title}")
 
-    # Auto-fold on mouse leave -------------------------------------------
-
-    def leaveEvent(self, event: QtCore.QEvent) -> None:  # type: ignore[override]
+    def leaveEvent(self, event: QtCore.QEvent) -> None:
         if self._auto_fold_enabled and self._expanded:
             self._fold_timer.start(self._auto_fold_delay)
         super().leaveEvent(event)
 
-    def enterEvent(self, event: QtCore.QEvent) -> None:  # type: ignore[override]
+    def enterEvent(self, event: QtCore.QEvent) -> None:
         self._fold_timer.stop()
         super().enterEvent(event)
 

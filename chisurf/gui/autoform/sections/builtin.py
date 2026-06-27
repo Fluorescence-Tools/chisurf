@@ -4,6 +4,7 @@ Importing this module wires the standard plot keys (``line``, ``residual``,
 ``distribution`` ...) and standard custom sections into the registry. The model
 layer references these by string only; the concrete classes live here.
 """
+
 from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets
@@ -20,6 +21,7 @@ from .registry import register_plot, register_section
 # plot is actually resolved.
 def _plots():
     import chisurf.gui.plots as _p
+
     return _p
 
 
@@ -46,9 +48,7 @@ def resolve_distribution_options(options: dict) -> dict:
             cfg = dict(cfg)
             accessor = cfg.get("accessor")
             if isinstance(accessor, str):
-                cfg["accessor"] = getattr(
-                    chisurf.core.math.datatools, accessor, None
-                )
+                cfg["accessor"] = getattr(chisurf.core.math.datatools, accessor, None)
             new_dist[name] = cfg
         resolved["distribution_options"] = new_dist
     return resolved
@@ -122,6 +122,7 @@ class CurveInputWidget(QtWidgets.QWidget):
 
     def _open_selector(self):
         from chisurf.gui.widgets.experiments import ExperimentalDataSelector
+
         fit = getattr(self._model, "fit", None)
         try:
             experiment = fit.data.experiment.__class__
@@ -160,7 +161,9 @@ class CurveInputWidget(QtWidgets.QWidget):
             return
         fit_index = self._own_fit_index()
         try:
-            cs.core.actions.dispatch(name=section.unload_action, payload={"fit_index": int(fit_index)})
+            cs.core.actions.dispatch(
+                name=section.unload_action, payload={"fit_index": int(fit_index)}
+            )
             cs.core.actions.dispatch(name="fit.update", payload={"fit_index": int(fit_index)})
         except Exception as exc:
             logging.warning(f"CurveInputWidget: unload dispatch failed: {exc}")
@@ -184,7 +187,7 @@ class CurveInputWidget(QtWidgets.QWidget):
         curve = getattr(group, self._section.name_attr, None) if group is not None else None
         fwhm = getattr(curve, "fwhm", None)
         try:
-            self.fwhm_label.setText("%.3f" % float(fwhm) if fwhm is not None else "")
+            self.fwhm_label.setText(f"{float(fwhm):.3f}" if fwhm is not None else "")
         except Exception:
             self.fwhm_label.setText("")
 
@@ -193,9 +196,7 @@ class CurveInputWidget(QtWidgets.QWidget):
 def _resolve_options_source(name: str):
     """Resolve a named option list (e.g. ``"window_function_types"``)."""
     sources = {
-        "window_function_types": lambda: list(
-            chisurf.core.math.signal.window_function_types
-        ),
+        "window_function_types": lambda: list(chisurf.core.math.signal.window_function_types),
     }
     factory = sources.get(name)
     if factory is None:
@@ -296,6 +297,7 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
         options = list(section.options)
         if not options and section.options_source:
             options = _resolve_options_source(section.options_source)
+        self._options = options
         _labels = list(getattr(section, "labels", ()))
         _has_labels = bool(_labels) and len(_labels) == len(options)
         current = self._current_value()
@@ -309,9 +311,7 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
                 rb = QtWidgets.QRadioButton(display)
                 if current is not None and str(opt) == str(current):
                     rb.setChecked(True)
-                rb.toggled.connect(
-                    lambda checked, v=opt: self._commit(v) if checked else None
-                )
+                rb.toggled.connect(lambda checked, v=opt: self._commit(v) if checked else None)
                 self._button_group.addButton(rb)
                 self._radios.append(rb)
                 layout.addWidget(rb)
@@ -336,6 +336,26 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
             self.combo.currentIndexChanged.connect(_on_index_changed)
             layout.addWidget(self.combo, 1)
             self._apply_tooltip(self, self.combo)
+
+    def sync(self) -> None:
+        """Re-read the model value into the control without firing signals."""
+        cur = self._current_value()
+        if cur is None:
+            return
+        if self.combo is not None:
+            for i, opt in enumerate(self._options):
+                if str(opt) == str(cur):
+                    self.combo.blockSignals(True)
+                    self.combo.setCurrentIndex(i)
+                    self.combo.blockSignals(False)
+                    break
+        else:
+            for opt, rb in zip(self._options, self._radios):
+                if str(opt) == str(cur):
+                    rb.blockSignals(True)
+                    rb.setChecked(True)
+                    rb.blockSignals(False)
+                    break
 
 
 class ToggleWidget(_BoundControlMixin, QtWidgets.QWidget):
@@ -362,6 +382,15 @@ class ToggleWidget(_BoundControlMixin, QtWidgets.QWidget):
         layout.addStretch(1)
         self._apply_tooltip(self, self.checkbox)
 
+    def sync(self) -> None:
+        """Re-read the model value into the checkbox without firing signals."""
+        cur = self._current_value()
+        if cur is None:
+            return
+        self.checkbox.blockSignals(True)
+        self.checkbox.setChecked(bool(cur))
+        self.checkbox.blockSignals(False)
+
 
 class ToggleRowWidget(QtWidgets.QWidget):
     """Multiple boolean checkboxes on a single horizontal line.
@@ -387,12 +416,14 @@ class ToggleRowWidget(QtWidgets.QWidget):
             if desc:
                 cb.setToolTip(desc)
             cb.setChecked(bool(getattr(group, attr, False)))
+
             def _on_toggle(checked, g=group, a=attr, m=model):
                 setattr(g, a, bool(checked))
                 try:
                     m.update()
                 except Exception:
                     pass
+
             cb.toggled.connect(_on_toggle)
             layout.addWidget(cb)
         layout.addStretch(1)
@@ -414,21 +445,31 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
         layout.setSpacing(4)
 
         current = self._current_value()
+        # A read-only field must never write back — its value (which may be a
+        # non-editable object such as a callable) is displayed but left untouched.
+        read_only = bool(getattr(section, "read_only", False))
         if section.kind == "int":
             self.editor = QtWidgets.QSpinBox()
-            self.editor.setMinimum(int(section.minimum) if section.minimum is not None else -2_147_483_648)
-            self.editor.setMaximum(int(section.maximum) if section.maximum is not None else 2_147_483_647)
+            self.editor.setMinimum(
+                int(section.minimum) if section.minimum is not None else -2_147_483_648
+            )
+            self.editor.setMaximum(
+                int(section.maximum) if section.maximum is not None else 2_147_483_647
+            )
             if section.step:
                 self.editor.setSingleStep(int(section.step))
             if section.suffix:
                 self.editor.setSuffix(section.suffix)
             if current is not None:
                 self.editor.setValue(int(current))
-            self.editor.valueChanged.connect(lambda v: self._commit(int(v)))
+            if not read_only:
+                self.editor.valueChanged.connect(lambda v: self._commit(int(v)))
         elif section.kind == "float":
             self.editor = QtWidgets.QDoubleSpinBox()
             self.editor.setDecimals(int(section.decimals))
-            self.editor.setMinimum(float(section.minimum) if section.minimum is not None else -1e308)
+            self.editor.setMinimum(
+                float(section.minimum) if section.minimum is not None else -1e308
+            )
             self.editor.setMaximum(float(section.maximum) if section.maximum is not None else 1e308)
             if section.step:
                 self.editor.setSingleStep(float(section.step))
@@ -436,20 +477,36 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
                 self.editor.setSuffix(section.suffix)
             if current is not None:
                 self.editor.setValue(float(current))
-            self.editor.valueChanged.connect(lambda v: self._commit(float(v)))
+            if not read_only:
+                self.editor.valueChanged.connect(lambda v: self._commit(float(v)))
         else:  # "str"
             self.editor = QtWidgets.QLineEdit()
             if section.placeholder:
                 self.editor.setPlaceholderText(section.placeholder)
             if current is not None:
                 self.editor.setText(str(current))
-            self.editor.editingFinished.connect(lambda: self._commit(self.editor.text()))
-        if getattr(section, "read_only", False):
+            if not read_only:
+                self.editor.editingFinished.connect(lambda: self._commit(self.editor.text()))
+        if read_only:
             self.editor.setReadOnly(True)
             if isinstance(self.editor, QtWidgets.QAbstractSpinBox):
                 self.editor.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         layout.addWidget(self.editor, 1)
         self._apply_tooltip(self, self.editor)
+
+    def sync(self) -> None:
+        """Re-read the model value into the editor without firing signals."""
+        cur = self._current_value()
+        if cur is None:
+            return
+        self.editor.blockSignals(True)
+        if isinstance(self.editor, QtWidgets.QSpinBox):
+            self.editor.setValue(int(cur))
+        elif isinstance(self.editor, QtWidgets.QDoubleSpinBox):
+            self.editor.setValue(float(cur))
+        elif isinstance(self.editor, QtWidgets.QLineEdit):
+            self.editor.setText(str(cur))
+        self.editor.blockSignals(False)
 
 
 # --- custom sections -------------------------------------------------------
@@ -486,7 +543,9 @@ class LifetimeAmplitudeOptions(QtWidgets.QWidget):
         self.read_btn.setText("read")
         self.read_btn.setToolTip("Copy parameter values from another lifetime group.")
         self.read_menu = QtWidgets.QMenu(self.read_btn)
-        self.read_menu.aboutToShow.connect(lambda: self._build_target_menu(self.read_menu, self._read_values))
+        self.read_menu.aboutToShow.connect(
+            lambda: self._build_target_menu(self.read_menu, self._read_values)
+        )
         self.read_btn.setMenu(self.read_menu)
         self.read_btn.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
@@ -494,7 +553,9 @@ class LifetimeAmplitudeOptions(QtWidgets.QWidget):
         self.link_btn.setText("link")
         self.link_btn.setToolTip("Link this lifetime group to another (shared spectrum).")
         self.link_menu = QtWidgets.QMenu(self.link_btn)
-        self.link_menu.aboutToShow.connect(lambda: self._build_target_menu(self.link_menu, self._link_to))
+        self.link_menu.aboutToShow.connect(
+            lambda: self._build_target_menu(self.link_menu, self._link_to)
+        )
         self.link_btn.setMenu(self.link_menu)
         self.link_btn.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
@@ -511,8 +572,10 @@ class LifetimeAmplitudeOptions(QtWidgets.QWidget):
         both legacy and auto-rendered models.
         """
         from chisurf.core.models.tcspc.lifetime import Lifetime
+
         try:
             from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+
             fit_groups = get_fitting_client().get_fit_objects()
         except Exception:
             fit_groups = []
@@ -636,9 +699,7 @@ class PlotWidget(QtWidgets.QWidget):
             self.plot.setLabel("left", section.y_label)
         if getattr(section, "log_x", False) or section.log_y:
             try:
-                self.plot.setLogMode(
-                    bool(getattr(section, "log_x", False)), bool(section.log_y)
-                )
+                self.plot.setLogMode(bool(getattr(section, "log_x", False)), bool(section.log_y))
             except Exception:
                 pass
         if section.legend:
@@ -656,6 +717,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.refresh()
 
     def refresh(self) -> None:
+        """Re-read the section's source method and redraw all series."""
         import pyqtgraph as pg
 
         source = getattr(self._model, self._section.source, None)
@@ -673,4 +735,217 @@ class PlotWidget(QtWidgets.QWidget):
                 width=int(s.get("width", 1)),
                 style=self._STYLES.get(s.get("style", "solid"), QtCore.Qt.SolidLine),
             )
-            self.plot.plot(s.get("x", []), s.get("y", []), pen=pen, name=s.get("name", ""))
+            kw = {"pen": pen, "name": s.get("name", "")}
+            if s.get("symbol"):
+                kw["symbol"] = s["symbol"]
+                kw["symbolBrush"] = s.get("color", "y")
+                kw["symbolSize"] = int(s.get("symbol_size", 9))
+                if s.get("no_line"):
+                    kw["pen"] = None
+            self.plot.plot(s.get("x", []), s.get("y", []), **kw)
+
+
+class LCurveWidget(QtWidgets.QWidget):
+    """Reusable L-curve view (residual vs solution norm, log-log, corner marked).
+
+    The general, declarative L-curve component: any model holding a
+    :class:`chisurf.core.math.regularization.LCurveData` (as an attribute or a
+    zero-arg method named by ``target``) can show it with a ``custom`` section::
+
+        {"type": "custom", "key": "lcurve", "target": "lcurve_data", "title": "L-curve"}
+
+    The corner (auto-selected regularization weight) is highlighted.
+    """
+
+    #: marker so :meth:`AutoForm.refresh_plots` re-reads this widget.
+    AUTOFORM_REFRESH = True
+
+    def __init__(self, model, target: str, **options):
+        super().__init__()
+        self._model = model
+        self._target = target
+        self._opts = options
+        self._plot = None
+        lay = QtWidgets.QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        try:
+            import pyqtgraph as pg
+
+            self._pg = pg
+            self._plot = pg.PlotWidget()
+            self._plot.setLogMode(x=True, y=True)
+            self._plot.setLabel("bottom", options.get("x_label", "residual norm"))
+            self._plot.setLabel("left", options.get("y_label", "solution norm"))
+            self._plot.addLegend()
+            lay.addWidget(self._plot)
+        except Exception:  # pragma: no cover - pyqtgraph optional
+            lay.addWidget(QtWidgets.QLabel("pyqtgraph not available"))
+        self.refresh()
+
+    def _data(self):
+        obj = getattr(self._model, self._target, None)
+        return obj() if callable(obj) else obj
+
+    def refresh(self) -> None:
+        """Re-read the model's :class:`LCurveData` and redraw."""
+        if self._plot is None:
+            return
+        data = self._data()
+        self._plot.clear()
+        if data is None or getattr(data, "reg", None) is None or len(data.reg) == 0:
+            return
+        pg = self._pg
+        self._plot.plot(
+            data.residual_norm,
+            data.solution_norm,
+            pen=pg.mkPen("c", width=2),
+            symbol="o",
+            symbolSize=5,
+            symbolBrush="c",
+            name="L-curve",
+        )
+        corner = getattr(data, "corner_point", None)
+        if corner is not None:
+            self._plot.plot(
+                [corner[0]],
+                [corner[1]],
+                pen=None,
+                symbol="o",
+                symbolSize=12,
+                symbolBrush="r",
+                name="chosen",
+            )
+
+
+@register_section("lcurve")
+def _lcurve_section_factory(model, target: str, **options):
+    """Custom-section factory rendering a model's ``LCurveData`` (see :class:`LCurveWidget`)."""
+    return LCurveWidget(model, target, **options)
+
+
+#: Matplotlib colormaps offered by the general image widget's colour selector.
+IMAGE_COLORMAPS = ["viridis", "magma", "inferno", "plasma", "cividis", "turbo", "gray"]
+
+
+def apply_colormap(image_view, name: str) -> None:
+    """Apply a (matplotlib) colormap by name to a pyqtgraph ImageView, best-effort.
+
+    Reusable by any pyqtgraph image plot (AutoForm or not) so the colour handling is
+    consistent across tools (2D-FLC, RICS, PDA, ...).
+    """
+    try:
+        import pyqtgraph as pg
+
+        try:
+            cmap = pg.colormap.get(name, source="matplotlib")
+        except Exception:
+            cmap = pg.colormap.get(name)
+        image_view.setColorMap(cmap)
+    except Exception:  # pragma: no cover - colormap optional
+        pass
+
+
+class ImageMapWidget(QtWidgets.QWidget):
+    """General 2D image dock bound to ``model.<target>()`` with an optional colour selector.
+
+    Declare it in a view.json as a ``custom`` section so any tool can show a 2D map::
+
+        {"type": "custom", "key": "image", "target": "spectrum_image", "title": "Map",
+         "options": {"colormap": true, "colormap_attr": "colormap"}}
+
+    The colour control lives *in the plot* (a small combo above the image), so it is
+    portable and needs no separate settings panel. ``options``:
+
+    * ``colormap`` (bool) — show the embedded colormap selector (default ``False``).
+    * ``default_colormap`` (str) — initial colormap (default ``"viridis"``).
+    * ``colormap_attr`` (str) — optional model attribute to read/write the chosen colormap,
+      so it persists and can be shared between several image docks.
+    """
+
+    #: marker so :meth:`AutoForm.refresh_plots` re-reads this widget.
+    AUTOFORM_REFRESH = True
+
+    def __init__(
+        self,
+        model,
+        target: str,
+        *,
+        colormap: bool = False,
+        default_colormap: str = "viridis",
+        colormap_attr: str | None = None,
+        **options,
+    ):
+        super().__init__()
+        self._model = model
+        self._target = target
+        self._cmap_attr = colormap_attr
+        self._cmap = default_colormap
+        self._image = None
+        self._combo = None
+        lay = QtWidgets.QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(2)
+        if colormap:
+            bar = QtWidgets.QHBoxLayout()
+            bar.setContentsMargins(4, 2, 4, 0)
+            bar.addStretch(1)
+            bar.addWidget(QtWidgets.QLabel("colormap"))
+            self._combo = QtWidgets.QComboBox()
+            self._combo.addItems(IMAGE_COLORMAPS)
+            self._combo.setToolTip("Colormap for this image")
+            cur = self._current_cmap()
+            idx = self._combo.findText(cur)
+            if idx >= 0:
+                self._combo.setCurrentIndex(idx)
+            self._combo.currentTextChanged.connect(self._on_cmap)
+            bar.addWidget(self._combo)
+            lay.addLayout(bar)
+        try:
+            import pyqtgraph as pg
+
+            self._image = pg.ImageView()
+            self._image.ui.roiBtn.hide()
+            self._image.ui.menuBtn.hide()
+            lay.addWidget(self._image, 1)
+        except Exception:  # pragma: no cover - pyqtgraph optional
+            lay.addWidget(QtWidgets.QLabel("pyqtgraph not available"))
+
+    def _current_cmap(self) -> str:
+        if self._cmap_attr:
+            return str(getattr(self._model, self._cmap_attr, self._cmap))
+        return self._cmap
+
+    def _on_cmap(self, name: str) -> None:
+        self._cmap = name
+        if self._cmap_attr and hasattr(self._model, self._cmap_attr):
+            setattr(self._model, self._cmap_attr, name)
+        if self._image is not None:
+            apply_colormap(self._image, name)
+
+    def refresh(self) -> None:
+        """Re-read the model image and redraw with the current colormap."""
+        if self._image is None:
+            return
+        import numpy as np
+
+        obj = getattr(self._model, self._target, None)
+        img = obj() if callable(obj) else obj
+        if img is None:
+            return
+        # keep the combo in sync if the colormap is model-backed
+        if self._combo is not None:
+            cur = self._current_cmap()
+            if cur != self._combo.currentText():
+                self._combo.blockSignals(True)
+                i = self._combo.findText(cur)
+                if i >= 0:
+                    self._combo.setCurrentIndex(i)
+                self._combo.blockSignals(False)
+        self._image.setImage(np.asarray(img, dtype=float), autoLevels=True)
+        apply_colormap(self._image, self._current_cmap())
+
+
+@register_section("image")
+def _image_section_factory(model, target: str, **options):
+    """Custom-section factory for a general 2D image dock (see :class:`ImageMapWidget`)."""
+    return ImageMapWidget(model, target, **options)

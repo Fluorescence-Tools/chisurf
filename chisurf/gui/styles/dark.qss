@@ -562,3 +562,21 @@ QToolButton:hover {
 }
 
 /* Dock-specific titles already defined above */
+
+/* ===== CollapsibleBox section headers ===== */
+
+QPushButton#CollapsibleBoxHeader {
+    background: #2d3a50;
+    color: #e4e8f0;
+    border: none;
+    border-bottom: 1px solid #1a2233;
+}
+
+QPushButton#CollapsibleBoxHeader:hover {
+    background: #384a62;
+    color: #ffffff;
+}
+
+QPushButton#CollapsibleBoxHeader:checked {
+    color: #7eb8f7;
+}

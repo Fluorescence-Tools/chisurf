@@ -7,6 +7,7 @@ looked up in the section registry by key. This is the single renderer that
 replaces the per-domain hand-written widgets (PRD-40). ``AutoModelWidget`` is
 kept as a backwards-compatible alias.
 """
+
 from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets
@@ -14,10 +15,7 @@ from qtpy import QtCore, QtWidgets
 import chisurf as cs
 from chisurf import logging
 from chisurf.core import dataspec as vs
-from chisurf.gui.widgets.fitting import (
-    make_fitting_parameter_group_widget,
-    make_fitting_parameter_widget,
-)
+from chisurf.gui.widgets.fitting import make_fitting_parameter_widget
 
 from . import sections  # noqa: F401  (side effect: populate the registry)
 from .sections.registry import get_section_factory
@@ -35,6 +33,26 @@ REMOVE_BUTTON_STYLE = (
     "border-radius: 3px; padding: 2px 8px; }"
     "QPushButton:hover { background-color: #bf2626; }"
 )
+
+
+def _align_label_columns(param_widgets):
+    """Give a batch of fitting-parameter rows one shared label width.
+
+    Each :class:`FittingParameterWidget` is a self-contained row, so without
+    this their name labels self-size and the fix/link/value/error columns end up
+    ragged from row to row. Setting every label to the widest label's width (up
+    to a sane cap) lines the columns up cleanly; the full name stays available
+    as the label tooltip.
+    """
+    labels = [getattr(pw, "label", None) for pw in param_widgets]
+    labels = [lbl for lbl in labels if lbl is not None]
+    if not labels:
+        return
+    width = min(max(lbl.sizeHint().width() for lbl in labels), 120)
+    for lbl in labels:
+        if not lbl.toolTip():
+            lbl.setToolTip(lbl.text())
+        lbl.setFixedWidth(width)
 
 
 class AutoForm(QtWidgets.QWidget):
@@ -57,12 +75,14 @@ class AutoForm(QtWidgets.QWidget):
         forwarded to it.
         """
         from chisurf.core.dataspec import ParameterGroupView
+
         return cls(ParameterGroupView(group, **kwargs), parent=parent)
 
     def __init__(self, model, parent=None):
         super().__init__(parent)
         self.model = model
         self._param_widgets = []
+        self._dock_areas = []
         self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setAlignment(QtCore.Qt.AlignTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -78,10 +98,35 @@ class AutoForm(QtWidgets.QWidget):
             if w is not None:
                 w.setParent(None)
         self._param_widgets = []
+        self._dock_areas = []
 
         view = self.model.view_spec()
         self._emit_sections(view.sections, self._layout.addWidget)
-        self._layout.addStretch(1)  # push panels to the top; prevents height distribution
+        # If the view contains an expanding widget (e.g. a dock area or plot), let it take
+        # the spare vertical space; otherwise top-align the panels with a trailing stretch.
+        expanding = False
+        for i in range(self._layout.count()):
+            w = self._layout.itemAt(i).widget()
+            if w is not None and getattr(w, "_autoform_expanding", False):
+                self._layout.setStretch(i, 1)
+                expanding = True
+        if not expanding:
+            self._layout.addStretch(1)  # push panels to the top; prevent height distribution
+
+    def sync_fields(self):
+        """Re-read model values into existing field widgets without rebuilding.
+
+        Use this after changing model attributes programmatically so the controls reflect
+        the new values *without* tearing down the layout (which would, e.g., reset a dock
+        arrangement). Only widgets exposing a ``sync()`` method are updated.
+        """
+        for w in self.findChildren(QtWidgets.QWidget):
+            sync = getattr(w, "sync", None)
+            if callable(sync) and getattr(w, "is_form_field", False):
+                try:
+                    sync()
+                except Exception:
+                    pass
 
     def refresh_plots(self):
         """Re-read and redraw every inline :class:`PlotSection` in the form.
@@ -90,7 +135,19 @@ class AutoForm(QtWidgets.QWidget):
         plots update without rebuilding the whole editor.
         """
         from .sections.builtin import PlotWidget
+
+        seen = set()
         for w in self.findChildren(PlotWidget):
+            seen.add(id(w))
+            try:
+                w.refresh()
+            except Exception:
+                pass
+        # Also refresh custom widgets opting in via the AUTOFORM_REFRESH marker
+        # (e.g. the reusable L-curve view and the 2D map docks).
+        for w in self.findChildren(QtWidgets.QWidget):
+            if id(w) in seen or not getattr(w, "AUTOFORM_REFRESH", False):
+                continue
             try:
                 w.refresh()
             except Exception:
@@ -126,9 +183,7 @@ class AutoForm(QtWidgets.QWidget):
                     label.setToolTip(tip)
                 # Fields stretch horizontally to share the available width; the
                 # field columns carry the stretch, the label columns stay fixed.
-                field.setSizePolicy(
-                    QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
-                )
+                field.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
                 grid.addWidget(label, r, col)
                 grid.addWidget(field, r, col + 1)
                 grid.setColumnStretch(col + 1, 1)
@@ -172,18 +227,23 @@ class AutoForm(QtWidgets.QWidget):
             return self._build_curve_input(section)
         if isinstance(section, vs.ChoiceSection):
             from .sections.builtin import ChoiceWidget
+
             return ChoiceWidget(self.model, section)
         if isinstance(section, vs.ToggleSection):
             from .sections.builtin import ToggleWidget
+
             return ToggleWidget(self.model, section)
         if isinstance(section, vs.ToggleRowSection):
             from .sections.builtin import ToggleRowWidget
+
             return ToggleRowWidget(self.model, section)
         if isinstance(section, vs.ValueSection):
             from .sections.builtin import ValueWidget
+
             return ValueWidget(self.model, section)
         if isinstance(section, vs.PlotSection):
             from .sections.builtin import PlotWidget
+
             return PlotWidget(self.model, section)
         if isinstance(section, vs.DockAreaSection):
             return self._build_dock_area(section)
@@ -231,7 +291,9 @@ class AutoForm(QtWidgets.QWidget):
             try:
                 group.find_parameters()
             except Exception as exc:  # pragma: no cover - defensive
-                logging.warning(f"AutoModelWidget: find_parameters failed for {section.target!r}: {exc}")
+                logging.warning(
+                    f"AutoModelWidget: find_parameters failed for {section.target!r}: {exc}"
+                )
 
         if section.exclude_source:
             try:
@@ -256,6 +318,7 @@ class AutoForm(QtWidgets.QWidget):
     def _build_param_grid(self, params, n_col=None):
         """Build a bare ``QWidget`` grid from a pre-filtered parameter list."""
         import chisurf.core.settings
+
         if n_col is None:
             n_col = chisurf.core.settings.gui["fit_models"]["n_columns"]
         n_col = max(1, int(n_col))
@@ -263,10 +326,13 @@ class AutoForm(QtWidgets.QWidget):
         grid = QtWidgets.QGridLayout(container)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(0)
+        pws = []
         for i, p in enumerate(params):
             label_text = p.__dict__.get("label_text", p.name)
             pw = make_fitting_parameter_widget(fitting_parameter=p, label_text=label_text)
             grid.addWidget(pw, i // n_col, i % n_col)
+            pws.append(pw)
+        _align_label_columns(pws)
         return container
 
     def _build_panel(self, section: vs.PanelSection):
@@ -283,20 +349,44 @@ class AutoForm(QtWidgets.QWidget):
         from chisurf.gui.widgets.dock_area import DockArea
 
         area = DockArea()
+        self._dock_areas.append(area)
+        # Let rebuild() give the dock area the spare vertical space instead of a trailing
+        # stretch, so its panels fill the height.
+        area._autoform_expanding = True
+        area.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         if getattr(section, "height", 0):
             area.setMinimumHeight(int(section.height))
         for i, child in enumerate(section.sections):
+            name = (
+                getattr(child, "title", None) or getattr(child, "label", None) or f"Panel {i + 1}"
+            )
             try:
-                widget = self._build_section(child)
+                if isinstance(child, vs.PanelSection):
+                    # The dock tab already carries the panel's title, so render the panel's
+                    # contents directly (no redundant outer collapsible) and wrap them in a
+                    # scroll area so the tab expands vertically and scrolls when needed.
+                    inner = QtWidgets.QWidget()
+                    lay = QtWidgets.QVBoxLayout(inner)
+                    lay.setContentsMargins(0, 0, 0, 0)
+                    self._emit_sections(child.sections, lay.addWidget)
+                    # Distribute spare vertical space across the sub-panels so the settings
+                    # stretch to fill the dock instead of leaving a gap at the bottom.
+                    for r in range(lay.count()):
+                        lay.setStretch(r, 1)
+                    inner.setSizePolicy(
+                        QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
+                    )
+                    widget = QtWidgets.QScrollArea()
+                    widget.setWidgetResizable(True)
+                    widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+                    widget.setWidget(inner)
+                else:
+                    widget = self._build_section(child)
             except Exception:
                 widget = None
             if widget is None:
                 continue
-            name = (
-                getattr(child, "title", None)
-                or getattr(child, "label", None)
-                or f"Panel {i + 1}"
-            )
             try:
                 area.add_panel(widget, str(name))
             except Exception:
@@ -317,6 +407,7 @@ class AutoForm(QtWidgets.QWidget):
 
     def _build_curve_input(self, section: vs.CurveInputSection):
         from .sections.builtin import CurveInputWidget
+
         return CurveInputWidget(self.model, section)
 
     def _build_custom(self, section: vs.CustomSection):
@@ -383,9 +474,10 @@ class AutoForm(QtWidgets.QWidget):
             if section.component_title:
                 # Each row_width chunk of params gets its own CollapsibleBox
                 from chisurf.gui.widgets.collapsible_box import CollapsibleBox
+
                 n = len(params) // width if width else 0
                 for comp_idx in range(n):
-                    chunk = params[comp_idx * width: (comp_idx + 1) * width]
+                    chunk = params[comp_idx * width : (comp_idx + 1) * width]
                     comp_box = CollapsibleBox(
                         f"{section.component_title} {comp_idx + 1}", expanded=True
                     )
@@ -401,11 +493,14 @@ class AutoForm(QtWidgets.QWidget):
                     comp_box.add_widget(row_widget)
                     rows_layout.addWidget(comp_box)
             else:
+                batch = []
                 for i, p in enumerate(params):
                     label = p.__dict__.get("label_text", p.name)
                     pw = make_fitting_parameter_widget(fitting_parameter=p, label_text=label)
                     rows_layout.addWidget(pw, i // width, i % width)
                     self._param_widgets.append(pw)
+                    batch.append(pw)
+                _align_label_columns(batch)
 
         def on_add():
             add_fn = getattr(group, section.append_method, None)
@@ -447,6 +542,7 @@ class AutoForm(QtWidgets.QWidget):
     @staticmethod
     def _collect_param_widgets(group_widget):
         from chisurf.gui.widgets.fitting import FittingParameterWidget
+
         return group_widget.findChildren(FittingParameterWidget)
 
 
