@@ -9,6 +9,20 @@ import time
 from chisurf import typing
 
 
+def canonical(name: str) -> str:
+    """Return the separator-normalized form of an action / event name.
+
+    Action names use ``.`` as namespace separators and may contain ``_`` *within*
+    a verb (e.g. ``dataset.restore_global_fit``).  Collapsing ``.`` to ``_`` is
+    therefore the only lossless, collision-free normalization: dotted and
+    underscored spellings of the same action map to one normal form and compare
+    equal.  This is pure syntax — it defines no vocabulary.  The controlled
+    vocabulary of action names lives in the MFDB dictionary
+    (``_mfdb_event_log.action_type``), not here.
+    """
+    return str(name).replace(".", "_")
+
+
 @dataclass(frozen=True)
 class ActionSpec:
     name: str
@@ -117,16 +131,21 @@ class ActionRegistry:
             return self._specs.get(key)
 
     def resolve_name(self, name: str) -> str:
+        """Resolve any separator spelling of an action name to its registered key.
+
+        Matches on the collision-free normal form (see :func:`canonical`) so that
+        dotted and underscored spellings — including names with underscores inside
+        a verb (``dataset.restore_global_fit``) — resolve correctly, which the old
+        two-shot ``replace`` could not.
+        """
         key = str(name)
         with self._lock:
             if key in self._specs:
                 return key
-            dotted = key.replace("_", ".")
-            if dotted in self._specs:
-                return dotted
-            underscored = key.replace(".", "_")
-            if underscored in self._specs:
-                return underscored
+            target = canonical(key)
+            for registered in self._specs:
+                if canonical(registered) == target:
+                    return registered
         return key
 
     def list_actions(self) -> typing.List[str]:

@@ -3482,6 +3482,221 @@ save__mfdb_state_transition_rule.to_state
    _chisurf_schema.column_name to_state
 
 ########################################
+## mfdb_event_log (PRD-43)              #
+########################################
+
+save_mfdb_event_log
+   _category.id              mfdb_event_log
+   _category.description
+;     Append-only log of interactive analysis operations.  One row per recorded
+;     action.  Durable record of a session's operation history; an interactive
+;     client's in-memory undo/redo history is a projection of these rows.  The
+;     controlled vocabulary of action names — and their mapping to the coarse
+;     mfdb_operation.operation_type — is declared here (the action_type
+;     enumeration plus its per-value detail), so the dictionary is the single
+;     source of truth for the operation vocabulary.  Rows are never mutated in
+;     place.
+;
+   _category.mandatory_code  no
+   _category_key.name        "_mfdb_event_log.event_id"
+
+save__mfdb_event_log.event_id
+   _item.name                "_mfdb_event_log.event_id"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name event_id
+   _item_description.description
+;     Stable UUID identity of the event; equals the in-memory operation-history
+;     event id so the projection is identity-stable across save/restore.
+
+save__mfdb_event_log.seq
+   _item.name                "_mfdb_event_log.seq"
+   _item.category_id         mfdb_event_log
+   _item_type.code           int
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name seq
+   _item_description.description
+;     Monotonic per-project ordinal giving the log's total order (clock-skew proof).
+
+save__mfdb_event_log.project_id
+   _item.name                "_mfdb_event_log.project_id"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name project_id
+   _item_description.description
+;     Project / session scope of the event; null for session-only events.
+
+save__mfdb_event_log.action_type
+   _item.name                "_mfdb_event_log.action_type"
+   _item.category_id         mfdb_event_log
+   _item_type.code           line
+   _item.mandatory_code      yes
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name action_type
+   _item_description.description
+;     Canonical action name (dotted form is authoritative).  The detail column
+;     maps each action to the coarse mfdb_operation.operation_type it emits
+;     ('.' = fine-grained action with no operation).
+    loop_
+    _item_enumeration.value
+    _item_enumeration.detail
+      dataset.add                     measurement_import
+      dataset.group                   .
+      dataset.remove                  .
+      dataset.restore_global_fit      .
+      dataset.ungroup                 .
+      experiment.set                  .
+      fit.add                         .
+      fit.add.start                   .
+      fit.close                       .
+      fit.close_all                   .
+      fit.data_set                    .
+      fit.group_link                  .
+      fit.group_link_toggle           .
+      fit.group_unlink                .
+      fit.load                        .
+      fit.mask_set                    .
+      fit.range.set                   .
+      fit.run                         .
+      fit.run.abort                   .
+      fit.run.execute                 local_fit
+      fit.run.finish                  local_fit
+      fit.run.start                   .
+      fit.save                        .
+      fit.save_all                    .
+      fit.set_dataset                 .
+      fit.update                      .
+      model.absolute_amplitudes       .
+      model.add_component             .
+      model.append_fit                .
+      model.append_global_parameter   .
+      model.change_irf                .
+      model.clear_local_fits          .
+      model.normalize_amplitudes      .
+      model.remove_component          .
+      model.remove_local_fit          .
+      model.set_correction            .
+      model.set_linearization         .
+      model.unload_background_curve   .
+      model.unload_irf                .
+      model.unload_lintable           .
+      model.update                    .
+      parameter.adaptive_scan         .
+      parameter.bounds.on             .
+      parameter.bounds.set            .
+      parameter.fixed                 .
+      parameter.link                  .
+      parameter.scan                  .
+      parameter.unlink                .
+      parameter.value                 .
+      project.archive                 project_archive
+      project.close                   .
+      project.load                    project_restore
+      project.restore                 project_restore
+      project.save                    project_archive
+      run_command                     .
+      setup.params.set                .
+      setup.select                    .
+      action.catalog.export           .
+      app.reinitialize.finish         .
+      app.reinitialize.start          .
+
+save__mfdb_event_log.operation_type
+   _item.name                "_mfdb_event_log.operation_type"
+   _item.category_id         mfdb_event_log
+   _item_type.code           line
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name operation_type
+   _item_description.description
+;     Coarse operation classification for this event, drawn from
+;     mfdb_operation.operation_type; null for fine-grained actions.
+
+save__mfdb_event_log.summary
+   _item.name                "_mfdb_event_log.summary"
+   _item.category_id         mfdb_event_log
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name summary
+
+save__mfdb_event_log.payload_json
+   _item.name                "_mfdb_event_log.payload_json"
+   _item.category_id         mfdb_event_log
+   _item_type.code           text
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name payload_json
+   _item_description.description
+;     JSON-encoded enriched action payload (opaque to the database).
+
+save__mfdb_event_log.source_uid
+   _item.name                "_mfdb_event_log.source_uid"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name source_uid
+
+save__mfdb_event_log.target_uid
+   _item.name                "_mfdb_event_log.target_uid"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name target_uid
+
+save__mfdb_event_log.operation_id
+   _item.name                "_mfdb_event_log.operation_id"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name operation_id
+   _chisurf_schema.foreign_key mfdb_operation(operation_id) ON DELETE SET NULL
+   _item_description.description
+;     Links a coarse event to the semantic mfdb_operation it produced (if any).
+
+save__mfdb_event_log.event_timestamp
+   _item.name                "_mfdb_event_log.event_timestamp"
+   _item.category_id         mfdb_event_log
+   _item_type.code           datetime
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name event_timestamp
+   _item_description.description
+;     The event's own ISO-8601 timestamp (distinct from the audit created_at).
+
+save__mfdb_event_log.replayable
+   _item.name                "_mfdb_event_log.replayable"
+   _item.category_id         mfdb_event_log
+   _item_type.code           boolean
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name replayable
+
+save__mfdb_event_log.side_effect_class
+   _item.name                "_mfdb_event_log.side_effect_class"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name side_effect_class
+
+save__mfdb_event_log.history_version
+   _item.name                "_mfdb_event_log.history_version"
+   _item.category_id         mfdb_event_log
+   _item_type.code           code
+   _item.mandatory_code      no
+   _chisurf_schema.table_name  mfdb_event_log
+   _chisurf_schema.column_name history_version
+
+########################################
 ## mfdb_protocol (PRD-14 LIMS P3)       #
 ########################################
 

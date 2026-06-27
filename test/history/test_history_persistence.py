@@ -263,5 +263,54 @@ class TestHistoryPersistence(unittest.TestCase):
         self.assertTrue(auto_compact_report.get("compaction_successful", False))
 
 
+class TestBoundedCheckpoints(unittest.TestCase):
+    """Stage-3: the in-memory checkpoint store is capped and evicts safely."""
+
+    def _history(self, cap):
+        # interval=1 -> a checkpoint per recorded event (after the first)
+        hist = OperationHistory(checkpoint_interval=1, max_checkpoints=cap)
+        # capture_fn tags each snapshot with the event count so we can identify it
+        hist.set_checkpoint_capture(
+            lambda: {"navigation": {"datasets": [str(len(hist.list_events()))]}}
+        )
+        return hist
+
+    def test_checkpoint_count_is_capped(self):
+        hist = self._history(cap=3)
+        for i in range(12):
+            hist.record("test_action", f"e{i}", {"i": i})
+        self.assertLessEqual(hist.checkpoint_count(), 3)
+
+    def test_eviction_keeps_earliest_and_most_recent(self):
+        hist = self._history(cap=3)
+        for i in range(12):
+            hist.record("test_action", f"e{i}", {"i": i})
+        kept = sorted(hist._checkpoints)
+        # earliest retained for cheap cold-start; newest retained for cheap undo
+        self.assertEqual(kept[0], min(hist._checkpoints))
+        self.assertEqual(kept[0], 1)
+        self.assertEqual(kept[-1], max(hist._checkpoints))
+
+    def test_evicted_region_still_reconstructs_from_earlier_checkpoint(self):
+        hist = self._history(cap=3)
+        for i in range(12):
+            hist.record("test_action", f"e{i}", {"i": i})
+        # a target in the evicted middle still resolves to a kept checkpoint at
+        # or before it, plus exactly the events needed to replay the gap
+        checkpoint = hist.get_checkpoint_before(5)
+        self.assertIsNotNone(checkpoint)
+        self.assertLessEqual(checkpoint["event_index"], 5)
+        snapshot, events = hist.get_events_from_checkpoint(5)
+        self.assertIsNotNone(snapshot)
+        self.assertEqual(len(events), 5 - checkpoint["event_index"])
+
+    def test_cap_zero_disables_eviction(self):
+        hist = self._history(cap=0)
+        for i in range(12):
+            hist.record("test_action", f"e{i}", {"i": i})
+        # no cap -> every interval checkpoint retained (legacy behaviour)
+        self.assertGreater(hist.checkpoint_count(), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -88,15 +88,50 @@ verbose = False  # Updated lazily when settings are loaded
 __jupyter_process__ = None
 __jupyter_address__ = None
 
+import types
+
 _SETTINGS_MODULE = None
 _LOGGING_SETTINGS_APPLIED = False
+
+
+class _LazySettingsModule(types.ModuleType):
+    def __getattr__(self, item):
+        mod = _load_settings_module()
+        return getattr(mod, item)
+
+    def __dir__(self):
+        mod = _load_settings_module()
+        return dir(mod)
+
+
+class _LazySettingsSubmodule(types.ModuleType):
+    def __init__(self, name, real_module_path):
+        super().__init__(name)
+        self.__real_module_path = real_module_path
+
+    def __getattr__(self, item):
+        mod = importlib.import_module(self.__real_module_path)
+        sys.modules[self.__name__] = mod
+        return getattr(mod, item)
+
+    def __dir__(self):
+        mod = importlib.import_module(self.__real_module_path)
+        sys.modules[self.__name__] = mod
+        return dir(mod)
+
+
+sys.modules['chisurf.settings'] = _LazySettingsModule('chisurf.settings')
+sys.modules['chisurf.settings.path_utils'] = _LazySettingsSubmodule('chisurf.settings.path_utils', 'chisurf.core.settings.path_utils')
+sys.modules['chisurf.settings.ai_settings'] = _LazySettingsSubmodule('chisurf.settings.ai_settings', 'chisurf.core.settings.ai_settings')
 
 
 def _load_settings_module():
     global _SETTINGS_MODULE
     if _SETTINGS_MODULE is None:
         _SETTINGS_MODULE = importlib.import_module("chisurf.core.settings")
+        sys.modules['chisurf.settings'] = _SETTINGS_MODULE
     return _SETTINGS_MODULE
+
 
 
 def _apply_logging_settings(settings_module) -> None:
@@ -181,7 +216,11 @@ def __getattr__(name: str):
         return value
     if name == "history":
         mod = importlib.import_module("chisurf.history")
-        value = mod.OperationHistory()
+        # Return the package's shared singleton (not a fresh instance), so the
+        # chisurf.history package-vs-singleton name collision is benign: the module
+        # delegates OperationHistory members to this same object. See
+        # chisurf/history/__init__.py.
+        value = mod.get_history()
         globals()["history"] = value
         return value
     if name == "actions":

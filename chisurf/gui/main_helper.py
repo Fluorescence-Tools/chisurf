@@ -1709,67 +1709,17 @@ class StateMixin:
             except Exception:
                 pass
 
-            if checkpoint_snapshot is not None:
-                replay_state = _hr.snapshot_to_replay_state(checkpoint_snapshot)
-                nav_state = replay_state.get("navigation", {})
-                parameter_state = replay_state.get("parameters", {})
-                fit_range_state = replay_state.get("fit_ranges", {})
-                setup_state = replay_state.get("setup", {})
-                model_state = replay_state.get("models", {})
-                nav_delta = _hr.reconstruct_navigation_state(events_to_replay)
-                param_delta = _hr.reconstruct_parameter_state(events_to_replay)
-                range_delta = _hr.reconstruct_fit_range_state(events_to_replay)
-                setup_delta = _hr.reconstruct_setup_state(events_to_replay)
-                model_delta = _hr.reconstruct_model_state(events_to_replay)
-                for key in ["datasets", "dataset_uids", "fits", "fit_uids"]:
-                    if key in nav_delta:
-                        nav_state[key] = nav_delta[key]
-                if nav_delta.get("selected_dataset"):
-                    nav_state["selected_dataset"] = nav_delta["selected_dataset"]
-                if nav_delta.get("selected_dataset_uid"):
-                    nav_state["selected_dataset_uid"] = nav_delta["selected_dataset_uid"]
-                if nav_delta.get("selected_fit"):
-                    nav_state["selected_fit"] = nav_delta["selected_fit"]
-                if nav_delta.get("selected_fit_uid"):
-                    nav_state["selected_fit_uid"] = nav_delta["selected_fit_uid"]
-                parameter_state.update(param_delta)
-                fit_range_state.update(range_delta)
-                setup_state.update(setup_delta)
-                for fg_uid, fg_data in model_delta.items():
-                    if fg_uid not in model_state:
-                        model_state[fg_uid] = fg_data
-                    else:
-                        for local_uid, local_data in fg_data.get("local_fits", {}).items():
-                            if local_uid not in model_state[fg_uid].get("local_fits", {}):
-                                if "local_fits" not in model_state[fg_uid]:
-                                    model_state[fg_uid]["local_fits"] = {}
-                                model_state[fg_uid]["local_fits"][local_uid] = local_data
-                            else:
-                                existing = model_state[fg_uid]["local_fits"][local_uid]
-                                if "components" in local_data:
-                                    if "components" not in existing:
-                                        existing["components"] = []
-                                    for comp in local_data["components"]:
-                                        comp_name = comp.get("name", "")
-                                        found = False
-                                        for i, existing_comp in enumerate(existing["components"]):
-                                            if existing_comp.get("name") == comp_name:
-                                                existing["components"][i] = comp
-                                                found = True
-                                                break
-                                        if not found:
-                                            existing["components"].append(comp)
-                                if "config" in local_data:
-                                    if "config" not in existing:
-                                        existing["config"] = {}
-                                    existing["config"].update(local_data["config"])
-            else:
-                nav_state = _hr.reconstruct_navigation_state(events)
-                parameter_state = _hr.reconstruct_parameter_state(events)
-                fit_range_state = _hr.reconstruct_fit_range_state(events)
-                setup_state = _hr.reconstruct_setup_state(events)
-                model_state = _hr.reconstruct_model_state(events)
-            
+            # Pure, Qt-free reconstruction of the target domain state. Applying
+            # it to the live widgets (below) is the GUI adapter's job.
+            domain_state = chisurf.history.build_target_state(
+                checkpoint_snapshot, events_to_replay, all_events
+            )
+            nav_state = domain_state.navigation
+            parameter_state = domain_state.parameters
+            fit_range_state = domain_state.fit_ranges
+            setup_state = domain_state.setup
+            model_state = domain_state.models
+
             _hr.sync_domain_entities(nav_state, all_events)
 
             link_touched = _hr.touched_parameter_keys(
@@ -1799,7 +1749,12 @@ class StateMixin:
             except Exception:
                 pass
         except Exception:
-            pass
+            # Surface replay/undo failures instead of silently dropping them —
+            # otherwise the history browser appears to do nothing on navigation.
+            try:
+                cs.logging.exception("HISTNAV: failed to apply replayed state")
+            except Exception:
+                pass
         self._sync_history_navigation_actions()
 
     def _select_dataset_by_identity(self: Main, names: typing.List[str], dataset_uid: str = "") -> None:

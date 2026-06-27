@@ -565,6 +565,18 @@ def archive_project_to_mfdb(
                     exc_info=True,
                 )
 
+    # Operation-history projection: stamp this project's history events with the
+    # project_id so a later restore can read them back. Events recorded live were
+    # written to the durable log untagged; persisting them here (idempotent on
+    # event_id) only fills in project scoping. Source from the payload's
+    # ``extra.history_events`` (set at save time) — the archiver stays decoupled
+    # from cs.history.
+    history_events = (project_payload.get("extra") or {}).get("history_events") or []
+    if history_events:
+        from chisurf.core.mfdb import event_log
+        for _ev in history_events:
+            event_log.append_event(_ev, project_id=project_id, db=db)
+
     # Count actual parameters and edges created for this version
     escaped = version_id.replace("_", "\\_")
     param_count = db.conn.execute(
@@ -752,6 +764,15 @@ def restore_project_from_artifacts(
         ).fetchall()
         dependency_edges = [dict(r) for r in rows]
 
+    # Operation-history projection: read the durable event log for this project
+    # and hand it back under the same ``extra.history_events`` seam the .csp path
+    # uses, so the consumer rehydrates cs.history identically (PRD-43).
+    history_events: list[dict[str, Any]] = []
+    restore_project_id = project_metadata.get("project_id")
+    if restore_project_id:
+        from chisurf.core.mfdb import event_log
+        history_events = event_log.read_events(project_id=restore_project_id, db=db)
+
     return {
         "datasets": datasets,
         "fits": fits,
@@ -760,4 +781,5 @@ def restore_project_from_artifacts(
         "dependency_edges": dependency_edges,
         "ui_state": project_metadata.get("ui_state", {}),
         "experiments": project_metadata.get("experiments", {}),
+        "extra": {"history_events": history_events},
     }

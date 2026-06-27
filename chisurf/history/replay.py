@@ -1,6 +1,19 @@
 from __future__ import annotations
 
+import chisurf as cs
 from chisurf import typing
+from chisurf.core.actions._infra import canonical as _canon
+
+
+def _is(action_type: str, *names: str) -> bool:
+    """Return whether ``action_type`` matches any of ``names`` under normal form.
+
+    ``action_type`` is expected pre-normalized via :func:`canonical`; the literal
+    ``names`` are written in the authoritative dotted form (matching the MFDB
+    ``_mfdb_event_log.action_type`` vocabulary) and normalized here, so dotted and
+    underscored event spellings compare equal.
+    """
+    return action_type in {_canon(n) for n in names}
 
 
 def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any]]) -> typing.Dict[str, typing.Any]:
@@ -22,10 +35,10 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
         return [v for v in lst if v not in values]
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "dataset.add":
+        if _is(action_type, "dataset.add"):
             loaded = payload.get("loaded_names", [])
             loaded_uids = payload.get("loaded_uids", [])
             if isinstance(loaded, list):
@@ -39,7 +52,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if loaded_uids:
                     selected_dataset_uid = str(loaded_uids[-1])
 
-        elif action_type == "dataset.group":
+        elif _is(action_type, "dataset.group"):
             name = str(payload.get("group_name", ""))
             uid = str(payload.get("group_uid", ""))
             if name:
@@ -49,7 +62,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 append_unique(dataset_uids, uid)
                 selected_dataset_uid = uid
 
-        elif action_type == "dataset.remove":
+        elif _is(action_type, "dataset.remove"):
             removed = payload.get("removed_names", [])
             removed_uids = payload.get("removed_uids", [])
             if isinstance(removed, list):
@@ -63,7 +76,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if selected_dataset_uid in removed_uid_set:
                     selected_dataset_uid = dataset_uids[-1] if dataset_uids else None
 
-        elif action_type == "dataset.ungroup":
+        elif _is(action_type, "dataset.ungroup"):
             group_names = payload.get("group_names", [])
             group_uids = payload.get("group_uids", [])
             expanded_names = payload.get("expanded_names", [])
@@ -89,7 +102,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if expanded_uids:
                     selected_dataset_uid = str(expanded_uids[-1])
 
-        elif action_type == "fit.add":
+        elif _is(action_type, "fit.add"):
             fit_name = str(payload.get("fit_group_name") or payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -99,7 +112,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 append_unique(fit_uids, fit_uid)
                 selected_fit_uid = fit_uid
 
-        elif action_type == "fit.close":
+        elif _is(action_type, "fit.close"):
             fit_name = str(payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -111,7 +124,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if selected_fit_uid == fit_uid:
                     selected_fit_uid = fit_uids[-1] if fit_uids else None
 
-        elif action_type in {"fit.run.start", "fit.run.finish", "fit.run.abort"}:
+        elif _is(action_type, "fit.run.start", "fit.run.finish", "fit.run.abort"):
             fit_name = str(payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -119,7 +132,8 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
             if fit_uid:
                 selected_fit_uid = fit_uid
 
-        elif action_type in {
+        elif _is(
+            action_type,
             "parameter.value",
             "parameter.fixed",
             "parameter.bounds.set",
@@ -127,8 +141,8 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
             "parameter.link",
             "parameter.unlink",
             "fit.range.set",
-            "fit.mask.set",
-        }:
+            "fit.mask_set",
+        ):
             fit_name = str(payload.get("fit_group") or payload.get("source_fit_group") or "")
             if fit_name:
                 selected_fit = fit_name
@@ -191,13 +205,13 @@ def reconstruct_parameter_state(
                     pass
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "fit.run.start":
+        if _is(action_type, "fit.run.start"):
             apply_snapshot_rows(payload.get("parameter_snapshot_before"))
             continue
-        if action_type in {"fit.run.finish", "fit.run.abort"}:
+        if _is(action_type, "fit.run.finish", "fit.run.abort"):
             apply_snapshot_rows(payload.get("parameter_snapshot_after"))
             continue
 
@@ -216,19 +230,19 @@ def reconstruct_parameter_state(
         if src_param_uid:
             entry["source_parameter_uid"] = src_param_uid
 
-        if action_type == "parameter.value":
+        if _is(action_type, "parameter.value"):
             if "new_value" in payload:
                 entry["value"] = payload.get("new_value")
 
-        elif action_type == "parameter.fixed":
+        elif _is(action_type, "parameter.fixed"):
             if "fixed" in payload:
                 entry["fixed"] = bool(payload.get("fixed"))
 
-        elif action_type == "parameter.bounds.on":
+        elif _is(action_type, "parameter.bounds.on"):
             if "bounds_on" in payload:
                 entry["bounds_on"] = bool(payload.get("bounds_on"))
 
-        elif action_type == "parameter.bounds.set":
+        elif _is(action_type, "parameter.bounds.set"):
             lower = payload.get("lower")
             upper = payload.get("upper")
             if lower is not None and upper is not None:
@@ -237,7 +251,7 @@ def reconstruct_parameter_state(
                 except Exception:
                     pass
 
-        elif action_type == "parameter.link":
+        elif _is(action_type, "parameter.link"):
             target_fit_group = str(payload.get("target_fit_group") or "")
             target_local_fit = str(payload.get("target_local_fit") or "")
             target_parameter = str(payload.get("target_parameter") or "")
@@ -249,7 +263,7 @@ def reconstruct_parameter_state(
             if target_fit_uid or target_local_uid or target_param_uid:
                 entry["link_uid"] = (target_fit_uid, target_local_uid, target_param_uid)
 
-        elif action_type == "parameter.unlink":
+        elif _is(action_type, "parameter.unlink"):
             entry["link"] = None
 
     return state
@@ -284,17 +298,17 @@ def reconstruct_fit_range_state(
                 pass
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "fit.run.start":
+        if _is(action_type, "fit.run.start"):
             apply_range_rows(payload.get("fit_range_snapshot_before"))
             continue
-        if action_type in {"fit.run.finish", "fit.run.abort"}:
+        if _is(action_type, "fit.run.finish", "fit.run.abort"):
             apply_range_rows(payload.get("fit_range_snapshot_after"))
             continue
 
-        if action_type == "fit.range.set":
+        if _is(action_type, "fit.range.set"):
             fit_group = str(payload.get("fit_group") or "")
             xmin = payload.get("xmin")
             xmax = payload.get("xmax")
@@ -323,10 +337,10 @@ def touched_parameter_keys(
         "parameter.link",
         "parameter.unlink",
     }
-    actions = include_actions or default_actions
+    actions = {_canon(a) for a in (include_actions or default_actions)}
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         if action_type not in actions:
             continue
         payload = event.get("payload", {}) or {}
@@ -346,22 +360,22 @@ def reconstruct_setup_state(
     params: typing.Dict[str, typing.Any] = {}
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "experiment.set":
+        if _is(action_type, "experiment.set"):
             name = str(payload.get("name") or "")
             if name:
                 experiment_name = name
             continue
 
-        if action_type == "setup.select":
+        if _is(action_type, "setup.select"):
             name = str(payload.get("name") or "")
             if name:
                 setup_name = name
             continue
 
-        if action_type == "setup.params.set":
+        if _is(action_type, "setup.params.set"):
             values = payload.get("params") or {}
             if isinstance(values, dict):
                 for key, value in values.items():
@@ -386,7 +400,7 @@ def reconstruct_model_state(
     state: typing.Dict[str, typing.Any] = {}
 
     for event in events:
-        action_type = str(event.get("action_type", ""))
+        action_type = _canon(str(event.get("action_type", "")))
         payload = event.get("payload", {}) or {}
         source_uid = str(event.get("source_uid", ""))
         target_uid = str(event.get("target_uid", ""))
@@ -425,7 +439,7 @@ def reconstruct_model_state(
 
         local_state = fg_state["local_fits"][local_fit_uid]
 
-        if action_type == "model_add_component":
+        if _is(action_type, "model.add_component"):
             component_name = str(payload.get("component_name", ""))
             if component_name:
                 if component_name not in [c.get("name", "") for c in local_state["components"]]:
@@ -434,7 +448,7 @@ def reconstruct_model_state(
                         "action": "add"
                     })
 
-        elif action_type == "model_remove_component":
+        elif _is(action_type, "model.remove_component"):
             component_name = str(payload.get("component_name", ""))
             if component_name:
                 # Mark component for removal
@@ -449,63 +463,63 @@ def reconstruct_model_state(
                         "action": "remove"
                     })
 
-        elif action_type == "model_normalize_amplitudes":
+        elif _is(action_type, "model.normalize_amplitudes"):
             component_name = str(payload.get("component_name", ""))
             if component_name:
                 local_state["config"]["normalize_amplitudes"] = component_name
 
-        elif action_type == "model_absolute_amplitudes":
+        elif _is(action_type, "model.absolute_amplitudes"):
             component_name = str(payload.get("component_name", ""))
             if component_name:
                 local_state["config"]["absolute_amplitudes"] = component_name
 
-        elif action_type == "model_change_irf":
+        elif _is(action_type, "model.change_irf"):
             irf_idx = payload.get("irf_idx")
             irf_name = str(payload.get("irf_name", ""))
             if irf_idx is not None and irf_name:
                 local_state["config"][f"irf_{irf_idx}"] = irf_name
 
-        elif action_type == "model_unload_irf":
+        elif _is(action_type, "model.unload_irf"):
             local_state["config"]["unload_irf"] = True
 
-        elif action_type == "model_update":
+        elif _is(action_type, "model.update"):
             # Generic model update - store payload
             local_state["config"]["update"] = payload
 
-        elif action_type == "model_set_correction":
+        elif _is(action_type, "model.set_correction"):
             correction_type = str(payload.get("correction_type", ""))
             value = payload.get("value")
             if correction_type:
                 local_state["config"][f"correction_{correction_type}"] = value
 
-        elif action_type == "model_set_linearization":
+        elif _is(action_type, "model.set_linearization"):
             idx = payload.get("idx")
             lin_name = str(payload.get("lin_name", ""))
             if idx is not None and lin_name:
                 local_state["config"][f"linearization_{idx}"] = lin_name
 
-        elif action_type == "model_unload_lintable":
+        elif _is(action_type, "model.unload_lintable"):
             local_state["config"]["unload_lintable"] = True
 
-        elif action_type == "model_unload_background_curve":
+        elif _is(action_type, "model.unload_background_curve"):
             local_state["config"]["unload_background_curve"] = True
 
-        elif action_type == "model_remove_local_fit":
+        elif _is(action_type, "model.remove_local_fit"):
             row = payload.get("row")
             if row is not None:
                 local_state["config"]["remove_local_fit"] = row
 
-        elif action_type == "model_clear_local_fits":
+        elif _is(action_type, "model.clear_local_fits"):
             local_state["config"]["clear_local_fits"] = True
 
-        elif action_type == "model_append_global_parameter":
+        elif _is(action_type, "model.append_global_parameter"):
             parameter_name = str(payload.get("parameter_name", ""))
             if parameter_name:
                 if "global_parameters" not in local_state["config"]:
                     local_state["config"]["global_parameters"] = []
                 local_state["config"]["global_parameters"].append(parameter_name)
 
-        elif action_type == "model_append_fit":
+        elif _is(action_type, "model.append_fit"):
             fit_index = payload.get("fit_index")
             if fit_index is not None:
                 local_state["config"]["append_fit"] = fit_index
@@ -523,7 +537,6 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
     - setup: experiment and setup state
     - models: model component and configuration state
     """
-    import chisurf as cs
     snapshot: typing.Dict[str, typing.Any] = {
         "navigation": {},
         "parameters": {},
@@ -880,6 +893,16 @@ def sync_domain_entities(
         if str(getattr(f, "unique_identifier", "")) not in target_fit_uids
     ]
 
+    try:
+        cs.logging.info(
+            "HISTNAV: sync_domain_entities missing_ds=%d missing_fits=%d "
+            "extra_ds=%d extra_fits=%d"
+            % (len(missing_ds), len(missing_fits),
+               len(extra_ds_indices), len(extra_fit_indices))
+        )
+    except Exception:
+        pass
+
     history = getattr(cs, "history", None)
     if history is None:
         return
@@ -905,18 +928,26 @@ def sync_domain_entities(
             # uid_to_event_uids: typing.Dict[str, typing.List[str]] = {} # Map UID to all UIDs created in same event
 
             for event in all_events:
-                atype = str(event.get("action_type", ""))
+                atype = _canon(str(event.get("action_type", "")))
                 payload = event.get("payload", {}) or {}
-                if atype == "dataset_add":
+                if _is(atype, "dataset.add"):
                     uids = [str(u) for u in payload.get("loaded_uids", [])]
                     for uid in uids:
                         creation_map[uid] = event
                         # uid_to_event_uids[uid] = uids
-                elif atype == "fit_add":
-                    uid = str(event.get("target_uid") or payload.get("fit_uid") or "")
+                elif _is(atype, "fit.add"):
+                    # Key on source_uid first — that is the fit-group UID that
+                    # reconstruct_navigation_state records into fit_uids, so the
+                    # redo lookup (creation_map.get(missing_fit_uid)) matches.
+                    uid = str(
+                        event.get("source_uid")
+                        or event.get("target_uid")
+                        or payload.get("fit_uid")
+                        or ""
+                    )
                     if uid:
                         creation_map[uid] = event
-                elif atype == "dataset_group":
+                elif _is(atype, "dataset.group"):
                     uid = str(payload.get("group_uid", ""))
                     if uid:
                         creation_map[uid] = event
@@ -933,14 +964,14 @@ def sync_domain_entities(
             for uid in sorted(missing_ds): # Deterministic order
                 event = creation_map.get(uid)
                 if event and event["event_id"] not in processed_events:
-                    atype = str(event.get("action_type", ""))
-                    if atype == "dataset_add":
+                    atype = _canon(str(event.get("action_type", "")))
+                    if _is(atype, "dataset.add"):
                         payload = event.get("payload", {})
                         if "experiment_reader" not in payload:
                             payload = dict(payload)
                             payload["experiment_reader"] = None
                         actions.dispatch("dataset.add", payload)
-                    elif atype == "dataset_group":
+                    elif _is(atype, "dataset.group"):
                         payload = event.get("payload", {})
                         new_indices = resolve_indices(payload.get("dataset_indices", []), event)
                         actions.dispatch("dataset.group", {"dataset_indices": new_indices})

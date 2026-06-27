@@ -8,6 +8,7 @@ import threading
 import uuid
 
 from chisurf import typing
+from chisurf.core.actions._infra import canonical as _canon
 
 
 class OperationHistory:
@@ -18,13 +19,23 @@ class OperationHistory:
     SUPPORTED_VERSIONS = ["1.0"]  # Versions we can read
     
     DEFAULT_CHECKPOINT_INTERVAL = 50
+    DEFAULT_MAX_CHECKPOINTS = 20  # cap in-memory snapshots; 0 disables eviction
 
-    def __init__(self, checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL):
+    def __init__(
+            self,
+            checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL,
+            max_checkpoints: int = DEFAULT_MAX_CHECKPOINTS,
+    ):
         self._events: typing.List[typing.Dict[str, typing.Any]] = []
         self._lock = threading.RLock()
         self._subscribers: typing.List[typing.Callable[[typing.Dict[str, typing.Any]], None]] = []
         self._checkpoints: typing.Dict[int, typing.Dict[str, typing.Any]] = {}
         self._checkpoint_interval = max(1, int(checkpoint_interval))
+        # Bound the in-memory checkpoint store. Each snapshot is a full-domain
+        # deep copy, so an unbounded dict exhausts memory on long sessions. Since
+        # the durable event log can rebuild any evicted snapshot by replay, the
+        # checkpoint dict is a pure cache and safe to evict.
+        self._max_checkpoints = max(0, int(max_checkpoints))
         self._checkpoint_capture_fn: typing.Optional[typing.Callable[[], typing.Dict[str, typing.Any]]] = None
         self._recording_suppressed = False
         # Memory management settings
@@ -38,6 +49,7 @@ class OperationHistory:
             payload: typing.Optional[typing.Dict[str, typing.Any]] = None,
             source_uid: typing.Optional[str] = None,
             target_uid: typing.Optional[str] = None,
+            persist: bool = True,
     ) -> typing.Dict[str, typing.Any]:
         with self._lock:
             if self._recording_suppressed:
@@ -62,7 +74,21 @@ class OperationHistory:
             except Exception:
                 pass
         self._emit_log(event)
+        # Durable, best-effort projection into MFDB. The in-memory list above is
+        # authoritative for the live session; this is a no-op without a database
+        # (local mode), so history works identically offline. ``persist=False``
+        # is used when re-inserting events on restore/replay to stay idempotent.
+        if persist:
+            self._persist_event(event)
         return event
+
+    def _persist_event(self, event: typing.Dict[str, typing.Any]) -> None:
+        """Best-effort durable append of ``event`` to the MFDB event log."""
+        try:
+            from chisurf.core.mfdb import event_log
+            event_log.append_event(event, history_version=self.HISTORY_VERSION)
+        except Exception:
+            pass
 
     from contextlib import contextmanager
     @contextmanager
@@ -97,7 +123,17 @@ class OperationHistory:
         with self._lock:
             self._subscribers = [cb for cb in self._subscribers if cb is not callback]
 
-    def list_events(self) -> typing.List[typing.Dict[str, typing.Any]]:
+    def list_events(self, source: str = "memory") -> typing.List[typing.Dict[str, typing.Any]]:
+        """Return history events.
+
+        ``source="memory"`` (default) returns the in-memory log — the authoritative
+        live-session view. ``source="mfdb"`` reads the durable event log from the
+        database (the projection's backing store); it returns ``[]`` when no MFDB
+        is available, so callers degrade gracefully offline.
+        """
+        if source == "mfdb":
+            from chisurf.core.mfdb import event_log
+            return event_log.read_events()
         with self._lock:
             return list(self._events)
 
@@ -406,9 +442,28 @@ class OperationHistory:
                     "snapshot": snapshot,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
+                self._evict_checkpoints_locked()
             return True
         except Exception:
             return False
+
+    def _evict_checkpoints_locked(self) -> None:
+        """Bound ``self._checkpoints`` to ``_max_checkpoints`` (caller holds lock).
+
+        Keeps the earliest checkpoint (so a full cold-start replay is always
+        cheap) plus the most recent ``max - 1`` (so undo/redo near the cursor is
+        cheap), evicting the middle. Evicted snapshots are rebuildable by replay,
+        so dropping them only costs recompute, never correctness.
+        """
+        cap = self._max_checkpoints
+        if cap <= 0 or len(self._checkpoints) <= cap:
+            return
+        indices = sorted(self._checkpoints)
+        recent = set(indices[-(cap - 1):]) if cap > 1 else set()
+        keep = {indices[0]} | recent
+        for idx in indices:
+            if idx not in keep:
+                del self._checkpoints[idx]
 
     def get_checkpoint_before(self, event_index: int) -> typing.Optional[typing.Dict[str, typing.Any]]:
         """Get the nearest checkpoint at or before the given event index.
@@ -557,12 +612,18 @@ class OperationHistory:
             self,
             handlers: typing.Dict[str, typing.Callable[[typing.Dict[str, typing.Any]], None]],
             stop_on_error: bool = False,
+            events: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None,
     ) -> typing.Dict[str, typing.Any]:
         """Replay history events using provided handlers.
 
         Args:
             handlers: Dict mapping action_type to handler callable.
             stop_on_error: If True, stop replaying on first handler error.
+            events: Optional explicit event list to replay; defaults to the
+                in-memory log. Handler keys and event ``action_type`` are matched
+                under the separator-normal form (see
+                :func:`chisurf.core.actions.canonical`), so dotted and underscored
+                spellings are interchangeable.
 
         Returns:
             Dict with:
@@ -572,14 +633,17 @@ class OperationHistory:
                 - errors: list of (event_index, error_message) tuples
         """
         with self._lock:
-            total = len(self._events)
+            replay_events = self._events if events is None else events
+            total = len(replay_events)
             replayed = 0
             skipped = 0
             errors: typing.List[typing.Tuple[int, str]] = []
 
-            for i, event in enumerate(self._events):
-                action_type = str(event.get("action_type", ""))
-                handler = handlers.get(action_type)
+            canon_handlers = {_canon(k): v for k, v in handlers.items()}
+
+            for i, event in enumerate(replay_events):
+                action_type = _canon(str(event.get("action_type", "")))
+                handler = canon_handlers.get(action_type)
 
                 if handler is None:
                     skipped += 1
