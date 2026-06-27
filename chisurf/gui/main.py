@@ -1534,7 +1534,13 @@ class Main(
                 fw = sub.fit_widget
                 if hasattr(fw, "update_chi2"):
                     fw.update_chi2()
-            if hasattr(sub, "plot_tab_widget") and sub.plot_tab_widget is not None:
+            # Re-pull the model curve: a plain DockArea ``update()`` is only a
+            # Qt repaint and leaves the plotted trace stale. ``refresh_current_plot``
+            # invokes the visible Plot's own ``update``/``update_all`` so a
+            # parameter change or finished fit is reflected immediately.
+            if hasattr(sub, "refresh_current_plot"):
+                sub.refresh_current_plot()
+            elif hasattr(sub, "plot_tab_widget") and sub.plot_tab_widget is not None:
                 if hasattr(sub.plot_tab_widget, "update"):
                     sub.plot_tab_widget.update()
         except Exception:

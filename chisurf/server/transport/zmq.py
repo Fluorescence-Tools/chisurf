@@ -12,6 +12,33 @@ _log = logging.getLogger(__name__)
 _SERVER_DISPATCH_CONTEXT = threading.local()
 
 
+def _json_default(o: Any) -> Any:
+    """Coerce non-JSON-native scalars (e.g. numpy ``int64``) to plain Python.
+
+    ``json.dumps`` only invokes this for objects it cannot serialise itself, so
+    native ``int``/``float``/``str`` are untouched.  numpy scalars expose
+    ``.item()`` (returning a Python scalar) and numpy arrays expose
+    ``.tolist()``; we try those before giving up so that any numpy value leaking
+    into RPC params/results is transported instead of raising ``TypeError`` and
+    silently dropping the call.
+    """
+    item = getattr(o, "item", None)
+    if callable(item):
+        try:
+            return item()
+        except Exception:
+            pass
+    tolist = getattr(o, "tolist", None)
+    if callable(tolist):
+        try:
+            return tolist()
+        except Exception:
+            pass
+    raise TypeError(
+        f"Object of type {o.__class__.__name__} is not JSON serializable"
+    )
+
+
 def in_server_dispatch() -> bool:
     """Return whether the current thread is handling a ZMQ RPC request."""
     return bool(getattr(_SERVER_DISPATCH_CONTEXT, "active", False))
@@ -116,7 +143,7 @@ class ZmqServer:
         if self._pub_socket is None:
             return
         try:
-            data = json.dumps(payload)
+            data = json.dumps(payload, default=_json_default)
             self._pub_socket.send_multipart([topic.encode("utf-8"), data.encode("utf-8")])
         except Exception:
             _log.exception("Failed to broadcast event")
@@ -156,7 +183,7 @@ class ZmqServer:
                 "jsonrpc": "2.0",
                 "result": result,
                 "id": req_id,
-            })
+            }, default=_json_default)
         except Exception as e:
             self._rep_socket.send_json({
                 "jsonrpc": "2.0",
@@ -292,9 +319,15 @@ class ZmqClient:
             }
 
             try:
-                self._req_socket.send_json(msg)
+                self._req_socket.send_json(msg, default=_json_default)
             except zmq.ZMQError as e:
                 self._reset_socket()
+                return {"ok": False, "error": f"send failed: {e}"}
+            except TypeError as e:
+                # Non-serialisable param slipped past _json_default. Nothing was
+                # sent (serialisation happens before the socket write), so the
+                # REQ socket is still in a clean send-ready state — no reset
+                # needed; just surface the error to the caller.
                 return {"ok": False, "error": f"send failed: {e}"}
 
             poller = zmq.Poller()

@@ -30,6 +30,30 @@ class FitSubWindow(CustomMdiSubWindow):
     def update(self, *args):
         super().update(self, *args)
         self.plot_tab_widget.update(*args)
+        self.refresh_current_plot()
+
+    def refresh_current_plot(self) -> None:
+        """Recompute and redraw the currently visible plot from the model.
+
+        The DockArea's own ``update()`` only schedules a Qt repaint; it does
+        **not** re-pull the model curve. The actual redraw is performed by the
+        individual :class:`Plot` widget via its ``update_all``/``update`` hook
+        (the same path :meth:`on_change_plot` uses). Call it here so that a
+        parameter-value edit or a finished fit (delivered as ``fit.updated`` /
+        ``fit.ran`` events) is reflected in the trace without switching tabs.
+        """
+        try:
+            idx = self.plot_tab_widget.currentIndex()
+            plot = self.ensure_plot_created(idx)
+            if plot is None:
+                return
+            update_all = getattr(plot, "update_all", None)
+            if callable(update_all):
+                update_all()
+            elif hasattr(plot, "update"):
+                plot.update()
+        except Exception:
+            pass
 
     def __init__(
             self,
