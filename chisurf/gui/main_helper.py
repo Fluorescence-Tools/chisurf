@@ -1720,7 +1720,14 @@ class StateMixin:
             setup_state = domain_state.setup
             model_state = domain_state.models
 
-            _hr.sync_domain_entities(nav_state, all_events)
+            uid_remap = _hr.sync_domain_entities(nav_state, all_events) or {}
+            # Entities re-created on redo get fresh UIDs; model_state is keyed by
+            # the (old) fit-group UID, so rewrite its keys through the remap before
+            # applying. Parameter/fit-range state is name-keyed and needs no remap.
+            if uid_remap and model_state:
+                model_state = {
+                    uid_remap.get(str(k), str(k)): v for k, v in model_state.items()
+                }
 
             link_touched = _hr.touched_parameter_keys(
                 all_events,

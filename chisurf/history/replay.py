@@ -863,6 +863,14 @@ def sync_domain_entities(
 
     This identifies missing or extra entities by UID and uses action services
     to reconcile them, with history recording suppressed.
+
+    Returns
+    -------
+    dict
+        Map of recorded (old) UID -> re-created (new) UID for entities re-added on
+        redo. Empty when nothing was re-created. Callers must rewrite any
+        UID-keyed reconstructed state (e.g. ``model_state``) through this map
+        before applying it, since re-creation yields fresh UIDs.
     """
     import chisurf.core.actions as actions
 
@@ -903,9 +911,15 @@ def sync_domain_entities(
     except Exception:
         pass
 
+    # Maps a recorded (old) entity UID to the UID of the entity re-created for it
+    # on redo. Re-creating a dataset/fit by replay yields a fresh UID, so any
+    # reconstructed state still keyed by the old UID (notably model_state, keyed by
+    # fit-group UID) must be rewritten through this map before it is applied.
+    uid_remap: typing.Dict[str, str] = {}
+
     history = getattr(cs, "history", None)
     if history is None:
-        return
+        return uid_remap
 
     with history.suppress_recording():
         # 1. Remove extra entities (reverse order to keep indices valid)
@@ -989,9 +1003,19 @@ def sync_domain_entities(
                 if event and event["event_id"] not in processed_events:
                     payload = event.get("payload", {})
                     new_indices = resolve_indices(payload.get("dataset_indices", []), event)
+                    fits_before = {id(f) for f in getattr(cs, "fits", [])}
                     actions.dispatch("fit.add", {
                         "dataset_indices": new_indices,
                         "model_name": payload.get("model_name"),
                         "model_kw": payload.get("model_kw"),
                     })
+                    # Map the recorded fit-group UID -> the re-created fit's UID so
+                    # model_state keyed by the old UID can resolve after redo.
+                    new_fits = [f for f in getattr(cs, "fits", []) if id(f) not in fits_before]
+                    if new_fits:
+                        new_uid = str(getattr(new_fits[-1], "unique_identifier", ""))
+                        if new_uid:
+                            uid_remap[uid] = new_uid
                     processed_events.add(event["event_id"])
+
+    return uid_remap
