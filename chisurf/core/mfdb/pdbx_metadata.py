@@ -314,13 +314,13 @@ class MmcifDictionary:
                     current_item.mandatory = val.lower() == "yes"
                 elif stripped.startswith("_item_default.value"):
                     current_item.default_value = self._extract_value(stripped)
-                elif stripped.startswith("_chisurf_schema.table_name"):
+                elif stripped.startswith("_mfdb_schema.table_name") or stripped.startswith("_chisurf_schema.table_name"):
                     current_item.schema_table = self._extract_value(stripped)
-                elif stripped.startswith("_chisurf_schema.column_name"):
+                elif stripped.startswith("_mfdb_schema.column_name") or stripped.startswith("_chisurf_schema.column_name"):
                     current_item.schema_column = self._extract_value(stripped)
-                elif stripped.startswith("_chisurf_schema.status"):
+                elif stripped.startswith("_mfdb_schema.status") or stripped.startswith("_chisurf_schema.status"):
                     current_item.schema_status = self._extract_value(stripped)
-                elif stripped.startswith("_chisurf_schema.foreign_key"):
+                elif stripped.startswith("_mfdb_schema.foreign_key") or stripped.startswith("_chisurf_schema.foreign_key"):
                     current_item.schema_foreign_key = self._extract_value(stripped)
                 elif stripped.startswith("loop_"):
                     in_loop = True

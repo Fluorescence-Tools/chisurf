@@ -47,8 +47,8 @@ class DictionarySchemaMap:
 
     Mapping rules are intentionally mechanical:
 
-    1. If the dictionary item declares ``_chisurf_schema.table_name`` or
-       ``_chisurf_schema.column_name``, use those values.
+    1. If the dictionary item declares ``_mfdb_schema.table_name`` or
+       ``_mfdb_schema.column_name``, use those values.
     2. Otherwise use the dictionary category as table name and item attribute
        as column name.
     3. When a live schema is provided, keep only mappings that point to real

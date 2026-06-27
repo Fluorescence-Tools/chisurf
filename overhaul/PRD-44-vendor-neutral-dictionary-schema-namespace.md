@@ -1,5 +1,14 @@
 # PRD-44: Vendor-Neutral Dictionary Schema Namespace
 
+> **Status: DONE (2026-06-27).** All four DoD items met (see checklist below).
+> Parser dual-recognizes `_mfdb_schema.*` + legacy `_chisurf_schema.*`;
+> `mfdb_flr_ext.dic` rewritten (0 legacy / 985 `_mfdb_schema` tags); consumers
+> reference only `_mfdb_schema`; back-compat test added
+> (`test/fio/test_dictionary_namespace_backcompat.py`). 11 schema tests +
+> prerequisites gate green. Out of scope (correctly untouched): the flrCIF
+> *table/category* `flr_chisurf_parameter` and its `_flr_chisurf_parameter.*`
+> item ids — renaming those would change materialized SQL, which this PRD forbids.
+
 > **Scope:** De-brand the MFDB dictionary's local extension tags so MFDB is a
 > general-purpose metadata/provenance store usable by software beyond ChiSurf.
 > Mechanical but wide (≈1000 call sites); ships behind a backward-compatible
@@ -81,13 +90,14 @@ is the natural neutral namespace and introduces no new brand.
 
 ## Definition of Done
 
-- [ ] `grep -r _chisurf_schema chisurf/` returns only the parser's legacy-fallback
-      branch (and its test).
-- [ ] Fresh `:memory:` reconcile produces byte-identical schema to before the
-      rename (table/column/FK set unchanged).
-- [ ] A `.dic` fragment using the **legacy** `_chisurf_schema.*` tag still parses
-      (back-compat test).
-- [ ] `_mfdb_schema.*` is the spelling in `mfdb_flr_ext.dic` and all new entries.
+- [x] `grep -r _chisurf_schema chisurf/` returns only the parser's legacy-fallback
+      branch (4 lines, `pdbx_metadata.py:317–323`).
+- [x] Fresh reconcile produces the unchanged schema (table/column/FK set) — verified
+      by the 11 `test_schema_from_dictionary.py` tests + the `test_setup_prerequisites`
+      live⊇declared gate.
+- [x] A `.dic` fragment using the **legacy** `_chisurf_schema.*` tag still parses
+      (`test/fio/test_dictionary_namespace_backcompat.py`).
+- [x] `_mfdb_schema.*` is the spelling in `mfdb_flr_ext.dic` (0 legacy / 985 new).
 
 ## Definition of Clean
 

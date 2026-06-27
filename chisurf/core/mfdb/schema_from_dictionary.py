@@ -3,7 +3,7 @@
 The dictionary is the single authored artifact for the reading/processing
 setup tables (mfdb_setup_detector_channel, mfdb_setup_pie_window) and the
 TTTR-reading columns on mfdb_setup.  Every column, type, PK, FK, and
-default is derived from the ``_chisurf_schema`` bridge attributes.
+default is derived from the ``_mfdb_schema`` bridge attributes.
 
 Usage::
 
@@ -64,7 +64,7 @@ def _sql_type_for_item(item: DictItem) -> str:
 def _resolve_table_name(category_name: str, dic: MmcifDictionary) -> str:
     """Resolve the SQL table name for a dictionary category.
 
-    Uses the first item's ``_chisurf_schema.table_name``, or falls back
+    Uses the first item's ``_mfdb_schema.table_name``, or falls back
     to the category name.
     """
     cat = dic.get_category(category_name)
