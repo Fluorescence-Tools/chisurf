@@ -24,6 +24,7 @@ models, settings, metadata and tool panels can all be declared the same way;
 :mod:`chisurf.gui.widgets.models.auto_model_widget` for the renderer that
 consumes these descriptors.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -53,6 +54,41 @@ class Section:
     #: this to the widget's tooltip, so every section type can carry inline help
     #: straight from the ``.view.json``.
     description: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class ParameterGroupTableSection(Section):
+    """A compact table of parameters from one :class:`FittingParameterGroup`.
+
+    Instead of rendering each parameter as a standalone row of widgets (the
+    :class:`ParameterGroupSection` approach), this renders all parameters in a
+    single ``QTableView`` with columns for the name, value, fixed flag, bounds
+    and error estimate. Each column is editable where it makes sense (value,
+    fixed, bounds) and boolean columns use a click-to-toggle checkbox delegate.
+
+    The list of visible columns is controlled via the ``columns`` attribute;
+    when empty all columns are shown.  Column identifiers are:
+
+    * ``"name"`` – parameter label (read-only)
+    * ``"value"`` – current value (editable float)
+    * ``"fixed"`` – fix/release checkbox (editable)
+    * ``"bounds_lo"`` – lower bound (editable when bounds are enabled)
+    * ``"bounds_hi"`` – upper bound (editable when bounds are enabled)
+    * ``"bounds_on"`` – enable/disable bounds checkbox (editable)
+    * ``"error"`` – error estimate (read-only)
+    """
+
+    #: Optional group method returning parameters to *exclude* from this table
+    #: (same semantics as :attr:`ParameterGroupSection.exclude_source`).
+    exclude_source: typing.Optional[str] = None
+    #: Whether the section header can fold/unfold the table.
+    collapsible: bool = True
+    #: Initial fold state (``True`` = start collapsed).
+    collapsed: bool = False
+    #: Optional condition that folds the section: ``{target, attr, equals}``.
+    collapsed_when: typing.Optional[typing.Mapping[str, typing.Any]] = None
+    #: Visible column subset. When empty all columns are shown.
+    columns: typing.Tuple[str, ...] = ()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -328,7 +364,7 @@ class DockAreaSection(Section):
     """
 
     #: Child sections, each rendered as one dock panel.
-    sections: typing.Tuple["Section", ...] = ()
+    sections: typing.Tuple[Section, ...] = ()
     #: Optional minimum height (pixels) for the dock area (0 = unconstrained).
     height: int = 0
 
@@ -359,17 +395,19 @@ class ModelView:
     sections: typing.Tuple[Section, ...] = ()
     plots: typing.Tuple[PlotSpec, ...] = ()
 
-    def flat_sections(self) -> typing.List["Section"]:
+    def flat_sections(self) -> typing.List[Section]:
         """Return all sections in depth-first order, recursing into panels.
 
         Allows callers to find any section type regardless of nesting depth.
         """
         result: typing.List[Section] = []
+
         def _walk(secs):
             for s in secs:
                 result.append(s)
                 if isinstance(s, PanelSection):
                     _walk(s.sections)
+
         _walk(self.sections)
         return result
 
@@ -384,6 +422,7 @@ class ModelView:
 #: Maps the ``"type"`` field of a JSON section to its dataclass.
 _SECTION_TYPES = {
     "panel": PanelSection,
+    "parameter_group_table": ParameterGroupTableSection,
     "parameter_group": ParameterGroupSection,
     "dynamic_group": DynamicGroupSection,
     "curve_input": CurveInputSection,
@@ -402,18 +441,23 @@ def _section_from_dict(d: typing.Mapping[str, typing.Any]) -> Section:
     kind = d.get("type", "parameter_group")
     cls = _SECTION_TYPES.get(kind)
     if cls is None:
-        raise ValueError(
-            f"unknown section type {kind!r}; expected one of {sorted(_SECTION_TYPES)}"
-        )
+        raise ValueError(f"unknown section type {kind!r}; expected one of {sorted(_SECTION_TYPES)}")
     fields = {f.name for f in dataclasses.fields(cls)}
     kwargs = {k: v for k, v in d.items() if k in fields}
     # tuples for frozen/hashable dataclasses
     if "header_keys" in kwargs and kwargs["header_keys"] is not None:
         kwargs["header_keys"] = tuple(kwargs["header_keys"])
     if "options" in kwargs and kwargs["options"] is not None:
-        kwargs["options"] = tuple(kwargs["options"])
+        # CustomSection.options is a free-form Mapping forwarded to the widget; every other
+        # section (ChoiceSection) uses a tuple of choices.
+        if cls is CustomSection:
+            kwargs["options"] = dict(kwargs["options"])
+        else:
+            kwargs["options"] = tuple(kwargs["options"])
     if "labels" in kwargs and kwargs["labels"] is not None:
         kwargs["labels"] = tuple(kwargs["labels"])
+    if "columns" in kwargs and kwargs["columns"] is not None:
+        kwargs["columns"] = tuple(kwargs["columns"])
     # panels nest child sections — parse them recursively
     if "sections" in kwargs and kwargs["sections"] is not None:
         kwargs["sections"] = tuple(_section_from_dict(s) for s in kwargs["sections"])
@@ -473,6 +517,127 @@ class ParameterGroupView:
         )
 
 
+class _SettingsGroup:
+    """Bind one dict level so AutoForm can get/set its keys as attributes.
+
+    AutoForm reads and writes a section's bound value through ``getattr`` /
+    ``setattr`` on the object resolved from the section's ``target``. This wraps
+    the *live* dict level so edits mutate it in place; an optional ``on_change``
+    callback fires after every write. Keys that are never bound to an editor are
+    simply left untouched, so non-scalar values (callables, lists, colours)
+    round-trip exactly.
+    """
+
+    def __init__(self, data: dict, on_change: typing.Optional[typing.Callable] = None):
+        object.__setattr__(self, "_data", data)
+        object.__setattr__(self, "_on_change", on_change)
+
+    def __getattr__(self, name):
+        data = object.__getattribute__(self, "_data")
+        try:
+            return data[name]
+        except KeyError as exc:
+            raise AttributeError(name) from exc
+
+    def __setattr__(self, name, value):
+        data = object.__getattribute__(self, "_data")
+        data[name] = value
+        on_change = object.__getattribute__(self, "_on_change")
+        if on_change is not None:
+            on_change()
+
+
+class SettingsView:
+    """Render an arbitrary (possibly nested) settings ``dict`` through AutoForm.
+
+    Dict-backed counterpart of :class:`ParameterGroupView`: it derives a
+    :class:`ModelView` from the dict's *structure* — nested dicts become
+    collapsible :class:`PanelSection` blocks, and scalar leaves become typed
+    :class:`ValueSection` / :class:`ToggleSection` fields — and resolves each
+    section's ``target`` to a :class:`_SettingsGroup` wrapping the corresponding
+    live dict level. Non-scalar values (callables, lists, colours, ``None``) are
+    shown read-only and left untouched, so the backing dict round-trips exactly.
+
+    Because the result exposes a :meth:`view_spec` and resolves targets via
+    ``getattr``, ``AutoForm(SettingsView(my_dict))`` renders a full settings
+    editor with no authored ``.view.json``. This keeps the module Qt-free.
+
+    Parameters
+    ----------
+    data : dict
+        The settings dict to edit (mutated in place as the user edits).
+    title : str or None
+        Optional title (currently informational only).
+    on_change : callable or None
+        Invoked with no arguments after any value changes.
+    """
+
+    def __init__(
+        self,
+        data: dict,
+        *,
+        title: typing.Optional[str] = None,
+        on_change: typing.Optional[typing.Callable] = None,
+    ):
+        self._data = data
+        self._title = title
+        self._on_change = on_change
+        self._groups: typing.Dict[str, _SettingsGroup] = {}
+        self._counter = 0
+        self._view = ModelView(sections=tuple(self._sections_for(data, top=True)))
+
+    # AutoForm resolves a section's target via ``getattr(model, target)``.
+    def __getattr__(self, name):
+        groups = object.__getattribute__(self, "_groups")
+        if name in groups:
+            return groups[name]
+        raise AttributeError(name)
+
+    def view_spec(self) -> ModelView:
+        return self._view
+
+    def to_dict(self) -> dict:
+        return self._data
+
+    # -- builder ------------------------------------------------------------
+    def _new_group(self, data: dict) -> str:
+        gid = f"_g{self._counter}"
+        self._counter += 1
+        self._groups[gid] = _SettingsGroup(data, self._on_change)
+        return gid
+
+    def _sections_for(self, data: dict, top: bool = False) -> typing.List[Section]:
+        gid = self._new_group(data)
+        out: typing.List[Section] = []
+        for key, value in data.items():
+            if isinstance(value, dict):
+                out.append(
+                    PanelSection(
+                        title=str(key),
+                        collapsible=True,
+                        collapsed=False,
+                        sections=tuple(self._sections_for(value)),
+                    )
+                )
+            else:
+                out.append(self._leaf_section(gid, str(key), value))
+        return out
+
+    @staticmethod
+    def _leaf_section(gid: str, key: str, value: typing.Any) -> Section:
+        # bool is a subclass of int — test it first.
+        if isinstance(value, bool):
+            return ToggleSection(target=gid, attr=key, label=key)
+        if isinstance(value, int):
+            return ValueSection(target=gid, attr=key, label=key, kind="int")
+        if isinstance(value, float):
+            return ValueSection(target=gid, attr=key, label=key, kind="float", decimals=6)
+        if isinstance(value, str):
+            return ValueSection(target=gid, attr=key, label=key, kind="str")
+        # callables, lists, None, colours, … : display read-only, leave untouched.
+        return ValueSection(target=gid, attr=key, label=key, kind="str", read_only=True)
+
+
 def load_view_spec(data: typing.Union[str, pathlib.Path, typing.Mapping]) -> ModelView:
     """Build a :class:`ModelView` from JSON data, a file path, or a dict.
 
@@ -498,8 +663,7 @@ def load_view_spec(data: typing.Union[str, pathlib.Path, typing.Mapping]) -> Mod
 
     sections = tuple(_section_from_dict(s) for s in data.get("sections", ()))
     plots = tuple(
-        PlotSpec(key=p["key"], options=dict(p.get("options", {})))
-        for p in data.get("plots", ())
+        PlotSpec(key=p["key"], options=dict(p.get("options", {}))) for p in data.get("plots", ())
     )
     return ModelView(sections=sections, plots=plots)
 
@@ -533,6 +697,7 @@ class FittingParameterSection(Section):
 
 __all__ = [
     "Section",
+    "ParameterGroupTableSection",
     "ParameterGroupSection",
     "DynamicGroupSection",
     "CurveInputSection",

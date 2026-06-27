@@ -52,6 +52,10 @@ class CollapsibleBox(QtWidgets.QWidget):
 
     toggled = QtCore.Signal(bool)  # True = expanded, False = collapsed
 
+    def title(self) -> str:
+        """Return the header text of this collapsible section."""
+        return self._title
+
     def __init__(
         self,
         title: str,

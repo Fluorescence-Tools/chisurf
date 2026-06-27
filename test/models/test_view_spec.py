@@ -183,3 +183,78 @@ def test_value_section_loads_from_json():
     assert n_bins.kind == "int" and n_bins.attr == "n_bins"
     assert (n_bins.minimum, n_bins.maximum) == (1, 64)
     assert name.kind == "str" and name.placeholder == "untitled"
+
+
+def test_parameter_group_table_section_round_trips_from_json():
+    """PRD-44: ParameterGroupTableSection parses from JSON with column
+    subsetting and folds through flat_sections()."""
+    spec = vs.load_view_spec({
+        "sections": [
+            {
+                "type": "parameter_group_table",
+                "target": "convolve",
+                "collapsible": False,
+                "columns": ["name", "value", "fixed", "error"],
+            },
+            {
+                "type": "panel",
+                "title": "Outer",
+                "sections": [
+                    {
+                        "type": "parameter_group_table",
+                        "target": "lifetimes",
+                        "columns": ["name", "value"],
+                    },
+                ],
+            },
+        ],
+        "plots": [],
+    })
+    assert len(spec.sections) == 2
+
+    table = spec.sections[0]
+    assert isinstance(table, vs.ParameterGroupTableSection)
+    assert table.target == "convolve"
+    assert table.collapsible is False
+    assert table.columns == ("name", "value", "fixed", "error")
+
+    # nested inside a panel
+    panel = spec.sections[1]
+    assert isinstance(panel, vs.PanelSection)
+    nested = panel.sections[0]
+    assert isinstance(nested, vs.ParameterGroupTableSection)
+    assert nested.target == "lifetimes"
+    assert nested.columns == ("name", "value")
+
+    # flat_sections covers both top-level and nested
+    flat = spec.flat_sections()
+    table_ids = [id(s) for s in flat if isinstance(s, vs.ParameterGroupTableSection)]
+    assert len(table_ids) == 2
+    assert id(table) in table_ids
+    assert id(nested) in table_ids
+
+    # section_targets resolves correctly
+    assert "convolve" in spec.section_targets()
+    assert "lifetimes" in spec.section_targets()
+
+    # empty columns means all columns
+    spec2 = vs.load_view_spec({
+        "sections": [
+            {"type": "parameter_group_table", "target": "g", "columns": []},
+        ],
+    })
+    assert spec2.sections[0].columns == ()
+
+
+def test_parameter_group_table_section_hashable():
+    """ParameterGroupTableSection is frozen and hashable like the rest."""
+    s1 = vs.ParameterGroupTableSection(target="a", columns=("name", "value"))
+    s2 = vs.ParameterGroupTableSection(target="a", columns=("name", "value"))
+    s3 = vs.ParameterGroupTableSection(target="a", columns=("name",))
+    assert s1 == s2
+    assert s1 != s3
+    assert hash(s1) == hash(s2)
+
+    # works in sets
+    _ = {s1, s2, s3}  # no error
+    assert len({s1, s2, s3}) == 2

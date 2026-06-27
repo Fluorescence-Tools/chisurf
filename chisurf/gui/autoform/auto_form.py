@@ -247,6 +247,8 @@ class AutoForm(QtWidgets.QWidget):
             return PlotWidget(self.model, section)
         if isinstance(section, vs.DockAreaSection):
             return self._build_dock_area(section)
+        if isinstance(section, vs.ParameterGroupTableSection):
+            return self._build_parameter_group_table(section)
         if isinstance(section, vs.ParameterGroupSection):
             return self._build_parameter_group(section)
         if isinstance(section, vs.CustomSection):
@@ -264,8 +266,9 @@ class AutoForm(QtWidgets.QWidget):
         """Build a :class:`CollapsibleBox` from a section's fold attributes.
 
         Honors ``collapsible`` / ``collapsed`` / ``collapsed_when`` when present
-        (``PanelSection``, ``ParameterGroupSection``, ``DynamicGroupSection``),
-        falling back to an always-expanded box otherwise.
+        (``PanelSection``, ``ParameterGroupSection``,
+        ``ParameterGroupTableSection``, ``DynamicGroupSection``), falling back
+        to an always-expanded box otherwise.
         """
         from chisurf.gui.widgets.collapsible_box import CollapsibleBox
 
@@ -334,6 +337,46 @@ class AutoForm(QtWidgets.QWidget):
             pws.append(pw)
         _align_label_columns(pws)
         return container
+
+    def _build_parameter_group_table(self, section: vs.ParameterGroupTableSection):
+        group = self._resolve_group(section.target)
+        if group is None:
+            return None
+
+        if not list(getattr(group, "parameters_all", [])) and hasattr(group, "find_parameters"):
+            try:
+                group.find_parameters()
+            except Exception as exc:
+                logging.warning(
+                    f"AutoModelWidget: find_parameters failed for {section.target!r}: {exc}"
+                )
+
+        if section.exclude_source:
+            try:
+                excluded = {id(p) for p in getattr(group, section.exclude_source)()}
+            except Exception:
+                excluded = set()
+            params = [p for p in getattr(group, "parameters_all", []) if id(p) not in excluded]
+        else:
+            params = list(getattr(group, "parameters_all", []))
+
+        if not params:
+            return None
+
+        from chisurf.gui.autoform.sections.parameter_table import ParameterGroupTableWidget
+
+        table = ParameterGroupTableWidget(
+            params=params,
+            section=section,
+            on_change=self._dispatch_fit_update,
+        )
+
+        if not getattr(section, "collapsible", True):
+            return table
+
+        box = self._make_fold_box(section, fallback_title=getattr(group, "name", ""))
+        box.add_widget(table)
+        return box
 
     def _build_panel(self, section: vs.PanelSection):
         box = self._make_fold_box(section)

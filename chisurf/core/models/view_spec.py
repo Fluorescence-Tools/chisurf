@@ -17,6 +17,7 @@ from chisurf.core.dataspec import (  # noqa: F401
     ModelView,
     PanelSection,
     ParameterGroupSection,
+    ParameterGroupTableSection,
     ParameterGroupView,
     PlotSpec,
     Section,
@@ -30,6 +31,7 @@ from chisurf.core.dataspec import (  # noqa: F401
 __all__ = [
     "Section",
     "ParameterGroupSection",
+    "ParameterGroupTableSection",
     "DynamicGroupSection",
     "CurveInputSection",
     "PanelSection",
