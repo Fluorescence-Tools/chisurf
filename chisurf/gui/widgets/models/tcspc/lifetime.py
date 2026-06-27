@@ -221,12 +221,14 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         normalize_amplitude.setChecked(True)
         normalize_amplitude.setToolTip("Normalize amplitudes to unity.\nThe sum of all amplitudes equals one.")
         normalize_amplitude.clicked.connect(self.onNormalizeAmplitudes)
+        normalize_amplitude.setStyleSheet("QCheckBox { spacing: 2px; min-height: 14px; max-height: 16px; }")
         self.normalize_amplitude = normalize_amplitude
 
         absolute_amplitude = QtWidgets.QCheckBox("Abs.")
         absolute_amplitude.setChecked(True)
         absolute_amplitude.setToolTip("Take absolute value of amplitudes\nNo negative amplitudes")
         absolute_amplitude.clicked.connect(self.onAbsoluteAmplitudes)
+        absolute_amplitude.setStyleSheet("QCheckBox { spacing: 2px; min-height: 14px; max-height: 16px; }")
         self.absolute_amplitude = absolute_amplitude
 
         lh.addWidget(absolute_amplitude)

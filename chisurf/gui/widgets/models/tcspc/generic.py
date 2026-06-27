@@ -112,6 +112,8 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         self.layout.addLayout(layout)
 
         ly = QtWidgets.QHBoxLayout()
+        ly.setContentsMargins(0, 0, 0, 0)
+        ly.setSpacing(0)
         layout.addLayout(ly, 0, 0, 1, 2)
         ly.addWidget(QtWidgets.QLabel('Background file:'))
         self.lineEdit = QtWidgets.QLineEdit()

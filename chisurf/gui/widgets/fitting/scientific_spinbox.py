@@ -41,6 +41,7 @@ class ScientificDoubleSpinBox(QtWidgets.QAbstractSpinBox):
         bounds=None,
         min=None,
         max=None,
+        compactHeight=False,
     ):
         super().__init__(parent)
         self._is_int = bool(int)
@@ -68,8 +69,10 @@ class ScientificDoubleSpinBox(QtWidgets.QAbstractSpinBox):
         self._min = float(lo) if lo is not None else None
         self._max = float(hi) if hi is not None else None
 
+        self._compactHeight = bool(compactHeight)
+
         # Backwards-compat dict read by FittingParameterDetailPopup
-        self.opts: dict = {"decimals": decimals, "compactHeight": False}
+        self.opts: dict = {"decimals": decimals, "compactHeight": self._compactHeight}
 
         self._value = self._clamp(self._coerce(value))
         self._refresh_display()
@@ -116,6 +119,19 @@ class ScientificDoubleSpinBox(QtWidgets.QAbstractSpinBox):
         self._decimals = int(decimals)
         self.opts["decimals"] = int(decimals)
         self._refresh_display()
+
+    # ---------------------------------------------------------------- size hint
+    def sizeHint(self):
+        hint = super().sizeHint()
+        if self._compactHeight:
+            return QtCore.QSize(hint.width(), 20)
+        return hint
+
+    def minimumSizeHint(self):
+        hint = super().minimumSizeHint()
+        if self._compactHeight:
+            return QtCore.QSize(hint.width(), 20)
+        return hint
 
     # ---------------------------------------------------------- display helpers
     def _format(self, v: float) -> str:

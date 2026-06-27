@@ -43,8 +43,8 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         # Counter to temporarily suspend auto-hide on focus loss (e.g., while link menu is open)
         self._suspend_auto_hide = 0
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(6, 4, 6, 4)
+        layout.setSpacing(4)
 
         # Header
         self.lbl_title = QtWidgets.QLabel(f"{controller.fitting_parameter.name}")
@@ -669,27 +669,32 @@ class FittingParameterWidget(Controller):
 
         main_row = QtWidgets.QHBoxLayout()
         main_row.setContentsMargins(0, 0, 0, 0)
-        main_row.setSpacing(5)
+        main_row.setSpacing(2)
 
         self.label = QtWidgets.QLabel("name")
         self.label.setMinimumWidth(40)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_row.addWidget(self.label)
 
+        compact_cb_style = "QCheckBox { spacing: 0px; min-height: 14px; max-height: 16px; }"
+
         self.widget_fix = QtWidgets.QCheckBox()
         self.widget_fix.setToolTip("fix value")
         self.widget_fix.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.widget_fix.setStyleSheet(compact_cb_style)
         main_row.addWidget(self.widget_fix)
 
         self.widget_link = QtWidgets.QCheckBox()
         self.widget_link.setTristate(True)
         self.widget_link.setToolTip("link — right-click to link, uncheck to unlink")
         self.widget_link.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.widget_link.setStyleSheet(compact_cb_style)
         main_row.addWidget(self.widget_link)
 
         self.widget_bounds_on = QtWidgets.QCheckBox()
         self.widget_bounds_on.setToolTip("enable bounds")
         self.widget_bounds_on.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.widget_bounds_on.setStyleSheet(compact_cb_style)
         main_row.addWidget(self.widget_bounds_on)
 
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -785,14 +790,19 @@ class FittingParameterWidget(Controller):
             decimals=decimals,
             suffix=suffix,
             finite=False,
+            compactHeight=True,
         )
         self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         self.horizontalLayout.addWidget(self.widget_value)
 
-        self.widget_lower_bound = ScientificDoubleSpinBox(dec=True, decimals=decimals)
+        self.widget_lower_bound = ScientificDoubleSpinBox(
+            dec=True, decimals=decimals, compactHeight=True,
+        )
         self.horizontalLayout_2.addWidget(self.widget_lower_bound)
 
-        self.widget_upper_bound = ScientificDoubleSpinBox(dec=True, decimals=decimals)
+        self.widget_upper_bound = ScientificDoubleSpinBox(
+            dec=True, decimals=decimals, compactHeight=True,
+        )
         self.horizontalLayout_2.addWidget(self.widget_upper_bound)
 
         # Hide and disable widgets
@@ -1264,10 +1274,15 @@ class FittingParameterWidget(Controller):
                     except Exception:
                         pass
             else:
-                # Group-level behaviour: interpret the current checkbox
-                # state as a request to link/unlink the whole fit group for
-                # this parameter name.
-                state = int(self.widget_link.checkState())
+                # Group-level behaviour: link/unlink the whole fit group for
+                # this parameter name. The checkbox is tristate, so a user
+                # left-click cycles Unchecked -> PartiallyChecked -> Checked;
+                # reading the raw post-click state would land an unlinked
+                # parameter on PartiallyChecked (== 1), which ``link_fit_group``
+                # treats as a no-op. Derive the intent from the parameter's
+                # logical role instead: a master toggles the group off (0),
+                # anything else toggles it on (2 == establish the group link).
+                state = 0 if is_master else 2
                 source_group, source_local = self._locate_parameter(fp)
                 self._trace_operation(
                     "fit_group_link_toggle",
@@ -1376,6 +1391,10 @@ class FittingParameterWidget(Controller):
                 if fit_uid:
                     fc.update_fit(fit_uid=fit_uid)
                     fc.model_finalize(fit_uid=fit_uid)
+            # ``fc.update_fit`` publishes ``fit.updated``, which the main window
+            # turns into a single ``_refresh_fit_display`` (trace redraw) on the
+            # next subscriber poll. Do not redraw here as well — one refresh per
+            # value change is enough.
             # Fallback (UI-scoped): refresh visible output parameter widgets
             try:
                 root = self.window()
@@ -1741,7 +1760,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         if layout is None:
             layout = QtWidgets.QGridLayout()
         layout.setHorizontalSpacing(12)
-        layout.setVerticalSpacing(2)
+        layout.setVerticalSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)

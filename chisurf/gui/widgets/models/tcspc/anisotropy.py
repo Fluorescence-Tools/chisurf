@@ -32,230 +32,10 @@ REMOVE_BUTTON_STYLE = (
 
 class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
-    @staticmethod
-    def _shift_trace_to_reference(t: np.ndarray, y: np.ndarray, delta_t: float) -> np.ndarray:
-        """Return y shifted by delta_t on axis t using linear interpolation.
 
-        Positive delta_t advances the trace towards earlier times so that a
-        larger IRF timeshift can be aligned to a smaller reference shift.
-        """
-        if not np.isfinite(delta_t) or abs(delta_t) < 1e-15:
-            return y
-        return np.interp(t + float(delta_t), t, y, left=0.0, right=0.0)
 
-    @staticmethod
-    def _fit_timeshift(local_fit) -> float:
-        """Extract the IRF timeshift from a local fit's convolve.
 
-        Parameters
-        ----------
-        local_fit : cs.core.fitting.fit.Fit
-            The local fit object.
 
-        Returns
-        -------
-        float
-            The timeshift value, or 0.0 if unavailable.
-        """
-        try:
-            model = getattr(local_fit, 'model', None)
-            convolve = getattr(model, 'convolve', None)
-            if convolve is not None and hasattr(convolve, 'timeshift'):
-                return float(convolve.timeshift)
-        except Exception:
-            pass
-        return 0.0
-
-    @staticmethod
-    def _fit_bg_level(local_fit, default: float = 0.0) -> float:
-        """Extract the background level from a local fit's generic.
-
-        Parameters
-        ----------
-        local_fit : cs.core.fitting.fit.Fit
-            The local fit object.
-        default : float
-            Fallback value if background is unavailable.
-
-        Returns
-        -------
-        float
-            The background level.
-        """
-        bg = default
-        try:
-            model = getattr(local_fit, 'model', None)
-            generic = getattr(model, 'generic', None)
-            if generic is not None and hasattr(generic, 'background'):
-                bg = float(generic.background)
-        except Exception:
-            pass
-        return bg
-
-    def _extract_vv_vh_raw_for_diag(self):
-        """Return raw VV/VH channels and default correction controls.
-
-        Returns
-        -------
-        tuple
-            (t, vv_raw, vh_raw, defaults)
-            defaults has keys: g, l1, l2, bg_vv, bg_vh, shift_vv, shift_vh
-        """
-        fit = getattr(self, 'fit', None)
-        data = getattr(fit, 'data', None)
-        if data is None:
-            return None, None, None, None
-
-        defaults = {
-            'g': float(self.g),
-            'l1': float(self.l1),
-            'l2': float(self.l2),
-            'bg_vv': 0.0,
-            'bg_vh': 0.0,
-            'shift_vv': 0.0,
-            'shift_vh': 0.0,
-        }
-        pol = str(getattr(self, 'polarization_type', 'vm')).lower()
-
-        if pol in ('vv/vh', 'vvvh') and hasattr(data, '__len__') and hasattr(data, '__getitem__'):
-            try:
-                if len(data) >= 2:
-                    d_vv = data[0]
-                    d_vh = data[1]
-                    t_vv = np.asarray(getattr(d_vv, 'x', None), dtype=np.float64)
-                    t_vh = np.asarray(getattr(d_vh, 'x', None), dtype=np.float64)
-                    y_vv = np.asarray(getattr(d_vv, 'y', None), dtype=np.float64)
-                    y_vh = np.asarray(getattr(d_vh, 'y', None), dtype=np.float64)
-                    if y_vv.ndim > 1:
-                        y_vv = y_vv[0]
-                    if y_vh.ndim > 1:
-                        y_vh = y_vh[1] if y_vh.shape[0] > 1 else y_vh[0]
-                    n = min(t_vv.size, t_vh.size, y_vv.size, y_vh.size)
-                    if n >= 2:
-                        t = t_vv[:n]
-                        if np.max(np.abs(t - t_vh[:n])) > 1e-12:
-                            t = 0.5 * (t + t_vh[:n])
-                        bg_base = self._fit_bg_level(fit, 0.0)
-                        defaults['bg_vv'] = self._curve_bg_level(d_vv, bg_base)
-                        defaults['bg_vh'] = self._curve_bg_level(d_vh, bg_base)
-                        # Do not prefill relative VV/VH shift from fit: this is
-                        # intentionally user-controlled in diagnostics.
-                        defaults['shift_vv'] = 0.0
-                        defaults['shift_vh'] = 0.0
-                        return t, y_vv[:n], y_vh[:n], defaults
-            except Exception:
-                pass
-
-        group = getattr(fit, 'group', None)
-        if group is not None:
-            try:
-                if len(group) >= 2:
-                    vv_fit = None
-                    vh_fit = None
-                    for local_fit in group:
-                        local_model = getattr(local_fit, 'model', None)
-                        local_aniso = getattr(local_model, 'anisotropy', None)
-                        local_pol = str(getattr(local_aniso, 'polarization_type', '')).lower()
-                        if local_pol == 'vv' and vv_fit is None:
-                            vv_fit = local_fit
-                        elif local_pol == 'vh' and vh_fit is None:
-                            vh_fit = local_fit
-                    if vv_fit is None or vh_fit is None:
-                        vv_fit = group[0]
-                        vh_fit = group[1]
-
-                    d_vv = getattr(vv_fit, 'data', None)
-                    d_vh = getattr(vh_fit, 'data', None)
-                    if d_vv is not None and d_vh is not None:
-                        t_vv = np.asarray(getattr(d_vv, 'x', None), dtype=np.float64)
-                        t_vh = np.asarray(getattr(d_vh, 'x', None), dtype=np.float64)
-                        y_vv = np.asarray(getattr(d_vv, 'y', None), dtype=np.float64)
-                        y_vh = np.asarray(getattr(d_vh, 'y', None), dtype=np.float64)
-                        if y_vv.ndim > 1:
-                            y_vv = y_vv[0]
-                        if y_vh.ndim > 1:
-                            y_vh = y_vh[1] if y_vh.shape[0] > 1 else y_vh[0]
-                        n = min(t_vv.size, t_vh.size, y_vv.size, y_vh.size)
-                        if n >= 2:
-                            t = t_vv[:n]
-                            if np.max(np.abs(t - t_vh[:n])) > 1e-12:
-                                t = 0.5 * (t + t_vh[:n])
-                            defaults['bg_vv'] = self._curve_bg_level(d_vv, self._fit_bg_level(vv_fit, 0.0))
-                            defaults['bg_vh'] = self._curve_bg_level(d_vh, self._fit_bg_level(vh_fit, 0.0))
-                            # Do not prefill relative VV/VH shift from fit: this is
-                            # intentionally user-controlled in diagnostics.
-                            defaults['shift_vv'] = 0.0
-                            defaults['shift_vh'] = 0.0
-                            return t, y_vv[:n], y_vh[:n], defaults
-            except Exception:
-                pass
-
-        return None, None, None, None
-
-    def _extract_vv_vh_model_for_diag(self):
-        """Return modeled VV/VH channels for diagnostics.
-
-        Returns
-        -------
-        tuple
-            (t, vv_model, vh_model) or (None, None, None)
-        """
-        fit = getattr(self, 'fit', None)
-        data = getattr(fit, 'data', None)
-        if fit is None or data is None:
-            return None, None, None
-
-        pol = str(getattr(self, 'polarization_type', 'vm')).lower()
-
-        # Stacked dataset in one fit
-        if pol in ('vv/vh', 'vvvh'):
-            try:
-                y_model = np.asarray(getattr(getattr(fit, 'model', None), 'y', None), dtype=np.float64)
-                x = np.asarray(getattr(data, 'x', None), dtype=np.float64)
-                if y_model.ndim > 1 and y_model.shape[0] >= 2:
-                    n = min(x.size, y_model.shape[1])
-                    if n >= 2:
-                        return x[:n], y_model[0, :n], y_model[1, :n]
-            except Exception:
-                pass
-
-        # Paired VV/VH local fits in a group
-        group = getattr(fit, 'group', None)
-        if group is not None:
-            try:
-                if len(group) >= 2:
-                    vv_fit = None
-                    vh_fit = None
-                    for local_fit in group:
-                        local_model = getattr(local_fit, 'model', None)
-                        local_aniso = getattr(local_model, 'anisotropy', None)
-                        local_pol = str(getattr(local_aniso, 'polarization_type', '')).lower()
-                        if local_pol == 'vv' and vv_fit is None:
-                            vv_fit = local_fit
-                        elif local_pol == 'vh' and vh_fit is None:
-                            vh_fit = local_fit
-                    if vv_fit is None or vh_fit is None:
-                        vv_fit = group[0]
-                        vh_fit = group[1]
-
-                    x_vv = np.asarray(getattr(getattr(vv_fit, 'data', None), 'x', None), dtype=np.float64)
-                    x_vh = np.asarray(getattr(getattr(vh_fit, 'data', None), 'x', None), dtype=np.float64)
-                    y_vv = np.asarray(getattr(getattr(vv_fit, 'model', None), 'y', None), dtype=np.float64)
-                    y_vh = np.asarray(getattr(getattr(vh_fit, 'model', None), 'y', None), dtype=np.float64)
-                    if y_vv.ndim > 1:
-                        y_vv = y_vv[0]
-                    if y_vh.ndim > 1:
-                        y_vh = y_vh[1] if y_vh.shape[0] > 1 else y_vh[0]
-                    n = min(x_vv.size, x_vh.size, y_vv.size, y_vh.size)
-                    if n >= 2:
-                        t = x_vv[:n]
-                        if np.max(np.abs(t - x_vh[:n])) > 1e-12:
-                            t = 0.5 * (t + x_vh[:n])
-                        return t, y_vv[:n], y_vh[:n]
-            except Exception:
-                pass
-
-        return None, None, None
 
     def _compute_anisotropy_traces_from_channels(self, t, vv_m, vh_m):
         """Compute uncorrected and corrected anisotropy traces from VV/VH.
@@ -696,30 +476,6 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         self._intensity_diag_cache = diag
         return diag
 
-    @staticmethod
-    def _curve_bg_level(curve, default: float = 0.0) -> float:
-        """Extract the background level from a curve's metadata.
-
-        Parameters
-        ----------
-        curve : object
-            Data curve with an optional ``meta_data`` dict.
-        default : float
-            Fallback value.
-
-        Returns
-        -------
-        float
-            The background level.
-        """
-        bg = default
-        try:
-            meta = getattr(curve, 'meta_data', None)
-            if isinstance(meta, dict):
-                bg = float(meta.get('bg', meta.get('background', bg)))
-        except Exception:
-            pass
-        return bg
 
     def _extract_vv_vh_bg_corrected(self):
         """Extract VV and VH channel data with background correction.
@@ -1211,7 +967,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         param_grid = QtWidgets.QGridLayout()
         param_grid.setContentsMargins(0, 0, 0, 0)
         param_grid.setHorizontalSpacing(6)
-        param_grid.setVerticalSpacing(2)
+        param_grid.setVerticalSpacing(0)
 
         w_r0 = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
@@ -1242,7 +998,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         output_grid = QtWidgets.QGridLayout()
         output_grid.setContentsMargins(0, 0, 0, 0)
         output_grid.setHorizontalSpacing(6)
-        output_grid.setVerticalSpacing(2)
+        output_grid.setVerticalSpacing(0)
 
         self._rss_l = FittingParameter(
             name='r_ss_l',
