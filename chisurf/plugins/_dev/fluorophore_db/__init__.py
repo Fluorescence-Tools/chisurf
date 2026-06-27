@@ -1,11 +1,9 @@
-"""
-Fluorophore Database Plugin
+"""Fluorophore Database Plugin.
 
 This plugin manages a centralized database of fluorophore spectra and optical properties.
 """
 
-import os
-from chisurf.fio.mmcif.db import FluorophoreDatabase
+from .mfdb_adapter import DEFAULT_DATABASE_PATH, FluorophoreDatabase
 
 name = "Dev:Spectroscopy:Fluorophore DB"
 
@@ -16,13 +14,12 @@ def get_db():
     """Get the singleton instance of the FluorophoreDatabase."""
     global _db_instance
     if _db_instance is None:
-        db_path = os.path.join(os.path.dirname(__file__), "spectra.db")
-        _db_instance = FluorophoreDatabase(db_path)
+        _db_instance = FluorophoreDatabase(DEFAULT_DATABASE_PATH)
     return _db_instance
 
 class FluorophoreDBWidget:
-    # Placeholder for the curation UI widget
-    # This will be implemented in db_manager_widget.py
+    """Placeholder for the curation UI widget implemented in db_manager_widget."""
+
     pass
 
 if __name__ == "plugin":

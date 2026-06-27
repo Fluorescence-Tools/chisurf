@@ -67,35 +67,29 @@ class FluorophoreDBWidget(QtWidgets.QMainWindow):
         self.toolbar = QtWidgets.QToolBar()
         self.addToolBar(self.toolbar)
         
-        self.add_action = QtWidgets.QAction("Add New...", self)
+        self.add_action = QtWidgets.QAction("\U00002795 Add New...", self)
         self.add_action.triggered.connect(self.on_add_item)
         self.toolbar.addAction(self.add_action)
         
-        self.edit_action = QtWidgets.QAction("Edit Selected...", self)
+        self.edit_action = QtWidgets.QAction("\U0000270F\U0000FE0F Edit Selected...", self)
         self.edit_action.triggered.connect(self.on_edit_item)
         self.toolbar.addAction(self.edit_action)
         
-        self.delete_action = QtWidgets.QAction("Delete Selected", self)
+        self.delete_action = QtWidgets.QAction("\U0001F5D1\U0000FE0F Delete Selected", self)
         self.delete_action.triggered.connect(self.on_delete_item)
         self.toolbar.addAction(self.delete_action)
         
         self.toolbar.addSeparator()
         
-        self.mark_good_action = QtWidgets.QAction("Toggle Curated", self)
+        self.mark_good_action = QtWidgets.QAction("\U00002B50 Toggle Curated", self)
         self.mark_good_action.setToolTip("Toggle Curated status (Shortcut: Space)")
         self.mark_good_action.triggered.connect(lambda: self.toggle_selection_curated())
         self.toolbar.addAction(self.mark_good_action)
         
-        self.mark_quality_action = QtWidgets.QAction("Toggle Quality", self)
+        self.mark_quality_action = QtWidgets.QAction("\U00002705 Toggle Quality", self)
         self.mark_quality_action.setToolTip("Toggle Quality Good/Bad (Shortcut: Q)")
         self.mark_quality_action.triggered.connect(lambda: self.toggle_selection_quality())
         self.toolbar.addAction(self.mark_quality_action)
-        
-        self.toolbar.addSeparator()
-        
-        self.download_action = QtWidgets.QAction("Download...", self)
-        self.download_action.triggered.connect(self.on_open_download_manager)
-        self.toolbar.addAction(self.download_action)
         
         # Table
         self.table = QtWidgets.QTableWidget()
@@ -296,12 +290,6 @@ class FluorophoreDBWidget(QtWidgets.QMainWindow):
                 item = self.db.get_probe_by_id(probe_id)
                 if item:
                     self.db.update_probe(probe_id, quality_flag=not bool(item['quality_flag']))
-        self.refresh_table()
-
-    def on_open_download_manager(self):
-        from .download_manager import DownloadManagerDialog
-        dlg = DownloadManagerDialog(self.db, self)
-        dlg.exec_()
         self.refresh_table()
 
 class AddFluorophoreDialog(QtWidgets.QDialog):
