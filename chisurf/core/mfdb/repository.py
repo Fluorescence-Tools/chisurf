@@ -2792,11 +2792,37 @@ class MFDatabase(MFDBClientBase):
             for row in self.conn.execute("SELECT * FROM spectra WHERE deleted_at IS NULL ORDER BY id").fetchall()
         ]
         analysis_data = [dict(row) for row in self.get_analysis_data(analysis_id)]
+        struct_refs = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM struct_ref WHERE deleted_at IS NULL ORDER BY ref_id"
+            ).fetchall()
+        ]
+        struct_ref_seqs = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM struct_ref_seq WHERE deleted_at IS NULL ORDER BY align_id"
+            ).fetchall()
+        ]
+        struct_ref_seq_difs = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM struct_ref_seq_dif WHERE deleted_at IS NULL ORDER BY pdbx_ordinal, seq_num"
+            ).fetchall()
+        ]
 
         def _array_to_text(blob, dtype=np.float64):
             if not blob:
                 return ""
-            return " ".join(f"{float(v):.8g}" for v in np.frombuffer(blob, dtype=dtype))
+            try:
+                return " ".join(f"{float(v):.8g}" for v in np.frombuffer(blob, dtype=dtype))
+            except ValueError:
+                pass
+            try:
+                values = json.loads(blob)
+                return " ".join(f"{float(v):.8g}" for v in values)
+            except (json.JSONDecodeError, TypeError, ValueError):
+                return str(blob)
 
         def _write_content(writer):
             writer.start_block("chisurf_flr_export")
@@ -2927,6 +2953,85 @@ class MFDatabase(MFDBClientBase):
                     software_id=analysis.get("software_id"),
                     details=analysis.get("details"),
                 )
+
+            with writer.loop(
+                "_struct_ref",
+                [
+                    "ref_id",
+                    "entity_id",
+                    "db_name",
+                    "db_code",
+                    "pdbx_db_accession",
+                    "pdbx_db_isoform",
+                    "pdbx_seq_one_letter_code",
+                    "organism",
+                    "details",
+                ],
+            ) as loop:
+                for row in struct_refs:
+                    loop.write(
+                        ref_id=row.get("ref_id"),
+                        entity_id=row.get("entity_id"),
+                        db_name=row.get("db_name"),
+                        db_code=row.get("db_code"),
+                        pdbx_db_accession=row.get("pdbx_db_accession"),
+                        pdbx_db_isoform=row.get("pdbx_db_isoform"),
+                        pdbx_seq_one_letter_code=row.get("pdbx_seq_one_letter_code"),
+                        organism=row.get("organism"),
+                        details=row.get("details"),
+                    )
+
+            with writer.loop(
+                "_struct_ref_seq",
+                [
+                    "align_id",
+                    "ref_id",
+                    "seq_align_beg",
+                    "seq_align_end",
+                    "db_align_beg",
+                    "db_align_end",
+                    "pdbx_db_accession",
+                    "details",
+                ],
+            ) as loop:
+                for row in struct_ref_seqs:
+                    loop.write(
+                        align_id=row.get("align_id"),
+                        ref_id=row.get("ref_id"),
+                        seq_align_beg=row.get("seq_align_beg"),
+                        seq_align_end=row.get("seq_align_end"),
+                        db_align_beg=row.get("db_align_beg"),
+                        db_align_end=row.get("db_align_end"),
+                        pdbx_db_accession=row.get("pdbx_db_accession"),
+                        details=row.get("details"),
+                    )
+
+            with writer.loop(
+                "_struct_ref_seq_dif",
+                [
+                    "id",
+                    "align_id",
+                    "seq_num",
+                    "mon_id",
+                    "db_mon_id",
+                    "details",
+                    "pdbx_seq_db_name",
+                    "pdbx_seq_db_accession_code",
+                    "pdbx_ordinal",
+                ],
+            ) as loop:
+                for row in struct_ref_seq_difs:
+                    loop.write(
+                        id=row.get("id"),
+                        align_id=row.get("align_id"),
+                        seq_num=row.get("seq_num"),
+                        mon_id=row.get("mon_id"),
+                        db_mon_id=row.get("db_mon_id"),
+                        details=row.get("details"),
+                        pdbx_seq_db_name=row.get("pdbx_seq_db_name"),
+                        pdbx_seq_db_accession_code=row.get("pdbx_seq_db_accession_code"),
+                        pdbx_ordinal=row.get("pdbx_ordinal"),
+                    )
 
             sample_probe_by_probe = {
                 row.get("probe_id"): row.get("sample_probe_id")

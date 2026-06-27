@@ -117,6 +117,51 @@ CREATE_TABLES_SQL = [
         deleted_at TEXT,
         UNIQUE (entity_id, num)
     )""",
+    # ── External database cross-references (PDBx struct_ref family) ──
+    # Standard mmCIF mechanism for linking an entity to a source DB record
+    # (UNP = UniProt, PDB = wwPDB). See PRD-39.
+    """CREATE TABLE IF NOT EXISTS struct_ref (
+        ref_id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL REFERENCES entities(entity_id),
+        db_name TEXT NOT NULL,
+        db_code TEXT,
+        pdbx_db_accession TEXT,
+        pdbx_db_isoform TEXT,
+        pdbx_seq_one_letter_code TEXT,
+        organism TEXT,
+        details TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        deleted_at TEXT
+    )""",
+    """CREATE TABLE IF NOT EXISTS struct_ref_seq (
+        align_id TEXT PRIMARY KEY,
+        ref_id TEXT NOT NULL REFERENCES struct_ref(ref_id),
+        seq_align_beg INTEGER,
+        seq_align_end INTEGER,
+        db_align_beg INTEGER,
+        db_align_end INTEGER,
+        pdbx_db_accession TEXT,
+        details TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        deleted_at TEXT
+    )""",
+    """CREATE TABLE IF NOT EXISTS struct_ref_seq_dif (
+        id INTEGER PRIMARY KEY,
+        align_id TEXT NOT NULL REFERENCES struct_ref_seq(align_id),
+        seq_num INTEGER NOT NULL,
+        mon_id TEXT,
+        db_mon_id TEXT,
+        details TEXT DEFAULT 'ENGINEERED MUTATION',
+        pdbx_seq_db_name TEXT,
+        pdbx_seq_db_accession_code TEXT,
+        pdbx_ordinal INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        deleted_at TEXT,
+        UNIQUE (align_id, seq_num)
+    )""",
     """CREATE TABLE IF NOT EXISTS flr_sample (
         sample_id TEXT PRIMARY KEY,
         description TEXT,

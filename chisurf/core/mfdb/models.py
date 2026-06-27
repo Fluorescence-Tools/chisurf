@@ -138,14 +138,74 @@ class EntityDefinition:
         Valid values: protein, dna, rna, polymer, non-polymer, water,
         macromolecule, oligosaccharide, ligand, solvent.
     sequence : str
-        Amino-acid or nucleotide sequence.
+        Amino-acid or nucleotide sequence of the construct, **as measured**
+        (i.e. including engineered mutations such as cysteine substitutions).
     details : str, optional
         Additional entity description.
+    uniprot_accession : str, optional
+        UniProt accession of the source record, e.g. ``"P00720"``. Maps to a
+        ``struct_ref`` row with ``db_name="UNP"``. See PRD-39.
+    pdb_id : str, optional
+        PDB identifier of the corresponding structure, e.g. ``"2LZM"``. Maps to
+        a ``struct_ref`` row with ``db_name="PDB"``.
+    pdb_chain_id : str, optional
+        Author chain identifier within the PDB entry.
+    organism : str, optional
+        Source organism (typically populated from UniProt).
+    reference_sequence : str, optional
+        Canonical / wild-type sequence from the reference DB. The diff between
+        ``sequence`` and ``reference_sequence`` yields ``mutations``.
+    mutations : list of MutationDefinition, optional
+        Engineered mutations / sequence differences vs. ``reference_sequence``.
+        Maps to ``struct_ref_seq_dif`` rows.
     """
     name: str = ""
     entity_type: str = ""
     sequence: str = ""
     details: str = ""
+    # ── External references (PRD-39) ──
+    uniprot_accession: Optional[str] = None
+    pdb_id: Optional[str] = None
+    pdb_chain_id: Optional[str] = None
+    organism: Optional[str] = None
+    reference_sequence: Optional[str] = None
+    mutations: list["MutationDefinition"] = dataclasses.field(default_factory=list)
+
+
+# ── Mutation Definition ──────────────────────────────────────────────────────
+
+
+@dataclass
+class MutationDefinition:
+    """One difference between the construct and its reference DB sequence.
+
+    Maps 1:1 to a ``struct_ref_seq_dif`` row. The common case in smFRET is a
+    cysteine substitution introduced for dye labeling (e.g. ``S48C`` replaces
+    SER with CYS at residue 48). See PRD-39.
+
+    Parameters
+    ----------
+    seq_id : int
+        Residue number in the construct sequence numbering.
+    mut_comp_id : str
+        Construct residue (3-letter code), e.g. ``"CYS"`` (``mon_id``).
+    wt_comp_id : str, optional
+        Reference (wild-type) residue, e.g. ``"SER"`` (``db_mon_id``).
+    auth_name : str, optional
+        Author label for the mutation, e.g. ``"S48C"``.
+    kind : str, optional
+        Difference type, written to ``struct_ref_seq_dif.details``. One of
+        ``engineered_mutation`` (default), ``conflict``, ``insertion``,
+        ``deletion``, ``variant``.
+    rationale : str, optional
+        Why the mutation was made, e.g. ``"cysteine labeling"``.
+    """
+    seq_id: int = 0
+    mut_comp_id: str = ""
+    wt_comp_id: str = ""
+    auth_name: str = ""
+    kind: str = "engineered_mutation"
+    rationale: str = ""
 
 
 # ── Probe Definition for photophysical properties ────────────────────────────

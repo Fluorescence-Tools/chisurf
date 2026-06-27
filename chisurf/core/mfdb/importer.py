@@ -217,6 +217,12 @@ def _import_chisurf_extensions(db: MFDatabase, path: Path, summary: Dict[str, An
                 _import_probe_spectra(db, rows, summary)
             elif category_name == "_chisurf_analysis_data":
                 _import_analysis_data(db, rows, summary)
+            elif category_name == "_struct_ref":
+                _import_struct_ref(db, rows, summary)
+            elif category_name == "_struct_ref_seq":
+                _import_struct_ref_seq(db, rows, summary)
+            elif category_name == "_struct_ref_seq_dif":
+                _import_struct_ref_seq_dif(db, rows, summary)
 
 
 def _pdbx_category_rows(category: Any) -> List[Dict[str, Any]]:
@@ -285,6 +291,75 @@ def _import_analysis_data(db: MFDatabase, rows: List[Dict[str, Any]], summary: D
             x_unit=row.get("x_unit") or None,
             y_unit=row.get("y_unit") or None,
             details=row.get("details") or None,
+        )
+
+
+def _import_struct_ref(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+    """Import ``_struct_ref`` category rows from FLR CIF."""
+    for row in rows:
+        ref_id = row.get("ref_id")
+        entity_id = row.get("entity_id")
+        if not ref_id or not entity_id:
+            continue
+        db.conn.execute(
+            "INSERT OR IGNORE INTO struct_ref "
+            "(ref_id, entity_id, db_name, db_code, pdbx_db_accession, "
+            "pdbx_db_isoform, pdbx_seq_one_letter_code, organism, details) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (ref_id, entity_id,
+             row.get("db_name") or "",
+             row.get("db_code"),
+             row.get("pdbx_db_accession"),
+             row.get("pdbx_db_isoform"),
+             row.get("pdbx_seq_one_letter_code"),
+             row.get("organism"),
+             row.get("details")),
+        )
+        if entity_id not in summary.setdefault("entities", []):
+            summary["entities"].append(entity_id)
+
+
+def _import_struct_ref_seq(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+    """Import ``_struct_ref_seq`` category rows from FLR CIF."""
+    for row in rows:
+        align_id = row.get("align_id")
+        ref_id = row.get("ref_id")
+        if not align_id:
+            continue
+        db.conn.execute(
+            "INSERT OR IGNORE INTO struct_ref_seq "
+            "(align_id, ref_id, seq_align_beg, seq_align_end, "
+            "db_align_beg, db_align_end, pdbx_db_accession, details) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (align_id, ref_id,
+             _int_or_none(row.get("seq_align_beg")),
+             _int_or_none(row.get("seq_align_end")),
+             _int_or_none(row.get("db_align_beg")),
+             _int_or_none(row.get("db_align_end")),
+             row.get("pdbx_db_accession"),
+             row.get("details")),
+        )
+
+
+def _import_struct_ref_seq_dif(db: MFDatabase, rows: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+    """Import ``_struct_ref_seq_dif`` category rows from FLR CIF."""
+    for row in rows:
+        align_id = row.get("align_id")
+        seq_num = _int_or_none(row.get("seq_num"))
+        if not align_id or seq_num is None:
+            continue
+        db.conn.execute(
+            "INSERT OR IGNORE INTO struct_ref_seq_dif "
+            "(align_id, seq_num, mon_id, db_mon_id, details, "
+            "pdbx_seq_db_name, pdbx_seq_db_accession_code, pdbx_ordinal) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (align_id, seq_num,
+             row.get("mon_id"),
+             row.get("db_mon_id"),
+             row.get("details"),
+             row.get("pdbx_seq_db_name"),
+             row.get("pdbx_seq_db_accession_code"),
+             _int_or_none(row.get("pdbx_ordinal"))),
         )
 
 

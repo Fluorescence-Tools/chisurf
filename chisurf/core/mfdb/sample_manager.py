@@ -1343,6 +1343,9 @@ def _full_description_from_sample_graph(
         }
         if sequence:
             entity_info["sequence"] = sequence
+        # External references + mutation provenance (PRD-39)
+        entity_info["external_refs"] = entity.get("external_refs", [])
+        entity_info["mutations"] = entity.get("mutations", [])
         entities.append(entity_info)
     if entities:
         result["entities"] = entities
@@ -1733,6 +1736,44 @@ def validate_sample_for_export(db: MFDatabase, sample_id: str) -> list[str]:
 
     if not desc.get("fret_pairs"):
         warnings.append("Recommended: no FRET pairs defined")
+
+    # Probe <-> mutation consistency (PRD-39): a labeled-cysteine probe position
+    # (mutation_flag="yes") should have a matching struct_ref_seq_dif record on
+    # its entity at the same residue.
+    mutations_by_entity: dict[str, dict[int, str]] = {}
+    for entity in desc.get("entities", []):
+        eid = entity.get("entity_id")
+        if eid is None:
+            continue
+        mutations_by_entity[eid] = {
+            m["seq_id"]: m.get("mut_comp_id")
+            for m in entity.get("mutations", [])
+            if m.get("seq_id") is not None
+        }
+
+    for probe in probes:
+        position = probe.get("position") or {}
+        if position.get("mutation_flag") != "yes":
+            continue
+        eid = position.get("entity_id")
+        seq_id = position.get("seq_id")
+        label = position.get("auth_name") or probe.get("probe_name") or "probe"
+        if seq_id is None:
+            continue
+        entity_muts = mutations_by_entity.get(eid, {})
+        if seq_id not in entity_muts:
+            warnings.append(
+                f"Probe '{label}' sits on a mutated residue (seq_id={seq_id}) with "
+                f"no matching mutation record on its entity"
+            )
+            continue
+        recorded = entity_muts[seq_id]
+        probe_comp = position.get("comp_id")
+        if recorded and probe_comp and recorded != probe_comp:
+            warnings.append(
+                f"Probe '{label}' residue {probe_comp} disagrees with the "
+                f"recorded mutation {recorded} at seq_id={seq_id}"
+            )
 
     return warnings
 

@@ -16,9 +16,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
+from chisurf.core.mfdb.external_refs import diff_sequences
 from chisurf.core.mfdb.models import (
     EntityDefinition,
     FretPairDefinition,
+    MutationDefinition,
     ProbeDefinition,
     SampleDefinition,
 )
@@ -39,6 +41,9 @@ from .models import (
     OpticalProperty,
     Spectrum,
     ChemDescriptor,
+    StructRef,
+    StructRefSeq,
+    StructRefSeqDif,
 )
 
 logger = logging.getLogger(__name__)
@@ -157,6 +162,142 @@ def _apply_probe_descriptors(
         probe_row.reactive_probe_chem_descriptor_id = reactive_descriptor_id
 
 
+def _persist_external_refs(session: Session, entity_def: EntityDefinition) -> None:
+    """Persist UniProt/PDB cross-references and mutations for one entity (PRD-39).
+
+    Writes ``struct_ref`` rows (UNP for ``uniprot_accession``, PDB for
+    ``pdb_id``), a ``struct_ref_seq`` alignment for the UniProt reference, and a
+    ``struct_ref_seq_dif`` row per :class:`MutationDefinition`. No-op when the
+    entity carries no external references or mutations, so existing samples are
+    unaffected.
+    """
+    entity_id = entity_def.name
+    has_unp = bool(entity_def.uniprot_accession)
+    mutations: list[MutationDefinition] = list(entity_def.mutations or [])
+    if not mutations and entity_def.reference_sequence and entity_def.sequence:
+        mutations = diff_sequences(
+            entity_def.sequence,
+            entity_def.reference_sequence,
+        )
+    if not has_unp and not entity_def.pdb_id and not mutations:
+        return
+
+    if entity_def.pdb_id:
+        session.add(
+            StructRef(
+                ref_id=f"{entity_id}_PDB",
+                entity_id=entity_id,
+                db_name="PDB",
+                pdbx_db_accession=entity_def.pdb_id,
+                details=entity_def.pdb_chain_id or None,
+            )
+        )
+
+    # The UniProt reference anchors the sequence alignment + mutation diffs.
+    unp_ref_id = f"{entity_id}_UNP"
+    session.add(
+        StructRef(
+            ref_id=unp_ref_id,
+            entity_id=entity_id,
+            db_name="UNP",
+            pdbx_db_accession=entity_def.uniprot_accession,
+            pdbx_seq_one_letter_code=entity_def.reference_sequence or None,
+            organism=entity_def.organism or None,
+        )
+    )
+
+    construct_len = len(entity_def.sequence or "") or None
+    ref_len = len(entity_def.reference_sequence) if entity_def.reference_sequence else construct_len
+    align_id = f"{entity_id}_UNP_aln"
+    session.add(
+        StructRefSeq(
+            align_id=align_id,
+            ref_id=unp_ref_id,
+            seq_align_beg=1 if construct_len else None,
+            seq_align_end=construct_len,
+            db_align_beg=1 if ref_len else None,
+            db_align_end=ref_len,
+            pdbx_db_accession=entity_def.uniprot_accession,
+        )
+    )
+
+    for ordinal, mut in enumerate(mutations, start=1):
+        session.add(
+            StructRefSeqDif(
+                align_id=align_id,
+                seq_num=mut.seq_id,
+                mon_id=mut.mut_comp_id or None,
+                db_mon_id=mut.wt_comp_id or None,
+                details=(mut.kind or "engineered_mutation")
+                .replace("_", " ")
+                .upper(),
+                pdbx_seq_db_name="UNP",
+                pdbx_seq_db_accession_code=entity_def.uniprot_accession,
+                pdbx_ordinal=ordinal,
+            )
+        )
+
+
+def _attach_external_refs(
+    session: Session, entity_id: str, entity_data: dict[str, Any]
+) -> None:
+    """Populate ``external_refs`` and ``mutations`` on an entity dict (PRD-39)."""
+    refs = (
+        session.execute(
+            select(StructRef).where(
+                StructRef.entity_id == entity_id,
+                StructRef.deleted_at.is_(None),
+            )
+        )
+        .scalars()
+        .all()
+    )
+    external_refs = [
+        {
+            "db_name": r.db_name,
+            "accession": r.pdbx_db_accession,
+            "db_code": r.db_code,
+            "organism": r.organism,
+        }
+        for r in refs
+    ]
+    entity_data["external_refs"] = external_refs
+
+    mutations: list[dict[str, Any]] = []
+    align_ids = []
+    if refs:
+        align_ids = [
+            a
+            for (a,) in session.execute(
+                select(StructRefSeq.align_id).where(
+                    StructRefSeq.ref_id.in_([r.ref_id for r in refs]),
+                    StructRefSeq.deleted_at.is_(None),
+                )
+            ).all()
+        ]
+    if align_ids:
+        difs = (
+            session.execute(
+                select(StructRefSeqDif).where(
+                    StructRefSeqDif.align_id.in_(align_ids),
+                    StructRefSeqDif.deleted_at.is_(None),
+                )
+            )
+            .scalars()
+            .all()
+        )
+        mutations = [
+            {
+                "seq_id": d.seq_num,
+                "mut_comp_id": d.mon_id,
+                "wt_comp_id": d.db_mon_id,
+                "details": d.details,
+            }
+            for d in sorted(difs, key=lambda d: (d.pdbx_ordinal or 0, d.seq_num or 0))
+        ]
+    entity_data["mutations"] = mutations
+
+
 def create_sample_graph(
     db: MFDatabase,
     definition: SampleDefinition,
@@ -266,6 +407,12 @@ def _create_sample_graph_in_session(
                     mon_id=str(residue),
                 )
                 session.add(seq_record)
+
+    session.flush()
+
+    # Create external references (struct_ref family) and mutations (PRD-39)
+    for entity_def in definition.entities:
+        _persist_external_refs(session, entity_def)
 
     session.flush()
 
@@ -535,6 +682,7 @@ def _get_sample_graph_in_session(
                         for seq in entity.sequences
                     ],
                 }
+                _attach_external_refs(session, entity.entity_id, entity_data)
                 result["entities"].append(entity_data)
 
     # Get probes for this sample
