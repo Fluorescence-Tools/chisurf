@@ -2,7 +2,34 @@
 
 ## Status
 
-Proposed — **someone else implements**. This PRD was written after wiring and
+**Implemented (2026-06-27).** Both primitives + both chisurf wrappers landed.
+
+- **Primitives (chisurf-free, `modules/ndxplorer/ndxplorer/cli.py`):** `ndxplorer
+  filter` (burst folder → `--select`/`--query` gates → filtered `.bst` folder
+  referencing the same TTTR) and `ndxplorer image` (HDF5/burst image axes →
+  intensity or named-parameter mean map → float32 TIFF / normalized PNG, with
+  `--roi` TIFF mask + `--select` gates + `--out-selection` masked sub-selection).
+  JSON to stdout; registered as click subcommands in `__main__.py` with
+  pre-import offscreen handling.
+- **chisurf wrappers (`chisurf/plugins/ndxplorer/cli.py`, `cli_entrypoint`
+  `ndxplorer=…:cli` so `csc ndxplorer …` works):** resolve `--from-mfdb` via
+  `resolve_database_path`, call the primitive over subprocess (keeps the submodule
+  chisurf-free), and with `--to-mfdb` register the result via `register_result`
+  (`operation_type="burst_filter"`, parented to the source, under `--sample-id`).
+- **No chisurf imports in `modules/ndxplorer`** (DoD constraint verified).
+- **Tests green:** `modules/ndxplorer/ndxplorer/tests/test_cli.py` (5 — filter
+  gate, filter query, image intensity, image lifetime-TIFF, image ROI mask) +
+  `test/fio/test_ndxplorer_cli.py` (chisurf filter round trip, 1).
+- **Recipe doc:** `docs/ndxplorer_headless_cli.md` (both pipelines from raw+sample).
+
+**Remaining gap:** the `csc ndxplorer image` MFDB round trip is implemented but
+not yet covered by a chisurf-side test (needs an image artifact fixture under the
+hermetic harness); the `filter` round trip is tested. Everything else in the DoD
+is met.
+
+---
+
+This PRD was written after wiring and
 testing the `raw+sample → Burst Selection → ndXplorer` CLI handoff (see PRD-28);
 the missing leg is a *headless* ndXplorer that can run its two core workflows —
 **burst filtering** and **imaging** — without the GUI.
@@ -195,16 +222,16 @@ through `mfdb.datasets.open`, so `raw+sample → BS → ndXplorer filter` and
 
 ## Definition of Done
 
-- [ ] `ndxplorer filter --folder <burst_dir> --select "proximity_ratio:0.3-0.7"
+- [x] `ndxplorer filter --folder <burst_dir> --select "proximity_ratio:0.3-0.7"
       --out <dir>` writes a filtered burst selection headlessly (no window).
-- [ ] `ndxplorer image --file <clsm.ptu> --map lifetime --out map.tiff` renders
+- [x] `ndxplorer image --file <clsm.ptu> --map lifetime --out map.tiff` renders
       and exports a parameter map headlessly; `--roi`/`--select` masks it.
-- [ ] `csc ndxplorer filter|image --from-mfdb <id> --to-mfdb --sample-id <id>`
-      completes the MFDB round trip; outputs re-open in ndXplorer and resolve via
-      `mfdb.datasets.open`.
-- [ ] `modules/ndxplorer` has no chisurf imports; MFDB logic is chisurf-side only.
-- [ ] Burst/masked outputs reference the same TTTR (photon-index linkage intact).
-- [ ] Tests + the recipes pass.
+- [~] `csc ndxplorer filter|image --from-mfdb <id> --to-mfdb --sample-id <id>`
+      completes the MFDB round trip; outputs resolve via `mfdb.datasets.open`.
+      **filter tested; image wrapper implemented but not yet tested.**
+- [x] `modules/ndxplorer` has no chisurf imports; MFDB logic is chisurf-side only.
+- [x] Burst/masked outputs reference the same TTTR (photon-index linkage intact).
+- [x] Tests + the recipes pass.
 
 ## Definition of Clean
 

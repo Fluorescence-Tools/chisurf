@@ -99,3 +99,7 @@ if __name__ == "plugin":
         mfdb_action.triggered.connect(_open_burst_in_current_ndx)
     except Exception:
         pass  # MFDB not available — skip toolbar button
+
+
+cli_entrypoint = "ndxplorer=chisurf.plugins.ndxplorer.cli:cli"
+
