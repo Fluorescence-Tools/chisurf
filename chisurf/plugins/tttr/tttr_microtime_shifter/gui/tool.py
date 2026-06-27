@@ -10,6 +10,7 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.gui.widgets.fitting.scientific_spinbox import ScientificDoubleSpinBox
 from chisurf.gui.widgets.tools import ChisurfDockTool
 from chisurf.gui.widgets.tools import PathDropListWidget as DropListWidget
 
@@ -91,11 +92,11 @@ class MicrotimeShifterTool(ChisurfDockTool):
         self.controls_layout.addWidget(controls_header)
 
         # Trigger / Auto-align controls (instantiated here, added to toolbar)
-        self.trigger_level_spin = pg.SpinBox(value=0, int=True, step=10, bounds=[0, 1000000])
+        self.trigger_level_spin = ScientificDoubleSpinBox(value=0, int=True, step=10, bounds=[0, 1000000])
         self.trigger_level_spin.setMinimumWidth(80)
         self.trigger_level_spin.setMaximumWidth(120)
 
-        self.trigger_pos_spin = pg.SpinBox(value=0, int=True, step=1, bounds=[0, 100000])
+        self.trigger_pos_spin = ScientificDoubleSpinBox(value=0, int=True, step=1, bounds=[0, 100000])
         self.trigger_pos_spin.setMinimumWidth(60)
         self.trigger_pos_spin.setMaximumWidth(100)
 
@@ -527,7 +528,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
             if channel is None
             else self._channel_shifts.get(channel, 0)
         )
-        spin = pg.SpinBox(
+        spin = ScientificDoubleSpinBox(
             value=value,
             int=True,
             step=1,
@@ -554,7 +555,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
 
         self.shifts_layout.addWidget(row)
 
-    def _make_global_fn(self, spin: pg.SpinBox):
+    def _make_global_fn(self, spin: ScientificDoubleSpinBox):
         def fn() -> None:
             try:
                 self._global_shift = int(spin.value())
@@ -563,7 +564,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
             self._update_plot()
         return fn
 
-    def _make_chan_fn(self, ch: int, spin: pg.SpinBox):
+    def _make_chan_fn(self, ch: int, spin: ScientificDoubleSpinBox):
         def fn() -> None:
             try:
                 self._channel_shifts[ch] = int(spin.value())
@@ -572,7 +573,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
             self._update_plot()
         return fn
 
-    def _make_global_reset_fn(self, spin: pg.SpinBox):
+    def _make_global_reset_fn(self, spin: ScientificDoubleSpinBox):
         def fn() -> None:
             self._global_shift = 0
             spin.blockSignals(True)
@@ -581,7 +582,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
             self._update_plot()
         return fn
 
-    def _make_chan_reset_fn(self, ch: int, spin: pg.SpinBox):
+    def _make_chan_reset_fn(self, ch: int, spin: ScientificDoubleSpinBox):
         def fn() -> None:
             self._channel_shifts[ch] = 0
             spin.blockSignals(True)

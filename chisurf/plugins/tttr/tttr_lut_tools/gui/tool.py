@@ -87,6 +87,21 @@ class TTRLutToolsWidget(QtWidgets.QMainWindow):
             cs.logging.warning(f"Failed to restore TTTR LUT tools dock layout: {exc}")
 
 
+class TTTRLUTSettingsPanel(QtWidgets.QWidget):
+    """Embeddable TTTR LUT Tools panel for the unified settings dialog."""
+
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        """Create the panel with compute and assign tabs."""
+        super().__init__(parent)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        tabs = QtWidgets.QTabWidget(self)
+        tabs.addTab(TACLinearizationPanel(), "Compute Microtime LUT")
+        tabs.addTab(TTTRSettingsPanel(), "Create LUT Settings")
+        layout.addWidget(tabs)
+
+
 if __name__ == "plugin":
     window = TTRLutToolsWidget()
     window.show()
