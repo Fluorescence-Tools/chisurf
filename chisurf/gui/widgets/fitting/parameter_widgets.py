@@ -672,7 +672,7 @@ class FittingParameterWidget(Controller):
         main_row.setSpacing(5)
 
         self.label = QtWidgets.QLabel("name")
-        self.label.setMinimumWidth(60)
+        self.label.setMinimumWidth(50)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         main_row.addWidget(self.label)
 
@@ -1740,7 +1740,8 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         self.setTitle(parameter_group.name)
         if layout is None:
             layout = QtWidgets.QGridLayout()
-        layout.setSpacing(0)
+        layout.setHorizontalSpacing(10)
+        layout.setVerticalSpacing(2)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
