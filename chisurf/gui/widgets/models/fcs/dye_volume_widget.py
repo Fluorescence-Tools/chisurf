@@ -505,15 +505,15 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
         widgets = [
             fitting_widgets.make_fitting_parameter_widget(self._N),
             fitting_widgets.make_fitting_parameter_widget(self._s),
-            fitting_widgets.make_fitting_parameter_widget(self._w0, suffix=" nm"),
+            fitting_widgets.make_fitting_parameter_widget(self._w0, label_text="w<sub>0</sub>", suffix=" nm"),
             fitting_widgets.make_fitting_parameter_widget(self._b),
             fitting_widgets.make_fitting_parameter_widget(self._temp, suffix=" °C"),
-            fitting_widgets.make_fitting_parameter_widget(self._ba),
-            fitting_widgets.make_fitting_parameter_widget(self._bt),
+            fitting_widgets.make_fitting_parameter_widget(self._ba, label_text="b<sub>a</sub>"),
+            fitting_widgets.make_fitting_parameter_widget(self._bt, label_text="b<sub>t</sub>"),
             fitting_widgets.make_fitting_parameter_widget(self._D, suffix=" µm²/s"),
-            fitting_widgets.make_fitting_parameter_widget(self._tauD, suffix=" ms"),
+            fitting_widgets.make_fitting_parameter_widget(self._tauD, label_text="&tau;<sub>D</sub>", suffix=" ms"),
             fitting_widgets.make_fitting_parameter_widget(self._cpm),
-            fitting_widgets.make_fitting_parameter_widget(self._cpm_all),
+            fitting_widgets.make_fitting_parameter_widget(self._cpm_all, label_text="cpm<sub>all</sub>"),
         ]
         for w in widgets:
             params_layout.addWidget(w)

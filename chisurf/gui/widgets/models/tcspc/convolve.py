@@ -83,7 +83,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
         layout = QtWidgets.QHBoxLayout()
         cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._dt, layout=layout)
-        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._n0, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._n0, label_text='n<sub>0</sub>', layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()

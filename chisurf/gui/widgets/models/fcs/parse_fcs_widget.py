@@ -262,7 +262,7 @@ class ParseFCSWidget(ParseModelWidget):
 
         try:
             cpm_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm, suffix=" kHz")
-            cpm_all_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm_all, suffix=" kHz")
+            cpm_all_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm_all, label_text="cpm<sub>all</sub>", suffix=" kHz")
             S_widget = fitting_widgets.make_fitting_parameter_widget(self._S, suffix=" kHz")
             B_widget = fitting_widgets.make_fitting_parameter_widget(self._B, suffix=" kHz")
 
