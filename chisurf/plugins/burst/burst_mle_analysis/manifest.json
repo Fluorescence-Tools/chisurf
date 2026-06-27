@@ -1,0 +1,33 @@
+{
+  "id": "burst_mle_analysis",
+  "version": "1.1.0",
+  "display_name": "Spectroscopy:Single-Molecule:Burst MLE",
+  "description": "Maximum likelihood lifetime analysis for single-molecule burst data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "state_namespace": "burst_mle_analysis",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_mle_analysis.wizard:MLELifetimeAnalysisWizard",
+    "services": "chisurf.plugins.burst.burst_mle_analysis.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "burst_mle.workflow.prepare",
+      "summary": "Resolve MLE burst files and channel definitions from workflow context.",
+      "long_running": false
+    },
+    {
+      "name": "burst_mle.contract.describe",
+      "summary": "Return the Burst MLE workflow contract.",
+      "long_running": false
+    }
+  ],
+  "menu_hidden": true
+}

@@ -7,7 +7,6 @@ from chisurf.core.fluorescence.burst.bocpd import (
     bocpd_joint_poisson_optimized,
     extract_bursts as bocpd_extract_bursts,
     bocpd_burst_detection,
-    create_burst_mask as bocpd_create_burst_mask,
     bin_photons_multi as bocpd_bin_photons_multi,
     extract_bursts_multi as bocpd_extract_bursts_multi,
     bocpd_burst_detection_multi
@@ -23,8 +22,7 @@ from chisurf.core.fluorescence.burst.kalman import (
     bin_photons as kalman_bin_photons,
     bin_photons_multi as kalman_bin_photons_multi,
     kalman_burst_detection,
-    kalman_burst_detection_multi,
-    create_burst_mask as kalman_create_burst_mask
+    kalman_burst_detection_multi
 )
 # Import with module prefix to avoid name conflict
 import chisurf.core.fluorescence.burst.kalman
@@ -37,6 +35,9 @@ from chisurf.core.fluorescence.burst.count_rate import count_rate_filter
 
 # Burst module
 from chisurf.core.fluorescence.burst.burst import burst_filter
+
+# CUSUM module
+from chisurf.core.fluorescence.burst.cusum import cusum_filter
 
 # Background estimation module
 from chisurf.core.fluorescence.burst.background import (

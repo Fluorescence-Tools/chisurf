@@ -11,6 +11,120 @@ import numpy as np
 import tttrlib
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Optional, Union, Any
+from numba import njit
+
+
+@njit(cache=True, inline='always')
+def _inv2x2(A: np.ndarray) -> np.ndarray:
+    """Compute the analytic inverse of a 2x2 matrix.
+
+    Parameters
+    ----------
+    A : np.ndarray
+        2×2 matrix to invert.
+
+    Returns
+    -------
+    np.ndarray
+        Inverse of A.
+
+    Notes
+    -----
+    Uses the analytic formula: inv([[a,b],[c,d]]) = [[d,-b],[-c,a]] / (ad - bc)
+    Avoids LAPACK overhead for the common 2-channel case.
+    """
+    det = A[0, 0] * A[1, 1] - A[0, 1] * A[1, 0]
+    if det == 0.0:
+        det = 1e-300
+    inv = np.empty((2, 2))
+    inv[0, 0] =  A[1, 1] / det
+    inv[0, 1] = -A[0, 1] / det
+    inv[1, 0] = -A[1, 0] / det
+    inv[1, 1] =  A[0, 0] / det
+    return inv
+
+
+@njit(cache=True)
+def _kalman_filter_loop(
+    y: np.ndarray,
+    x0: np.ndarray,
+    P0: np.ndarray,
+    Q: np.ndarray,
+    dt: float,
+    r_scale: float
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """JIT-compiled Kalman filter recursion assuming A = H = I (identity).
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Observed count rates, shape (T, dim).
+    x0 : np.ndarray
+        Initial state estimate, shape (dim,).
+    P0 : np.ndarray
+        Initial state covariance, shape (dim, dim).
+    Q : np.ndarray
+        Process noise covariance, shape (dim, dim).
+    dt : float
+        Bin width in seconds.
+    r_scale : float
+        Measurement noise scaling parameter.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
+        (x_filt, P_filt, D_mahal) — filtered states (T, dim),
+        filtered covariances (T, dim, dim), Mahalanobis distances (T,).
+    """
+    T, dim = y.shape
+    x_filt = np.zeros((T, dim))
+    P_filt = np.zeros((T, dim, dim))
+    D_mahal = np.zeros(T)
+
+    x = x0.copy()
+    P = P0.copy()
+    I = np.eye(dim)
+    use_analytic = (dim == 2)
+
+    for t in range(T):
+        # Predict: A = I, so x_pred = x, P_pred = P + Q
+        P_pred = P + Q
+
+        # Build diagonal measurement noise R from Poisson statistics
+        R = np.zeros((dim, dim))
+        for i in range(dim):
+            rate_i = x[i] if x[i] > 1e-12 else 1e-12
+            R[i, i] = r_scale * (rate_i / dt)
+
+        v = y[t] - x           # innovation
+        S = P_pred + R          # innovation covariance
+
+        # Kalman gain K = P_pred @ S^{-1} (H = I, so K = P_pred S^{-1})
+        if use_analytic:
+            S_inv = _inv2x2(S)
+        else:
+            S_inv = np.linalg.inv(S)
+
+        K = P_pred @ S_inv
+
+        # Update
+        x = x + K @ v
+        P = (I - K) @ P_pred
+
+        x_filt[t] = x
+        P_filt[t] = P
+
+        # Mahalanobis distance: sqrt(v^T S^{-1} v)
+        Sv = S_inv @ v
+        val = 0.0
+        for i in range(dim):
+            val += v[i] * Sv[i]
+        if val < 0.0:
+            val = 0.0
+        D_mahal[t] = np.sqrt(val)
+
+    return x_filt, P_filt, D_mahal
+
 
 
 @dataclass
@@ -94,34 +208,11 @@ class KalmanBurstDetector:
         """
         counts = np.asarray(counts, dtype=float)
         assert counts.ndim == 2 and counts.shape[1] == self.dim, "counts must be of shape (T, dim)"
-        T = counts.shape[0]
         y = counts / self.dt
 
-        x = self.x0.copy()
-        P = self.P0.copy()
-
-        x_filt = np.zeros((T, self.dim))
-        P_filt = np.zeros((T, self.dim, self.dim))
-        D_mahal = np.zeros(T)
-
-        I = np.eye(self.dim)
-
-        for t in range(T):
-            x_pred = self._A @ x
-            P_pred = self._A @ P @ self._A.T + self._Q
-            R = self._adaptive_R(y[t], x_pred)
-            v = y[t] - self._H @ x_pred
-            S = self._H @ P_pred @ self._H.T + R
-            try:
-                S_inv = np.linalg.inv(S)
-            except np.linalg.LinAlgError:
-                S_inv = np.linalg.pinv(S)
-            K = P_pred @ self._H.T @ S_inv
-            x = x_pred + K @ v
-            P = (I - K @ self._H) @ P_pred
-            x_filt[t] = x
-            P_filt[t] = P
-            D_mahal[t] = float(np.sqrt(v.T @ S_inv @ v))
+        x_filt, P_filt, D_mahal = _kalman_filter_loop(
+            y, self.x0, self.P0, self._Q, self.dt, self.r_scale
+        )
 
         bursts = self._extract_bursts(D_mahal)
 
@@ -141,21 +232,28 @@ class KalmanBurstDetector:
             List of detected burst intervals.
         """
         over = D > self.z_thresh
+        if not np.any(over):
+            return []
+
+        # Find start and end indices of contiguous True regions
+        padded = np.empty(over.size + 2, dtype=np.bool_)
+        padded[0] = False
+        padded[1:-1] = over
+        padded[-1] = False
+        
+        diff = np.diff(padded.astype(np.int8))
+        starts = np.where(diff == 1)[0]
+        ends = np.where(diff == -1)[0] - 1  # inclusive
+        
+        lengths = ends - starts + 1
+        valid = lengths >= self.min_len
+        starts = starts[valid]
+        ends = ends[valid]
+        
         bursts: List[Burst] = []
-        t = 0
-        T = over.size
-        while t < T:
-            if over[t]:
-                start = t
-                peak = D[t]
-                while t + 1 < T and over[t + 1]:
-                    t += 1
-                    if D[t] > peak:
-                        peak = D[t]
-                end = t
-                if end - start + 1 >= self.min_len:
-                    bursts.append(Burst(start, end, peak))
-            t += 1
+        for s, e in zip(starts, ends):
+            peak = np.max(D[s:e+1])
+            bursts.append(Burst(int(s), int(e), float(peak)))
 
         if self.merge_gap > 0 and len(bursts) > 1:
             merged: List[Burst] = [bursts[0]]
@@ -411,40 +509,21 @@ def kalman_burst_detection_multi(
     return bursts, bin_edges, result.x_filt, result.innovation_mahal, result
 
 
-def create_burst_mask(bursts: List[Dict[str, Any]], tttr_length: int) -> np.ndarray:
-    """
-    Create a boolean mask for the TTTR data based on the bursts.
-    
-    Args:
-        bursts: List of burst dictionaries with 'start_time' and 'end_time' keys
-        tttr_length: Length of the TTTR data
-        
-    Returns:
-        Boolean mask array of length tttr_length
-    """
-    mask = np.zeros(tttr_length, dtype=bool)
-    
-    for burst in bursts:
-        start_time = burst['start_time']
-        end_time = burst['end_time']
-        
-        # Find indices in the TTTR data that fall within this burst
-        # This is a placeholder - actual implementation would depend on how
-        # the TTTR data is structured and how to map from time to indices
-        
-    return mask
-
-
 def convert_bursts_to_start_stop(bursts: List[Dict[str, Any]], tttr: tttrlib.TTTR) -> np.ndarray:
     """
     Convert bursts to start-stop indices for the TTTR data.
     
-    Args:
-        bursts: List of burst dictionaries with 'start_time' and 'end_time' keys
-        tttr: TTTR object
+    Parameters
+    ----------
+    bursts : List[Dict[str, Any]]
+        List of burst dictionaries with 'start_time' and 'end_time' keys.
+    tttr : tttrlib.TTTR
+        TTTR object.
         
-    Returns:
-        Array of shape (n_bursts, 2) with [start_idx, end_idx] for each burst
+    Returns
+    -------
+    np.ndarray
+        Array of shape (n_bursts, 2) with [start_idx, end_idx] for each burst.
     """
     if not bursts:
         return np.array([], dtype=np.uint64).reshape(0, 2)
@@ -452,23 +531,17 @@ def convert_bursts_to_start_stop(bursts: List[Dict[str, Any]], tttr: tttrlib.TTT
     macro_times = tttr.macro_times
     time_unit = tttr.header.macro_time_resolution
     
-    start_stop = []
-    for burst in bursts:
-        start_time = burst['start_time']
-        end_time = burst['end_time']
-        
-        # Convert times to macro time units
-        start_mt = int(start_time / time_unit)
-        end_mt = int(end_time / time_unit)
-        
-        # Find indices in the macro_times array
-        start_idx = np.searchsorted(macro_times, start_mt)
-        end_idx = np.searchsorted(macro_times, end_mt, side='right') - 1
-        
-        if start_idx <= end_idx:
-            start_stop.append([start_idx, end_idx])
+    starts_time = np.array([burst['start_time'] for burst in bursts])
+    ends_time = np.array([burst['end_time'] for burst in bursts])
     
-    if not start_stop:
+    starts_mt = (starts_time / time_unit).astype(np.int64)
+    ends_mt = (ends_time / time_unit).astype(np.int64)
+    
+    start_indices = np.searchsorted(macro_times, starts_mt)
+    end_indices = np.searchsorted(macro_times, ends_mt, side='right') - 1
+    
+    valid = start_indices <= end_indices
+    if not np.any(valid):
         return np.array([], dtype=np.uint64).reshape(0, 2)
-    
-    return np.array(start_stop, dtype=np.uint64)
+        
+    return np.stack([start_indices[valid], end_indices[valid]], axis=1).astype(np.uint64)

@@ -20,25 +20,24 @@ from typing import Dict
 
 import numpy as np
 import tttrlib
-
-from qtpy.QtWidgets import (
-    QApplication,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTabWidget,
-    QPushButton,
-    QFileDialog,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
-    QMessageBox,
-)
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
+from qtpy.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
-from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 import chisurf.core.fluorescence.burst
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 try:
     from chisurf.gui.misc_helpers import persist_plugin_state
@@ -51,9 +50,10 @@ except ImportError:
 class BurstBackgroundEstimator(QWidget):
     """Main widget for the Burst Background Estimation plugin."""
 
-    def __init__(self) -> None:
+    def __init__(self, show_channel_definition: bool = True) -> None:
         super().__init__()
         self.setWindowTitle("Burst Background Estimation")
+        self.show_channel_definition = show_channel_definition
 
         # Data storage
         self.tttr_files = []  # type: ignore[var-annotated]
@@ -97,7 +97,8 @@ class BurstBackgroundEstimator(QWidget):
             show_tables=True,
             show_add_inputs=True,
         )
-        tab_widget.addTab(self.detector_wizard_page, "Channel Definition")
+        if self.show_channel_definition:
+            tab_widget.addTab(self.detector_wizard_page, "Channel Definition")
 
         # Tab 2: files and background estimation results
         files_tab = QWidget()

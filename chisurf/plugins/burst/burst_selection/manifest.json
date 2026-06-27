@@ -86,5 +86,6 @@
       "topic": "burst_selection.jobs.*",
       "description": "Job lifecycle events"
     }
-  ]
+  ],
+  "menu_hidden": true
 }

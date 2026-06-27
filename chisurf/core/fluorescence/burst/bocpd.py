@@ -11,7 +11,7 @@ The implementation is optimized using numba for performance.
 
 import numpy as np
 import tttrlib
-from numba import njit, prange
+from numba import njit
 from math import lgamma, log
 from typing import List, Dict, Tuple, Optional, Union, Any
 
@@ -85,11 +85,10 @@ def _log_poisson_pmf(k: int, lam: float) -> float:
     return k * log(lam) - lam - lgamma(k + 1.0)
 
 
-@njit(nopython=True)
-def compute_predictive(D_t: int, A_t: int, alphaD: np.ndarray, betaD: np.ndarray, 
-                      alphaA: np.ndarray, betaA: np.ndarray, Rmax: int) -> np.ndarray:
-    """
-    Compute the predictive distribution for the current time step.
+@njit(cache=True)
+def _compute_predictive(D_t: int, A_t: int, alphaD: np.ndarray, betaD: np.ndarray, 
+                        alphaA: np.ndarray, betaA: np.ndarray, Rmax: int) -> np.ndarray:
+    """Compute predictive log-likelihoods for all run lengths up to Rmax.
 
     Parameters
     ----------
@@ -98,30 +97,30 @@ def compute_predictive(D_t: int, A_t: int, alphaD: np.ndarray, betaD: np.ndarray
     A_t : int
         Acceptor count at current time step.
     alphaD : np.ndarray
-        Alpha parameters for donor Gamma prior.
+        Alpha parameters for donor Gamma prior (shape >= Rmax).
     betaD : np.ndarray
-        Beta parameters for donor Gamma prior.
+        Beta parameters for donor Gamma prior (shape >= Rmax).
     alphaA : np.ndarray
-        Alpha parameters for acceptor Gamma prior.
+        Alpha parameters for acceptor Gamma prior (shape >= Rmax).
     betaA : np.ndarray
-        Beta parameters for acceptor Gamma prior.
+        Beta parameters for acceptor Gamma prior (shape >= Rmax).
     Rmax : int
-        Maximum run length.
+        Number of run-length hypotheses to evaluate.
 
     Returns
     -------
     np.ndarray
-        Predictive distribution for the current time step.
+        Array of shape (Rmax,) with the joint log-predictive per run length.
     """
     pred = np.empty(Rmax)
-    for rl in prange(Rmax):
+    for rl in range(Rmax):
         lamD = alphaD[rl] / betaD[rl]
         lamA = alphaA[rl] / betaA[rl]
         pred[rl] = _log_poisson_pmf(D_t, lamD) + _log_poisson_pmf(A_t, lamA)
     return pred
 
 
-@njit(nopython=True)
+@njit(nopython=True, cache=True)
 def bocpd_joint_poisson_optimized(D: np.ndarray, A: np.ndarray, prior_count: float = 1.0, 
                                  prior_duration: float = 1.0, changepoint_prob: float = 1e-3, 
                                  max_run: int = 500, 
@@ -175,13 +174,17 @@ def bocpd_joint_poisson_optimized(D: np.ndarray, A: np.ndarray, prior_count: flo
     log_R_prev = np.full(max_run + 1, -np.inf)
     log_R_prev[0] = 0.0
 
-    alphaD_buf = np.full((2, max_run + 1), prior_count)
-    betaD_buf  = np.full((2, max_run + 1), prior_duration)
-    alphaA_buf = np.full((2, max_run + 1), prior_count)
-    betaA_buf  = np.full((2, max_run + 1), prior_duration)
+    # Flat 1D buffers: alphaD_buf[curr_row * (max_run+1) + rl]
+    buf_size = 2 * (max_run + 1)
+    alphaD_buf = np.full(buf_size, prior_count)
+    betaD_buf  = np.full(buf_size, prior_duration)
+    alphaA_buf = np.full(buf_size, prior_count)
+    betaA_buf  = np.full(buf_size, prior_duration)
 
-    cps = []
+    cps_buf = np.empty(T, dtype=np.int64)
+    n_cps = 0
     run_length_map = np.zeros(T, dtype=np.int64)
+    stride = max_run + 1
 
     for t in range(T):
         d = D[t]
@@ -190,11 +193,16 @@ def bocpd_joint_poisson_optimized(D: np.ndarray, A: np.ndarray, prior_count: flo
 
         curr = t % 2
         prev = (t + 1) % 2
+        curr_off = curr * stride
+        prev_off = prev * stride
 
-        pred = compute_predictive(d, a,
-                                  alphaD_buf[prev], betaD_buf[prev],
-                                  alphaA_buf[prev], betaA_buf[prev],
-                                  Rmax)
+        # Compute predictive log-likelihoods for each run length
+        pred = _compute_predictive(d, a,
+                                   alphaD_buf[prev_off:prev_off + Rmax],
+                                   betaD_buf[prev_off:prev_off + Rmax],
+                                   alphaA_buf[prev_off:prev_off + Rmax],
+                                   betaA_buf[prev_off:prev_off + Rmax],
+                                   Rmax)
 
         log_growth = log_R_prev[:Rmax] + pred + log_1h
         log_cp = _logsumexp(log_R_prev[:Rmax] + pred + log_h)
@@ -204,25 +212,27 @@ def bocpd_joint_poisson_optimized(D: np.ndarray, A: np.ndarray, prior_count: flo
         log_R[1:Rmax + 1] = log_growth
         log_R[:Rmax + 1] -= _logsumexp(log_R[:Rmax + 1])
 
-        alphaD_buf[curr][0] = prior_count + d
-        betaD_buf[curr][0]  = prior_duration + 1.0
-        alphaA_buf[curr][0] = prior_count + a
-        betaA_buf[curr][0]  = prior_duration + 1.0
+        # Changepoint slot (run-length 0): accumulate current observation only
+        alphaD_buf[curr_off] = prior_count + d
+        betaD_buf[curr_off]  = prior_duration + 1.0
+        alphaA_buf[curr_off] = prior_count + a
+        betaA_buf[curr_off]  = prior_duration + 1.0
 
-        for rl in range(1, Rmax + 1):
-            alphaD_buf[curr][rl] = alphaD_buf[prev][rl - 1] + d
-            betaD_buf[curr][rl]  = betaD_buf[prev][rl - 1] + 1.0
-            alphaA_buf[curr][rl] = alphaA_buf[prev][rl - 1] + a
-            betaA_buf[curr][rl]  = betaA_buf[prev][rl - 1] + 1.0
+        # Suffix update: shift previous slot values and accumulate
+        alphaD_buf[curr_off + 1:curr_off + Rmax + 1] = alphaD_buf[prev_off:prev_off + Rmax] + d
+        betaD_buf[curr_off + 1:curr_off + Rmax + 1]  = betaD_buf[prev_off:prev_off + Rmax]  + 1.0
+        alphaA_buf[curr_off + 1:curr_off + Rmax + 1] = alphaA_buf[prev_off:prev_off + Rmax] + a
+        betaA_buf[curr_off + 1:curr_off + Rmax + 1]  = betaA_buf[prev_off:prev_off + Rmax]  + 1.0
 
         rl_map = np.argmax(log_R[:Rmax + 1])
         run_length_map[t] = rl_map
         if rl_map == 0:
-            cps.append(t)
+            cps_buf[n_cps] = t
+            n_cps += 1
 
         log_R_prev[:max_run + 1] = log_R
 
-    return np.array(cps, dtype=np.int64), run_length_map
+    return cps_buf[:n_cps], run_length_map
 
 
 def extract_bursts(D: np.ndarray, A: np.ndarray, bins: np.ndarray, 
@@ -255,21 +265,38 @@ def extract_bursts(D: np.ndarray, A: np.ndarray, bins: np.ndarray,
         - acceptor: Number of acceptor photons
         - FRET: FRET efficiency (acceptor / (donor + acceptor))
     """
-    cps = [0] + list(changepoints) + [len(D)]
+    cps = np.concatenate((np.array([0], dtype=np.int64), changepoints, np.array([len(D)], dtype=np.int64)))
+    starts = cps[:-1]
+    ends = cps[1:]
+    
+    cum_D = np.zeros(len(D) + 1, dtype=D.dtype)
+    np.cumsum(D, out=cum_D[1:])
+    cum_A = np.zeros(len(A) + 1, dtype=A.dtype)
+    np.cumsum(A, out=cum_A[1:])
+    
+    nds = cum_D[ends] - cum_D[starts]
+    nas = cum_A[ends] - cum_A[starts]
+    totals = nds + nas
+    
+    valid = totals >= min_counts
+    valid_indices = np.where(valid)[0]
+    
     bursts = []
-    for i in range(len(cps) - 1):
-        s, e = cps[i], cps[i + 1]
-        nd, na = int(D[s:e].sum()), int(A[s:e].sum())
-        if nd + na >= min_counts:
-            bursts.append({
-                'start_bin': s,
-                'end_bin': e,
-                'start': bins[s],
-                'end': bins[e - 1] if e - 1 < len(bins) else bins[-1],
-                'donor': nd,
-                'acceptor': na,
-                'FRET': na / (nd + na) if (nd + na) > 0 else np.nan
-            })
+    for idx in valid_indices:
+        s = int(starts[idx])
+        e = int(ends[idx])
+        nd = int(nds[idx])
+        na = int(nas[idx])
+        tot = nd + na
+        bursts.append({
+            'start_bin': s,
+            'end_bin': e,
+            'start': bins[s],
+            'end': bins[e - 1] if e - 1 < len(bins) else bins[-1],
+            'donor': nd,
+            'acceptor': na,
+            'FRET': na / tot if tot > 0 else np.nan
+        })
     return bursts
 
 
@@ -344,30 +371,7 @@ def bocpd_burst_detection(donor_timestamps: np.ndarray, acceptor_timestamps: np.
     return bursts, bins, D_counts, A_counts
 
 
-def create_burst_mask(bursts: List[Dict[str, Any]], tttr_length: int) -> np.ndarray:
-    """
-    Create a binary mask for bursts.
 
-    Parameters
-    ----------
-    bursts : List[Dict[str, Any]]
-        List of burst dictionaries from extract_bursts.
-    tttr_length : int
-        Length of the TTTR object.
-
-    Returns
-    -------
-    np.ndarray
-        Binary mask with 1s for photons in bursts and 0s elsewhere.
-    """
-    mask = np.zeros(tttr_length, dtype=np.uint8)
-    
-    for burst in bursts:
-        start_idx = int(burst['start'] / tttr_length * len(mask))
-        end_idx = int(burst['end'] / tttr_length * len(mask))
-        mask[start_idx:end_idx+1] = 1
-        
-    return mask
 
 
 def bin_photons_multi(timestamps_list: List[np.ndarray], dt: float = 1e-3, tmax: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
@@ -443,35 +447,44 @@ def extract_bursts_multi(counts: np.ndarray, bin_edges: np.ndarray, changepoints
         - total_counts: Total counts across all channels
         - donor/acceptor/FRET: Only if exactly 2 channels (for backward compatibility)
     """
-    cps = [0] + list(changepoints) + [len(counts)]
+    cps = np.concatenate((np.array([0], dtype=np.int64), changepoints, np.array([len(counts)], dtype=np.int64)))
+    starts = cps[:-1]
+    ends = cps[1:]
+    
+    # Cumulative sum of counts along axis 0
+    cum_counts = np.zeros((counts.shape[0] + 1, counts.shape[1]), dtype=counts.dtype)
+    np.cumsum(counts, axis=0, out=cum_counts[1:, :])
+    
+    channel_sums = cum_counts[ends] - cum_counts[starts]  # shape (n_segments, n_channels)
+    total_sums = np.sum(channel_sums, axis=1)
+    
+    valid = total_sums >= min_counts
+    valid_indices = np.where(valid)[0]
+    
     bursts = []
     n_channels = counts.shape[1]
-    
-    for i in range(len(cps) - 1):
-        s, e = cps[i], cps[i + 1]
+    for idx in valid_indices:
+        s = int(starts[idx])
+        e = int(ends[idx])
+        ch_counts = channel_sums[idx]
+        tot = int(total_sums[idx])
         
-        # Get counts for each channel in this burst
-        channel_counts = np.sum(counts[s:e, :], axis=0)
-        total_counts = np.sum(channel_counts)
+        burst_dict = {
+            'start_bin': s,
+            'end_bin': e,
+            'start': bin_edges[s],
+            'end': bin_edges[e - 1] if e - 1 < len(bin_edges) else bin_edges[-1],
+            'counts': ch_counts.tolist(),
+            'total_counts': tot
+        }
         
-        if total_counts >= min_counts:
-            burst_dict = {
-                'start_bin': s,
-                'end_bin': e,
-                'start': bin_edges[s],
-                'end': bin_edges[e - 1] if e - 1 < len(bin_edges) else bin_edges[-1],
-                'counts': channel_counts.tolist(),
-                'total_counts': total_counts
-            }
+        if n_channels == 2:
+            burst_dict['donor'] = int(ch_counts[0])
+            burst_dict['acceptor'] = int(ch_counts[1])
+            burst_dict['FRET'] = ch_counts[1] / tot if tot > 0 else np.nan
             
-            # For backward compatibility, if we have exactly 2 channels, add donor/acceptor fields
-            if n_channels == 2:
-                burst_dict['donor'] = channel_counts[0]
-                burst_dict['acceptor'] = channel_counts[1]
-                burst_dict['FRET'] = channel_counts[1] / total_counts if total_counts > 0 else np.nan
-                
-            bursts.append(burst_dict)
-            
+        bursts.append(burst_dict)
+        
     return bursts
 
 
@@ -644,22 +657,17 @@ def convert_bursts_to_start_stop(bursts: List[Dict[str, Any]], tttr: tttrlib.TTT
     macro_times = tttr.macro_times
     time_unit = tttr.header.macro_time_resolution
     
-    start_stop = []
-    for burst in bursts:
-        start_time = burst['start']
-        end_time = burst['end']
-        
-        # Convert times to macro_time units
-        start_macro = start_time / time_unit
-        end_macro = end_time / time_unit
-        
-        # Find indices of photons within the burst
-        indices = np.where((macro_times >= start_macro) & (macro_times <= end_macro))[0]
-        
-        if len(indices) > 0:
-            start_stop.append([indices[0], indices[-1]])
+    starts_time = np.array([burst['start'] for burst in bursts])
+    ends_time = np.array([burst['end'] for burst in bursts])
     
-    if not start_stop:
+    starts_mt = starts_time / time_unit
+    ends_mt = ends_time / time_unit
+    
+    start_indices = np.searchsorted(macro_times, starts_mt)
+    end_indices = np.searchsorted(macro_times, ends_mt, side='right') - 1
+    
+    valid = start_indices <= end_indices
+    if not np.any(valid):
         return np.array([], dtype=np.uint64).reshape(0, 2)
-    
-    return np.array(start_stop, dtype=np.uint64)
+        
+    return np.stack([start_indices[valid], end_indices[valid]], axis=1).astype(np.uint64)

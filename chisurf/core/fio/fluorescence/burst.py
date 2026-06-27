@@ -371,6 +371,9 @@ def generate_burst_dataframe(
     n_cols = len(cols)
 
     # precompute global masks so we don't remake them per-burst
+    # Detector/window micro-time ranges are always expressed in raw micro-time
+    # channels (the same units as ``micro``); micro-time binning is a display-only
+    # concern and never rescales these ranges.
     det_global = {}
     for d,info in detectors.items():
         chm = np.isin(rout, info["chs"])

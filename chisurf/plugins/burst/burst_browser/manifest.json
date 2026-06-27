@@ -1,0 +1,20 @@
+{
+  "id": "burst_browser",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:Burst Browser",
+  "description": "Inspect burstwise analysis tables and plots.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "state_namespace": "burst_browser",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_browser:BurstBrowserWidget"
+  },
+  "menu_hidden": true
+}

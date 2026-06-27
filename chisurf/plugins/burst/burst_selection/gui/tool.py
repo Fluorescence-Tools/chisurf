@@ -17,10 +17,10 @@ from qtpy import QtCore, QtGui, QtWidgets
 from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys
 from chisurf.core.mfdb.base import MFDBClientBase
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
-from chisurf.gui.widgets.tools import ChisurfDockTool
-from chisurf.gui.widgets.tools import PathDropListWidget as DropListWidget
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog
+from chisurf.gui.widgets.tools import ChisurfDockTool
+from chisurf.gui.widgets.tools import PathDropListWidget as DropListWidget
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_channel_definition import (
     DetectorWizardPage,
 )
@@ -34,10 +34,20 @@ from chisurf.server.rpc_logging import RpcLogWriter
 
 from ..api.mfdb import (
     acquire_mfdb_connection as _acquire_mfdb_connection,
+)
+from ..api.mfdb import (
     file_md5 as _file_md5,
+)
+from ..api.mfdb import (
     raw_artifact_id_for_path as _raw_artifact_id_for_path,
+)
+from ..api.mfdb import (
     raw_file_data_format as _raw_file_data_format,
+)
+from ..api.mfdb import (
     register_raw_input_for_sample as _register_raw_input_for_sample,
+)
+from ..api.mfdb import (
     sample_id_for_raw_path as _sample_id_for_raw_path,
 )
 from ..api.models import (
@@ -56,6 +66,7 @@ from .adapter import (
     proximity_ratio_from_frame,
 )
 from .client import BurstSelectionClient
+from .gmm_settings_dialog import DEFAULT_GMM_SETTINGS, GMMSettingsDialog
 
 # Curated common keys shown first; then all PDBx keys are appended.
 COMMON_METADATA_KEYS = [
@@ -400,6 +411,7 @@ class BurstSelectionTool(ChisurfDockTool):
         self._selected_filetype: str | None = None
         self._mfdb_db: MFDBClientBase | None = None
         self._fit_gmm_on_update = False
+        self.gmm_settings = dict(DEFAULT_GMM_SETTINGS)
         self._building_ui = True
         self._metadata: dict[str, str] = {}
         self._has_processed: bool = False
@@ -686,11 +698,15 @@ class BurstSelectionTool(ChisurfDockTool):
         self.gmm_components_spin.setRange(0, 10)
         self.gmm_auto_components_check = QtWidgets.QCheckBox("Auto components", widget)
         self.fit_gmm_button = QtWidgets.QPushButton("🎯 Fit GMM", widget)
+        self.gmm_settings_button = QtWidgets.QPushButton("⚙", widget)
+        self.gmm_settings_button.setToolTip("Advanced GMM settings…")
+        self.gmm_settings_button.setMaximumWidth(28)
         gmm_layout = QtWidgets.QHBoxLayout()
         gmm_layout.setSpacing(2)
         gmm_layout.addWidget(self.gmm_components_spin)
         gmm_layout.addWidget(self.gmm_auto_components_check)
         gmm_layout.addWidget(self.fit_gmm_button)
+        gmm_layout.addWidget(self.gmm_settings_button)
         layout.addRow("GMM", gmm_layout)
         self.gmm_summary = QtWidgets.QTextEdit(widget)
         self.gmm_summary.setReadOnly(True)
@@ -702,6 +718,7 @@ class BurstSelectionTool(ChisurfDockTool):
         self._connect_histogram_controls(self._update_histogram_if_available)
         self.auto_range_button.clicked.connect(self._set_histogram_range_to_data)
         self.fit_gmm_button.clicked.connect(self._fit_gmm)
+        self.gmm_settings_button.clicked.connect(self._show_gmm_settings)
         return widget
 
     def _build_plot_group(self, parent: QtWidgets.QWidget) -> QtWidgets.QGroupBox:
@@ -1311,7 +1328,9 @@ class BurstSelectionTool(ChisurfDockTool):
 
     def _settings_from_controls(self) -> AnalysisSettings:
         """Build API settings from the embedded wizard's current state."""
-        from chisurf.plugins.burst.burst_selection.gui.adapter import photon_filter_settings_from_wizard
+        from chisurf.plugins.burst.burst_selection.gui.adapter import (
+            photon_filter_settings_from_wizard,
+        )
 
         mode_text = self.wizard.comboBox_burst_filter.currentText()
         if "CUSUM" in mode_text:
@@ -1773,6 +1792,7 @@ class BurstSelectionTool(ChisurfDockTool):
                     legacy_parameters=legacy_parameters,
                     mfdb=mfdb_context,
                 )
+                self._last_service_result = result
             except RuntimeError as rpc_err:
                 dialog.finish(
                     final_text=f"RPC error: {rpc_err}",
@@ -2340,19 +2360,41 @@ class BurstSelectionTool(ChisurfDockTool):
         finally:
             self._fit_gmm_on_update = False
 
+    def _show_gmm_settings(self) -> None:
+        """Open the advanced GMM settings dialog and refit on accept."""
+        dialog = GMMSettingsDialog(self, self.gmm_settings)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            self.gmm_settings = dialog.get_settings()
+            self._fit_gmm()
+
+    def _gmm_model(self, n_components: int):
+        """Build a GaussianMixture using the configured advanced settings."""
+        from sklearn.mixture import GaussianMixture
+
+        s = self.gmm_settings
+        return GaussianMixture(
+            n_components=n_components,
+            covariance_type=s["covariance_type"],
+            random_state=s["random_state"],
+            max_iter=s["max_iter"],
+            n_init=s["n_init"],
+            tol=s["tol"],
+            reg_covar=s["reg_covar"],
+        )
+
     def _plot_gmm(self, data: np.ndarray, min_value: float, max_value: float, counts: np.ndarray) -> None:
         """Fit and plot an optional Gaussian mixture model."""
         try:
-            from sklearn.mixture import GaussianMixture
+            from sklearn.mixture import GaussianMixture  # noqa: F401  (availability check)
         except Exception as exc:
             self.gmm_summary.setPlainText(f"GMM fitting failed: {exc}")
             return
         n_components = int(self.gmm_components_spin.value())
         if self.gmm_auto_components_check.isChecked() and n_components == 0 and data.size > 1:
-            max_components = min(10, data.size)
+            max_components = min(int(self.gmm_settings["max_components"]), data.size)
             bic_scores = []
             for components in range(1, max_components + 1):
-                model = GaussianMixture(n_components=components, random_state=42)
+                model = self._gmm_model(components)
                 model.fit(data.reshape(-1, 1))
                 bic_scores.append(model.bic(data.reshape(-1, 1)))
             n_components = int(np.argmin(bic_scores) + 1)
@@ -2361,7 +2403,7 @@ class BurstSelectionTool(ChisurfDockTool):
             return
         x_fit = np.linspace(min_value, max_value, 200).reshape(-1, 1)
         try:
-            model = GaussianMixture(n_components=n_components, covariance_type="full", random_state=42)
+            model = self._gmm_model(n_components)
             model.fit(data.reshape(-1, 1))
             y_fit = np.exp(model.score_samples(x_fit))
             if np.max(y_fit) > 0:

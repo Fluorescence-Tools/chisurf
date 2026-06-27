@@ -8,30 +8,42 @@ from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
-
-from qtpy.QtCore import Qt, QCoreApplication, QSize, QSettings, Signal
-from qtpy.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox,
-    QGroupBox, QFormLayout, QProgressBar, QDialog,
-    QToolBar, QToolButton, QComboBox, QSizePolicy, QCheckBox,
-    QSpinBox,
-)
-from qtpy.QtGui import QDragEnterEvent, QDropEvent
-
 import pyqtgraph as pg
+from qtpy.QtCore import QCoreApplication, QSettings, QSize, Qt, Signal
+from qtpy.QtGui import QDragEnterEvent, QDropEvent
+from qtpy.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSizePolicy,
+    QSpinBox,
+    QToolBar,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from chisurf import logging
-from chisurf.plugins.burst.burst_bva.core import computation as core
 from chisurf.gui.misc_helpers import (
-    persist_plugin_state,
     get_plugin_settings_path,
+    persist_plugin_state,
 )
+from chisurf.gui.widgets.dock_area.dock_area import DockArea
 from chisurf.gui.widgets.wizard import DetectorWizardPage
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
     load_detector_setups,
 )
-from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.plugins.burst.burst_bva.core import computation as core
 
 
 class HelpDialog(QDialog):
@@ -49,6 +61,7 @@ class HelpDialog(QDialog):
         cli_text = ""
         try:
             from click.testing import CliRunner
+
             from ..cli.main import cli
 
             runner = CliRunner()
@@ -203,8 +216,9 @@ class _ProgressDialog(QDialog):
 class BVATool(QMainWindow):
     """BVA analysis widget with toolbar, tabbed settings, and pyqtgraph plot."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, embedded: bool = False):
         super().__init__(parent)
+        self._embedded = embedded
         self.setWindowTitle("smFRET BVA Analysis")
         self.data_folder: pathlib.Path | None = None
         self.analysis_folder: pathlib.Path | None = None
@@ -767,8 +781,9 @@ class BVATool(QMainWindow):
             settings = QSettings("chisurf", "BVATool")
             layout_state = self.dock_area.get_layout_state()
             settings.setValue("dock_layout", json.dumps(layout_state, sort_keys=True))
-            settings.setValue("window_geometry", self.saveGeometry())
-            settings.setValue("window_state", self.saveState())
+            if not self._embedded:
+                settings.setValue("window_geometry", self.saveGeometry())
+                settings.setValue("window_state", self.saveState())
             settings.sync()
         except Exception as exc:
             pass
@@ -783,12 +798,13 @@ class BVATool(QMainWindow):
                 layout_state = value
             else:
                 return
-            geometry = settings.value("window_geometry")
-            if geometry is not None:
-                self.restoreGeometry(geometry)
-            state = settings.value("window_state")
-            if state is not None:
-                self.restoreState(state)
+            if not self._embedded:
+                geometry = settings.value("window_geometry")
+                if geometry is not None:
+                    self.restoreGeometry(geometry)
+                state = settings.value("window_state")
+                if state is not None:
+                    self.restoreState(state)
             self.dock_area.set_layout_state(layout_state, emit_change=False)
         except Exception as exc:
             pass
