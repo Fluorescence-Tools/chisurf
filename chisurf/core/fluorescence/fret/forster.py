@@ -98,3 +98,37 @@ def forster_radius_from_spectra(
         refractive_index=refractive_index,
     )
     return r0, overlap_J
+
+
+def lookup_forster_radius(
+    donor_name: str,
+    acceptor_name: str,
+    db=None,
+) -> float | None:
+    """Look up the Förster radius R0 for a donor-acceptor pair in MFDB.
+
+    This is a convenience wrapper over :meth:`MFDatabase.lookup_forster_radius`.
+    Returns ``None`` when the pair is not found or the database is unavailable.
+
+    Parameters
+    ----------
+    donor_name : str
+        Donor probe name.
+    acceptor_name : str
+        Acceptor probe name.
+    db : MFDatabase, optional
+        Database instance. Resolved globally when ``None``.
+
+    Returns
+    -------
+    float or None
+        R0 in Ångström, or ``None``.
+    """
+    if db is None:
+        try:
+            from chisurf.core.mfdb.repository import MFDatabase
+            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            db = MFDatabase(resolve_database_path(), readonly=True)
+        except Exception:
+            return None
+    return db.lookup_forster_radius(donor_name, acceptor_name)

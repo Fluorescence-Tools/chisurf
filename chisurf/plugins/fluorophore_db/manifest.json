@@ -1,0 +1,11 @@
+{
+  "name": "Fluorophore DB",
+  "version": "0.1.0",
+  "description": "Fluorophore database with curation GUI and spectral data management",
+  "status": "experimental",
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorophore_db:get_db",
+    "cli": "chisurf.plugins.fluorophore_db.cli:cli"
+  },
+  "services": []
+}

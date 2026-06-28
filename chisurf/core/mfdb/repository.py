@@ -562,6 +562,378 @@ class MFDatabase(MFDBClientBase):
         with self.conn:
             self.dao.soft_delete("probes", probe_id, pk_column="probe_id", deleted_at=_utc_now())
 
+    # -- probe verification / approval (PRD-06 Tasks 8) --
+
+    def _set_probe_column(self, probe_id: int, column: str, value: str | None) -> None:
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                f"UPDATE probes SET {column} = ?, updated_at = ? WHERE probe_id = ?",
+                (value, now, probe_id),
+            )
+
+    def approve_probe(
+        self, probe_id: int, verified_by: str | None = None
+    ) -> None:
+        """Mark a probe as approved.
+
+        Parameters
+        ----------
+        probe_id : int
+            Probe identifier.
+        verified_by : str, optional
+            User or system that approved the probe.
+        """
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """UPDATE probes SET verification_status = 'approved',
+                   is_curated = 1, verified_by = ?, verified_at = ?,
+                   updated_at = ? WHERE probe_id = ?""",
+                (verified_by, now, now, probe_id),
+            )
+
+    def reject_probe(
+        self, probe_id: int, verified_by: str | None = None
+    ) -> None:
+        """Mark a probe as rejected."""
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """UPDATE probes SET verification_status = 'rejected',
+                   verified_by = ?, verified_at = ?, updated_at = ?
+                   WHERE probe_id = ?""",
+                (verified_by, now, now, probe_id),
+            )
+
+    def mark_probe_under_review(self, probe_id: int) -> None:
+        """Mark a probe as under review."""
+        self._set_probe_column(probe_id, "verification_status", "under_review")
+
+    def set_probe_quality(
+        self, probe_id: int, quality: str
+    ) -> None:
+        """Set the quality grade for a probe.
+
+        Parameters
+        ----------
+        probe_id : int
+            Probe identifier.
+        quality : str
+            Quality grade: 'unknown', 'low', 'medium', or 'high'.
+        """
+        if quality not in ("unknown", "low", "medium", "high"):
+            raise ValueError(f"Invalid quality grade: {quality!r}")
+        self._set_probe_column(probe_id, "quality", quality)
+
+    def get_probes_approved_only(
+        self, category: str | None = None
+    ) -> list[dict]:
+        """Return approved probes suitable for downstream consumers.
+
+        Parameters
+        ----------
+        category : str, optional
+            Filter by probe category (e.g. 'organic_dye').
+
+        Returns
+        -------
+        list of dict
+            Approved probe rows.
+        """
+        query = "SELECT * FROM probes WHERE deleted_at IS NULL AND verification_status = 'approved'"
+        params: list = []
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+        query += " ORDER BY chromophore_name"
+        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+
+    # -- import reference set from spectra.db (PRD-06 Task 7.2) --
+
+    _FLUOROPHORE_TYPE_IDS = {1, 2, 6, 7, 27}
+
+    def import_reference_set(
+        self,
+        source_path: str | None = None,
+        *,
+        mark_verified: bool = False,
+    ) -> dict[str, int]:
+        """Import fluorophore reference data from the scraped spectra.db.
+
+        Copies probes, spectra, and optical properties from the ``_dev``
+        spectra.db into this MFDB. All imported rows are stamped with
+        ``source='spectra_db'`` and ``verification_status='unverified'``
+        (unless ``mark_verified=True``).
+
+        Parameters
+        ----------
+        source_path : str, optional
+            Path to the source ``spectra.db``. Defaults to the ``_dev``
+            plugin-local database.
+        mark_verified : bool, default=False
+            If True, stamp imported probes as approved.
+
+        Returns
+        -------
+        dict
+            Counts of imported probes, spectra, and optical properties.
+        """
+        if source_path is None:
+            source_path = (
+                Path(__file__).resolve().parents[2]
+                / "plugins"
+                / "_dev"
+                / "fluorophore_db"
+                / "spectra.db"
+            )
+        source = sqlite3.connect(str(source_path))
+        source.row_factory = sqlite3.Row
+        try:
+            # Determine which probe types to import
+            type_ids = self._FLUOROPHORE_TYPE_IDS
+
+            # Fetch source probe types and build a map to MFDB type_ids
+            src_type_rows = source.execute(
+                "SELECT type_id, type_name FROM probe_types"
+            ).fetchall()
+            src_type_map = {r["type_id"]: r["type_name"] for r in src_type_rows}
+
+            # Fetch MFDB probe types, creating missing ones on the fly
+            mfdb_types = {
+                r["type_name"]: r["type_id"]
+                for r in self.conn.execute("SELECT type_id, type_name FROM probe_types").fetchall()
+            }
+
+            def _resolve_mfdb_type(source_type_id: int) -> int:
+                """Map a source type_id to the corresponding MFDB type_id."""
+                src_type_name = src_type_map.get(source_type_id, "organic_dye")
+                # Strip path prefix from old-style type names (e.g. "E:\\dev\\...atto" → "atto")
+                short_name = src_type_name.split("\\")[-1].split("/")[-1].lower()
+                # Map source categories to MFDB canonical type names
+                mfdb_type_name_map = {
+                    "atto": "organic_dye",
+                    "fluorophore": "organic_dye",
+                    "photochemcad_common_compounds": "organic_dye",
+                    "fpbase": "organic_dye",
+                    "chroma_fluorochrome": "organic_dye",
+                }
+                canonical = mfdb_type_name_map.get(short_name, "organic_dye")
+                if canonical not in mfdb_types:
+                    # Create the type if it doesn't exist
+                    self.conn.execute(
+                        "INSERT OR IGNORE INTO probe_types (type_name, display_name) VALUES (?, ?)",
+                        (canonical, canonical.replace("_", " ").title()),
+                    )
+                    mfdb_types[canonical] = self.conn.execute(
+                        "SELECT type_id FROM probe_types WHERE type_name = ?", (canonical,)
+                    ).fetchone()["type_id"]
+                return mfdb_types[canonical]
+
+            # Fetch source probes
+            src_probes = source.execute(
+                f"SELECT * FROM probes WHERE type_id IN ({','.join('?' * len(type_ids))})",
+                list(type_ids),
+            ).fetchall()
+
+            imported_probes = 0
+            imported_spectra = 0
+            imported_props = 0
+            skipped = 0
+
+            now = _utc_now()
+            verification = "approved" if mark_verified else "unverified"
+
+            for src_p in src_probes:
+                name = str(src_p["name"] or "").strip()
+                if not name:
+                    skipped += 1
+                    continue
+
+                with self.conn:
+                    # Normalize name: "ATTO-647N" -> "ATTO 647N"
+                    chromophore_name = name.replace("-", " ").replace("_", " ")
+
+                    existing = self.conn.execute(
+                        "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
+                        (chromophore_name,),
+                    ).fetchone()
+                    if existing:
+                        probe_id = int(existing["probe_id"])
+                    else:
+                        mfdb_type_id = _resolve_mfdb_type(int(src_p["type_id"]))
+                        cursor = self.conn.execute(
+                            """INSERT INTO probes (chromophore_name, type_id, category,
+                               description, is_curated, quality_flag,
+                               verification_status, quality,
+                               source, created_at, updated_at, deleted_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (
+                                chromophore_name,
+                                mfdb_type_id,
+                                str(src_p["category"] or "other"),
+                                str(src_p["description"] or ""),
+                                1 if mark_verified else 0,
+                                1,
+                                verification,
+                                "unknown",
+                                "spectra_db",
+                                now,
+                                now,
+                                None,
+                            ),
+                        )
+                        probe_id = int(cursor.lastrowid)
+                        imported_probes += 1
+
+                # Copy optical properties
+                src_props = source.execute(
+                    "SELECT * FROM optical_properties WHERE item_id = ? AND deleted_at IS NULL",
+                    (int(src_p["probe_id"]),),
+                ).fetchall()
+                for prop in src_props:
+                    pname = str(prop["property_name"] or "").strip()
+                    pval = str(prop["property_value"] or "").strip()
+                    if not pname or not pval:
+                        continue
+                    with self.conn:
+                        self.conn.execute(
+                            """INSERT OR REPLACE INTO optical_properties
+                               (probe_id, property_name, property_value, unit, details,
+                                created_at, updated_at, deleted_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (
+                                probe_id,
+                                pname,
+                                pval,
+                                str(prop["unit"] or ""),
+                                str(prop["details"] or ""),
+                                now,
+                                now,
+                                None,
+                            ),
+                        )
+                        imported_props += 1
+
+                # Copy spectra
+                src_spectra = source.execute(
+                    "SELECT * FROM spectra WHERE item_id = ? AND deleted_at IS NULL",
+                    (int(src_p["probe_id"]),),
+                ).fetchall()
+                for spec in src_spectra:
+                    stype = str(spec["spectrum_type"] or "").strip()
+                    wl = spec["wavelengths"]
+                    iv = spec["intensity_values"]
+                    if not stype or not wl or not iv:
+                        continue
+                    with self.conn:
+                        self.conn.execute(
+                            """INSERT OR REPLACE INTO spectra
+                               (probe_id, spectrum_type, wavelengths, intensity_values,
+                                wavelength_unit, intensity_unit, details,
+                                created_at, updated_at, deleted_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (
+                                probe_id,
+                                stype,
+                                wl,
+                                iv,
+                                "nm",
+                                "normalized",
+                                f"Imported from spectra_db (source probe_id={src_p['probe_id']})",
+                                now,
+                                now,
+                                None,
+                            ),
+                        )
+                        imported_spectra += 1
+
+            return {
+                "probes": imported_probes,
+                "spectra": imported_spectra,
+                "optical_properties": imported_props,
+                "skipped": skipped,
+            }
+        finally:
+            source.close()
+
+    # -- Forster radius lookup (PRD-06 Task 5) --
+
+    def lookup_forster_radius(
+        self, donor_name: str, acceptor_name: str
+    ) -> float | None:
+        """Look up the Forster radius for a donor-acceptor pair.
+
+        Reads from ``flr_fret_forster_radius`` via probe names.
+        Only considers approved probes.
+
+        Parameters
+        ----------
+        donor_name : str
+            Donor probe name.
+        acceptor_name : str
+            Acceptor probe name.
+
+        Returns
+        -------
+        float or None
+            R0 in Angstrom, or None if not found or not approved.
+        """
+        row = self.conn.execute(
+            """SELECT fr.forster_radius
+               FROM flr_fret_forster_radius fr
+               JOIN probes d ON d.probe_id = fr.donor_probe_id
+               JOIN probes a ON a.probe_id = fr.acceptor_probe_id
+               WHERE d.chromophore_name = ?
+                 AND a.chromophore_name = ?
+                 AND d.verification_status = 'approved'
+                 AND a.verification_status = 'approved'
+                 AND d.deleted_at IS NULL
+                 AND a.deleted_at IS NULL""",
+            (donor_name, acceptor_name),
+        ).fetchone()
+        return float(row[0]) if row else None
+
+    def get_spectra_for_forster(
+        self, probe_name: str
+    ) -> dict | None:
+        """Get absorption and emission spectra for a named probe.
+
+        Only returns data for approved probes.
+
+        Parameters
+        ----------
+        probe_name : str
+            Probe name.
+
+        Returns
+        -------
+        dict or None
+            Dict with 'absorption' and 'emission' keys, each with
+            'wavelengths' and 'intensity' arrays, or None if not found.
+        """
+        probe = self.conn.execute(
+            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND verification_status = 'approved' AND deleted_at IS NULL",
+            (probe_name,),
+        ).fetchone()
+        if not probe:
+            return None
+        probe_id = int(probe["probe_id"])
+        result = {}
+        for stype in ("absorption", "emission"):
+            row = self.conn.execute(
+                "SELECT wavelengths, intensity_values FROM spectra WHERE probe_id = ? AND spectrum_type = ? AND deleted_at IS NULL",
+                (probe_id, stype),
+            ).fetchone()
+            if row:
+                result[stype] = {
+                    "wavelengths": np.frombuffer(row["wavelengths"], dtype=np.float64),
+                    "intensity": np.frombuffer(row["intensity_values"], dtype=np.float64),
+                }
+        if not result:
+            return None
+        return result
+
     # -- spectra --
 
     def get_spectra(self, probe_id=None, spectrum_type=None):

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-SCHEMA_VERSION = 39
+SCHEMA_VERSION = 40
 
 
 @dataclass
@@ -90,6 +90,13 @@ CREATE_TABLES_SQL = [
         is_curated INTEGER DEFAULT 0,
         quality_flag INTEGER DEFAULT 1,
         type_id INTEGER REFERENCES probe_types(type_id),
+        source TEXT,
+        source_ref TEXT,
+        retrieved_at TEXT,
+        verification_status TEXT DEFAULT 'unverified',
+        quality TEXT DEFAULT 'unknown',
+        verified_by TEXT,
+        verified_at TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         deleted_at TEXT

@@ -8,16 +8,58 @@ from typing import Optional
 
 import numpy as np
 
-from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.repository import MFDatabase, _utc_now
 from chisurf.core.mfdb.database_resolver import source_database_path
 
 T4_LYSOZYME_SEQUENCE = "MSTLQEK"
 
 _DATA_DIR = Path(__file__).resolve().parent / "data"
 
+# Common FRET pairs for R0 precomputation
+# (donor_name, acceptor_name) — names must match imported/chromophore_name
+_COMMON_FRET_PAIRS = [
+    ("ATTO 488", "ATTO 647N"),
+    ("ATTO 532", "ATTO 647N"),
+    ("ATTO 550", "ATTO 647N"),
+    ("ATTO 565", "ATTO 647N"),
+    ("Alexa488", "Alexa594"),
+    ("Alexa488", "Alexa647"),
+    ("Alexa555", "Alexa647"),
+    ("Cy3", "Cy5"),
+    ("Cy3B", "ATTO 647N"),
+    ("Cy3B", "Cy5"),
+]
+
+# Additional common dyes to seed if not present in the reference import
+_ADDITIONAL_PROBES = [
+    {
+        "name": "Trp", "type_name": "amino_acid", "category": "protein",
+        "absorption_max_nm": 280.0, "emission_max_nm": 350.0,
+        "quantum_yield": 0.13, "extinction_coefficient": 6990.0,
+        "fwhm_abs": 30.0, "fwhm_em": 55.0,
+    },
+    {
+        "name": "2-aminopurine", "type_name": "nucleic_acid", "category": "other",
+        "absorption_max_nm": 310.0, "emission_max_nm": 370.0,
+        "quantum_yield": 0.68, "extinction_coefficient": 23000.0,
+        "fwhm_abs": 25.0, "fwhm_em": 40.0,
+    },
+]
+
+
+def _gaussian_spectrum(center_nm, fwhm_nm, wl_start=250.0, wl_end=800.0):
+    """Generate a Gaussian approximation of a spectrum (fallback)."""
+    wl = np.arange(wl_start, wl_end + 1, 1.0)
+    sigma = fwhm_nm / (2 * np.sqrt(2 * np.log(2)))
+    intensity = np.exp(-0.5 * ((wl - center_nm) / sigma) ** 2)
+    return wl, intensity
+
 
 def seed_curated_database(db_path: Optional[str | Path] = None) -> Path:
     """Populate a sample database with curated fluorescence examples.
+
+    Imports the scraped fluorophore reference set (spectra.db) for real
+    spectral data, then seeds curated sample/entity/experiment records.
 
     Parameters
     ----------
@@ -32,8 +74,17 @@ def seed_curated_database(db_path: Optional[str | Path] = None) -> Path:
     path = Path(db_path) if db_path is not None else source_database_path()
     db = MFDatabase(path)
     try:
+        # Import scraped reference data first (idempotent, dedup by name)
+        counts = db.import_reference_set()
+        if counts["probes"] > 0:
+            import logging
+            logging.getLogger(__name__).info(
+                "Seeded %d probes, %d spectra, %d optical properties from reference set",
+                counts["probes"], counts["spectra"], counts["optical_properties"],
+            )
         _seed_probe_types(db)
         _seed_probes(db)
+        _seed_forster_radii(db)
         _seed_entities(db)
         _seed_conditions_and_assemblies(db)
         _seed_users_and_devices(db)
@@ -62,42 +113,132 @@ def _load_probe_properties() -> list[dict]:
                 return json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
-    # Fallback to hardcoded values
     return [
         {
             "name": "Alexa488", "type_name": "organic_dye", "category": "organic_dye",
             "absorption_max_nm": 495.0, "emission_max_nm": 519.0,
-            "quantum_yield": 0.92, "extinction_coefficient": 73000.0
+            "quantum_yield": 0.92, "extinction_coefficient": 73000.0,
+            "fwhm_abs": 28.0, "fwhm_em": 37.0,
+        },
+        {
+            "name": "Alexa546", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 556.0, "emission_max_nm": 573.0,
+            "quantum_yield": 0.79, "extinction_coefficient": 104000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 33.0,
+        },
+        {
+            "name": "Alexa555", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 555.0, "emission_max_nm": 565.0,
+            "quantum_yield": 0.10, "extinction_coefficient": 155000.0,
+            "fwhm_abs": 27.0, "fwhm_em": 38.0,
+        },
+        {
+            "name": "Alexa568", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 578.0, "emission_max_nm": 603.0,
+            "quantum_yield": 0.69, "extinction_coefficient": 91300.0,
+            "fwhm_abs": 28.0, "fwhm_em": 40.0,
         },
         {
             "name": "Alexa594", "type_name": "organic_dye", "category": "organic_dye",
             "absorption_max_nm": 590.0, "emission_max_nm": 617.0,
-            "quantum_yield": 0.66, "extinction_coefficient": 87000.0
+            "quantum_yield": 0.66, "extinction_coefficient": 87000.0,
+            "fwhm_abs": 28.0, "fwhm_em": 40.0,
+        },
+        {
+            "name": "Alexa647", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 650.0, "emission_max_nm": 665.0,
+            "quantum_yield": 0.33, "extinction_coefficient": 270000.0,
+            "fwhm_abs": 28.0, "fwhm_em": 35.0,
         },
         {
             "name": "Cy3", "type_name": "organic_dye", "category": "organic_dye",
             "absorption_max_nm": 550.0, "emission_max_nm": 570.0,
-            "quantum_yield": 0.15, "extinction_coefficient": 150000.0
+            "quantum_yield": 0.15, "extinction_coefficient": 150000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 35.0,
+        },
+        {
+            "name": "Cy3B", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 558.0, "emission_max_nm": 572.0,
+            "quantum_yield": 0.67, "extinction_coefficient": 130000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 33.0,
         },
         {
             "name": "Cy5", "type_name": "organic_dye", "category": "organic_dye",
             "absorption_max_nm": 649.0, "emission_max_nm": 670.0,
-            "quantum_yield": 0.27, "extinction_coefficient": 250000.0
+            "quantum_yield": 0.27, "extinction_coefficient": 250000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 35.0,
         },
         {
-            "name": "ATTO647N", "type_name": "organic_dye", "category": "organic_dye",
+            "name": "Cy5.5", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 673.0, "emission_max_nm": 707.0,
+            "quantum_yield": 0.23, "extinction_coefficient": 209000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 40.0,
+        },
+        {
+            "name": "ATTO 488", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 501.0, "emission_max_nm": 523.0,
+            "quantum_yield": 0.80, "extinction_coefficient": 90000.0,
+            "fwhm_abs": 22.0, "fwhm_em": 30.0,
+        },
+        {
+            "name": "ATTO 532", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 532.0, "emission_max_nm": 553.0,
+            "quantum_yield": 0.90, "extinction_coefficient": 115000.0,
+            "fwhm_abs": 23.0, "fwhm_em": 32.0,
+        },
+        {
+            "name": "ATTO 550", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 554.0, "emission_max_nm": 576.0,
+            "quantum_yield": 0.80, "extinction_coefficient": 120000.0,
+            "fwhm_abs": 23.0, "fwhm_em": 32.0,
+        },
+        {
+            "name": "ATTO 565", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 563.0, "emission_max_nm": 592.0,
+            "quantum_yield": 0.90, "extinction_coefficient": 120000.0,
+            "fwhm_abs": 23.0, "fwhm_em": 35.0,
+        },
+        {
+            "name": "ATTO 590", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 594.0, "emission_max_nm": 624.0,
+            "quantum_yield": 0.80, "extinction_coefficient": 120000.0,
+            "fwhm_abs": 24.0, "fwhm_em": 36.0,
+        },
+        {
+            "name": "ATTO 594", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 601.0, "emission_max_nm": 627.0,
+            "quantum_yield": 0.85, "extinction_coefficient": 120000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 35.0,
+        },
+        {
+            "name": "ATTO 647N", "type_name": "organic_dye", "category": "organic_dye",
             "absorption_max_nm": 644.0, "emission_max_nm": 669.0,
-            "quantum_yield": 0.65, "extinction_coefficient": 150000.0
+            "quantum_yield": 0.65, "extinction_coefficient": 150000.0,
+            "fwhm_abs": 22.0, "fwhm_em": 30.0,
+        },
+        {
+            "name": "ATTO 655", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 663.0, "emission_max_nm": 684.0,
+            "quantum_yield": 0.30, "extinction_coefficient": 125000.0,
+            "fwhm_abs": 22.0, "fwhm_em": 28.0,
+        },
+        {
+            "name": "ATTO 680", "type_name": "organic_dye", "category": "organic_dye",
+            "absorption_max_nm": 680.0, "emission_max_nm": 700.0,
+            "quantum_yield": 0.30, "extinction_coefficient": 125000.0,
+            "fwhm_abs": 23.0, "fwhm_em": 30.0,
         },
         {
             "name": "Trp", "type_name": "amino_acid", "category": "protein",
             "absorption_max_nm": 280.0, "emission_max_nm": 350.0,
-            "quantum_yield": 0.13, "extinction_coefficient": None
+            "quantum_yield": 0.13, "extinction_coefficient": 6990.0,
+            "fwhm_abs": 30.0, "fwhm_em": 55.0,
         },
         {
             "name": "2-aminopurine", "type_name": "nucleic_acid", "category": "other",
             "absorption_max_nm": 310.0, "emission_max_nm": 370.0,
-            "quantum_yield": 0.68, "extinction_coefficient": 23000.0
+            "quantum_yield": 0.68, "extinction_coefficient": 23000.0,
+            "fwhm_abs": 25.0, "fwhm_em": 40.0,
         },
     ]
 
@@ -114,20 +255,180 @@ def _seed_probes(db: MFDatabase) -> None:
         em_max = probe_data["emission_max_nm"]
         qy = probe_data["quantum_yield"]
         ext_coeff = probe_data["extinction_coefficient"]
+        fwhm_abs = probe_data.get("fwhm_abs", 28.0)
+        fwhm_em = probe_data.get("fwhm_em", 35.0)
 
-        probe_id = db.add_probe(name, types[type_name], category=category, is_curated=1)
-        db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
-        db.add_optical_property(probe_id, "em_max", em_max, unit="nm")
-        db.add_optical_property(probe_id, "qy", qy, unit="")
-        if ext_coeff is not None:
-            db.add_optical_property(probe_id, "ext_coeff", ext_coeff, unit="M-1 cm-1")
-        x = np.array([abs_max - 40.0, abs_max, abs_max + 40.0], dtype=np.float64)
-        y = np.array([0.25, 1.0, 0.25], dtype=np.float64)
-        db.add_spectrum(probe_id, "absorption", x, y, details="Curated seed spectrum")
-        y_em = np.array([0.1, 1.0, 0.2], dtype=np.float64)
-        db.add_spectrum(
-            probe_id, "emission", np.array([em_max - 35.0, em_max, em_max + 35.0]), y_em
+        # Check if already imported from reference set
+        existing = db.conn.execute(
+            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
+            (name,),
+        ).fetchone()
+
+        if existing:
+            probe_id = int(existing["probe_id"])
+            # Mark as approved if it was imported as unverified
+            db.approve_probe(probe_id, verified_by="seed_data")
+            # Ensure optical properties are present
+            props = {r["property_name"] for r in db.conn.execute(
+                "SELECT property_name FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL",
+                (probe_id,),
+            ).fetchall()}
+            if "abs_max" not in props:
+                db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
+            if "em_max" not in props:
+                db.add_optical_property(probe_id, "em_max", em_max, unit="nm")
+            if "qy" not in props:
+                db.add_optical_property(probe_id, "qy", qy, unit="")
+            if ext_coeff is not None and "ext_coeff" not in props:
+                db.add_optical_property(probe_id, "ext_coeff", ext_coeff, unit="M-1 cm-1")
+        else:
+            probe_id = db.add_probe(name, types[type_name], category=category, is_curated=1)
+            with db.conn:
+                db.conn.execute(
+                    "UPDATE probes SET verification_status = 'approved', quality = 'high' WHERE probe_id = ?",
+                    (probe_id,),
+                )
+            db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
+            db.add_optical_property(probe_id, "em_max", em_max, unit="nm")
+            db.add_optical_property(probe_id, "qy", qy, unit="")
+            if ext_coeff is not None:
+                db.add_optical_property(probe_id, "ext_coeff", ext_coeff, unit="M-1 cm-1")
+
+            # Add fallback Gaussian spectra if no spectra exist from import
+            has_abs = db.conn.execute(
+                "SELECT 1 FROM spectra WHERE probe_id = ? AND spectrum_type = 'absorption' AND deleted_at IS NULL",
+                (probe_id,),
+            ).fetchone()
+            has_em = db.conn.execute(
+                "SELECT 1 FROM spectra WHERE probe_id = ? AND spectrum_type = 'emission' AND deleted_at IS NULL",
+                (probe_id,),
+            ).fetchone()
+            if not has_abs:
+                x, y = _gaussian_spectrum(abs_max, fwhm_abs)
+                db.add_spectrum(probe_id, "absorption", x, y, details="Fallback Gaussian spectrum")
+            if not has_em:
+                x, y = _gaussian_spectrum(em_max, fwhm_em)
+                db.add_spectrum(probe_id, "emission", x, y, details="Fallback Gaussian spectrum")
+
+
+def _seed_forster_radii(db: MFDatabase) -> None:
+    """Precompute Forster radii for common FRET pairs (PRD-06 Task 4)."""
+    from chisurf.core.fluorescence.fret.forster import (
+        compute_forster_radius_from_spectra,
+    )
+
+    for donor_name, acceptor_name in _COMMON_FRET_PAIRS:
+        donor_spec = db.get_spectra_for_forster(donor_name)
+        acceptor_spec = db.get_spectra_for_forster(acceptor_name)
+        if not donor_spec or not acceptor_spec:
+            continue
+        if "emission" not in donor_spec or "absorption" not in acceptor_spec:
+            continue
+
+        donor_row = db.conn.execute(
+            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
+            (donor_name,),
+        ).fetchone()
+        acceptor_row = db.conn.execute(
+            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
+            (acceptor_name,),
+        ).fetchone()
+        if not donor_row or not acceptor_row:
+            continue
+
+        donor_props = {r["property_name"]: r["property_value"] for r in db.conn.execute(
+            "SELECT property_name, property_value FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL",
+            (int(donor_row["probe_id"]),),
+        ).fetchall()}
+        qy_str = donor_props.get("qy", "0.0")
+        try:
+            donor_qy = float(str(qy_str).replace(",", ""))
+        except (ValueError, TypeError):
+            continue
+
+        em_wl = donor_spec["emission"]["wavelengths"]
+        em_int = donor_spec["emission"]["intensity"]
+        abs_wl = acceptor_spec["absorption"]["wavelengths"]
+        abs_int = acceptor_spec["absorption"]["intensity"]
+
+        # Scale absorption intensity by extinction coefficient
+        acc_props = {r["property_name"]: r["property_value"] for r in db.conn.execute(
+            "SELECT property_name, property_value FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL",
+            (int(acceptor_row["probe_id"]),),
+        ).fetchall()}
+        ec_str = acc_props.get("ext_coeff", "0")
+        try:
+            ext_coeff = float(str(ec_str).replace(",", ""))
+        except (ValueError, TypeError):
+            ext_coeff = 100000.0  # fallback
+
+        eps_a = abs_int * ext_coeff
+
+        # Both spectra must be on a common wavelength grid
+        # Interpolate onto 1 nm grid covering the overlap region
+        wl_min = max(float(em_wl[0]), float(abs_wl[0]))
+        wl_max = min(float(em_wl[-1]), float(abs_wl[-1]))
+        if wl_min >= wl_max:
+            continue
+        common_wl = np.arange(wl_min, wl_max + 1, 1.0)
+
+        from chisurf.core.fluorescence.fret.forster import (
+            overlap_integral,
+            forster_radius,
         )
+
+        try:
+            fd = np.interp(common_wl, em_wl, em_int)
+            ea = np.interp(common_wl, abs_wl, abs_int * ext_coeff)
+            J = overlap_integral(common_wl, fd, ea)
+            R0 = forster_radius(J, donor_quantum_yield=donor_qy)
+        except Exception:
+            continue
+
+        if R0 <= 0:
+            continue
+
+        # Generate a deterministic forster_radius_id
+        fr_id = f"seed_{donor_name}_{acceptor_name}".replace(" ", "_").replace(".", "_")
+
+        # Use the first sample that has both probes, or NULL
+        sample_id = None
+        try:
+            sample_row = db.conn.execute(
+                """SELECT sp1.sample_id
+                   FROM flr_sample_probe sp1
+                   JOIN flr_sample_probe sp2 ON sp1.sample_id = sp2.sample_id
+                   WHERE sp1.probe_id = ? AND sp2.probe_id = ?
+                   LIMIT 1""",
+                (int(donor_row["probe_id"]), int(acceptor_row["probe_id"])),
+            ).fetchone()
+            if sample_row:
+                sample_id = sample_row[0]
+        except Exception:
+            pass
+
+        with db.conn:
+            db.conn.execute(
+                """INSERT OR REPLACE INTO flr_fret_forster_radius
+                   (forster_radius_id, sample_id, donor_probe_id, acceptor_probe_id,
+                    forster_radius, kappa_squared, index_of_refraction, overlap_integral,
+                    details, created_at, updated_at, deleted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    fr_id,
+                    sample_id,
+                    int(donor_row["probe_id"]),
+                    int(acceptor_row["probe_id"]),
+                    float(R0),
+                    2.0 / 3.0,
+                    1.33,
+                    float(J),
+                    f"Precomputed from seed data (PRD-06 Task 4); donor QY={donor_qy}",
+                    _utc_now(),
+                    _utc_now(),
+                    None,
+                ),
+            )
 
 
 def _seed_entities(db: MFDatabase) -> None:

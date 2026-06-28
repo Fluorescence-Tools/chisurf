@@ -1,0 +1,11 @@
+{
+  "name": "Spectra Downloader",
+  "version": "0.1.0",
+  "description": "Download fluorophore spectra from external databases",
+  "status": "experimental",
+  "entrypoints": {
+    "gui": "chisurf.plugins.spectra_downloader:get_db",
+    "cli": "chisurf.plugins.spectra_downloader.cli:cli"
+  },
+  "services": []
+}
