@@ -2,7 +2,7 @@ import csv
 import requests
 from typing import Any, List, Tuple
 
-from ..fluorophore_db.mfdb_adapter import FluorophoreDatabase
+from chisurf.plugins._dev.fluorophore_db.mfdb_adapter import FluorophoreDatabase
 
 
 class OmegaOpticalDownloader:
