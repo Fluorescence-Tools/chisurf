@@ -27,6 +27,13 @@ def qapp():
     return QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
+# Keep constructed widgets alive for the whole module: each MFDBWidget builds
+# docks that schedule QTimer.singleShot(0, refresh); if a widget is GC'd while a
+# timer is pending, the callback hits a deleted C++ object. Holding references
+# avoids that cross-test flake (the widgets are torn down at interpreter exit).
+_WIDGETS: list = []
+
+
 def _make_widget(db):
     from chisurf.plugins.core.mfdb_admin.gui.tool import MFDBWidget
 
@@ -34,7 +41,9 @@ def _make_widget(db):
         client = MFDBClient(inprocess=True)
         with mock.patch.object(MFDBWidget, "_verify_admin_access", lambda s: None), \
              mock.patch.object(MFDBWidget, "_ensure_authenticated", lambda s: None):
-            return MFDBWidget(client=client)
+            w = MFDBWidget(client=client)
+    _WIDGETS.append(w)
+    return w
 
 
 def test_widget_is_navigation_panel_tool(db, qapp):
