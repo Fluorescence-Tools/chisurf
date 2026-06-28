@@ -129,6 +129,11 @@ def register_services(dispatcher_or_context: Any) -> None:
     register_measurement_services(dispatcher)
     register_ndxplorer_services(dispatcher)
     register_setup_services(dispatcher)
+    # Fluorophore curation (fluorophores.*), migrated from the fluorophore_db plugin.
+    from chisurf.plugins.core.mfdb_admin.backend.fluorophore_services import (
+        register_services as register_fluorophore_services,
+    )
+    register_fluorophore_services(dispatcher)
 
     # Versioned mfdb.v1.* services with auth enforcement
     import chisurf.core.mfdb.api as mfdb_api

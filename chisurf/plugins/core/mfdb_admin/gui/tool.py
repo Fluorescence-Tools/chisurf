@@ -1286,13 +1286,24 @@ class MFDBWidget(NavigationPanelTool):
         "Administration",
     )
 
+    #: Per-entity nav emoji, keyed by entity-registry key.
+    _ENTITY_ICONS = {
+        "sample": "🧪", "condition": "🌡️", "entity": "🧬", "probe": "💡",
+        "position": "📍", "fret_pair": "🔗", "experiment": "🔬",
+        "experiment_type": "🧾", "setup": "⚙️", "detector_channel": "📡",
+        "pie_window": "🪟", "fcs_pair": "🔀", "device": "🖥️", "raw_data": "📂",
+        "processing_run": "🏭", "processed_product": "📦", "analysis": "📈",
+        "object": "🧱", "project": "📁", "branch": "🌿", "user": "👤",
+    }
+
     def _build_panels(self) -> list[dict[str, Any]]:
         """Return the ordered left-nav panel list for the shell.
 
         The old nested DockArea/QTabWidget grouping is flattened into one nav
-        list: separator headers group the per-entity panels, the aggregate
-        Overview/All-items/Measurements/Graph/Import-Export tabs become panels,
-        and the previously-orphaned workflow views are surfaced.
+        list: emoji-tagged separator headers group the per-entity panels, the
+        aggregate Overview/All-items/Measurements/Graph/Import-Export tabs become
+        panels, the previously-orphaned workflow views are surfaced, and the
+        fluorophore curation view is integrated from the fluorophore_db plugin.
         """
         panels: list[dict[str, Any]] = [
             {"name": "Overview", "icon": "📊", "factory": lambda p: self.overview_tab()},
@@ -1306,38 +1317,48 @@ class MFDBWidget(NavigationPanelTool):
             for spec in [s for s in ENTITY_REGISTRY if s.group == group]:
                 panels.append({
                     "name": spec.title,
+                    "icon": self._ENTITY_ICONS.get(spec.key, "•"),
                     "entity_key": spec.key,
                     "factory": self._entity_factory(spec),
                 })
 
-        panels.append({"name": "Samples & chemistry", "separator": True})
+        panels.append({"name": "Samples & chemistry", "icon": "🧫", "separator": True})
         _add_group_entities("Samples & chemistry")
         panels.append({
-            "name": "Sample Metadata", "entity_key": "metadata",
+            "name": "Sample Metadata", "icon": "🏷️", "entity_key": "metadata",
             "factory": self._metadata_factory,
         })
+        panels.append({
+            "name": "Fluorophores", "icon": "🌈", "factory": self._fluorophore_factory,
+        })
 
-        panels.append({"name": "Experiments & data", "separator": True})
+        panels.append({"name": "Experiments & data", "icon": "🔬", "separator": True})
         _add_group_entities("Experiments & data")
 
-        panels.append({"name": "Provenance", "separator": True})
+        panels.append({"name": "Provenance", "icon": "🕸️", "separator": True})
         _add_group_entities("Provenance")
-        panels.append({"name": "Provenance Graph", "factory": lambda p: self.provenance_graph_dock()})
+        panels.append({"name": "Provenance Graph", "icon": "🕸️", "factory": lambda p: self.provenance_graph_dock()})
 
-        panels.append({"name": "Administration", "separator": True})
+        panels.append({"name": "Administration", "icon": "🛡️", "separator": True})
         _add_group_entities("Administration")
-        panels.append({"name": "Import / Export", "factory": lambda p: self.import_export_tab()})
+        panels.append({"name": "Import / Export", "icon": "🔄", "factory": lambda p: self.import_export_tab()})
 
-        panels.append({"name": "Workflows & QC", "separator": True})
+        panels.append({"name": "Workflows & QC", "icon": "🧰", "separator": True})
         panels += [
-            {"name": "Studies", "factory": lambda p: StudiesView(self.client, p)},
-            {"name": "Protocols", "factory": lambda p: ProtocolsView(self.client, p)},
-            {"name": "Lifecycle", "factory": lambda p: LifecycleView(self.client, p)},
-            {"name": "Calibrations", "factory": lambda p: CalibrationsView(self.client, p)},
-            {"name": "Reagent Lots", "factory": lambda p: ReagentLotsView(self.client, p)},
-            {"name": "Pipelines", "factory": lambda p: PipelinesView(self.client, p)},
+            {"name": "Studies", "icon": "📚", "factory": lambda p: StudiesView(self.client, p)},
+            {"name": "Protocols", "icon": "📋", "factory": lambda p: ProtocolsView(self.client, p)},
+            {"name": "Lifecycle", "icon": "♻️", "factory": lambda p: LifecycleView(self.client, p)},
+            {"name": "Calibrations", "icon": "🎯", "factory": lambda p: CalibrationsView(self.client, p)},
+            {"name": "Reagent Lots", "icon": "🧴", "factory": lambda p: ReagentLotsView(self.client, p)},
+            {"name": "Pipelines", "icon": "🛠️", "factory": lambda p: PipelinesView(self.client, p)},
         ]
         return panels
+
+    def _fluorophore_factory(self, parent):
+        """Build the integrated fluorophore curation dock (lazy import)."""
+        from .fluorophore_view import FluorophoreDock
+
+        return FluorophoreDock(self.client, parent)
 
     def _entity_factory(self, spec: EntitySpec):
         """Build a lazy factory creating + registering an EntityDock for ``spec``."""
