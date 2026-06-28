@@ -1,11 +1,189 @@
 {
-  "name": "Fluorophore DB",
-  "version": "0.1.0",
-  "description": "Fluorophore database with curation GUI and spectral data management",
-  "status": "experimental",
-  "entrypoints": {
-    "gui": "chisurf.plugins.fluorophore_db:get_db",
-    "cli": "chisurf.plugins.fluorophore_db.cli:cli"
+  "id": "fluorophore_db",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorophore DB",
+  "description": "Fluorophore database with curation GUI, spectral data management, AI-assisted triage, and CLI tools.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Spectroscopy", "Database"],
+  "icon": "icon.png",
+  "state_namespace": "fluorophore_db",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
   },
-  "services": []
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorophore_db.gui.tool:FluorophoreTool",
+    "cli": "chisurf.plugins.fluorophore_db.cli:cli",
+    "services": "chisurf.plugins.fluorophore_db.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "fluorophores.list",
+      "summary": "List fluorophore probes with optional filtering.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "verification_status": {"type": "string", "description": "Filter by status (approved/unverified/rejected/needs_review)."},
+          "category": {"type": "string", "description": "Filter by category."},
+          "source": {"type": "string", "description": "Filter by source (e.g. spectra_db)."},
+          "search": {"type": "string", "description": "Substring search on chromophore_name."},
+          "limit": {"type": "integer", "default": 200},
+          "offset": {"type": "integer", "default": 0}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "probes": {"type": "array", "items": {"type": "object"}},
+          "total": {"type": "integer"},
+          "limit": {"type": "integer"},
+          "offset": {"type": "integer"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.get",
+      "summary": "Get a single probe with its optical properties and spectra.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer", "description": "Probe ID."}
+        },
+        "required": ["probe_id"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "probe": {"type": "object"},
+          "optical_properties": {"type": "array"},
+          "spectra": {"type": "array"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.approve",
+      "summary": "Approve a fluorophore probe (sets status to approved, is_curated=1).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer"},
+          "verified_by": {"type": "string", "default": "admin"}
+        },
+        "required": ["probe_id"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "probe_id": {"type": "integer"},
+          "verification_status": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.reject",
+      "summary": "Reject a fluorophore probe.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer"},
+          "verified_by": {"type": "string", "default": "admin"}
+        },
+        "required": ["probe_id"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "probe_id": {"type": "integer"},
+          "verification_status": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.set_quality",
+      "summary": "Set the quality level of a probe (high/medium/low).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer"},
+          "quality": {"type": "string", "enum": ["high", "medium", "low", "unknown"]}
+        },
+        "required": ["probe_id", "quality"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "probe_id": {"type": "integer"},
+          "quality": {"type": "string"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.import_reference_set",
+      "summary": "Import fluorophore data from the bundled spectra.db reference database.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "mark_verified": {"type": "boolean", "default": false, "description": "If true, stamp imported probes as approved."}
+        }
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean"},
+          "probes": {"type": "integer"},
+          "spectra": {"type": "integer"},
+          "optical_properties": {"type": "integer"},
+          "skipped": {"type": "integer"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.forster_radius.lookup",
+      "summary": "Look up the Förster radius R0 for a donor-acceptor pair.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "donor_name": {"type": "string"},
+          "acceptor_name": {"type": "string"}
+        },
+        "required": ["donor_name", "acceptor_name"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "forster_radius": {"type": "number", "description": "R0 in Ångström, or null if not found."}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.ai_triage",
+      "summary": "Run deterministic AI triage checks on a probe.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer"}
+        },
+        "required": ["probe_id"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {
+          "probe_id": {"type": "integer"},
+          "issues": {"type": "array", "items": {"type": "string"}},
+          "proposed_quality": {"type": "string"},
+          "applied": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "fluorophores.probe_types.list",
+      "summary": "List all available probe types."
+    }
+  ]
 }

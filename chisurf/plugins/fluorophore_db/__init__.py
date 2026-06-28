@@ -1,11 +1,11 @@
 """Fluorophore Database Plugin.
 
 Manages a centralized database of fluorophore spectra and optical
-properties. Provides a curation GUI, CLI commands, and an import
-pipeline for reference spectral data.
+properties. Provides a curation GUI, CLI commands, an import pipeline
+for reference spectral data, and AI-assisted triage.
 
-**Status:** experimental — data imported from the reference set is
-unverified until approved by a human curator.
+All data imported from the reference set starts unverified; approval
+or rejection is managed through the curation GUI or CLI.
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ def get_db(db_path: str | None = None) -> FluorophoreDatabase:
 
 
 if __name__ == "plugin":
-    from .db_manager_widget import FluorophoreDBWidget as _Widget
+    # Modern GUI entrypoint (defined in manifest.json)
+    from .gui.tool import FluorophoreTool as _Widget
     window = _Widget()
     window.show()
