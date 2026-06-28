@@ -24,8 +24,13 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
         navigation_width: int = 220,
         navigation_min_width: int | None = None,
         panel_margins: tuple[int, int, int, int] = (12, 12, 12, 12),
+        searchable: bool = True,
     ) -> None:
-        """Create a navigation shell."""
+        """Create a navigation shell.
+
+        ``searchable`` (default ``True``) adds a search box at the top of the left
+        pane that filters the navigation list to matching panels.
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.resize(*initial_size)
@@ -33,6 +38,7 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
 
         self.panels: list[dict[str, Any]] = [dict(panel) for panel in panels]
         self._panel_margins = panel_margins
+        self._searchable = searchable
         self._navigation_min_width = navigation_min_width or navigation_width
         self._build_ui(navigation_width)
 
@@ -47,6 +53,21 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
 
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         main_layout.addWidget(self.splitter)
+
+        # Left pane: a search box on top of the navigation list.
+        left_pane = QtWidgets.QWidget()
+        left_layout = QtWidgets.QVBoxLayout(left_pane)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(0)
+
+        self.nav_search: QtWidgets.QLineEdit | None = None
+        if self._searchable:
+            self.nav_search = QtWidgets.QLineEdit()
+            self.nav_search.setPlaceholderText("Search…")
+            self.nav_search.setClearButtonEnabled(True)
+            self.nav_search.setStyleSheet("QLineEdit { margin: 6px 10px 2px 10px; }")
+            self.nav_search.textChanged.connect(self._on_search_changed)
+            left_layout.addWidget(self.nav_search)
 
         self.nav_list = QtWidgets.QListWidget()
         self.nav_list.setMinimumWidth(self._navigation_min_width)
@@ -83,7 +104,8 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
                 item.setFlags(QtCore.Qt.NoItemFlags)
             self.nav_list.addItem(item)
 
-        self.splitter.addWidget(self.nav_list)
+        left_layout.addWidget(self.nav_list, 1)
+        self.splitter.addWidget(left_pane)
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         for panel in self.panels:
@@ -106,6 +128,43 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
         self.nav_list.currentRowChanged.connect(self._on_nav_changed)
         if self.panels:
             self.nav_list.setCurrentRow(0)
+
+    def _on_search_changed(self, text: str) -> None:
+        """Filter the nav list to panels whose name matches ``text``.
+
+        Leaf panels are shown when the (case-insensitive) query is a substring of
+        their name; a separator group header is shown only while at least one of
+        its child panels is still visible. An empty query restores everything.
+        """
+        query = (text or "").strip().lower()
+
+        # First pass: leaf visibility (separators hidden, decided in pass two).
+        for i, panel in enumerate(self.panels):
+            item = self.nav_list.item(i)
+            if item is None:
+                continue
+            if panel.get("separator"):
+                item.setHidden(bool(query))
+            else:
+                name = str(panel.get("name") or "").lower()
+                item.setHidden(bool(query) and query not in name)
+
+        if not query:
+            return
+
+        # Second pass: reveal a group header only if its group has a visible child.
+        sep_row: int | None = None
+        group_has_visible = False
+        for i, panel in enumerate(self.panels):
+            if panel.get("separator"):
+                if sep_row is not None:
+                    self.nav_list.item(sep_row).setHidden(not group_has_visible)
+                sep_row = i
+                group_has_visible = False
+            elif not self.nav_list.item(i).isHidden():
+                group_has_visible = True
+        if sep_row is not None:
+            self.nav_list.item(sep_row).setHidden(not group_has_visible)
 
     def _panel_label(self, panel: Mapping[str, Any]) -> str:
         """Return the selector label for a panel (flagged when experimental)."""
