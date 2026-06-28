@@ -1,18 +1,18 @@
 """
 FCS Correlator
 
-This plugin provides a wizard interface for correlating and merging fluorescence
-correlation spectroscopy (FCS) data. Features include:
+This plugin provides a two-pane navigation-based correlator tool for computing
+and merging fluorescence correlation spectroscopy (FCS) data. Features include:
 
-- Selection and filtering of TTTR (Time-Tagged Time-Resolved) photon data
-- Calculation of correlation functions with configurable parameters
-- Merging of multiple correlation curves for improved signal-to-noise ratio
-- Export of correlation results for further analysis
+- Detector and PIE window definition
+- TTTR file selection with drag-and-drop
+- Optional photon/burst filtering
+- Multi-tau correlation with configurable parameters (bins, cascades, fine grid)
+- FCS curve merging and export
 
-The correlator is essential for analyzing molecular dynamics and diffusion
-processes in fluorescence correlation spectroscopy experiments.
+The tool replaces the legacy QWizard with a modern navigation panel layout
+(left step list, right view/display), built using the AutoForm declarative
+UI framework for the correlator settings panel.
 """
 
-
 name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Correlator"
-

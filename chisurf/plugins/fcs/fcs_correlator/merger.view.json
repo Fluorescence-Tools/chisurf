@@ -1,0 +1,59 @@
+{
+  "sections": [
+    {
+      "type": "custom",
+      "key": "merger_folder_picker",
+      "target": "",
+      "options": {}
+    },
+    {
+      "type": "value",
+      "attr": "folder_path",
+      "label": "Folder",
+      "kind": "str",
+      "placeholder": "Path to correlation chunks...",
+      "description": "Folder containing .cor or .json.gz correlation chunk files."
+    },
+    {
+      "type": "custom",
+      "key": "merger_table",
+      "target": "",
+      "options": {}
+    },
+    {
+      "type": "panel",
+      "title": "Correlation Plots",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "plot",
+          "source": "curves_series",
+          "title": "Individual FCS Curves",
+          "x_label": "Correlation time (ms)",
+          "y_label": "G",
+          "log_x": true,
+          "height": 200,
+          "legend": true,
+          "description": "Individual FCS correlation chunks. Dashed = excluded from merge."
+        },
+        {
+          "type": "plot",
+          "source": "mean_series",
+          "title": "Merged FCS Curve",
+          "x_label": "Correlation time (ms)",
+          "y_label": "G",
+          "log_x": true,
+          "height": 200,
+          "legend": false,
+          "description": "Weighted average of the checked correlation curves."
+        }
+      ]
+    },
+    {
+      "type": "custom",
+      "key": "merger_controls",
+      "target": "",
+      "options": {}
+    }
+  ]
+}
