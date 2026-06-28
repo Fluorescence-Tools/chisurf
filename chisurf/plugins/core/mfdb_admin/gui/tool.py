@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import QUrl
@@ -19,10 +19,49 @@ except ImportError:
         sip = None
 
 from chisurf.gui.misc_helpers import get_plugin_settings_path
-from chisurf.gui.widgets.dock_area import DockArea
+from chisurf.gui.widgets.general import apply_compact_table_style
 from chisurf.gui.widgets.metadata_editor import MetadataEditor
+from chisurf.gui.widgets.navigation import NavigationPanelTool
+from chisurf.core.mfdb.models import (
+    COMMON_PROBE_NAMES,
+    DEFAULT_FLUOROPHORE_SPECTRA,
+    ENTITY_TYPES,
+)
+
+import chisurf.logging
 
 from .client import MFDBClient
+from .generic_form import MFDBDetailWidget
+from .entity_registry import ENTITY_REGISTRY, EntitySpec, build_registry_dict
+from .entity_dock import EntityDock
+from .metadata_dock import MetadataDock
+from .studies_view import StudiesView
+from .protocols_view import ProtocolsView
+from .lifecycle_view import LifecycleView
+from .calibrations_view import CalibrationsView
+from .reagents_view import ReagentLotsView
+from .pipelines_view import PipelinesView
+from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+from chisurf.core.mfdb.dictionary_schema_map import DictionarySchemaMap, build_dictionary_schema_map
+
+
+class _MFDBBackgroundTask(QtCore.QObject):
+    """Run one blocking MFDB callable in a QThread."""
+
+    finished = QtCore.Signal(object)
+    failed = QtCore.Signal(str)
+
+    def __init__(self, fn: Callable[[], Any]):
+        super().__init__()
+        self._fn = fn
+
+    @QtCore.Slot()
+    def run(self) -> None:
+        """Execute the task and emit its result."""
+        try:
+            self.finished.emit(self._fn())
+        except Exception as exc:
+            self.failed.emit(str(exc))
 
 
 def _qurl_for_location(location: str) -> QtCore.QUrl:
@@ -41,6 +80,70 @@ def _processed_location(item: dict[str, Any]) -> str:
 def _processed_row_count(item: dict[str, Any]) -> Any:
     """Return the stored processed-data row count."""
     return item.get("row_count", "")
+
+
+def _sample_quality_table_item(item: dict[str, Any]) -> QtWidgets.QTableWidgetItem:
+    """Return a formatted table item for measurement sample metadata quality."""
+    status = str(item.get("sample_quality_status") or "red").lower()
+    score = item.get("sample_quality_score", 0)
+    label = str(item.get("sample_quality_summary") or f"{status.upper()} {score}")
+    table_item = QtWidgets.QTableWidgetItem(label)
+    colors = {
+        "green": QtGui.QColor(214, 245, 220),
+        "yellow": QtGui.QColor(255, 244, 204),
+        "red": QtGui.QColor(255, 220, 220),
+    }
+    table_item.setBackground(colors.get(status, colors["red"]))
+    flags = item.get("sample_quality_flags") or []
+    sample_id = item.get("sample_id") or "none"
+    sample_name = item.get("sample_name") or ""
+    tooltip_lines = [
+        f"Sample: {sample_name or sample_id}",
+        f"Status: {status.upper()}",
+        f"Score: {score}",
+    ]
+    if flags:
+        tooltip_lines.append("Flags:")
+        tooltip_lines.extend(f"- {flag}" for flag in flags)
+    table_item.setToolTip("\n".join(tooltip_lines))
+    return table_item
+
+
+def _property_value(properties: dict[str, Any], *names: str) -> Any:
+    """Return the first matching optical-property scalar value."""
+    for name in names:
+        value = properties.get(name)
+        if isinstance(value, dict):
+            return value.get("value", "")
+        if value not in (None, ""):
+            return value
+    return ""
+
+
+def _table_text(table: QtWidgets.QTableWidget, row: int, column: int) -> str:
+    """Return stripped table item text for a row/column."""
+    item = table.item(row, column)
+    return item.text().strip() if item else ""
+
+
+def _int_or_none(value: Any) -> int | None:
+    """Return an integer for non-empty values, otherwise None."""
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _float_or_none(value: Any) -> float | None:
+    """Return a float for non-empty values, otherwise None."""
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _experiment_processing_ids(client: Any, experiment_id: str | None) -> set[str]:
@@ -271,19 +374,30 @@ class PasswordChangeDialog(QtWidgets.QDialog):
         return score, feedback
 
 
-class MFDBWidget(QtWidgets.QMainWindow):
-    """Window for browsing, editing, importing, and exporting samples."""
+class MFDBWidget(NavigationPanelTool):
+    """Window for browsing, editing, importing, and exporting samples.
+
+    Uses the shared left-nav / right-panel :class:`NavigationPanelTool` shell so
+    the tool matches plugin:setup and the FCS/burst tools. Plain-Python state is
+    prepared *before* ``super().__init__`` because the shell auto-loads panel 0
+    during construction.
+    """
 
     def __init__(self, parent: QtWidgets.QWidget | None = None, client: Any | None = None):
-        super().__init__(parent)
+        # -- prep that does not need a live QWidget (must precede super()) --
+        client_was_provided = client is not None
         self.client = client or MFDBClient()
         self._loading = False
         self._auth_login_user: str | None = None
         self._checkable_tables: list[QtWidgets.QTableWidget] = []
         self._mock_data_click_count = 0
-
-        self._verify_admin_access()
-        self._ensure_authenticated()
+        self._background_tasks: list[tuple[QtCore.QThread, _MFDBBackgroundTask]] = []
+        self._mock_data_task_running = False
+        self._loaded_tabs: set[str] = set()
+        # Panel-0 (Overview) is loaded during super().__init__, before refresh()
+        # initialises these, so seed them here.
+        self._failures: list[str] = []
+        self._refresh_in_progress = False
 
         # Selection state
         self.current_sample_id = None
@@ -291,14 +405,81 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.current_provenance_seed_type = "processed_data"
         self.current_provenance_seed_id = None
 
-        self.setWindowTitle("mfdb-admin — Multiparametric Fluorescence Database")
-        self.resize(1100, 760)
+        # Dictionary and schema map for dictionary-driven docks
+        self._dictionary: MmcifDictionary | None = None
+        self._schema_map: DictionarySchemaMap | None = None
+        self._registry_dict: dict[str, Any] = build_registry_dict()
+        self._entity_docks: dict[str, Any] = {}
+        try:
+            self._dictionary = MmcifDictionary.load_bundled()
+            self._schema_map = build_dictionary_schema_map()
+        except Exception:
+            chisurf.logging.warning("Failed to load mmCIF dictionary for admin GUI", exc_info=True)
+
+        # Status label is wired to entity-dock signals built lazily by factories.
+        self.status_label = QtWidgets.QLabel("")
+        self.status_label.setWordWrap(True)
+
+        # Build the nav shell (this auto-loads panel 0 — see Overview factory).
+        super().__init__(
+            title="mfdb-admin — Multiparametric Fluorescence Database",
+            panels=self._build_panels(),
+            parent=parent,
+            minimum_size=(900, 560),
+            initial_size=(1180, 780),
+            navigation_width=230,
+        )
+
+        # -- everything below needs a live QWidget (post-super) --
+        self._verify_admin_access()
+        self._ensure_authenticated()
+        self._row_by_entity = {
+            p["entity_key"]: i for i, p in enumerate(self.panels) if p.get("entity_key")
+        }
+        self._row_by_name = {
+            p.get("name"): i for i, p in enumerate(self.panels) if not p.get("separator")
+        }
+
+        # Initialize generic detail widgets
+        self.user_detail_widget = MFDBDetailWidget("user", parent=self)
+        self.device_detail_widget = MFDBDetailWidget("device", parent=self)
+        
+        sample_providers = {
+            "measured_by_user_id": lambda: [(u["user_id"], u.get("display_name", u["user_id"])) for u in self.client.list_users()],
+            "measured_by_device_id": lambda: [(d["device_id"], d["name"]) for d in self.client.list_devices()],
+        }
+        self.sample_detail_widget = MFDBDetailWidget("sample", dropdown_providers=sample_providers, parent=self)
+
+        experiment_providers = {
+            "type_id": lambda: [(t["type_id"], t["name"]) for t in self.client.list_experiment_types()],
+            "sample_id": lambda: [(s["sample_id"], s.get("description") or s["sample_id"]) for s in self.client.list_samples()],
+            "measured_by_user_id": lambda: [(u["user_id"], u.get("display_name", u["user_id"])) for u in self.client.list_users()],
+            "measured_by_device_id": lambda: [(d["device_id"], d["name"]) for d in self.client.list_devices()],
+            "setup_definition_id": lambda: [(s["setup_id"], s["name"]) for s in self.client._call("mfdb.setups.list").get("setups", [])],
+        }
+        self.experiment_detail_widget = MFDBDetailWidget("experiment", dropdown_providers=experiment_providers, parent=self)
+        self.experiment_type_detail_widget = MFDBDetailWidget("experiment_type", parent=self)
+        self.branch_detail_widget = MFDBDetailWidget("branch", parent=self)
+        self.probe_detail_widget = MFDBDetailWidget("probe", parent=self)
+        self.setup_detail_widget = MFDBDetailWidget("setup", parent=self)
+        self.project_detail_widget = MFDBDetailWidget("project", parent=self)
+        self.raw_data_detail_widget = MFDBDetailWidget("raw_data", parent=self)
+        self.processing_run_detail_widget = MFDBDetailWidget("processing_run", parent=self)
+        self.processed_product_detail_widget = MFDBDetailWidget("processed_product", parent=self)
+        self.object_detail_widget = MFDBDetailWidget("object", parent=self)
+        self.analysis_detail_widget = MFDBDetailWidget("analysis", parent=self)
+        self.condition_detail_widget = MFDBDetailWidget("condition", parent=self)
+
         self.setup_ui()
         self.setup_menu_bar()
         self.setup_toolbar()
         self.setup_status_bar()
         self._update_login_actions(logged_in=bool(getattr(self.client, "token", None)))
-        self.refresh()
+        if client_was_provided:
+            self.refresh()
+        else:
+            self._set_status_message("Loading MFDB overview...")
+            QtCore.QTimer.singleShot(0, self.refresh)
 
     def _verify_admin_access(self) -> None:
         """Raise ``PermissionError`` when the active user is not an admin.
@@ -415,7 +596,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         try:
             signal.disconnect()
         except Exception:
-            pass
+            chisurf.logging.warning("_disconnect_signal(self, signal: Any) -> None: %s", _exc)
 
     @staticmethod
     def _icon_button(icon: QtWidgets.QStyle.StandardPixmap, tooltip: str, slot: Any) -> QtWidgets.QToolButton:
@@ -509,12 +690,50 @@ class MFDBWidget(QtWidgets.QMainWindow):
         extra_actions: list[tuple[str, Any]],
     ) -> None:
         menu = QtWidgets.QMenu(table)
-        menu.addAction("☑ Check all", lambda: self._set_all_checks(table, True))
-        menu.addAction("☐ Uncheck all", lambda: self._set_all_checks(table, False))
-        menu.addAction("🔁 Invert checks", lambda: self._invert_checks(table))
+
+        # Open details
+        current_row = table.rowAt(pos.y())
+        has_row = current_row >= 0 and current_row < table.rowCount()
+        if has_row and delete_one_fn is not None:
+            menu.addAction(
+                "🔍 Open details",
+                lambda: self._open_table_row(table, current_row, item_kind, id_col),
+            )
+
+        # Copy actions
+        menu.addAction(
+            "📋 Copy checked IDs",
+            lambda: self._copy_checked_ids_to_clipboard(table, id_col),
+        )
+        menu.addAction(
+            "📋 Copy selected row",
+            lambda: self._copy_selected_row(table),
+        )
+        menu.addAction(
+            "📋 Copy selected cell",
+            lambda: self._copy_selected_cell(table),
+        )
+
         menu.addSeparator()
+
+        # Check/uncheck actions
+        menu.addAction(
+            "☑ Check selected rows",
+            lambda: self._set_selected_checks(table, True),
+        )
+        menu.addAction(
+            "☐ Uncheck selected rows",
+            lambda: self._set_selected_checks(table, False),
+        )
+        menu.addAction("☑ Check all visible", lambda: self._set_all_checks(table, True))
+        menu.addAction("☐ Uncheck all", lambda: self._set_all_checks(table, False))
+        menu.addAction("🔁 Invert visible checks", lambda: self._invert_checks(table))
+
+        menu.addSeparator()
+
         menu.addAction("⬛ Select all rows", table.selectAll)
         menu.addAction("🔳 Clear selection", table.clearSelection)
+
         if delete_one_fn is not None:
             menu.addSeparator()
             menu.addAction(
@@ -530,6 +749,255 @@ class MFDBWidget(QtWidgets.QMainWindow):
         for label, slot in extra_actions:
             menu.addAction(label, slot)
         menu.exec(table.viewport().mapToGlobal(pos))
+
+    @staticmethod
+    def _open_table_row(
+        table: QtWidgets.QTableWidget,
+        row: int,
+        item_kind: str,
+        id_col: int,
+    ) -> None:
+        """Select the row under the cursor and trigger default action."""
+        id_item = table.item(row, id_col)
+        if id_item is not None:
+            logging.info("Open details: %s %s", item_kind, id_item.text())
+
+    def _copy_checked_ids_to_clipboard(self, table: QtWidgets.QTableWidget, id_col: int) -> None:
+        """Copy all checked row IDs to clipboard, newline-separated."""
+        ids = self._checked_row_ids(table, id_col)
+        if ids:
+            QtWidgets.QApplication.clipboard().setText("\n".join(ids))
+            self.status_label.setText(f"Copied {len(ids)} IDs")
+
+    @staticmethod
+    def _copy_selected_row(table: QtWidgets.QTableWidget) -> None:
+        """Copy the selected row as tab-separated text."""
+        selected = table.selectedItems()
+        if not selected:
+            return
+        rows: dict[int, list[str]] = {}
+        for item in selected:
+            row = item.row()
+            if row not in rows:
+                rows[row] = []
+            rows[row].append(item.text())
+        lines = ["\t".join(cols) for cols in rows.values()]
+        if lines:
+            QtWidgets.QApplication.clipboard().setText("\n".join(lines))
+
+    @staticmethod
+    def _copy_selected_cell(table: QtWidgets.QTableWidget) -> None:
+        """Copy the text of the selected (active) cell."""
+        item = table.currentItem()
+        if item is not None:
+            QtWidgets.QApplication.clipboard().setText(item.text())
+
+    @staticmethod
+    def _set_selected_checks(table: QtWidgets.QTableWidget, checked: bool) -> None:
+        """Check or uncheck only the selected rows."""
+        state = QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked
+        selected = table.selectedItems() if hasattr(table, 'selectedItems') else []
+        rows = set()
+        for item in selected:
+            rows.add(item.row())
+        for row in rows:
+            cb = table.item(row, 0)
+            if cb is not None and cb.flags() & QtCore.Qt.ItemIsUserCheckable:
+                cb.setCheckState(state)
+
+    def _setup_standard_table(
+        self,
+        table: QtWidgets.QTableWidget,
+        *,
+        headers: list[str],
+        item_kind: str = "item",
+        id_col: int = 1,
+        delete_one_fn: Any = None,
+        usage_fn: Any = None,
+        open_details_fn: Any = None,
+        extra_actions: list[tuple[str, Any]] | None = None,
+    ) -> None:
+        """Configure a QTableWidget with a dedicated checkbox column and
+        standard context menu.
+
+        Prepends a checkbox column (✓) before the supplied *headers*.
+        The id_col parameter refers to the column index **after** the
+        checkbox column is prepended; e.g. if you want the ID in the
+        first data column, pass id_col=1.
+
+        Parameters
+        ----------
+        table : QTableWidget
+            The table to configure.
+        headers : list of str
+            Data column headers (checkbox column is prepended).
+        item_kind : str
+            Human-readable label for context menus and dialogs.
+        id_col : int
+            Column index where the item ID lives (after checkbox prepend).
+        delete_one_fn : callable or None
+            ``delete_one_fn(item_id) -> None``.
+        usage_fn : callable or None
+            ``usage_fn([ids]) -> {id: description}`` for dependency checks.
+        open_details_fn : callable or None
+            Called with the row ID when "Open details" is selected.
+        extra_actions : list of (label, callable) or None
+            Additional context-menu entries.
+        """
+        all_headers = ["✓"] + list(headers)
+        table.setColumnCount(len(all_headers))
+        table.setHorizontalHeaderLabels(all_headers)
+        apply_compact_table_style(table)
+        # Re-enable sorting disabled by apply_compact_table_style
+        table.setSortingEnabled(True)
+
+        self._install_table_context_menu(
+            table,
+            item_kind=item_kind,
+            id_col=id_col,
+            delete_one_fn=delete_one_fn,
+            usage_fn=usage_fn,
+            extra_actions=extra_actions,
+        )
+
+        if open_details_fn is not None:
+            table.cellDoubleClicked.connect(
+                lambda row, _col: (
+                    open_details_fn(str(table.item(row, id_col).text()))
+                    if table.item(row, id_col)
+                    else None
+                )
+            )
+
+    def _build_filter_bar(
+        self,
+        filters: list[dict[str, Any]],
+    ) -> QtWidgets.QWidget:
+        """Build a generic filter bar with labelled combo boxes.
+
+        Each entry in *filters* supports:
+            label      – display text for the QLabel
+            attr       – stored as ``self.{attr}`` (QComboBox)
+            items      – static list of items to add (optional)
+            signal     – ``"currentIndexChanged"`` (default) or ``"currentTextChanged"``
+            cb         – callable connected to *signal* (optional)
+            default_data – userData for the empty first item (default ``""``)
+        """
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        for f in filters:
+            layout.addWidget(QtWidgets.QLabel(f["label"]))
+            combo = QtWidgets.QComboBox()
+            items = f.get("items")
+            if items:
+                for item in items:
+                    if isinstance(item, tuple):
+                        combo.addItem(item[0], item[1])
+                    else:
+                        combo.addItem(item, item)
+            else:
+                combo.addItem("", f.get("default_data", ""))
+            setattr(self, f["attr"], combo)
+            if f.get("cb"):
+                sig = f.get("signal", "currentIndexChanged")
+                getattr(combo, sig).connect(f["cb"])
+            layout.addWidget(combo)
+        layout.addStretch()
+        return widget
+
+    def _create_standard_dock_tab(
+        self,
+        table: QtWidgets.QTableWidget,
+        detail_widget: MFDBDetailWidget,
+        save_slot: Callable[[], None] | None = None,
+        delete_slot: Callable[[], None] | None = None,
+        extra_widgets_top: list[QtWidgets.QWidget] | None = None,
+        extra_buttons: list[QtWidgets.QWidget] | None = None,
+        extra_widgets_bottom: list[QtWidgets.QWidget] | None = None,
+    ) -> QtWidgets.QWidget:
+        """Create a standardized dock tab layout with a table at the top and a form at the bottom."""
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        if extra_widgets_top:
+            for w in extra_widgets_top:
+                layout.addWidget(w)
+
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        layout.addWidget(splitter, stretch=1)
+
+        splitter.addWidget(table)
+
+        bottom_widget = QtWidgets.QWidget()
+        bottom_layout = QtWidgets.QVBoxLayout(bottom_widget)
+        bottom_layout.setContentsMargins(4, 4, 4, 4)
+        bottom_layout.setSpacing(4)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(detail_widget)
+        scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
+        bottom_layout.addWidget(scroll, stretch=1)
+
+        if extra_widgets_bottom:
+            for w in extra_widgets_bottom:
+                bottom_layout.addWidget(w)
+
+        buttons_layout = QtWidgets.QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setSpacing(2)
+
+        if save_slot:
+            save_btn = self._text_icon_button(
+                "💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save changes", save_slot
+            )
+            buttons_layout.addWidget(save_btn)
+
+        if delete_slot:
+            delete_btn = self._text_icon_button(
+                "🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete selected", delete_slot
+            )
+            buttons_layout.addWidget(delete_btn)
+
+        if extra_buttons:
+            for btn in extra_buttons:
+                buttons_layout.addWidget(btn)
+
+        buttons_layout.addStretch()
+        bottom_layout.addLayout(buttons_layout)
+
+        splitter.addWidget(bottom_widget)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 2)
+
+        return widget
+
+    def _checkbox_item(self, checked: bool = False) -> QtWidgets.QTableWidgetItem:
+        """Return a centered, checkable table item for column 0."""
+        item = QtWidgets.QTableWidgetItem("")
+        item.setFlags(
+            QtCore.Qt.ItemIsUserCheckable
+            | QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+        )
+        item.setCheckState(QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked)
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        return item
+
+    def _checked_row_ids(self, table: QtWidgets.QTableWidget, id_col: int = 1) -> list[str]:
+        """Return IDs of all checked rows in *table*."""
+        ids: list[str] = []
+        for row in range(table.rowCount()):
+            cb = table.item(row, 0)
+            if cb is not None and cb.checkState() == QtCore.Qt.Checked:
+                id_item = table.item(row, id_col)
+                if id_item is not None:
+                    ids.append(id_item.text().strip())
+        return ids
 
     @staticmethod
     def _apply_checkable_first_column(table: QtWidgets.QTableWidget) -> None:
@@ -742,64 +1210,237 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 out[tid] = f"{n} experiment(s)"
         return out
 
-    def setup_ui(self) -> None:
-        self._central_widget = QtWidgets.QWidget()
-        self.setCentralWidget(self._central_widget)
-        layout = QtWidgets.QVBoxLayout(self._central_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+    def _extra_buttons_for_spec(self, spec: "EntitySpec") -> list[QtWidgets.QWidget]:
+        """Return ChiSurf-specific extra toolbar buttons for a given EntitySpec.
 
-        header = QtWidgets.QLabel("<h2>mfdb-admin</h2>")
-        header.setContentsMargins(4, 4, 4, 0)
-        header.setCursor(QtCore.Qt.PointingHandCursor)
-        header.mousePressEvent = self._on_header_label_clicked
-        layout.addWidget(header)
+        These are per-entity actions that are NOT part of generic CRUD but are
+        specific to ChiSurf administration (branch management, password change,
+        etc.).  Every button must be a QWidget (e.g. QToolButton).
+        """
+        btns: list[QtWidgets.QWidget] = []
 
-        self.tabs = DockArea(self, stacked_tabs=True)
-        self.tabs.setNewTabButtonVisible(False)
-        self.tabs.setContextMenuEnabled(True)
-        self.tabs.setContextMenuMode("basic")
-        self._tabs_by_name: dict[str, QtWidgets.QWidget] = {}
-        layout.addWidget(self.tabs, stretch=1)
-        tab_widgets = (
-            ("All items", self.all_items_tab()),
-            ("Sample", self.sample_tab()),
-            ("Condition", self.condition_tab()),
-            ("Entities", self.entities_tab()),
-            ("Probes", self.probes_tab()),
-            ("Label positions", self.positions_tab()),
-            ("Metadata", self.metadata_tab()),
-            ("Users", self.users_tab()),
-            ("Branches", self.branches_tab()),
-            ("Devices", self.devices_tab()),
-            ("Setups", self.setups_tab()),
-            ("Raw data", self.raw_data_tab()),
-            ("Processing runs", self.processing_runs_tab()),
-            ("Processed products", self.processed_products_tab()),
-            ("Objects", self.objects_tab()),
-            ("Analyses", self.analyses_tab()),
-            ("Provenance", self.provenance_tab()),
-            ("Provenance graph", self.provenance_graph_dock()),
-            ("Experiment types", self.experiment_types_tab()),
-            ("Experiments", self.experiments_tab()),
-            ("Projects", self.projects_tab()),
-            ("Import/Export", self.import_export_tab()),
+        if spec.key == "user":
+            pw_btn = QtWidgets.QToolButton()
+            pw_btn.setText("🔑 Change password")
+            pw_btn.setToolTip("Change the selected user's password")
+            pw_btn.clicked.connect(self._change_password_for_selected_user)
+            btns.append(pw_btn)
+
+            branch_btn = QtWidgets.QToolButton()
+            branch_btn.setText("⎇ Jump to branch")
+            branch_btn.setToolTip("Move the selected user to a branch")
+            branch_btn.clicked.connect(self.create_time_branch)
+            btns.append(branch_btn)
+
+        elif spec.key == "branch":
+            head_btn = QtWidgets.QToolButton()
+            head_btn.setText("🕐 Set head")
+            head_btn.setToolTip("Update the head operation of this branch")
+            head_btn.clicked.connect(self._set_branch_head_for_selected)
+            btns.append(head_btn)
+
+        return btns
+
+    def _change_password_for_selected_user(self) -> None:
+        """Open password-change dialog for the user selected in the Users dock."""
+        dock = self._entity_docks.get("user")
+        if dock is None:
+            return
+        user_id = dock.selected_row_id() if isinstance(dock, EntityDock) else None
+        if not user_id:
+            QtWidgets.QMessageBox.information(self, "No user selected", "Select a user row first.")
+            return
+        dlg = PasswordChangeDialog(user_id=user_id, client=self.client, parent=self)
+        dlg.exec()
+
+    def _set_branch_head_for_selected(self) -> None:
+        """Prompt for a head operation ID and update the selected branch."""
+        dock = self._entity_docks.get("branch")
+        if dock is None:
+            return
+        branch_uuid = dock.selected_row_id() if isinstance(dock, EntityDock) else None
+        if not branch_uuid:
+            QtWidgets.QMessageBox.information(self, "No branch selected", "Select a branch row first.")
+            return
+        op_id, ok = QtWidgets.QInputDialog.getText(
+            self, "Set branch head", "Operation ID (leave empty to reset to None):"
         )
-        for label, widget in tab_widgets:
-            self.tabs.addTab(widget, label)
-            self._tabs_by_name[label] = widget
-        self.tabs.layoutChanged.connect(self._save_dock_layout)
+        if not ok:
+            return
+        try:
+            self.client.update_branch_head(branch_uuid, op_id.strip() or None)
+            self.status_label.setText(f"Branch {branch_uuid} head updated.")
+            if isinstance(dock, EntityDock):
+                dock.refresh()
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(self, "Update failed", str(exc))
 
-        self.status_label = QtWidgets.QLabel("")
-        self.status_label.setWordWrap(True)
-        layout.addWidget(self.status_label)
+    # ------------------------------------------------------------------
+    # Navigation panels (NavigationPanelTool)
+    # ------------------------------------------------------------------
+
+    _ENTITY_GROUPS = (
+        "Samples & chemistry",
+        "Experiments & data",
+        "Provenance",
+        "Administration",
+    )
+
+    def _build_panels(self) -> list[dict[str, Any]]:
+        """Return the ordered left-nav panel list for the shell.
+
+        The old nested DockArea/QTabWidget grouping is flattened into one nav
+        list: separator headers group the per-entity panels, the aggregate
+        Overview/All-items/Measurements/Graph/Import-Export tabs become panels,
+        and the previously-orphaned workflow views are surfaced.
+        """
+        panels: list[dict[str, Any]] = [
+            {"name": "Overview", "icon": "📊", "factory": lambda p: self.overview_tab()},
+            {"name": "All items", "icon": "🗂", "factory": lambda p: self.all_items_tab()},
+            {"name": "Measurements", "icon": "📈", "factory": lambda p: self.measurements_tab()},
+        ]
+
+        def _add_group_entities(group: str) -> None:
+            if self._dictionary is None:
+                return
+            for spec in [s for s in ENTITY_REGISTRY if s.group == group]:
+                panels.append({
+                    "name": spec.title,
+                    "entity_key": spec.key,
+                    "factory": self._entity_factory(spec),
+                })
+
+        panels.append({"name": "Samples & chemistry", "separator": True})
+        _add_group_entities("Samples & chemistry")
+        panels.append({
+            "name": "Sample Metadata", "entity_key": "metadata",
+            "factory": self._metadata_factory,
+        })
+
+        panels.append({"name": "Experiments & data", "separator": True})
+        _add_group_entities("Experiments & data")
+
+        panels.append({"name": "Provenance", "separator": True})
+        _add_group_entities("Provenance")
+        panels.append({"name": "Provenance Graph", "factory": lambda p: self.provenance_graph_dock()})
+
+        panels.append({"name": "Administration", "separator": True})
+        _add_group_entities("Administration")
+        panels.append({"name": "Import / Export", "factory": lambda p: self.import_export_tab()})
+
+        panels.append({"name": "Workflows & QC", "separator": True})
+        panels += [
+            {"name": "Studies", "factory": lambda p: StudiesView(self.client, p)},
+            {"name": "Protocols", "factory": lambda p: ProtocolsView(self.client, p)},
+            {"name": "Lifecycle", "factory": lambda p: LifecycleView(self.client, p)},
+            {"name": "Calibrations", "factory": lambda p: CalibrationsView(self.client, p)},
+            {"name": "Reagent Lots", "factory": lambda p: ReagentLotsView(self.client, p)},
+            {"name": "Pipelines", "factory": lambda p: PipelinesView(self.client, p)},
+        ]
+        return panels
+
+    def _entity_factory(self, spec: EntitySpec):
+        """Build a lazy factory creating + registering an EntityDock for ``spec``."""
+        def factory(parent):
+            dock = EntityDock(
+                spec=spec,
+                client=self.client,
+                dictionary=self._dictionary,
+                schema_map=self._schema_map,
+                registry_dict=self._registry_dict,
+                extra_buttons=self._extra_buttons_for_spec(spec),
+            )
+            self._entity_docks[spec.key] = dock
+            dock.jumpRequested.connect(
+                lambda ek, rid, _k=spec.key: self._jump_to_entity(ek, rid)
+            )
+            dock.statusMessage.connect(self.status_label.setText)
+            return dock
+        return factory
+
+    def _metadata_factory(self, parent):
+        dock = MetadataDock(client=self.client)
+        self._entity_docks["metadata"] = dock
+        return dock
+
+    def _refresh_active_panel(self) -> None:
+        """Refresh the currently visible panel if it is an entity dock."""
+        idx = self.nav_list.currentRow()
+        if 0 <= idx < len(self.panels):
+            inst = self.panels[idx].get("instance")
+            widget = self._unwrap(inst)
+            if isinstance(widget, EntityDock):
+                widget.refresh()
+
+    @staticmethod
+    def _unwrap(wrapper):
+        """Return the panel content widget from a NavigationPanelTool wrapper."""
+        if wrapper is None:
+            return None
+        layout = wrapper.layout()
+        if layout is not None and layout.count():
+            return layout.itemAt(layout.count() - 1).widget()
+        return wrapper
+
+    def _jump_to_entity(self, entity_key: str, record_id: str) -> None:
+        """Select the entity's nav panel (lazy-building its dock), then the record."""
+        row = self._row_by_entity.get(entity_key)
+        if row is None:
+            return
+        self.nav_list.setCurrentRow(row)  # builds + shows the panel
+        dock = self._entity_docks.get(entity_key)
+        if dock is None:
+            return
+        if entity_key == "metadata":
+            dock.load_sample(record_id)
+        else:
+            dock.jump_to(record_id)
+
+    def setup_ui(self) -> None:
+        # The NavigationPanelTool shell owns the central widget (nav list + stack).
+        # This method only builds the hidden legacy tab widgets for their
+        # attribute side-effects (self.*_table / *_detail_widget / *_edit) that
+        # clear_form()/refresh() and other utilities still reference.
+
+        # --- Initialise bespoke-tab attributes without showing the tabs ---
+        # These calls create self.*_table / self.*_detail_widget / self.*_edit
+        # attributes that clear_form(), refresh(), and other utility methods
+        # still reference. The widgets are created but never added to self.tabs.
+        # Build legacy tab widgets off-screen.  Store in an instance attr so
+        # the underlying C++ QWidget objects are never garbage-collected while
+        # this window exists (parentless, hidden widgets are freed by Qt if no
+        # Python strong reference holds them).
+        self._hidden_legacy_tabs = (
+            self.sample_tab(),
+            self.condition_tab(),
+            self.entities_tab(),
+            self.probes_tab(),
+            self.positions_tab(),
+            self.fret_pairs_tab(),
+            self.metadata_tab(),
+            self.experiments_tab(),
+            self.processing_runs_tab(),
+            self.raw_data_tab(),
+            self.processed_products_tab(),
+            self.objects_tab(),
+            self.analyses_tab(),
+            self.provenance_tab(),
+            self.users_tab(),
+            self.branches_tab(),
+            self.devices_tab(),
+            self.setups_tab(),
+            self.experiment_types_tab(),
+            self.projects_tab(),
+        )
+        # status_label is created in __init__ (before super); entity panels are
+        # built lazily by the nav shell via the factories in _build_panels().
 
     def setup_menu_bar(self) -> None:
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("⬇️ &Import...", self.import_file)
         file_menu.addAction("⬆️ &Export selected sample...", self.export_selected_sample)
         file_menu.addAction("💾 &Backup database...", self.backup_database)
-        file_menu.addAction("♻️ Reset database from source...", self.reset_from_source)
+        file_menu.addAction("♻️ Reset", self.reset_from_source)
         file_menu.addSeparator()
         file_menu.addAction("❌ &Close", self.close)
 
@@ -884,13 +1525,16 @@ class MFDBWidget(QtWidgets.QMainWindow):
         toolbar.addSeparator()
         
         self.refresh_action = toolbar.addAction("🔄 Refresh", self.refresh)
+        self.refresh_action.setToolTip("Reload MFDB status and visible tables")
         self._transport_actions = [self.refresh_action]
-        for text, slot in (
-            ("⬇️ Import", self.import_file),
-            ("💾 Backup", self.backup_database),
-            ("♻️ Reset from source", self.reset_from_source),
+        for text, slot, tip in (
+            ("⬇️ Import", self.import_file, "Import fluorescence/sample/project data into MFDB"),
+            ("💾 Backup", self.backup_database, "Create a backup copy of the active MFDB database"),
+            ("♻️ Reset", self.reset_from_source, "Reset the active MFDB database. A backup is created first."),
         ):
-            self._transport_actions.append(toolbar.addAction(text, slot))
+            action = toolbar.addAction(text, slot)
+            action.setToolTip(tip)
+            self._transport_actions.append(action)
         self._set_transport_connected(False)
         self._update_login_actions(logged_in=False)
         
@@ -1000,11 +1644,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
         try:
             self.client.logout()
         except Exception:
-            pass
+            chisurf.logging.warning("_on_logout_clicked(self) -> None: %s", _exc)
         try:
             self.client.token = None
         except Exception:
-            pass
+            chisurf.logging.warning("_on_logout_clicked(self) -> None: %s", _exc)
         self._auth_login_user = None
         self._update_login_actions(logged_in=False)
         self.status_label.setText("Logged out.")
@@ -1017,6 +1661,48 @@ class MFDBWidget(QtWidgets.QMainWindow):
     def setup_status_bar(self) -> None:
         self.statusBar().addPermanentWidget(self.status_label, stretch=1)
         self.statusBar().showMessage("Ready")
+
+    def _set_status_message(self, message: str, timeout_ms: int = 0) -> None:
+        """Show a status message in the label and status bar."""
+        self.status_label.setText(message)
+        self.statusBar().showMessage(message, timeout_ms)
+
+    def _run_background_task(
+        self,
+        *,
+        label: str,
+        fn: Callable[[], Any],
+        on_success: Callable[[Any], None],
+        on_failure: Callable[[str], None] | None = None,
+    ) -> None:
+        """Run a blocking callable in a QThread and marshal results to the GUI."""
+        thread = QtCore.QThread(self)
+        worker = _MFDBBackgroundTask(fn)
+        worker.moveToThread(thread)
+        self._background_tasks.append((thread, worker))
+
+        def _cleanup() -> None:
+            try:
+                self._background_tasks.remove((thread, worker))
+            except ValueError:
+                pass
+            thread.deleteLater()
+
+        def _failed(error: str) -> None:
+            if on_failure is not None:
+                on_failure(error)
+            else:
+                self._set_status_message(f"{label} failed: {error}")
+
+        thread.started.connect(worker.run)
+        worker.finished.connect(on_success)
+        worker.failed.connect(_failed)
+        worker.finished.connect(worker.deleteLater)
+        worker.failed.connect(worker.deleteLater)
+        worker.finished.connect(thread.quit)
+        worker.failed.connect(thread.quit)
+        thread.finished.connect(_cleanup)
+        thread.start()
 
     # ------------------------------------------------------------------ #
     # All items dock
@@ -1079,6 +1765,164 @@ class MFDBWidget(QtWidgets.QMainWindow):
              "tab": "Projects", "table": "projects_table", "id_col": 0},
         ]
 
+    def overview_tab(self) -> QtWidgets.QWidget:
+        """Database overview with counts and health summary (Task 11.5)."""
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(6)
+
+        refresh_btn = self._text_icon_button(
+            "🔄 Refresh overview", QtWidgets.QStyle.SP_BrowserReload,
+            "Reload database overview", self._refresh_overview
+        )
+        layout.addWidget(refresh_btn)
+
+        self.overview_text = QtWidgets.QPlainTextEdit()
+        self.overview_text.setReadOnly(True)
+        self.overview_text.setStyleSheet("font-family: monospace; font-size: 11pt;")
+        self.overview_text.setMinimumHeight(300)
+        layout.addWidget(self.overview_text, stretch=1)
+
+        self._refresh_overview()
+        return widget
+
+    def _refresh_overview(self) -> None:
+        """Update the overview panel with current database stats."""
+        try:
+            status = self.client.status() or {}
+            parts = [
+                "=== MFDB Database Overview ===",
+                "",
+                f"  User DB:       {status.get('user_database', '—')}",
+                f"  Source DB:     {status.get('source_database', '—')}",
+                f"  Schema:        {status.get('schema_version', '?')}",
+                f"  Samples:       {status.get('sample_count', '?')}",
+                f"  Experiments:   {status.get('experiment_count', '?')}",
+                f"  Raw data:      {status.get('raw_data_count', '?')}",
+                f"  Processed:     {status.get('processed_run_count', '?')}",
+                f"  Users:         {status.get('user_count', '?')}",
+                f"  Devices:       {status.get('device_count', '?')}",
+                f"  Prov. edges:   {status.get('provenance_edge_count', '?')}",
+                "",
+            ]
+
+            # Quality warnings
+            warnings_list = []
+            try:
+                samples = self.client.list_samples()
+                for s in samples:
+                    sid = s.get("sample_id", "")
+                    if not s.get("description"):
+                        warnings_list.append(f"  ⚠ Sample '{sid}' has no description")
+            except Exception:
+                chisurf.logging.warning("Operation failed: %s", _exc)
+
+            if warnings_list:
+                parts.append("=== Quality Warnings ===")
+                parts.extend(warnings_list)
+                parts.append("")
+            else:
+                parts.append("No quality warnings detected.")
+                parts.append("")
+
+            self.overview_text.setPlainText("\n".join(parts))
+        except Exception as exc:
+            self.overview_text.setPlainText(f"Failed to load overview: {exc}")
+
+    def measurements_tab(self) -> QtWidgets.QWidget:
+        """Unified Measurements dock — aggregates raw data, processing runs,
+        and processed products (Task 11.1)."""
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        filter_bar = QtWidgets.QHBoxLayout()
+        self.meas_kind_combo = QtWidgets.QComboBox()
+        self.meas_kind_combo.addItems(["All", "Raw data", "Processing runs", "Processed products"])
+        filter_bar.addWidget(QtWidgets.QLabel("Kind:"))
+        filter_bar.addWidget(self.meas_kind_combo)
+        self.meas_search_edit = QtWidgets.QLineEdit()
+        self.meas_search_edit.setPlaceholderText("Search...")
+        filter_bar.addWidget(self.meas_search_edit)
+        filter_bar.addWidget(self._text_icon_button(
+            "🔄 Refresh", QtWidgets.QStyle.SP_BrowserReload,
+            "Refresh measurements list", self._refresh_measurements
+        ))
+        filter_bar.addStretch()
+        layout.addLayout(filter_bar)
+
+        self.measurements_table = QtWidgets.QTableWidget(0, 9)
+        apply_compact_table_style(self.measurements_table)
+        self.measurements_table.setHorizontalHeaderLabels(
+            ["kind", "id", "sample", "experiment", "status", "created", "location", "project", "sample QA"]
+        )
+        self.measurements_table.horizontalHeader().setStretchLastSection(True)
+        self.measurements_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.measurements_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        layout.addWidget(self.measurements_table, stretch=1)
+        return widget
+
+    def _refresh_measurements(self) -> None:
+        """Reload measurements from all sources into the unified table."""
+        self.measurements_table.setRowCount(0)
+        kind_filter = self.meas_kind_combo.currentText()
+        search_text = self.meas_search_edit.text().strip().lower()
+
+        sources: list[tuple[str, str, list[dict[str, Any]]]] = []
+
+        if kind_filter in ("All", "Raw data"):
+            try:
+                raw = self.client.list_raw_data()
+                sources.append(("Raw", "raw_data_id", raw))
+            except Exception:
+                chisurf.logging.warning("_refresh_measurements(self) -> None: %s", _exc)
+
+        if kind_filter in ("All", "Processing runs"):
+            try:
+                procs = self.client.list_processing_runs()
+                sources.append(("Processing", "processing_id", procs))
+            except Exception:
+                chisurf.logging.warning("_refresh_measurements(self) -> None: %s", _exc)
+
+        if kind_filter in ("All", "Processed products"):
+            try:
+                products = self.client.list_processed_data()
+                sources.append(("Processed", "processed_data_id", products))
+            except Exception:
+                chisurf.logging.warning("Operation failed: %s", _exc)
+
+        for kind, id_key, items in sources:
+            for item in items:
+                item_id = str(item.get(id_key, ""))
+                sample = str(item.get("sample_id", ""))
+                experiment = str(item.get("experiment_id", ""))
+                status = str(item.get("status", ""))
+                created = str(item.get("created_at", "") or item.get("acquired_at", ""))
+                location = str(
+                    item.get("file_path", "") or item.get("url", "") or item.get("folder_path", "")
+                )
+                project = str(item.get("project_id", ""))
+                sample_qa = str(item.get("sample_quality_status", ""))
+
+                if search_text and search_text not in (
+                    kind.lower() + item_id.lower() + sample.lower() + project.lower()
+                ):
+                    continue
+
+                row = self.measurements_table.rowCount()
+                self.measurements_table.insertRow(row)
+                values = [kind, item_id, sample, experiment, status, created, location, project, sample_qa]
+                for col, val in enumerate(values):
+                    self.measurements_table.setItem(
+                        row, col, QtWidgets.QTableWidgetItem(val)
+                    )
+
+        self.status_label.setText(
+            f"Measurements: {self.measurements_table.rowCount()} rows"
+        )
+
     def all_items_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(widget)
@@ -1116,10 +1960,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
         self.all_items_table = QtWidgets.QTableWidget(0, 4)
         self.all_items_table.setHorizontalHeaderLabels(["type", "id", "label", "details"])
-        self.all_items_table.horizontalHeader().setStretchLastSection(True)
-        self.all_items_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        apply_compact_table_style(self.all_items_table)
         self.all_items_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.all_items_table.setAlternatingRowColors(True)
         self.all_items_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.all_items_table.itemDoubleClicked.connect(self._on_all_item_activated)
         self.all_items_table.itemActivated.connect(self._on_all_item_activated)
@@ -1164,6 +2006,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 self.all_items_table.setItem(row, 2, QtWidgets.QTableWidgetItem(label_value))
                 details = self._summarise_item(source["type"], item)
                 self.all_items_table.setItem(row, 3, QtWidgets.QTableWidgetItem(details))
+        self.all_items_table.resizeColumnsToContents()
+        # Last column stretches; cap the others so the table doesn't sprawl
+        for col in range(self.all_items_table.columnCount() - 1):
+            w = self.all_items_table.columnWidth(col)
+            self.all_items_table.setColumnWidth(col, min(w, 220))
         self._filter_all_items_table()
 
     @staticmethod
@@ -1241,37 +2088,24 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
         self._jump_to_item(payload)
 
+    #: All-items "type" values that differ from the entity-registry key.
+    _ALL_ITEMS_ENTITY_ALIAS = {"processed_data": "processed_product"}
+
     def _jump_to_item(self, payload: dict[str, Any]) -> None:
-        tab_name = payload.get("tab", "")
-        tab_widget = self._tabs_by_name.get(tab_name)
-        if tab_widget is not None:
+        item_type = payload.get("type", "")
+        item_id = payload.get("id", "")
+        entity_key = self._ALL_ITEMS_ENTITY_ALIAS.get(item_type, item_type)
+        # Jump to the entity's nav panel and select the record there.
+        if entity_key in self._row_by_entity and item_id:
+            self._jump_to_entity(entity_key, item_id)
+            return
+        # Fallback: a bespoke loader for types without a registered entity panel.
+        load_method = getattr(self, f"load_{item_type}", None)
+        if load_method and item_id:
             try:
-                index = self.tabs.indexOf(tab_widget)
-            except Exception:
-                index = -1
-            if index >= 0:
-                if hasattr(self.tabs, "isTabVisible") and hasattr(self.tabs, "showTab"):
-                    try:
-                        if not self.tabs.isTabVisible(index):
-                            self.tabs.showTab(index)
-                    except Exception:
-                        pass
-                try:
-                    self.tabs.setCurrentWidget(tab_widget)
-                except Exception:
-                    pass
-        # Try to select in table first
-        table_attr = payload.get("table")
-        table = getattr(self, table_attr, None) if table_attr else None
-        if table is not None and not self._is_widget_deleted(table):
-            self._select_row_by_id(table, int(payload.get("id_col", 0)), payload.get("id", ""))
-        # If no table or table not found, try to call a load method
-        elif tab_name:
-            item_type = payload.get("type", "")
-            item_id = payload.get("id", "")
-            load_method = getattr(self, f"load_{item_type}", None)
-            if load_method and item_id:
                 load_method(item_id)
+            except Exception as exc:
+                chisurf.logging.warning("_jump_to_item: load_%s(%r): %s", item_type, item_id, exc)
 
     @staticmethod
     def _select_row_by_id(table: QtWidgets.QTableWidget, id_col: int, value: str) -> None:
@@ -1289,6 +2123,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         settings.remove("dock_layout")
         settings.remove("geometry")
         settings.remove("state")
+        settings.remove("group_tab")
+        settings.remove("entity_splitter")
         self.resize(1100, 760)
         self._restore_dock_layout()
 
@@ -1319,41 +2155,92 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
     def populate_mock_data(self) -> None:
         """Populate the active MFDB with bundled mock/demo data."""
-        try:
-            summary = self.client.populate_mock_data()
-        except Exception as exc:
-            self.status_label.setText(f"Mock data population failed: {exc}")
+        if self._mock_data_task_running:
+            self._set_status_message("Mock data population is already running.")
             return
-        if hasattr(self, "preview_edit"):
-            self.preview_edit.setPlainText(json.dumps(summary, indent=2, default=str))
-        self.status_label.setText(
-            f"Mock data populated: {summary.get('sample_id', 'sample')} "
-            f"from {len(summary.get('used_test_files', []))} test file(s)"
+
+        self._mock_data_task_running = True
+        previous_transport_state = bool(getattr(self, "transport_connected", False))
+        self._set_transport_connected(False)
+        self._set_status_message(
+            "Populating MFDB demo data in background. The GUI remains usable."
         )
-        self.refresh()
+        if hasattr(self, "preview_edit"):
+            self.preview_edit.setPlainText(
+                "Populating bundled smFRET demo data from test fixtures...\n"
+                "This may take a moment for a fresh database."
+            )
+
+        def _succeeded(summary: Any) -> None:
+            self._mock_data_task_running = False
+            if isinstance(summary, dict) and hasattr(self, "preview_edit"):
+                self.preview_edit.setPlainText(
+                    json.dumps(summary, indent=2, default=str)
+                )
+            raw_count = (
+                len(summary.get("raw_data_ids", []))
+                if isinstance(summary, dict)
+                else 0
+            )
+            sample_id = summary.get("sample_id", "?") if isinstance(summary, dict) else "?"
+            self._set_status_message(
+                "Mock data populated: "
+                f"{raw_count} raw files, sample {sample_id}. Refreshing tables..."
+            )
+            QtCore.QTimer.singleShot(0, self.refresh)
+
+        def _failed(error: str) -> None:
+            self._mock_data_task_running = False
+            self._set_transport_connected(previous_transport_state)
+            self._set_status_message(f"Mock data population failed: {error}")
+            if hasattr(self, "preview_edit"):
+                self.preview_edit.setPlainText(
+                    "Mock data population failed:\n\n"
+                    f"{error}"
+                )
+
+        self._run_background_task(
+            label="Mock data population",
+            fn=self.client.populate_mock_data,
+            on_success=_succeeded,
+            on_failure=_failed,
+        )
 
     def sample_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
-        layout = QtWidgets.QFormLayout(widget)
+        layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.sample_id_edit = QtWidgets.QLineEdit()
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        layout.addWidget(splitter, stretch=1)
+
+        header_widget = QtWidgets.QWidget()
+        header_layout = QtWidgets.QVBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(2)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.sample_detail_widget)
+        scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
+        header_layout.addWidget(scroll, stretch=1)
+
+        # Reassign widget references for compatibility with the rest of the class
+        self.sample_id_edit = self.sample_detail_widget.widgets["sample_id"]
+        self.uuid_edit = self.sample_detail_widget.widgets["sample_uuid"]
+        self.description_edit = self.sample_detail_widget.widgets["description"]
+        self.details_edit = self.sample_detail_widget.widgets["details"]
+        self.num_probes_spin = self.sample_detail_widget.widgets["num_of_probes"]
+        self.solvent_edit = self.sample_detail_widget.widgets["solvent_phase"]
+        self.condition_id_edit = self.sample_detail_widget.widgets["sample_condition_id"]
+        self.assembly_id_edit = self.sample_detail_widget.widgets["entity_assembly_id"]
+        self.project_edit = self.sample_detail_widget.widgets["project_id"]
+        self.measured_by_combo = self.sample_detail_widget.widgets["measured_by_user_id"]
+        self.measured_device_combo = self.sample_detail_widget.widgets["measured_by_device_id"]
+        self.measured_at_edit = self.sample_detail_widget.widgets["measured_at"]
+
+        # Customize placeholder for sample_id_edit
         self.sample_id_edit.setPlaceholderText("Type sample id (autocomplete searches existing)")
-        self.uuid_edit = QtWidgets.QLineEdit()
-        self.uuid_edit.setPlaceholderText("Auto-generated if left empty")
-        self.description_edit = QtWidgets.QLineEdit()
-        self.details_edit = QtWidgets.QPlainTextEdit()
-        self.details_edit.setMinimumHeight(60)
-        self.num_probes_spin = QtWidgets.QSpinBox()
-        self.num_probes_spin.setRange(0, 1000)
-        self.solvent_edit = QtWidgets.QComboBox()
-        self.solvent_edit.addItems(["liquid", "vitrified", "other"])
-        self.condition_id_edit = QtWidgets.QLineEdit()
-        self.assembly_id_edit = QtWidgets.QLineEdit()
-        self.project_edit = QtWidgets.QLineEdit()
-        self.measured_by_combo = QtWidgets.QComboBox()
-        self.measured_device_combo = QtWidgets.QComboBox()
-        self.measured_at_edit = QtWidgets.QLineEdit()
 
         btn_row = QtWidgets.QHBoxLayout()
         new_btn = self._text_icon_button("🧪 New", QtWidgets.QStyle.SP_FileDialogNewFolder, "Create new sample", self.new_sample)
@@ -1379,25 +2266,218 @@ class MFDBWidget(QtWidgets.QMainWindow):
         btn_row.addWidget(full_btn)
         btn_row.addWidget(validate_btn)
         btn_row.addStretch()
+        header_layout.addLayout(btn_row)
+        splitter.addWidget(header_widget)
 
-        layout.addRow("Sample id", self.sample_id_edit)
-        layout.addRow("UUID", self.uuid_edit)
-        layout.addRow("Description", self.description_edit)
-        layout.addRow("Details", self.details_edit)
-        layout.addRow("Number of probes", self.num_probes_spin)
-        layout.addRow("Solvent phase", self.solvent_edit)
-        layout.addRow("Condition id", self.condition_id_edit)
-        layout.addRow("Entity assembly id", self.assembly_id_edit)
-        layout.addRow("Project id", self.project_edit)
-        layout.addRow("Measured by", self.measured_by_combo)
-        layout.addRow("Device", self.measured_device_combo)
-        layout.addRow("Measured at", self.measured_at_edit)
-        layout.addRow("", btn_row)
+        self.sample_subtabs = QtWidgets.QTabWidget()
+        self.sample_subtabs.addTab(self._entities_sub_panel(), "Entities")
+        self.sample_subtabs.addTab(self._probes_sub_panel(), "Probes & Positions")
+        self.sample_subtabs.addTab(self._fret_pairs_sub_panel(), "FRET Pairs")
+        self.sample_subtabs.addTab(self._condition_sub_panel(), "Condition")
+        self.sample_subtabs.addTab(self._full_description_panel(), "Full Description")
+        splitter.addWidget(self.sample_subtabs)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+
         self._setup_sample_id_completer()
         self.sample_id_edit.textChanged.connect(self._auto_generate_uuid)
         self.sample_id_edit.editingFinished.connect(self._on_sample_id_edited)
         self.condition_id_edit.editingFinished.connect(self._auto_fill_condition)
         return widget
+
+    def _entities_sub_panel(self) -> QtWidgets.QWidget:
+        """Return the structured sample entities editor."""
+        panel = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button("Add entity", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add entity row", self.add_entity_row))
+        buttons.addWidget(self._text_icon_button("Remove", QtWidgets.QStyle.SP_TrashIcon, "Remove selected entity row", self.remove_entity_row))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.sample_entities_table = QtWidgets.QTableWidget(0, 5)
+        self.sample_entities_table.setHorizontalHeaderLabels(
+            ["entity_id", "name", "type", "sequence", "details"]
+        )
+        self.sample_entities_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.DoubleClicked
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.EditKeyPressed
+        )
+        self.sample_entities_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.sample_entities_table, stretch=1)
+        return panel
+
+    def _probes_sub_panel(self) -> QtWidgets.QWidget:
+        """Return the structured sample probe-position editor."""
+        panel = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button("Add probe", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add probe row", self.add_probe_position_row))
+        buttons.addWidget(self._text_icon_button("Remove", QtWidgets.QStyle.SP_TrashIcon, "Remove selected probe row", self.remove_probe_position_row))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.sample_probes_table = QtWidgets.QTableWidget(0, 12)
+        self.sample_probes_table.setHorizontalHeaderLabels(
+            [
+                "probe_name", "entity", "seq_id", "comp_id", "asym_id", "atom_id",
+                "mutation", "modification", "abs_nm", "em_nm", "QY", "sample_probe_id",
+            ]
+        )
+        self.sample_probes_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.DoubleClicked
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.EditKeyPressed
+        )
+        self.sample_probes_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.sample_probes_table, stretch=1)
+        return panel
+
+    def _fret_pairs_sub_panel(self) -> QtWidgets.QWidget:
+        """Return the structured sample FRET-pair editor."""
+        panel = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button("Add pair", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add FRET pair row", self.add_fret_pair_row))
+        buttons.addWidget(self._text_icon_button("Remove", QtWidgets.QStyle.SP_TrashIcon, "Remove selected FRET pair row", self.remove_fret_pair_row))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.fret_pairs_table = QtWidgets.QTableWidget(0, 7)
+        self.fret_pairs_table.setHorizontalHeaderLabels(
+            ["donor", "acceptor", "R0 nm", "kappa^2", "n_refr", "overlap", "id"]
+        )
+        self.fret_pairs_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.DoubleClicked
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.EditKeyPressed
+        )
+        self.fret_pairs_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.fret_pairs_table, stretch=1)
+        return panel
+
+    def _condition_sub_panel(self) -> QtWidgets.QWidget:
+        """Return the sample-scoped condition editor used by structured saves."""
+        panel = QtWidgets.QWidget()
+        layout = QtWidgets.QFormLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.sample_condition_id_field = QtWidgets.QLineEdit()
+        self.sample_ph_spin = QtWidgets.QDoubleSpinBox()
+        self.sample_ph_spin.setRange(-1.0, 14.0)
+        self.sample_ph_spin.setSpecialValueText("auto")
+        self.sample_temperature_spin = QtWidgets.QDoubleSpinBox()
+        self.sample_temperature_spin.setRange(0.0, 400.0)
+        self.sample_temperature_spin.setSpecialValueText("auto")
+        self.sample_ionic_spin = QtWidgets.QDoubleSpinBox()
+        self.sample_ionic_spin.setRange(0.0, 10.0)
+        self.sample_ionic_spin.setSpecialValueText("auto")
+        self.sample_buffer_edit = QtWidgets.QLineEdit()
+        self.sample_condition_details_edit = QtWidgets.QPlainTextEdit()
+        self.sample_condition_details_edit.setMinimumHeight(60)
+        layout.addRow("Condition id", self.sample_condition_id_field)
+        layout.addRow("pH", self.sample_ph_spin)
+        layout.addRow("Temperature [K]", self.sample_temperature_spin)
+        layout.addRow("Ionic strength [M]", self.sample_ionic_spin)
+        layout.addRow("Buffer", self.sample_buffer_edit)
+        layout.addRow("Details", self.sample_condition_details_edit)
+        return panel
+
+    def _full_description_panel(self) -> QtWidgets.QWidget:
+        """Return the JSON full-description and validation preview panel."""
+        panel = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button("Refresh", QtWidgets.QStyle.SP_BrowserReload, "Refresh full description", self.refresh_full_description_panel))
+        buttons.addWidget(self._text_icon_button("Copy", QtWidgets.QStyle.SP_DialogSaveButton, "Copy JSON", self.copy_full_description_json))
+        buttons.addWidget(self._text_icon_button("Validate", QtWidgets.QStyle.SP_DialogApplyButton, "Validate export", self.validate_selected_sample_export))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.full_description_edit = QtWidgets.QPlainTextEdit()
+        self.full_description_edit.setReadOnly(True)
+        layout.addWidget(self.full_description_edit, stretch=2)
+        self.validation_list = QtWidgets.QListWidget()
+        layout.addWidget(self.validation_list, stretch=1)
+        return panel
+
+    def add_entity_row(self) -> None:
+        """Append an editable entity row to the active entity tables."""
+        table = self._active_entities_table()
+        row = table.rowCount()
+        table.insertRow(row)
+        values = ["", "", ENTITY_TYPES[0] if ENTITY_TYPES else "polymer", "", ""]
+        for column, value in enumerate(values):
+            table.setItem(row, column, QtWidgets.QTableWidgetItem(value))
+
+    def remove_entity_row(self) -> None:
+        """Remove selected entity rows from the active entity table."""
+        table = self._active_entities_table()
+        for row in sorted({item.row() for item in table.selectedItems()}, reverse=True):
+            table.removeRow(row)
+
+    def add_probe_position_row(self) -> None:
+        """Append an editable probe-position row to the sample probe table."""
+        table = self.sample_probes_table
+        row = table.rowCount()
+        table.insertRow(row)
+        probe_name = COMMON_PROBE_NAMES[0] if COMMON_PROBE_NAMES else ""
+        defaults = DEFAULT_FLUOROPHORE_SPECTRA.get(probe_name, {})
+        values = [
+            probe_name, "", "", "", "A", "", "no", "no",
+            defaults.get("absorption_wavelength_nm", ""),
+            defaults.get("emission_wavelength_nm", ""),
+            defaults.get("quantum_yield", ""),
+            "",
+        ]
+        for column, value in enumerate(values):
+            table.setItem(row, column, QtWidgets.QTableWidgetItem(value))
+
+    def remove_probe_position_row(self) -> None:
+        """Remove selected probe-position rows."""
+        table = self.sample_probes_table
+        for row in sorted({item.row() for item in table.selectedItems()}, reverse=True):
+            table.removeRow(row)
+
+    def add_fret_pair_row(self) -> None:
+        """Append an editable FRET pair row."""
+        row = self.fret_pairs_table.rowCount()
+        self.fret_pairs_table.insertRow(row)
+        values = ["", "", "", "0.6666667", "1.4", "", ""]
+        for column, value in enumerate(values):
+            self.fret_pairs_table.setItem(row, column, QtWidgets.QTableWidgetItem(value))
+
+    def remove_fret_pair_row(self) -> None:
+        """Remove selected FRET pair rows."""
+        for row in sorted({item.row() for item in self.fret_pairs_table.selectedItems()}, reverse=True):
+            self.fret_pairs_table.removeRow(row)
+
+    def _active_entities_table(self) -> QtWidgets.QTableWidget:
+        """Return the entity table currently used for sample editing."""
+        return getattr(self, "sample_entities_table", self.entities_table)
+
+    def refresh_full_description_panel(self) -> None:
+        """Refresh the embedded full-description JSON panel."""
+        sample_id = self._active_sample_id()
+        if not sample_id:
+            self.status_label.setText("Select or enter a sample id")
+            return
+        description = self.client.get_sample_full_description(sample_id)
+        self.full_description_edit.setPlainText(
+            json.dumps(description, indent=2, default=str)
+        )
+        self.status_label.setText(f"Loaded full description for {sample_id}")
+
+    def copy_full_description_json(self) -> None:
+        """Copy the embedded full-description JSON to the clipboard."""
+        QtWidgets.QApplication.clipboard().setText(
+            self.full_description_edit.toPlainText()
+        )
 
     def _auto_generate_uuid(self) -> None:
         if self._loading:
@@ -1413,14 +2493,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
             sample = self.client._call("sample_database.samples.get", {"sample_id": cid})
             cond = (sample.get("sample") or {}).get("condition")
             if cond:
-                self.condition_id_field.setText(cond.get("condition_id", ""))
-                self.ph_spin.setValue(float(cond.get("ph") or 0))
-                self.temperature_spin.setValue(float(cond.get("temperature") or 0))
-                self.ionic_spin.setValue(float(cond.get("ionic_strength") or 0))
-                self.buffer_edit.setText(cond.get("buffer_composition", ""))
-                self.condition_details_edit.setPlainText(cond.get("details", ""))
+                self.condition_detail_widget.set_data(cond)
         except Exception:
-            pass
+            chisurf.logging.warning("_auto_fill_condition(self) -> None: %s", _exc)
 
     def _setup_sample_id_completer(self) -> None:
         try:
@@ -1434,7 +2509,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
             self.sample_id_edit.setCompleter(completer)
         except Exception:
-            pass
+            chisurf.logging.warning("_setup_sample_id_completer(self) -> None: %s", _exc)
 
     def _on_sample_id_edited(self) -> None:
         sample_id = self.sample_id_edit.text().strip()
@@ -1445,59 +2520,49 @@ class MFDBWidget(QtWidgets.QMainWindow):
             if sample:
                 self.load_sample(sample_id)
         except Exception:
-            pass
+            chisurf.logging.warning("_on_sample_id_edited(self) -> None: %s", _exc)
 
     def condition_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
-        layout = QtWidgets.QFormLayout(widget)
+        layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        self.condition_id_field = QtWidgets.QLineEdit()
+        layout.setSpacing(4)
+
+        self.condition_id_field = self.condition_detail_widget.widgets["condition_id"]
         self.condition_id_field.setPlaceholderText("Type condition id to auto-fill from DB")
-        self.ph_spin = QtWidgets.QDoubleSpinBox()
-        self.ph_spin.setRange(-1.0, 14.0)
-        self.ph_spin.setSpecialValueText("auto")
-        self.temperature_spin = QtWidgets.QDoubleSpinBox()
-        self.temperature_spin.setRange(0.0, 400.0)
-        self.temperature_spin.setSpecialValueText("auto")
-        self.ionic_spin = QtWidgets.QDoubleSpinBox()
-        self.ionic_spin.setRange(0.0, 10.0)
-        self.ionic_spin.setSpecialValueText("auto")
-        self.buffer_edit = QtWidgets.QLineEdit()
-        self.condition_details_edit = QtWidgets.QPlainTextEdit()
-        self.condition_details_edit.setMinimumHeight(60)
-
-        cond_btn_row = QtWidgets.QHBoxLayout()
-        cond_save_btn = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save condition", self.save_condition)
-        cond_clear_btn = self._text_icon_button("🧹 Clear", QtWidgets.QStyle.SP_DialogResetButton, "Clear condition", self.clear_condition_form)
-        cond_btn_row.addWidget(cond_save_btn)
-        cond_btn_row.addWidget(cond_clear_btn)
-        cond_btn_row.addStretch()
-
-        layout.addRow("Condition id", self.condition_id_field)
-        layout.addRow("pH", self.ph_spin)
-        layout.addRow("Temperature [K]", self.temperature_spin)
-        layout.addRow("Ionic strength [M]", self.ionic_spin)
-        layout.addRow("Buffer", self.buffer_edit)
-        layout.addRow("Details", self.condition_details_edit)
-        layout.addRow("", cond_btn_row)
-
         self.condition_id_field.editingFinished.connect(self._auto_fill_condition_details)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.condition_detail_widget)
+        scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
+        layout.addWidget(scroll, stretch=1)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button(
+            "💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save condition", self.save_condition
+        ))
+        buttons.addWidget(self._text_icon_button(
+            "🧹 Clear", QtWidgets.QStyle.SP_DialogResetButton, "Clear form", self.clear_condition_form
+        ))
+        buttons.addStretch()
+        layout.addLayout(buttons)
         return widget
 
     def save_condition(self) -> None:
-        cid = self.condition_id_field.text().strip()
+        data = self.condition_detail_widget.get_data()
+        cid = (data.get("condition_id") or "").strip()
         if not cid:
             self.status_label.setText("Condition id is required")
             return
         try:
             condition = {
                 "condition_id": cid,
-                "ph": None if self.ph_spin.value() == 0 else self.ph_spin.value(),
-                "temperature": None if self.temperature_spin.value() == 0 else self.temperature_spin.value(),
-                "ionic_strength": None if self.ionic_spin.value() == 0 else self.ionic_spin.value(),
-                "buffer_composition": self.buffer_edit.text().strip() or None,
-                "details": self.condition_details_edit.toPlainText().strip() or None,
+                "ph": None if data.get("ph") in (None, 0, 0.0) else float(data["ph"]),
+                "temperature": None if data.get("temperature") in (None, 0, 0.0) else float(data["temperature"]),
+                "ionic_strength": None if data.get("ionic_strength") in (None, 0, 0.0) else float(data["ionic_strength"]),
+                "buffer_composition": data.get("buffer_composition") or None,
+                "details": data.get("details") or None,
             }
             self.client.save_sample_condition(condition)
             self.status_label.setText(f"Condition '{cid}' saved")
@@ -1505,61 +2570,92 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.status_label.setText(f"Failed to save condition: {exc}")
 
     def clear_condition_form(self) -> None:
-        self.condition_id_field.clear()
-        self.ph_spin.setValue(0)
-        self.temperature_spin.setValue(0)
-        self.ionic_spin.setValue(0)
-        self.buffer_edit.clear()
-        self.condition_details_edit.clear()
+        self.condition_detail_widget.set_data({})
 
     def _auto_fill_condition_details(self) -> None:
-        cid = self.condition_id_field.text().strip()
+        cid = self.condition_detail_widget.widgets["condition_id"].text().strip()
         if not cid or self._loading:
             return
         try:
             row = self.client.get_sample_condition(cid)
             if row:
-                self.ph_spin.setValue(float(row.get("ph") or 0))
-                self.temperature_spin.setValue(float(row.get("temperature") or 0))
-                self.ionic_spin.setValue(float(row.get("ionic_strength") or 0))
-                self.buffer_edit.setText(row.get("buffer_composition", ""))
-                self.condition_details_edit.setPlainText(row.get("details", ""))
+                self.condition_detail_widget.set_data(row)
                 self.status_label.setText(f"Auto-filled condition '{cid}'")
         except Exception:
-            pass
+            chisurf.logging.warning("_auto_fill_condition_details(self) -> None: %s", _exc)
 
     def entities_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button("Refresh", QtWidgets.QStyle.SP_BrowserReload, "Refresh entities", self.refresh_entities_table))
+        buttons.addWidget(self._text_icon_button("New entity", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add entity row", self.add_entity_row))
+        buttons.addWidget(self._text_icon_button("Save row", QtWidgets.QStyle.SP_DialogSaveButton, "Save selected entity", self.save_selected_entity))
+        buttons.addWidget(self._text_icon_button("Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete selected entity", self.delete_selected_entity))
+        buttons.addStretch()
+        layout.addLayout(buttons)
         self.entities_table = QtWidgets.QTableWidget(0, 5)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        layout.addWidget(splitter, stretch=1)
         self.entities_table.setHorizontalHeaderLabels(
-            ["entity id", "type", "description", "common name", "sequence"]
+            ["entity_id", "name", "type", "sequence", "details"]
+        )
+        self.entities_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.DoubleClicked
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.EditKeyPressed
         )
         self.entities_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.entities_table, stretch=1)
+        splitter.addWidget(self.entities_table)
         return widget
 
     def probes_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        self.probes_table = QtWidgets.QTableWidget(0, 8)
+        self.probes_table = QtWidgets.QTableWidget(0, 11)
         self.probes_table.setHorizontalHeaderLabels(
-            ["id", "name", "category", "origin", "link", "abs", "em", "QY"]
+            [
+                "id", "name", "category", "origin", "link_type", "reactive",
+                "center_atom", "abs_nm", "em_nm", "QY", "ext_coeff",
+            ]
         )
         self.probes_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.probes_table, stretch=1)
-        return widget
+        self.probes_table.itemSelectionChanged.connect(self.load_probe)
+        self.probes_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.probes_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self._install_table_context_menu(
+            self.probes_table,
+            item_kind="probe",
+            id_col=0,
+            delete_one_fn=lambda pid: self.client.delete_probe(int(pid)),
+        )
+        
+        new_probe_btn = self._text_icon_button("New probe", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add probe", self.new_probe)
+        refresh_btn = self._text_icon_button("Refresh", QtWidgets.QStyle.SP_BrowserReload, "Refresh probes", self.fill_probes)
+        
+        return self._create_standard_dock_tab(
+            table=self.probes_table,
+            detail_widget=self.probe_detail_widget,
+            save_slot=self.save_selected_probe,
+            delete_slot=self.delete_probe,
+            extra_buttons=[new_probe_btn, refresh_btn],
+        )
 
     def positions_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.positions_table = QtWidgets.QTableWidget(0, 9)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button(
+            "🔄 Refresh", QtWidgets.QStyle.SP_BrowserReload,
+            "Reload probe positions", self.fill_positions
+        ))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.positions_table = QtWidgets.QTableWidget(0, 13)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        layout.addWidget(splitter, stretch=1)
         self.positions_table.setHorizontalHeaderLabels(
             [
                 "sample_probe_id",
@@ -1569,13 +2665,163 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 "entity",
                 "chain",
                 "residue",
+                "atom_id",
+                "mutation",
+                "modification",
+                "auth_name",
                 "type",
                 "description",
             ]
         )
         self.positions_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.positions_table, stretch=1)
+        splitter.addWidget(self.positions_table)
         return widget
+
+    def fret_pairs_tab(self) -> QtWidgets.QWidget:
+        """Standalone FRET Pairs tab — view, add, edit, delete Forster radius records."""
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        filter_bar = QtWidgets.QHBoxLayout()
+        self.fp_sample_combo = QtWidgets.QComboBox()
+        self.fp_sample_combo.setEditable(True)
+        self.fp_sample_combo.setPlaceholderText("Select sample...")
+        filter_bar.addWidget(QtWidgets.QLabel("Sample:"))
+        filter_bar.addWidget(self.fp_sample_combo)
+        filter_bar.addWidget(self._text_icon_button(
+            "🔄 Refresh", QtWidgets.QStyle.SP_BrowserReload,
+            "Refresh FRET pairs for selected sample", self._refresh_fret_pairs_tab
+        ))
+        filter_bar.addStretch()
+        layout.addLayout(filter_bar)
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(self._text_icon_button(
+            "Add pair", QtWidgets.QStyle.SP_FileDialogNewFolder,
+            "Add FRET pair", self._add_fret_pair_standalone
+        ))
+        buttons.addWidget(self._text_icon_button(
+            "Delete", QtWidgets.QStyle.SP_TrashIcon,
+            "Delete selected FRET pair", self._delete_fret_pair_standalone
+        ))
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        self.standalone_fret_pairs_table = QtWidgets.QTableWidget(0, 9)
+        self.standalone_fret_pairs_table.setHorizontalHeaderLabels(
+            ["id", "sample", "donor", "acceptor", "R₀ (nm)", "κ²", "n", "overlap_integral", "details"]
+        )
+        self.standalone_fret_pairs_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.DoubleClicked
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.EditKeyPressed
+        )
+        self.standalone_fret_pairs_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.standalone_fret_pairs_table, stretch=1)
+        return widget
+
+    def _refresh_fret_pairs_tab(self) -> None:
+        """Reload FRET pairs for the selected sample in the standalone tab."""
+        sample_id = self.fp_sample_combo.currentText().strip()
+        if not sample_id:
+            self.status_label.setText("Select a sample to load FRET pairs")
+            return
+        pairs = self.client.list_fret_pairs(sample_id)
+        self.standalone_fret_pairs_table.setRowCount(0)
+        for pair in pairs:
+            row = self.standalone_fret_pairs_table.rowCount()
+            self.standalone_fret_pairs_table.insertRow(row)
+            values = [
+                pair.get("forster_radius_id", ""),
+                pair.get("sample_id", ""),
+                pair.get("donor_probe", ""),
+                pair.get("acceptor_probe", ""),
+                pair.get("forster_radius_nm") or pair.get("forster_radius", ""),
+                pair.get("kappa_squared", ""),
+                pair.get("refractive_index") or pair.get("index_of_refraction", ""),
+                pair.get("overlap_integral", ""),
+                pair.get("details", ""),
+            ]
+            for column, value in enumerate(values):
+                self.standalone_fret_pairs_table.setItem(
+                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
+                )
+        self.status_label.setText(f"Loaded {len(pairs)} FRET pairs for {sample_id}")
+
+    def _add_fret_pair_standalone(self) -> None:
+        """Open a dialog to create a new FRET pair."""
+        sample_id = self.fp_sample_combo.currentText().strip()
+        if not sample_id:
+            self.status_label.setText("Select a sample first")
+            return
+        donor, ok1 = QtWidgets.QInputDialog.getText(self, "Donor probe", "Donor probe name:")
+        if not ok1 or not donor.strip():
+            return
+        acceptor, ok2 = QtWidgets.QInputDialog.getText(self, "Acceptor probe", "Acceptor probe name:")
+        if not ok2 or not acceptor.strip():
+            return
+        r0, ok3 = QtWidgets.QInputDialog.getDouble(self, "Förster radius", "R₀ (nm):", 5.0, 0.0, 20.0, 2)
+        if not ok3:
+            return
+        try:
+            probes = self.client.list_probes()
+            donor_id = next((p["probe_id"] for p in probes if p.get("chromophore_name", "").lower() == donor.strip().lower()), None)
+            acceptor_id = next((p["probe_id"] for p in probes if p.get("chromophore_name", "").lower() == acceptor.strip().lower()), None)
+            if not donor_id or not acceptor_id:
+                self.status_label.setText("Could not resolve probe names to IDs")
+                return
+            result = self.client.save_fret_pair({
+                "sample_id": sample_id,
+                "donor_probe_id": donor_id,
+                "acceptor_probe_id": acceptor_id,
+                "forster_radius": r0,
+                "kappa_squared": 0.6666667,
+                "refractive_index": 1.4,
+            })
+            self.status_label.setText(f"Created FRET pair: {result.get('fret_pair', {}).get('forster_radius_id', '')}")
+            self._refresh_fret_pairs_tab()
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Failed to create FRET pair", str(exc))
+
+    def _delete_fret_pair_standalone(self) -> None:
+        """Delete the selected FRET pair."""
+        selected = self.standalone_fret_pairs_table.selectedItems()
+        if not selected:
+            self.status_label.setText("Select a FRET pair row to delete")
+            return
+        row = selected[0].row()
+        pair_id = self.standalone_fret_pairs_table.item(row, 0).text()
+        reply = QtWidgets.QMessageBox.question(
+            self, "Delete FRET pair",
+            f"Delete FRET pair '{pair_id}'?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+        if reply != QtWidgets.QMessageBox.Yes:
+            return
+        try:
+            self.client.delete_fret_pair(pair_id)
+            self.status_label.setText(f"Deleted FRET pair {pair_id}")
+            self._refresh_fret_pairs_tab()
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Delete failed", str(exc))
+
+    def _fill_fp_sample_combo(self) -> None:
+        """Populate the FRET Pairs tab sample combo."""
+        if not hasattr(self, "fp_sample_combo"):
+            return
+        current = self.fp_sample_combo.currentText()
+        self.fp_sample_combo.clear()
+        try:
+            samples = self.client.list_samples()
+            for s in samples:
+                sid = str(s.get("sample_id", ""))
+                desc = str(s.get("description", ""))
+                label = f"{sid} — {desc}" if desc else sid
+                self.fp_sample_combo.addItem(label, sid)
+        except Exception:
+            chisurf.logging.warning("_fill_fp_sample_combo(self) -> None: %s", _exc)
+        idx = self.fp_sample_combo.findText(current)
+        if idx >= 0:
+            self.fp_sample_combo.setCurrentIndex(idx)
 
     def import_export_tab(self) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
@@ -1595,9 +2841,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
         buttons.setSpacing(2)
         import_button = self._text_icon_button("⬇️ Import file", QtWidgets.QStyle.SP_ArrowDown, "Import file into database", self.import_file)
         export_button = self._text_icon_button("⬆️ Export selected sample", QtWidgets.QStyle.SP_ArrowUp, "Export selected sample to FLR CIF", self.export_selected_sample)
+        preview_button = self._text_icon_button("👁 Preview CIF", QtWidgets.QStyle.SP_FileDialogDetailedView, "Preview flrCIF output in the text area below", self.preview_cif)
         export_table_button = self._text_icon_button("📊 Export table CSV/XLSX", QtWidgets.QStyle.SP_FileIcon, "Export sample table", self.export_table)
         buttons.addWidget(import_button)
         buttons.addWidget(export_button)
+        buttons.addWidget(preview_button)
         buttons.addWidget(export_table_button)
         buttons.addStretch()
         layout.addLayout(buttons)
@@ -1693,10 +2941,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
     ]
 
     def users_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
         self.users_table = QtWidgets.QTableWidget(0, len(self.USERS_TABLE_COLUMNS))
         self.users_table.setHorizontalHeaderLabels(list(self.USERS_TABLE_COLUMNS))
         self.users_table.horizontalHeader().setStretchLastSection(True)
@@ -1711,86 +2955,26 @@ class MFDBWidget(QtWidgets.QMainWindow):
             delete_one_fn=lambda uid: self.client.delete_user(uid),
             usage_fn=self._usage_check_users,
         )
-        layout.addWidget(self.users_table, stretch=1)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-
-        self.user_uuid_edit = QtWidgets.QLineEdit()
-        self.user_uuid_edit.setPlaceholderText("Auto-generated if left empty")
-        self.user_id_edit = QtWidgets.QLineEdit()
-        self.user_display_edit = QtWidgets.QLineEdit()
-        self.user_email_edit = QtWidgets.QLineEdit()
-        self.user_role_combo = QtWidgets.QComboBox()
-        self.user_role_combo.setEditable(True)
-        self.user_role_combo.addItems(self.USER_ROLE_OPTIONS)
-        self.user_affiliation_edit = QtWidgets.QLineEdit()
-        self.user_department_edit = QtWidgets.QLineEdit()
-        self.user_phone_edit = QtWidgets.QLineEdit()
-        self.user_website_edit = QtWidgets.QLineEdit()
-        self.user_address_edit = QtWidgets.QPlainTextEdit()
-        self.user_address_edit.setMinimumHeight(60)
-        self.user_is_admin_check = QtWidgets.QCheckBox("Administrator")
-        self.user_passwordless_check = QtWidgets.QCheckBox("Allow passwordless login")
-        self.user_active_branch_edit = QtWidgets.QLineEdit()
-        self.user_active_branch_edit.setReadOnly(True)
-        self.user_has_password_label = QtWidgets.QLabel("—")
-        self.user_created_label = QtWidgets.QLabel("—")
-        self.user_updated_label = QtWidgets.QLabel("—")
-        self.user_details_edit = QtWidgets.QPlainTextEdit()
-        self.user_details_edit.setMinimumHeight(60)
-
-        form.addRow("User UUID", self.user_uuid_edit)
-        form.addRow("User id", self.user_id_edit)
-        form.addRow("Display name", self.user_display_edit)
-        form.addRow("Email", self.user_email_edit)
-        form.addRow("Role", self.user_role_combo)
-        form.addRow("Affiliation", self.user_affiliation_edit)
-        form.addRow("Department", self.user_department_edit)
-        form.addRow("Phone", self.user_phone_edit)
-        form.addRow("Website", self.user_website_edit)
-        form.addRow("Address", self.user_address_edit)
-        form.addRow("Flags", self.user_is_admin_check)
-        form.addRow("", self.user_passwordless_check)
-        form.addRow("Active branch", self.user_active_branch_edit)
-        form.addRow("Password set", self.user_has_password_label)
-        form.addRow("Created at", self.user_created_label)
-        form.addRow("Updated at", self.user_updated_label)
-        form.addRow("Details", self.user_details_edit)
-        layout.addLayout(form)
-
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
         new_user_button = self._text_icon_button(
             "👤 New user",
             QtWidgets.QStyle.SP_FileDialogNewFolder,
             "Prepare the form for a new user (auto-generates UUID)",
             self.new_user,
         )
-        save_user_button = self._text_icon_button(
-            "💾 Save user", QtWidgets.QStyle.SP_DialogSaveButton, "Save user", self.save_user
-        )
         change_password_button = self._text_icon_button(
             "🔑 Password", QtWidgets.QStyle.SP_DialogApplyButton, "Change password", self.change_user_password
         )
-        delete_user_button = self._text_icon_button(
-            "🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete user", self.delete_user
+
+        return self._create_standard_dock_tab(
+            table=self.users_table,
+            detail_widget=self.user_detail_widget,
+            save_slot=self.save_user,
+            delete_slot=self.delete_user,
+            extra_buttons=[new_user_button, change_password_button],
         )
-        buttons.addWidget(new_user_button)
-        buttons.addWidget(save_user_button)
-        buttons.addWidget(change_password_button)
-        buttons.addWidget(delete_user_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
 
     def devices_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
         self.devices_table = QtWidgets.QTableWidget(0, 8)
         self.devices_table.setHorizontalHeaderLabels(
             ["id", "name", "type", "model", "serial", "location", "owner", "details"]
@@ -1804,45 +2988,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             delete_one_fn=lambda did: self.client.delete_device(did),
             usage_fn=self._usage_check_devices,
         )
-        layout.addWidget(self.devices_table, stretch=1)
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.device_id_edit = QtWidgets.QLineEdit()
-        self.device_name_edit = QtWidgets.QLineEdit()
-        self.device_type_edit = QtWidgets.QLineEdit()
-        self.device_model_edit = QtWidgets.QLineEdit()
-        self.device_serial_edit = QtWidgets.QLineEdit()
-        self.device_location_edit = QtWidgets.QLineEdit()
-        self.device_owner_edit = QtWidgets.QLineEdit()
-        self.device_details_edit = QtWidgets.QPlainTextEdit()
-        self.device_details_edit.setMinimumHeight(60)
-        form.addRow("Device id", self.device_id_edit)
-        form.addRow("Name", self.device_name_edit)
-        form.addRow("Type", self.device_type_edit)
-        form.addRow("Model", self.device_model_edit)
-        form.addRow("Serial", self.device_serial_edit)
-        form.addRow("Location", self.device_location_edit)
-        form.addRow("Owner", self.device_owner_edit)
-        form.addRow("Details", self.device_details_edit)
-        layout.addLayout(form)
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
-        save_device_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save device", self.save_device)
-        delete_device_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete device", self.delete_device)
-        buttons.addWidget(save_device_button)
-        buttons.addWidget(delete_device_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.devices_table,
+            detail_widget=self.device_detail_widget,
+            save_slot=self.save_device,
+            delete_slot=self.delete_device,
+        )
 
     def branches_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
         self.branches_table = QtWidgets.QTableWidget(0, 5)
         self.branches_table.setHorizontalHeaderLabels(
             ["name", "uuid", "parent uuid", "head op", "description"]
@@ -1855,7 +3008,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
             id_col=1,  # branch_uuid lives in col 1
             delete_one_fn=lambda uuid: self.client.delete_branch(uuid),
         )
-        layout.addWidget(self.branches_table, stretch=1)
 
         user_group = QtWidgets.QGroupBox("User's Active Branch")
         user_group_layout = QtWidgets.QFormLayout(user_group)
@@ -1884,43 +3036,24 @@ class MFDBWidget(QtWidgets.QMainWindow):
         user_buttons.addWidget(self.jump_branch_button)
         user_buttons.addStretch()
         user_group_layout.addRow("", user_buttons)
-        layout.addWidget(user_group)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.branch_uuid_edit = QtWidgets.QLineEdit()
-        self.branch_uuid_edit.setPlaceholderText("Auto-generated UUID")
-        self.branch_name_edit = QtWidgets.QLineEdit()
-        self.branch_parent_uuid_edit = QtWidgets.QLineEdit()
-        self.branch_head_op_edit = QtWidgets.QLineEdit()
-        self.branch_description_edit = QtWidgets.QPlainTextEdit()
-        self.branch_description_edit.setMinimumHeight(60)
-        form.addRow("Branch UUID", self.branch_uuid_edit)
-        form.addRow("Branch Name", self.branch_name_edit)
-        form.addRow("Parent Branch UUID", self.branch_parent_uuid_edit)
-        form.addRow("Head Operation ID", self.branch_head_op_edit)
-        form.addRow("Description", self.branch_description_edit)
-        layout.addLayout(form)
+        fork_branch_button = self._text_icon_button(
+            "🍴 Fork",
+            QtWidgets.QStyle.SP_FileDialogNewFolder,
+            "Prefill branch from selected head",
+            self.prefill_branch_fork,
+        )
 
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
-        save_branch_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save/Create branch", self.save_branch)
-        fork_branch_button = self._text_icon_button("🍴 Fork", QtWidgets.QStyle.SP_FileDialogNewFolder, "Prefill branch from selected head", self.prefill_branch_fork)
-        delete_branch_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete branch", self.delete_branch)
-        buttons.addWidget(save_branch_button)
-        buttons.addWidget(fork_branch_button)
-        buttons.addWidget(delete_branch_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.branches_table,
+            detail_widget=self.branch_detail_widget,
+            save_slot=self.save_branch,
+            delete_slot=self.delete_branch,
+            extra_widgets_top=[user_group],
+            extra_buttons=[fork_branch_button],
+        )
 
     def experiment_types_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
         self.experiment_types_table = QtWidgets.QTableWidget(0, 5)
         self.experiment_types_table.setHorizontalHeaderLabels(
             ["id", "name", "category", "description", "details"]
@@ -1934,38 +3067,21 @@ class MFDBWidget(QtWidgets.QMainWindow):
             delete_one_fn=lambda tid: self.client.delete_experiment_type(int(tid)),
             usage_fn=self._usage_check_experiment_types,
         )
-        layout.addWidget(self.experiment_types_table, stretch=1)
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.experiment_type_id_edit = QtWidgets.QLineEdit()
-        self.experiment_type_name_edit = QtWidgets.QLineEdit()
-        self.experiment_type_category_edit = QtWidgets.QLineEdit()
-        self.experiment_type_description_edit = QtWidgets.QLineEdit()
-        self.experiment_type_details_edit = QtWidgets.QPlainTextEdit()
-        self.experiment_type_details_edit.setMinimumHeight(60)
-        form.addRow("Type id", self.experiment_type_id_edit)
-        form.addRow("Name", self.experiment_type_name_edit)
-        form.addRow("Category", self.experiment_type_category_edit)
-        form.addRow("Description", self.experiment_type_description_edit)
-        form.addRow("Details", self.experiment_type_details_edit)
-        layout.addLayout(form)
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
-        save_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment type", self.save_experiment_type)
-        delete_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment type", self.delete_experiment_type)
-        buttons.addWidget(save_button)
-        buttons.addWidget(delete_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.experiment_types_table,
+            detail_widget=self.experiment_type_detail_widget,
+            save_slot=self.save_experiment_type,
+            delete_slot=self.delete_experiment_type,
+        )
 
     def experiments_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        filter_widget = self._build_filter_bar([
+            {"label": "Type:", "attr": "experiment_type_combo",
+             "default_data": -1, "cb": self._filter_experiments},
+            {"label": "Sample:", "attr": "experiment_sample_combo",
+             "cb": self._filter_experiments},
+        ])
+
         self.experiments_table = QtWidgets.QTableWidget(0, 8)
         self.experiments_table.setHorizontalHeaderLabels(
             ["experiment id", "type", "sample", "project", "user", "device", "started", "status"]
@@ -1979,59 +3095,43 @@ class MFDBWidget(QtWidgets.QMainWindow):
             delete_one_fn=lambda eid: self.client.delete_experiment(eid),
             usage_fn=self._usage_check_experiments,
         )
-        layout.addWidget(self.experiments_table, stretch=2)
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.experiment_id_edit = QtWidgets.QLineEdit()
-        self.experiment_type_combo = QtWidgets.QComboBox()
-        self.experiment_sample_combo = QtWidgets.QComboBox()
-        self.experiment_project_edit = QtWidgets.QLineEdit()
-        self.experiment_user_combo = QtWidgets.QComboBox()
-        self.experiment_device_combo = QtWidgets.QComboBox()
-        self.experiment_started_edit = QtWidgets.QLineEdit()
-        self.experiment_ended_edit = QtWidgets.QLineEdit()
-        self.experiment_status_edit = QtWidgets.QLineEdit()
-        self.experiment_details_edit = QtWidgets.QPlainTextEdit()
-        self.experiment_details_edit.setMinimumHeight(60)
-        form.addRow("Experiment id", self.experiment_id_edit)
-        form.addRow("Type", self.experiment_type_combo)
-        form.addRow("Sample", self.experiment_sample_combo)
-        form.addRow("Project", self.experiment_project_edit)
-        form.addRow("User", self.experiment_user_combo)
-        form.addRow("Device", self.experiment_device_combo)
-        form.addRow("Started", self.experiment_started_edit)
-        form.addRow("Ended", self.experiment_ended_edit)
-        form.addRow("Status", self.experiment_status_edit)
-        form.addRow("Details", self.experiment_details_edit)
-        layout.addLayout(form)
+
+        data_container = QtWidgets.QWidget()
+        data_layout = QtWidgets.QVBoxLayout(data_container)
+        data_layout.setContentsMargins(0, 0, 0, 0)
+        data_layout.setSpacing(2)
         data_header = QtWidgets.QLabel("Experiment data / links")
-        layout.addWidget(data_header)
+        data_header.setStyleSheet("font-weight: bold; margin-top: 4px;")
         self.experiment_data_table = QtWidgets.QTableWidget(0, 8)
         self.experiment_data_table.setHorizontalHeaderLabels(
             ["id", "type", "mode", "path/url/folder", "mime", "checksum", "reading options", "details"]
         )
         self.experiment_data_table.horizontalHeader().setStretchLastSection(True)
         self.experiment_data_table.itemSelectionChanged.connect(self.load_experiment_data)
-        layout.addWidget(self.experiment_data_table, stretch=1)
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
-        save_experiment_button = self._text_icon_button("💾 Save", QtWidgets.QStyle.SP_DialogSaveButton, "Save experiment", self.save_experiment)
-        delete_experiment_button = self._text_icon_button("🗑 Delete", QtWidgets.QStyle.SP_TrashIcon, "Delete experiment", self.delete_experiment)
+        data_layout.addWidget(data_header)
+        data_layout.addWidget(self.experiment_data_table, stretch=1)
+
         add_data_button = self._text_icon_button("➕ Add", QtWidgets.QStyle.SP_FileDialogNewFolder, "Add data row", self.add_experiment_data_row)
         save_data_button = self._text_icon_button("💾 Save data", QtWidgets.QStyle.SP_DialogSaveButton, "Save data", self.save_experiment_data)
         delete_data_button = self._text_icon_button("🗑 Del data", QtWidgets.QStyle.SP_TrashIcon, "Delete data", self.delete_experiment_data)
         open_data_button = self._text_icon_button("📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open linked data", self.open_experiment_data)
-        buttons.addWidget(save_experiment_button)
-        buttons.addWidget(delete_experiment_button)
-        buttons.addWidget(add_data_button)
-        buttons.addWidget(save_data_button)
-        buttons.addWidget(delete_data_button)
-        buttons.addWidget(open_data_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+
+        return self._create_standard_dock_tab(
+            table=self.experiments_table,
+            detail_widget=self.experiment_detail_widget,
+            save_slot=self.save_experiment,
+            delete_slot=self.delete_experiment,
+            extra_widgets_top=[filter_widget],
+            extra_buttons=[add_data_button, save_data_button, delete_data_button, open_data_button],
+            extra_widgets_bottom=[data_container],
+        )
+
+    def _filter_experiments(self) -> None:
+        type_id = self.experiment_type_combo.currentData()
+        sample_id = self.experiment_sample_combo.currentData() or None
+        if type_id == -1:
+            type_id = None
+        self.fill_experiment_table(sample_id=sample_id, type_id=type_id)
 
     def _refresh_sample_id_completer(self) -> None:
         try:
@@ -2045,7 +3145,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
             self.sample_id_edit.setCompleter(completer)
         except Exception:
-            pass
+            chisurf.logging.warning("_refresh_sample_id_completer(self) -> None: %s", _exc)
 
     def _set_transport_connected(self, connected: bool) -> None:
         self.transport_connected = bool(connected)
@@ -2055,9 +3155,83 @@ class MFDBWidget(QtWidgets.QMainWindow):
             else:
                 action.setEnabled(bool(connected))
 
+
+    def save_raw_data(self) -> None:
+        raw_id = self.raw_id_edit.text()
+        if not raw_id: return
+        import json
+        details = self.raw_details_edit.toPlainText()
+        try:
+            details_dict = json.loads(details) if details else {}
+        except json.JSONDecodeError:
+            QtWidgets.QMessageBox.warning(self, "Invalid JSON", "Details field must be valid JSON.")
+            return
+        
+        payload = {
+            "raw_data_id": raw_id,
+            "experiment_id": self.raw_exp_edit.text(),
+            "data_type": self.raw_type_edit.text(),
+            "storage_mode": self.raw_storage_edit.text(),
+            "file_path": self.raw_path_edit.text(),
+            "details": details_dict
+        }
+        try:
+            self.client._call("mfdb.raw_data.save", {"raw_data": payload})
+            QtWidgets.QMessageBox.information(self, "Success", "Saved successfully.")
+            self.fill_raw_data_table()
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to save: {e}")
+
+    def save_processed_product(self) -> None:
+        data = self.processed_product_detail_widget.get_data()
+        prod_id = data.get("product_id") or data.get("processed_data_id")
+        if not prod_id:
+            return
+        import json
+        details_raw = data.get("details") or data.get("metadata_json") or ""
+        try:
+            details_dict = json.loads(details_raw) if details_raw else {}
+        except (json.JSONDecodeError, TypeError):
+            details_dict = {}
+        payload = {
+            "product_id": prod_id,
+            "processing_run_id": data.get("processing_id") or "",
+            "product_type": data.get("product_type") or "",
+            "storage_mode": data.get("storage_mode") or "",
+            "file_path": data.get("location") or "",
+            "details": details_dict,
+        }
+        try:
+            self.client._call("mfdb.processed_data.save", {"product": payload})
+            QtWidgets.QMessageBox.information(self, "Success", "Saved successfully.")
+            self.fill_processed_products_table()
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to save: {e}")
+
+    def save_processing_run(self) -> None:
+        pass # To be implemented via client._call
+
+    def save_analysis(self) -> None:
+        pass
+
+    def save_object(self) -> None:
+        pass
+
+    def save_experiment_tab(self) -> None:
+        pass
+
+    def save_project_tab(self) -> None:
+        pass
+
+    def save_experiment_type(self) -> None:
+        pass
+
     def refresh(self) -> None:
+        if getattr(self, "_refresh_in_progress", False):
+            return
+        self._refresh_in_progress = True
         self._loading = True
-        failures: list[str] = []
+        self._failures: list[str] = []
         transport_ok = False
         try:
             status = self.client.status() or {}
@@ -2071,118 +3245,112 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 f"samples {sample_count} | experiments {experiment_count}"
             )
             self.status_label.setText(status_text)
+            self._set_transport_connected(transport_ok)
         except Exception as exc:
             self.status_label.setText(f"MFDB transport unavailable: {exc}")
             self._set_transport_connected(False)
             self._loading = False
+            self._refresh_in_progress = False
             return
 
-        def _safe(label: str, fn) -> None:
-            try:
-                fn()
-            except Exception as exc:
-                failures.append(f"{label}: {exc}")
-
-
-        _safe("users (combo)", self.fill_users)
-        _safe("devices (combo)", self.fill_devices)
-        _safe("users", self.fill_user_table)
-        _safe("devices", self.fill_device_table)
-        _safe("branches", self.fill_branch_table)
-        _safe("branch user combo", self.fill_branch_user_combo)
-        _safe("experiment types (combo)", self.fill_experiment_types)
-        _safe("experiment types", self.fill_experiment_type_table)
-        _safe("experiments", self.fill_experiment_table)
-        _safe("projects", self.fill_project_table)
-        _safe("experiment sample combo", self.fill_experiment_sample_combo)
-        _safe("experiment user combo", self.fill_experiment_user_combo)
-        _safe("experiment device combo", self.fill_experiment_device_combo)
-        _safe("setups", self.fill_setup_table)
-        _safe("raw data", self.fill_raw_data_table)
-        _safe("processing runs", self.fill_processing_runs_table)
-        _safe("processed products", self.fill_processed_products_table)
-        _safe("objects", self.fill_object_table)
-        _safe("analyses", self.fill_analyses_table)
-        _safe("all items", self._populate_all_items)
-        _safe("sample completer", self._refresh_sample_id_completer)
-        for _table in self._checkable_tables:
-            try:
-                self._apply_checkable_first_column(_table)
-            except Exception:
-                pass
-
-        self._set_transport_connected(transport_ok)
-        if failures:
-            short = failures[0]
-            if len(failures) > 1:
-                short = f"{short} (+{len(failures) - 1} more)"
-            self.status_label.setText(
-                f"{self.status_label.text()}  ⚠ partial refresh — {short}"
-            )
+        self._loaded_tabs.clear()
+        self._load_active_tab()
+        # Also refresh the currently visible entity dock (if any).
+        self._refresh_active_panel()
         self._loading = False
+        self._refresh_in_progress = False
+
+    def _on_nav_changed(self, index: int) -> None:
+        """Load the selected panel (shell) then populate its aggregate data."""
+        super()._on_nav_changed(index)
+        if self._is_deleted() or getattr(self, "_loading", False):
+            return
+        if 0 <= index < len(self.panels):
+            name = self.panels[index].get("name")
+            if name:
+                self._load_tab_data(name)
+
+    def _load_active_tab(self) -> None:
+        if self._is_deleted():
+            return
+        idx = self.nav_list.currentRow()
+        if 0 <= idx < len(self.panels):
+            name = self.panels[idx].get("name")
+            if name and not self.panels[idx].get("separator"):
+                self._load_tab_data(name)
+
+    def _load_tab_data(self, tab_name: str) -> None:
+        if tab_name in self._loaded_tabs:
+            return
+
+        populators = {
+            "Overview": [self._refresh_overview],
+            "All items": [self._populate_all_items],
+            "Measurements": [self._refresh_measurements],
+        }
+
+        fns = populators.get(tab_name, [])
+        if not fns:
+            self._loaded_tabs.add(tab_name)
+            return
+
+        self._loading = True
+        try:
+            for fn in fns:
+                try:
+                    fn()
+                except Exception as exc:
+                    self._failures.append(f"{tab_name} populator: {exc}")
+            self._loaded_tabs.add(tab_name)
+        finally:
+            self._loading = False
+
+        if self._failures:
+            short = self._failures[0]
+            if len(self._failures) > 1:
+                short = f"{short} (+{len(self._failures) - 1} more)"
+            self.status_label.setText(f"{self.status_label.text()}  ⚠ partial refresh — {short}")
 
     def clear_form(self) -> None:
         for widget in (
-            self.sample_id_edit,
-            self.uuid_edit,
-            self.description_edit,
-            self.condition_id_edit,
-            self.assembly_id_edit,
-            self.project_edit,
-            self.measured_at_edit,
-            self.condition_id_field,
-            self.buffer_edit,
-            self.user_id_edit,
-            self.user_uuid_edit,
-            self.user_display_edit,
-            self.user_email_edit,
-            self.user_affiliation_edit,
-            self.user_department_edit,
-            self.user_phone_edit,
-            self.user_website_edit,
-            self.user_active_branch_edit,
-            self.device_id_edit,
-            self.branch_uuid_edit,
-            self.branch_name_edit,
-            self.branch_parent_uuid_edit,
-            self.branch_head_op_edit,
-            self.device_name_edit,
-            self.device_type_edit,
-            self.device_model_edit,
-            self.device_serial_edit,
-            self.device_location_edit,
-            self.device_owner_edit,
-            self.experiment_type_id_edit,
-            self.experiment_type_name_edit,
-            self.experiment_type_category_edit,
-            self.experiment_type_description_edit,
-            self.experiment_id_edit,
-            self.experiment_project_edit,
-            self.experiment_started_edit,
-            self.experiment_ended_edit,
-            self.experiment_status_edit,
+            self.user_detail_widget,
+            self.device_detail_widget,
+            self.sample_detail_widget,
+            self.experiment_detail_widget,
+            self.experiment_type_detail_widget,
+            self.branch_detail_widget,
+            self.probe_detail_widget,
+            self.setup_detail_widget,
+            self.project_detail_widget,
+            self.raw_data_detail_widget,
+            self.processing_run_detail_widget,
+            self.processed_product_detail_widget,
+            self.object_detail_widget,
+            self.analysis_detail_widget,
+            self.condition_detail_widget,
         ):
-            widget.clear()
-        self.details_edit.clear()
-        self.condition_details_edit.clear()
-        self.user_details_edit.clear()
-        self.user_address_edit.clear()
-        self.user_is_admin_check.setChecked(False)
-        self.user_passwordless_check.setChecked(False)
-        self.user_has_password_label.setText("—")
-        self.user_created_label.setText("—")
-        self.user_updated_label.setText("—")
-        self.user_role_combo.setCurrentIndex(0)
-        self.device_details_edit.clear()
-        self.branch_description_edit.clear()
+            if hasattr(widget, "set_data"):
+                widget.set_data({})
+
         self.branches_table.setRowCount(0)
-        self.experiment_type_details_edit.clear()
-        self.experiment_details_edit.clear()
-        self.measured_by_combo.setCurrentIndex(-1)
-        self.measured_device_combo.setCurrentIndex(-1)
-        self.num_probes_spin.setValue(0)
-        self.solvent_edit.setCurrentText("liquid")
         self.entities_table.setRowCount(0)
+        if hasattr(self, "sample_entities_table"):
+            self.sample_entities_table.setRowCount(0)
+        if hasattr(self, "sample_probes_table"):
+            self.sample_probes_table.setRowCount(0)
+        if hasattr(self, "fret_pairs_table"):
+            self.fret_pairs_table.setRowCount(0)
+        if hasattr(self, "full_description_edit"):
+            self.full_description_edit.clear()
+        if hasattr(self, "validation_list"):
+            self.validation_list.clear()
+        if hasattr(self, "sample_condition_id_field"):
+            self.sample_condition_id_field.clear()
+            self.sample_ph_spin.setValue(0)
+            self.sample_temperature_spin.setValue(0)
+            self.sample_ionic_spin.setValue(0)
+            self.sample_buffer_edit.clear()
+            self.sample_condition_details_edit.clear()
         self.probes_table.setRowCount(0)
         self.positions_table.setRowCount(0)
         self.metadata_editor.clear()
@@ -2200,29 +3368,52 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
         self.current_sample_id = sample_id
         self.current_experiment_id = None
-        sample = self.client.get_sample(sample_id) or {}
+        sample = self.client.get_sample_full_description(sample_id) or {}
+        if not sample:
+            sample = self.client.get_sample(sample_id) or {}
         self._loading = True
         try:
-            self.sample_id_edit.setText(sample.get("sample_id", ""))
+            self.sample_id_edit.setText(sample.get("sample_id", sample_id))
             self.uuid_edit.setText(sample.get("sample_uuid", ""))
-            self.description_edit.setText(sample.get("description", ""))
+            self.description_edit.setText(sample.get("description") or sample.get("display_name", ""))
             self.details_edit.setPlainText(sample.get("details", ""))
-            self.num_probes_spin.setValue(int(sample.get("num_of_probes") or 0))
+            self.num_probes_spin.setValue(int(sample.get("num_of_probes") or len(sample.get("probes", [])) or 0))
             self.solvent_edit.setCurrentText(sample.get("solvent_phase") or "liquid")
             self.condition_id_edit.setText(sample.get("sample_condition_id", ""))
             self.assembly_id_edit.setText(sample.get("entity_assembly_id", ""))
             self.project_edit.setText(sample.get("project_id", ""))
             self.measured_at_edit.setText(sample.get("measured_at", ""))
-            self.condition_id_field.setText((sample.get("condition") or {}).get("condition_id", ""))
             condition = sample.get("condition") or {}
-            self.ph_spin.setValue(float(condition.get("ph") or 0))
-            self.temperature_spin.setValue(float(condition.get("temperature") or 0))
-            self.ionic_spin.setValue(float(condition.get("ionic_strength") or 0))
-            self.buffer_edit.setText(condition.get("buffer_composition", ""))
-            self.condition_details_edit.setPlainText(condition.get("details", ""))
+            temp_val = (
+                condition.get("temperature") or condition.get("temperature_k")
+            )
+            cond_data = {
+                "condition_id": condition.get("condition_id", ""),
+                "ph": condition.get("ph"),
+                "temperature": temp_val,
+                "ionic_strength": (
+                    condition.get("ionic_strength") or condition.get("salt_concentration_m")
+                ),
+                "buffer_composition": condition.get("buffer_composition", ""),
+                "details": condition.get("details", ""),
+            }
+            self.condition_detail_widget.set_data(cond_data)
+            if hasattr(self, "sample_condition_id_field"):
+                self.sample_condition_id_field.setText(condition.get("condition_id", ""))
+                self.sample_ph_spin.setValue(float(condition.get("ph") or 0))
+                self.sample_temperature_spin.setValue(float(temperature or 0))
+                self.sample_ionic_spin.setValue(float(condition.get("ionic_strength") or condition.get("salt_concentration_m") or 0))
+                self.sample_buffer_edit.setText(condition.get("buffer_composition", ""))
+                self.sample_condition_details_edit.setPlainText(condition.get("details", ""))
             self.fill_entities(sample.get("entities", []))
+            self.fill_probes_positions(sample.get("probes", []))
             self.fill_probes()
             self.fill_positions(sample.get("sample_probes", []))
+            self.fill_fret_pairs(sample.get("fret_pairs", []))
+            if hasattr(self, "full_description_edit"):
+                self.full_description_edit.setPlainText(
+                    json.dumps(sample, indent=2, default=str)
+                )
             self.fill_metadata(sample.get("key_values", []))
             self.fill_experiment_table(sample_id=sample_id)
             self.measured_by_combo.setCurrentText("")
@@ -2233,6 +3424,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.measured_device_combo.setCurrentIndex(
                 self.measured_device_combo.findData(sample.get("measured_by_device_id") or "")
             )
+        except Exception as exc:
+            chisurf.logging.warning("load_sample(%r): %s", sample_id, exc)
         finally:
             self._loading = False
 
@@ -2261,26 +3454,33 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.measured_device_combo.blockSignals(False)
 
     def fill_entities(self, entities: list[dict[str, Any]]) -> None:
-        self.entities_table.setRowCount(0)
+        try:
+            scoped_entities = self.client.list_entities(self.current_sample_id) if self.current_sample_id else []
+            if scoped_entities:
+                entities = scoped_entities
+        except Exception:
+            chisurf.logging.warning("fill_entities(self, entities: list[dict[str, Any]]) -> None: %s", _exc)
+        for table in self._entity_tables():
+            table.setRowCount(0)
+        count = 0
         for entity in entities:
-            row = self.entities_table.rowCount()
-            self.entities_table.insertRow(row)
-            sequence = (
-                self.client.get_sample(self.sample_id_edit.text()).get("sequence", "")
-                if False
-                else ""
-            )
+            sequence = entity.get("sequence", "")
+            if isinstance(sequence, list):
+                sequence = "".join(str(item) for item in sequence)
             values = [
                 entity.get("entity_id", ""),
-                entity.get("type", ""),
-                entity.get("description", ""),
-                entity.get("common_name", ""),
+                entity.get("common_name") or entity.get("name", ""),
+                entity.get("type") or entity.get("entity_type", ""),
                 sequence,
+                entity.get("details") or entity.get("description", ""),
             ]
-            for column, value in enumerate(values):
-                self.entities_table.setItem(
-                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
-                )
+            for table in self._entity_tables():
+                row = table.rowCount()
+                table.insertRow(row)
+                for column, value in enumerate(values):
+                    table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+            count += 1
+        self._set_entities_tab_label(count)
 
     def fill_probes(self) -> None:
         self.probes_table.setRowCount(0)
@@ -2297,16 +3497,94 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 row.get("category", ""),
                 row.get("probe_origin", ""),
                 row.get("probe_link_type", ""),
+                row.get("reactive_probe_flag", ""),
+                row.get("chromophore_center_atom", ""),
                 props.get("abs_max", {}).get("property_value", ""),
                 props.get("em_max", {}).get("property_value", ""),
                 props.get("qy", {}).get("property_value", ""),
+                props.get("ext_coeff", {}).get("property_value", ""),
+            ]
+            flat_row = dict(row)
+            flat_row["abs_max"] = props.get("abs_max", {}).get("property_value")
+            flat_row["em_max"] = props.get("em_max", {}).get("property_value")
+            flat_row["qy"] = props.get("qy", {}).get("property_value")
+            flat_row["ext_coeff"] = props.get("ext_coeff", {}).get("property_value")
+
+            for column, value in enumerate(values):
+                item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    item.setData(QtCore.Qt.UserRole, flat_row)
+                self.probes_table.setItem(index, column, item)
+
+    def load_probe(self) -> None:
+        rows = self.probes_table.selectionModel().selectedRows()
+        if not rows:
+            return
+        item = self.probes_table.item(rows[0].row(), 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.probe_detail_widget.set_data(data)
+
+    def new_probe(self) -> None:
+        """Clear form to create a new probe."""
+        self.probe_detail_widget.set_data({})
+        widget = self.probe_detail_widget.widgets.get("chromophore_name")
+        if widget:
+            widget.setFocus()
+
+    def delete_probe(self) -> None:
+        """Delete the selected probe."""
+        data = self.probe_detail_widget.get_data()
+        probe_id = data.get("probe_id")
+        if not probe_id:
+            return
+        answer = QtWidgets.QMessageBox.question(
+            self, "Delete probe", f"Delete probe {probe_id}?"
+        )
+        if answer == QtWidgets.QMessageBox.Yes:
+            self.client.delete_probe(int(probe_id))
+            self.fill_probes()
+
+    def fill_probes_positions(self, probes: list[dict[str, Any]]) -> None:
+        """Populate the structured probe-position editor from full description."""
+        if not hasattr(self, "sample_probes_table"):
+            return
+        self.sample_probes_table.setRowCount(0)
+        if not probes and self.current_sample_id:
+            try:
+                probes = self.client.list_probe_positions(sample_id=self.current_sample_id)
+            except Exception:
+                probes = []
+        for probe in probes:
+            row = self.sample_probes_table.rowCount()
+            self.sample_probes_table.insertRow(row)
+            position = probe.get("position") or probe
+            properties = probe.get("properties") or {}
+            values = [
+                probe.get("probe_name") or probe.get("chromophore_name") or probe.get("name", ""),
+                position.get("entity_id", ""),
+                position.get("seq_id") or position.get("residue_number", ""),
+                position.get("comp_id") or position.get("residue_name", ""),
+                position.get("asym_id") or position.get("chain_id", ""),
+                position.get("atom_id", ""),
+                position.get("mutation_flag", "no"),
+                position.get("modification_flag", "no"),
+                _property_value(properties, "abs_max", "absorption_wavelength"),
+                _property_value(properties, "em_max", "emission_wavelength"),
+                _property_value(properties, "qy", "quantum_yield"),
+                probe.get("sample_probe_id", ""),
             ]
             for column, value in enumerate(values):
-                self.probes_table.setItem(
-                    index, column, QtWidgets.QTableWidgetItem(str(value or ""))
-                )
+                self.sample_probes_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
 
-    def fill_positions(self, mappings: list[dict[str, Any]]) -> None:
+    def fill_positions(self, mappings: list[dict[str, Any]] | None = None) -> None:
+        if mappings is None or isinstance(mappings, bool):
+            mappings = []
+        if self.current_sample_id:
+            try:
+                mappings = self.client.list_probe_positions(sample_id=self.current_sample_id)
+            except Exception:
+                chisurf.logging.warning("fill_positions(self, mappings: list[dict[str, Any]] | None = None) -> None: %s", _exc)
         self.positions_table.setRowCount(0)
         for mapping in mappings:
             row = self.positions_table.rowCount()
@@ -2318,7 +3596,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 mapping.get("chromophore_name", ""),
                 mapping.get("entity_id", ""),
                 mapping.get("asym_id", ""),
-                mapping.get("residue_number", ""),
+                mapping.get("seq_id") or mapping.get("residue_number", ""),
+                mapping.get("atom_id", ""),
+                mapping.get("mutation_flag", ""),
+                mapping.get("modification_flag", ""),
+                mapping.get("auth_name", ""),
                 mapping.get("fluorophore_type", ""),
                 mapping.get("description", "") or mapping.get("position_description", ""),
             ]
@@ -2326,6 +3608,146 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 self.positions_table.setItem(
                     row, column, QtWidgets.QTableWidgetItem(str(value or ""))
                 )
+
+    def fill_fret_pairs(self, pairs: list[dict[str, Any]]) -> None:
+        """Populate the structured FRET-pair editor."""
+        if not hasattr(self, "fret_pairs_table"):
+            return
+        if self.current_sample_id:
+            try:
+                pairs = self.client.list_fret_pairs(self.current_sample_id)
+            except Exception:
+                chisurf.logging.warning("fill_fret_pairs(self, pairs: list[dict[str, Any]]) -> None: %s", _exc)
+        self.fret_pairs_table.setRowCount(0)
+        for pair in pairs:
+            row = self.fret_pairs_table.rowCount()
+            self.fret_pairs_table.insertRow(row)
+            values = [
+                pair.get("donor_probe", ""),
+                pair.get("acceptor_probe", ""),
+                pair.get("forster_radius_nm") or pair.get("forster_radius", ""),
+                pair.get("kappa_squared", ""),
+                pair.get("refractive_index") or pair.get("index_of_refraction", ""),
+                pair.get("overlap_integral", ""),
+                pair.get("forster_radius_id", ""),
+            ]
+            for column, value in enumerate(values):
+                self.fret_pairs_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def refresh_entities_table(self) -> None:
+        """Refresh standalone entities from the new PRD-02 entity service."""
+        self.fill_entities(self.client.list_entities())
+
+    def save_selected_entity(self) -> None:
+        """Save the selected standalone entity row."""
+        row = self.entities_table.currentRow()
+        if row < 0:
+            self.status_label.setText("Select an entity row to save")
+            return
+        entity = {
+            "entity_id": _table_text(self.entities_table, row, 0),
+            "name": _table_text(self.entities_table, row, 1),
+            "common_name": _table_text(self.entities_table, row, 1),
+            "type": _table_text(self.entities_table, row, 2) or "polymer",
+            "sequence": _table_text(self.entities_table, row, 3),
+            "details": _table_text(self.entities_table, row, 4),
+        }
+        saved = self.client.save_entity(entity)
+        self.status_label.setText(f"Saved entity {saved.get('entity_id', entity['entity_id'])}")
+        self.refresh_entities_table()
+
+    def delete_selected_entity(self) -> None:
+        """Soft-delete the selected standalone entity row."""
+        row = self.entities_table.currentRow()
+        if row < 0:
+            self.status_label.setText("Select an entity row to delete")
+            return
+        entity_id = _table_text(self.entities_table, row, 0)
+        if not entity_id:
+            return
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Delete entity",
+            f"Delete entity {entity_id}?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No,
+        )
+        if reply != QtWidgets.QMessageBox.Yes:
+            return
+        self.client.delete_entity(entity_id)
+        self.status_label.setText(f"Deleted entity {entity_id}")
+        self.refresh_entities_table()
+
+    def add_standalone_probe_row(self) -> None:
+        """Append an editable standalone probe row."""
+        row = self.probes_table.rowCount()
+        self.probes_table.insertRow(row)
+        probe_name = COMMON_PROBE_NAMES[0] if COMMON_PROBE_NAMES else ""
+        defaults = DEFAULT_FLUOROPHORE_SPECTRA.get(probe_name, {})
+        values = [
+            "", probe_name, "dye", "extrinsic", "covalent", "no", "",
+            defaults.get("absorption_wavelength_nm", ""),
+            defaults.get("emission_wavelength_nm", ""),
+            defaults.get("quantum_yield", ""),
+            defaults.get("extinction_coefficient", ""),
+        ]
+        for column, value in enumerate(values):
+            self.probes_table.setItem(row, column, QtWidgets.QTableWidgetItem(value))
+
+    def save_selected_probe(self) -> None:
+        """Save the selected standalone probe row and its optical properties."""
+        data = self.probe_detail_widget.get_data()
+        probe = {
+            "chromophore_name": data.get("chromophore_name"),
+            "category": data.get("category") or "dye",
+            "probe_origin": data.get("probe_origin") or "extrinsic",
+            "probe_link_type": data.get("probe_link_type") or "covalent",
+            "reactive_probe_flag": data.get("reactive_probe_flag") or "no",
+            "reactive_probe_name": data.get("reactive_probe_name"),
+            "fluorophore_type": data.get("fluorophore_type"),
+            "description": data.get("description"),
+            "is_curated": bool(data.get("is_curated")),
+            "quality_flag": int(data.get("quality_flag") or 0) if data.get("quality_flag") is not None else None,
+        }
+        
+        probe["name"] = data.get("chromophore_name")
+        probe_id_val = data.get("probe_id")
+        if probe_id_val not in (None, "", 0):
+            probe["probe_id"] = int(probe_id_val)
+
+        saved = self.client.save_probe(probe)
+        probe_id = saved.get("probe_id")
+        if probe_id:
+            properties = [
+                {"property_name": "abs_max", "property_value": _float_or_none(data.get("abs_max")), "unit": "nm"},
+                {"property_name": "em_max", "property_value": _float_or_none(data.get("em_max")), "unit": "nm"},
+                {"property_name": "qy", "property_value": _float_or_none(data.get("qy")), "unit": ""},
+                {"property_name": "ext_coeff", "property_value": _float_or_none(data.get("ext_coeff")), "unit": "M^-1 cm^-1"},
+            ]
+            self.client.save_probe_optical_properties(
+                int(probe_id),
+                [prop for prop in properties if prop["property_value"] is not None],
+            )
+        self.status_label.setText(f"Saved probe {saved.get('chromophore_name', probe.get('chromophore_name', ''))}")
+        self.fill_probes()
+
+    def _entity_tables(self) -> list[QtWidgets.QTableWidget]:
+        """Return all initialized entity tables that should stay in sync."""
+        tables = []
+        for name in ("sample_entities_table", "entities_table"):
+            table = getattr(self, name, None)
+            if table is not None and table not in tables:
+                tables.append(table)
+        return tables
+
+    def _set_entities_tab_label(self, count: int) -> None:
+        """Update the entities nav item with a row count."""
+        row = getattr(self, "_row_by_entity", {}).get("entity")
+        if row is None:
+            return
+        item = self.nav_list.item(row)
+        if item is not None:
+            item.setText(f"{self.panels[row].get('name', 'Entities')} ({count})")
 
     def fill_metadata(self, key_values: list[dict[str, Any]]) -> None:
         self.metadata_editor.set_data(key_values)
@@ -2339,44 +3761,122 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
     def collect_sample(self) -> dict[str, Any]:
         entities = []
-        for row in range(self.entities_table.rowCount()):
+        entity_table = getattr(self, "sample_entities_table", self.entities_table)
+        for row in range(entity_table.rowCount()):
+            entity_id = _table_text(entity_table, row, 0)
+            name = _table_text(entity_table, row, 1)
+            entity_type = _table_text(entity_table, row, 2) or "polymer"
+            sequence = _table_text(entity_table, row, 3)
+            details = _table_text(entity_table, row, 4)
+            if not any((entity_id, name, sequence, details)):
+                continue
             entities.append(
                 {
-                    "entity_id": self.entities_table.item(row, 0).text()
-                    if self.entities_table.item(row, 0)
-                    else "",
-                    "type": self.entities_table.item(row, 1).text()
-                    if self.entities_table.item(row, 1)
-                    else "polymer",
-                    "description": self.entities_table.item(row, 2).text()
-                    if self.entities_table.item(row, 2)
-                    else "",
-                    "common_name": self.entities_table.item(row, 3).text()
-                    if self.entities_table.item(row, 3)
-                    else "",
+                    "entity_id": entity_id or name,
+                    "name": name or entity_id,
+                    "common_name": name or entity_id,
+                    "type": entity_type,
+                    "entity_type": entity_type,
+                    "sequence": sequence,
+                    "details": details,
+                    "description": details,
                 }
             )
+        probes = []
+        if hasattr(self, "sample_probes_table"):
+            for row in range(self.sample_probes_table.rowCount()):
+                probe_name = _table_text(self.sample_probes_table, row, 0)
+                if not probe_name:
+                    continue
+                entity_id = _table_text(self.sample_probes_table, row, 1)
+                entity_index = next(
+                    (
+                        index
+                        for index, entity in enumerate(entities)
+                        if entity_id
+                        and entity_id in {entity.get("entity_id"), entity.get("name"), entity.get("common_name")}
+                    ),
+                    0,
+                )
+                probes.append(
+                    {
+                        "name": probe_name,
+                        "chromophore_name": probe_name,
+                        "entity_index": entity_index,
+                        "seq_id": _int_or_none(_table_text(self.sample_probes_table, row, 2)),
+                        "comp_id": _table_text(self.sample_probes_table, row, 3),
+                        "asym_id": _table_text(self.sample_probes_table, row, 4) or "A",
+                        "atom_id": _table_text(self.sample_probes_table, row, 5),
+                        "mutation_flag": _table_text(self.sample_probes_table, row, 6) or "no",
+                        "modification_flag": _table_text(self.sample_probes_table, row, 7) or "no",
+                        "absorption_wavelength_nm": _float_or_none(_table_text(self.sample_probes_table, row, 8)),
+                        "emission_wavelength_nm": _float_or_none(_table_text(self.sample_probes_table, row, 9)),
+                        "quantum_yield": _float_or_none(_table_text(self.sample_probes_table, row, 10)),
+                    }
+                )
+        fret_pairs = []
+        if hasattr(self, "fret_pairs_table"):
+            probe_names = [probe["name"] for probe in probes]
+            for row in range(self.fret_pairs_table.rowCount()):
+                donor = _table_text(self.fret_pairs_table, row, 0)
+                acceptor = _table_text(self.fret_pairs_table, row, 1)
+                if not donor or not acceptor:
+                    continue
+                if donor not in probe_names or acceptor not in probe_names:
+                    continue
+                fret_pairs.append(
+                    {
+                        "donor_probe": donor,
+                        "acceptor_probe": acceptor,
+                        "probe_1_index": probe_names.index(donor),
+                        "probe_2_index": probe_names.index(acceptor),
+                        "forster_radius_nm": _float_or_none(_table_text(self.fret_pairs_table, row, 2)),
+                        "kappa_squared": _float_or_none(_table_text(self.fret_pairs_table, row, 3)),
+                        "refractive_index": _float_or_none(_table_text(self.fret_pairs_table, row, 4)),
+                        "overlap_integral": _float_or_none(_table_text(self.fret_pairs_table, row, 5)),
+                        "forster_radius_id": _table_text(self.fret_pairs_table, row, 6),
+                    }
+                )
         mappings = []
         for row in range(self.positions_table.rowCount()):
             mappings.append(
                 {
-                    "sample_probe_id": self.positions_table.item(row, 0).text()
-                    if self.positions_table.item(row, 0)
-                    else None,
-                    "probe_id": self.positions_table.item(row, 2).text()
-                    if self.positions_table.item(row, 2)
-                    else None,
-                    "fluorophore_type": self.positions_table.item(row, 7).text()
-                    if self.positions_table.item(row, 7)
-                    else "unspecified",
-                    "description": self.positions_table.item(row, 8).text()
-                    if self.positions_table.item(row, 8)
-                    else "",
+                    "sample_probe_id": _table_text(self.positions_table, row, 0) or None,
+                    "sample_id": _table_text(self.positions_table, row, 1) or None,
+                    "probe_id": _table_text(self.positions_table, row, 2) or None,
+                    "entity_id": _table_text(self.positions_table, row, 4) or None,
+                    "asym_id": _table_text(self.positions_table, row, 5) or None,
+                    "seq_id": _int_or_none(_table_text(self.positions_table, row, 6)),
+                    "fluorophore_type": _table_text(self.positions_table, row, 7) or "unspecified",
+                    "description": _table_text(self.positions_table, row, 8),
                 }
             )
         key_values = self.metadata_editor.get_data()
+        condition_id = (
+            self.sample_condition_id_field.text().strip()
+            if hasattr(self, "sample_condition_id_field")
+            else ""
+        )
+        ph_value = self.sample_ph_spin.value() if hasattr(self, "sample_ph_spin") else 0
+        temperature_value = (
+            self.sample_temperature_spin.value()
+            if hasattr(self, "sample_temperature_spin")
+            else 0
+        )
+        ionic_value = self.sample_ionic_spin.value() if hasattr(self, "sample_ionic_spin") else 0
+        buffer_text = (
+            self.sample_buffer_edit.text().strip()
+            if hasattr(self, "sample_buffer_edit")
+            else ""
+        )
+        condition_details = (
+            self.sample_condition_details_edit.toPlainText().strip()
+            if hasattr(self, "sample_condition_details_edit")
+            else ""
+        )
         return {
             "sample_id": self.sample_id_edit.text().strip(),
+            "name": self.sample_id_edit.text().strip(),
             "sample_uuid": self.uuid_edit.text().strip(),
             "description": self.description_edit.text().strip(),
             "details": self.details_edit.toPlainText().strip(),
@@ -2389,16 +3889,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "measured_by_device_id": self.measured_device_combo.currentData() or None,
             "measured_at": self.measured_at_edit.text().strip(),
             "condition": {
-                "condition_id": self.condition_id_field.text().strip(),
-                "ph": None if self.ph_spin.value() == 0 else self.ph_spin.value(),
-                "temperature": None
-                if self.temperature_spin.value() == 0
-                else self.temperature_spin.value(),
-                "ionic_strength": None if self.ionic_spin.value() == 0 else self.ionic_spin.value(),
-                "buffer_composition": self.buffer_edit.text().strip(),
-                "details": self.condition_details_edit.toPlainText().strip(),
+                "condition_id": condition_id,
+                "ph": None if ph_value == 0 else ph_value,
+                "temperature": None if temperature_value == 0 else temperature_value,
+                "temperature_k": None if temperature_value == 0 else temperature_value,
+                "ionic_strength": None if ionic_value == 0 else ionic_value,
+                "salt_concentration_m": None if ionic_value == 0 else ionic_value,
+                "buffer_composition": buffer_text,
+                "details": condition_details,
             },
             "entities": entities,
+            "probes": probes,
+            "fret_pairs": fret_pairs,
             "sample_probes": mappings,
             "key_values": key_values,
         }
@@ -2409,7 +3911,10 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.status_label.setText("Sample id is required")
             return
         saved = self.client.save_sample(sample)
-        self.status_label.setText(f"Saved {saved['sample_id']}")
+        if saved is not None:
+            self.status_label.setText(f"Saved {saved['sample_id']}")
+        else:
+            self.status_label.setText("Save failed: no response from server")
         self.refresh()
 
     def add_metadata_row(self) -> None:
@@ -2419,50 +3924,31 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.metadata_editor._on_delete_row()
 
     def collect_user(self) -> dict[str, Any]:
-        role = self.user_role_combo.currentText().strip() or None
-        payload: dict[str, Any] = {
-            "user_id": self.user_id_edit.text().strip(),
-            "user_uuid": self.user_uuid_edit.text().strip() or None,
-            "display_name": self.user_display_edit.text().strip(),
-            "email": self.user_email_edit.text().strip() or None,
-            "role": role,
-            "affiliation": self.user_affiliation_edit.text().strip() or None,
-            "department": self.user_department_edit.text().strip() or None,
-            "phone": self.user_phone_edit.text().strip() or None,
-            "website": self.user_website_edit.text().strip() or None,
-            "address": self.user_address_edit.toPlainText().strip() or None,
-            "details": self.user_details_edit.toPlainText().strip() or None,
-            "is_admin": 1 if self.user_is_admin_check.isChecked() else 0,
-            "allow_passwordless_login": 1 if self.user_passwordless_check.isChecked() else 0,
-            "requester_id": self._active_mfdb_user_id(),
-        }
-        return payload
+        data = self.user_detail_widget.get_data()
+        data["requester_id"] = self._active_mfdb_user_id()
+        return data
 
     def new_user(self) -> None:
         """Prepare the user form for a new entry with a generated UUID."""
         self.users_table.clearSelection()
-        self._loading = True
-        try:
-            self.user_uuid_edit.setText(str(uuid.uuid4()))
-            self.user_id_edit.clear()
-            self.user_display_edit.clear()
-            self.user_email_edit.clear()
-            self.user_role_combo.setCurrentIndex(0)
-            self.user_affiliation_edit.clear()
-            self.user_department_edit.clear()
-            self.user_phone_edit.clear()
-            self.user_website_edit.clear()
-            self.user_address_edit.clear()
-            self.user_is_admin_check.setChecked(False)
-            self.user_passwordless_check.setChecked(False)
-            self.user_active_branch_edit.clear()
-            self.user_has_password_label.setText("not set")
-            self.user_created_label.setText("—")
-            self.user_updated_label.setText("—")
-            self.user_details_edit.clear()
-        finally:
-            self._loading = False
-        self.user_id_edit.setFocus()
+        new_data = {
+            "user_uuid": str(uuid.uuid4()),
+            "user_id": "",
+            "display_name": "",
+            "email": "",
+            "role": "user",
+            "affiliation": "",
+            "department": "",
+            "phone": "",
+            "website": "",
+            "address": "",
+            "is_admin": 0,
+            "allow_passwordless_login": 0,
+            "active_branch_uuid": "",
+            "details": "",
+        }
+        self.user_detail_widget.set_data(new_data)
+        self.user_detail_widget.widgets["user_id"].setFocus()
         self.status_label.setText("New user — fill fields and Save")
 
     def save_user(self) -> None:
@@ -2471,7 +3957,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def delete_user(self) -> None:
-        user_id = self.user_id_edit.text().strip()
+        user_id = self.user_detail_widget.get_data().get("user_id")
         if not user_id:
             return
         users = self.client.delete_user(user_id)
@@ -2479,14 +3965,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def change_user_password(self) -> None:
-        """Set or clear the selected user's MFDB password.
-
-        Goes through ``save_user`` so the active admin can change the
-        password of any other user. ``change_password`` only updates the
-        password of the currently authenticated principal and is therefore
-        unsuitable for this admin tool.
-        """
-        user_id = self.user_id_edit.text().strip()
+        """Set or clear the selected user's MFDB password."""
+        user_id = self.user_detail_widget.get_data().get("user_id")
         if not user_id:
             QtWidgets.QMessageBox.warning(
                 self, "Selection Required", "Please select or save a user first."
@@ -2520,32 +4000,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         user = self._selected_user_payload()
         if not user:
             return
-        self._loading = True
-        try:
-            self.user_uuid_edit.setText(str(user.get("user_uuid") or ""))
-            self.user_id_edit.setText(str(user.get("user_id") or ""))
-            self.user_display_edit.setText(str(user.get("display_name") or ""))
-            self.user_email_edit.setText(str(user.get("email") or ""))
-            role = str(user.get("role") or "")
-            idx = self.user_role_combo.findText(role)
-            if idx >= 0:
-                self.user_role_combo.setCurrentIndex(idx)
-            else:
-                self.user_role_combo.setEditText(role)
-            self.user_affiliation_edit.setText(str(user.get("affiliation") or ""))
-            self.user_department_edit.setText(str(user.get("department") or ""))
-            self.user_phone_edit.setText(str(user.get("phone") or ""))
-            self.user_website_edit.setText(str(user.get("website") or ""))
-            self.user_address_edit.setPlainText(str(user.get("address") or ""))
-            self.user_is_admin_check.setChecked(bool(user.get("is_admin")))
-            self.user_passwordless_check.setChecked(bool(user.get("allow_passwordless_login")))
-            self.user_active_branch_edit.setText(str(user.get("active_branch_uuid") or ""))
-            self.user_has_password_label.setText("set" if user.get("has_password") else "not set")
-            self.user_created_label.setText(str(user.get("created_at") or "—"))
-            self.user_updated_label.setText(str(user.get("updated_at") or "—"))
-            self.user_details_edit.setPlainText(str(user.get("details") or ""))
-        finally:
-            self._loading = False
+        self.user_detail_widget.set_data(user)
 
     def fill_user_table(self, users: list[dict[str, Any]] | None = None) -> None:
         users = users if users is not None else self.client.list_users()
@@ -2591,12 +4046,10 @@ class MFDBWidget(QtWidgets.QMainWindow):
         rows = self.branches_table.selectionModel().selectedRows()
         if not rows:
             return
-        row = rows[0].row()
-        self.branch_name_edit.setText(self.branches_table.item(row, 0).text() or "")
-        self.branch_uuid_edit.setText(self.branches_table.item(row, 1).text() or "")
-        self.branch_parent_uuid_edit.setText(self.branches_table.item(row, 2).text() or "")
-        self.branch_head_op_edit.setText(self.branches_table.item(row, 3).text() or "")
-        self.branch_description_edit.setPlainText(self.branches_table.item(row, 4).text() or "")
+        item = self.branches_table.item(rows[0].row(), 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.branch_detail_widget.set_data(data)
 
     def fill_branch_table(self, branches: list[dict[str, Any]] | None = None) -> None:
         if self._loading:
@@ -2615,34 +4068,32 @@ class MFDBWidget(QtWidgets.QMainWindow):
                     b.get("description", ""),
                 ]
                 for column, value in enumerate(values):
-                    self.branches_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+                    item = QtWidgets.QTableWidgetItem(str(value or ""))
+                    if column == 0:
+                        item.setData(QtCore.Qt.UserRole, b)
+                    self.branches_table.setItem(row, column, item)
         except Exception:
-            pass
+            chisurf.logging.warning("Operation failed: %s", _exc)
 
     def save_branch(self) -> None:
         try:
-            name = self.branch_name_edit.text().strip()
-            uuid_val = self.branch_uuid_edit.text().strip() or None
-            parent_uuid = self.branch_parent_uuid_edit.text().strip() or None
-            head_op = self.branch_head_op_edit.text().strip() or None
-            desc = self.branch_description_edit.toPlainText().strip() or None
+            data = self.branch_detail_widget.get_data()
             creator_user = self.branch_user_combo.currentData() or "user_default"
-
             self.client.create_branch(
-                branch_uuid=uuid_val,
-                name=name,
-                parent_branch_uuid=parent_uuid,
-                head_operation_id=head_op,
+                branch_uuid=data.get("branch_uuid"),
+                name=data.get("name"),
+                parent_branch_uuid=data.get("parent_branch_uuid"),
+                head_operation_id=data.get("head_operation_id"),
                 created_by_user_id=creator_user,
-                description=desc,
+                description=data.get("description"),
             )
             self.refresh()
-            QtWidgets.QMessageBox.information(self, "Success", f"Branch '{name}' saved successfully.")
+            QtWidgets.QMessageBox.information(self, "Success", f"Branch '{data.get('name')}' saved successfully.")
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Could not save branch: {e}")
 
     def delete_branch(self) -> None:
-        uuid_val = self.branch_uuid_edit.text().strip()
+        uuid_val = self.branch_detail_widget.get_data().get("branch_uuid")
         if not uuid_val:
             return
         if QtWidgets.QMessageBox.question(
@@ -2674,7 +4125,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             else:
                 self._set_combo_data(self.branch_user_combo, "user_default")
         except Exception:
-            pass
+            chisurf.logging.warning("fill_branch_user_combo(self) -> None: %s", _exc)
         finally:
             self.branch_user_combo.blockSignals(False)
             self.on_branch_user_changed(0)
@@ -2723,20 +4174,23 @@ class MFDBWidget(QtWidgets.QMainWindow):
         name = self.branches_table.item(row, 0).text()
         branch_uuid = self.branches_table.item(row, 1).text()
         head_operation_id = self.branches_table.item(row, 3).text()
-        self.branch_uuid_edit.clear()
-        self.branch_name_edit.setText(f"{name}-branch")
-        self.branch_parent_uuid_edit.setText(branch_uuid)
-        self.branch_head_op_edit.setText(head_operation_id)
-        self.branch_description_edit.setPlainText(f"Parallel branch from {name}")
+        self.branch_detail_widget.set_data({
+            "branch_uuid": "",
+            "name": f"{name}-branch",
+            "parent_branch_uuid": branch_uuid,
+            "head_operation_id": head_operation_id,
+            "description": f"Parallel branch from {name}",
+        })
 
     def create_time_branch(self) -> None:
         """Create and activate a branch at the requested operation."""
         user_id = self.branch_user_combo.currentData()
-        operation_id = self.branch_head_op_edit.text().strip()
-        branch_name = self.branch_name_edit.text().strip() or None
-        branch_uuid = self.branch_uuid_edit.text().strip() or None
-        parent_uuid = self.branch_parent_uuid_edit.text().strip() or None
-        description = self.branch_description_edit.toPlainText().strip() or None
+        data = self.branch_detail_widget.get_data()
+        operation_id = data.get("head_operation_id")
+        branch_name = data.get("name")
+        branch_uuid = data.get("branch_uuid")
+        parent_uuid = data.get("parent_branch_uuid")
+        description = data.get("description")
         if not user_id:
             QtWidgets.QMessageBox.warning(self, "Warning", "Please select a user first.")
             return
@@ -2763,16 +4217,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "Error", f"Could not create time branch: {e}")
 
     def collect_device(self) -> dict[str, Any]:
-        return {
-            "device_id": self.device_id_edit.text().strip(),
-            "name": self.device_name_edit.text().strip(),
-            "device_type": self.device_type_edit.text().strip() or None,
-            "model": self.device_model_edit.text().strip() or None,
-            "serial_number": self.device_serial_edit.text().strip() or None,
-            "location": self.device_location_edit.text().strip() or None,
-            "owner": self.device_owner_edit.text().strip() or None,
-            "details": self.device_details_edit.toPlainText().strip() or None,
-        }
+        return self.device_detail_widget.get_data()
 
     def save_device(self) -> None:
         devices = self.client.save_device(self.collect_device())
@@ -2780,7 +4225,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def delete_device(self) -> None:
-        device_id = self.device_id_edit.text().strip()
+        device_id = self.device_detail_widget.get_data().get("device_id")
         if not device_id:
             return
         devices = self.client.delete_device(device_id)
@@ -2791,33 +4236,21 @@ class MFDBWidget(QtWidgets.QMainWindow):
         rows = self.devices_table.selectionModel().selectedRows()
         if not rows:
             return
-        row = rows[0].row()
-        self.device_id_edit.setText(self.devices_table.item(row, 0).text() or "")
-        self.device_name_edit.setText(self.devices_table.item(row, 1).text() or "")
-        self.device_type_edit.setText(self.devices_table.item(row, 2).text() or "")
-        self.device_model_edit.setText(self.devices_table.item(row, 3).text() or "")
-        self.device_serial_edit.setText(self.devices_table.item(row, 4).text() or "")
-        self.device_location_edit.setText(self.devices_table.item(row, 5).text() or "")
-        self.device_owner_edit.setText(self.devices_table.item(row, 6).text() or "")
-        self.device_details_edit.setPlainText(self.devices_table.item(row, 7).text() or "")
-
-    def collect_experiment_type(self) -> dict[str, Any]:
-        return {
-            "type_id": self.experiment_type_id_edit.text().strip() or None,
-            "name": self.experiment_type_name_edit.text().strip(),
-            "category": self.experiment_type_category_edit.text().strip() or None,
-            "description": self.experiment_type_description_edit.text().strip() or None,
-            "details": self.experiment_type_details_edit.toPlainText().strip() or None,
-        }
+        item = self.devices_table.item(rows[0].row(), 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.device_detail_widget.set_data(data)
 
     def save_experiment_type(self) -> None:
-        types = self.client.save_experiment_type(self.collect_experiment_type())
+        data = self.experiment_type_detail_widget.get_data()
+        types = self.client.save_experiment_type(data)
         self.fill_experiment_type_table(types)
         self.refresh()
 
     def delete_experiment_type(self) -> None:
-        type_id = self.experiment_type_id_edit.text().strip()
-        if not type_id:
+        data = self.experiment_type_detail_widget.get_data()
+        type_id = data.get("type_id")
+        if type_id is None:
             return
         answer = QtWidgets.QMessageBox.question(
             self, "Delete experiment type", f"Delete experiment type {type_id}?"
@@ -2828,24 +4261,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.refresh()
 
     def collect_experiment(self) -> dict[str, Any]:
-        return {
-            "experiment_id": self.experiment_id_edit.text().strip(),
-            "type_id": int(self.experiment_type_combo.currentData() or -1)
-            if self.experiment_type_combo.currentData() not in (None, -1, "")
-            else None,
-            "sample_id": self.experiment_sample_combo.currentData() or None,
-            "project_id": self.experiment_project_edit.text().strip() or None,
-            "measured_by_user_id": self.experiment_user_combo.currentData() or None,
-            "measured_by_device_id": self.experiment_device_combo.currentData() or None,
-            "started_at": self.experiment_started_edit.text().strip() or None,
-            "ended_at": self.experiment_ended_edit.text().strip() or None,
-            "status": self.experiment_status_edit.text().strip() or None,
-            "details": self.experiment_details_edit.toPlainText().strip() or None,
-        }
+        data = self.experiment_detail_widget.get_data()
+        # Ensure type_id is an integer if present
+        if data.get("type_id") is not None:
+            try:
+                data["type_id"] = int(data["type_id"])
+            except (ValueError, TypeError):
+                pass
+        return data
 
     def save_experiment(self) -> None:
         experiment = self.collect_experiment()
-        if not experiment["experiment_id"]:
+        if not experiment.get("experiment_id"):
             self.status_label.setText("Experiment id is required")
             return
         saved = self.client.save_experiment(experiment)
@@ -2853,7 +4280,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def delete_experiment(self) -> None:
-        experiment_id = self.experiment_id_edit.text().strip()
+        data = self.experiment_detail_widget.get_data()
+        experiment_id = data.get("experiment_id")
         if not experiment_id:
             return
         answer = QtWidgets.QMessageBox.question(
@@ -2989,15 +4417,16 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("details", ""),
             ]
             for column, value in enumerate(values):
-                self.experiment_types_table.setItem(
-                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
-                )
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, item)
+                self.experiment_types_table.setItem(row, column, cell_item)
 
-    def fill_experiment_table(self, sample_id: str | None = None) -> None:
+    def fill_experiment_table(self, sample_id: str | None = None, type_id: int | None = None) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.experiments_table):
             return
         self.experiments_table.setRowCount(0)
-        for item in self.client.list_experiments(sample_id=sample_id):
+        for item in self.client.list_experiments(sample_id=sample_id, type_id=type_id):
             row = self.experiments_table.rowCount()
             self.experiments_table.insertRow(row)
             values = [
@@ -3011,9 +4440,10 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("status", ""),
             ]
             for column, value in enumerate(values):
-                self.experiments_table.setItem(
-                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
-                )
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, item)
+                self.experiments_table.setItem(row, column, cell_item)
 
     def fill_experiment_sample_combo(self) -> None:
         self.experiment_sample_combo.blockSignals(True)
@@ -3025,66 +4455,26 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.experiment_sample_combo.addItem(f"{description} ({sample_id})", sample_id)
         self.experiment_sample_combo.blockSignals(False)
 
-    def fill_experiment_user_combo(self) -> None:
-        self.experiment_user_combo.blockSignals(True)
-        self.experiment_user_combo.clear()
-        self.experiment_user_combo.addItem("", "")
-        for user in self.client.list_users():
-            user_id = user.get("user_id", "")
-            self.experiment_user_combo.addItem(
-                f"{user.get('display_name') or user_id} ({user_id})",
-                user_id,
-            )
-        self.experiment_user_combo.blockSignals(False)
-
-    def fill_experiment_device_combo(self) -> None:
-        self.experiment_device_combo.blockSignals(True)
-        self.experiment_device_combo.clear()
-        self.experiment_device_combo.addItem("", "")
-        for device in self.client.list_devices():
-            device_id = device.get("device_id", "")
-            self.experiment_device_combo.addItem(
-                f"{device.get('name') or device_id} ({device_id})",
-                device_id,
-            )
-        self.experiment_device_combo.blockSignals(False)
-
     def load_experiment_type(self) -> None:
         rows = self.experiment_types_table.selectionModel().selectedRows()
         if not rows:
             return
-        row = rows[0].row()
-        self.experiment_type_id_edit.setText(self.experiment_types_table.item(row, 0).text() or "")
-        self.experiment_type_name_edit.setText(self.experiment_types_table.item(row, 1).text() or "")
-        self.experiment_type_category_edit.setText(
-            self.experiment_types_table.item(row, 2).text() or ""
-        )
-        self.experiment_type_description_edit.setText(
-            self.experiment_types_table.item(row, 3).text() or ""
-        )
-        self.experiment_type_details_edit.setPlainText(
-            self.experiment_types_table.item(row, 4).text() or ""
-        )
+        item = self.experiment_types_table.item(rows[0].row(), 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.experiment_type_detail_widget.set_data(data)
 
     def load_experiment(self) -> None:
         rows = self.experiments_table.selectionModel().selectedRows()
         if not rows:
             return
-        experiment_id = self.experiments_table.item(rows[0].row(), 0).text()
+        item = self.experiments_table.item(rows[0].row(), 0)
+        experiment_id = item.text()
         self.current_experiment_id = experiment_id
         experiment = self.client.get_experiment(experiment_id) or {}
         self._loading = True
         try:
-            self.experiment_id_edit.setText(experiment.get("experiment_id", ""))
-            self._set_combo_data(self.experiment_type_combo, experiment.get("type_id"))
-            self._set_combo_data(self.experiment_sample_combo, experiment.get("sample_id"))
-            self.experiment_project_edit.setText(experiment.get("project_id", ""))
-            self._set_combo_data(self.experiment_user_combo, experiment.get("measured_by_user_id"))
-            self._set_combo_data(self.experiment_device_combo, experiment.get("measured_by_device_id"))
-            self.experiment_started_edit.setText(experiment.get("started_at", ""))
-            self.experiment_ended_edit.setText(experiment.get("ended_at", ""))
-            self.experiment_status_edit.setText(experiment.get("status", ""))
-            self.experiment_details_edit.setPlainText(experiment.get("details", ""))
+            self.experiment_detail_widget.set_data(experiment)
             self.fill_experiment_data_table(experiment.get("data", []))
 
             # Refresh dependent views
@@ -3149,6 +4539,11 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.status_label.setText("Select or enter a sample id")
             return
         description = self.client.get_sample_full_description(sample_id)
+        if hasattr(self, "sample_subtabs") and hasattr(self, "full_description_edit"):
+            self.sample_subtabs.setCurrentWidget(self.full_description_edit.parentWidget())
+            self.full_description_edit.setPlainText(
+                json.dumps(description, indent=2, default=str)
+            )
         if hasattr(self, "preview_edit"):
             self.preview_edit.setPlainText(json.dumps(description, indent=2, default=str))
         self.status_label.setText(f"Loaded full description for {sample_id}")
@@ -3160,6 +4555,12 @@ class MFDBWidget(QtWidgets.QMainWindow):
             self.status_label.setText("Select or enter a sample id")
             return
         result = self.client.validate_sample_export(sample_id)
+        if hasattr(self, "validation_list"):
+            self.validation_list.clear()
+            for warning in result.get("warnings", []):
+                self.validation_list.addItem(str(warning))
+            if not result.get("warnings"):
+                self.validation_list.addItem("No export validation warnings.")
         if hasattr(self, "preview_edit"):
             self.preview_edit.setPlainText(json.dumps(result, indent=2, default=str))
         status = "valid" if result.get("valid") else "has warnings"
@@ -3173,7 +4574,17 @@ class MFDBWidget(QtWidgets.QMainWindow):
         super().showEvent(event)
         self._restore_dock_layout()
 
+    def hideEvent(self, event) -> None:
+        super().hideEvent(event)
+        self._save_dock_layout()
+
     def closeEvent(self, event) -> None:
+        if self._background_tasks:
+            self._set_status_message(
+                "MFDB task still running. Wait for it to finish before closing."
+            )
+            event.ignore()
+            return
         self._save_dock_layout()
         super().closeEvent(event)
 
@@ -3193,18 +4604,51 @@ class MFDBWidget(QtWidgets.QMainWindow):
         return settings
 
     def _save_dock_layout(self) -> None:
-        if not hasattr(self, "tabs"):
+        if not hasattr(self, "nav_list"):
             return
         settings = self._dock_settings()
-        settings.setValue("dock_layout", json.dumps(self.tabs.get_layout_state()))
+
+        # Selected nav panel + window geometry
+        settings.setValue("nav_row", int(self.nav_list.currentRow()))
+        settings.setValue("geometry", self.saveGeometry())
+
+        # Per-entity-dock splitter position (table/form ratio); only built docks.
+        for key, dock in getattr(self, "_entity_docks", {}).items():
+            sp = getattr(dock, "_splitter", None)
+            if sp is not None:
+                settings.setValue(f"entity_splitter/{key}", sp.saveState())
 
     def _restore_dock_layout(self) -> None:
-        if not hasattr(self, "tabs"):
+        if not hasattr(self, "nav_list"):
             return
         settings = self._dock_settings()
-        state = json.loads(settings.value("dock_layout", "") or "{}")
-        if state:
-            self.tabs.set_layout_state(state)
+
+        # Window geometry
+        geo = settings.value("geometry")
+        if geo is not None:
+            try:
+                self.restoreGeometry(geo)
+            except Exception as exc:
+                chisurf.logging.warning("_restore_dock_layout: geometry: %s", exc)
+
+        # Selected nav panel
+        row = settings.value("nav_row")
+        if row is not None:
+            try:
+                self.nav_list.setCurrentRow(int(row))
+            except Exception:
+                pass
+
+        # Per-entity-dock splitter position
+        for key, dock in getattr(self, "_entity_docks", {}).items():
+            sp = getattr(dock, "_splitter", None)
+            if sp is not None:
+                saved = settings.value(f"entity_splitter/{key}")
+                if saved is not None:
+                    try:
+                        sp.restoreState(saved)
+                    except Exception:
+                        pass
 
     def new_sample(self) -> None:
         sample_id = f"sample_{datetime.now():%Y%m%d_%H%M%S}"
@@ -3264,6 +4708,23 @@ class MFDBWidget(QtWidgets.QMainWindow):
         if not sample_id:
             self.status_label.setText("Select a sample to export")
             return
+        # Pre-export validation (Task 9.2)
+        try:
+            validation = self.client.validate_sample_export(sample_id)
+            if not validation.get("valid", True):
+                warnings = validation.get("warnings", [])
+                msg = "The following issues were found:\n"
+                for w in warnings:
+                    msg += f"\n• {w}"
+                msg += "\n\nExport anyway?"
+                reply = QtWidgets.QMessageBox.question(
+                    self, "Export validation warnings", msg,
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                )
+                if reply != QtWidgets.QMessageBox.Yes:
+                    return
+        except Exception:
+            chisurf.logging.warning("export_selected_sample(self) -> None: %s", _exc)
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, "Export FLR CIF", f"{sample_id}.cif", "CIF files (*.cif *.mmcif);;All files (*)"
         )
@@ -3271,6 +4732,24 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
         result = self.client.export_sample(sample_id, output_path=path)
         self.status_label.setText(f"Exported {result.get('output_path')}")
+
+    def preview_cif(self) -> None:
+        """Preview the flrCIF output for the selected sample (Task 9.3)."""
+        sample_id = self.sample_id_edit.text().strip()
+        if not sample_id:
+            self.status_label.setText("Select a sample to preview")
+            return
+        try:
+            result = self.client.export_sample(sample_id)
+            text = result.get("text", "")
+            if not text:
+                text = result.get("output_path", "")
+                if text:
+                    text = Path(text).read_text(encoding="utf-8")
+            self.preview_edit.setPlainText(text)
+            self.status_label.setText(f"CIF preview for {sample_id}")
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Preview failed", str(exc))
 
     def backup_database(self) -> None:
         path = self.client.backup()
@@ -3287,11 +4766,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self.refresh()
 
     def projects_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
         self.projects_table = QtWidgets.QTableWidget(0, 5)
         self.projects_table.setHorizontalHeaderLabels(
             ["version id", "name", "project id", "created at", "notes"]
@@ -3306,27 +4780,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             id_col=0,
             delete_one_fn=lambda pid: self.client.delete_project(pid),
         )
-        layout.addWidget(self.projects_table, stretch=1)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.project_id_edit = QtWidgets.QLineEdit()
-        self.project_id_edit.setReadOnly(True)
-        self.project_name_edit = QtWidgets.QLineEdit()
-        self.project_name_edit.setReadOnly(True)
-        self.project_notes_edit = QtWidgets.QPlainTextEdit()
-        self.project_notes_edit.setReadOnly(True)
-        self.project_notes_edit.setMinimumHeight(60)
-
-        form.addRow("Version ID", self.project_id_edit)
-        form.addRow("Name", self.project_name_edit)
-        form.addRow("Notes", self.project_notes_edit)
-        layout.addLayout(form)
-
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
         restore_button = self._text_icon_button(
             "📥 Restore project to ChiSurf",
             QtWidgets.QStyle.SP_DialogOpenButton,
@@ -3339,12 +4793,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "Delete the archived project version",
             self.delete_selected_project,
         )
-        buttons.addWidget(restore_button)
-        buttons.addWidget(delete_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
 
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.projects_table,
+            detail_widget=self.project_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_buttons=[restore_button, delete_button],
+        )
 
     def fill_project_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.projects_table):
@@ -3357,39 +4813,41 @@ class MFDBWidget(QtWidgets.QMainWindow):
         for item in projects:
             row = self.projects_table.rowCount()
             self.projects_table.insertRow(row)
+            flat_item = dict(item)
+            flat_item["project_id"] = item.get("analysis_id") or item.get("version_id") or item.get("project_id", "")
+            flat_item["name"] = item.get("model_name") or item.get("project_name") or ""
+            flat_item["description"] = item.get("notes", "")
+
             values = [
-                item.get("analysis_id") or item.get("version_id") or item.get("project_id", ""),
-                item.get("model_name") or item.get("project_name") or "",
+                flat_item["project_id"],
+                flat_item["name"],
                 item.get("project_id", ""),
                 (item.get("created_at") or "")[:19].replace("T", " "),
-                item.get("notes", ""),
+                flat_item["description"],
             ]
             for column, value in enumerate(values):
-                self.projects_table.setItem(
-                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
-                )
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, flat_item)
+                self.projects_table.setItem(row, column, cell_item)
 
     def load_project_details(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.projects_table):
             return
         selected = self.projects_table.selectedItems()
         if not selected:
-            self.project_id_edit.clear()
-            self.project_name_edit.clear()
-            self.project_notes_edit.clear()
+            self.project_detail_widget.set_data({})
             return
 
         row = selected[0].row()
-        project_id = self.projects_table.item(row, 0).text()
-        project_name = self.projects_table.item(row, 1).text()
-        project_notes = self.projects_table.item(row, 4).text()
-
-        self.project_id_edit.setText(project_id)
-        self.project_name_edit.setText(project_name)
-        self.project_notes_edit.setPlainText(project_notes)
+        item = self.projects_table.item(row, 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.project_detail_widget.set_data(data)
 
     def restore_selected_project(self) -> None:
-        project_id = self.project_id_edit.text()
+        data = self.project_detail_widget.get_data()
+        project_id = data.get("project_id")
         if not project_id:
             QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project to restore.")
             return
@@ -3416,7 +4874,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
             )
 
     def delete_selected_project(self) -> None:
-        project_id = self.project_id_edit.text()
+        data = self.project_detail_widget.get_data()
+        project_id = data.get("project_id")
         if not project_id:
             QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project version to delete.")
             return
@@ -3447,13 +4906,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
             )
 
     def setups_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        self.setups_table = QtWidgets.QTableWidget(0, 5)
+        self.setups_table = QtWidgets.QTableWidget(0, 7)
         self.setups_table.setHorizontalHeaderLabels(
-            ["setup id", "name", "instrument type", "details", "lasers/detectors"]
+            ["setup id", "name", "instrument type", "details", "lasers/detectors", "owner", "public"]
         )
         self.setups_table.horizontalHeader().setStretchLastSection(True)
         self.setups_table.itemSelectionChanged.connect(self.load_setup)
@@ -3463,49 +4918,22 @@ class MFDBWidget(QtWidgets.QMainWindow):
             id_col=0,
             delete_one_fn=lambda sid: self.client._call("mfdb.setups.delete", {"setup_id": sid}),
         )
-        layout.addWidget(self.setups_table, stretch=1)
-
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.setup_id_edit = QtWidgets.QLineEdit()
-        self.setup_name_edit = QtWidgets.QLineEdit()
-        self.setup_instrument_edit = QtWidgets.QLineEdit()
-        self.setup_lasers_edit = QtWidgets.QLineEdit()
-        self.setup_detectors_edit = QtWidgets.QLineEdit()
-        self.setup_details_edit = QtWidgets.QPlainTextEdit()
-        self.setup_details_edit.setMinimumHeight(60)
-
-        form.addRow("Setup id", self.setup_id_edit)
-        form.addRow("Name", self.setup_name_edit)
-        form.addRow("Instrument type", self.setup_instrument_edit)
-        form.addRow("Laser wavelengths (JSON)", self.setup_lasers_edit)
-        form.addRow("Detector channels (JSON)", self.setup_detectors_edit)
-        form.addRow("Details/JSON", self.setup_details_edit)
-        layout.addLayout(form)
 
         self.setup_validation_label = QtWidgets.QLabel("")
         self.setup_validation_label.setWordWrap(True)
-        layout.addWidget(self.setup_validation_label)
 
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
-        save_setup_button = self._text_icon_button(
-            "💾 Save setup", QtWidgets.QStyle.SP_DialogSaveButton, "Save setup", self.save_setup
-        )
-        delete_setup_button = self._text_icon_button(
-            "🗑 Delete setup", QtWidgets.QStyle.SP_TrashIcon, "Delete setup", self.delete_setup
-        )
         validate_setup_button = self._text_icon_button(
             "✅ Validate setup", QtWidgets.QStyle.SP_DialogApplyButton, "Validate setup", self.validate_setup
         )
-        buttons.addWidget(save_setup_button)
-        buttons.addWidget(delete_setup_button)
-        buttons.addWidget(validate_setup_button)
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+
+        return self._create_standard_dock_tab(
+            table=self.setups_table,
+            detail_widget=self.setup_detail_widget,
+            save_slot=self.save_setup,
+            delete_slot=self.delete_setup,
+            extra_buttons=[validate_setup_button],
+            extra_widgets_bottom=[self.setup_validation_label],
+        )
 
     def fill_setup_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.setups_table):
@@ -3521,62 +4949,39 @@ class MFDBWidget(QtWidgets.QMainWindow):
             lasers = item.get("laser_wavelengths", [])
             detectors = item.get("detector_channels", {})
             ld_str = f"Lasers: {lasers} | Detectors: {detectors}"
+            owner = item.get("created_by_user_id") or ""
+            is_public = item.get("is_public", 0)
             values = [
                 item.get("setup_id", ""),
                 item.get("name", ""),
                 item.get("instrument_type", ""),
                 item.get("details", ""),
-                ld_str
+                ld_str,
+                owner,
+                "Yes" if is_public else "No",
             ]
             for column, value in enumerate(values):
-                self.setups_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, item)
+                self.setups_table.setItem(row, column, cell_item)
 
     def load_setup(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.setups_table):
             return
-        selected = self.setups_table.selectedItems()
-        if not selected:
-            self.setup_id_edit.clear()
-            self.setup_name_edit.clear()
-            self.setup_instrument_edit.clear()
-            self.setup_lasers_edit.clear()
-            self.setup_detectors_edit.clear()
-            self.setup_details_edit.clear()
+        rows = self.setups_table.selectionModel().selectedRows()
+        if not rows:
+            self.setup_detail_widget.set_data({})
             self.setup_validation_label.clear()
             return
-        row = selected[0].row()
-        setup_id = self.setups_table.item(row, 0).text()
-        try:
-            setup = self.client._call("mfdb.setups.get", {"setup_id": setup_id}).get("setup", {})
-        except Exception:
-            setup = {}
-        self.setup_id_edit.setText(setup.get("setup_id", ""))
-        self.setup_name_edit.setText(setup.get("name", ""))
-        self.setup_instrument_edit.setText(setup.get("instrument_type", ""))
-        import json
-        self.setup_lasers_edit.setText(json.dumps(setup.get("laser_wavelengths", [])))
-        self.setup_detectors_edit.setText(json.dumps(setup.get("detector_channels", {})))
-        self.setup_details_edit.setPlainText(setup.get("details", "") or "")
+        item = self.setups_table.item(rows[0].row(), 0)
+        data = item.data(QtCore.Qt.UserRole) if item else None
+        if data:
+            self.setup_detail_widget.set_data(data)
         self.setup_validation_label.clear()
 
     def collect_setup(self) -> dict[str, Any]:
-        import json
-        try:
-            lasers = json.loads(self.setup_lasers_edit.text() or "[]")
-        except Exception:
-            lasers = []
-        try:
-            detectors = json.loads(self.setup_detectors_edit.text() or "{}")
-        except Exception:
-            detectors = {}
-        return {
-            "setup_id": self.setup_id_edit.text().strip(),
-            "name": self.setup_name_edit.text().strip(),
-            "instrument_type": self.setup_instrument_edit.text().strip() or None,
-            "laser_wavelengths": lasers,
-            "detector_channels": detectors,
-            "details": self.setup_details_edit.toPlainText().strip() or None,
-        }
+        return self.setup_detail_widget.get_data()
 
     def save_setup(self) -> None:
         try:
@@ -3588,7 +4993,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "Save Failed", f"Failed to save setup:\n{e}")
 
     def delete_setup(self) -> None:
-        setup_id = self.setup_id_edit.text().strip()
+        data = self.setup_detail_widget.get_data()
+        setup_id = data.get("setup_id")
         if not setup_id:
             return
         confirm = QtWidgets.QMessageBox.question(
@@ -3608,61 +5014,41 @@ class MFDBWidget(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "Delete Failed", f"Failed to delete setup:\n{e}")
 
     def validate_setup(self) -> None:
-        setup_id = self.setup_id_edit.text().strip()
+        data = self.setup_detail_widget.get_data()
+        setup_id = data.get("setup_id")
         if not setup_id:
             return
         try:
             res = self.client._call("mfdb.setups.validate", {"setup_id": setup_id})
             valid = res.get("valid", False)
-            errors = res.get("errors", [])
             if valid:
-                self.setup_validation_label.setText("<font color='green'><b>Validation PASS</b>: Setup is valid and fully specified.</font>")
+                self.setup_validation_label.setText(
+                    "<font color='green'><b>Validation OK</b></font>"
+                )
             else:
-                err_str = "<br>".join(errors)
-                self.setup_validation_label.setText(f"<font color='red'><b>Validation FAIL</b>:<br>{err_str}</font>")
+                err_str = res.get("message", "Unknown validation error")
+                self.setup_validation_label.setText(
+                    f"<font color='red'><b>Validation FAIL</b>:<br>{err_str}</font>"
+                )
         except Exception as e:
-            self.setup_validation_label.setText(f"<font color='red'><b>Error validating setup</b>: {e}</font>")
+            self.setup_validation_label.setText(
+                f"<font color='red'><b>Error validating setup</b>: {e}</font>"
+            )
 
     def raw_data_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        self.raw_data_table = QtWidgets.QTableWidget(0, 9)
+        self.raw_data_table = QtWidgets.QTableWidget(0, 10)
         self.raw_data_table.setHorizontalHeaderLabels(
-            ["raw data id", "experiment id", "data type", "storage mode", "path/url/folder", "validation", "checksum", "acquired at", "sample"]
+            [
+                "raw data id", "experiment id", "data type", "storage mode",
+                "path/url/folder", "validation", "checksum", "acquired at",
+                "sample", "sample QA",
+            ]
         )
         self.raw_data_table.horizontalHeader().setStretchLastSection(True)
         self.raw_data_table.itemSelectionChanged.connect(self.load_raw_data)
-        layout.addWidget(self.raw_data_table, stretch=1)
+        self.raw_data_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.raw_data_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.raw_id_edit = QtWidgets.QLineEdit()
-        self.raw_exp_edit = QtWidgets.QLineEdit()
-        self.raw_type_edit = QtWidgets.QLineEdit()
-        self.raw_storage_edit = QtWidgets.QLineEdit()
-        self.raw_path_edit = QtWidgets.QLineEdit()
-        self.raw_checksum_edit = QtWidgets.QLineEdit()
-        self.raw_validation_edit = QtWidgets.QLineEdit()
-        self.raw_details_edit = QtWidgets.QPlainTextEdit()
-        self.raw_details_edit.setMinimumHeight(60)
-
-        for w in (self.raw_id_edit, self.raw_exp_edit, self.raw_type_edit, self.raw_storage_edit, self.raw_path_edit, self.raw_checksum_edit, self.raw_validation_edit, self.raw_details_edit):
-            w.setReadOnly(True)
-
-        form.addRow("Raw Data ID", self.raw_id_edit)
-        form.addRow("Experiment ID", self.raw_exp_edit)
-        form.addRow("Data Type", self.raw_type_edit)
-        form.addRow("Storage Mode", self.raw_storage_edit)
-        form.addRow("File Path/URL/Folder", self.raw_path_edit)
-        form.addRow("Validation Status", self.raw_validation_edit)
-        form.addRow("Checksum (SHA-256)", self.raw_checksum_edit)
-        form.addRow("Details/JSON", self.raw_details_edit)
-        layout.addLayout(form)
-
-        btn_layout = QtWidgets.QHBoxLayout()
         btn_open = self._text_icon_button(
             "📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open raw data file/URL", self._on_raw_open_clicked
         )
@@ -3675,12 +5061,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "Load this record into the provenance graph",
             self._on_raw_seed_clicked,
         )
-        btn_layout.addWidget(btn_open)
-        btn_layout.addWidget(btn_copy)
-        btn_layout.addWidget(btn_seed)
-        btn_layout.addStretch()
-        layout.addLayout(btn_layout)
-        return widget
+
+        return self._create_standard_dock_tab(
+            table=self.raw_data_table,
+            detail_widget=self.raw_data_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_buttons=[btn_open, btn_copy, btn_seed],
+        )
 
     def fill_raw_data_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.raw_data_table):
@@ -3702,63 +5090,55 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("validation_status", ""),
                 item.get("checksum", ""),
                 item.get("acquired_at", ""),
-                item.get("sample_name", "")
+                item.get("sample_name", ""),
             ]
             for column, value in enumerate(values):
-                self.raw_data_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, item)
+                self.raw_data_table.setItem(row, column, cell_item)
+            self.raw_data_table.setItem(row, len(values), _sample_quality_table_item(item))
 
     def load_raw_data(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.raw_data_table):
             return
-        selected = self.raw_data_table.selectedItems()
-        if not selected:
-            self.raw_id_edit.clear()
-            self.raw_exp_edit.clear()
-            self.raw_type_edit.clear()
-            self.raw_storage_edit.clear()
-            self.raw_path_edit.clear()
-            self.raw_checksum_edit.clear()
-            self.raw_validation_edit.clear()
-            self.raw_details_edit.clear()
+        rows = self.raw_data_table.selectionModel().selectedRows()
+        if not rows:
+            self.raw_data_detail_widget.set_data({})
             return
-        row = selected[0].row()
-        raw_id = self.raw_data_table.item(row, 0).text()
+        raw_id = self.raw_data_table.item(rows[0].row(), 0).text()
         try:
-            item = self.client.get_raw_data(raw_id)
+            item = self.client.get_raw_data(raw_id) or {}
         except Exception:
             item = {}
-        self.raw_id_edit.setText(item.get("raw_data_id", ""))
-        self.raw_exp_edit.setText(item.get("experiment_id", ""))
-        self.raw_type_edit.setText(item.get("data_type", ""))
-        self.raw_storage_edit.setText(item.get("storage_mode", ""))
-        self.raw_path_edit.setText(_processed_location(item))
-        self.raw_checksum_edit.setText(item.get("checksum", ""))
-        self.raw_validation_edit.setText(item.get("validation_status", ""))
-        self.raw_details_edit.setPlainText(json.dumps(item, indent=2))
+        
+        flat_item = dict(item)
+        flat_item["location"] = _processed_location(item)
+        import json
+        flat_item["details"] = json.dumps(item, indent=2)
+        
+        self.raw_data_detail_widget.set_data(flat_item)
 
     def _on_raw_open_clicked(self) -> None:
-        path = self.raw_path_edit.text().strip()
+        path = self.raw_data_detail_widget.get_data().get("location")
         if path:
             QtGui.QDesktopServices.openUrl(_qurl_for_location(path))
 
     def _on_raw_copy_clicked(self) -> None:
-        raw_id = self.raw_id_edit.text().strip()
-        if raw_id:
-            QtWidgets.QApplication.clipboard().setText(raw_id)
+        raw_id = self.raw_data_detail_widget.get_data().get("raw_data_id")
+        if raw_id is not None:
+            QtWidgets.QApplication.clipboard().setText(str(raw_id))
 
     def _on_raw_seed_clicked(self) -> None:
-        raw_id = self.raw_id_edit.text().strip()
-        if raw_id:
-            self._set_provenance_seed("raw_data", raw_id)
+        raw_id = self.raw_data_detail_widget.get_data().get("raw_data_id")
+        if raw_id is not None:
+            self._set_provenance_seed("raw_data", str(raw_id))
 
     def _show_provenance_graph_dock(self) -> None:
-        """Show and activate the provenance graph dock."""
-        if not hasattr(self, "_provenance_graph_widget"):
-            return
-        index = self.tabs.indexOf(self._provenance_graph_widget)
-        if index >= 0 and not self.tabs.isTabVisible(index):
-            self.tabs.showTab(index)
-        self.tabs.setCurrentWidget(self._provenance_graph_widget)
+        """Select the Provenance Graph nav panel (building it if needed)."""
+        row = getattr(self, "_row_by_name", {}).get("Provenance Graph")
+        if row is not None:
+            self.nav_list.setCurrentRow(row)
 
     def _set_provenance_seed(self, seed_type: str, seed_id: str) -> None:
         self.current_provenance_seed_type = seed_type
@@ -3768,39 +5148,15 @@ class MFDBWidget(QtWidgets.QMainWindow):
         self._show_provenance_graph_dock()
 
     def processing_runs_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
         self.processing_runs_table = QtWidgets.QTableWidget(0, 8)
         self.processing_runs_table.setHorizontalHeaderLabels(
             ["processing id", "experiment id", "type", "started at", "status", "raw count", "product count", "operator"]
         )
         self.processing_runs_table.horizontalHeader().setStretchLastSection(True)
         self.processing_runs_table.itemSelectionChanged.connect(self.load_processing_run)
-        layout.addWidget(self.processing_runs_table, stretch=1)
+        self.processing_runs_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.processing_runs_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.proc_id_edit = QtWidgets.QLineEdit()
-        self.proc_exp_edit = QtWidgets.QLineEdit()
-        self.proc_type_edit = QtWidgets.QLineEdit()
-        self.proc_status_edit = QtWidgets.QLineEdit()
-        self.proc_settings_edit = QtWidgets.QPlainTextEdit()
-        self.proc_settings_edit.setMinimumHeight(60)
-
-        for w in (self.proc_id_edit, self.proc_exp_edit, self.proc_type_edit, self.proc_status_edit, self.proc_settings_edit):
-            w.setReadOnly(True)
-
-        form.addRow("Processing ID", self.proc_id_edit)
-        form.addRow("Experiment ID", self.proc_exp_edit)
-        form.addRow("Type", self.proc_type_edit)
-        form.addRow("Status", self.proc_status_edit)
-        form.addRow("Settings/JSON", self.proc_settings_edit)
-        layout.addLayout(form)
-
-        btn_layout = QtWidgets.QHBoxLayout()
         btn_copy = self._text_icon_button(
             "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy processing ID to clipboard", self._on_proc_copy_clicked
         )
@@ -3810,11 +5166,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "Load this run into the provenance graph",
             self._on_proc_seed_clicked,
         )
-        btn_layout.addWidget(btn_copy)
-        btn_layout.addWidget(btn_seed)
-        btn_layout.addStretch()
-        layout.addLayout(btn_layout)
-        return widget
+
+        return self._create_standard_dock_tab(
+            table=self.processing_runs_table,
+            detail_widget=self.processing_run_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_buttons=[btn_copy, btn_seed],
+        )
 
     def fill_processing_runs_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.processing_runs_table):
@@ -3838,125 +5197,93 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("operator_user_id", "")
             ]
             for column, value in enumerate(values):
-                self.processing_runs_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+                cell_item = QtWidgets.QTableWidgetItem(str(value or ""))
+                if column == 0:
+                    cell_item.setData(QtCore.Qt.UserRole, item)
+                self.processing_runs_table.setItem(row, column, cell_item)
 
     def load_processing_run(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.processing_runs_table):
             return
-        selected = self.processing_runs_table.selectedItems()
-        if not selected:
-            self.proc_id_edit.clear()
-            self.proc_exp_edit.clear()
-            self.proc_type_edit.clear()
-            self.proc_status_edit.clear()
-            self.proc_settings_edit.clear()
+        rows = self.processing_runs_table.selectionModel().selectedRows()
+        if not rows:
+            self.processing_run_detail_widget.set_data({})
             return
-        row = selected[0].row()
-        proc_id = self.processing_runs_table.item(row, 0).text()
+        proc_id = self.processing_runs_table.item(rows[0].row(), 0).text()
         try:
-            item = self.client.get_processing_run(proc_id)
+            item = self.client.get_processing_run(proc_id) or {}
         except Exception:
             item = {}
-        self.proc_id_edit.setText(item.get("processing_id", ""))
-        self.proc_exp_edit.setText(item.get("experiment_id", ""))
-        self.proc_type_edit.setText(item.get("processing_type", ""))
-        self.proc_status_edit.setText(item.get("status", ""))
-        self.proc_settings_edit.setPlainText(json.dumps(item, indent=2))
+        
+        flat_item = dict(item)
+        flat_item["type"] = item.get("processing_type")
+        import json
+        flat_item["settings"] = json.dumps(item, indent=2)
+        
+        self.processing_run_detail_widget.set_data(flat_item)
 
     def _on_proc_copy_clicked(self) -> None:
-        proc_id = self.proc_id_edit.text().strip()
-        if proc_id:
-            QtWidgets.QApplication.clipboard().setText(proc_id)
+        proc_id = self.processing_run_detail_widget.get_data().get("processing_id")
+        if proc_id is not None:
+            QtWidgets.QApplication.clipboard().setText(str(proc_id))
 
     def _on_proc_seed_clicked(self) -> None:
-        proc_id = self.proc_id_edit.text().strip()
-        if proc_id:
-            self._set_provenance_seed("processing_run", proc_id)
+        proc_id = self.processing_run_detail_widget.get_data().get("processing_id")
+        if proc_id is not None:
+            self._set_provenance_seed("processing_run", str(proc_id))
 
     def processed_products_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
-        filter_layout = QtWidgets.QHBoxLayout()
-        filter_layout.addWidget(QtWidgets.QLabel("Product type filter:"))
-        self.prod_filter_combo = QtWidgets.QComboBox()
-        self.prod_filter_combo.addItems([
-            "all", "bur", "tcspc_decay", "fcs_correlation", "pda_histogram",
-            "irf_curve", "hdf5", "zip", "gmm_summary", "spectra", "fit_results"
+        PROD_TYPES = ["all", "bur", "tcspc_decay", "fcs_correlation", "pda_histogram",
+                      "irf_curve", "hdf5", "zip", "gmm_summary", "spectra", "fit_results"]
+        filter_widget = self._build_filter_bar([
+            {"label": "Product type:", "attr": "prod_filter_combo",
+             "items": PROD_TYPES, "signal": "currentTextChanged",
+             "cb": self.fill_processed_products_table},
         ])
-        self.prod_filter_combo.currentTextChanged.connect(self.fill_processed_products_table)
-        filter_layout.addWidget(self.prod_filter_combo)
-        filter_layout.addStretch()
-        layout.addLayout(filter_layout)
 
-        self.processed_products_table = QtWidgets.QTableWidget(0, 9)
+        self.processed_products_table = QtWidgets.QTableWidget(0, 10)
         self.processed_products_table.setHorizontalHeaderLabels(
-            ["product id", "processing id", "product type", "storage mode", "path/url/folder", "validation", "checksum", "row count", "sample"]
+            [
+                "product id", "processing id", "product type", "storage mode",
+                "path/url/folder", "validation", "checksum", "row count",
+                "sample", "sample QA",
+            ]
         )
         self.processed_products_table.horizontalHeader().setStretchLastSection(True)
         self.processed_products_table.itemSelectionChanged.connect(self.load_processed_product)
-        layout.addWidget(self.processed_products_table, stretch=1)
-
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.prod_id_edit = QtWidgets.QLineEdit()
-        self.prod_proc_edit = QtWidgets.QLineEdit()
-        self.prod_type_edit = QtWidgets.QLineEdit()
-        self.prod_storage_edit = QtWidgets.QLineEdit()
-        self.prod_path_edit = QtWidgets.QLineEdit()
-        self.prod_validation_edit = QtWidgets.QLineEdit()
-        self.prod_checksum_edit = QtWidgets.QLineEdit()
-        self.prod_exp_edit = QtWidgets.QLineEdit()
-
-        for w in (self.prod_id_edit, self.prod_proc_edit, self.prod_type_edit, self.prod_storage_edit, self.prod_path_edit, self.prod_validation_edit, self.prod_checksum_edit, self.prod_exp_edit):
-            w.setReadOnly(True)
-
-        form.addRow("Product ID", self.prod_id_edit)
-        form.addRow("Processing Run ID", self.prod_proc_edit)
-        form.addRow("Product Type", self.prod_type_edit)
-        form.addRow("Storage Mode", self.prod_storage_edit)
-        form.addRow("File Path/URL/Folder", self.prod_path_edit)
-        form.addRow("Validation Status", self.prod_validation_edit)
-        form.addRow("Checksum (SHA-256)", self.prod_checksum_edit)
-        form.addRow("Experiment ID", self.prod_exp_edit)
-        layout.addLayout(form)
-
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
+        self._install_table_context_menu(
+            self.processed_products_table,
+            item_kind="processed_product",
+            id_col=0,
+        )
 
         btn_open = self._text_icon_button(
             "📂 Open", QtWidgets.QStyle.SP_DialogOpenButton, "Open processed product", self._on_prod_open_clicked
         )
-        buttons.addWidget(btn_open)
-
         ndx_button = self._text_icon_button(
             "🔬 Open in NDXplorer",
             QtWidgets.QStyle.SP_FileDialogContentsView,
             "Open the selected product in NDXplorer",
             self.open_in_ndxplorer,
         )
-        buttons.addWidget(ndx_button)
-
         btn_copy = self._text_icon_button(
             "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy product ID to clipboard", self._on_prod_copy_clicked
         )
-        buttons.addWidget(btn_copy)
-
         btn_seed = self._text_icon_button(
             "🌱 Use as provenance seed",
             QtWidgets.QStyle.SP_ArrowRight,
             "Load this product into the provenance graph",
             self._on_prod_seed_clicked,
         )
-        buttons.addWidget(btn_seed)
 
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.processed_products_table,
+            detail_widget=self.processed_product_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_widgets_top=[filter_widget],
+            extra_buttons=[btn_open, ndx_button, btn_copy, btn_seed],
+        )
 
     def fill_processed_products_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.processed_products_table):
@@ -3986,24 +5313,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 item.get("validation_status", ""),
                 item.get("checksum", ""),
                 _processed_row_count(item),
-                item.get("sample_name", "")
+                item.get("sample_name", ""),
             ]
             for column, value in enumerate(values):
                 self.processed_products_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+            self.processed_products_table.setItem(row, len(values), _sample_quality_table_item(item))
 
     def load_processed_product(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.processed_products_table):
             return
         selected = self.processed_products_table.selectedItems()
         if not selected:
-            self.prod_id_edit.clear()
-            self.prod_proc_edit.clear()
-            self.prod_type_edit.clear()
-            self.prod_storage_edit.clear()
-            self.prod_path_edit.clear()
-            self.prod_validation_edit.clear()
-            self.prod_checksum_edit.clear()
-            self.prod_exp_edit.clear()
+            self.processed_product_detail_widget.set_data({})
             return
         row = selected[0].row()
         prod_id = self.processed_products_table.item(row, 0).text()
@@ -4011,30 +5332,29 @@ class MFDBWidget(QtWidgets.QMainWindow):
             item = self.client.get_processed_data(prod_id)
         except Exception:
             item = {}
-        self.prod_id_edit.setText(item.get("processed_data_id", ""))
+        flat_item = dict(item)
+        flat_item["location"] = _processed_location(item)
         processing_id = item.get("processing_id", "")
-        self.prod_proc_edit.setText(processing_id)
-        self.prod_type_edit.setText(item.get("product_type", ""))
-        self.prod_storage_edit.setText(item.get("storage_mode", ""))
-        self.prod_path_edit.setText(_processed_location(item))
-        self.prod_validation_edit.setText(item.get("validation_status", ""))
-        self.prod_checksum_edit.setText(item.get("checksum", ""))
-        self.prod_exp_edit.setText(_experiment_id_for_processing_id(self.client, processing_id))
+        flat_item["experiment_id"] = _experiment_id_for_processing_id(self.client, processing_id)
+        self.processed_product_detail_widget.set_data(flat_item)
 
     def _on_prod_open_clicked(self) -> None:
-        path = self.prod_path_edit.text().strip()
+        data = self.processed_product_detail_widget.get_data()
+        path = (data.get("location") or "").strip()
         if path:
             QtGui.QDesktopServices.openUrl(_qurl_for_location(path))
 
     def _on_prod_copy_clicked(self) -> None:
-        prod_id = self.prod_id_edit.text().strip()
+        data = self.processed_product_detail_widget.get_data()
+        prod_id = data.get("product_id") or data.get("processed_data_id") or ""
         if prod_id:
-            QtWidgets.QApplication.clipboard().setText(prod_id)
+            QtWidgets.QApplication.clipboard().setText(str(prod_id))
 
     def _on_prod_seed_clicked(self) -> None:
-        prod_id = self.prod_id_edit.text().strip()
+        data = self.processed_product_detail_widget.get_data()
+        prod_id = data.get("product_id") or data.get("processed_data_id") or ""
         if prod_id:
-            self._set_provenance_seed("processed_data", prod_id)
+            self._set_provenance_seed("processed_data", str(prod_id))
 
     def open_in_ndxplorer(self) -> None:
         selected = self.processed_products_table.selectedItems()
@@ -4044,7 +5364,8 @@ class MFDBWidget(QtWidgets.QMainWindow):
         row = selected[0].row()
         prod_id = self.processed_products_table.item(row, 0).text()
         path_str = self.processed_products_table.item(row, 4).text()
-        exp_id = self.prod_exp_edit.text().strip()
+        prod_data = self.processed_product_detail_widget.get_data()
+        exp_id = prod_data.get("experiment_id") or ""
         if not path_str:
             QtWidgets.QMessageBox.warning(self, "No Path", "Selected product has no associated file path.")
             return
@@ -4081,7 +5402,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 try:
                     ndx.open_files(file_handles=str(path), file_type="burst_dir", append=False)
                 except Exception:
-                    pass
+                    chisurf.logging.warning("Operation failed: %s", _exc)
             else:
                 ndx = NDXplorer(
                     zmq_cmd_port=8765,
@@ -4096,7 +5417,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
                 try:
                     ndx.open_files(file_handles=str(path), file_type=file_type, append=False)
                 except Exception:
-                    pass
+                    chisurf.logging.warning("Operation failed: %s", _exc)
 
             if not hasattr(self, "_ndxplorer_windows"):
                 self._ndxplorer_windows = []
@@ -4107,12 +5428,9 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
     def objects_tab(self) -> QtWidgets.QWidget:
         """Create the object store management tab."""
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-
-        filter_layout = QtWidgets.QHBoxLayout()
+        filter_widget = QtWidgets.QWidget()
+        filter_layout = QtWidgets.QHBoxLayout(filter_widget)
+        filter_layout.setContentsMargins(0, 0, 0, 0)
         filter_layout.addWidget(QtWidgets.QLabel("Filename filter:"))
         self.object_filter_edit = QtWidgets.QLineEdit()
         self.object_filter_edit.setPlaceholderText("Filter by original filename")
@@ -4131,7 +5449,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         filter_layout.addWidget(refresh_button)
         filter_layout.addStretch()
-        layout.addLayout(filter_layout)
 
         self.objects_table = QtWidgets.QTableWidget(0, 8)
         self.objects_table.setHorizontalHeaderLabels(
@@ -4142,44 +5459,6 @@ class MFDBWidget(QtWidgets.QMainWindow):
         )
         self.objects_table.horizontalHeader().setStretchLastSection(True)
         self.objects_table.itemSelectionChanged.connect(self.load_object)
-        layout.addWidget(self.objects_table, stretch=1)
-
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.object_uuid_edit = QtWidgets.QLineEdit()
-        self.object_md5_edit = QtWidgets.QLineEdit()
-        self.object_filename_edit = QtWidgets.QLineEdit()
-        self.object_size_edit = QtWidgets.QLineEdit()
-        self.object_mime_edit = QtWidgets.QLineEdit()
-        self.object_refcount_edit = QtWidgets.QLineEdit()
-        self.object_created_edit = QtWidgets.QLineEdit()
-        self.object_storage_edit = QtWidgets.QLineEdit()
-        for w in (
-            self.object_uuid_edit,
-            self.object_md5_edit,
-            self.object_filename_edit,
-            self.object_size_edit,
-            self.object_mime_edit,
-            self.object_refcount_edit,
-            self.object_created_edit,
-            self.object_storage_edit,
-        ):
-            w.setReadOnly(True)
-
-        form.addRow("Object UUID", self.object_uuid_edit)
-        form.addRow("MD5", self.object_md5_edit)
-        form.addRow("Original Filename", self.object_filename_edit)
-        form.addRow("Size (bytes)", self.object_size_edit)
-        form.addRow("MIME Type", self.object_mime_edit)
-        form.addRow("Refcount", self.object_refcount_edit)
-        form.addRow("Created At", self.object_created_edit)
-        form.addRow("Storage Path", self.object_storage_edit)
-        layout.addLayout(form)
-
-        buttons = QtWidgets.QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(2)
 
         btn_delete = self._text_icon_button(
             "🗑 Delete object",
@@ -4187,27 +5466,27 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "Delete the selected object (or decrement refcount)",
             self.delete_selected_object,
         )
-        buttons.addWidget(btn_delete)
-
         btn_copy = self._text_icon_button(
             "📋 Copy UUID",
             QtWidgets.QStyle.SP_FileIcon,
             "Copy object UUID to clipboard",
             self._on_object_copy_clicked,
         )
-        buttons.addWidget(btn_copy)
-
         btn_reveal = self._text_icon_button(
             "📂 Reveal",
             QtWidgets.QStyle.SP_DirOpenIcon,
             "Reveal the object in the file manager",
             self._on_object_reveal_clicked,
         )
-        buttons.addWidget(btn_reveal)
 
-        buttons.addStretch()
-        layout.addLayout(buttons)
-        return widget
+        return self._create_standard_dock_tab(
+            table=self.objects_table,
+            detail_widget=self.object_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_widgets_top=[filter_widget],
+            extra_buttons=[btn_delete, btn_copy, btn_reveal],
+        )
 
     def fill_object_table(self) -> None:
         """Populate the object store table."""
@@ -4242,17 +5521,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
         selected = self.objects_table.selectedItems()
         if not selected:
-            for w in (
-                self.object_uuid_edit,
-                self.object_md5_edit,
-                self.object_filename_edit,
-                self.object_size_edit,
-                self.object_mime_edit,
-                self.object_refcount_edit,
-                self.object_created_edit,
-                self.object_storage_edit,
-            ):
-                w.clear()
+            self.object_detail_widget.set_data({})
             return
         row = selected[0].row()
         object_uuid = self.objects_table.item(row, 0).text()
@@ -4260,14 +5529,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             item = self.client.get_object_info(object_uuid).get("object", {})
         except Exception:
             item = {}
-        self.object_uuid_edit.setText(item.get("object_uuid", ""))
-        self.object_md5_edit.setText(item.get("content_md5", ""))
-        self.object_filename_edit.setText(item.get("original_filename", ""))
-        self.object_size_edit.setText(str(item.get("size_bytes", "")))
-        self.object_mime_edit.setText(item.get("mime_type", ""))
-        self.object_refcount_edit.setText(str(item.get("refcount", "")))
-        self.object_created_edit.setText(item.get("created_at", ""))
-        self.object_storage_edit.setText(item.get("storage_path", ""))
+        self.object_detail_widget.set_data(item)
 
     def delete_selected_object(self) -> None:
         """Delete the selected object or decrement its refcount."""
@@ -4302,25 +5564,18 @@ class MFDBWidget(QtWidgets.QMainWindow):
 
     def _on_object_copy_clicked(self) -> None:
         """Copy selected object UUID to clipboard."""
-        selected = self.objects_table.selectedItems()
-        if not selected:
-            return
-        row = selected[0].row()
-        object_uuid = self.objects_table.item(row, 0).text()
-        QtWidgets.QApplication.clipboard().setText(object_uuid)
+        data = self.object_detail_widget.get_data()
+        object_uuid = (data.get("object_uuid") or "").strip()
+        if object_uuid:
+            QtWidgets.QApplication.clipboard().setText(object_uuid)
 
     def _on_object_reveal_clicked(self) -> None:
         """Reveal the selected object in the file manager."""
-        selected = self.objects_table.selectedItems()
-        if not selected:
+        data = self.object_detail_widget.get_data()
+        storage_path = (data.get("storage_path") or "").strip()
+        if not storage_path:
             return
-        row = selected[0].row()
-        object_uuid = self.objects_table.item(row, 0).text()
         try:
-            info = self.client.get_object_info(object_uuid).get("object", {})
-            storage_path = info.get("storage_path", "")
-            if not storage_path:
-                return
             from chisurf.core.mfdb.database_resolver import object_store_root
             path = object_store_root() / storage_path
             QtGui.QDesktopServices.openUrl(_qurl_for_location(str(path)))
@@ -4328,39 +5583,13 @@ class MFDBWidget(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, "Reveal failed", str(exc))
 
     def analyses_tab(self) -> QtWidgets.QWidget:
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
         self.analyses_table = QtWidgets.QTableWidget(0, 5)
         self.analyses_table.setHorizontalHeaderLabels(
             ["analysis id", "experiment id", "type", "model name", "created at"]
         )
         self.analyses_table.horizontalHeader().setStretchLastSection(True)
         self.analyses_table.itemSelectionChanged.connect(self.load_analysis)
-        layout.addWidget(self.analyses_table, stretch=1)
 
-        form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setSpacing(2)
-        self.analysis_id_field = QtWidgets.QLineEdit()
-        self.analysis_exp_field = QtWidgets.QLineEdit()
-        self.analysis_type_field = QtWidgets.QLineEdit()
-        self.analysis_model_field = QtWidgets.QLineEdit()
-        self.analysis_settings_field = QtWidgets.QPlainTextEdit()
-        self.analysis_settings_field.setMinimumHeight(60)
-
-        for w in (self.analysis_id_field, self.analysis_exp_field, self.analysis_type_field, self.analysis_model_field, self.analysis_settings_field):
-            w.setReadOnly(True)
-
-        form.addRow("Analysis ID", self.analysis_id_field)
-        form.addRow("Experiment ID", self.analysis_exp_field)
-        form.addRow("Type", self.analysis_type_field)
-        form.addRow("Model Name", self.analysis_model_field)
-        form.addRow("Settings/JSON", self.analysis_settings_field)
-        layout.addLayout(form)
-
-        btn_layout = QtWidgets.QHBoxLayout()
         btn_copy = self._text_icon_button(
             "📋 Copy ID", QtWidgets.QStyle.SP_FileIcon, "Copy analysis ID to clipboard", self._on_analysis_copy_clicked
         )
@@ -4370,11 +5599,14 @@ class MFDBWidget(QtWidgets.QMainWindow):
             "Load this analysis into the provenance graph",
             self._on_analysis_seed_clicked,
         )
-        btn_layout.addWidget(btn_copy)
-        btn_layout.addWidget(btn_seed)
-        btn_layout.addStretch()
-        layout.addLayout(btn_layout)
-        return widget
+
+        return self._create_standard_dock_tab(
+            table=self.analyses_table,
+            detail_widget=self.analysis_detail_widget,
+            save_slot=None,
+            delete_slot=None,
+            extra_buttons=[btn_copy, btn_seed],
+        )
 
     def fill_analyses_table(self) -> None:
         if self._is_deleted() or self._is_widget_deleted(self.analyses_table):
@@ -4404,11 +5636,7 @@ class MFDBWidget(QtWidgets.QMainWindow):
             return
         selected = self.analyses_table.selectedItems()
         if not selected:
-            self.analysis_id_field.clear()
-            self.analysis_exp_field.clear()
-            self.analysis_type_field.clear()
-            self.analysis_model_field.clear()
-            self.analysis_settings_field.clear()
+            self.analysis_detail_widget.set_data({})
             return
         row = selected[0].row()
         analysis_id = self.analyses_table.item(row, 0).text()
@@ -4416,19 +5644,21 @@ class MFDBWidget(QtWidgets.QMainWindow):
             item = self.client.get_analysis_run(analysis_id)
         except Exception:
             item = {}
-        self.analysis_id_field.setText(item.get("analysis_id", ""))
-        self.analysis_exp_field.setText(item.get("experiment_id", ""))
-        self.analysis_type_field.setText(item.get("analysis_type", ""))
-        self.analysis_model_field.setText(item.get("model_name", ""))
-        self.analysis_settings_field.setPlainText(json.dumps(item, indent=2))
+        flat_item = dict(item)
+        flat_item["type"] = item.get("analysis_type")
+        import json
+        flat_item["settings"] = json.dumps(item, indent=2)
+        self.analysis_detail_widget.set_data(flat_item)
 
     def _on_analysis_copy_clicked(self) -> None:
-        analysis_id = self.analysis_id_field.text().strip()
+        data = self.analysis_detail_widget.get_data()
+        analysis_id = (data.get("analysis_id") or "").strip()
         if analysis_id:
             QtWidgets.QApplication.clipboard().setText(analysis_id)
 
     def _on_analysis_seed_clicked(self) -> None:
-        analysis_id = self.analysis_id_field.text().strip()
+        data = self.analysis_detail_widget.get_data()
+        analysis_id = (data.get("analysis_id") or "").strip()
         if analysis_id:
             self._set_provenance_seed("analysis_run", analysis_id)
 

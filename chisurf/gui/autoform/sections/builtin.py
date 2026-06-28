@@ -429,8 +429,27 @@ class ToggleRowWidget(QtWidgets.QWidget):
         layout.addStretch(1)
 
 
+class _FocusOutPlainTextEdit(QtWidgets.QPlainTextEdit):
+    """Multi-line editor that emits ``editingFinished`` on focus-out.
+
+    Mirrors :class:`QtWidgets.QLineEdit`'s commit-on-focus-out semantics so a
+    ``ValueSection`` of ``kind="text"`` commits once the user leaves the field
+    rather than on every keystroke.
+    """
+
+    editingFinished = QtCore.Signal()
+
+    def focusOutEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        super().focusOutEvent(event)
+        self.editingFinished.emit()
+
+
 class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
-    """Scalar int / float / string field for a :class:`ValueSection`."""
+    """Scalar field for a :class:`ValueSection`.
+
+    Supported ``kind`` values: ``int`` / ``float`` (spin boxes), ``str`` (line
+    edit), ``text`` (multi-line plain-text edit) and ``date`` (date edit).
+    """
 
     is_form_field = True
 
@@ -479,6 +498,26 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
                 self.editor.setValue(float(current))
             if not read_only:
                 self.editor.valueChanged.connect(lambda v: self._commit(float(v)))
+        elif section.kind == "text":
+            self.editor = _FocusOutPlainTextEdit()
+            self.editor.setMinimumHeight(54)
+            if section.placeholder:
+                self.editor.setPlaceholderText(section.placeholder)
+            if current is not None:
+                self.editor.setPlainText(str(current))
+            if not read_only:
+                self.editor.editingFinished.connect(
+                    lambda: self._commit(self.editor.toPlainText())
+                )
+        elif section.kind == "date":
+            self.editor = QtWidgets.QDateEdit()
+            self.editor.setCalendarPopup(True)
+            self.editor.setDisplayFormat("yyyy-MM-dd")
+            self._set_date_from(current)
+            if not read_only:
+                self.editor.dateChanged.connect(
+                    lambda d: self._commit(d.toString("yyyy-MM-dd"))
+                )
         else:  # "str"
             self.editor = QtWidgets.QLineEdit()
             if section.placeholder:
@@ -494,6 +533,14 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
         layout.addWidget(self.editor, 1)
         self._apply_tooltip(self, self.editor)
 
+    def _set_date_from(self, value) -> None:
+        """Set the QDateEdit from an ISO ``yyyy-MM-dd`` string (or leave default)."""
+        if not value:
+            return
+        date = QtCore.QDate.fromString(str(value)[:10], "yyyy-MM-dd")
+        if date.isValid():
+            self.editor.setDate(date)
+
     def sync(self) -> None:
         """Re-read the model value into the editor without firing signals."""
         cur = self._current_value()
@@ -504,6 +551,10 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             self.editor.setValue(int(cur))
         elif isinstance(self.editor, QtWidgets.QDoubleSpinBox):
             self.editor.setValue(float(cur))
+        elif isinstance(self.editor, QtWidgets.QPlainTextEdit):
+            self.editor.setPlainText(str(cur))
+        elif isinstance(self.editor, QtWidgets.QDateEdit):
+            self._set_date_from(cur)
         elif isinstance(self.editor, QtWidgets.QLineEdit):
             self.editor.setText(str(cur))
         self.editor.blockSignals(False)

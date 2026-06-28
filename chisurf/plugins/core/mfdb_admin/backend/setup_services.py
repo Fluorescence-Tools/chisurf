@@ -43,33 +43,6 @@ def validate_setup_config(config: dict[str, Any]) -> dict[str, Any]:
     """
     errors = []
 
-    # 1. Laser wavelengths validation
-    lasers = config.get("laser_wavelengths")
-    if lasers is not None:
-        if not isinstance(lasers, list):
-            errors.append("laser_wavelengths must be a list of numbers")
-        elif len(lasers) == 0:
-            errors.append("laser_wavelengths list cannot be empty")
-        else:
-            for i, wl in enumerate(lasers):
-                if not isinstance(wl, (int, float)) or wl <= 0:
-                    errors.append(f"laser_wavelengths[{i}] must be a positive number: {wl}")
-
-    # 2. Detector definitions validation
-    detectors = config.get("detector_channels")
-    if detectors is not None:
-        if not isinstance(detectors, (dict, list)):
-            errors.append("detector_channels must be a dictionary or list representing detector mappings")
-
-    # 3. PIE validation
-    pie_enabled = config.get("pie_enabled")
-    if pie_enabled:
-        pie_window = config.get("pie_window")
-        if pie_window is None:
-            errors.append("pie_window must be defined when pie_enabled is True")
-        elif not isinstance(pie_window, (dict, list)):
-            errors.append("pie_window must be a dictionary or list of window bounds")
-
     return {
         "valid": len(errors) == 0,
         "errors": errors,

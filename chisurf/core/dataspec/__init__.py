@@ -278,11 +278,13 @@ class ValueSection(Section):
     and :class:`ToggleSection` it either writes ``attr`` on the ``target`` group
     (``setattr``) or dispatches ``set_action`` with the value under
     ``value_key``. The numeric bounds/step/decimals/suffix only apply to the
-    ``int``/``float`` kinds; ``placeholder`` only to ``str``.
+    ``int``/``float`` kinds; ``placeholder`` applies to ``str``/``text``. The
+    ``text`` kind renders a multi-line editor and ``date`` an ISO-date editor.
     """
 
     label: str = "Value"
-    #: One of ``"int"``, ``"float"``, ``"str"``.
+    #: One of ``"int"``, ``"float"``, ``"str"``, ``"text"`` (multi-line) or
+    #: ``"date"`` (ISO ``yyyy-MM-dd``).
     kind: str = "str"
     #: Attribute on the target group to get/set (direct-binding mode).
     attr: typing.Optional[str] = None

@@ -12,7 +12,12 @@ from typing import Any
 
 from chisurf.core.mfdb.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.sample_manager import get_sample_for_artifact, get_sample_name
+from chisurf.core.mfdb.sample_manager import (
+    get_sample_for_artifact,
+    get_sample_full_description,
+    get_sample_name,
+    validate_sample_for_export,
+)
 from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
 
 
@@ -98,9 +103,134 @@ def register_raw_data_handler(
                 validation_message=payload.get("validation_message") or None,
             )
             row = db.get_raw_data(raw_data_id)
-            return {"ok": True, "raw_data": db._decode_raw_data_row(row)}
+            return {"ok": True, "raw_data": _decode_raw_data_row_with_sample(db, row)}
     except Exception as exc:
         return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
+
+
+def sample_metadata_quality_for_artifact(
+    db: MFDatabase,
+    artifact_id: str,
+) -> dict[str, Any]:
+    """Return the sample metadata quality signal for a measurement artifact.
+
+    Parameters
+    ----------
+    db : MFDatabase
+        Active MFDB connection.
+    artifact_id : str
+        Artifact identifier for a raw or processed measurement.
+
+    Returns
+    -------
+    dict
+        Quality fields suitable for inclusion in JSON-RPC measurement rows.
+    """
+    sample_id = get_sample_for_artifact(db, artifact_id)
+    if not sample_id:
+        return {
+            "sample_id": "",
+            "sample_name": "",
+            "sample_quality_status": "red",
+            "sample_quality_score": 0,
+            "sample_quality_flags": ["missing_sample"],
+            "sample_quality_summary": "RED 0 - no linked sample",
+        }
+
+    quality = _sample_metadata_quality(db, sample_id)
+    quality["sample_id"] = sample_id
+    quality["sample_name"] = get_sample_name(db, sample_id)
+    return quality
+
+
+def _sample_metadata_quality(db: MFDatabase, sample_id: str) -> dict[str, Any]:
+    """Score the completeness of metadata available for a linked sample."""
+    desc = get_sample_full_description(db, sample_id)
+    if desc is None:
+        return {
+            "sample_quality_status": "red",
+            "sample_quality_score": 10,
+            "sample_quality_flags": ["sample_not_found"],
+            "sample_quality_summary": "RED 10 - linked sample not found",
+        }
+
+    score = 35
+    flags: list[str] = []
+
+    if desc.get("display_name") or desc.get("description"):
+        score += 10
+    else:
+        flags.append("missing_sample_description")
+
+    condition = desc.get("condition") or {}
+    condition_fields = [
+        condition.get("ph"),
+        condition.get("temperature_k"),
+        condition.get("ionic_strength") or condition.get("salt_concentration_m"),
+        condition.get("buffer_composition"),
+    ]
+    condition_score = sum(1 for value in condition_fields if value not in (None, ""))
+    if condition_score:
+        score += min(20, condition_score * 5)
+    else:
+        flags.append("missing_sample_condition")
+
+    entities = desc.get("entities") or ([desc.get("entity")] if desc.get("entity") else [])
+    if entities:
+        score += 10
+        if any(entity.get("sequence") for entity in entities):
+            score += 5
+        else:
+            flags.append("missing_entity_sequence")
+    else:
+        flags.append("missing_entity")
+
+    probes = desc.get("probes") or []
+    probes_with_positions = [
+        probe for probe in probes
+        if probe.get("position") and any(
+            probe["position"].get(key) is not None
+            for key in ("residue_number", "seq_id", "atom_id")
+        )
+    ]
+    if probes:
+        score += 10
+    else:
+        flags.append("missing_probes")
+    if probes_with_positions:
+        score += 10
+    elif probes:
+        flags.append("missing_probe_positions")
+    if any(probe.get("properties") for probe in probes):
+        score += 5
+    elif probes:
+        flags.append("missing_probe_optical_properties")
+
+    if desc.get("fret_pairs"):
+        score += 10
+    else:
+        flags.append("missing_fret_pair")
+
+    export_warnings = validate_sample_for_export(db, sample_id)
+    if export_warnings:
+        flags.extend(f"export_warning:{warning}" for warning in export_warnings)
+    else:
+        score += 10
+
+    score = max(0, min(100, score))
+    if score < 40:
+        status = "red"
+    elif score < 80:
+        status = "yellow"
+    else:
+        status = "green"
+
+    return {
+        "sample_quality_status": status,
+        "sample_quality_score": score,
+        "sample_quality_flags": flags,
+        "sample_quality_summary": f"{status.upper()} {score}",
+    }
 
 
 def _decode_raw_data_row_with_sample(db: MFDatabase, row: Any) -> dict[str, Any] | None:
@@ -124,10 +254,7 @@ def _decode_raw_data_row_with_sample(db: MFDatabase, row: Any) -> dict[str, Any]
     artifact_id = item.get("artifact_id") or item.get("raw_data_id")
     if not artifact_id:
         return item
-    sample_id = get_sample_for_artifact(db, str(artifact_id))
-    if sample_id:
-        item["sample_id"] = sample_id
-        item["sample_name"] = get_sample_name(db, sample_id)
+    item.update(sample_metadata_quality_for_artifact(db, str(artifact_id)))
     return item
 
 
@@ -152,10 +279,7 @@ def _decode_processed_data_row_with_sample(db: MFDatabase, row: Any) -> dict[str
     artifact_id = item.get("artifact_id") or item.get("processed_data_id")
     if not artifact_id:
         return item
-    sample_id = get_sample_for_artifact(db, str(artifact_id))
-    if sample_id:
-        item["sample_id"] = sample_id
-        item["sample_name"] = get_sample_name(db, sample_id)
+    item.update(sample_metadata_quality_for_artifact(db, str(artifact_id)))
     return item
 
 
@@ -505,7 +629,10 @@ def register_processed_data_handler(
             )
             return {
                 "ok": True,
-                "processed_data": db._decode_processed_data_row(db.get_processed_data(product_id)),
+                "processed_data": _decode_processed_data_row_with_sample(
+                    db,
+                    db.get_processed_data(product_id),
+                ),
             }
     except Exception as exc:
         return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
@@ -531,11 +658,30 @@ def list_processed_data_handler(
 
     """
     with MFDatabase(resolve_database_path()) as db:
-        rows = db.get_processed_data_products(
-            processing_id=processing_id,
-            product_type=product_type,
-        )
-        return {"ok": True, "processed_data": [_decode_processed_data_row_with_sample(db, row) for row in rows]}
+        if processing_id:
+            rows = db.get_processed_data_products(processing_id=processing_id)
+        else:
+            query = (
+                "SELECT DISTINCT artifact.* FROM mfdb_artifact AS artifact "
+                "JOIN mfdb_operation_artifact AS link "
+                "ON link.artifact_id = artifact.artifact_id "
+                "WHERE link.direction = 'output' "
+                "AND artifact.deleted_at IS NULL "
+                "AND link.deleted_at IS NULL"
+            )
+            params: list[Any] = []
+            if product_type:
+                query += " AND artifact.artifact_kind = ?"
+                params.append(product_type)
+            query += " ORDER BY artifact.created_at, artifact.artifact_id"
+            rows = [dict(row) for row in db.conn.execute(query, params).fetchall()]
+        return {
+            "ok": True,
+            "processed_data": [
+                _decode_processed_data_row_with_sample(db, row)
+                for row in rows
+            ],
+        }
 
 
 def get_processed_data_handler(processed_data_id: str) -> dict[str, Any]:
@@ -1847,4 +1993,3 @@ def list_audit_logs_handler(
             return {"ok": True, "audit_logs": logs}
     except Exception as exc:
         return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
-

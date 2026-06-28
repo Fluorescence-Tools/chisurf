@@ -19,6 +19,7 @@ from pathlib import Path
 
 from chisurf.core.mfdb.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.mfdb.sample_manager import link_artifact_to_sample
 
 logger = logging.getLogger(__name__)
 
@@ -282,6 +283,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
         "processing_id": d["processing_id"],
         "source_data_dir": str(SPC_DATA_DIR),
         "raw_data_ids": [],
+        "quality_example_raw_data_ids": [],
         "processed_data_id": None,
         "used_test_files": [],
     }
@@ -318,12 +320,35 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
             raw_ids.append(raw_id)
             logger.info("Registered raw data %s (%s, %d bytes)",
                         raw_id, spc_path.name, spc_path.stat().st_size)
+            link_artifact_to_sample(db, raw_id, d["sample_id"])
+
+        for raw_id in raw_ids:
+            link_artifact_to_sample(db, raw_id, d["sample_id"])
 
         if not raw_ids:
             logger.warning("No SPC files found at %s -- skipping processing run", SPC_DATA_DIR)
             summary["warning"] = f"No SPC files found at {SPC_DATA_DIR}"
             return summary
         summary["raw_data_ids"] = raw_ids
+
+        unlinked_path = _spc_path(0)
+        if unlinked_path.exists():
+            unlinked_raw_id = "raw_demo_unlinked_sample_red_flag"
+            if not db.conn.execute(
+                "SELECT 1 FROM mfdb_artifact WHERE artifact_id=?", (unlinked_raw_id,)
+            ).fetchone():
+                db.add_raw_data_reference(
+                    raw_data_id=unlinked_raw_id,
+                    experiment_id=d["experiment_id"],
+                    data_type="SPC",
+                    storage_mode="local_file",
+                    file_path=str(unlinked_path.resolve()),
+                    size_bytes=unlinked_path.stat().st_size,
+                    checksum=f"demo:unlinked:{unlinked_path.name}",
+                    validation_status="unvalidated",
+                )
+                logger.info("Registered unlinked red-flag raw data %s", unlinked_raw_id)
+            summary["quality_example_raw_data_ids"] = [unlinked_raw_id]
 
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -403,6 +428,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                     details={"processing_id": d["processing_id"], "product_type": "bur"},
                 )
             logger.info("Created processed data %s", prod_id)
+        link_artifact_to_sample(db, prod_id, d["sample_id"])
         summary["processed_data_id"] = prod_id
 
     logger.info("Seeding complete at %s", path)
