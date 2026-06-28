@@ -54,13 +54,20 @@ def handle_list_probes(
         clauses.append("p.chromophore_name LIKE ?")
         params.append(f"%{search}%")
     where = " AND ".join(clauses)
+    # Surface the common optical properties (stored in optical_properties, not on
+    # the probe row) so the list table can show Abs max / Em max / QY.
+    op = (
+        "(SELECT property_value FROM optical_properties o "
+        "WHERE o.probe_id = p.probe_id AND o.property_name = ? AND o.deleted_at IS NULL LIMIT 1)"
+    )
     with _db() as db:
         total = db.conn.execute(
             f"SELECT COUNT(*) FROM probes p WHERE {where}", params
         ).fetchone()[0]
         rows = db.conn.execute(
-            f"SELECT p.* FROM probes p WHERE {where} ORDER BY p.chromophore_name LIMIT ? OFFSET ?",
-            params + [limit, offset],
+            f"SELECT p.*, {op} AS abs_max, {op} AS em_max, {op} AS qy "
+            f"FROM probes p WHERE {where} ORDER BY p.chromophore_name LIMIT ? OFFSET ?",
+            ["abs_max", "em_max", "qy"] + params + [limit, offset],
         ).fetchall()
     return {
         "probes": [dict(r) for r in rows],

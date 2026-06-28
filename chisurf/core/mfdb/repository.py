@@ -653,6 +653,31 @@ class MFDatabase(MFDBClientBase):
 
     _FLUOROPHORE_TYPE_IDS = {1, 2, 6, 7, 27}
 
+    @staticmethod
+    def _derive_probe_source(origin: str, name: str, prop_map: dict) -> tuple[str, str]:
+        """Map a scraped probe to a real (source, source_ref).
+
+        The reference ``spectra.db`` has no ``source`` column, but the scraper
+        recorded provenance as optical properties — ``Origin`` (e.g.
+        ``"FPbase (Protein)"``, ``"Chroma (Fluorochrome)"``, ``"Thorlabs (…)"``),
+        ``fpbase_slug`` and ``PhotochemCAD Index``. Derive the canonical source
+        from those (falling back to the name prefix, then ``spectra_db``).
+        """
+        o = (origin or "").lower()
+        if "fpbase" in o:
+            return "fpbase", str(prop_map.get("fpbase_slug", "") or "")
+        if "chroma" in o:
+            return "chroma", ""
+        if "thorlabs" in o:
+            return "thorlabs", ""
+        if "omega" in o:
+            return "omega", ""
+        if "photochemcad" in o or prop_map.get("PhotochemCAD Index"):
+            return "photochemcad", str(prop_map.get("PhotochemCAD Index", "") or "")
+        if "atto" in o or name.upper().startswith("ATTO"):
+            return "atto", ""
+        return "spectra_db", ""
+
     def import_reference_set(
         self,
         source_path: str | None = None,
@@ -750,6 +775,21 @@ class MFDatabase(MFDBClientBase):
                     skipped += 1
                     continue
 
+                # Load this probe's optical properties first (keyed by probe_id,
+                # which is always populated — item_id is NULL for many rows). The
+                # scraped provenance lives here (Origin / fpbase_slug / …).
+                src_props = source.execute(
+                    "SELECT * FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL",
+                    (int(src_p["probe_id"]),),
+                ).fetchall()
+                prop_map = {
+                    str(p["property_name"] or "").strip(): str(p["property_value"] or "").strip()
+                    for p in src_props
+                }
+                derived_source, source_ref = self._derive_probe_source(
+                    prop_map.get("Origin", ""), name, prop_map
+                )
+
                 with self.conn:
                     # Normalize name: "ATTO-647N" -> "ATTO 647N"
                     chromophore_name = name.replace("-", " ").replace("_", " ")
@@ -766,8 +806,8 @@ class MFDatabase(MFDBClientBase):
                             """INSERT INTO probes (chromophore_name, type_id, category,
                                description, is_curated, quality_flag,
                                verification_status, quality,
-                               source, created_at, updated_at, deleted_at)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                               source, source_ref, created_at, updated_at, deleted_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                             (
                                 chromophore_name,
                                 mfdb_type_id,
@@ -777,7 +817,8 @@ class MFDatabase(MFDBClientBase):
                                 1,
                                 verification,
                                 "unknown",
-                                "spectra_db",
+                                derived_source,
+                                source_ref,
                                 now,
                                 now,
                                 None,
@@ -786,11 +827,7 @@ class MFDatabase(MFDBClientBase):
                         probe_id = int(cursor.lastrowid)
                         imported_probes += 1
 
-                # Copy optical properties
-                src_props = source.execute(
-                    "SELECT * FROM optical_properties WHERE item_id = ? AND deleted_at IS NULL",
-                    (int(src_p["probe_id"]),),
-                ).fetchall()
+                # Copy optical properties (already fetched above)
                 for prop in src_props:
                     pname = str(prop["property_name"] or "").strip()
                     pval = str(prop["property_value"] or "").strip()
@@ -815,9 +852,9 @@ class MFDatabase(MFDBClientBase):
                         )
                         imported_props += 1
 
-                # Copy spectra
+                # Copy spectra (by probe_id — item_id is NULL for many rows)
                 src_spectra = source.execute(
-                    "SELECT * FROM spectra WHERE item_id = ? AND deleted_at IS NULL",
+                    "SELECT * FROM spectra WHERE probe_id = ? AND deleted_at IS NULL",
                     (int(src_p["probe_id"]),),
                 ).fetchall()
                 for spec in src_spectra:
