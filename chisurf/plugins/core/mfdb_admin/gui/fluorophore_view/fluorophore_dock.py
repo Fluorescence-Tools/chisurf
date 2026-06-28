@@ -191,10 +191,11 @@ class FluorophoreDock(QtWidgets.QWidget):
             self._set_status(f"Load failed: {exc}")
 
     def _populate_table(self, probes: list[dict[str, Any]]) -> None:
-        headers = ["✓"] + [c[1] for c in self.PROBE_COLUMNS]
+        headers = ["✓"] + [c[0] for c in self.PROBE_COLUMNS]
         self._table.setColumnCount(len(headers))
         self._table.setHorizontalHeaderLabels(headers)
         self._table.setRowCount(len(probes))
+        self._size_columns()
 
         for row, p in enumerate(probes):
             cb = QtWidgets.QTableWidgetItem("")
@@ -223,6 +224,19 @@ class FluorophoreDock(QtWidgets.QWidget):
                         item.setBackground(bg)
                 item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
                 self._table.setItem(row, col + 1, item)
+
+    def _size_columns(self) -> None:
+        """Sane column widths: narrow checkbox, stretchy Name, fit the rest."""
+        header = self._table.horizontalHeader()
+        header.setStretchLastSection(False)
+        Modes = QtWidgets.QHeaderView
+        for col in range(self._table.columnCount()):
+            header.setSectionResizeMode(col, Modes.ResizeToContents)
+        # Checkbox column: fixed and narrow.
+        header.setSectionResizeMode(0, Modes.Fixed)
+        self._table.setColumnWidth(0, 28)
+        # Name column (index 2: ✓, ID, Name) takes the slack.
+        header.setSectionResizeMode(2, Modes.Stretch)
 
     # ------------------------------------------------------------------
     # Selection → form + spectra auto-fill

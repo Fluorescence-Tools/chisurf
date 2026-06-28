@@ -18,10 +18,23 @@ class SpectrumView(QtWidgets.QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
 
         self.plot = pg.PlotWidget()
-        self.plot.setBackground("w")
-        self.plot.addLegend()
-        self.plot.setLabel("bottom", "Wavelength", units="nm")
-        self.plot.setLabel("left", "Normalized Intensity", units="a.u.")
+        # Transparent background so the plot adapts to the surrounding (dark) UI
+        # instead of a white box; axes/labels use a light neutral so they stay
+        # readable on a dark theme.
+        self.plot.setBackground(None)
+        _axis = "#b0b0b0"
+        _text = "#d0d0d0"
+        for _ax in ("left", "bottom"):
+            axis = self.plot.getAxis(_ax)
+            axis.setPen(pg.mkPen(_axis))
+            axis.setTextPen(pg.mkPen(_text))
+        legend = self.plot.addLegend()
+        try:
+            legend.setLabelTextColor(_text)
+        except Exception:
+            pass
+        self.plot.setLabel("bottom", "Wavelength", units="nm", color=_text)
+        self.plot.setLabel("left", "Normalized Intensity", units="a.u.", color=_text)
         self.plot.showGrid(x=True, y=True, alpha=0.3)
         self.layout().addWidget(self.plot)
 
