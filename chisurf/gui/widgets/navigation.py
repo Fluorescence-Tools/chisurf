@@ -65,7 +65,7 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
             self.nav_search = QtWidgets.QLineEdit()
             self.nav_search.setPlaceholderText("Search…")
             self.nav_search.setClearButtonEnabled(True)
-            self.nav_search.setStyleSheet("QLineEdit { margin: 6px 10px 2px 10px; }")
+            self.nav_search.setStyleSheet("QLineEdit { margin: 6px 0px 2px 0px; padding: 4px 10px; }")
             self.nav_search.textChanged.connect(self._on_search_changed)
             left_layout.addWidget(self.nav_search)
 
