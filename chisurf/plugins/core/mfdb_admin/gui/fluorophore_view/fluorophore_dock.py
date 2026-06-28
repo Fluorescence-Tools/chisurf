@@ -148,8 +148,24 @@ class FluorophoreDock(QtWidgets.QWidget):
         self._search_edit = QtWidgets.QLineEdit()
         self._search_edit.setPlaceholderText("Probe name...")
         self._search_edit.setClearButtonEnabled(True)
-        self._search_edit.returnPressed.connect(self.refresh)
+        # Debounced auto-filter: each keystroke (re)starts a short timer that
+        # re-queries; Enter filters immediately. Server-side search re-queries
+        # the DB, so it is gated by the "Auto" checkbox for large databases.
+        self._search_timer = QtCore.QTimer(self)
+        self._search_timer.setSingleShot(True)
+        self._search_timer.setInterval(300)
+        self._search_timer.timeout.connect(self.refresh)
+        self._search_edit.textChanged.connect(self._on_search_text)
+        self._search_edit.returnPressed.connect(self._search_now)
         layout.addWidget(self._search_edit)
+
+        self._auto_check = QtWidgets.QCheckBox("Auto")
+        self._auto_check.setChecked(True)
+        self._auto_check.setToolTip(
+            "Filter as you type. Disable on very large databases where each\n"
+            "search re-query is slow — then press Enter to filter."
+        )
+        layout.addWidget(self._auto_check)
 
         layout.addWidget(QtWidgets.QLabel("Status:"))
         self._status_combo = QtWidgets.QComboBox()
@@ -164,6 +180,16 @@ class FluorophoreDock(QtWidgets.QWidget):
         layout.addWidget(refresh_btn)
 
         return widget
+
+    def _on_search_text(self, _text: str) -> None:
+        """Restart the debounce timer when auto-filter is enabled."""
+        if self._auto_check.isChecked():
+            self._search_timer.start()
+
+    def _search_now(self) -> None:
+        """Filter immediately (Enter), cancelling any pending debounce."""
+        self._search_timer.stop()
+        self.refresh()
 
     # ------------------------------------------------------------------
     # Data loading

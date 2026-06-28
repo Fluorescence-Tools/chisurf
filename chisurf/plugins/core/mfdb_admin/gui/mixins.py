@@ -433,7 +433,18 @@ class DockToolbarMixin:
         self._filter_edit.setPlaceholderText("Filter...")
         self._filter_edit.setClearButtonEnabled(True)
         self._filter_edit.textChanged.connect(self._on_filter_changed)
+        self._filter_edit.returnPressed.connect(
+            lambda: self._apply_filter(self._filter_edit.text())
+        )
         layout.addWidget(self._filter_edit, stretch=1)
+
+        self._auto_filter_check = QtWidgets.QCheckBox("Auto")
+        self._auto_filter_check.setChecked(True)
+        self._auto_filter_check.setToolTip(
+            "Filter the table as you type. Disable on very large tables where\n"
+            "live filtering lags — then press Enter to filter."
+        )
+        layout.addWidget(self._auto_filter_check)
 
         if self._spec.writable:
             new_btn = QtWidgets.QToolButton()
@@ -455,6 +466,11 @@ class DockToolbarMixin:
         return bar
 
     def _on_filter_changed(self, text: str) -> None:
+        # Live (as-you-type) only when Auto is enabled; otherwise wait for Enter.
+        if getattr(self, "_auto_filter_check", None) is None or self._auto_filter_check.isChecked():
+            self._apply_filter(text)
+
+    def _apply_filter(self, text: str) -> None:
         if self._table is None:
             return
         text_lower = text.strip().lower()
