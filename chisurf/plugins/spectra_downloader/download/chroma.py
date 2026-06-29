@@ -288,22 +288,12 @@ def download_chroma_to_db(db: FluorophoreDatabase) -> dict[str, int]:
 
 def main() -> None:
     """CLI entry point."""
-    import argparse
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
 
-    parser = argparse.ArgumentParser(
-        description="Download Chroma optical component spectra into MFDB",
+    scraper_main(
+        "Download Chroma optical-component spectra into the staging DB",
+        lambda db, args: download_chroma_to_db(db),
     )
-    parser.add_argument(
-        "--db",
-        default=str(DEFAULT_DATABASE_PATH),
-        help="MFDB SQLite database path (default: %(default)s)",
-    )
-    args = parser.parse_args()
-
-    db = FluorophoreDatabase(args.db)
-    with db:
-        download_chroma_to_db(db)
-    print("Chroma data download complete.")
 
 
 if __name__ == "__main__":

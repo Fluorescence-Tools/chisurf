@@ -70,64 +70,46 @@ class OmegaOpticalDownloader:
             )
 
 
-def download_omega_to_db(db_path: str = None) -> None:
-    """
-    Download all available Omega Optical spectra into MFDB.
-    
-    This is a placeholder - full implementation would require scraping
-    Omega's website to get product list. For now, demonstrates with examples.
-    """
-    db = FluorophoreDatabase(db_path or ":memory:")
-    
-    # Example products - in reality this would come from scraping or API
-    # These are example SKUs we saw in our web search
-    example_products = [
-        ("W2806", "650LP", "longpass"),
-        ("W3272", "630SP", "shortpass"),
-        ("W253", "330BP10", "bandpass"),
-        ("W3450", "420SP", "shortpass"),
-        ("W201", "490SP", "shortpass"),
-        ("XF2017/25.7*36", "560DRLP", "dichroic"),
-    ]
-    
-    for product_id, name, ftype in example_products:
+# Example SKUs (Omega has no public catalogue API; these are demonstration parts).
+EXAMPLE_PRODUCTS = [
+    ("W2806", "650LP", "longpass"),
+    ("W3272", "630SP", "shortpass"),
+    ("W253", "330BP10", "bandpass"),
+    ("W3450", "420SP", "shortpass"),
+    ("W201", "490SP", "shortpass"),
+    ("XF2017/25.7*36", "560DRLP", "dichroic"),
+]
+
+
+def download_omega_to_db(db: FluorophoreDatabase) -> None:
+    """Download the example Omega Optical spectra into an open staging DB."""
+    downloader = OmegaOpticalDownloader(db)
+    for product_id, name, ftype in EXAMPLE_PRODUCTS:
         try:
             print(f"Processing Omega {name} ({product_id})...")
-            downloader = OmegaOpticalDownloader(db)
             downloader.download_and_store(product_id, name, ftype)
-            print(f"  Success")
+            print("  Success")
         except Exception as e:
             print(f"  Failed: {e}")
 
 
+def main():
+    """CLI entry point."""
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
+
+    def _add(parser):
+        parser.add_argument("--product", default=None,
+                            help="Download a specific Omega product ID (for testing).")
+
+    def _run(db, args):
+        if args.product:
+            OmegaOpticalDownloader(db).download_and_store(
+                args.product, f"Omega-{args.product}", "unknown")
+        else:
+            download_omega_to_db(db)
+
+    scraper_main("Download Omega Optical spectra into the staging DB", _run, _add)
+
+
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(
-        description="Download Omega Optical spectra into MFDB"
-    )
-    parser.add_argument(
-        "--db", 
-        default=None, 
-        help="MFDB SQLite database path (default: in-memory)"
-    )
-    parser.add_argument(
-        "--product",
-        help="Download specific Omega product ID (for testing)"
-    )
-    
-    args = parser.parse_args()
-    
-    if args.product:
-        # Single product mode
-        db = FluorophoreDatabase(args.db or ":memory:")
-        downloader = OmegaOpticalDownloader(db)
-        # Would need name and type - simplified for CLI
-        downloader.download_and_store(
-            args.product, 
-            f"Omega-{args.product}", 
-            "unknown"
-        )
-    else:
-        # Full catalog mode (placeholder)
-        download_omega_to_db(args.db)
+    main()

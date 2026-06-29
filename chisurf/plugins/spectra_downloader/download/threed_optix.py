@@ -260,31 +260,24 @@ def download_threed_optix_to_db(
 
 def main() -> None:
     """CLI entry point for threed_optix.py script."""
-    parser = argparse.ArgumentParser(
-        description="Download 3DOptix optical filter catalog metadata into MFDB",
-    )
-    parser.add_argument(
-        "--db",
-        default=str(DEFAULT_DATABASE_PATH),
-        help="MFDB SQLite database path (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--max-pages",
-        type=int,
-        default=10,
-        help="Maximum catalog pages to scrape (default: 10, set to 0 for unlimited)",
-    )
-    parser.add_argument(
-        "--brand",
-        default=None,
-        help="Filter items by brand name (e.g. optosigma, thorlabs)",
-    )
-    args = parser.parse_args()
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
 
-    db = FluorophoreDatabase(args.db)
-    with db:
-        download_threed_optix_to_db(db, max_pages=args.max_pages, brand_filter=args.brand)
-    print("3DOptix catalog scrape complete.")
+    def _add(parser):
+        parser.add_argument(
+            "--max-pages", type=int, default=10,
+            help="Maximum catalog pages to scrape (default: 10, 0 = unlimited).",
+        )
+        parser.add_argument(
+            "--brand", default=None,
+            help="Filter items by brand name (e.g. optosigma, thorlabs).",
+        )
+
+    scraper_main(
+        "Download 3DOptix optical-filter catalogue metadata into the staging DB",
+        lambda db, args: download_threed_optix_to_db(
+            db, max_pages=args.max_pages, brand_filter=args.brand),
+        _add,
+    )
 
 if __name__ == "__main__":
     main()

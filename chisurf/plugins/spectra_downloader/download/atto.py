@@ -182,32 +182,27 @@ def process_product_page(url, db):
     print(f"Processed {dye_name}")
 
 def main():
-    """Download ATTO dye records into the configured MFDB database."""
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Download ATTO dye spectra and information")
-    parser.add_argument("-o", "--output", help="Output directory for downloaded files", default="atto_dyes")
-    parser.add_argument("--db", help="MFDB SQLite database path", default=str(DEFAULT_DATABASE_PATH))
-    args = parser.parse_args()
+    """Download ATTO dye records into the staging database."""
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
 
-    # Set the global BASE_DIR
-    global BASE_DIR
-    BASE_DIR = args.output
+    def _add(parser):
+        parser.add_argument("-o", "--output", default="atto_dyes",
+                            help="Output directory for downloaded files.")
 
-    print("Downloading ATTO dye information")
-
-    # Initialize the database
-    db = FluorophoreDatabase(args.db)
-    with db:
-
-        # Get product links and process them
+    def _run(db, args):
+        global BASE_DIR
+        BASE_DIR = args.output
+        print("Downloading ATTO dye information")
         product_links = get_all_links(START_URL)
         print(f"Found {len(product_links)} product pages.")
         for url in product_links:
             print(f"Processing {url}")
             process_product_page(url, db)
             time.sleep(1)
+        print("Download complete. Data saved to database.")
 
-    print("Download complete. Data saved to database.")
+    scraper_main("Download ATTO-TEC dye spectra into the staging DB", _run, _add)
+
 
 if __name__ == "__main__":
     main()

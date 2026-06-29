@@ -7,72 +7,54 @@ from pathlib import Path
 
 import click
 
-# Network scrapers that can run in parallel, each into its own per-source DB.
-# Values are extra CLI args appended after ``--db <tmp>``.
-PARALLEL_SOURCES: dict[str, list[str]] = {
-    "fpbase": [],
-    "chroma": [],
-    "thorlabs": [],
-    "threed_optix": [],  # page cap injected from --threed-max-pages
-    "atto": [],
-    "omega_optical": [],
-}
+# All sources come from the single registry in download/_base.py.
+from chisurf.plugins.spectra_downloader.download._base import (  # noqa: E402
+    SCRAPERS,
+    default_scrapers,
+    get_scraper,
+)
 
 # 3DOptix is a slow per-item crawl, so it bounds the whole parallel run. Cap it
 # by default; raise/zero it (0 = all pages) only when a full catalogue is needed.
 DEFAULT_THREED_MAX_PAGES = 15
 
-# Helper modules in download/ that are not standalone source scrapers.
-_NON_SCRAPER_MODULES = {"archive_recovery", "merge", "count_proteins", "count_spectra"}
+_MODULE_PREFIX = "chisurf.plugins.spectra_downloader.download"
 
-
-def get_available_sources():
-    download_dir = Path(__file__).parent / "download"
-    sources = {}
-    if download_dir.exists():
-        for script_file in download_dir.glob("*.py"):
-            if script_file.name == "__init__.py" or script_file.name.startswith("import_"):
-                continue
-            if script_file.name.startswith("probe_"):
-                continue
-            if script_file.stem in _NON_SCRAPER_MODULES:
-                continue
-            sources[script_file.stem] = script_file
-    return sources
 
 @click.group()
 def cli():
     """Spectra Downloader CLI tool."""
     pass
 
-@click.command("list-sources")
+
+@cli.command("list-sources")
 def list_sources():
-    """List all available downloader sources."""
-    sources = get_available_sources()
+    """List all registered downloader sources."""
     click.echo("Available downloader sources:")
-    for src in sorted(sources.keys()):
-        click.echo(f"  - {src}")
+    for spec in SCRAPERS:
+        flag = "" if spec.default else "  (off by default)"
+        click.echo(f"  - {spec.module:<30} {spec.label}{flag}")
+
 
 @cli.command("run")
 @click.argument("source")
-@click.option("--db", default=None, help="Path to the SQLite database.")
-@click.option("--extra", "extra_args", default=None, help="Extra arguments to pass to the script (space separated).")
+@click.option("--db", default=None, help="Path to the staging spectra.db.")
+@click.option("--extra", "extra_args", default=None,
+              help="Extra arguments to pass to the scraper (space separated).")
 def run_source(source, db, extra_args):
-    """Run a specific downloader source."""
-    sources = get_available_sources()
-    if source not in sources:
-        click.echo(f"Error: Unknown source '{source}'. Available: {', '.join(sorted(sources.keys()))}")
+    """Run a single registered downloader source."""
+    if get_scraper(source) is None:
+        names = ", ".join(s.module for s in SCRAPERS)
+        click.echo(f"Error: Unknown source '{source}'. Available: {names}")
         sys.exit(1)
-        
-    script_path = sources[source]
-    args = [sys.executable, str(script_path)]
+
+    args = [sys.executable, "-m", f"{_MODULE_PREFIX}.{source}"]
     if db:
         args += ["--db", db]
-        
     if extra_args:
         args += extra_args.split()
-        
-    click.echo(f"Running {source} downloader ({script_path.name}) ...")
+
+    click.echo(f"Running {source} downloader …")
     res = subprocess.run(args)
     sys.exit(res.returncode)
 
@@ -94,15 +76,16 @@ def run_all(db, only, keep_temp, no_consolidate, threed_max_pages):
     from chisurf.plugins.spectra_downloader.download.merge import merge_all
 
     target = db or str(DEFAULT_DATABASE_PATH)
+    valid = {s.module for s in SCRAPERS}
     if only:
         names = [s.strip() for s in only.split(",") if s.strip()]
-        unknown = [n for n in names if n not in PARALLEL_SOURCES]
+        unknown = [n for n in names if n not in valid]
         if unknown:
             click.echo(f"Unknown source(s): {', '.join(unknown)}. "
-                       f"Available: {', '.join(PARALLEL_SOURCES)}")
+                       f"Available: {', '.join(sorted(valid))}")
             sys.exit(1)
     else:
-        names = list(PARALLEL_SOURCES)
+        names = [s.module for s in default_scrapers()]
 
     tmpdir = tempfile.mkdtemp(prefix="spectra_parallel_")
     click.echo(f"Launching {len(names)} scraper(s) in parallel (temp: {tmpdir}) …")
@@ -110,9 +93,7 @@ def run_all(db, only, keep_temp, no_consolidate, threed_max_pages):
     procs = {}
     for name in names:
         tmp = os.path.join(tmpdir, f"{name}.db")
-        args = [sys.executable, "-m",
-                f"chisurf.plugins.spectra_downloader.download.{name}", "--db", tmp]
-        args += PARALLEL_SOURCES[name]
+        args = [sys.executable, "-m", f"{_MODULE_PREFIX}.{name}", "--db", tmp]
         if name == "threed_optix":
             args += ["--max-pages", str(threed_max_pages)]
         logf = open(os.path.join(tmpdir, f"{name}.log"), "w")

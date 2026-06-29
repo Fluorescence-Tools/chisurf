@@ -258,21 +258,28 @@ def download_fpbase_to_db(db):
     return count
 
 
-if __name__ == "__main__":
-    import argparse
+def main():
+    """CLI entry point."""
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
 
-    parser = argparse.ArgumentParser(description="Download FPbase spectra into MFDB")
-    parser.add_argument("--db", help="MFDB SQLite database path", default=str(DEFAULT_DATABASE_PATH))
-    parser.add_argument("--optics", default="C",
-                        help="FPbase instrument categories to also import: C=detectors, "
-                             "L=light sources, F=filters (comma-separated; empty to skip).")
-    args = parser.parse_args()
+    def _add(parser):
+        parser.add_argument(
+            "--optics", default="C",
+            help="FPbase instrument categories to also import: C=detectors, "
+                 "L=light sources, F=filters (comma-separated; empty to skip).",
+        )
 
-    print("Starting FPbase data fetch...")
-    db = FluorophoreDatabase(args.db)
-    with db:
+    def _run(db, args):
         download_fpbase_to_db(db)
         cats = tuple(c.strip() for c in args.optics.split(",") if c.strip())
         if cats:
             download_fpbase_optics_to_db(db, categories=cats)
-    print("FPbase database update complete.")
+
+    scraper_main(
+        "Download FPbase spectra (proteins/dyes + instruments) into the staging DB",
+        _run, _add,
+    )
+
+
+if __name__ == "__main__":
+    main()

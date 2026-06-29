@@ -62,46 +62,34 @@ class DownloadManagerDialog(QtWidgets.QDialog):
 
         self.process = None
 
-    # Helper modules in download/ that are NOT standalone source scrapers (they
-    # need extra arguments and must not appear in the "Run script" list).
-    _NON_SCRAPER_MODULES = {"archive_recovery", "merge", "count_proteins", "count_spectra"}
-
     def get_available_download_scripts(self):
-        """Return runnable download scripts keyed by display name."""
-        download_dir = Path(__file__).parent / "download"
-        scripts = {}
-        if download_dir.exists():
-            for script_file in download_dir.glob("*.py"):
-                if script_file.name == "__init__.py" or script_file.name.startswith("import_"):
-                    continue
-                if script_file.name.startswith("probe_"):
-                    continue
-                if script_file.stem in self._NON_SCRAPER_MODULES:
-                    continue
-                name = script_file.stem.replace("_", " ").title()
-                scripts[name] = script_file
-        return scripts
+        """Return runnable scrapers keyed by display label (from the registry)."""
+        from chisurf.plugins.spectra_downloader.download._base import SCRAPERS
+        return {spec.label: spec.module for spec in SCRAPERS}
 
     def run_script(self):
-        """Run the selected script against the current database path."""
+        """Run the selected scraper against the current database path."""
         if self.process is not None:
             QtWidgets.QMessageBox.warning(self, "Running", "A script is already running.")
             return
 
-        script_path = self.source_combo.currentData()
-        if not script_path:
+        module = self.source_combo.currentData()
+        if not module:
             return
 
         self.run_btn.setEnabled(False)
         self.log_output.clear()
-        self.log_output.appendPlainText(f"--- Running {script_path.name} ---")
+        self.log_output.appendPlainText(f"--- Running {module} ---")
 
         self.process = QtCore.QProcess(self)
         self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
         self.process.readyReadStandardOutput.connect(self.handle_stdout)
         self.process.finished.connect(self.process_finished)
 
-        self.process.start(sys.executable, [str(script_path), "--db", str(self.db.db_path)])
+        self.process.start(sys.executable, [
+            "-m", f"chisurf.plugins.spectra_downloader.download.{module}",
+            "--db", str(self.db.db_path),
+        ])
 
     def push_to_mfdb(self):
         """Push the scraped staging database into the connected MFDB."""

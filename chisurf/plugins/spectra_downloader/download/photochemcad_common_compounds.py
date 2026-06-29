@@ -461,21 +461,16 @@ def download_photochemcad_from_web(db: FluorophoreDatabase) -> int:
 
 def main():
     """Entry point for CLI / Spectra Viewer integration."""
-    import argparse
+    from chisurf.plugins.spectra_downloader.download._base import scraper_main
 
-    parser = argparse.ArgumentParser(
-        description="Download PhotochemCAD common compounds (from the web) into spectra.db.",
-    )
-    parser.add_argument("--db", help="MFDB SQLite database path", default=str(DEFAULT_DATABASE_PATH))
-    parser.add_argument(
-        "--pcad-dir", default=None,
-        help="Optional local PhotochemCAD 'Common Compounds' dir (offline fallback). "
-             "If omitted, data is fetched from the web mirror.",
-    )
-    args = parser.parse_args()
+    def _add(parser):
+        parser.add_argument(
+            "--pcad-dir", default=None,
+            help="Optional local PhotochemCAD 'Common Compounds' dir (offline "
+                 "fallback). If omitted, data is fetched from the web mirror.",
+        )
 
-    db = FluorophoreDatabase(args.db)
-    with db:
+    def _run(db, args):
         if args.pcad_dir:
             common_dir = Path(args.pcad_dir)
             if not common_dir.exists():
@@ -484,6 +479,11 @@ def main():
             import_photochemcad_common_compounds(db, common_dir)
         else:
             download_photochemcad_from_web(db)
+
+    scraper_main(
+        "Download PhotochemCAD common compounds (web) into the staging DB",
+        _run, _add,
+    )
 
 
 if __name__ == "__main__":
