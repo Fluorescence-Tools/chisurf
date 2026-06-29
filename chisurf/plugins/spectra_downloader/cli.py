@@ -13,10 +13,14 @@ PARALLEL_SOURCES: dict[str, list[str]] = {
     "fpbase": [],
     "chroma": [],
     "thorlabs": [],
-    "threed_optix": ["--max-pages", "0"],
+    "threed_optix": [],  # page cap injected from --threed-max-pages
     "atto": [],
     "omega_optical": [],
 }
+
+# 3DOptix is a slow per-item crawl, so it bounds the whole parallel run. Cap it
+# by default; raise/zero it (0 = all pages) only when a full catalogue is needed.
+DEFAULT_THREED_MAX_PAGES = 15
 
 def get_available_sources():
     download_dir = Path(__file__).parent / "download"
@@ -71,7 +75,9 @@ def run_source(source, db, extra_args):
 @click.option("--only", default=None, help="Comma-separated subset of sources (default: all).")
 @click.option("--keep-temp", is_flag=True, help="Keep the per-source temp DBs/logs.")
 @click.option("--no-consolidate", is_flag=True, help="Skip de-duplication after merge.")
-def run_all(db, only, keep_temp, no_consolidate):
+@click.option("--threed-max-pages", default=DEFAULT_THREED_MAX_PAGES, show_default=True,
+              help="3DOptix catalogue page cap (0 = all; it bounds the whole run).")
+def run_all(db, only, keep_temp, no_consolidate, threed_max_pages):
     """Run scrapers in parallel, each into its own DB, then merge + consolidate.
 
     Stage 1+2 (download & save) run concurrently per source with no SQLite
@@ -101,6 +107,8 @@ def run_all(db, only, keep_temp, no_consolidate):
         args = [sys.executable, "-m",
                 f"chisurf.plugins.spectra_downloader.download.{name}", "--db", tmp]
         args += PARALLEL_SOURCES[name]
+        if name == "threed_optix":
+            args += ["--max-pages", str(threed_max_pages)]
         logf = open(os.path.join(tmpdir, f"{name}.log"), "w")
         procs[name] = (subprocess.Popen(args, stdout=logf, stderr=subprocess.STDOUT), tmp, logf)
         click.echo(f"  ▶ {name}")

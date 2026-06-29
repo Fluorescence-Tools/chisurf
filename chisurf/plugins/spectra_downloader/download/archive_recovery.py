@@ -36,12 +36,13 @@ def _key(conn: sqlite3.Connection, table: str) -> str:
 def import_from_archive(
     db: FluorophoreDatabase,
     archive_path: str,
-    name_like: str,
     source: str,
     kind: str,
+    name_like: str | None = None,
+    type_like: str | None = None,
     source_ref: str | None = None,
 ) -> int:
-    """Recover probes whose name matches ``name_like`` from an archived DB.
+    """Recover probes from an archived DB, selected by name and/or probe type.
 
     Parameters
     ----------
@@ -49,13 +50,15 @@ def import_from_archive(
         Open target database (the staging ``spectra.db``).
     archive_path : str
         Path to the archived ``spectra.db`` extracted from git history.
-    name_like : str
-        SQL ``LIKE`` pattern matched case-insensitively against the probe name
-        (e.g. ``"ATTO%"``).
     source : str
         Canonical provenance source slug to stamp on the recovered probes.
     kind : str
         Canonical component kind (key of ``COMPONENT_KINDS``).
+    name_like : str, optional
+        Case-insensitive ``LIKE`` pattern on the probe name (e.g. ``"ATTO%"``).
+    type_like : str, optional
+        Case-insensitive ``LIKE`` pattern on the archived probe *type* name
+        (e.g. ``"photochemcad%"``) — needed when records share no name prefix.
     source_ref : str, optional
         Per-record reference; defaults to ``"<source> (archived)"``.
 
@@ -64,6 +67,8 @@ def import_from_archive(
     int
         Number of probes recovered.
     """
+    if not name_like and not type_like:
+        raise ValueError("Provide at least one of name_like / type_like")
     source_ref = source_ref or f"{source} (archived)"
     arc = sqlite3.connect(archive_path)
     arc.row_factory = sqlite3.Row
@@ -73,9 +78,18 @@ def import_from_archive(
     spec_key = _key(arc, "spectra")
     opt_key = _key(arc, "optical_properties")
 
+    clauses, params = [], []
+    if name_like:
+        clauses.append(f"upper(p.{name_col}) LIKE upper(?)")
+        params.append(name_like)
+    if type_like:
+        clauses.append("upper(t.type_name) LIKE upper(?)")
+        params.append(type_like)
+    where = " AND ".join(clauses)
     rows = arc.execute(
-        f"SELECT * FROM probes WHERE upper({name_col}) LIKE upper(?)",
-        (name_like,),
+        f"SELECT p.* FROM probes p LEFT JOIN probe_types t ON p.type_id = t.type_id "
+        f"WHERE {where}",
+        params,
     ).fetchall()
 
     recovered = 0
@@ -122,7 +136,8 @@ def import_from_archive(
         db.conn.commit()
 
     arc.close()
-    print(f"Recovered {recovered} '{name_like}' probes from {archive_path} "
+    selector = name_like or type_like or "*"
+    print(f"Recovered {recovered} '{selector}' probes from {archive_path} "
           f"(source={source}, kind={kind}).")
     return recovered
 
@@ -134,7 +149,8 @@ def main() -> None:
     )
     parser.add_argument("--archive", required=True, help="Archived spectra.db path")
     parser.add_argument("--db", default=str(DEFAULT_DATABASE_PATH), help="Target spectra.db")
-    parser.add_argument("--name-like", required=True, help="LIKE pattern, e.g. 'ATTO%%'")
+    parser.add_argument("--name-like", default=None, help="Name LIKE pattern, e.g. 'ATTO%%'")
+    parser.add_argument("--type-like", default=None, help="Probe-type LIKE pattern, e.g. 'photochemcad%%'")
     parser.add_argument("--source", required=True, help="Provenance source slug, e.g. atto")
     parser.add_argument("--kind", required=True, help="Component kind, e.g. organic_dye")
     parser.add_argument("--source-ref", default=None, help="Optional source reference")
@@ -143,7 +159,8 @@ def main() -> None:
     db = FluorophoreDatabase(args.db)
     with db:
         import_from_archive(
-            db, args.archive, args.name_like, args.source, args.kind, args.source_ref,
+            db, args.archive, args.source, args.kind,
+            name_like=args.name_like, type_like=args.type_like, source_ref=args.source_ref,
         )
 
 
