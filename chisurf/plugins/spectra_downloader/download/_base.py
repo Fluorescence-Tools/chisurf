@@ -42,14 +42,15 @@ SCRAPERS: list[ScraperSpec] = [
     ScraperSpec("chroma", "Chroma", "chroma"),
     ScraperSpec("thorlabs", "Thorlabs", "thorlabs"),
     ScraperSpec("photochemcad_common_compounds", "PhotochemCAD", "photochemcad"),
+    # ATTO-TEC's live site (now Leica) dropped the per-dye spectra; this scraper
+    # recovers them from the Internet Archive (Wayback Machine).
+    ScraperSpec("atto", "ATTO-TEC (Wayback)", "atto"),
     # 3DOptix carries no spectra — it is a metadata/optical-property enricher
     # (cut-on/cut-off, material, shape …) that enriches matching components via
     # dedup. Off by default: it is a slow crawl run deliberately, not a spectrum
     # source.
     ScraperSpec("threed_optix", "3DOptix (metadata only)", "3doptix", default=False),
-    # ATTO-TEC's site is now a Leica JS SPA (static scrape returns nothing); Omega's
-    # example product URLs are dead. Kept in the registry but off by default.
-    ScraperSpec("atto", "ATTO-TEC", "atto", default=False),
+    # Omega's example product URLs are dead. Kept in the registry but off by default.
     ScraperSpec("omega_optical", "Omega Optical", "omega", default=False),
 ]
 
