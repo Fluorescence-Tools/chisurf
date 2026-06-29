@@ -204,7 +204,11 @@ def make_runtime(prefix: Path, *, conda_extras: list[str], pip_nodeps: list[str]
         if (mod / "setup.py").exists() or (mod / "pyproject.toml").exists():
             run([py, "-m", "pip", "install", mod, "--no-deps"], env=env)
 
-    strip_bloat(prefix)
+    # Slimming is optional for correctness — isolate it in a child process so a
+    # crash (e.g. a native tool segfaulting) can't fail the installer build.
+    rc = subprocess.call([sys.executable, str(Path(__file__).resolve()), "--strip-only", str(prefix)])
+    if rc != 0:
+        print(f"WARNING: slimming step exited {rc}; shipping un-slimmed env", file=sys.stderr, flush=True)
     return py
 
 
@@ -222,14 +226,23 @@ def _install_imp_tricks(py: Path, env: dict) -> None:
 # --------------------------------------------------------------------------- #
 # Slimming (shared): measure -> trim proven offenders -> re-measure
 # --------------------------------------------------------------------------- #
+def _step(msg: str) -> None:
+    print(f"[strip] {msg}", flush=True)
+
+
 def strip_bloat(prefix: Path) -> None:
-    before = du_mb(prefix)
     sp = site_packages(prefix)
+    _step("measuring size")
+    before = du_mb(prefix)
 
-    # remove build tools used only to compile modules/* (force => no cascade)
-    subprocess.run(["micromamba", "remove", "-y", "-p", str(prefix), "--force", *BUILD_TOOLS_TO_REMOVE],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    _step("removing build tools")
+    try:
+        subprocess.run(["micromamba", "remove", "-y", "-p", str(prefix), *BUILD_TOOLS_TO_REMOVE],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=300)
+    except Exception as exc:
+        print(f"[strip] build-tool removal skipped: {exc}", flush=True)
 
+    _step("removing generic cruft")
     for rel in ("include", "share/doc", "share/man", "share/info", "conda-meta", "man"):
         rmtree(prefix / rel)
     for f in _walk_files(prefix):
@@ -240,8 +253,10 @@ def strip_bloat(prefix: Path) -> None:
     rmtree(sp / "pip")
     rmtree(sp / "wheel")
 
+    _step("stripping unused Qt")
     _strip_qt(prefix, sp)
 
+    _step("removing test suites")
     for pkg in TEST_PKGS:
         pkg_dir = sp / pkg
         if pkg_dir.exists():
@@ -249,10 +264,12 @@ def strip_bloat(prefix: Path) -> None:
                 rmtree(d)
 
     if not IS_WIN:
+        _step("stripping debug symbols")
         _strip_symbols(prefix)
 
+    _step("measuring size (after)")
     after = du_mb(prefix)
-    print(f"[strip] env: {before:.0f} MB -> {after:.0f} MB (saved {before - after:.0f} MB)")
+    print(f"[strip] env: {before:.0f} MB -> {after:.0f} MB (saved {before - after:.0f} MB)", flush=True)
 
 
 def _strip_qt(prefix: Path, sp: Path) -> None:
@@ -466,6 +483,11 @@ exec "$APPDIR/usr/runtime/bin/python3" -m chisurf "$@"
 # Entry point
 # --------------------------------------------------------------------------- #
 def main() -> None:
+    # Hidden mode: run only the (isolated) slimming pass on an existing prefix.
+    if len(sys.argv) == 3 and sys.argv[1] == "--strip-only":
+        strip_bloat(Path(sys.argv[2]))
+        return
+
     ap = argparse.ArgumentParser(description="Build the ChiSurf installer for this platform.")
     ap.add_argument("--no-build", action="store_true", help="reuse an existing conda package")
     ap.add_argument("--platform", choices=["macos", "linux", "windows"], help="override target")
