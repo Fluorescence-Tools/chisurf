@@ -119,6 +119,9 @@ class MFDatabase(MFDBClientBase):
         ],
         "bandwidth": ["bandwidth", "bandwidth (nm)", "fwhm", "fwhm (nm)", "notch bandwidth (nm)", "bandwidth fwhm (nm)"],
         "optical_density": ["optical_density", "optical density", "od"],
+        # CAS Registry Number — chemical identity for dyes/compounds.
+        "cas": ["cas", "cas number", "cas_number", "cas nbr", "cas no", "cas#",
+                "cas registry number", "casrn"],
     }
 
     def __init__(self, db_path: str | os.PathLike | None = None, readonly: bool = False, connection: sqlite3.Connection | None = None, enforce_foreign_keys: bool = True):
@@ -479,6 +482,29 @@ class MFDatabase(MFDBClientBase):
             pass
         query += " ORDER BY probe_id"
         return self.conn.execute(query, params).fetchall()
+
+    def find_probes_by_cas(self, cas: str) -> list[dict]:
+        """Return probes whose CAS registry number matches ``cas``.
+
+        CAS numbers are stored as the canonical ``cas`` optical property. The
+        match ignores surrounding whitespace so ``"71-43-2"`` and ``" 71-43-2 "``
+        are equivalent.
+        """
+        norm = str(cas or "").strip()
+        if not norm:
+            return []
+        opt_cols = [r[1] for r in self.conn.execute("PRAGMA table_info(optical_properties)").fetchall()]
+        opt_key = "probe_id" if "probe_id" in opt_cols else "item_id"
+        rows = self.conn.execute(
+            f"""SELECT p.* FROM probes p
+                JOIN optical_properties o ON o.{opt_key} = p.probe_id
+                WHERE o.property_name = 'cas'
+                  AND TRIM(o.property_value) = ?
+                  AND p.deleted_at IS NULL AND o.deleted_at IS NULL
+                ORDER BY p.chromophore_name""",
+            (norm,),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     def add_probe(self, probe_id, uuid_str=None, name=None, category=None, probe_type_id=None, probe_origin=None, probe_link_type=None, fluorophore_type=None, reactive_probe_flag=None, is_active=1, description=None, details=None, **kwargs):
         import uuid as _uuid

@@ -270,6 +270,7 @@ class FluorophoreDatabase(MFDatabase):
         properties: dict[str, Any] | None = None,
         spectra: Any = None,
         retrieved_at: str | None = None,
+        cas: str | None = None,
     ) -> int:
         """Register one optical component the same way for every scraper.
 
@@ -335,7 +336,10 @@ class FluorophoreDatabase(MFDatabase):
         self.add_optical_property(probe_id, "component_kind", kind)
         self.add_optical_property(probe_id, "Origin", type_display)
 
-        for prop_name, prop_value in (properties or {}).items():
+        merged_props = dict(properties or {})
+        if cas:
+            merged_props.setdefault("cas", cas)
+        for prop_name, prop_value in merged_props.items():
             if prop_value is None or str(prop_value).strip() == "":
                 continue
             self.add_optical_property(probe_id, prop_name, prop_value)

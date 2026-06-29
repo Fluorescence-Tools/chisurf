@@ -204,6 +204,21 @@ def test_reregister_keeps_provenance_and_refreshes_spectra(db):
     assert row["source_ref"] == "EM-1"
 
 
+def test_cas_is_canonicalized_and_looked_up(db):
+    """Foundation for PRD-45: CAS aliases collapse to `cas` and are queryable."""
+    db.register_component(name="Benzene", source="photochemcad", kind="organic_dye",
+                          properties={"CAS": "71-43-2"}, spectra=_spec())
+    db.register_component(name="Fluorescein", source="atto", kind="organic_dye",
+                          cas="2321-07-5", spectra=_spec())
+    db.conn.commit()
+    # the non-canonical "CAS" key collapsed to "cas"
+    pid = _probe_row(db, "Benzene")["probe_id"]
+    assert _props(db, pid).get("cas") == "71-43-2"
+    # whitespace-tolerant lookup
+    assert [p["chromophore_name"] for p in db.find_probes_by_cas(" 71-43-2 ")] == ["Benzene"]
+    assert [p["chromophore_name"] for p in db.find_probes_by_cas("2321-07-5")] == ["Fluorescein"]
+
+
 def test_categories_match_gui_registry(db):
     """Every category produced here is selectable by some GUI radio tab."""
     import json
