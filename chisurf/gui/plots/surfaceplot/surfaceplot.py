@@ -1,7 +1,6 @@
 import numpy as np
 from qtpy import QtCore, QtWidgets, uic
-from guiqwt.builder import make
-from guiqwt.plot import CurveDialog, ImageDialog
+from chisurf.gui.plots._qwt_compat import make, CurveDialog, ImageDialog
 
 from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
 from chisurf.gui.plots.plotbase import Plot

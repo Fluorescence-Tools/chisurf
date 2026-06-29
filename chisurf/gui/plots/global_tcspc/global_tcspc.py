@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from guiqwt.builder import make
-from guiqwt.plot import CurveDialog
+from chisurf.gui.plots._qwt_compat import make, CurveDialog
 
 import chisurf.gui.decorators
 from chisurf.gui.plots.plotbase import Plot

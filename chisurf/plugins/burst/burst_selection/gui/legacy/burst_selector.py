@@ -9,7 +9,10 @@ from pathlib import Path
 from qtpy import QtWidgets, QtCore, QtGui
 
 import pyqtgraph as pg
-from guidata.widgets.dataframeeditor import DataFrameEditor
+try:
+    from guidata.widgets.dataframeeditor import DataFrameEditor
+except Exception:  # pragma: no cover - optional dependency
+    DataFrameEditor = None  # type: ignore
 
 import pandas as pd
 import numpy as np
@@ -349,6 +352,13 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
         if self.current_df is None:
             QtWidgets.QMessageBox.warning(
                 self, "No Data", "No burst data loaded—nothing to show."
+            )
+            return
+
+        if DataFrameEditor is None:
+            QtWidgets.QMessageBox.warning(
+                self, "DataFrameEditor unavailable",
+                "guidata DataFrameEditor is not installed."
             )
             return
 

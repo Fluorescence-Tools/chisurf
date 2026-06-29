@@ -102,15 +102,21 @@ requirements:
     - emcee
     - pyopengl
     - pytables
+    # guidata: light, still backs the optional DataFrameEditor (table_plot,
+    # legacy burst selector); both call sites degrade gracefully if absent.
     - guidata
-    - guiqwt
+    # guiqwt removed: its only users (global_tcspc, surfaceplot) were ported to
+    # pyqtgraph; dropping it sheds the heavy PythonQwt/Qwt C++ stack.
     - python-docx
     - qtconsole
     - hmmlearn
     - ${{ "libcxx" if osx }}
     - micromamba
     - pygments
-    - pyarrow
+    # pyarrow-core: ndxplorer uses only arrays + compute + csv (no parquet/
+    # dataset/flight), so the core build is sufficient and avoids pulling the
+    # heavy libarrow-all stack (~100 MB of unused Arrow C++ components).
+    - pyarrow-core
     - boost-histogram
     - ${{ "hdf5" if win }}
 
