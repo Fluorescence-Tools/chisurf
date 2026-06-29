@@ -25,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gzip
 import os
 import re
 import shutil
@@ -69,6 +70,16 @@ TEST_PKGS = ("numpy", "scipy", "pandas", "numba", "skimage", "mdtraj", "matplotl
 
 # Build tools pulled in only to compile modules/* during assembly; removed after.
 BUILD_TOOLS_TO_REMOVE = ("cmake", "ninja", "swig", "cython", "pythran", "vs2022_win-64", "doxygen")
+
+# ChiSurf + bundled modules whose installed payload carries test data, tutorial
+# example datasets, and source/provenance artifacts never read at runtime. The
+# repo keeps all of these; only the shipped runtime drops them.
+PAYLOAD_PKGS = ("chisurf", "ndxplorer", "quest", "clsmview")
+# Whole subtrees (by dir name) that are test- or tutorial-only.
+PRUNE_DIR_NAMES = ("test", "tests", "examples")
+# In chisurf/core/structure/potential/database only the binary lookups are
+# loaded at runtime; the rest (.csv/.xlsx/.gnumeric/.pdf/.md/...) are sources.
+POTENTIAL_DB_KEEP_SUFFIXES = (".npy", ".dat")
 
 
 # --------------------------------------------------------------------------- #
@@ -230,6 +241,42 @@ def _step(msg: str) -> None:
     print(f"[strip] {msg}", flush=True)
 
 
+def _strip_chisurf_payload(sp: Path) -> None:
+    """Drop test data, tutorial examples, and non-runtime source artifacts from
+    the installed chisurf + bundled-module packages (kept in the repo)."""
+    for pkg in PAYLOAD_PKGS:
+        root = sp / pkg
+        if not root.exists():
+            continue
+        for d in [d for d in _walk_dirs(root) if d.name in PRUNE_DIR_NAMES]:
+            rmtree(d)
+
+    # Structural-potential database: keep only the binary lookups the code reads.
+    db = sp / "chisurf" / "core" / "structure" / "potential" / "database"
+    if db.exists():
+        for f in list(_walk_files(db)):
+            if f.name == "__init__.py" or f.suffix.lower() in POTENTIAL_DB_KEEP_SUFFIXES:
+                continue
+            f.unlink(missing_ok=True)
+
+
+def _gzip_mmcif_dicts(sp: Path) -> None:
+    """Compress bundled mmCIF dictionaries to .dic.gz. The loader reads either
+    form (chisurf/core/mfdb/pdbx_metadata.py), and they are only parsed when the
+    JSON cache is (re)built, so the on-disk win is effectively free at runtime."""
+    data_dir = sp / "chisurf" / "core" / "mfdb" / "data"
+    if not data_dir.exists():
+        return
+    for dic in list(data_dir.glob("*.dic")):
+        gz = dic.with_name(dic.name + ".gz")
+        try:
+            with open(dic, "rb") as fi, gzip.open(gz, "wb", compresslevel=9) as fo:
+                shutil.copyfileobj(fi, fo)
+            dic.unlink(missing_ok=True)
+        except Exception as exc:
+            print(f"[strip] gzip {dic.name} skipped: {exc}", flush=True)
+
+
 def strip_bloat(prefix: Path) -> None:
     sp = site_packages(prefix)
     _step("measuring size")
@@ -262,6 +309,12 @@ def strip_bloat(prefix: Path) -> None:
         if pkg_dir.exists():
             for d in [d for d in _walk_dirs(pkg_dir) if d.name == "tests"]:
                 rmtree(d)
+
+    _step("trimming chisurf test data / examples / source artifacts")
+    _strip_chisurf_payload(sp)
+
+    _step("compressing mmCIF dictionaries (.dic -> .dic.gz)")
+    _gzip_mmcif_dicts(sp)
 
     _step("measuring size (after)")
     after = du_mb(prefix)

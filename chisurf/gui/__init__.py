@@ -2014,72 +2014,18 @@ def get_app():
     set_app_style(app)
     setup_gui(app=app, stage="setup_style")
     app.processEvents()
-    
-    try:
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-        from chisurf.core.mfdb.credentials import (
-            delete_session_token,
-            load_session_token,
-            store_runtime_session_token,
-            store_session_token,
-        )
-        import chisurf.core.settings as cs_settings
 
-        _ensure_chisurf_rpc_server()
-        
-        default_user = cs_settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
-        autologin = cs_settings.cs_settings.get("mfdb", {}).get("autologin", False)
-        server_host = cs_settings.cs_settings.get("mfdb", {}).get("last_server", "127.0.0.1")
-        server_port = cs_settings.cs_settings.get("mfdb", {}).get("last_port", 8765)
-        
-        client = MFDBClient(host=server_host, cmd_port=server_port, pub_port=server_port + 1)
-        users = client.list_users()
-        user_data = next((u for u in users if u["user_id"] == default_user), None)
-
-        trigger_login = True
-        if autologin and user_data is not None:
-            token = load_session_token(server_host, server_port, default_user)
-            if token:
-                try:
-                    client.token = token
-                    result = client.me()
-                    current_user = result.get("user") or {}
-                    trigger_login = current_user.get("user_id") != default_user
-                    if not trigger_login:
-                        store_runtime_session_token(server_host, server_port, default_user, token)
-                except Exception as exc:
-                    logging.info(f"MFDB stored-token autologin declined for {default_user}: {exc}")
-                    delete_session_token(server_host, server_port, default_user)
-            if trigger_login:
-                try:
-                    result = client.login(user_id=default_user, password="")
-                    trigger_login = not (result.get("ok") or result.get("authenticated"))
-                    if not trigger_login:
-                        token = result.get("token", "")
-                        store_runtime_session_token(server_host, server_port, default_user, token)
-                        store_session_token(server_host, server_port, default_user, token)
-                except Exception as exc:
-                    logging.info(f"MFDB passwordless autologin declined for {default_user}: {exc}")
-            
-        if trigger_login:
-            login_dialog = LoginDialog()
-            if login_dialog.exec() != QtWidgets.QDialog.Accepted:
-                sys.exit(0)
-    except Exception as e:
-        logging.warning(f"Could not perform startup authentication check: {e}")
-        QtWidgets.QMessageBox.critical(
-            None,
-            "MFDB Login Unavailable",
-            f"Could not start or reach the MFDB JSON-RPC service:\n{e}",
-        )
-        sys.exit(1)
-
+    # Build and show the main window first. MFDB server-start + authentication
+    # is deferred (below) so cold RPC-server startup no longer blocks the first
+    # paint. Window construction does not depend on an authenticated MFDB.
     win = get_win(app=app)
 
     # If startup was interrupted to open the updater, do not touch/show the main window
+    updater_interrupt = False
     try:
         import chisurf as _chisurf_mod
         if getattr(_chisurf_mod, "__startup_interrupt_for_updater__", False):
+            updater_interrupt = True
             win = None  # We won't use the main window in this case
         else:
             win.raise_()
@@ -2091,6 +2037,77 @@ def get_app():
             win.raise_()
             win.activateWindow()
             win.setFocus()
+
+    def _run_startup_auth():
+        """Ensure the MFDB RPC server and authenticate the default user.
+
+        Runs after the window is visible (scheduled via QTimer). Behaviour is
+        identical to the previous synchronous flow — autologin, passwordless
+        login, LoginDialog fallback — except process-exit calls become event-loop
+        quits so the already-running ``app.exec()`` unwinds cleanly.
+        """
+        try:
+            from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+            from chisurf.core.mfdb.credentials import (
+                delete_session_token,
+                load_session_token,
+                store_runtime_session_token,
+                store_session_token,
+            )
+            import chisurf.core.settings as cs_settings
+
+            _ensure_chisurf_rpc_server()
+
+            default_user = cs_settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+            autologin = cs_settings.cs_settings.get("mfdb", {}).get("autologin", False)
+            server_host = cs_settings.cs_settings.get("mfdb", {}).get("last_server", "127.0.0.1")
+            server_port = cs_settings.cs_settings.get("mfdb", {}).get("last_port", 8765)
+
+            client = MFDBClient(host=server_host, cmd_port=server_port, pub_port=server_port + 1)
+            users = client.list_users()
+            user_data = next((u for u in users if u["user_id"] == default_user), None)
+
+            trigger_login = True
+            if autologin and user_data is not None:
+                token = load_session_token(server_host, server_port, default_user)
+                if token:
+                    try:
+                        client.token = token
+                        result = client.me()
+                        current_user = result.get("user") or {}
+                        trigger_login = current_user.get("user_id") != default_user
+                        if not trigger_login:
+                            store_runtime_session_token(server_host, server_port, default_user, token)
+                    except Exception as exc:
+                        logging.info(f"MFDB stored-token autologin declined for {default_user}: {exc}")
+                        delete_session_token(server_host, server_port, default_user)
+                if trigger_login:
+                    try:
+                        result = client.login(user_id=default_user, password="")
+                        trigger_login = not (result.get("ok") or result.get("authenticated"))
+                        if not trigger_login:
+                            token = result.get("token", "")
+                            store_runtime_session_token(server_host, server_port, default_user, token)
+                            store_session_token(server_host, server_port, default_user, token)
+                    except Exception as exc:
+                        logging.info(f"MFDB passwordless autologin declined for {default_user}: {exc}")
+
+            if trigger_login:
+                login_dialog = LoginDialog()
+                if login_dialog.exec() != QtWidgets.QDialog.Accepted:
+                    app.quit()
+        except Exception as e:
+            logging.warning(f"Could not perform startup authentication check: {e}")
+            QtWidgets.QMessageBox.critical(
+                None,
+                "MFDB Login Unavailable",
+                f"Could not start or reach the MFDB JSON-RPC service:\n{e}",
+            )
+            app.exit(1)
+
+    if not updater_interrupt:
+        # singleShot(0) lets the window paint before auth runs.
+        QtCore.QTimer.singleShot(0, _run_startup_auth)
 
 
     def shutdown_services():

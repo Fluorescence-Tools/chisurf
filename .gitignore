@@ -31,6 +31,8 @@
 !chisurf/core/mfdb/data/*.json
 chisurf/core/mfdb/data/_dictionary_cache.json
 !chisurf/server/client_methods.json
+# Build-time generated static version (see setup.py / chisurf/core/info.py)
+chisurf/core/_version.py
 !chisurf/server/server_methods.json
 !chisurf/gui/plots/lineplot/reference_presets.json
 !chisurf/plugins/core/lightpath_simulator/templates/*.json

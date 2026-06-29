@@ -17,6 +17,7 @@ The parsed dictionary data is used for:
 from __future__ import annotations
 
 import functools
+import gzip
 import json
 import logging
 import re
@@ -169,7 +170,10 @@ class MmcifDictionary:
         category_key: Optional[str] = None
         pending_description: Optional[str] = None
         
-        with open(path, "r", encoding="utf-8") as f:
+        # Bundled dictionaries may ship gzip-compressed (.dic.gz) to save disk;
+        # gzip.open transparently decompresses, plain .dic is read directly.
+        opener = gzip.open if path.suffix == ".gz" else open
+        with opener(path, "rt", encoding="utf-8") as f:
             for line in f:
                 line = line.rstrip("\n\r")
                 stripped = line.strip()
@@ -456,6 +460,19 @@ class MmcifDictionary:
         self._register_item(current_save, current_item)
 
     @classmethod
+    def _resolve_dic(cls, fname: str) -> Path:
+        """Return the on-disk path for a bundled dictionary.
+
+        Prefers a plain ``.dic`` (dev tree) but falls back to a shipped
+        ``.dic.gz`` (slim installer) when the uncompressed file is absent.
+        """
+        plain = cls.DATA_DIR / fname
+        if plain.exists():
+            return plain
+        gz = cls.DATA_DIR / (fname + ".gz")
+        return gz if gz.exists() else plain
+
+    @classmethod
     def load_bundled(cls) -> "MmcifDictionary":
         """Load all bundled dictionary files."""
         if cls._cached_dict is not None:
@@ -466,7 +483,7 @@ class MmcifDictionary:
             cls._cached_dict = cached
             return cached
         
-        dic_paths = [cls.DATA_DIR / fname for fname in cls.BUNDLED_DICTS]
+        dic_paths = [cls._resolve_dic(fname) for fname in cls.BUNDLED_DICTS]
         dic = cls(*dic_paths)
         dic.save_cache()
         cls._cached_dict = dic
@@ -480,7 +497,7 @@ class MmcifDictionary:
         
         cache_mtime = cls.CACHE_PATH.stat().st_mtime
         for fname in cls.BUNDLED_DICTS:
-            dic_path = cls.DATA_DIR / fname
+            dic_path = cls._resolve_dic(fname)
             if dic_path.exists() and dic_path.stat().st_mtime > cache_mtime:
                 return None
         

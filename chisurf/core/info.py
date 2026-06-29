@@ -62,7 +62,9 @@ def _compute_version() -> str:
 
     Version policy:
     - Prefer explicit override via CHISURF_VERSION.
-    - If git tags are available, use `git describe`:
+    - Otherwise use the build-time static ``chisurf/core/_version.py`` if present
+      (installed apps): this avoids spawning git on every ``import chisurf``.
+    - If git tags are available (dev checkouts), use `git describe`:
       - exact tag: '<tag>'
       - commits after tag: '<YY>.dev<COUNT>'
     - If no usable tags exist, fall back to '<YY>.dev<COUNT>'
@@ -72,6 +74,15 @@ def _compute_version() -> str:
     env_version = os.environ.get("CHISURF_VERSION")
     if env_version:
         return env_version.strip()
+
+    # Build-time static version (written by setup.py / build_installer.py). This
+    # is the fast path for installed apps: no git subprocess at import time.
+    try:
+        from chisurf.core._version import __version__ as _static_version
+        if _static_version:
+            return _static_version
+    except Exception:
+        pass
 
     repo_root = pathlib.Path(__file__).resolve().parent.parent
 
