@@ -97,3 +97,23 @@ scripts/*.txt
 chisurf/plugins/core/acq/tcspc_devices/simulation/*.dylib
 chisurf/plugins/core/acq/tcspc_devices/simulation/*.so
 chisurf/plugins/core/acq/tcspc_devices/simulation/*.dll
+# agent / AI assistant artifacts (kept local-only, never tracked)
+.claude/
+/CLAUDE.md
+/AGENTS.md
+/AGENT/
+# internal dev notes (kept local-only)
+/BUGS.md
+/BUGS_FIXED.md
+/FRET_SUPERSET_IMPLEMENTATION_PLAN.md
+/OBJECT_STORE_IMPLEMENTATION.md
+/TODO_metadata_tooltips.md
+/TODO_sample_database_bugs.md
+chisurf/gui/widgets/node_editor/NODE_EDITOR_ENHANCEMENT_PLAN.md
+chisurf/plugins/chimol/CMD_PLAN.md
+chisurf/plugins/core/lightpath_simulator/BUGS.md
+chisurf/plugins/core/mfdb_admin/OVERHAUL_PLAN.md
+# old/removed module (kept local-only)
+/modules/tttrconvert/
+# stray generated test images
+/irf_*.png
