@@ -48,6 +48,10 @@ if exist modules\imp-tricks\pyproject.toml (
 )
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
+:: Install latexify-py (PyPI-only, not on conda) + its deps into the package
+%PYTHON% -m pip install latexify-py --prefix=%PREFIX%
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+
 :: Clean pre-compiled Cython files to force regeneration
 if exist chisurf\fluorescence\simulation\simulation_.cpp del /q chisurf\fluorescence\simulation\simulation_.cpp
 if exist chisurf\structure\av\fps_.cpp del /q chisurf\structure\av\fps_.cpp

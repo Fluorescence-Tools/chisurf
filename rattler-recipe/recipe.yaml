@@ -107,7 +107,6 @@ requirements:
     - python-docx
     - qtconsole
     - hmmlearn
-    - latexify-py
     - ${{ "libcxx" if osx }}
     - micromamba
     - pygments

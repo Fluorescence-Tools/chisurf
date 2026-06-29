@@ -26,6 +26,13 @@ def _get_lib_name():
 
 
 def _build_burbulator():
+    # If the shared library was already built and placed next to the wrapper
+    # (e.g. the conda recipe builds it once before `pip install .`), skip the
+    # rebuild. Avoids a redundant CMake invocation that fails inside the conda
+    # Windows build env (bogus CMAKE_GENERATOR).
+    if SIMULATION_DIR.exists() and any(SIMULATION_DIR.glob("*burbulator*")):
+        print("Burbulator library already present; skipping rebuild")
+        return
     if not shutil.which("cmake"):
         print("CMake not found -- skipping Burbulator C++ build", file=sys.stderr)
         return

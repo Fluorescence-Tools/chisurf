@@ -84,6 +84,9 @@ else
 fi
 "$PY" -m pip install "$IMP_TRICKS_SRC" --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 
+# 7b) Install latexify-py (PyPI-only, not on conda) + its deps into the package
+"$PY" -m pip install latexify-py --no-build-isolation -vv --prefix="$PREFIX"
+
 # 8) Versioning
 echo "Building ChiSurf version: $PKG_VERSION"
 cp chisurf/info.py chisurf/info.py.bak
