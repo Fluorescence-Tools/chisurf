@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-"""Download 3DOptix optical filter catalog metadata.
+"""Download 3DOptix optical-filter catalogue **metadata** (no spectra).
 
-Crawls the public 3DOptix catalog pages for filters, extracts physical
-properties (Brand, Subtype, Material, Cut-On/Cut-Off wavelengths, shape, thickness, etc.),
-and stores them in the MFDB reference database (spectra.db).
+3DOptix publishes filter *properties* — not spectral curves. This scraper is
+therefore a **metadata / optical-property enricher**, not a spectrum source: it
+records Brand, Subtype, Material, Cut-On/Cut-Off wavelengths (the spectral-shape
+parameters), shape, thickness, coating, etc. as optical properties on each part,
+and writes **no** ``spectra`` rows.
+
+Its value comes from de-duplication: a 3DOptix part whose name matches a
+component scraped elsewhere (e.g. a Thorlabs/Chroma filter that *does* carry a
+transmission curve) is merged with it, enriching that component with the 3DOptix
+metadata while keeping the real spectrum. Parts with no match remain useful
+metadata-only records. (Registered ``default=False`` in the scraper registry.)
 
 Usage:
     python -m chisurf.plugins.spectra_downloader.download.threed_optix --db <path> [--max-pages <N>] [--brand <brand_name>]

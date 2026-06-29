@@ -63,4 +63,56 @@ def test_browser_lists_and_shows_detail_on_selection(qapp):
     w._category.setCurrentText("protein")
     qapp.processEvents()
     assert w._table.rowCount() == 1
+
+    # JSON metadata view is populated for the selection
+    w._category.setCurrentText("All")
+    w._search.setText("SPCM")
+    qapp.processEvents()
+    w._table.selectRow(0)
+    qapp.processEvents()
+    import json
+    meta = json.loads(w._metadata.toPlainText())
+    assert meta["probe"]["chromophore_name"] == "Thorlabs SPCMxxA"
+    assert any(s["type"] == "quantum_efficiency" for s in meta["spectra"])
+    db.close()
+
+
+def test_source_filter_and_push(qapp):
+    import tempfile
+
+    from chisurf.plugins.spectra_downloader.browser import SpectraBrowserWidget
+    from chisurf.plugins.spectra_downloader.download.merge import push_staging_to_mfdb
+
+    db = _staging_db()  # EGFP (fpbase), SPCMxxA (fpbase) — both source fpbase
+    # add a second source
+    wl = np.linspace(400, 700, 8)
+    with db:
+        db.register_component(name="FB340-10", source="thorlabs", kind="bandpass",
+                              spectra={"transmission": (wl, np.ones_like(wl))})
+        db.conn.commit()
+
+    w = SpectraBrowserWidget(db, initial_source="thorlabs")
+    qapp.processEvents()
+    assert w._source.currentText() == "thorlabs"
+    assert w._table.rowCount() == 1  # only the thorlabs component
+
+    # push the selected (thorlabs) component into a fresh MFDB
+    w._table.selectRow(0)
+    qapp.processEvents()
+    mfdb = tempfile.mktemp(suffix=".mfdb")
+    summary = push_staging_to_mfdb(str(db.db_path), probe_ids=w._selected_probe_ids(), mfdb_path=mfdb)
+    assert summary["merged"] == 1
+
+    import sqlite3
+    rows = sqlite3.connect(mfdb).execute(
+        "SELECT chromophore_name, category, source FROM probes WHERE deleted_at IS NULL"
+    ).fetchall()
+    assert rows == [("FB340-10", "filter", "thorlabs")]
+
+    # push all → the other two components arrive too
+    push_staging_to_mfdb(str(db.db_path), mfdb_path=mfdb)
+    total = sqlite3.connect(mfdb).execute(
+        "SELECT COUNT(*) FROM probes WHERE deleted_at IS NULL"
+    ).fetchone()[0]
+    assert total == 3
     db.close()

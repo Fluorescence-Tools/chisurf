@@ -26,12 +26,22 @@ def _key(conn: sqlite3.Connection, table: str) -> str:
     return "probe_id" if "probe_id" in cols else "item_id"
 
 
-def merge_database(db: FluorophoreDatabase, source_path: str) -> int:
-    """Re-ingest every probe from ``source_path`` into ``db``.
+def merge_database(
+    db: FluorophoreDatabase,
+    source_path: str,
+    probe_ids: "set[int] | list[int] | None" = None,
+) -> int:
+    """Re-ingest probes from ``source_path`` into ``db``.
 
     The component kind is read back from each probe's ``component_kind`` optical
     property (set by ``register_component`` on the original scrape), so the
     merged record keeps its canonical category and spectrum grouping.
+
+    Parameters
+    ----------
+    probe_ids : optional
+        Restrict the merge to these source probe ids (e.g. a selection in the
+        browser). ``None`` merges every probe.
 
     Returns the number of probes merged.
     """
@@ -46,7 +56,18 @@ def merge_database(db: FluorophoreDatabase, source_path: str) -> int:
     spec_key = _key(src, "spectra")
     opt_key = _key(src, "optical_properties")
 
-    rows = src.execute("SELECT * FROM probes WHERE deleted_at IS NULL").fetchall()
+    if probe_ids is not None:
+        ids = list(probe_ids)
+        if not ids:
+            src.close()
+            return 0
+        placeholders = ",".join("?" * len(ids))
+        rows = src.execute(
+            f"SELECT * FROM probes WHERE deleted_at IS NULL AND probe_id IN ({placeholders})",
+            ids,
+        ).fetchall()
+    else:
+        rows = src.execute("SELECT * FROM probes WHERE deleted_at IS NULL").fetchall()
 
     merged = 0
     with db:
@@ -111,6 +132,32 @@ def merge_all(target_path: str, source_paths: list[str], consolidate: bool = Tru
         if consolidate:
             summary["consolidated"] = db.consolidate_probes()
             print(f"  consolidated: {summary['consolidated']}")
+    return summary
+
+
+def push_staging_to_mfdb(
+    staging_path: str,
+    probe_ids: "set[int] | list[int] | None" = None,
+    mfdb_path: str | None = None,
+    consolidate: bool = True,
+) -> dict:
+    """Push staging probes (a selection, or all) into the connected MFDB.
+
+    Re-ingests via ``register_component`` so the MFDB records stay canonical,
+    then de-duplicates. Used by the browser's "Push selected / Push all" actions.
+    Returns ``{"merged": n, "consolidated": {...}}``.
+    """
+    from chisurf.core.mfdb.database_resolver import resolve_database_path
+
+    target = mfdb_path or str(resolve_database_path())
+    # Open as FluorophoreDatabase so register_component is available (it is an
+    # MFDatabase subclass, so it works on the live MFDB too).
+    db = FluorophoreDatabase(target)
+    summary: dict = {}
+    with db:
+        summary["merged"] = merge_database(db, staging_path, probe_ids=probe_ids)
+        if consolidate:
+            summary["consolidated"] = db.consolidate_probes()
     return summary
 
 
