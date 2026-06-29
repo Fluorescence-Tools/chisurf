@@ -72,6 +72,18 @@ fi
 # 6) Install chinet (pure Python, no CMake/SWIG needed)
 "$PY" -m pip install ./modules/chinet --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 
+# 7) Install imp-tricks (external IMP mixin, pure Python) — use the local checkout
+#    if present (dev builds), otherwise clone it from GitLab (CI builds).
+IMP_TRICKS_REPO="${IMP_TRICKS_REPO:-https://gitlab.peulen.xyz/tpeulen/imp-tricks.git}"
+IMP_TRICKS_REF="${IMP_TRICKS_REF:-main}"
+if [[ -e modules/imp-tricks/pyproject.toml ]]; then
+  IMP_TRICKS_SRC="modules/imp-tricks"
+else
+  IMP_TRICKS_SRC="$(mktemp -d)/imp-tricks"
+  git clone --depth 1 --branch "$IMP_TRICKS_REF" "$IMP_TRICKS_REPO" "$IMP_TRICKS_SRC"
+fi
+"$PY" -m pip install "$IMP_TRICKS_SRC" --no-deps --no-build-isolation -vv --prefix="$PREFIX"
+
 # 8) Versioning
 echo "Building ChiSurf version: $PKG_VERSION"
 cp chisurf/info.py chisurf/info.py.bak

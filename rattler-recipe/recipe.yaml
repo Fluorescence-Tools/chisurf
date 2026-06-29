@@ -84,6 +84,8 @@ requirements:
     - markdown
     - click
     - click-didyoumean
+    - jsonschema
+    - tqdm
     - qtpy
     - pyqt
     - pyqtgraph

@@ -35,6 +35,19 @@ cd %ROOT_DIR%
 %PYTHON% -m pip install .\modules\ndxplorer --no-deps --prefix=%PREFIX%
 %PYTHON% -m pip install .\modules\quest --no-deps --prefix=%PREFIX%
 
+:: Install imp-tricks (external IMP mixin, pure Python): use local checkout if
+:: present (dev builds), otherwise clone from GitLab (CI builds).
+if not defined IMP_TRICKS_REPO set IMP_TRICKS_REPO=https://gitlab.peulen.xyz/tpeulen/imp-tricks.git
+if not defined IMP_TRICKS_REF set IMP_TRICKS_REF=main
+if exist modules\imp-tricks\pyproject.toml (
+    %PYTHON% -m pip install .\modules\imp-tricks --no-deps --prefix=%PREFIX%
+) else (
+    git clone --depth 1 --branch %IMP_TRICKS_REF% %IMP_TRICKS_REPO% %TEMP%\imp-tricks
+    if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+    %PYTHON% -m pip install %TEMP%\imp-tricks --no-deps --prefix=%PREFIX%
+)
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+
 :: Clean pre-compiled Cython files to force regeneration
 if exist chisurf\fluorescence\simulation\simulation_.cpp del /q chisurf\fluorescence\simulation\simulation_.cpp
 if exist chisurf\structure\av\fps_.cpp del /q chisurf\structure\av\fps_.cpp
