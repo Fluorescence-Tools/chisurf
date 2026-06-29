@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 
 from qtpy import QtCore, QtGui, QtWidgets
@@ -250,6 +251,232 @@ class YAMLHighlighter(SyntaxHighlighter):
             self.add_rule(pattern, "keyword")
 
 
+class FindBar(QtWidgets.QWidget):
+    """Notepad++-style find bar floating at the bottom of the editor viewport."""
+
+    def __init__(self, editor: "TextEditor") -> None:
+        super().__init__(editor.viewport())
+        self._editor = editor
+        self._matches: list[tuple[int, int]] = []
+        self._current = -1
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(6, 3, 6, 3)
+        layout.setSpacing(4)
+
+        close_btn = QtWidgets.QToolButton(self)
+        close_btn.setText("✕")
+        close_btn.setFixedSize(18, 18)
+        close_btn.setToolTip("Close (Esc)")
+        close_btn.clicked.connect(self.close_bar)
+
+        self.input = QtWidgets.QLineEdit(self)
+        self.input.setPlaceholderText("Find…")
+        self.input.setMinimumWidth(180)
+        self.input.setMaximumWidth(300)
+        self.input.textChanged.connect(self._search)
+        self.input.installEventFilter(self)
+
+        prev_btn = QtWidgets.QToolButton(self)
+        prev_btn.setText("▲")
+        prev_btn.setToolTip("Previous match (Shift+F3)")
+        prev_btn.clicked.connect(self.find_prev)
+
+        next_btn = QtWidgets.QToolButton(self)
+        next_btn.setText("▼")
+        next_btn.setToolTip("Next match (F3 / Enter)")
+        next_btn.clicked.connect(self.find_next)
+
+        self.case_btn = QtWidgets.QToolButton(self)
+        self.case_btn.setText("Aa")
+        self.case_btn.setToolTip("Match case")
+        self.case_btn.setCheckable(True)
+        self.case_btn.toggled.connect(lambda _: self._search(self.input.text()))
+
+        self.word_btn = QtWidgets.QToolButton(self)
+        self.word_btn.setText("\\b")
+        self.word_btn.setToolTip("Whole word")
+        self.word_btn.setCheckable(True)
+        self.word_btn.toggled.connect(lambda _: self._search(self.input.text()))
+
+        self.regex_btn = QtWidgets.QToolButton(self)
+        self.regex_btn.setText(".*")
+        self.regex_btn.setToolTip("Regular expression")
+        self.regex_btn.setCheckable(True)
+        self.regex_btn.toggled.connect(lambda _: self._search(self.input.text()))
+
+        self.count_label = QtWidgets.QLabel("")
+        self.count_label.setMinimumWidth(72)
+        self.count_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        layout.addWidget(close_btn)
+        layout.addWidget(self.input)
+        layout.addWidget(prev_btn)
+        layout.addWidget(next_btn)
+        layout.addWidget(self.case_btn)
+        layout.addWidget(self.word_btn)
+        layout.addWidget(self.regex_btn)
+        layout.addWidget(self.count_label)
+        layout.addStretch()
+
+        self.setAutoFillBackground(True)
+        pal = self.palette()
+        pal.setColor(QtGui.QPalette.Window, pal.color(QtGui.QPalette.AlternateBase))
+        self.setPalette(pal)
+
+        editor.viewport().installEventFilter(self)
+        self.hide()
+
+    # ------------------------------------------------------------------
+    # Event filter: viewport resize → reposition; input keys → nav/close
+    # ------------------------------------------------------------------
+
+    def eventFilter(self, obj, event):
+        if obj is self._editor.viewport():
+            if event.type() == QtCore.QEvent.Resize and self.isVisible():
+                self._reposition()
+            return False
+        if obj is self.input and event.type() == QtCore.QEvent.KeyPress:
+            key = event.key()
+            mods = event.modifiers()
+            if key == QtCore.Qt.Key_Escape:
+                self.close_bar()
+                return True
+            if key in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+                self.find_prev() if mods & QtCore.Qt.ShiftModifier else self.find_next()
+                return True
+            if key == QtCore.Qt.Key_F3:
+                self.find_prev() if mods & QtCore.Qt.ShiftModifier else self.find_next()
+                return True
+        return super().eventFilter(obj, event)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def open_bar(self) -> None:
+        self._reposition()
+        self.show()
+        self.raise_()
+        self.input.setFocus()
+        self.input.selectAll()
+        self._search(self.input.text())
+
+    def close_bar(self) -> None:
+        self.hide()
+        self._clear_highlights()
+        self._editor.setFocus()
+
+    def find_next(self) -> None:
+        if not self._matches:
+            self._search(self.input.text())
+            return
+        self._current = (self._current + 1) % len(self._matches)
+        self._select_current()
+
+    def find_prev(self) -> None:
+        if not self._matches:
+            self._search(self.input.text())
+            return
+        self._current = (self._current - 1) % len(self._matches)
+        self._select_current()
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _reposition(self) -> None:
+        vp = self._editor.viewport()
+        h = self.sizeHint().height()
+        self.setGeometry(0, vp.height() - h, vp.width(), h)
+
+    def _build_pattern(self, text: str):
+        if not text:
+            return None
+        pat = text if self.regex_btn.isChecked() else re.escape(text)
+        if self.word_btn.isChecked():
+            pat = r"\b" + pat + r"\b"
+        flags = 0 if self.case_btn.isChecked() else re.IGNORECASE
+        try:
+            return re.compile(pat, flags)
+        except re.error:
+            return None
+
+    def _search(self, text: str) -> None:
+        self._clear_highlights()
+        self._matches = []
+        self._current = -1
+
+        pattern = self._build_pattern(text)
+        if pattern is None:
+            self.count_label.setText("")
+            self._set_input_state(None)
+            return
+
+        content = self._editor.toPlainText()
+        self._matches = [(m.start(), m.end()) for m in pattern.finditer(content)]
+
+        if not self._matches:
+            self.count_label.setText("No results")
+            self._set_input_state("none")
+            return
+
+        self._set_input_state("found")
+        cursor_pos = self._editor.textCursor().position()
+        self._current = next(
+            (i for i, (s, _) in enumerate(self._matches) if s >= cursor_pos), 0
+        )
+        self._select_current()
+
+    def _build_selections(self, current: int) -> list:
+        all_fmt = QtGui.QTextCharFormat()
+        all_fmt.setBackground(QtGui.QColor("#ffe066"))
+        all_fmt.setForeground(QtGui.QColor("#000000"))
+
+        cur_fmt = QtGui.QTextCharFormat()
+        cur_fmt.setBackground(QtGui.QColor("#ff8c00"))
+        cur_fmt.setForeground(QtGui.QColor("#ffffff"))
+
+        doc = self._editor.document()
+        selections = []
+        for i, (s, e) in enumerate(self._matches):
+            sel = QtWidgets.QTextEdit.ExtraSelection()
+            sel.format = cur_fmt if i == current else all_fmt
+            c = QtGui.QTextCursor(doc)
+            c.setPosition(s)
+            c.setPosition(e, QtGui.QTextCursor.KeepAnchor)
+            sel.cursor = c
+            selections.append(sel)
+        return selections
+
+    def _select_current(self) -> None:
+        if not self._matches or self._current < 0:
+            return
+        self._editor._find_extra_selections = self._build_selections(self._current)
+        self._editor._update_extra_selections()
+
+        start, end = self._matches[self._current]
+        doc = self._editor.document()
+        cur = QtGui.QTextCursor(doc)
+        cur.setPosition(start)
+        cur.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+        self._editor.setTextCursor(cur)
+        self._editor.ensureCursorVisible()
+        self.count_label.setText(f"{self._current + 1} / {len(self._matches)}")
+
+    def _clear_highlights(self) -> None:
+        self._editor._find_extra_selections = []
+        self._editor._update_extra_selections()
+
+    def _set_input_state(self, state) -> None:
+        if state == "none":
+            self.input.setStyleSheet("background-color: #ffcccc;")
+        elif state == "found":
+            self.input.setStyleSheet("background-color: #ccffcc;")
+        else:
+            self.input.setStyleSheet("")
+
+
 class LineNumberArea(QtWidgets.QWidget):
     """Widget for displaying line numbers."""
 
@@ -345,7 +572,10 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.current_line_color = QtGui.QColor(settings["caret_line_background_color"])
         self.caret_line_visible = bool(settings["caret_line_visible"])
         self.line_numbers_visible = bool(settings.get("line_numbers_visible", True))
+        self.show_whitespace = bool(settings.get("show_whitespace", False))
         self.highlighter = None
+        self._find_extra_selections: list = []
+        self._caret_selection = None
 
         self.setFont(make_editor_font(settings))
 
@@ -368,12 +598,24 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self._symbol_timer.setInterval(250)
         self._symbol_timer.timeout.connect(self.refresh_symbols)
         self.cursorPositionChanged.connect(self._emit_status_changed)
+        self.cursorPositionChanged.connect(self._update_caret_selection)
         self.textChanged.connect(self._schedule_symbol_refresh)
         self.document().modificationChanged.connect(lambda _modified: self._emit_status_changed())
 
         self._rebuild_highlighter()
         self._apply_palette()
+        self.set_show_whitespace(self.show_whitespace)
         self.refresh_symbols()
+
+        self._find_bar = FindBar(self)
+        for key, slot in [
+            ("Ctrl+F", self._find_bar.open_bar),
+            ("F3",      self._find_bar.find_next),
+            ("Shift+F3", self._find_bar.find_prev),
+        ]:
+            sc = QtWidgets.QShortcut(QtGui.QKeySequence(key), self)
+            sc.setContext(QtCore.Qt.WidgetWithChildrenShortcut)
+            sc.activated.connect(slot)
 
         self.setMinimumSize(400, 200)
 
@@ -634,17 +876,35 @@ class TextEditor(QtWidgets.QPlainTextEdit):
                 continue
 
     def paintEvent(self, event):
-        """Paint the editor, including the current line highlight."""
+        """Paint the editor."""
         super().paintEvent(event)
 
-        if self.caret_line_visible:
-            selection = QtWidgets.QTextEdit.ExtraSelection()
-            selection.format.setBackground(self.current_line_color)
-            selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-            selection.cursor = self.textCursor()
-            selection.cursor.clearSelection()
+    def keyPressEvent(self, event):
+        """Close the find bar on Escape."""
+        if event.key() == QtCore.Qt.Key_Escape and self._find_bar.isVisible():
+            self._find_bar.close_bar()
+            return
+        super().keyPressEvent(event)
 
-            self.setExtraSelections([selection])
+    def _update_caret_selection(self) -> None:
+        """Rebuild the current-line extra selection and refresh."""
+        if self.caret_line_visible:
+            sel = QtWidgets.QTextEdit.ExtraSelection()
+            sel.format.setBackground(self.current_line_color)
+            sel.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+            sel.cursor = self.textCursor()
+            sel.cursor.clearSelection()
+            self._caret_selection = sel
+        else:
+            self._caret_selection = None
+        self._update_extra_selections()
+
+    def _update_extra_selections(self) -> None:
+        """Merge find highlights with the caret-line selection."""
+        selections = list(self._find_extra_selections)
+        if self._caret_selection is not None:
+            selections.append(self._caret_selection)
+        self.setExtraSelections(selections)
 
     def text(self):
         """Get the text content of the editor."""
@@ -683,6 +943,8 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self._rebuild_highlighter()
         self._apply_palette()
         self.set_line_numbers_visible(self.line_numbers_visible)
+        self.set_show_whitespace(bool(merged.get("show_whitespace", False)))
+        self._update_caret_selection()
         self.viewport().update()
 
     def get_editor_settings(self) -> dict:
@@ -692,6 +954,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         settings["font_size"] = self.font().pointSize()
         settings["language"] = self.language
         settings["line_numbers_visible"] = self.line_numbers_visible
+        settings["show_whitespace"] = self.show_whitespace
         return settings
 
     def set_font_family(self, font_family: str) -> None:
@@ -719,6 +982,23 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.line_numbers_visible = bool(visible)
         self.line_number_area.setVisible(self.line_numbers_visible)
         self.update_line_number_area_width(0)
+
+    def set_show_whitespace(self, visible: bool) -> None:
+        """Show or hide whitespace characters (spaces, tabs, line endings)."""
+        self.show_whitespace = bool(visible)
+        opt = self.document().defaultTextOption()
+        flags = opt.flags()
+        ws_flags = (
+            QtGui.QTextOption.ShowTabsAndSpaces
+            | QtGui.QTextOption.ShowLineAndParagraphSeparators
+        )
+        if self.show_whitespace:
+            flags |= ws_flags
+        else:
+            flags &= ~ws_flags
+        opt.setFlags(flags)
+        self.document().setDefaultTextOption(opt)
+        self.viewport().update()
 
     def _rebuild_highlighter(self) -> None:
         """Recreate the syntax highlighter for the current language."""

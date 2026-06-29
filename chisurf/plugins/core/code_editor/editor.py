@@ -3,7 +3,9 @@ from __future__ import annotations
 import ctypes
 import os
 import pathlib
+import platform
 import queue
+import subprocess
 import sys
 import tempfile
 import threading
@@ -63,6 +65,8 @@ class CodeEditor(QtWidgets.QWidget):
     symbolsChanged = QtCore.Signal(list)
     lspStatusChanged = QtCore.Signal(str)
     runStateChanged = QtCore.Signal(bool)
+    outputAppended = QtCore.Signal(str)   # emitted from any thread
+    endpointHint = QtCore.Signal(str)     # shebang-suggested endpoint for the active file
 
     def __init__(
         self,
@@ -96,7 +100,11 @@ class CodeEditor(QtWidgets.QWidget):
         self._rpc_server: EditorRpcServer | None = None
         self._agent_panel_visible = False
         self._run_process: QtCore.QProcess | None = None
-        self.project_root = find_project_root(project_root or filename or pathlib.Path.cwd())
+        if project_root is None and filename is None:
+            default_scripts = self._default_scripts_dir()
+            self.project_root = default_scripts if default_scripts else find_project_root(pathlib.Path.cwd())
+        else:
+            self.project_root = find_project_root(project_root or filename or pathlib.Path.cwd())
         editor_settings = get_editor_settings()
         if enable_lsp is None:
             enable_lsp = bool(editor_settings.get("enable_lsp", True))
@@ -133,6 +141,7 @@ class CodeEditor(QtWidgets.QWidget):
         self.tab_widget.setTabBarVisible(show_tab_bar)
         self.tab_widget.setContextMenuEnabled(True)
 
+        self.outputAppended.connect(self._append_output)
         self._sync_agent_font()
         self._sync_rpc_server()
 
@@ -178,6 +187,15 @@ class CodeEditor(QtWidgets.QWidget):
         self.diagnostics_list.setObjectName("code_editor_diagnostics_list")
         self.diagnostics_list.setMaximumHeight(100)
 
+        self.output_console = QtWidgets.QPlainTextEdit()
+        self.output_console.setObjectName("code_editor_output_console")
+        self.output_console.setReadOnly(True)
+        self.output_console.setFont(QtGui.QFont("Monospace", 9))
+        self.output_console.setMaximumBlockCount(5000)
+
+        self.file_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.file_tree.customContextMenuRequested.connect(self._on_file_tree_context_menu)
+
     def project_browser_widget(self) -> QtWidgets.QWidget:
         """Return the shared project file browser widget."""
         return self.file_tree
@@ -190,6 +208,10 @@ class CodeEditor(QtWidgets.QWidget):
         """Return the shared diagnostics widget."""
         return self.diagnostics_list
 
+    def output_console_widget(self) -> QtWidgets.QWidget:
+        """Return the script output console widget."""
+        return self.output_console
+
     def set_project_root(self, root: str | pathlib.Path) -> None:
         """Set the project root used by navigation and LSP."""
         self.project_root = find_project_root(root)
@@ -199,30 +221,64 @@ class CodeEditor(QtWidgets.QWidget):
             self._lsp_client.stop()
             self._lsp_client = None
 
+    def _open_project_folder_dialog(self) -> None:
+        """Show a folder picker and switch the project root to the chosen directory."""
+        folder = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Open Project Folder",
+            str(self.project_root),
+            QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks,
+        )
+        if folder:
+            self.set_project_root(folder)
+
     def create_actions(self, parent=None) -> dict[str, QtWidgets.QAction]:
         """Create shared editor actions for menus and toolbars."""
         parent = parent or self
         actions = {
-            "new": QtWidgets.QAction(create_emoji_icon("📄", size=20), "New", parent),
-            "open": QtWidgets.QAction(create_emoji_icon("📂", size=20), "Open...", parent),
-            "save": QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save", parent),
-            "save_as": QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save As...", parent),
-            "reload": QtWidgets.QAction(create_emoji_icon("🔄", size=20), "Reload", parent),
-            "run": QtWidgets.QAction(create_emoji_icon("▶", size=20), "Run Macro", parent),
-            "ruff": QtWidgets.QAction(create_emoji_icon("🧹", size=20), "Run Ruff", parent),
-            "back": QtWidgets.QAction(create_emoji_icon("◀", size=20), "Back", parent),
-            "forward": QtWidgets.QAction(create_emoji_icon("▶", size=20), "Forward", parent),
-            "definition": QtWidgets.QAction(create_emoji_icon("🔍", size=20), "Go to Definition", parent),
-            "completion": QtWidgets.QAction(create_emoji_icon("✨", size=20), "Complete", parent),
-            "settings": QtWidgets.QAction(create_emoji_icon("⚙", size=20), "Editor Settings...", parent),
-            "agent": QtWidgets.QAction(create_emoji_icon("🤖", size=20), "Agent", parent),
+            "new":              QtWidgets.QAction(create_emoji_icon("📄", size=20), "New", parent),
+            "open":             QtWidgets.QAction(create_emoji_icon("📂", size=20), "Open", parent),
+            "open_folder":      QtWidgets.QAction(create_emoji_icon("🗂", size=20), "Folder", parent),
+            "save":             QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save", parent),
+            "save_as":          QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save As", parent),
+            "reload":           QtWidgets.QAction(create_emoji_icon("🔄", size=20), "Reload", parent),
+            "run":              QtWidgets.QAction(create_emoji_icon("▶", size=20), "Run", parent),
+            "ruff":             QtWidgets.QAction(create_emoji_icon("🧹", size=20), "Lint", parent),
+            "back":             QtWidgets.QAction(create_emoji_icon("◀", size=20), "Back", parent),
+            "forward":          QtWidgets.QAction(create_emoji_icon("▶", size=20), "Fwd", parent),
+            "definition":       QtWidgets.QAction(create_emoji_icon("🔍", size=20), "Def", parent),
+            "completion":       QtWidgets.QAction(create_emoji_icon("✨", size=20), "Hint", parent),
+            "settings":         QtWidgets.QAction(create_emoji_icon("⚙", size=20), "Settings", parent),
+            "agent":            QtWidgets.QAction(create_emoji_icon("🤖", size=20), "Agent", parent),
+            "find":                QtWidgets.QAction(create_emoji_icon("🔍", size=20), "Find", parent),
             "toggle_line_numbers": QtWidgets.QAction("Show Line Numbers", parent),
-            "toggle_lsp": QtWidgets.QAction("Enable Python LSP", parent),
+            "toggle_lsp":          QtWidgets.QAction("Enable Python LSP", parent),
+            "toggle_whitespace":   QtWidgets.QAction(create_emoji_icon("¶", size=20), "", parent),
         }
+        actions["new"].setToolTip("New file (Ctrl+N)")
+        actions["open"].setToolTip("Open file (Ctrl+O)")
+        actions["open_folder"].setToolTip("Open project folder in the file browser")
+        actions["save"].setToolTip("Save current file (Ctrl+S)")
+        actions["save_as"].setToolTip("Save as a new file")
+        actions["reload"].setToolTip("Reload file from disk")
+        actions["run"].setToolTip("Run the current script")
+        actions["ruff"].setToolTip("Format and lint with ruff")
+        actions["back"].setToolTip("Navigate back in edit history")
+        actions["forward"].setToolTip("Navigate forward in edit history")
+        actions["definition"].setToolTip("Go to definition (F12)")
+        actions["completion"].setToolTip("Trigger autocompletion (Ctrl+Space)")
+        actions["settings"].setToolTip("Open editor settings")
+        actions["agent"].setToolTip("Toggle AI agent panel")
+        actions["find"].setToolTip("Find text (Ctrl+F)")
+        actions["toggle_line_numbers"].setToolTip("Show or hide line numbers in the editor")
+        actions["toggle_lsp"].setToolTip("Enable or disable the Python language server (LSP)")
+        actions["toggle_whitespace"].setToolTip("Show or hide whitespace characters (spaces ·, tabs →, line endings ¶)")
         actions["toggle_line_numbers"].setCheckable(True)
         actions["toggle_line_numbers"].setObjectName("toggle_line_numbers")
         actions["toggle_lsp"].setCheckable(True)
         actions["toggle_lsp"].setObjectName("toggle_lsp")
+        actions["toggle_whitespace"].setCheckable(True)
+        actions["toggle_whitespace"].setObjectName("toggle_whitespace")
         actions["new"].setShortcut(QtGui.QKeySequence.New)
         actions["open"].setShortcut(QtGui.QKeySequence.Open)
         actions["save"].setShortcut(QtGui.QKeySequence.Save)
@@ -235,6 +291,7 @@ class CodeEditor(QtWidgets.QWidget):
 
         actions["new"].triggered.connect(self._add_new_editor_tab)
         actions["open"].triggered.connect(lambda _checked=False: self.load_file())
+        actions["open_folder"].triggered.connect(lambda _checked=False: self._open_project_folder_dialog())
         actions["save"].triggered.connect(self.save_text)
         actions["save_as"].triggered.connect(self.save_current_as)
         actions["reload"].triggered.connect(self.reload_current)
@@ -246,8 +303,10 @@ class CodeEditor(QtWidgets.QWidget):
         actions["completion"].triggered.connect(self.complete_current)
         actions["settings"].triggered.connect(self.show_editor_settings)
         actions["agent"].triggered.connect(self._toggle_agent_panel)
+        actions["find"].triggered.connect(self._open_find_bar)
         actions["toggle_line_numbers"].triggered.connect(self._toggle_line_numbers)
         actions["toggle_lsp"].triggered.connect(self._toggle_lsp)
+        actions["toggle_whitespace"].triggered.connect(self._toggle_whitespace)
         self._actions = actions
         self._sync_editor_action_states()
         return actions
@@ -356,6 +415,9 @@ class CodeEditor(QtWidgets.QWidget):
         lsp_action = self._actions.get("toggle_lsp")
         if lsp_action is not None:
             lsp_action.setChecked(self._enable_lsp)
+        ws_action = self._actions.get("toggle_whitespace")
+        if ws_action is not None:
+            ws_action.setChecked(bool(settings.get("show_whitespace", False)))
 
     def _toggle_line_numbers(self, checked=None) -> None:
         """Toggle the global line-number visibility setting."""
@@ -364,6 +426,16 @@ class CodeEditor(QtWidgets.QWidget):
     def _toggle_lsp(self, checked=None) -> None:
         """Toggle the global Python LSP setting."""
         self._set_editor_setting_from_action("enable_lsp", checked)
+
+    def _toggle_whitespace(self, checked=None) -> None:
+        """Toggle display of whitespace characters in all open editors."""
+        self._set_editor_setting_from_action("show_whitespace", checked)
+
+    def _open_find_bar(self) -> None:
+        """Open the find bar in the active editor."""
+        editor = self._get_current_editor()
+        if editor is not None and hasattr(editor, "_find_bar"):
+            editor._find_bar.open_bar()
 
     def _set_editor_setting_from_action(self, key: str, checked=None) -> None:
         """Persist and apply a checkable editor setting."""
@@ -523,6 +595,9 @@ class CodeEditor(QtWidgets.QWidget):
             }
         )
         self._on_editor_symbols_changed(editor.refresh_symbols())
+        hint = self._shebang_endpoint(editor.toPlainText())
+        if hint:
+            self.endpointHint.emit(hint)
 
     def _on_editor_status_changed(self, status: dict) -> None:
         """Forward current editor status to hosts."""
@@ -564,6 +639,112 @@ class CodeEditor(QtWidgets.QWidget):
         self.symbol_tree.expandAll()
         self.symbol_tree.resizeColumnToContents(0)
         self.symbol_tree.blockSignals(False)
+
+    @staticmethod
+    def _default_scripts_dir() -> pathlib.Path | None:
+        """Return the project scripts/ dir, falling back to ~/.chisurf/scripts/."""
+        import chisurf as _cs_pkg
+        repo_scripts = pathlib.Path(_cs_pkg.__file__).parent.parent / "scripts"
+        if repo_scripts.is_dir():
+            return repo_scripts
+        fallback = pathlib.Path.home() / ".chisurf" / "scripts"
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+    def _on_file_tree_context_menu(self, pos: QtCore.QPoint) -> None:
+        """Show a context menu on right-click in the project file tree."""
+        index = self.file_tree.indexAt(pos)
+        path: pathlib.Path | None = None
+        if index.isValid():
+            path = pathlib.Path(self.file_model.filePath(index))
+
+        menu = QtWidgets.QMenu(self.file_tree)
+
+        if path is not None and path.is_file():
+            menu.addAction(
+                create_emoji_icon("📄", size=16), "Open in Editor",
+                lambda p=path: self.open_file(str(p))
+            )
+            if path.suffix == ".py":
+                menu.addAction(
+                    create_emoji_icon("▶", size=16), "Run Script",
+                    lambda p=path: self._run_file(str(p))
+                )
+            menu.addSeparator()
+            menu.addAction("Copy Path", lambda p=path: self._copy_to_clipboard(str(p)))
+            menu.addAction("Copy File Name", lambda p=path: self._copy_to_clipboard(p.name))
+        elif path is not None and path.is_dir():
+            menu.addAction(
+                create_emoji_icon("📂", size=16), "Set as Project Root",
+                lambda p=path: self.set_project_root(p)
+            )
+            menu.addSeparator()
+
+        # Reveal in system file manager
+        reveal_target = path if path else self.project_root
+        reveal_label = "Reveal in Finder" if platform.system() == "Darwin" else "Open Containing Folder"
+        menu.addAction(
+            create_emoji_icon("🔍", size=16), reveal_label,
+            lambda t=reveal_target: self._reveal_in_file_manager(t)
+        )
+
+        menu.addSeparator()
+
+        # New file in the current directory
+        dir_for_new = (
+            path.parent if (path and path.is_file())
+            else (path if (path and path.is_dir()) else self.project_root)
+        )
+        menu.addAction(
+            create_emoji_icon("📄", size=16), "New Python File…",
+            lambda d=dir_for_new: self._new_file_in_dir(d, suffix=".py")
+        )
+
+        if not menu.isEmpty():
+            menu.exec_(self.file_tree.viewport().mapToGlobal(pos))
+
+    def _run_file(self, path: str) -> None:
+        """Open *path* in a tab and run it immediately."""
+        self.open_file(path)
+        self._run_process_impl(path)
+
+    @staticmethod
+    def _reveal_in_file_manager(path: pathlib.Path) -> None:
+        """Open the containing directory in the platform file manager."""
+        target = path if path.is_dir() else path.parent
+        try:
+            if platform.system() == "Darwin":
+                subprocess.Popen(["open", str(target)])
+            elif platform.system() == "Windows":
+                subprocess.Popen(["explorer", str(target)])
+            else:
+                subprocess.Popen(["xdg-open", str(target)])
+        except OSError as exc:
+            logging.log(1, f"Could not open file manager: {exc}")
+
+    def _new_file_in_dir(self, directory: pathlib.Path, suffix: str = ".py") -> None:
+        """Prompt for a file name, create it in *directory*, and open it."""
+        default_name = f"script{suffix}"
+        name, ok = QtWidgets.QInputDialog.getText(
+            self, "New File", "File name:", text=default_name
+        )
+        if not ok or not name.strip():
+            return
+        new_path = directory / name.strip()
+        if not new_path.suffix:
+            new_path = new_path.with_suffix(suffix)
+        try:
+            new_path.write_text("", encoding="utf-8")
+        except OSError as exc:
+            QtWidgets.QMessageBox.warning(self, "Error", f"Cannot create file:\n{exc}")
+            return
+        self.open_file(str(new_path))
+
+    def _append_output(self, text: str) -> None:
+        """Append *text* to the output console (always on the GUI thread)."""
+        self.output_console.moveCursor(QtGui.QTextCursor.End)
+        self.output_console.insertPlainText(text)
+        self.output_console.moveCursor(QtGui.QTextCursor.End)
 
     def _on_file_tree_activated(self, index: QtCore.QModelIndex) -> None:
         """Open a file when the shared project browser is activated."""
@@ -1218,6 +1399,23 @@ class CodeEditor(QtWidgets.QWidget):
             f.write(content)
         return filepath
 
+    @staticmethod
+    def _shebang_endpoint(content: str) -> str | None:
+        """Return the endpoint named in a ``# !chisurf: <endpoint>`` shebang, or None.
+
+        The shebang is recognised anywhere in the first 5 lines so it can sit
+        after a regular ``#!/usr/bin/env python`` line.  Example::
+
+            # !chisurf: ipython
+        """
+        for line in content.splitlines()[:5]:
+            stripped = line.strip()
+            if stripped.startswith("# !chisurf:"):
+                endpoint = stripped[len("# !chisurf:"):].strip().lower()
+                if endpoint in ("console", "process", "ipython"):
+                    return endpoint
+        return None
+
     def run_macro(self, event):
         """Execute the current editor content without requiring a prior save."""
         editor = self._get_current_editor()
@@ -1230,35 +1428,82 @@ class CodeEditor(QtWidgets.QWidget):
         if not filepath:
             return
 
+        # Endpoint is always the toolbar dropdown (shebang pre-selects it on open; user can override).
         settings = get_editor_settings()
         mode = settings.get("run_endpoint", "process")
 
         if mode == "console":
             self._run_console(content, filepath)
+        elif mode == "ipython":
+            self._run_ipython_impl(filepath)
         else:
             self._run_process_impl(filepath)
 
+    def _run_ipython_impl(self, filepath: str) -> None:
+        """Send the current file to the ChiSurf IPython console via %%run magic."""
+        console = getattr(cs, "console", None)
+        if console is None:
+            self.outputAppended.emit(
+                "⚠ No IPython console found (cs.console is None).\n"
+                "  Start ChiSurf with the console enabled, or switch to Console/Process mode.\n"
+            )
+            return
+        self.output_console.clear()
+        self.output_console.appendPlainText(f"▶ Sending to IPython: {filepath}\n")
+        # %run executes the file in the kernel namespace where cs is already available.
+        # execute_on_gui_thread is signal-safe (can be called from any thread).
+        # -i runs in the current interactive namespace where cs, np, etc. are already defined.
+        console.execute_on_gui_thread(f"%run -i '{filepath}'")
+        self.outputAppended.emit("  Script sent — see the IPython console for output.\n")
+
     def _run_process_impl(self, filepath: str) -> None:
-        """Run a file as a subprocess via QProcess."""
+        """Run a file as a subprocess via QProcess, capturing output."""
+        self.output_console.clear()
+        self.output_console.appendPlainText(f"▶ Running: {filepath}\n")
         self._run_process = QtCore.QProcess(self)
+        self._run_process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
+        self._run_process.readyReadStandardOutput.connect(self._on_process_output)
         self._run_process.finished.connect(self._on_run_finished)
         self._run_process.errorOccurred.connect(self._on_run_error)
-        self._run_process.setProcessChannelMode(QtCore.QProcess.ForwardedChannels)
         self._run_process.started.connect(lambda: self.runStateChanged.emit(True))
         self._run_process.start(sys.executable, [filepath])
 
-    def _run_console(self, content: str, filepath: str) -> None:
-        """Run content in-process via exec wrapped in a stoppable thread."""
-        self._run_thread = threading.Thread(
-            target=self._exec_in_thread,
-            args=(content, filepath),
-            daemon=True,
-        )
-        self._run_thread.start()
-        self.runStateChanged.emit(True)
+    def _on_process_output(self) -> None:
+        """Read and display subprocess output in the console panel."""
+        if self._run_process is None:
+            return
+        raw = bytes(self._run_process.readAllStandardOutput())
+        text = raw.decode("utf-8", errors="replace")
+        if text:
+            self.outputAppended.emit(text)
 
-    def _exec_in_thread(self, content: str, filepath: str) -> None:
-        """Execute code in a thread, catching KeyboardInterrupt for stop."""
+    def _run_console(self, content: str, filepath: str) -> None:
+        """Run content in-process on the main thread so GUI operations work."""
+        self.output_console.clear()
+        self.output_console.appendPlainText(f"▶ Running (console): {filepath}\n")
+        self.runStateChanged.emit(True)
+        # Defer one event-loop tick so the output panel update renders first,
+        # then exec on the main thread (required for any code that touches Qt widgets).
+        QtCore.QTimer.singleShot(0, lambda: self._exec_on_main_thread(content, filepath))
+
+    def _exec_on_main_thread(self, content: str, filepath: str) -> None:
+        """Execute code on the main thread, capturing stdout/stderr to the output panel."""
+        import io as _io
+        import traceback
+
+        class _Tee:
+            def __init__(self, orig, buf):
+                self._orig, self._buf = orig, buf
+            def write(self, text):
+                self._orig.write(text)
+                self._buf.write(text)
+            def flush(self):
+                self._orig.flush()
+
+        buf = _io.StringIO()
+        old_stdout, old_stderr = sys.stdout, sys.stderr
+        sys.stdout = _Tee(old_stdout, buf)
+        sys.stderr = _Tee(old_stderr, buf)
         namespace = {
             "__name__": "__main__",
             "__file__": filepath,
@@ -1269,12 +1514,16 @@ class CodeEditor(QtWidgets.QWidget):
         }
         try:
             exec(compile(content, filepath, "exec"), namespace)
-        except KeyboardInterrupt:
-            pass
         except SystemExit:
             pass
+        except Exception:
+            sys.stderr.write(traceback.format_exc())
         finally:
-            self._run_thread = None
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+            captured = buf.getvalue()
+            if captured:
+                self.outputAppended.emit(captured)
             self.runStateChanged.emit(False)
 
     def stop_macro(self):
@@ -1285,13 +1534,17 @@ class CodeEditor(QtWidgets.QWidget):
             self._run_process = None
             self.runStateChanged.emit(False)
             return
-        if self._run_thread is not None and self._run_thread.is_alive():
-            _async_raise(self._run_thread.ident, KeyboardInterrupt)
-            self._run_thread = None
-            self.runStateChanged.emit(False)
+        # Console/IPython modes run on the main thread; Stop only applies to Process mode.
 
-    def _on_run_finished(self, _exit_code: int, _exit_status: QtCore.QProcess.ExitStatus) -> None:
+    def _on_run_finished(self, exit_code: int, _exit_status: QtCore.QProcess.ExitStatus) -> None:
         """Clean up after a script process finishes."""
+        if self._run_process is not None:
+            # drain any remaining output
+            raw = bytes(self._run_process.readAllStandardOutput())
+            text = raw.decode("utf-8", errors="replace")
+            if text:
+                self.outputAppended.emit(text)
+        self.outputAppended.emit(f"\n⏹ Process finished with exit code {exit_code}\n")
         self._run_process = None
         self.runStateChanged.emit(False)
 
