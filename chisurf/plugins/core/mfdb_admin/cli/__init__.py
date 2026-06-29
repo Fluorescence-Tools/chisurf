@@ -68,16 +68,24 @@ def cli() -> None:
 @click.option("--source", default=None, help="Path to the reference spectra.db.")
 @click.option("--mark-verified", is_flag=True, default=False,
               help="Stamp imported probes as approved (default: unverified).")
-def import_reference_set(source: str | None, mark_verified: bool) -> None:
+@click.option("--replace", is_flag=True, default=False,
+              help="Purge existing reference probes first, then import cleanly.")
+def import_reference_set(source: str | None, mark_verified: bool, replace: bool) -> None:
     """Import the scraped reference dataset into the MFDB."""
-    click.echo("Importing fluorophore reference set...")
+    click.echo("Importing fluorophore reference set..."
+               + (" (replacing existing)" if replace else ""))
     with _open_db() as db:
-        counts = db.import_reference_set(source_path=source, mark_verified=mark_verified)
+        counts = db.import_reference_set(
+            source_path=source, mark_verified=mark_verified, replace=replace,
+        )
+    if counts.get("purged"):
+        click.echo(f"  Purged existing: {counts['purged']}")
     click.echo(
         f"  Probes imported: {counts['probes']}\n"
         f"  Spectra imported: {counts['spectra']}\n"
         f"  Optical properties: {counts['optical_properties']}\n"
-        f"  Skipped: {counts['skipped']}"
+        f"  Skipped: {counts['skipped']}\n"
+        f"  Consolidated: {counts.get('consolidated')}"
     )
 
 

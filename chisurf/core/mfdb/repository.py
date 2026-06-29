@@ -724,18 +724,58 @@ class MFDatabase(MFDBClientBase):
             return "fluorophore"
         return "other"
 
+    def purge_reference_probes(self) -> dict[str, int]:
+        """Hard-delete all probes and their spectra / optical properties / images.
+
+        Clears the optical-component reference set so it can be rebuilt cleanly
+        from a freshly scraped ``spectra.db``. Foreign keys are checked first:
+        if any sample / FRET / reagent row references a probe this raises rather
+        than orphaning user data — only the self-contained probe tables
+        (probes + spectra + optical_properties + images) are removed.
+        """
+        guard_tables = [
+            ("flr_sample_probe", "probe_id"),
+            ("flr_poly_probe_position", "probe_id"),
+            ("flr_fret_forster_radius", "donor_probe_id"),
+            ("flr_fret_forster_radius", "acceptor_probe_id"),
+            ("flr_fret_distance_restraint", "probe_id_1"),
+            ("flr_fret_distance_restraint", "probe_id_2"),
+            ("mfdb_reagent_lot", "probe_id"),
+        ]
+        existing = {r["name"] for r in self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )}
+        for table, col in guard_tables:
+            if table not in existing:
+                continue
+            n = self.conn.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE {col} IS NOT NULL"
+            ).fetchone()[0]
+            if n:
+                raise RuntimeError(
+                    f"Refusing to purge probes: {n} row(s) in {table}.{col} "
+                    f"reference probes. Remove that data first."
+                )
+        counts = {}
+        with self.conn:
+            for table in ("spectra", "optical_properties", "images"):
+                if table in existing:
+                    counts[table] = self.conn.execute(f"DELETE FROM {table}").rowcount
+            counts["probes"] = self.conn.execute("DELETE FROM probes").rowcount
+        return counts
+
     def import_reference_set(
         self,
         source_path: str | None = None,
         *,
         mark_verified: bool = False,
+        replace: bool = False,
     ) -> dict[str, int]:
         """Import fluorophore reference data from the scraped spectra.db.
 
         Copies probes, spectra, and optical properties from the ``_dev``
-        spectra.db into this MFDB. All imported rows are stamped with
-        ``source='spectra_db'`` and ``verification_status='unverified'``
-        (unless ``mark_verified=True``).
+        spectra.db into this MFDB, carrying the scraper-assigned category and
+        provenance through, then de-duplicates.
 
         Parameters
         ----------
@@ -744,12 +784,21 @@ class MFDatabase(MFDBClientBase):
             plugin-local database.
         mark_verified : bool, default=False
             If True, stamp imported probes as approved.
+        replace : bool, default=False
+            If True, hard-delete the existing reference probes (and their
+            spectra / optical properties / images) first via
+            :meth:`purge_reference_probes`, so the set is rebuilt cleanly
+            instead of merged into the messy existing data.
 
         Returns
         -------
         dict
-            Counts of imported probes, spectra, and optical properties.
+            Counts of imported probes, spectra, and optical properties
+            (plus ``purged`` when ``replace=True``).
         """
+        purged = None
+        if replace:
+            purged = self.purge_reference_probes()
         if source_path is None:
             source_path = (
                 Path(__file__).resolve().parents[2]
@@ -987,6 +1036,7 @@ class MFDatabase(MFDBClientBase):
                 "optical_properties": imported_props,
                 "skipped": skipped,
                 "consolidated": consolidation,
+                "purged": purged,
             }
         finally:
             source.close()
