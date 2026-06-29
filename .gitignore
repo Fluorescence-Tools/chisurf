@@ -117,3 +117,4 @@ chisurf/plugins/core/mfdb_admin/OVERHAUL_PLAN.md
 /modules/tttrconvert/
 # stray generated test images
 /irf_*.png
+/modules/imp-tricks
