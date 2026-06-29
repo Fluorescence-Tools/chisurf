@@ -1,6 +1,6 @@
 context:
   name: "chisurf"
-  # The version is derived from Git (via CHISURF_VERSION env var) by build-setup.bat/CI.
+  # The version is derived from Git (via CHISURF_VERSION env var) by CI / build_installer.py.
   # Manual builds should prefix with CHISURF_VERSION=$(python rattler-recipe/generate_version.py --print).
   version: ${{ env.get("CHISURF_VERSION") if "CHISURF_VERSION" in env else "26.dev0" }}
 

@@ -77,7 +77,7 @@ By downloading and using ChiSurf, you agree to the following terms:
 
 #### Windows
 
-Run the downloaded `.exe` installer. For local installer builds, run `pixi run -e build build-setup`. The helper automatically downloads and installs the Inno Setup compiler into your user profile the first time it runs, so no extra manual setup is required.
+Run the downloaded `.exe` installer. To build the installer locally, run `pixi run -e build build-installer` (requires the Inno Setup compiler, `ISCC.exe`, on PATH — `choco install innosetup`).
 
 #### macOS
 

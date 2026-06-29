@@ -1,2 +1,0 @@
-#!/bin/sh
-./build-osx-app.sh -i=../../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=../../ -o=../../dist/osx

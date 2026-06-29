@@ -25,91 +25,42 @@
 ## Quick Start
 
 ```bash
-pixi run build-pkg        # Build conda package
-pixi run build-setup      # Build Windows installer
-pixi run build-osx-app   # Build macOS app
-pixi run build-appimage  # Build Linux AppImage
+pixi run build-pkg         # 1. Build the chisurf conda package (rattler-build)
+pixi run build-installer   # 2. Build the native installer for THIS OS
 ```
 
-## osx
+`build-installer` auto-detects the platform and produces:
 
-### Creating a ChiSurf.app
+| OS      | Artifact (in `dist/`)          | Wrapper        |
+|---------|--------------------------------|----------------|
+| Linux   | `ChiSurf-<ver>-x86_64.AppImage`| linuxdeploy    |
+| macOS   | `ChiSurf-<ver>.dmg`            | hdiutil (.app) |
+| Windows | `ChiSurf-Windows-Setup-<ver>.exe` | Inno Setup  |
 
-A distributable dmg file (including the .app) can be built using Pixi:
+## How it works
 
-```bash
-pixi run build-osx-app
-```
+A single orchestrator, `build_tools/build_installer.py`, runs one shared
+pipeline on every platform; only the final wrap differs:
 
-Or directly via the shell script:
+1. Build (or, with `--no-build`, locate) the `chisurf-*.conda` in `conda-bld/`.
+2. `make_runtime()` — `micromamba create` a self-contained env *from that
+   package*, then pip-install the extras the recipe does not bundle:
+   `labellib`, `latexify-py`, `imp-tricks` (from `modules/imp-tricks` if present,
+   else cloned from GitLab), the local `modules/*` (chinet/clsmview/ndxplorer/
+   quest), and `tttrlib` (conda on mac/linux, pip on Windows).
+3. `strip_bloat()` — slim the env: drop unused Qt5 modules, strip debug symbols,
+   remove build tools, test suites, headers, `pip`/`wheel`, `__pycache__`.
+4. Wrap into the platform installer.
 
-```bash
-./build_tools/osx/build-osx-app.sh -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=.. -o=../dist
-```
+Useful flags: `--no-build` (reuse an existing conda package), `--audit` (print
+the largest dirs in the runtime env), `--platform {linux,macos,windows}`.
 
-This creates a new environment and installs necessary dependencies. The
-environment is placed in a ChiSurf.app together with the `chisurf` folder
-from the project directory. The `chisurf` module is installed using
-`--use-local`. The compiled binary is used as an entry point for the
-ChiSurf.app. Unnecessary folders and files listed in `remove_list.txt` are
-stripped from the ChiSurf.app folder. Finally, the ChiSurf.app is bundled
-in a .dmg image that is placed in the `dist` folder.
-
-## Windows
-
-The Windows installation of ChiSurf is effectively a runtime environment with
-an installed ChiSurf package. The ChiSurf package is built with
-`rattler-build`.
-
-Windows versions are bundled in setup.exe files created using Inno Setup. The
-setup files will install a runtime environment that is used to run the chisurf
-module. A setup file is created by calling
-
-```cmd
-pixi run build-setup
-```
-
-Or directly:
-
-```cmd
-build_tools\win\build-setup.bat
-```
-
-The script will create a new environment in `dist/win` using a conda-style
-package manager (`micromamba`, `mamba`, or `conda`) if one is available on
-`PATH`.
-Next, a package of `chisurf` is built using the `rattler-recipe`
-located in the folder `rattler-recipe` of the project root. The `chisurf` package
-is installed to the environment in `dist/win`. Next, using `jinja2`, the
-file `setup_template.jinja2` is written to the file `installer_config.iss` using
-`create_installer_script.py`. The script `create_installer_script.py` will read details from
-`pyproject.toml` and `chisurf/info.py` (version number, entry points, etc.).
-Finally, Inno Setup reads `installer_config.iss` and writes an installation file
-`chisurf_windows_setup_version.exe` to `dist/`.
-
-> **Note:** The helper automatically bootstraps the Inno Setup compiler into your
-> `%LOCALAPPDATA%\Programs\Inno Setup 6` folder when it is not already
-> installed. No global admin installation or Chocolatey dependency is required.
+### Requirements
+- **All:** `micromamba` and `rattler-build` on PATH (provided by the `build`
+  pixi feature / the CI `build` env).
+- **Windows:** the Inno Setup compiler `ISCC.exe` on PATH (`choco install innosetup`).
+- **Linux:** `linuxdeploy` is downloaded automatically on first run.
 
 ### Versioning
-
-- The recommended build-time override is `CHISURF_VERSION` (PEP 440 compatible).
-- If unset, the recipe falls back to a dev-style version `YY.dev0`.
-
-## Linux
-
-### AppImage
-
-Uses linuxdeploy to build AppImage:
-
-```bash
-pixi run build-appimage
-```
-
-Or directly via the script:
-
-```bash
-./build_tools/linuxdeploy/build.sh
-```
-
-Modify the `linuxdeploy-plugin-conda.sh` script if necessary (adjust Python/Conda version).
+- Override with `CHISURF_VERSION` (PEP 440). If unset, the version is derived
+  from git tags by `rattler-recipe/generate_version.py` (falls back to `YY.devN`).

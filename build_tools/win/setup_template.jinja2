@@ -42,26 +42,17 @@ Source: ".\icons\*.ico"; DestDir: "{app}\icons"
 ; Use \* with recursesubdirs so Inno includes both root-level runtime files
 ; (for example python.exe and DLLs) and nested package dependencies.
 Source: "{{ App_dir }}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
-Source: "fix_shebangs.py"; DestDir: "{app}"
-Source: "..\..\rattler-recipe\entry_points.json"; DestDir: "{app}"
 
 [Icons]
-; --- Start Menu: all entry points ---
-{% for entry_point in gui_entry_points -%}
-Name: "{group}\{{ entry_point|lower }}"; Filename: "{app}\Scripts\{{ entry_point }}.exe"; IconFilename: "{app}\icons\icon.ico"
-{% endfor %}
-
-; --- Desktop: ONLY chisurf.exe ---
-Name: "{commondesktop}\chisurf"; Filename: "{app}\Scripts\chisurf.exe"; Tasks: desktopicon; Check: IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
-Name: "{userdesktop}\chisurf";   Filename: "{app}\Scripts\chisurf.exe"; Tasks: desktopicon; Check: not IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+; Launch via pythonw -m chisurf: relocation-proof (no Scripts\*.exe path
+; baked in), so no install-time launcher fixing is needed.
+Name: "{group}\ChiSurf"; Filename: "{app}\pythonw.exe"; Parameters: "-m chisurf"; WorkingDir: "{app}"; IconFilename: "{app}\icons\icon.ico"
+Name: "{group}\Uninstall ChiSurf"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\ChiSurf"; Filename: "{app}\pythonw.exe"; Parameters: "-m chisurf"; WorkingDir: "{app}"; Tasks: desktopicon; Check: IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+Name: "{userdesktop}\ChiSurf";   Filename: "{app}\pythonw.exe"; Parameters: "-m chisurf"; WorkingDir: "{app}"; Tasks: desktopicon; Check: not IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
 
 [UninstallDelete]
 Type: files; Name: "{app}\install.log"
-
-[Run]
-; Fix shebangs for all entry points
-Filename: "{app}\python.exe"; Parameters: "fix_shebangs.py {% for entry_point in gui_entry_points %}{{ entry_point }} {% endfor %}"; StatusMsg: "Regenerating entry-point launchers..."; Flags: runhidden
 
 [Code]
 function GetInstallDir(Param: string): string;

@@ -79,12 +79,18 @@ jobs:
           python rattler-recipe/collect_entry_points.py || true
           python build_tools/run_rattler_build.py
 
-      - name: Build macOS DMG
-        if: runner.os == 'macOS'
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      # One cross-platform step builds the native installer for the runner OS
+      # (AppImage / DMG / setup.exe) from the conda package built above.
+      - name: Build installer
         shell: bash -l {0}
         run: |
           micromamba activate build
-          bash build_tools/osx/build-osx-app.sh --no-build
+          python build_tools/build_installer.py --no-build
 
       - name: Upload macOS DMG
         if: runner.os == 'macOS'
@@ -92,6 +98,22 @@ jobs:
         with:
           name: installer-macos
           path: dist/*.dmg
+          if-no-files-found: error
+
+      - name: Upload Linux AppImage
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-linux
+          path: dist/ChiSurf-*-x86_64.AppImage
+          if-no-files-found: error
+
+      - name: Upload Windows installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: dist/*.exe
           if-no-files-found: error
 
       - name: Upload Linux conda packages
@@ -102,21 +124,6 @@ jobs:
           path: |
             ${{ env.OUT_DIR }}/linux-64/**/*.conda
             ${{ env.OUT_DIR }}/noarch/**/*.conda
-          if-no-files-found: error
-
-      - name: Build Linux AppImage
-        if: runner.os == 'Linux'
-        shell: bash -l {0}
-        run: |
-          micromamba activate build
-          bash build_tools/linuxdeploy/build.sh --no-build
-
-      - name: Upload Linux AppImage
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: appimage-linux
-          path: dist/ChiSurf-*-x86_64.AppImage
           if-no-files-found: error
 
       - name: Upload macOS conda packages
@@ -135,29 +142,6 @@ jobs:
         with:
           name: packages-windows
           path: ${{ env.OUT_DIR }}/win-64/**/*.conda
-          if-no-files-found: error
-
-      - name: Install Inno Setup (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: choco install innosetup -y --no-progress
-
-      - name: Build Windows installer (.exe)
-        if: runner.os == 'Windows'
-        shell: bash -l {0}
-        run: |
-          micromamba activate build
-          # cygpath converts the bash Unix-style path to a Windows path for the bat file
-          WIN_CONDA_ROOT=$(cygpath -w "$MAMBA_ROOT_PREFIX")
-          export BASE_CONDA_ROOT="$WIN_CONDA_ROOT"
-          cmd //c "build_tools\\win\\build-setup.bat /nobuild"
-
-      - name: Upload Windows installer
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: installer-windows
-          path: dist/*.exe
           if-no-files-found: error
 
   release:

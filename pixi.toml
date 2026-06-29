@@ -83,9 +83,8 @@ python-lsp-server = ">=1.14"
 
 [feature.build.tasks]
 build-pkg = { cmd = "python build_tools/run_rattler_build.py", depends-on = ["build-extensions"] }
-build-setup = { cmd = "python build_tools/win/build_setup.py /nobuild", depends-on = ["build-pkg"] }
-build-osx-app = { cmd = "bash build_tools/osx/build-osx-app.sh --no-build", depends-on = ["build-pkg"] }
-build-linux-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh --no-build", depends-on = ["build-pkg"] }
+# One cross-platform installer builder (AppImage / DMG / setup.exe).
+build-installer = { cmd = "python build_tools/build_installer.py --no-build", depends-on = ["build-pkg"] }
 
 [feature.docs.pypi-dependencies]
 sphinx = "*"
@@ -116,7 +115,6 @@ tttrlib = "*"
 tttrlib = "*"
 
  [tasks]
- build-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh" }
  test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
  build-ndxplorer = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$CONDA_PREFIX/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$CONDA_PREFIX/include/eigen3\" && pip install -e modules/ndxplorer --no-deps", inputs = [
      "modules/ndxplorer/CMakeLists.txt",
