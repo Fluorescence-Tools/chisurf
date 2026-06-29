@@ -16,6 +16,9 @@ or simply run it via the Spectra Viewer GUI (Tools → Download Data →
 """
 
 import csv
+import re
+import urllib.request
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +27,12 @@ from chisurf.plugins._dev.fluorophore_db.mfdb_adapter import (
     DEFAULT_DATABASE_PATH,
     FluorophoreDatabase,
 )
+
+# PhotochemCAD data is mirrored as MySQL dumps in this public repo, so the
+# downloader can fetch it from the web instead of needing a local install.
+PHOTOCHEMCAD_REPO = "https://raw.githubusercontent.com/yaxue1123/photochemcad/master"
+RECORDS_SQL_URL = f"{PHOTOCHEMCAD_REPO}/sql/records.sql"
+GRAPHIC_SQL_URL = f"{PHOTOCHEMCAD_REPO}/sql/graphic_data.sql"
 
 
 def _parse_float(value: str):
@@ -272,43 +281,209 @@ def import_photochemcad_common_compounds(db: FluorophoreDatabase, common_dir: Pa
     print(f"Finished PhotochemCAD import: {imported} compounds imported.")
 
 
+def _fetch_text(url: str) -> str:
+    """Download a text resource (UTF-8, errors ignored)."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (ChiSurf)"})
+    with urllib.request.urlopen(req, timeout=60) as response:
+        return response.read().decode("utf-8", errors="ignore")
+
+
+def _coerce(token: str, was_quoted: bool):
+    """Convert a parsed SQL token: quoted→str, NULL/empty→None, else numeric str."""
+    if was_quoted:
+        return token
+    t = token.strip()
+    if t == "" or t.upper() == "NULL":
+        return None
+    return t
+
+
+def _parse_value_tuples(segment: str) -> list[list]:
+    """Parse a MySQL ``VALUES (...),(...);`` body into a list of field lists.
+
+    Handles single-quoted strings with backslash and ``''`` escapes, NULLs and
+    numbers. Operates on the body after the ``... VALUES`` header (so the
+    column-list parens are not present and cannot be mistaken for a row).
+    """
+    rows: list[list] = []
+    i, n = 0, len(segment)
+    _esc = {"n": "\n", "t": "\t", "r": "\r", "0": "\0", "\\": "\\", "'": "'", '"': '"'}
+    while i < n:
+        while i < n and segment[i] != "(":
+            i += 1
+        if i >= n:
+            break
+        i += 1
+        fields: list = []
+        cur: list[str] = []
+        quoted = was_quoted = False
+        while i < n:
+            ch = segment[i]
+            if quoted:
+                if ch == "\\" and i + 1 < n:
+                    cur.append(_esc.get(segment[i + 1], segment[i + 1]))
+                    i += 2
+                    continue
+                if ch == "'":
+                    if i + 1 < n and segment[i + 1] == "'":
+                        cur.append("'")
+                        i += 2
+                        continue
+                    quoted = False
+                    i += 1
+                    continue
+                cur.append(ch)
+                i += 1
+                continue
+            if ch in " \t\r\n":
+                # Skip SQL formatting whitespace between unquoted tokens (some
+                # dumps put a space after each comma: ``'A01', 'Benzene'``).
+                i += 1
+                continue
+            if ch == "'":
+                quoted = True
+                was_quoted = True
+                i += 1
+                continue
+            if ch == ",":
+                fields.append(_coerce("".join(cur), was_quoted))
+                cur, was_quoted = [], False
+                i += 1
+                continue
+            if ch == ")":
+                fields.append(_coerce("".join(cur), was_quoted))
+                rows.append(fields)
+                i += 1
+                break
+            cur.append(ch)
+            i += 1
+    return rows
+
+
+def _parse_insert_rows(sql_text: str, table: str) -> tuple[list[str], list[list]]:
+    """Extract ``(columns, rows)`` for one table from a mysqldump SQL file."""
+    cm = re.search(rf"INSERT INTO `{re.escape(table)}`\s*\(([^)]*)\)\s*VALUES", sql_text)
+    if not cm:
+        return [], []
+    cols = [c.strip().strip("`") for c in cm.group(1).split(",")]
+    header_re = re.compile(rf"INSERT INTO `{re.escape(table)}`\s*\([^)]*\)\s*VALUES")
+    rows: list[list] = []
+    for seg in header_re.split(sql_text)[1:]:
+        rows.extend(_parse_value_tuples(seg))
+    return cols, rows
+
+
+def download_photochemcad_from_web(db: FluorophoreDatabase) -> int:
+    """Download PhotochemCAD common compounds from the public web mirror.
+
+    Pulls the ``records`` (metadata) and ``graphic_data`` (abs/em spectra) MySQL
+    dumps from the yaxue1123/photochemcad GitHub repo and registers each
+    compound through the canonical contract (no local PhotochemCAD install).
+    """
+    print("Fetching PhotochemCAD records + spectra from the web …")
+    rcols, rrows = _parse_insert_rows(_fetch_text(RECORDS_SQL_URL), "records")
+    gcols, grows = _parse_insert_rows(_fetch_text(GRAPHIC_SQL_URL), "graphic_data")
+    print(f"  {len(rrows)} records, {len(grows)} spectrum points.")
+    if not rrows:
+        print("  ERROR: no PhotochemCAD records parsed.")
+        return 0
+
+    gi = {c: i for i, c in enumerate(gcols)}
+    abs_pts: dict[str, list] = defaultdict(list)
+    ems_pts: dict[str, list] = defaultdict(list)
+    for row in grows:
+        comp = row[gi["compound"]]
+        wl = _parse_float(row[gi["wavelength"]])
+        if not comp or wl is None:
+            continue
+        a = _parse_float(row[gi["abs"]])
+        e = _parse_float(row[gi["ems"]])
+        if a is not None:
+            abs_pts[comp].append((wl, a))
+        if e is not None:
+            ems_pts[comp].append((wl, e))
+
+    def _arrays(points):
+        pts = sorted(points)
+        return (np.array([p[0] for p in pts], dtype=float),
+                np.array([p[1] for p in pts], dtype=float))
+
+    ri = {c: i for i, c in enumerate(rcols)}
+
+    def field(row, col):
+        return row[ri[col]] if col in ri and ri[col] < len(row) else None
+
+    # records column → canonical optical-property label (register_component
+    # further canonicalizes Quantum Yield → qy, Extinction Coefficient → ext_coeff…)
+    prop_map = {
+        "class": "Class", "cas": "CAS", "source": "Source compound",
+        "wavelength_abs": "Absorption max wavelength (nm)",
+        "epsilon_abs": "Extinction Coefficient", "solvent_abs": "Absorption solvent",
+        "reference_abs": "Absorption reference", "ems": "Emission max wavelength (nm)",
+        "quantum_yield_ems": "Quantum Yield", "solvent_ems": "Emission solvent",
+        "reference_ems": "Emission reference", "source_url": "source_url",
+    }
+
+    count = 0
+    with db:
+        for row in rrows:
+            name = field(row, "name")
+            if not name:
+                continue
+            properties = {}
+            for col, label in prop_map.items():
+                val = field(row, col)
+                if val not in (None, ""):
+                    properties[label] = str(val)
+            spectra = {}
+            if abs_pts.get(name):
+                spectra["absorption"] = _arrays(abs_pts[name])
+            if ems_pts.get(name):
+                spectra["emission"] = _arrays(ems_pts[name])
+
+            db.register_component(
+                name=name,
+                source="photochemcad",
+                kind="organic_dye",
+                source_ref=str(field(row, "cas") or field(row, "id") or ""),
+                description=f"PhotochemCAD: {field(row, 'class') or ''}".strip(": "),
+                properties=properties,
+                spectra=spectra,
+            )
+            count += 1
+            if count % 50 == 0:
+                print(f"  Imported {count} compounds…")
+        db.conn.commit()
+
+    print(f"PhotochemCAD web import complete: {count} compounds.")
+    return count
+
+
 def main():
     """Entry point for CLI / Spectra Viewer integration."""
     import argparse
 
-    # Default path: repo_root / playground / "PhotochemCAD 3.1" / "Common Compounds"
-    script_path = Path(__file__).resolve()
-    repo_root = script_path.parents[4]  # .../chisurf repo root (top-level)
-    default_common_dir = repo_root / "playground" / "PhotochemCAD 3.1" / "Common Compounds"
-
     parser = argparse.ArgumentParser(
-        description=(
-            "Import PhotochemCAD 3.1 Common Compounds into the Spectra Viewer "
-            "SQLite database (spectra.db)."
-        )
-    )
-    parser.add_argument(
-        "--pcad-dir",
-        default=str(default_common_dir),
-        help=(
-            "Directory containing 'Common Compounds DB.db' and the *.abs/*.ems/*.tif "
-            "files (default: %(default)s)."
-        ),
+        description="Download PhotochemCAD common compounds (from the web) into spectra.db.",
     )
     parser.add_argument("--db", help="MFDB SQLite database path", default=str(DEFAULT_DATABASE_PATH))
-
+    parser.add_argument(
+        "--pcad-dir", default=None,
+        help="Optional local PhotochemCAD 'Common Compounds' dir (offline fallback). "
+             "If omitted, data is fetched from the web mirror.",
+    )
     args = parser.parse_args()
-    common_dir = Path(args.pcad_dir)
-
-    if not common_dir.exists():
-        print(f"ERROR: PhotochemCAD Common Compounds directory not found: {common_dir}")
-        return
-
-    print(f"PhotochemCAD Common Compounds directory: {common_dir}")
 
     db = FluorophoreDatabase(args.db)
     with db:
-        import_photochemcad_common_compounds(db, common_dir)
+        if args.pcad_dir:
+            common_dir = Path(args.pcad_dir)
+            if not common_dir.exists():
+                print(f"ERROR: PhotochemCAD directory not found: {common_dir}")
+                return
+            import_photochemcad_common_compounds(db, common_dir)
+        else:
+            download_photochemcad_from_web(db)
 
 
 if __name__ == "__main__":
