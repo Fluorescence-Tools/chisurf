@@ -22,6 +22,10 @@ PARALLEL_SOURCES: dict[str, list[str]] = {
 # by default; raise/zero it (0 = all pages) only when a full catalogue is needed.
 DEFAULT_THREED_MAX_PAGES = 15
 
+# Helper modules in download/ that are not standalone source scrapers.
+_NON_SCRAPER_MODULES = {"archive_recovery", "merge", "count_proteins", "count_spectra"}
+
+
 def get_available_sources():
     download_dir = Path(__file__).parent / "download"
     sources = {}
@@ -30,6 +34,8 @@ def get_available_sources():
             if script_file.name == "__init__.py" or script_file.name.startswith("import_"):
                 continue
             if script_file.name.startswith("probe_"):
+                continue
+            if script_file.stem in _NON_SCRAPER_MODULES:
                 continue
             sources[script_file.stem] = script_file
     return sources

@@ -62,6 +62,10 @@ class DownloadManagerDialog(QtWidgets.QDialog):
 
         self.process = None
 
+    # Helper modules in download/ that are NOT standalone source scrapers (they
+    # need extra arguments and must not appear in the "Run script" list).
+    _NON_SCRAPER_MODULES = {"archive_recovery", "merge", "count_proteins", "count_spectra"}
+
     def get_available_download_scripts(self):
         """Return runnable download scripts keyed by display name."""
         download_dir = Path(__file__).parent / "download"
@@ -71,6 +75,8 @@ class DownloadManagerDialog(QtWidgets.QDialog):
                 if script_file.name == "__init__.py" or script_file.name.startswith("import_"):
                     continue
                 if script_file.name.startswith("probe_"):
+                    continue
+                if script_file.stem in self._NON_SCRAPER_MODULES:
                     continue
                 name = script_file.stem.replace("_", " ").title()
                 scripts[name] = script_file
