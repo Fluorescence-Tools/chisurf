@@ -30,6 +30,12 @@ class MFDBClient:
             )
         self._client = client
         self._token: str | None = None
+        # Remember the connection parameters so the login dialog can show/edit
+        # the endpoint and reconnect to a different server if needed.
+        self.host = host
+        self.cmd_port = cmd_port
+        self.pub_port = pub_port
+        self.inprocess = inprocess
 
     def _make_zmq_client(
         self,

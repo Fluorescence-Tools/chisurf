@@ -555,20 +555,39 @@ class MFDBWidget(NavigationPanelTool):
             )
             return
             
-        # No password provided or it failed, prompt for password
+        # No password provided or it failed — prompt with the AutoForm login
+        # dialog (single-line password; user/host/ports under "Advanced").
+        from chisurf.plugins.core.mfdb_admin.gui.connection_dialog import ConnectionAuthDialog
+
         for _ in range(3):
-            password, ok = QtWidgets.QInputDialog.getText(
-                self,
-                f"MFDB login required ({user_id})",
-                f"Password for '{user_id}':",
-                QtWidgets.QLineEdit.Password,
+            dialog = ConnectionAuthDialog(
+                user=user_id,
+                host=getattr(self.client, "host", "127.0.0.1"),
+                cmd_port=getattr(self.client, "cmd_port", 8765),
+                pub_port=getattr(self.client, "pub_port", 8766),
+                parent=self,
             )
-            if not ok:
+            if dialog.exec_() != QtWidgets.QDialog.Accepted:
                 return
+            values = dialog.values()
+            user_id = values["user"] or user_id
+
+            # Reconnect to a different server if the endpoint was changed.
+            if not getattr(self.client, "inprocess", False) and (
+                values["host"] != getattr(self.client, "host", values["host"])
+                or values["cmd_port"] != getattr(self.client, "cmd_port", values["cmd_port"])
+                or values["pub_port"] != getattr(self.client, "pub_port", values["pub_port"])
+            ):
+                self.client = MFDBClient(
+                    host=values["host"],
+                    cmd_port=values["cmd_port"],
+                    pub_port=values["pub_port"],
+                )
+
             try:
                 result = self.client.login(
                     user_id=user_id,
-                    password=password,
+                    password=values["password"],
                     client_metadata=client_metadata,
                 )
             except Exception as exc:
@@ -1329,7 +1348,7 @@ class MFDBWidget(NavigationPanelTool):
             "factory": self._metadata_factory,
         })
         panels.append({
-            "name": "Fluorophores", "icon": "🌈", "factory": self._fluorophore_factory,
+            "name": "Spectra", "icon": "🌈", "factory": self._fluorophore_factory,
         })
 
         panels.append({"name": "Experiments & data", "icon": "🔬", "separator": True})
@@ -1355,10 +1374,10 @@ class MFDBWidget(NavigationPanelTool):
         return panels
 
     def _fluorophore_factory(self, parent):
-        """Build the integrated fluorophore curation dock (lazy import)."""
-        from .fluorophore_view import FluorophoreDock
+        """Build the integrated optical component curation dock (lazy import)."""
+        from .optical_components import OpticalComponentDock
 
-        return FluorophoreDock(self.client, parent)
+        return OpticalComponentDock(self.client, parent)
 
     def _entity_factory(self, spec: EntitySpec):
         """Build a lazy factory creating + registering an EntityDock for ``spec``."""
