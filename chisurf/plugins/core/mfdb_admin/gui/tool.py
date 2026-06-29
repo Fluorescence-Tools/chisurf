@@ -1521,31 +1521,56 @@ class MFDBWidget(NavigationPanelTool):
         toolbar = self.addToolBar("mfdb-admin")
         toolbar.setObjectName("mfdbPluginToolBar")
 
-        # Connection state lives in hidden widgets; the visible connection UI is
-        # the AutoForm login dialog (single-line password, foldable endpoint).
         import chisurf.core.settings as cs_settings
         mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
         last_server = mfdb_settings.get("last_server", "127.0.0.1")
         last_port = mfdb_settings.get("last_port", 8765)
 
+        # Endpoint — the host/IP and port are inline so the user can point at a
+        # different MFDB server directly.
+        toolbar.addWidget(QtWidgets.QLabel(" 🌐 "))
         self.server_edit = QtWidgets.QLineEdit(last_server)
+        self.server_edit.setPlaceholderText("127.0.0.1")
+        self.server_edit.setFixedWidth(130)
+        self.server_edit.setToolTip("MFDB server host / IP address")
+        self.server_edit.returnPressed.connect(self._on_login_clicked)
+        toolbar.addWidget(self.server_edit)
         self.port_spin = QtWidgets.QSpinBox()
         self.port_spin.setRange(1, 65535)
         self.port_spin.setValue(int(last_port))
-        self.username_edit = QtWidgets.QLineEdit()
-        self.password_edit = QtWidgets.QLineEdit()
-        self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.url_edit = QtWidgets.QLineEdit(self.DEFAULT_URL)
+        self.port_spin.setFixedWidth(64)
+        self.port_spin.setToolTip("MFDB server port")
+        toolbar.addWidget(self.port_spin)
+        self.url_edit = QtWidgets.QLineEdit(self.DEFAULT_URL)  # back-compat
 
-        # Visible: status + a single Connect button (opens the AutoForm dialog).
-        toolbar.addWidget(QtWidgets.QLabel(" 🌐 "))
+        # Auth — a single line: user + (optional) password. With an active
+        # session the password is not needed; "More…" opens the AutoForm dialog.
+        toolbar.addWidget(QtWidgets.QLabel(" 👤 "))
+        self.username_edit = QtWidgets.QLineEdit()
+        self.username_edit.setFixedWidth(110)
+        self.username_edit.setToolTip("MFDB username")
+        self.username_edit.returnPressed.connect(self._on_login_clicked)
+        toolbar.addWidget(self.username_edit)
+        toolbar.addWidget(QtWidgets.QLabel(" 🔑 "))
+        self.password_edit = QtWidgets.QLineEdit()
+        self.password_edit.setFixedWidth(110)
+        self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.password_edit.setPlaceholderText("(session)")
+        self.password_edit.setToolTip("MFDB password — not needed if the session is already authorized")
+        self.password_edit.returnPressed.connect(self._on_login_clicked)
+        toolbar.addWidget(self.password_edit)
+
+        self.login_action = toolbar.addAction("🔐 Login", self._on_login_clicked)
+        self.more_action = toolbar.addAction("⋯", self._open_connection_dialog)
+        self.more_action.setToolTip("More connection / authentication options")
+        self.logout_action = toolbar.addAction("🚪 Logout", self._on_logout_clicked)
+        self.login_action.setToolTip("Connect and authenticate at the host/port above")
+        self.logout_action.setToolTip("Drop the current MFDB session")
+
+        toolbar.addSeparator()
         self.user_label = QtWidgets.QLabel(" (not connected) ")
         self.user_label.setStyleSheet("color: #888; padding: 0 6px;")
         toolbar.addWidget(self.user_label)
-        self.login_action = toolbar.addAction("🔐 Connect…", self._open_connection_dialog)
-        self.logout_action = toolbar.addAction("🚪 Logout", self._on_logout_clicked)
-        self.login_action.setToolTip("Connect / authenticate (host, user, password)")
-        self.logout_action.setToolTip("Drop the current MFDB session")
 
         toolbar.addSeparator()
         # Add expanding spacer to push transport actions to the right
