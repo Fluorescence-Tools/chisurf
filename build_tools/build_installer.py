@@ -263,10 +263,6 @@ def strip_bloat(prefix: Path) -> None:
             for d in [d for d in _walk_dirs(pkg_dir) if d.name == "tests"]:
                 rmtree(d)
 
-    if not IS_WIN:
-        _step("stripping debug symbols")
-        _strip_symbols(prefix)
-
     _step("measuring size (after)")
     after = du_mb(prefix)
     print(f"[strip] env: {before:.0f} MB -> {after:.0f} MB (saved {before - after:.0f} MB)", flush=True)
@@ -291,20 +287,6 @@ def _strip_qt(prefix: Path, sp: Path) -> None:
     for d in [d for d in _walk_dirs(prefix)
               if d.name.startswith("QtWebEngineProcess") or d.name.startswith("qtwebengine_")]:
         rmtree(d)
-
-
-def _strip_symbols(prefix: Path) -> None:
-    strip_bin = shutil.which("strip")
-    if not strip_bin:
-        return
-    args = ["-x"] if IS_MAC else ["--strip-unneeded"]
-    count = 0
-    for f in _walk_files(prefix):
-        if not f.is_symlink() and f.suffix in (".so", ".dylib"):
-            subprocess.run([strip_bin, *args, str(f)],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-            count += 1
-    print(f"[strip] symbols stripped from {count} shared libraries")
 
 
 # --------------------------------------------------------------------------- #
