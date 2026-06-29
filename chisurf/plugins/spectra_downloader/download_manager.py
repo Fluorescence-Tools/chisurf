@@ -39,6 +39,10 @@ class DownloadManagerDialog(QtWidgets.QDialog):
         )
         self.push_layout.addWidget(self.replace_check)
         self.push_layout.addStretch()
+        self.browse_btn = QtWidgets.QPushButton("🔎 Browse staging DB")
+        self.browse_btn.setToolTip("Inspect the scraped staging database before pushing it.")
+        self.browse_btn.clicked.connect(self.browse_staging)
+        self.push_layout.addWidget(self.browse_btn)
         self.push_btn = QtWidgets.QPushButton("⬆ Push to MFDB")
         self.push_btn.setToolTip("Integrate the scraped staging database into the connected MFDB.")
         self.push_btn.clicked.connect(self.push_to_mfdb)
@@ -90,6 +94,12 @@ class DownloadManagerDialog(QtWidgets.QDialog):
             "-m", f"chisurf.plugins.spectra_downloader.download.{module}",
             "--db", str(self.db.db_path),
         ])
+
+    def browse_staging(self):
+        """Open the data browser on the scraped staging database."""
+        from chisurf.plugins.spectra_downloader.browser import SpectraBrowserDialog
+
+        SpectraBrowserDialog(self.db, self).show()
 
     def push_to_mfdb(self):
         """Push the scraped staging database into the connected MFDB."""
