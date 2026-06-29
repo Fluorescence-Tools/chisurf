@@ -11,7 +11,13 @@ The panels (components, editor, sweep, plots) live in a ChiSurf ``DockArea`` —
 the same draggable/splittable dock system used by the fitting windows.
 
 The user assembles a mixture of these live models, then sweeps either a model
-parameter or a mixing fraction (linear or log spacing) to produce the FRET line.
+parameter or a mixing fraction (linear or log spacing) to produce a FRET line.
+
+Computation is *additive*: each press of "+ Add FRET line" snapshots the current
+mixture/sweep and appends it to the collection, overlaying it on the plots with
+its own colour. The ``FRET lines`` panel lists every computed line and lets the
+user remove individual lines or clear them all. Save-CSV and push-to-ndxplorer
+operate on the whole collection.
 """
 
 from __future__ import annotations
@@ -48,8 +54,23 @@ WIDGET_MODELS: dict[str, str] = {
 _DOCK_COMPONENTS = "Components"
 _DOCK_EDITOR = "Editor"
 _DOCK_SWEEP = "Sweep"
+_DOCK_LINES = "FRET lines"
 _DOCK_PLOT_E = "FRET line"
 _DOCK_PLOT_TAUX = "τ_X(τ_F)"
+
+# colour cycle for overlaid FRET lines (matplotlib-ish, distinct on white)
+_PALETTE: tuple[str, ...] = (
+    "#e05c00",
+    "#1f77b4",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#17becf",
+    "#bcbd22",
+    "#7f7f7f",
+)
 
 
 def _resolve_class(path: str):
@@ -100,6 +121,7 @@ def _default_dock_layout() -> dict:
                             "tabs": [
                                 {"tab_name": _DOCK_COMPONENTS},
                                 {"tab_name": _DOCK_SWEEP},
+                                {"tab_name": _DOCK_LINES},
                             ],
                         },
                         {"type": "tab", "tabs": [{"tab_name": _DOCK_EDITOR}]},
@@ -128,7 +150,12 @@ class FRETLineTool(QtWidgets.QWidget):
         # Each component: {"label", "fit", "model", "editor", "weight"}
         self._components: list[dict] = []
         self._cur = -1
-        self._result: dict | None = None
+        # Accumulated, computed FRET lines (snapshots) — additive across
+        # successive "Compute" presses. Each entry:
+        #   {"name", "sweep_label", "result", "color", "log", "tau_d0",
+        #    "components"}
+        self._lines: list[dict] = []
+        self._line_seq = 0
         self._loading = False
         self._build_ui()
         self._add_component()
@@ -145,6 +172,7 @@ class FRETLineTool(QtWidgets.QWidget):
         self._dock.addTab(self._make_components_panel(), _DOCK_COMPONENTS)
         self._dock.addTab(self._make_editor_panel(), _DOCK_EDITOR)
         self._dock.addTab(self._make_sweep_panel(), _DOCK_SWEEP)
+        self._dock.addTab(self._make_lines_panel(), _DOCK_LINES)
         self._dock.addTab(self._make_plots()[0], _DOCK_PLOT_E)
         self._dock.addTab(self._plot_taux_container, _DOCK_PLOT_TAUX)
         root.addWidget(self._dock, 1)
@@ -155,11 +183,17 @@ class FRETLineTool(QtWidgets.QWidget):
 
         # persistent action bar (always visible regardless of dock arrangement)
         bar = QtWidgets.QHBoxLayout()
-        self._compute_btn = QtWidgets.QPushButton("Compute")
+        self._compute_btn = QtWidgets.QPushButton("+ Add FRET line")
         self._compute_btn.setDefault(True)
+        self._compute_btn.setToolTip(
+            "Compute the current mixture/sweep and add it as a new FRET line.\n"
+            "Press repeatedly to overlay several lines."
+        )
         self._save_btn = QtWidgets.QPushButton("Save CSV")
+        self._save_btn.setToolTip("Save all computed FRET lines to a single CSV.")
         self._save_btn.setEnabled(False)
         self._push_btn = QtWidgets.QPushButton("Push to ndxplorer")
+        self._push_btn.setToolTip("Overlay all computed FRET lines on ndxplorer panels.")
         self._push_btn.setEnabled(False)
         bar.addWidget(self._compute_btn)
         bar.addWidget(self._save_btn)
@@ -277,6 +311,47 @@ class FRETLineTool(QtWidgets.QWidget):
         v.addStretch()
 
         self._show_all_check.toggled.connect(lambda _=None: self._refresh_sweep_targets())
+        return w
+
+    def _make_lines_panel(self) -> QtWidgets.QWidget:
+        w = QtWidgets.QWidget()
+        v = QtWidgets.QVBoxLayout(w)
+        v.setContentsMargins(4, 4, 4, 4)
+        v.addWidget(QtWidgets.QLabel("Computed FRET lines (overlaid on the plots):"))
+        self._lines_list = QtWidgets.QListWidget()
+        self._lines_list.setToolTip(
+            "Each press of '+ Add FRET line' appends a snapshot here.\n"
+            "Tick / untick the checkbox to show / hide a line on the plots.\n"
+            "The text colour matches the plotted curve."
+        )
+        v.addWidget(self._lines_list, 1)
+
+        vis = QtWidgets.QHBoxLayout()
+        self._line_show_all_btn = QtWidgets.QPushButton("Show all")
+        self._line_show_all_btn.setToolTip("Make every FRET line visible")
+        self._line_hide_all_btn = QtWidgets.QPushButton("Hide all")
+        self._line_hide_all_btn.setToolTip("Hide every FRET line (kept in the list)")
+        vis.addWidget(self._line_show_all_btn)
+        vis.addWidget(self._line_hide_all_btn)
+        vis.addStretch()
+        v.addLayout(vis)
+
+        btns = QtWidgets.QHBoxLayout()
+        self._line_rm_btn = QtWidgets.QPushButton("− Remove")
+        self._line_rm_btn.setToolTip("Remove the selected FRET line")
+        self._line_clear_btn = QtWidgets.QPushButton("Clear all")
+        self._line_clear_btn.setToolTip("Remove all computed FRET lines")
+        btns.addWidget(self._line_rm_btn)
+        btns.addWidget(self._line_clear_btn)
+        btns.addStretch()
+        v.addLayout(btns)
+
+        self._lines_list.itemChanged.connect(self._on_line_item_changed)
+        self._line_show_all_btn.clicked.connect(lambda: self._set_all_visible(True))
+        self._line_hide_all_btn.clicked.connect(lambda: self._set_all_visible(False))
+        self._line_rm_btn.clicked.connect(self._remove_line)
+        self._line_clear_btn.clicked.connect(self._clear_lines)
+        self._refresh_lines_list()
         return w
 
     def _make_plots(self):
@@ -404,9 +479,17 @@ class FRETLineTool(QtWidgets.QWidget):
         self._sweep_combo.blockSignals(False)
 
     def _invalidate(self) -> None:
-        self._result = None
-        self._save_btn.setEnabled(False)
-        self._push_btn.setEnabled(False)
+        """Editing the mixture does NOT discard already-computed lines.
+
+        Computed lines are independent snapshots, so the only thing to refresh
+        when the editor changes is the enabled-state of the export buttons.
+        """
+        self._update_action_buttons()
+
+    def _update_action_buttons(self) -> None:
+        has = bool(self._lines)
+        self._save_btn.setEnabled(has)
+        self._push_btn.setEnabled(has)
 
     # ── compute ───────────────────────────────────────────────────────
 
@@ -432,65 +515,155 @@ class FRETLineTool(QtWidgets.QWidget):
         if not result.get("ok"):
             QtWidgets.QMessageBox.warning(self, "Compute error", result.get("error", "?"))
             return
-        self._result = result["result"]
-        self._update_plots(sweep["label"])
-        self._save_btn.setEnabled(True)
-        self._push_btn.setEnabled(True)
 
-    def _update_plots(self, label: str) -> None:
-        if self._result is None or not self._has_pg:
+        self._line_seq += 1
+        line = {
+            "name": f"Line {self._line_seq}",
+            "sweep_label": sweep["label"],
+            "result": result["result"],
+            "color": _PALETTE[(self._line_seq - 1) % len(_PALETTE)],
+            "visible": True,
+            "log": self._log_check.isChecked(),
+            "tau_d0": tau_d0,
+            "components": "; ".join(
+                f"C{i}={c['label']}(w={c['weight']:g})" for i, c in enumerate(self._components)
+            ),
+        }
+        self._lines.append(line)
+        self._refresh_lines_list()
+        self._replot_all()
+        self._update_action_buttons()
+
+    # ── computed-line management ───────────────────────────────────────
+
+    def _refresh_lines_list(self) -> None:
+        lst = getattr(self, "_lines_list", None)
+        if lst is None:
+            return
+        from qtpy import QtGui
+
+        lst.blockSignals(True)  # programmatic check-state changes must not replot
+        lst.clear()
+        for ln in self._lines:
+            item = QtWidgets.QListWidgetItem(f"{ln['name']} · {ln['sweep_label']}")
+            item.setForeground(QtGui.QColor(ln["color"]))
+            item.setToolTip(ln["components"])
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(
+                QtCore.Qt.Checked if ln.get("visible", True) else QtCore.Qt.Unchecked
+            )
+            lst.addItem(item)
+        lst.blockSignals(False)
+        has = bool(self._lines)
+        self._line_rm_btn.setEnabled(has)
+        self._line_clear_btn.setEnabled(has)
+        self._line_show_all_btn.setEnabled(has)
+        self._line_hide_all_btn.setEnabled(has)
+
+    def _on_line_item_changed(self, item: "QtWidgets.QListWidgetItem") -> None:
+        row = self._lines_list.row(item)
+        if not (0 <= row < len(self._lines)):
+            return
+        self._lines[row]["visible"] = item.checkState() == QtCore.Qt.Checked
+        self._replot_all()
+
+    def _set_all_visible(self, visible: bool) -> None:
+        if not self._lines:
+            return
+        for ln in self._lines:
+            ln["visible"] = visible
+        self._refresh_lines_list()
+        self._replot_all()
+
+    def _remove_line(self) -> None:
+        if not self._lines:
+            return
+        idx = self._lines_list.currentRow()
+        if not (0 <= idx < len(self._lines)):
+            idx = len(self._lines) - 1
+        self._lines.pop(idx)
+        self._refresh_lines_list()
+        self._replot_all()
+        self._update_action_buttons()
+
+    def _clear_lines(self) -> None:
+        if not self._lines:
+            return
+        self._lines.clear()
+        self._refresh_lines_list()
+        self._replot_all()
+        self._update_action_buttons()
+
+    def _replot_all(self) -> None:
+        """Redraw both plots from scratch, overlaying every computed line."""
+        if not self._has_pg:
             return
         import pyqtgraph as pg
 
-        r = self._result
-        tau_f = np.asarray(r["tau_f"])
-        tau_x = np.asarray(r["tau_x"])
-        e_fret = np.asarray(r["e_fret"])
         for pw in (self._plot_e, self._plot_taux):
             pw.clear()
             try:
                 pw.getPlotItem().legend.clear()
             except Exception:
                 pass
-        self._plot_e.plot(tau_f, e_fret, pen=pg.mkPen("#e05c00", width=2), name=label)
-        self._plot_taux.plot(tau_f, tau_x, pen=pg.mkPen("#1f77b4", width=2), name=label)
-        tau_max = float(self._tau_d0_spin.value()) or float(tau_f.max() if tau_f.size else 1.0)
+
+        tau_max = 1.0
+        for ln in self._lines:
+            if not ln.get("visible", True):
+                continue
+            r = ln["result"]
+            tau_f = np.asarray(r["tau_f"])
+            tau_x = np.asarray(r["tau_x"])
+            e_fret = np.asarray(r["e_fret"])
+            pen = pg.mkPen(ln["color"], width=2)
+            self._plot_e.plot(tau_f, e_fret, pen=pen, name=ln["name"])
+            self._plot_taux.plot(tau_f, tau_x, pen=pen, name=ln["name"])
+            if tau_f.size:
+                tau_max = max(tau_max, float(tau_f.max()))
+
+        # diagonal reference (τ_X = τ_F) on the τ_X plot
+        ref = float(self._tau_d0_spin.value()) or tau_max
         self._plot_taux.plot(
-            [0.0, tau_max],
-            [0.0, tau_max],
+            [0.0, ref],
+            [0.0, ref],
             pen=pg.mkPen("#aaaaaa", width=1, style=QtCore.Qt.DashLine),
         )
 
     # ── save / push ───────────────────────────────────────────────────
 
     def _on_save(self) -> None:
-        if self._result is None:
+        if not self._lines:
             return
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save FRET line", "fret_line.csv", "CSV (*.csv)"
+            self, "Save FRET lines", "fret_lines.csv", "CSV (*.csv)"
         )
         if not path:
             return
         if not path.lower().endswith(".csv"):
             path += ".csv"
-        r = self._result
-        sweep = self._sweep_combo.currentText()
-        comps = "; ".join(
-            f"C{i}={c['label']}(w={c['weight']:g})" for i, c in enumerate(self._components)
-        )
         try:
             with open(path, "w") as fh:
-                fh.write(f"# FRET Line  sweep={sweep}  log={self._log_check.isChecked()}\n")
-                fh.write(f"# components: {comps}\n")
-                fh.write("# parameter,tau_F_ns,tau_X_ns,E_FRET\n")
-                for p, tf, tx, e in zip(r["parameter_values"], r["tau_f"], r["tau_x"], r["e_fret"]):
-                    fh.write(f"{p:.8g},{tf:.8g},{tx:.8g},{e:.8g}\n")
-            QtWidgets.QMessageBox.information(self, "Saved", f"Saved to:\n{path}")
+                fh.write(f"# {len(self._lines)} FRET line(s)\n")
+                fh.write("# line,sweep,log,components,parameter,tau_F_ns,tau_X_ns,E_FRET\n")
+                for ln in self._lines:
+                    r = ln["result"]
+                    sweep = ln["sweep_label"]
+                    comps = ln["components"].replace(",", ";")
+                    for p, tf, tx, e in zip(
+                        r["parameter_values"], r["tau_f"], r["tau_x"], r["e_fret"]
+                    ):
+                        fh.write(
+                            f"{ln['name']},{sweep},{ln['log']},{comps},"
+                            f"{p:.8g},{tf:.8g},{tx:.8g},{e:.8g}\n"
+                        )
+            QtWidgets.QMessageBox.information(
+                self, "Saved", f"Saved {len(self._lines)} line(s) to:\n{path}"
+            )
         except Exception as exc:
             QtWidgets.QMessageBox.critical(self, "Save error", str(exc))
 
     def _on_push(self) -> None:
-        if self._result is None:
+        if not self._lines:
             return
         try:
             from ndxplorer.plotting.curve_overlay import CurveOverlayWidget
@@ -511,15 +684,23 @@ class FRETLineTool(QtWidgets.QWidget):
                 self, "Push to ndxplorer", "No visible ndxplorer Overlay panel found."
             )
             return
-        tau_f = np.asarray(self._result["tau_f"]).copy()
-        e_fret = np.asarray(self._result["e_fret"]).copy()
-        label = f"FRET line — {self._sweep_combo.currentText()}"
 
-        def _curve():
-            return tau_f, e_fret
+        def _make_curve(line):
+            tau_f = np.asarray(line["result"]["tau_f"]).copy()
+            e_fret = np.asarray(line["result"]["e_fret"]).copy()
 
-        for ov in overlays:
-            ov.add_curve(_curve, is_function=True, base_name=label)
+            def _curve():
+                return tau_f, e_fret
+
+            return _curve
+
+        for ln in self._lines:
+            label = f"FRET line — {ln['name']} · {ln['sweep_label']}"
+            curve = _make_curve(ln)
+            for ov in overlays:
+                ov.add_curve(curve, is_function=True, base_name=label)
         QtWidgets.QMessageBox.information(
-            self, "Pushed", f"Added '{label}' to {len(overlays)} ndxplorer panel(s)."
+            self,
+            "Pushed",
+            f"Added {len(self._lines)} line(s) to {len(overlays)} ndxplorer panel(s).",
         )
