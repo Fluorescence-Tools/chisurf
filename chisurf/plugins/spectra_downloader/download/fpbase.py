@@ -12,6 +12,88 @@ from chisurf.plugins._dev.fluorophore_db.mfdb_adapter import (
 logger = logging.getLogger(__name__)
 
 FPBASE_API_URL = "https://www.fpbase.org/api/proteins/"
+FPBASE_GRAPHQL_URL = "https://www.fpbase.org/graphql/"
+
+# FPbase spectra are categorised (P protein, D dye, F filter, L light, C camera)
+# with a subtype. Map the optical-component ones to a canonical kind + spectrum
+# type. Proteins/dyes come from the richer proteins REST API above, so only the
+# instrument categories (cameras/detectors, light sources, filters) are pulled
+# from GraphQL here.
+FPBASE_OPTICS_MAP: dict[tuple[str, str], tuple[str, str]] = {
+    ("C", "QE"): ("detector", "quantum_efficiency"),   # cameras, SPADs, hybrid PMTs
+    ("L", "PD"): ("light_source", "emission"),         # light-source power distribution
+    ("F", "BP"): ("filter", "transmission"),
+    ("F", "LP"): ("filter", "transmission"),
+    ("F", "SP"): ("filter", "transmission"),
+    ("F", "BX"): ("filter", "transmission"),
+    ("F", "BM"): ("filter", "transmission"),
+    ("F", "BS"): ("dichroic", "transmission"),
+}
+
+
+def _fpbase_graphql(query: str):
+    """POST a GraphQL query to FPbase and return the ``data`` payload."""
+    req = urllib.request.Request(
+        FPBASE_GRAPHQL_URL,
+        data=json.dumps({"query": query}).encode(),
+        headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (ChiSurf)"},
+    )
+    with urllib.request.urlopen(req, timeout=30) as response:
+        return json.loads(response.read()).get("data") or {}
+
+
+def download_fpbase_optics_to_db(db, categories=("C",)) -> int:
+    """Download FPbase instrument spectra (cameras/detectors, lights, filters).
+
+    FPbase hosts many detectors the proteins API does not — cameras, hybrid
+    PMTs and single-photon detectors (e.g. the Thorlabs SPCMxxA SPAD). They are
+    fetched from the GraphQL ``spectra`` catalogue and registered with the
+    canonical kind/category (detector → quantum_efficiency, etc.).
+
+    Parameters
+    ----------
+    db : FluorophoreDatabase
+        Open database handle.
+    categories : tuple of str
+        FPbase categories to import: ``C`` (cameras/detectors), ``L`` (light
+        sources), ``F`` (filters/dichroics). Defaults to detectors only.
+    """
+    print(f"Fetching FPbase instrument spectra {categories} via GraphQL …")
+    listing = _fpbase_graphql("{ spectra { id category subtype owner { name } } }")
+    specs = [s for s in listing.get("spectra", []) if s.get("category") in categories]
+    print(f"  {len(specs)} candidate spectra.")
+
+    count = 0
+    with db:
+        for s in specs:
+            kind_stype = FPBASE_OPTICS_MAP.get((s.get("category"), s.get("subtype")))
+            if not kind_stype:
+                continue
+            kind, spectrum_type = kind_stype
+            name = (s.get("owner") or {}).get("name")
+            if not name:
+                continue
+            try:
+                one = _fpbase_graphql(f'{{ spectrum(id: {int(s["id"])}) {{ data }} }}')
+                data = (one.get("spectrum") or {}).get("data") or []
+                arr = np.array(data, dtype=float)
+                if arr.ndim != 2 or arr.shape[1] < 2 or arr.shape[0] < 3:
+                    continue
+                db.register_component(
+                    name=name,
+                    source="fpbase",
+                    kind=kind,
+                    source_ref=str(s["id"]),
+                    description=f"FPbase {kind} – {name}",
+                    spectra={spectrum_type: (arr[:, 0], arr[:, 1])},
+                )
+                count += 1
+            except Exception as e:  # pragma: no cover - network/parse resilience
+                logger.error(f"Failed FPbase spectrum {s.get('id')} ({name}): {e}")
+        db.conn.commit()
+
+    print(f"  FPbase instruments imported: {count}")
+    return count
 
 def fetch_fpbase_proteins(url=FPBASE_API_URL):
     """Fetch a page of proteins/summary from FPbase and any subsequent pages.
@@ -181,10 +263,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download FPbase spectra into MFDB")
     parser.add_argument("--db", help="MFDB SQLite database path", default=str(DEFAULT_DATABASE_PATH))
+    parser.add_argument("--optics", default="C",
+                        help="FPbase instrument categories to also import: C=detectors, "
+                             "L=light sources, F=filters (comma-separated; empty to skip).")
     args = parser.parse_args()
 
     print("Starting FPbase data fetch...")
     db = FluorophoreDatabase(args.db)
     with db:
         download_fpbase_to_db(db)
+        cats = tuple(c.strip() for c in args.optics.split(",") if c.strip())
+        if cats:
+            download_fpbase_optics_to_db(db, categories=cats)
     print("FPbase database update complete.")
