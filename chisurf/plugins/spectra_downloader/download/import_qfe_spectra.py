@@ -71,138 +71,122 @@ def load_spectrum(spec_path):
         print(f"Error loading spectrum {spec_path}: {e}")
         return None, None
 
+def _qfe_properties(props, exclude):
+    """Collect non-spectrum .ini keys as a property dict for register_component."""
+    return {k: v for k, v in props.items() if k not in exclude}
+
+
 def import_fluorophores(db, assets_dir, ini_data):
     """Import fluorophore data from .ini and .spec files."""
     print("Importing fluorophores...")
 
-    # Add probe type
-    fluorophore_type_id = db.add_probe_type("fluorophore", "Fluorophores")
-
     for name, props in ini_data.items():
         try:
-            # Get basic properties
-            description = props.get('reference', '')
-            # Add probe
-            item_id = db.add_probe(chromophore_name=name, type_id=fluorophore_type_id, description=description)
-
-            # Add optical properties
-            for prop_key, prop_value in props.items():
-                if prop_key not in ['spectrum_fl', 'spectrum_abs', 'folder', 'reference']:
-                    db.add_optical_property(item_id, prop_key, prop_value)
-
-            # Load and add absorption spectrum
+            spectra = {}
             abs_spec = props.get('spectrum_abs', '')
             if abs_spec and os.path.exists(assets_dir / abs_spec):
                 result = load_spectrum(assets_dir / abs_spec)
                 if result and len(result) >= 2:
-                    wavelengths, abs_values = result[0], result[1]
-                    db.add_spectrum(item_id, 'absorption', wavelengths, abs_values)
-
-            # Load and add emission spectrum
+                    spectra['absorption'] = (result[0], result[1])
             em_spec = props.get('spectrum_fl', '')
             if em_spec and os.path.exists(assets_dir / em_spec):
                 result = load_spectrum(assets_dir / em_spec)
                 if result and len(result) >= 2:
-                    wavelengths, em_values = result[0], result[1]
-                    db.add_spectrum(item_id, 'emission', wavelengths, em_values)
+                    spectra['emission'] = (result[0], result[1])
 
+            db.register_component(
+                name=name,
+                source="qfe",
+                kind="organic_dye",
+                source_ref=name,
+                description=props.get('reference', ''),
+                properties=_qfe_properties(props, {'spectrum_fl', 'spectrum_abs', 'folder', 'reference'}),
+                spectra=spectra,
+            )
             print(f"Imported fluorophore: {name}")
-
         except Exception as e:
             print(f"Error importing fluorophore {name}: {e}")
+
 
 def import_filters(db, assets_dir, ini_data):
     """Import filter data from .ini and .spec files."""
     print("Importing filters...")
 
-    # Add probe type
-    filter_type_id = db.add_probe_type("filter", "Filters")
-
     for name, props in ini_data.items():
         try:
-            # Get basic properties
-            description = props.get('description', '')
-            # Add probe
-            item_id = db.add_probe(chromophore_name=name, type_id=filter_type_id, description=description)
-
-            # Add optical properties
-            for prop_key, prop_value in props.items():
-                if prop_key not in ['spectrum', 'folder', 'description']:
-                    db.add_optical_property(item_id, prop_key, prop_value)
-
-            # Load and add transmission spectrum
+            spectra = None
             spec_file = props.get('spectrum', '')
             if spec_file and os.path.exists(assets_dir / spec_file):
                 wavelengths, values = load_spectrum(assets_dir / spec_file)
                 if wavelengths is not None:
-                    db.add_spectrum(item_id, 'transmission', wavelengths, values)
+                    spectra = {'transmission': (wavelengths, values)}
 
+            db.register_component(
+                name=name,
+                source="qfe",
+                kind="filter",
+                source_ref=name,
+                description=props.get('description', ''),
+                properties=_qfe_properties(props, {'spectrum', 'folder', 'description'}),
+                spectra=spectra,
+            )
             print(f"Imported filter: {name}")
-
         except Exception as e:
             print(f"Error importing filter {name}: {e}")
+
 
 def import_lightsources(db, assets_dir, ini_data):
     """Import light source data from .ini and .spec files."""
     print("Importing light sources...")
 
-    # Add probe type
-    lightsource_type_id = db.add_probe_type("lightsource", "Light Sources")
-
     for name, props in ini_data.items():
         try:
-            # Get basic properties
-            description = props.get('description', '')
-            # Add probe
-            item_id = db.add_probe(chromophore_name=name, type_id=lightsource_type_id, description=description)
-
-            # Add optical properties
-            for prop_key, prop_value in props.items():
-                if prop_key not in ['spectrum', 'folder', 'description']:
-                    db.add_optical_property(item_id, prop_key, prop_value)
-
-            # Load and add emission spectrum
+            spectra = None
             spec_file = props.get('spectrum', '')
             if spec_file and os.path.exists(assets_dir / spec_file):
                 wavelengths, values = load_spectrum(assets_dir / spec_file)
                 if wavelengths is not None:
-                    db.add_spectrum(item_id, 'emission', wavelengths, values)
+                    spectra = {'emission': (wavelengths, values)}
 
+            db.register_component(
+                name=name,
+                source="qfe",
+                kind="light_source",
+                source_ref=name,
+                description=props.get('description', ''),
+                properties=_qfe_properties(props, {'spectrum', 'folder', 'description'}),
+                spectra=spectra,
+            )
             print(f"Imported light source: {name}")
-
         except Exception as e:
             print(f"Error importing light source {name}: {e}")
 
-def import_detectors(db, assets_dir, ini_data):
-    """Import tttr_channeldefinition data from .ini and .spec files."""
-    print("Importing detectors...")
 
-    # Add probe type
-    detector_type_id = db.add_probe_type("tttr_channeldefinition", "Detectors")
+def import_detectors(db, assets_dir, ini_data):
+    """Import detector data from .ini and .spec files."""
+    print("Importing detectors...")
 
     for name, props in ini_data.items():
         try:
-            # Get basic properties
-            description = props.get('description', '')
-            # Add probe
-            item_id = db.add_probe(chromophore_name=name, type_id=detector_type_id, description=description)
-
-            # Add optical properties
-            for prop_key, prop_value in props.items():
-                if prop_key not in ['spectrum', 'folder', 'description']:
-                    db.add_optical_property(item_id, prop_key, prop_value)
-
-            # Load and add quantum efficiency spectrum
+            spectra = None
             spec_file = props.get('spectrum', '')
             if spec_file and os.path.exists(assets_dir / spec_file):
                 wavelengths, values = load_spectrum(assets_dir / spec_file)
                 if wavelengths is not None:
-                    db.add_spectrum(item_id, 'quantum_efficiency', wavelengths, values)
+                    spectra = {'quantum_efficiency': (wavelengths, values)}
 
-            print(f"Imported tttr_channeldefinition: {name}")
-
+            db.register_component(
+                name=name,
+                source="qfe",
+                kind="detector",
+                source_ref=name,
+                description=props.get('description', ''),
+                properties=_qfe_properties(props, {'spectrum', 'folder', 'description'}),
+                spectra=spectra,
+            )
+            print(f"Imported detector: {name}")
         except Exception as e:
-            print(f"Error importing tttr_channeldefinition {name}: {e}")
+            print(f"Error importing detector {name}: {e}")
 
 def main():
     """Import QuickFit spectra assets into the configured MFDB database."""

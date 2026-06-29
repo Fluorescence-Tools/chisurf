@@ -111,7 +111,6 @@ def download_fpbase_to_db(db):
     print(f"Retrieved metadata for {len(all_metadata)} proteins.")
 
     with db:
-        type_id = db.add_probe_type("fpbase", "FPbase")
         count = 0
 
         for slug, spec_item in slugs_with_spectra.items():
@@ -120,17 +119,33 @@ def download_fpbase_to_db(db):
             if not name:
                 continue
 
-            # Metadata extraction
             is_fp = meta.get('seq') is not None
-            origin = "FPbase (Protein)" if is_fp else "FPbase (Organic Dye)"
             desc = meta.get('description', '') or ''
 
-            # Create / update probe
-            item_id = db.add_probe(chromophore_name=name, type_id=type_id, description=desc)
-            db.add_optical_property(item_id, "fpbase_slug", slug)
-            db.add_optical_property(item_id, "Origin", origin)
+            # Collect spectra, keyed by canonical spectrum type.
+            spectra: dict[str, tuple] = {}
+            for spec in spec_item.get('spectra', []):
+                state_name = spec.get('state', '').lower()
+                stype = 'absorption' if ('ex' in state_name or 'abs' in state_name) else \
+                        'emission' if 'em' in state_name else \
+                        'transmission' if 'trans' in state_name else state_name
+                data = spec.get('data', [])
+                if data:
+                    arr = np.array(data)
+                    if arr.ndim == 2 and arr.shape[1] == 2:
+                        spectra[stype] = (arr[:, 0], arr[:, 1])
 
-            # Add optical properties from metadata
+            # A transmission spectrum marks an optical filter; otherwise it is a
+            # fluorescent protein (has a sequence) or an organic dye.
+            if 'transmission' in spectra:
+                kind = "filter"
+            elif is_fp:
+                kind = "fluorescent_protein"
+            else:
+                kind = "organic_dye"
+
+            # Optical properties (register_component canonicalizes the keys).
+            properties: dict[str, str] = {"fpbase_slug": slug}
             state = meta.get('default_state')
             if not state and meta.get('states'):
                 state = meta.get('states')[0]
@@ -139,20 +154,17 @@ def download_fpbase_to_db(db):
                                 ('ex_max', 'Excitation Max'), ('em_max', 'Emission Max')]:
                     val = state.get(k)
                     if val is not None:
-                        db.add_optical_property(item_id, db_k, str(val))
+                        properties[db_k] = str(val)
 
-            # Add the spectra data immediately
-            for spec in spec_item.get('spectra', []):
-                state_name = spec.get('state', '').lower()
-                stype = 'absorption' if ('ex' in state_name or 'abs' in state_name) else \
-                        'emission' if 'em' in state_name else \
-                        'transmission' if 'trans' in state_name else state_name
-
-                data = spec.get('data', [])
-                if data:
-                    arr = np.array(data)
-                    if arr.ndim == 2 and arr.shape[1] == 2:
-                        db.add_spectrum(item_id, stype, arr[:, 0], arr[:, 1])
+            db.register_component(
+                name=name,
+                source="fpbase",
+                kind=kind,
+                source_ref=slug,
+                description=desc,
+                properties=properties,
+                spectra=spectra,
+            )
 
             count += 1
             if count % 50 == 0:

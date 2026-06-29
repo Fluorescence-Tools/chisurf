@@ -89,7 +89,14 @@ _migrated_db_paths: set[str] = set()
 class MFDatabase(MFDBClientBase):
 
     _VALID_ENUMS = {
-        "category": ["organic_dye", "protein", "nanoparticle", "quantum_dot", "other"],
+        # ``category`` is the canonical optical-component class used by the
+        # mfdb-admin "Spectra" radio tabs. Fluorophores keep the finer
+        # ``organic_dye``/``protein``/… distinction; optical components use the
+        # coarse ``filter``/``dichroic``/``detector``/``light_source`` classes.
+        "category": [
+            "fluorophore", "organic_dye", "protein", "nanoparticle", "quantum_dot",
+            "filter", "dichroic", "detector", "light_source", "other",
+        ],
         "probe_origin": ["extrinsic", "intrinsic", "other"],
         "probe_link_type": ["covalent", "non-covalent", "other"],
         "fluorophore_type": ["unspecified", "small_molecule", "protein_domain"],
@@ -102,6 +109,16 @@ class MFDatabase(MFDBClientBase):
         "qy": ["qy", "fluorescence quantum yield", "ηfl", "quantum yield", "phi_acceptor", "phi", "qy_d", "phi_d"],
         "lifetime": ["lifetime", "fluorescence lifetime", "τfl", "tau", "tau_d", "tau_0"],
         "ext_coeff": ["ext_coeff", "molar extinction coefficient", "εmax", "extinction coefficient", "epsilon", "molar_ec"],
+        # Optical-component (filter / dichroic / detector) properties — kept under
+        # canonical keys so every scraper surfaces them identically in the GUI.
+        "cut_on": ["cut_on", "cut-on", "cut on", "cut-on wavelength (nm)", "cut-on wavelength", "cuton"],
+        "cut_off": ["cut_off", "cut-off", "cut off", "cut-off wavelength (nm)", "cut-off wavelength", "cutoff"],
+        "center_wavelength": [
+            "center_wavelength", "center wavelength", "center wavelength (nm)",
+            "central wavelength", "cwl", "wavelength (nm)",
+        ],
+        "bandwidth": ["bandwidth", "bandwidth (nm)", "fwhm", "fwhm (nm)", "notch bandwidth (nm)", "bandwidth fwhm (nm)"],
+        "optical_density": ["optical_density", "optical density", "od"],
     }
 
     def __init__(self, db_path: str | os.PathLike | None = None, readonly: bool = False, connection: sqlite3.Connection | None = None, enforce_foreign_keys: bool = True):
@@ -651,8 +668,6 @@ class MFDatabase(MFDBClientBase):
 
     # -- import reference set from spectra.db (PRD-06 Task 7.2) --
 
-    _FLUOROPHORE_TYPE_IDS = {1, 2, 6, 7, 27}
-
     @staticmethod
     def _derive_probe_source(origin: str, name: str, prop_map: dict) -> tuple[str, str]:
         """Map a scraped probe to a real (source, source_ref).
@@ -677,6 +692,37 @@ class MFDatabase(MFDBClientBase):
         if "atto" in o or name.upper().startswith("ATTO"):
             return "atto", ""
         return "spectra_db", ""
+
+    @staticmethod
+    def _derive_component_category(origin: str, type_name: str, name: str) -> str:
+        """Normalize a scraped probe to an optical-component category.
+
+        Drives the "Spectra" admin radio tabs. Derived from the scraped
+        ``Origin`` (e.g. ``"Chroma (Chroma Emission Filter)"``) and probe
+        ``type_name`` (e.g. ``"thorlabs_bandpass"``, ``"detector"``).
+        """
+        text = f"{origin} {type_name}".lower()
+        if any(k in text for k in ("dichroic", "beamsplitter", "mirror")):
+            return "dichroic"
+        if "detector" in text or "apd" in text or "responsivity" in text:
+            return "detector"
+        if "light source" in text or "lightsource" in text:
+            return "light_source"
+        if "filter" in text or any(
+            k in text for k in (
+                "bandpass", "longpass", "shortpass", "notch", "_nd", "astronomy",
+                "machine_vision", "tristimulus", "emission", "excitation",
+            )
+        ):
+            return "filter"
+        if any(
+            k in text for k in (
+                "fluorochrome", "protein", "organic dye", "organic_dye", "fpbase",
+                "atto", "photochemcad", "fluorophore", "dye",
+            )
+        ):
+            return "fluorophore"
+        return "other"
 
     def import_reference_set(
         self,
@@ -715,9 +761,6 @@ class MFDatabase(MFDBClientBase):
         source = sqlite3.connect(str(source_path))
         source.row_factory = sqlite3.Row
         try:
-            # Determine which probe types to import
-            type_ids = self._FLUOROPHORE_TYPE_IDS
-
             # Fetch source probe types and build a map to MFDB type_ids
             src_type_rows = source.execute(
                 "SELECT type_id, type_name FROM probe_types"
@@ -743,7 +786,7 @@ class MFDatabase(MFDBClientBase):
                     "fpbase": "organic_dye",
                     "chroma_fluorochrome": "organic_dye",
                 }
-                canonical = mfdb_type_name_map.get(short_name, "organic_dye")
+                canonical = mfdb_type_name_map.get(short_name, short_name)
                 if canonical not in mfdb_types:
                     # Create the type if it doesn't exist
                     self.conn.execute(
@@ -755,11 +798,24 @@ class MFDatabase(MFDBClientBase):
                     ).fetchone()["type_id"]
                 return mfdb_types[canonical]
 
-            # Fetch source probes
+            # Fetch ALL source probes — fluorophores AND optical components
+            # (filters/dichroics/detectors/light sources). The component type is
+            # normalized into ``category`` below so the admin can manage them all.
             src_probes = source.execute(
-                f"SELECT * FROM probes WHERE type_id IN ({','.join('?' * len(type_ids))})",
-                list(type_ids),
+                "SELECT * FROM probes WHERE deleted_at IS NULL"
             ).fetchall()
+
+            # Check if probe_id or item_id is used in optical_properties and spectra of the source
+            opt_cols = [row[1] for row in source.execute("PRAGMA table_info(optical_properties)").fetchall()]
+            opt_key = "probe_id" if "probe_id" in opt_cols else "item_id"
+
+            spec_cols = [row[1] for row in source.execute("PRAGMA table_info(spectra)").fetchall()]
+            spec_key = "probe_id" if "probe_id" in spec_cols else "item_id"
+
+            # The probe-name column differs between the canonical spectra.db
+            # (``chromophore_name``) and the minimal test schema (``name``).
+            probe_cols = [row[1] for row in source.execute("PRAGMA table_info(probes)").fetchall()]
+            name_col = "chromophore_name" if "chromophore_name" in probe_cols else "name"
 
             imported_probes = 0
             imported_spectra = 0
@@ -770,7 +826,7 @@ class MFDatabase(MFDBClientBase):
             verification = "approved" if mark_verified else "unverified"
 
             for src_p in src_probes:
-                name = str(src_p["name"] or "").strip()
+                name = str(src_p[name_col] or "").strip()
                 if not name:
                     skipped += 1
                     continue
@@ -779,7 +835,7 @@ class MFDatabase(MFDBClientBase):
                 # which is always populated — item_id is NULL for many rows). The
                 # scraped provenance lives here (Origin / fpbase_slug / …).
                 src_props = source.execute(
-                    "SELECT * FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL",
+                    f"SELECT * FROM optical_properties WHERE {opt_key} = ? AND deleted_at IS NULL",
                     (int(src_p["probe_id"]),),
                 ).fetchall()
                 prop_map = {
@@ -789,6 +845,29 @@ class MFDatabase(MFDBClientBase):
                 derived_source, source_ref = self._derive_probe_source(
                     prop_map.get("Origin", ""), name, prop_map
                 )
+                # Prefer the provenance the scraper already recorded on the
+                # staging row; fall back to the Origin-derived values.
+                if "source" in probe_cols and str(src_p["source"] or "").strip():
+                    derived_source = str(src_p["source"]).strip()
+                if "source_ref" in probe_cols and str(src_p["source_ref"] or "").strip():
+                    source_ref = str(src_p["source_ref"]).strip()
+                # Prefer the category the scraper already assigned (the canonical
+                # ingestion contract sets protein / organic_dye / filter / dichroic
+                # / detector / light_source). Only fall back to deriving it from
+                # the Origin/type when the staging row has none — so the staging
+                # DB and the live MFDB stay aligned.
+                src_category = ""
+                if "category" in probe_cols:
+                    src_category = str(src_p["category"] or "").strip().lower()
+                src_type_name = src_type_map.get(int(src_p["type_id"]), "")
+                if src_category and src_category != "other":
+                    component_category = src_category
+                else:
+                    component_category = self._derive_component_category(
+                        prop_map.get("Origin", ""), src_type_name, name
+                    )
+
+                mfdb_type_id = _resolve_mfdb_type(int(src_p["type_id"]))
 
                 with self.conn:
                     # Normalize name: "ATTO-647N" -> "ATTO 647N"
@@ -800,22 +879,36 @@ class MFDatabase(MFDBClientBase):
                     ).fetchone()
                     if existing:
                         probe_id = int(existing["probe_id"])
+                        # Update the category, source, etc. on import
+                        self.conn.execute(
+                            "UPDATE probes SET category = ?, source = ?, source_ref = ?, type_id = ?, updated_at = ? WHERE probe_id = ?",
+                            (
+                                component_category,
+                                derived_source,
+                                source_ref,
+                                mfdb_type_id,
+                                now,
+                                probe_id,
+                            ),
+                        )
                     else:
-                        mfdb_type_id = _resolve_mfdb_type(int(src_p["type_id"]))
-                        cursor = self.conn.execute(
+                        cursor = self.conn.cursor()
+                        cursor.execute(
                             """INSERT INTO probes (chromophore_name, type_id, category,
                                description, is_curated, quality_flag,
-                               verification_status, quality,
-                               source, source_ref, created_at, updated_at, deleted_at)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                               verification_status, verified_by, verified_at,
+                               quality, source, source_ref, created_at, updated_at, deleted_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                             (
                                 chromophore_name,
                                 mfdb_type_id,
-                                str(src_p["category"] or "other"),
+                                component_category,
                                 str(src_p["description"] or ""),
                                 1 if mark_verified else 0,
                                 1,
                                 verification,
+                                "admin" if mark_verified else None,
+                                now if mark_verified else None,
                                 "unknown",
                                 derived_source,
                                 source_ref,
@@ -854,7 +947,7 @@ class MFDatabase(MFDBClientBase):
 
                 # Copy spectra (by probe_id — item_id is NULL for many rows)
                 src_spectra = source.execute(
-                    "SELECT * FROM spectra WHERE probe_id = ? AND deleted_at IS NULL",
+                    f"SELECT * FROM spectra WHERE {spec_key} = ? AND deleted_at IS NULL",
                     (int(src_p["probe_id"]),),
                 ).fetchall()
                 for spec in src_spectra:
@@ -885,14 +978,252 @@ class MFDatabase(MFDBClientBase):
                         )
                         imported_spectra += 1
 
+            # Consolidate duplicate probes and merge their spectra/properties
+            consolidation = self.consolidate_probes()
+
             return {
                 "probes": imported_probes,
                 "spectra": imported_spectra,
                 "optical_properties": imported_props,
                 "skipped": skipped,
+                "consolidated": consolidation,
             }
         finally:
             source.close()
+
+    def consolidate_probes(self, aggressive: bool = False) -> dict[str, int]:
+        """Merge duplicate probes, then delete the secondary copies.
+
+        Two passes, simplest-first (per the maintainer's rule "prefer simple
+        dedups over complex ones"):
+
+        - **Simple (default).** Group **within a category** by a normalized name
+          (case-folded, punctuation/space removed). This reliably collapses the
+          same catalogue part scraped from two sources (e.g. a ``FB340-10``
+          filter from both Thorlabs and 3DOptix) without ever merging across
+          categories.
+        - **Aggressive (opt-in, ``aggressive=True``).** Additionally strips
+          reactive-group suffixes (``NHS ester``, ``maleimide``, …) so dye
+          conjugates collapse onto the parent chromophore. This is **never**
+          applied to fluorescent proteins (``category`` ``protein``/
+          ``fluorophore``), which look alike by name but are distinct molecules.
+        """
+        # Discover all tables and columns that reference 'probes(probe_id)'
+        referencing_cols = []
+        for r in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall():
+            tname = r["name"]
+            if tname.startswith("sqlite_"):
+                continue
+            fks = self.conn.execute(f"PRAGMA foreign_key_list({tname})").fetchall()
+            for fk in fks:
+                if fk["table"] == "probes":
+                    referencing_cols.append((tname, fk["from"]))
+
+        # Check column names dynamically to support both probe_id and item_id (for tests)
+        spec_cols = [row[1] for row in self.conn.execute("PRAGMA table_info(spectra)").fetchall()]
+        spec_key = "probe_id" if "probe_id" in spec_cols else "item_id"
+
+        prop_cols = [row[1] for row in self.conn.execute("PRAGMA table_info(optical_properties)").fetchall()]
+        prop_key = "probe_id" if "probe_id" in prop_cols else "item_id"
+
+        rows = self.conn.execute(
+            "SELECT probe_id, chromophore_name, category, type_id, description, "
+            "source, source_ref, retrieved_at FROM probes WHERE deleted_at IS NULL"
+        ).fetchall()
+
+        # Fluorescent proteins are never fuzzy-merged: distinct proteins share
+        # very similar names, so the aggressive suffix pass is suppressed for them.
+        _PROTEIN_CATS = {"protein", "fluorophore"}
+        _REACTIVE_SUFFIXES = (
+            " nhs ester", " nhs-ester", " nhs",
+            " maleimide",
+            " carboxylic acid", " carboxylic",
+            " succinimidyl ester", " succinimidyl",
+            " sodium salt",
+            " perchlorate",
+            " tetrafluoroborate",
+            " iodide",
+            " chloride",
+            " ester",
+            " (nhs ester)",
+            " (maleimide)",
+        )
+
+        def normalize_name(name: str, strip_suffixes: bool) -> str:
+            if not name:
+                return ""
+            name_lower = " ".join(name.lower().split())
+            if strip_suffixes:
+                for suffix in _REACTIVE_SUFFIXES:
+                    if name_lower.endswith(suffix):
+                        name_lower = name_lower[: -len(suffix)]
+            # Collapse to alphanumerics so "FB340-10" == "FB340 10".
+            return "".join(c for c in name_lower if c.isalnum())
+
+        # Group probes by (category, normalized name) so merges never cross a
+        # category boundary. The aggressive suffix pass is skipped for proteins.
+        groups: dict[tuple[str, str], list[dict]] = {}
+        for r in rows:
+            p = dict(r)
+            category = (p.get("category") or "").lower()
+            strip_suffixes = aggressive and category not in _PROTEIN_CATS
+            norm = normalize_name(p["chromophore_name"], strip_suffixes)
+            if norm:
+                groups.setdefault((category, norm), []).append(p)
+
+        merged_count = 0
+        deleted_count = 0
+
+        # Temporarily disable foreign keys constraint during database consolidation
+        was_enforced = self.conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        if was_enforced:
+            self.conn.execute("PRAGMA foreign_keys=OFF")
+
+        try:
+            for (_category, _norm), p_list in groups.items():
+                if len(p_list) <= 1:
+                    continue
+
+                # Choose the primary probe based on spectrum and property counts
+                scored_probes = []
+                for p in p_list:
+                    probe_id = p["probe_id"]
+                    n_specs = self.conn.execute(
+                        f"SELECT COUNT(*) FROM spectra WHERE {spec_key} = ? AND deleted_at IS NULL",
+                        (probe_id,)
+                    ).fetchone()[0]
+                    n_props = self.conn.execute(
+                        f"SELECT COUNT(*) FROM optical_properties WHERE {prop_key} = ? AND deleted_at IS NULL",
+                        (probe_id,)
+                    ).fetchone()[0]
+                    name_len = len(p["chromophore_name"])
+                    # Score formula: prefer more spectra, properties, and shorter/cleaner names
+                    score = (n_specs * 100) + (n_props * 10) - name_len
+                    scored_probes.append((score, p))
+
+                scored_probes.sort(key=lambda x: x[0], reverse=True)
+                primary = scored_probes[0][1]
+                secondaries = [x[1] for x in scored_probes[1:]]
+
+                primary_id = primary["probe_id"]
+
+                for sec in secondaries:
+                    sec_id = sec["probe_id"]
+
+                    # A. Merge spectra
+                    sec_spectra = self.conn.execute(
+                        f"SELECT id, spectrum_type FROM spectra WHERE {spec_key} = ? AND deleted_at IS NULL",
+                        (sec_id,)
+                    ).fetchall()
+                    for spec in sec_spectra:
+                        spec_id = spec["id"]
+                        stype = spec["spectrum_type"]
+                        existing_spec = self.conn.execute(
+                            f"SELECT id FROM spectra WHERE {spec_key} = ? AND spectrum_type = ? AND deleted_at IS NULL",
+                            (primary_id, stype)
+                        ).fetchone()
+                        if existing_spec is None:
+                            self.conn.execute(
+                                f"UPDATE spectra SET {spec_key} = ?, updated_at = ? WHERE id = ?",
+                                (primary_id, _utc_now(), spec_id)
+                            )
+                        else:
+                            self.conn.execute("DELETE FROM spectra WHERE id = ?", (spec_id,))
+
+                    # B. Merge optical properties — union, keeping metadata. On a
+                    # name conflict the secondary's value is dropped, UNLESS the
+                    # primary's value is empty (then the secondary fills it in).
+                    sec_props = self.conn.execute(
+                        f"SELECT id, property_name, property_value FROM optical_properties "
+                        f"WHERE {prop_key} = ? AND deleted_at IS NULL",
+                        (sec_id,)
+                    ).fetchall()
+                    for prop in sec_props:
+                        prop_id = prop["id"]
+                        pname = prop["property_name"]
+                        existing_prop = self.conn.execute(
+                            f"SELECT id, property_value FROM optical_properties "
+                            f"WHERE {prop_key} = ? AND property_name = ? AND deleted_at IS NULL",
+                            (primary_id, pname)
+                        ).fetchone()
+                        if existing_prop is None:
+                            self.conn.execute(
+                                f"UPDATE optical_properties SET {prop_key} = ?, updated_at = ? WHERE id = ?",
+                                (primary_id, _utc_now(), prop_id)
+                            )
+                        else:
+                            primary_val = (existing_prop["property_value"] or "").strip()
+                            sec_val = (prop["property_value"] or "").strip()
+                            if not primary_val and sec_val:
+                                self.conn.execute(
+                                    "UPDATE optical_properties SET property_value = ?, updated_at = ? WHERE id = ?",
+                                    (sec_val, _utc_now(), existing_prop["id"]),
+                                )
+                            self.conn.execute("DELETE FROM optical_properties WHERE id = ?", (prop_id,))
+
+                    # C. Merge probe-level metadata so nothing is lost:
+                    #  - description: fill if the primary has none;
+                    #  - source: keep the UNION of contributing sources;
+                    #  - source_ref / retrieved_at: fill if the primary has none;
+                    #  - the secondary's distinct name is preserved as a synonym.
+                    if not primary["description"] and sec["description"]:
+                        self.conn.execute(
+                            "UPDATE probes SET description = ?, updated_at = ? WHERE probe_id = ?",
+                            (sec["description"], _utc_now(), primary_id),
+                        )
+
+                    cur = self.conn.execute(
+                        "SELECT source, source_ref, retrieved_at FROM probes WHERE probe_id = ?",
+                        (primary_id,),
+                    ).fetchone()
+                    src_parts = [s for s in str(cur["source"] or "").split(",") if s]
+                    for s in str(sec["source"] or "").split(","):
+                        if s and s not in src_parts:
+                            src_parts.append(s)
+                    self.conn.execute(
+                        "UPDATE probes SET source = ?, "
+                        "source_ref = COALESCE(NULLIF(source_ref, ''), ?), "
+                        "retrieved_at = COALESCE(retrieved_at, ?), updated_at = ? "
+                        "WHERE probe_id = ?",
+                        (
+                            ",".join(src_parts) or None,
+                            sec["source_ref"],
+                            sec["retrieved_at"],
+                            _utc_now(),
+                            primary_id,
+                        ),
+                    )
+                    if (sec["chromophore_name"] or "") != (primary["chromophore_name"] or ""):
+                        self.conn.execute(
+                            f"INSERT OR IGNORE INTO optical_properties "
+                            f"({prop_key}, property_name, property_value, created_at, updated_at) "
+                            f"VALUES (?, 'synonym', ?, ?, ?)",
+                            (primary_id, sec["chromophore_name"], _utc_now(), _utc_now()),
+                        )
+
+                    # E. Update/clean up all other referencing tables dynamically
+                    for tname, colname in referencing_cols:
+                        self.conn.execute(
+                            f"UPDATE OR IGNORE {tname} SET {colname} = ? WHERE {colname} = ?",
+                            (primary_id, sec_id)
+                        )
+                        self.conn.execute(
+                            f"DELETE FROM {tname} WHERE {colname} = ?",
+                            (sec_id,)
+                        )
+
+                    # D. Physically delete secondary probe
+                    self.conn.execute("DELETE FROM probes WHERE probe_id = ?", (sec_id,))
+                    deleted_count += 1
+
+                merged_count += 1
+
+            self.conn.commit()
+        finally:
+            if was_enforced:
+                self.conn.execute("PRAGMA foreign_keys=ON")
+
+        return {"merged_groups": merged_count, "deleted_probes": deleted_count}
 
     # -- Forster radius lookup (PRD-06 Task 5) --
 

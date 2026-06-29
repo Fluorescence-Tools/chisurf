@@ -56,27 +56,17 @@ class OmegaOpticalDownloader:
         if not wavelengths:
             raise RuntimeError(f"No valid data parsed from CSV for {product_id}")
 
-        # Store in MFDB
+        # Store in MFDB through the canonical ingestion contract. ``filter_type``
+        # already matches a COMPONENT_KINDS key (longpass/shortpass/bandpass/
+        # dichroic), so the category and spectrum group are derived consistently.
         with self.db:
-            # Use generic type - in future could map filter_type to proper MFDB type
-            type_name = f"omega_{filter_type}"
-            type_display = f"Omega Optical {filter_type.title()}"
-            type_id = self.db.add_probe_type(type_name, type_display)
-            
-            probe_id = self.db.add_probe(
-                chromophore_name=f"Omega {name}",
-                type_id=type_id,
-                description=f"Omega Optical {filter_type} filter - {name}"
-            )
-            
-            self.db.add_spectrum(
-                probe_id=probe_id,
-                spectrum_type="transmission",
-                wavelengths=wavelengths,
-                intensity_values=intensities,
-                wavelength_unit="nm",
-                intensity_unit="normalized",
-                details=f"Source: Omega Optical product {product_id}"
+            self.db.register_component(
+                name=f"Omega {name}",
+                source="omega",
+                kind=filter_type,
+                source_ref=product_id,
+                description=f"Omega Optical {filter_type} filter - {name}",
+                spectra={"transmission": (wavelengths, intensities)},
             )
 
 

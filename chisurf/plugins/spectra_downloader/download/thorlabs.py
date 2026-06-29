@@ -40,19 +40,20 @@ THOR2_DATA_URL = (
     "https://github.com/tjconstant/thor2/archive/refs/heads/master.zip"
 )
 
-# Map file prefix → (probe_type_name, probe_type_display, spectrum_type)
-COMPONENT_CLASSES: dict[str, tuple[str, str, str]] = {
-    "FEL":  ("thorlabs_longpass",  "Thorlabs Longpass Filter",  "transmission"),
-    "FES":  ("thorlabs_shortpass", "Thorlabs Shortpass Filter", "transmission"),
-    "FB":   ("thorlabs_bandpass",  "Thorlabs Bandpass Filter",  "transmission"),
-    "FL":   ("thorlabs_laserline", "Thorlabs Laser Line Filter","transmission"),
-    "NF":   ("thorlabs_notch",     "Thorlabs Notch Filter",     "transmission"),
-    "ND":   ("thorlabs_nd",        "Thorlabs ND Filter",        "transmission"),
+# Map a data-file prefix → a canonical component kind (resolved via
+# COMPONENT_KINDS in mfdb_adapter to its category + default spectrum type).
+COMPONENT_KIND_BY_PREFIX: dict[str, str] = {
+    "FEL": "longpass",
+    "FES": "shortpass",
+    "FB": "bandpass",
+    "FL": "laserline",
+    "NF": "notch",
+    "ND": "nd",
 }
 
-# Photodetectors (CSV files) handled separately
-DETECTOR_FILES: dict[str, tuple[str, str, str]] = {
-    "APD120A2_data.csv": ("thorlabs_apd120a2", "Thorlabs APD120A2 Detector", "responsivity"),
+# Photodetectors (CSV files) → component kind.
+DETECTOR_FILES: dict[str, str] = {
+    "APD120A2_data.csv": "apd",
 }
 
 
@@ -64,10 +65,11 @@ def _parse_filter_name(filename: str) -> str | None:
     return stem.upper()
 
 
-def _infer_component_class(name: str) -> tuple[str, str, str] | None:
-    for prefix, info in COMPONENT_CLASSES.items():
+def _infer_component_kind(name: str) -> str | None:
+    # Longer prefixes first so "FES"/"FEL" win over a hypothetical "F".
+    for prefix in sorted(COMPONENT_KIND_BY_PREFIX, key=len, reverse=True):
         if name.startswith(prefix):
-            return info
+            return COMPONENT_KIND_BY_PREFIX[prefix]
     return None
 
 
@@ -131,45 +133,36 @@ def _parse_csv_spectrum(data: bytes, sep: str = ";") -> tuple[np.ndarray, np.nda
     return arr[:, 0], arr[:, 1]
 
 
-def _add_optical_properties_from_name(
-    db: FluorophoreDatabase,
-    probe_id: int,
-    name: str,
-) -> None:
-    """Store common optical properties inferred from the part number."""
+def _optical_properties_from_name(name: str) -> dict[str, str]:
+    """Derive optical properties from a Thorlabs part number.
+
+    Returns a dict of (raw) property names → values; ``register_component``
+    canonicalizes the keys (e.g. "Center Wavelength (nm)" → ``center_wavelength``).
+    """
     # Bandpass / laser-line: FB340-10 → CWL=340 nm, BW=10 nm
     m = re.match(r"FB(\d+)-(\d+)", name)
     if m:
-        db.add_optical_property(probe_id, "Center Wavelength (nm)", m.group(1))
-        db.add_optical_property(probe_id, "Bandwidth (nm)", m.group(2))
-        return
+        return {"Center Wavelength (nm)": m.group(1), "Bandwidth (nm)": m.group(2)}
     m = re.match(r"FL(\d+(?:\.\d+)?)-(\d+)", name)
     if m:
-        db.add_optical_property(probe_id, "Center Wavelength (nm)", m.group(1))
-        db.add_optical_property(probe_id, "Bandwidth (nm)", m.group(2))
-        return
+        return {"Center Wavelength (nm)": m.group(1), "Bandwidth (nm)": m.group(2)}
     # Longpass: FEL0550 → Cut-On = 550 nm
     m = re.match(r"FEL0*(\d+)", name)
     if m:
-        db.add_optical_property(probe_id, "Cut-On Wavelength (nm)", m.group(1))
-        return
+        return {"Cut-On Wavelength (nm)": m.group(1)}
     # Shortpass: FES0550 → Cut-Off = 550 nm
     m = re.match(r"FES0*(\d+)", name)
     if m:
-        db.add_optical_property(probe_id, "Cut-Off Wavelength (nm)", m.group(1))
-        return
+        return {"Cut-Off Wavelength (nm)": m.group(1)}
     # Notch: NF533-17 → CWL=533 nm, BW=17 nm
     m = re.match(r"NF(\d+)-(\d+)", name)
     if m:
-        db.add_optical_property(probe_id, "Center Wavelength (nm)", m.group(1))
-        db.add_optical_property(probe_id, "Notch Bandwidth (nm)", m.group(2))
-        return
+        return {"Center Wavelength (nm)": m.group(1), "Notch Bandwidth (nm)": m.group(2)}
     # ND: ND01 → OD=0.1
     m = re.match(r"ND(\d+)", name)
     if m:
-        od = int(m.group(1)) / 10.0
-        db.add_optical_property(probe_id, "Optical Density", f"{od:.1f}")
-        return
+        return {"Optical Density": f"{int(m.group(1)) / 10.0:.1f}"}
+    return {}
 
 
 def download_thorlabs_to_db(db: FluorophoreDatabase) -> dict[str, int]:
@@ -219,10 +212,9 @@ def download_thorlabs_to_db(db: FluorophoreDatabase) -> dict[str, int]:
                 stem = _parse_filter_name(Path(name).name)
                 if stem is None:
                     continue
-                info = _infer_component_class(stem)
-                if info is None:
+                kind = _infer_component_kind(stem)
+                if kind is None:
                     continue
-                type_name, type_display, spectrum_type = info
 
                 with zf.open(name) as fh:
                     raw = fh.read()
@@ -233,24 +225,24 @@ def download_thorlabs_to_db(db: FluorophoreDatabase) -> dict[str, int]:
                     continue
 
                 with db:
-                    type_id = db.add_probe_type(type_name, type_display)
-                    item_id = db.add_probe(
-                        chromophore_name=stem,
-                        type_id=type_id,
-                        description=f"Thorlabs {type_display} – {stem}",
+                    db.register_component(
+                        name=stem,
+                        source="thorlabs",
+                        kind=kind,
+                        source_ref=stem,
+                        description=f"Thorlabs {stem}",
+                        properties=_optical_properties_from_name(stem),
+                        spectra=(wl, val),
                     )
-                    db.add_spectrum(item_id, spectrum_type, wl, val)
-                    _add_optical_properties_from_name(db, item_id, stem)
-                    db.add_optical_property(item_id, "Origin", f"Thorlabs ({type_display})")
 
-                counts[type_name] = counts.get(type_name, 0) + 1
+                counts[kind] = counts.get(kind, 0) + 1
 
             # Import detector CSV files
             for csv_name in sorted(csv_files):
                 base = Path(csv_name).name
                 if base not in DETECTOR_FILES:
                     continue
-                type_name, type_display, spectrum_type = DETECTOR_FILES[base]
+                kind = DETECTOR_FILES[base]
 
                 with zf.open(csv_name) as fh:
                     raw = fh.read()
@@ -263,21 +255,20 @@ def download_thorlabs_to_db(db: FluorophoreDatabase) -> dict[str, int]:
 
                 stem = Path(base).stem.upper().replace("_DATA", "")
                 with db:
-                    type_id = db.add_probe_type(type_name, type_display)
-                    item_id = db.add_probe(
-                        chromophore_name=stem,
-                        type_id=type_id,
-                        description=f"Thorlabs {type_display}",
+                    db.register_component(
+                        name=stem,
+                        source="thorlabs",
+                        kind=kind,
+                        source_ref=stem,
+                        description=f"Thorlabs {stem} detector",
+                        spectra=(wl, val),
                     )
-                    db.add_spectrum(item_id, spectrum_type, wl, val)
-                    db.add_optical_property(item_id, "Origin", f"Thorlabs ({type_display})")
 
-                counts[type_name] = counts.get(type_name, 0) + 1
+                counts[kind] = counts.get(kind, 0) + 1
 
-    print("\nImport summary:")
-    for tname, cnt in sorted(counts.items()):
-        display = {v[0]: v[1] for v in list(COMPONENT_CLASSES.values()) + list(DETECTOR_FILES.values())}.get(tname, tname)
-        print(f"  {display:<35s} {cnt:3d} items")
+    print("\nImport summary (by component kind):")
+    for kind, cnt in sorted(counts.items()):
+        print(f"  {kind:<20s} {cnt:3d} items")
     print(f"\nTotal: {sum(counts.values())} items imported.")
     return counts
 

@@ -36,26 +36,22 @@ DATA_PROVIDER_URL = "https://www.chroma.com/api/sv/data-providers"
 ASCII_BASE_URL = "https://www.chroma.com/files/part_spectra"
 
 
-# Map Chroma filter types → MFDB probe info
-FILTER_TYPE_MAP: dict[str, tuple[str, str, str]] = {
-    "BP":  ("chroma_bandpass",    "Chroma Bandpass Filter",       "transmission"),
-    "EX":  ("chroma_excitation",  "Chroma Excitation Filter",     "transmission"),
-    "EM":  ("chroma_emission",    "Chroma Emission Filter",       "transmission"),
-    "BS":  ("chroma_dichroic",    "Chroma Dichroic Beamsplitter", "transmission"),
-    "AS":  ("chroma_astronomy",   "Chroma Astronomy Filter",      "transmission"),
-    "MV":  ("chroma_machine_vision", "Chroma Machine Vision Filter", "transmission"),
-    "ND":  ("chroma_nd",          "Chroma ND Filter",             "transmission"),
-    "BEAMSPLITTER": ("chroma_beamsplitter", "Chroma Beamsplitter", "transmission"),
-    "MIRROR":       ("chroma_mirror",       "Chroma Mirror",       "reflectance"),
-    "POLARIZER":    ("chroma_polarizer",    "Chroma Polarizer",    "transmission"),
-    "TRI":          ("chroma_tristimulus",  "Chroma Tristimulus Filter", "transmission"),
+# Map each Chroma filter "Type" code → a canonical component kind. The kind
+# resolves (via COMPONENT_KINDS in mfdb_adapter) to the canonical category and
+# default spectrum type, so filters/dichroics/mirrors land in the right tab.
+FILTER_KIND_MAP: dict[str, str] = {
+    "BP": "bandpass",
+    "EX": "excitation_filter",
+    "EM": "emission_filter",
+    "BS": "dichroic",
+    "AS": "astronomy",
+    "MV": "machine_vision",
+    "ND": "nd",
+    "BEAMSPLITTER": "beamsplitter",
+    "MIRROR": "mirror",
+    "POLARIZER": "polarizer",
+    "TRI": "tristimulus",
 }
-
-# Light sources → MFDB probe type
-LIGHTSOURCE_TYPE = ("chroma_lightsource", "Chroma Light Source", "emission")
-
-# Fluorochrome → MFDB probe type
-FLUOROCHROME_TYPE = ("chroma_fluorochrome", "Chroma Fluorochrome", "excitation")
 
 
 def _fetch_json(url: str, data: dict | None = None) -> Any:
@@ -120,14 +116,13 @@ def _import_filter_item(
     item: dict,
     counts: dict[str, int],
 ) -> None:
-    """Import a single Chroma filter item into the database."""
+    """Import a single Chroma filter / dichroic / mirror item."""
     sp_id = item.get("spID")
     if not sp_id:
         return
-    chroma_type = item.get("Type")
-    if chroma_type not in FILTER_TYPE_MAP:
+    kind = FILTER_KIND_MAP.get(item.get("Type"))
+    if kind is None:
         return
-    type_name, type_display, spectrum_type = FILTER_TYPE_MAP[chroma_type]
     raw_name = item.get("Number", "")
     name = _sanitize_name(raw_name)
     if not name:
@@ -135,17 +130,16 @@ def _import_filter_item(
     spectrum = _fetch_ascii_spectrum(sp_id)
     if spectrum is None:
         return
-    wl, val = spectrum
     with db:
-        type_id = db.add_probe_type(type_name, type_display)
-        item_id = db.add_probe(
-            chromophore_name=name,
-            type_id=type_id,
-            description=f"Chroma {type_display} – {raw_name}",
+        db.register_component(
+            name=name,
+            source="chroma",
+            kind=kind,
+            source_ref=str(sp_id),
+            description=f"Chroma {raw_name}".strip(),
+            spectra=spectrum,
         )
-        db.add_spectrum(item_id, spectrum_type, wl, val)
-        db.add_optical_property(item_id, "Origin", f"Chroma ({type_display})")
-    counts[type_name] = counts.get(type_name, 0) + 1
+    counts[kind] = counts.get(kind, 0) + 1
 
 
 def _import_light_source_item(
@@ -153,28 +147,26 @@ def _import_light_source_item(
     item: dict,
     counts: dict[str, int],
 ) -> None:
-    """Import a single Chroma light source item into the database."""
+    """Import a single Chroma light source item."""
     sp_id = item.get("spID")
     if not sp_id:
         return
-    type_name, type_display, spectrum_type = LIGHTSOURCE_TYPE
     name = item.get("Title", "").strip()
     if not name:
         return
     spectrum = _fetch_ascii_spectrum(sp_id)
     if spectrum is None:
         return
-    wl, val = spectrum
     with db:
-        type_id = db.add_probe_type(type_name, type_display)
-        probe_id = db.add_probe(
-            chromophore_name=name,
-            type_id=type_id,
-            description=f"Chroma {type_display} – {item.get('source', '')}",
+        db.register_component(
+            name=name,
+            source="chroma",
+            kind="light_source",
+            source_ref=str(sp_id),
+            description=f"Chroma Light Source – {item.get('source', '')}".strip(" –"),
+            spectra=spectrum,
         )
-        db.add_spectrum(probe_id, spectrum_type, wl, val)
-        db.add_optical_property(probe_id, "Origin", "Chroma (Light Source)")
-    counts[type_name] = counts.get(type_name, 0) + 1
+    counts["light_source"] = counts.get("light_source", 0) + 1
 
 
 def _import_fluorochrome_item(
@@ -182,10 +174,7 @@ def _import_fluorochrome_item(
     item: dict,
     counts: dict[str, int],
 ) -> None:
-    """Import a single Chroma fluorochrome item into the database.
-
-    Stores both excitation and emission spectra.
-    """
+    """Import a single Chroma fluorochrome (excitation + emission spectra)."""
     ex_id = item.get("spExID")
     em_id = item.get("spEmID")
     if not ex_id or not em_id:
@@ -197,20 +186,16 @@ def _import_fluorochrome_item(
     em_spec = _fetch_ascii_spectrum(em_id)
     if ex_spec is None or em_spec is None:
         return
-    ex_wl, ex_val = ex_spec
-    em_wl, em_val = em_spec
-    type_name, type_display, _ = FLUOROCHROME_TYPE
     with db:
-        type_id = db.add_probe_type(type_name, type_display)
-        probe_id = db.add_probe(
-            chromophore_name=name,
-            type_id=type_id,
+        db.register_component(
+            name=name,
+            source="chroma",
+            kind="fluorochrome",
+            source_ref=f"{ex_id}/{em_id}",
             description=f"Chroma Fluorochrome – {name}",
+            spectra={"excitation": ex_spec, "emission": em_spec},
         )
-        db.add_spectrum(probe_id, "excitation", ex_wl, ex_val)
-        db.add_spectrum(probe_id, "emission", em_wl, em_val)
-        db.add_optical_property(probe_id, "Origin", "Chroma (Fluorochrome)")
-    counts[type_name] = counts.get(type_name, 0) + 1
+    counts["fluorochrome"] = counts.get("fluorochrome", 0) + 1
 
 
 def _import_item_batch(
@@ -294,14 +279,9 @@ def download_chroma_to_db(db: FluorophoreDatabase) -> dict[str, int]:
     for item in fluoro_items:
         _import_fluorochrome_item(db, item, counts)
 
-    print("\nImport summary:")
-    for tname, cnt in sorted(counts.items()):
-        known = dict(
-            [v[:2] for v in FILTER_TYPE_MAP.values()]
-            + [LIGHTSOURCE_TYPE[:2], FLUOROCHROME_TYPE[:2]]
-        )
-        display = known.get(tname, tname)
-        print(f"  {display:<40s} {cnt:4d} items")
+    print("\nImport summary (by component kind):")
+    for kind, cnt in sorted(counts.items()):
+        print(f"  {kind:<20s} {cnt:4d} items")
     print(f"\nTotal: {sum(counts.values())} items imported.")
     return counts
 

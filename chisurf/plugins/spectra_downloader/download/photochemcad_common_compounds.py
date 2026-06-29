@@ -104,11 +104,6 @@ def import_photochemcad_common_compounds(db: FluorophoreDatabase, common_dir: Pa
     # Ensure tables exist
     db.create_tables()
 
-    # Create / get probe type for these compounds
-    item_type_name = "photochemcad_common_compounds"
-    item_type_display = "PhotochemCAD Common Compounds"
-    type_id = db.add_probe_type(item_type_name, item_type_display)
-
     imported = 0
 
     with db.conn:  # type: ignore[attr-defined]
@@ -186,14 +181,14 @@ def import_photochemcad_common_compounds(db: FluorophoreDatabase, common_dir: Pa
                     desc_lines.append(f"Emission ref: {em_reference}")
                 description = "\n".join(desc_lines)
 
-                # Create / update probe
-                item_id = db.add_probe(chromophore_name=name, type_id=type_id, description=description)
+                # Collect optical properties into a dict (register_component
+                # canonicalizes keys like "Quantum Yield" → qy).
+                properties: dict[str, str] = {}
 
-                # Helper for adding non-empty optical properties
                 def add_prop(label: str, value: str):
                     v = (value or "").strip()
                     if v:
-                        db.add_optical_property(item_id, label, v)
+                        properties[label] = v
 
                 # Core metadata
                 add_prop("PhotochemCAD Index", idx)
@@ -206,7 +201,7 @@ def import_photochemcad_common_compounds(db: FluorophoreDatabase, common_dir: Pa
                 eps_float = _parse_float(epsilon)
                 if eps_float is not None:
                     # Name chosen to integrate with Förster-radius UI
-                    db.add_optical_property(item_id, "Extinction Coefficient", str(eps_float))
+                    properties["Extinction Coefficient"] = str(eps_float)
 
                 add_prop("Absorption solvent", abs_solvent)
                 add_prop("Absorption instrument", abs_instrument)
@@ -226,25 +221,35 @@ def import_photochemcad_common_compounds(db: FluorophoreDatabase, common_dir: Pa
                 add_prop("Absorption file", abs_file)
                 add_prop("Emission file", em_file)
 
-                # Import absorption spectrum
+                # Collect spectra.
+                spectra: dict[str, tuple] = {}
                 if abs_file:
                     abs_path = common_dir / abs_file
                     if abs_path.exists():
                         wl, val = _load_pcad_spectrum(abs_path)
                         if wl is not None and val is not None:
-                            db.add_spectrum(item_id, "absorption", wl, val)
+                            spectra["absorption"] = (wl, val)
                     else:
                         print(f"  WARNING: absorption file not found: {abs_path}")
-
-                # Import emission spectrum
                 if em_file:
                     em_path = common_dir / em_file
                     if em_path.exists():
                         wl, val = _load_pcad_spectrum(em_path)
                         if wl is not None and val is not None:
-                            db.add_spectrum(item_id, "emission", wl, val)
+                            spectra["emission"] = (wl, val)
                     else:
                         print(f"  WARNING: emission file not found: {em_path}")
+
+                # Register through the canonical ingestion contract.
+                item_id = db.register_component(
+                    name=name,
+                    source="photochemcad",
+                    kind="organic_dye",
+                    source_ref=idx,
+                    description=description,
+                    properties=properties,
+                    spectra=spectra,
+                )
 
                 # Import structure image
                 if structure_file:

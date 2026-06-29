@@ -136,34 +136,32 @@ def process_product_page(url, db):
 
     dye_name = url.split('/')[-1].replace('.html', '')
 
-    # Get the probe type ID (create if it doesn't exist)
-    type_id = db.add_probe_type(BASE_DIR, "Atto Dyes")
-
     # Get the description and optical properties
     description = get_description(soup)
     optical_properties = parse_optical_properties(soup)
 
-    # Add the probe to the database
-    item_id = db.add_probe(chromophore_name=dye_name, type_id=type_id, description=description)
-    print(f"Added item: {dye_name}")
-
-    # Add optical properties
-    for prop_name, prop_value in optical_properties.items():
-        db.add_optical_property(item_id, prop_name, prop_value)
-
-    # Process spectra
+    # Collect spectra first, keyed by canonical spectrum type.
+    spectra: dict[str, tuple] = {}
     for link in soup.find_all('a', href=True):
         href = link['href']
         if href.endswith(".txt") and ("abs" in href.lower() or "ems" in href.lower()):
             full_url = urllib.parse.urljoin(url, href)
             spectrum_type = "absorption" if "abs" in href.lower() else "emission"
-
-            # Download and parse the spectrum
             wavelengths, values = download_spectrum(full_url)
             if wavelengths is not None and values is not None:
-                # Add the spectrum to the database
-                db.add_spectrum(item_id, spectrum_type, wavelengths, values)
-                print(f"Added {spectrum_type} spectrum for {dye_name}")
+                spectra[spectrum_type] = (wavelengths, values)
+
+    # Register the dye through the canonical ingestion contract.
+    item_id = db.register_component(
+        name=dye_name,
+        source="atto",
+        kind="organic_dye",
+        source_ref=url,
+        description=description,
+        properties=optical_properties,
+        spectra=spectra,
+    )
+    print(f"Added item: {dye_name} ({len(spectra)} spectra)")
 
     # Download and add structure images
     image_urls = get_image_links(soup)
