@@ -162,5 +162,54 @@ def consolidate(db):
         res = fdb.consolidate_probes()
     click.echo(f"Consolidation complete: merged {res['merged_groups']} groups, deleted {res['deleted_probes']} duplicate probes.")
 
+
+@cli.command("push")
+@click.option("--staging", "--db", "staging", default=None,
+              help="Scraped staging spectra.db to push (default: the bundled one).")
+@click.option("--mfdb", default=None,
+              help="Target MFDB (default: the resolved/connected live MFDB).")
+@click.option("--replace", is_flag=True,
+              help="Purge the existing reference probes first, then import cleanly.")
+@click.option("--mark-verified", is_flag=True,
+              help="Stamp imported probes as approved (default: unverified).")
+@click.option("--backup/--no-backup", default=True, show_default=True,
+              help="Back up the MFDB before a --replace push.")
+def push(staging, mfdb, replace, mark_verified, backup):
+    """Push a scraped staging spectra.db into the connected MFDB.
+
+    Scrapers write to their own staging DB; this is the explicit integration
+    (stage 3) step that pushes that scrape into the live MFDB.
+    """
+    import shutil
+
+    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.repository import MFDatabase
+    from chisurf.plugins._dev.fluorophore_db.mfdb_adapter import DEFAULT_DATABASE_PATH
+
+    staging = staging or str(DEFAULT_DATABASE_PATH)
+    target = mfdb or str(resolve_database_path())
+    if not Path(staging).exists():
+        click.echo(f"Staging DB not found: {staging}")
+        sys.exit(1)
+
+    if replace and backup and Path(target).exists():
+        bak = f"{target}.bak"
+        shutil.copy2(target, bak)
+        click.echo(f"  backed up MFDB -> {bak}")
+
+    click.echo(f"Pushing {staging} -> MFDB {target}" + (" (replace)" if replace else ""))
+    with MFDatabase(target) as db:
+        counts = db.import_reference_set(
+            source_path=staging, replace=replace, mark_verified=mark_verified,
+        )
+    if counts.get("purged"):
+        click.echo(f"  purged: {counts['purged']}")
+    click.echo(
+        f"  probes={counts['probes']} spectra={counts['spectra']} "
+        f"props={counts['optical_properties']} consolidated={counts.get('consolidated')}"
+    )
+    click.echo("Push complete.")
+
+
 if __name__ == "__main__":
     cli()
