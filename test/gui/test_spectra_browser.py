@@ -77,6 +77,38 @@ def test_browser_lists_and_shows_detail_on_selection(qapp):
     db.close()
 
 
+def test_spectra_tool_navigation_panels_build(qapp):
+    """The Spectra tool is a NavigationPanelTool whose panels all build."""
+    from qtpy import QtWidgets
+
+    from chisurf.gui.widgets.navigation import NavigationPanelTool
+    from chisurf.plugins.spectra_downloader.gui.tool import SpectraTool
+
+    db = _staging_db()
+    tool = SpectraTool(db)
+    assert isinstance(tool, NavigationPanelTool)
+    names = [p.get("name") for p in tool.panels]
+    assert names == ["Overview", "Browse", "Download"]
+    for i in range(len(tool.panels)):
+        tool.nav_list.setCurrentRow(i)
+        qapp.processEvents()
+        assert isinstance(tool.panels[i].get("instance"), QtWidgets.QWidget)
+    db.close()
+
+
+def test_overview_panel_counts(qapp):
+    from chisurf.plugins.spectra_downloader.gui.overview_panel import OverviewPanel
+
+    db = _staging_db()  # EGFP (protein) + SPCMxxA (detector)
+    panel = OverviewPanel(db)
+    import json
+    blob = json.loads(panel._json.toPlainText())
+    assert blob["by_category"].get("protein") == 1
+    assert blob["by_category"].get("detector") == 1
+    assert getattr(panel._form._model, "detectors") == "1"
+    db.close()
+
+
 def test_source_filter_and_push(qapp):
     import tempfile
 

@@ -1,0 +1,68 @@
+{
+  "sections": [
+    {
+      "type": "value",
+      "attr": "db_path",
+      "label": "Staging DB",
+      "kind": "str",
+      "read_only": true,
+      "description": "Path to the staging spectra database being summarised."
+    },
+    {
+      "type": "value",
+      "attr": "total",
+      "label": "Total components",
+      "kind": "str",
+      "read_only": true,
+      "description": "Number of components in the staging database."
+    },
+    {
+      "type": "value",
+      "attr": "with_spectra",
+      "label": "With spectra",
+      "kind": "str",
+      "read_only": true,
+      "description": "Components that carry at least one spectrum."
+    },
+    {
+      "type": "value",
+      "attr": "fluorophores",
+      "label": "Fluorophores",
+      "kind": "str",
+      "read_only": true,
+      "description": "Proteins + organic dyes + other fluorophores."
+    },
+    {
+      "type": "value",
+      "attr": "filters",
+      "label": "Filters",
+      "kind": "str",
+      "read_only": true,
+      "description": "Optical filters."
+    },
+    {
+      "type": "value",
+      "attr": "dichroics",
+      "label": "Dichroics",
+      "kind": "str",
+      "read_only": true,
+      "description": "Dichroic beamsplitters / mirrors."
+    },
+    {
+      "type": "value",
+      "attr": "detectors",
+      "label": "Detectors",
+      "kind": "str",
+      "read_only": true,
+      "description": "Cameras / SPADs / PMTs (quantum-efficiency curves)."
+    },
+    {
+      "type": "value",
+      "attr": "light_sources",
+      "label": "Light sources",
+      "kind": "str",
+      "read_only": true,
+      "description": "Lamps / LEDs / lasers."
+    }
+  ]
+}

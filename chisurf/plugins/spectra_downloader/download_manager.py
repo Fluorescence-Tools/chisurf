@@ -4,15 +4,17 @@ from pathlib import Path
 from qtpy import QtCore, QtGui, QtWidgets
 
 
-class DownloadManagerDialog(QtWidgets.QDialog):
-    """Dialog for running fluorophore-data download scripts."""
+class DownloadPanel(QtWidgets.QWidget):
+    """Run scrapers into the staging DB and push it to the MFDB.
+
+    A plain ``QWidget`` so it can live as a panel inside the Spectra tool's
+    navigation shell, or be wrapped in :class:`DownloadManagerDialog`.
+    """
 
     def __init__(self, db, parent=None):
-        """Create the dialog and populate available download scripts."""
+        """Create the panel and populate available download scripts."""
         super().__init__(parent)
         self.db = db
-        self.setWindowTitle("Spectra Downloader")
-        self.resize(600, 400)
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
@@ -67,10 +69,6 @@ class DownloadManagerDialog(QtWidgets.QDialog):
         font.setStyleHint(QtGui.QFont.Monospace)
         self.log_output.setFont(font)
         self.layout.addWidget(self.log_output)
-
-        self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Close)
-        self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
 
         self.scripts = self.get_available_download_scripts()
         for name in sorted(self.scripts.keys()):
@@ -203,3 +201,19 @@ class DownloadManagerDialog(QtWidgets.QDialog):
         self.process = None
         self.run_btn.setEnabled(True)
         self.push_btn.setEnabled(True)
+
+
+class DownloadManagerDialog(QtWidgets.QDialog):
+    """Standalone dialog wrapper around :class:`DownloadPanel` (back-compat)."""
+
+    def __init__(self, db, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Spectra Downloader")
+        self.resize(640, 460)
+        self.db = db
+        layout = QtWidgets.QVBoxLayout(self)
+        self.panel = DownloadPanel(db, self)
+        layout.addWidget(self.panel)
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)

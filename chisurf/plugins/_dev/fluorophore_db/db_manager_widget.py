@@ -1,41 +1,38 @@
 import numpy as np
-import pyqtgraph as pg
 from qtpy import QtWidgets, QtCore, QtGui
 from . import get_db
 
+from chisurf.gui.widgets.spectrum_view import SpectrumView
+
+
 class SpectrumPlotPopup(QtWidgets.QDialog):
+    """Spectra popup — renders with the shared :class:`SpectrumView`."""
+
     def __init__(self, db, probe_id, chromophore_name, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Spectra: {chromophore_name}")
         self.resize(700, 500)
         self.layout = QtWidgets.QVBoxLayout(self)
-        
-        self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground('w')
-        self.plot_widget.addLegend()
-        self.plot_widget.setLabel('bottom', 'Wavelength', units='nm')
-        self.plot_widget.setLabel('left', 'Intensity', units='a.u.')
-        self.layout.addWidget(self.plot_widget)
-        
+
+        self.spectrum_view = SpectrumView()
+        self.layout.addWidget(self.spectrum_view)
+
+        spectra = []
         with db:
-            # Plot Absorption
-            abs_spec = db.get_spectrum(probe_id, 'absorption')
-            if abs_spec:
-                wl, vals = abs_spec
-                y = np.array(vals, dtype=float)
-                if len(y) > 0 and np.max(y) > 0: y = y / np.max(y)
-                self.plot_widget.plot(wl, y, pen=pg.mkPen('b', width=2), name="Absorption")
-            
-            # Plot Emission
-            em_spec = db.get_spectrum(probe_id, 'emission')
-            if em_spec:
-                wl, vals = em_spec
-                y = np.array(vals, dtype=float)
-                if len(y) > 0 and np.max(y) > 0: y = y / np.max(y)
-                self.plot_widget.plot(wl, y, pen=pg.mkPen('r', width=2), name="Emission")
-            
-            if not abs_spec and not em_spec:
-                self.layout.addWidget(QtWidgets.QLabel("No spectra data found."))
+            for stype in ("absorption", "emission", "excitation", "transmission"):
+                spec = db.get_spectrum(probe_id, stype)
+                if spec:
+                    wl, vals = spec
+                    spectra.append({
+                        "spectrum_type": stype,
+                        "wavelengths": list(np.asarray(wl, dtype=float)),
+                        "intensity": list(np.asarray(vals, dtype=float)),
+                    })
+        self.spectrum_view.display({
+            "probe": {"chromophore_name": chromophore_name},
+            "spectra": spectra,
+            "optical_properties": [],
+        })
 
 class FluorophoreDBWidget(QtWidgets.QMainWindow):
     """Main curation interface for the Fluorophore Database."""

@@ -1,7 +1,7 @@
 {
   "name": "Spectra Downloader",
-  "version": "0.1.0",
-  "description": "Download fluorophore spectra from external databases",
+  "version": "0.2.0",
+  "description": "Download, browse and push optical-component spectra (fluorophores, filters, dichroics, detectors, light sources)",
   "status": "experimental",
   "entrypoints": {
     "gui": "chisurf.plugins.spectra_downloader:get_db",
