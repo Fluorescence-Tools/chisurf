@@ -9,6 +9,43 @@ prompt for authorized users.
 
 from __future__ import annotations
 
+# Process-wide MFDB session cache. The first successful login (e.g. in
+# mfdb-admin) stores its token here; every other surface in the same ChiSurf
+# process (re-opening mfdb-admin, the spectra scraper's "Add to MFDB") reuses it
+# so the user is not asked for a password again. Keyed loosely by endpoint.
+_SESSION: dict = {
+    "user": None, "token": None,
+    "host": "127.0.0.1", "cmd_port": 8765, "pub_port": 8766,
+}
+
+
+def cache_session(user: str, token: str | None, host: str = "127.0.0.1",
+                  cmd_port: int = 8765, pub_port: int = 8766) -> None:
+    """Remember an authenticated MFDB session for reuse across the process."""
+    _SESSION.update(
+        user=user, token=token, host=host,
+        cmd_port=int(cmd_port), pub_port=int(pub_port),
+    )
+
+
+def cached_token(host: str = "127.0.0.1", cmd_port: int = 8765, pub_port: int = 8766) -> str | None:
+    """Return a cached token for this endpoint, or ``None``."""
+    if (_SESSION.get("token")
+            and _SESSION.get("host") == host
+            and int(_SESSION.get("cmd_port") or 0) == int(cmd_port)):
+        return _SESSION["token"]
+    return None
+
+
+def cached_user() -> str | None:
+    """Return the user of the cached session, if any."""
+    return _SESSION.get("user")
+
+
+def clear_cached_session() -> None:
+    """Forget the cached session (on logout)."""
+    _SESSION.update(user=None, token=None)
+
 
 def active_user_id() -> str:
     """Return the active MFDB user id from settings (default ``user_default``)."""

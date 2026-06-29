@@ -523,16 +523,34 @@ class MFDBWidget(NavigationPanelTool):
         password : str, optional
             Password to use for authentication. If not provided, tries passwordless login first.
         """
+        from chisurf.plugins.core.mfdb_admin.gui.session import (
+            cache_session,
+            cached_token,
+            cached_user,
+        )
+
         if getattr(self.client, "token", None):
             self._auth_login_user = getattr(self.client, "_auth_user_id", None)
             return
-            
+
+        # SSO: reuse a session token cached earlier in this ChiSurf process
+        # (e.g. a previous mfdb-admin login). No password prompt if already
+        # authenticated this session.
+        _host = getattr(self.client, "host", "127.0.0.1")
+        _cmd = getattr(self.client, "cmd_port", 8765)
+        _pub = getattr(self.client, "pub_port", 8766)
+        token = cached_token(_host, _cmd, _pub)
+        if token:
+            self.client.token = token
+            self._auth_login_user = cached_user()
+            return
+
         user_id = username or self._active_mfdb_user_id()
         if not user_id:
             return
-        
+
         client_metadata = {"name": "mfdb-admin", "host": "local"}
-        
+
         # Try with provided password first, or passwordless if no password provided
         try:
             result = self.client.login(
@@ -540,9 +558,10 @@ class MFDBWidget(NavigationPanelTool):
             )
         except Exception:
             result = {}
-            
+
         if isinstance(result, dict) and result.get("ok"):
             self._auth_login_user = user_id
+            cache_session(user_id, getattr(self.client, "token", None), _host, _cmd, _pub)
             return
             
         # Only show error if password was explicitly provided and non-empty
@@ -597,6 +616,12 @@ class MFDBWidget(NavigationPanelTool):
                 continue
             if isinstance(result, dict) and result.get("ok"):
                 self._auth_login_user = user_id
+                cache_session(
+                    user_id, getattr(self.client, "token", None),
+                    getattr(self.client, "host", "127.0.0.1"),
+                    getattr(self.client, "cmd_port", 8765),
+                    getattr(self.client, "pub_port", 8766),
+                )
                 return
             QtWidgets.QMessageBox.warning(
                 self,
@@ -1496,66 +1521,31 @@ class MFDBWidget(NavigationPanelTool):
         toolbar = self.addToolBar("mfdb-admin")
         toolbar.setObjectName("mfdbPluginToolBar")
 
-        toolbar.addWidget(QtWidgets.QLabel(" 🌐 "))
-        # Server and port fields
-        server_layout = QtWidgets.QHBoxLayout()
-        server_layout.setContentsMargins(0, 0, 0, 0)
-        server_layout.setSpacing(2)
-        
-        # Load server and port from settings
+        # Connection state lives in hidden widgets; the visible connection UI is
+        # the AutoForm login dialog (single-line password, foldable endpoint).
         import chisurf.core.settings as cs_settings
         mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
         last_server = mfdb_settings.get("last_server", "127.0.0.1")
         last_port = mfdb_settings.get("last_port", 8765)
-        
-        self.server_edit = QtWidgets.QLineEdit()
-        self.server_edit.setText(last_server)
-        self.server_edit.setPlaceholderText("127.0.0.1")
-        self.server_edit.setFixedWidth(140)
-        self.server_edit.setToolTip("MFDB server host")
-        self.server_edit.returnPressed.connect(self._on_login_clicked)
+
+        self.server_edit = QtWidgets.QLineEdit(last_server)
         self.port_spin = QtWidgets.QSpinBox()
         self.port_spin.setRange(1, 65535)
         self.port_spin.setValue(int(last_port))
-        self.port_spin.setFixedWidth(60)
-        self.port_spin.setToolTip("MFDB server port")
-        server_layout.addWidget(self.server_edit)
-        server_layout.addWidget(self.port_spin)
-        
-        # Container widget for the layout
-        server_container = QtWidgets.QWidget()
-        server_container.setLayout(server_layout)
-        toolbar.addWidget(server_container)
-        
-        # Keep url_edit for backwards compatibility with existing code
-        self.url_edit = QtWidgets.QLineEdit()
-        self.url_edit.setText(self.DEFAULT_URL)
-
-        toolbar.addSeparator()
-        toolbar.addWidget(QtWidgets.QLabel(" 👤 "))
         self.username_edit = QtWidgets.QLineEdit()
-        self.username_edit.setFixedWidth(120)
-        self.username_edit.setToolTip("MFDB username")
-        self.username_edit.returnPressed.connect(self._on_login_clicked)
-        toolbar.addWidget(self.username_edit)
-
-        toolbar.addWidget(QtWidgets.QLabel(" 🔑 "))
         self.password_edit = QtWidgets.QLineEdit()
-        self.password_edit.setFixedWidth(120)
         self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.password_edit.setToolTip("MFDB password (not required if already logged in on remote)")
-        self.password_edit.returnPressed.connect(self._on_login_clicked)
-        toolbar.addWidget(self.password_edit)
+        self.url_edit = QtWidgets.QLineEdit(self.DEFAULT_URL)
 
-        self.login_action = toolbar.addAction("🔐 Login", self._on_login_clicked)
-        self.logout_action = toolbar.addAction("🚪 Logout", self._on_logout_clicked)
-        self.login_action.setToolTip("Connect and authenticate at the URL above")
-        self.logout_action.setToolTip("Drop the current MFDB session")
-
-        toolbar.addSeparator()
+        # Visible: status + a single Connect button (opens the AutoForm dialog).
+        toolbar.addWidget(QtWidgets.QLabel(" 🌐 "))
         self.user_label = QtWidgets.QLabel(" (not connected) ")
         self.user_label.setStyleSheet("color: #888; padding: 0 6px;")
         toolbar.addWidget(self.user_label)
+        self.login_action = toolbar.addAction("🔐 Connect…", self._open_connection_dialog)
+        self.logout_action = toolbar.addAction("🚪 Logout", self._on_logout_clicked)
+        self.login_action.setToolTip("Connect / authenticate (host, user, password)")
+        self.logout_action.setToolTip("Drop the current MFDB session")
 
         toolbar.addSeparator()
         # Add expanding spacer to push transport actions to the right
@@ -1615,9 +1605,10 @@ class MFDBWidget(NavigationPanelTool):
             self.user_label.setStyleSheet("color: #ffc107; padding: 0 6px; font-weight: bold;")
             self.user_label.setToolTip("Connecting...")
         elif logged_in:
-            self.user_label.setText(" ● ")
+            who = self._auth_login_user or ""
+            self.user_label.setText(f" ● {who} ".rstrip() + " ")
             self.user_label.setStyleSheet("color: #2e7d32; padding: 0 6px; font-weight: bold;")
-            self.user_label.setToolTip("Connected")
+            self.user_label.setToolTip(f"Connected as {who}" if who else "Connected")
             # Update username field with the logged-in user
             if self._auth_login_user:
                 self.username_edit.setText(self._auth_login_user)
@@ -1638,6 +1629,27 @@ class MFDBWidget(NavigationPanelTool):
             # Fall back to default user from settings
             default_user = self._active_mfdb_user_id()
             self.username_edit.setText(default_user)
+
+    def _open_connection_dialog(self) -> None:
+        """Open the AutoForm login dialog, then connect with its values."""
+        from chisurf.plugins.core.mfdb_admin.gui.connection_dialog import ConnectionAuthDialog
+
+        user = self.username_edit.text() or self._active_mfdb_user_id()
+        dialog = ConnectionAuthDialog(
+            user=user,
+            host=self.server_edit.text() or "127.0.0.1",
+            cmd_port=self.port_spin.value(),
+            pub_port=self.port_spin.value() + 1,
+            parent=self,
+        )
+        if dialog.exec_() != QtWidgets.QDialog.Accepted:
+            return
+        v = dialog.values()
+        self.server_edit.setText(v["host"])
+        self.port_spin.setValue(int(v["cmd_port"]))
+        self.username_edit.setText(v["user"])
+        self.password_edit.setText(v["password"])
+        self._on_login_clicked()
 
     def _on_login_clicked(self) -> None:
         """Reconnect the client at the URL in the toolbar and authenticate."""
@@ -1689,6 +1701,9 @@ class MFDBWidget(NavigationPanelTool):
             self.client.token = None
         except Exception:
             chisurf.logging.warning("_on_logout_clicked(self) -> None: %s", _exc)
+        from chisurf.plugins.core.mfdb_admin.gui.session import clear_cached_session
+
+        clear_cached_session()
         self._auth_login_user = None
         self._update_login_actions(logged_in=False)
         self.status_label.setText("Logged out.")

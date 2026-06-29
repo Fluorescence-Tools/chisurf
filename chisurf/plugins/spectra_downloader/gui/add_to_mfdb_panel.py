@@ -121,16 +121,26 @@ class AddToMfdbPanel(QtWidgets.QWidget):
     def _server_client(self):
         """Authenticated MFDB client for the configured server (session-first)."""
         from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.session import cache_session, cached_token
 
         m = self._model
-        client = MFDBClient(host=m.host, cmd_port=int(m.cmd_port), pub_port=int(m.pub_port))
-        # Session-first: try a passwordless login as the session user; only use
-        # the Advanced password if that is rejected.
+        host, cmd, pub = m.host, int(m.cmd_port), int(m.pub_port)
+        client = MFDBClient(host=host, cmd_port=cmd, pub_port=pub)
+
+        # SSO: reuse a session token cached earlier this ChiSurf session (e.g.
+        # from a previous mfdb-admin login) — no password needed.
+        token = cached_token(host, cmd, pub)
+        if token:
+            client.token = token
+            return client
+
+        # Otherwise try a passwordless login; fall back to the Advanced password.
         try:
-            client.login(self._user(), m.password or "")
+            result = client.login(self._user(), m.password or "")
         except Exception:
-            if m.password:
-                client.login(self._user(), m.password)
+            result = client.login(self._user(), m.password) if m.password else {}
+        if isinstance(result, dict) and result.get("ok"):
+            cache_session(self._user(), client.token, host, cmd, pub)
         return client
 
     # -- actions -------------------------------------------------------------
