@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -62,11 +63,9 @@ QT_DROP_TOKENS = (
     "RemoteObjects", "Gamepad", "SerialPort", "SerialBus", "Nfc",
 )
 
-# Bundled test suites of large packages — safe to drop at runtime.
-TEST_DIR_GLOBS = (
-    "numpy/**/tests", "scipy/**/tests", "pandas/tests", "numba/**/tests",
-    "skimage/**/tests", "mdtraj/tests", "matplotlib/tests", "sklearn/**/tests",
-)
+# Packages whose bundled "tests" dirs are safe to drop (NOT tables/pytables,
+# which imports its tests at runtime).
+TEST_PKGS = ("numpy", "scipy", "pandas", "numba", "skimage", "mdtraj", "matplotlib", "sklearn")
 
 # Build tools pulled in only to compile modules/* during assembly; removed after.
 BUILD_TOOLS_TO_REMOVE = ("cmake", "ninja", "swig", "cython", "pythran", "vs2022_win-64", "doxygen")
@@ -88,15 +87,38 @@ def rmtree(p: Path) -> None:
         shutil.rmtree(p, ignore_errors=True)
 
 
+# NOTE: all traversal uses os.walk(followlinks=False). Path.rglob("**") follows
+# symlinked directories on Python 3.12, and conda envs can contain symlink cycles
+# -> infinite recursion -> C-stack overflow -> SIGSEGV. os.walk is iterative and
+# does not follow symlinks here.
+def _walk_files(root: Path):
+    for dp, _dns, fns in os.walk(root, followlinks=False):
+        for fn in fns:
+            yield Path(dp) / fn
+
+
+def _walk_dirs(root: Path):
+    for dp, dns, _fns in os.walk(root, followlinks=False):
+        for dn in dns:
+            yield Path(dp) / dn
+
+
 def du_mb(p: Path) -> float:
     total = 0
-    for f in p.rglob("*"):
+    for f in _walk_files(p):
         try:
-            if f.is_file() and not f.is_symlink():
+            if not f.is_symlink():
                 total += f.stat().st_size
         except OSError:
             pass
     return total / (1024 * 1024)
+
+
+def _render_template(text: str, params: dict) -> str:
+    """Minimal {{ VAR }} substitution (no jinja2 dependency). Single pass, so
+    substituted values containing braces (e.g. the Inno {{GUID}} AppId) are not
+    re-scanned, and Inno's own {app}/{group} single-brace tokens are untouched."""
+    return re.sub(r"\{\{\s*(\w+)\s*\}\}", lambda m: str(params[m.group(1)]), text)
 
 
 def load_info() -> dict:
@@ -177,7 +199,7 @@ def make_runtime(prefix: Path, *, conda_extras: list[str], pip_nodeps: list[str]
     _install_imp_tricks(py, env)
 
     for mod in sorted(MODULES_DIR.iterdir()):
-        if mod.name == "imp-tricks":
+        if mod.name in ("imp-tricks", "tttrconvert"):  # imp-tricks installed above; tttrconvert is retired
             continue
         if (mod / "setup.py").exists() or (mod / "pyproject.toml").exists():
             run([py, "-m", "pip", "install", mod, "--no-deps"], env=env)
@@ -210,24 +232,20 @@ def strip_bloat(prefix: Path) -> None:
 
     for rel in ("include", "share/doc", "share/man", "share/info", "conda-meta", "man"):
         rmtree(prefix / rel)
-    for pat in ("**/*.a", "**/*.la"):
-        for f in prefix.glob(pat):
+    for f in _walk_files(prefix):
+        if f.suffix in (".a", ".la") or (IS_WIN and f.suffix == ".lib"):
             f.unlink(missing_ok=True)
-    if IS_WIN:
-        libdir = prefix / "Library" / "lib"
-        if libdir.exists():
-            for f in libdir.glob("**/*.lib"):
-                f.unlink(missing_ok=True)
-    for d in prefix.rglob("__pycache__"):
+    for d in [d for d in _walk_dirs(prefix) if d.name == "__pycache__"]:
         rmtree(d)
     rmtree(sp / "pip")
     rmtree(sp / "wheel")
 
     _strip_qt(prefix, sp)
 
-    for g in TEST_DIR_GLOBS:
-        for d in sp.glob(g):
-            if d.is_dir():
+    for pkg in TEST_PKGS:
+        pkg_dir = sp / pkg
+        if pkg_dir.exists():
+            for d in [d for d in _walk_dirs(pkg_dir) if d.name == "tests"]:
                 rmtree(d)
 
     if not IS_WIN:
@@ -238,26 +256,24 @@ def strip_bloat(prefix: Path) -> None:
 
 
 def _strip_qt(prefix: Path, sp: Path) -> None:
+    drop = tuple(t.lower() for t in QT_DROP_TOKENS)
     roots = [prefix / "lib", prefix / "Library" / "bin", prefix / "Library" / "lib",
              prefix / "Library" / "plugins", prefix / "plugins", sp / "PyQt5"]
     for root in roots:
         if not root.exists():
             continue
-        for f in list(root.rglob("*")):
-            if f.is_dir() or not f.exists():
-                continue
-            if any(tok.lower() in f.name.lower() for tok in QT_DROP_TOKENS):
+        for f in list(_walk_files(root)):
+            low = f.name.lower()
+            if any(tok in low for tok in drop):
                 f.unlink(missing_ok=True)
     for root in (prefix / "lib", prefix / "Library", sp / "PyQt5"):
         if not root.exists():
             continue
-        for sub in ("qml", "translations"):
-            for d in root.rglob(sub):
-                if d.is_dir():
-                    rmtree(d)
-    for pat in ("QtWebEngineProcess*", "qtwebengine_*"):
-        for d in prefix.rglob(pat):
+        for d in [d for d in _walk_dirs(root) if d.name in ("qml", "translations")]:
             rmtree(d)
+    for d in [d for d in _walk_dirs(prefix)
+              if d.name.startswith("QtWebEngineProcess") or d.name.startswith("qtwebengine_")]:
+        rmtree(d)
 
 
 def _strip_symbols(prefix: Path) -> None:
@@ -266,8 +282,8 @@ def _strip_symbols(prefix: Path) -> None:
         return
     args = ["-x"] if IS_MAC else ["--strip-unneeded"]
     count = 0
-    for f in prefix.rglob("*"):
-        if f.is_file() and not f.is_symlink() and f.suffix in (".so", ".dylib"):
+    for f in _walk_files(prefix):
+        if not f.is_symlink() and f.suffix in (".so", ".dylib"):
             subprocess.run([strip_bin, *args, str(f)],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
             count += 1
@@ -353,8 +369,6 @@ def package_linux(version: str, info: dict) -> Path:
 
 
 def package_windows(version: str, info: dict) -> Path:
-    import jinja2
-
     prefix = DIST / "win"
     make_runtime(prefix,
                  conda_extras=["cmake<3.27", "ninja", "eigen", "pybind11", "swig", "cython",
@@ -375,7 +389,7 @@ def package_windows(version: str, info: dict) -> Path:
         "App_dir": str(prefix),
         "SetupIconFile": str(icon),
     }
-    iss = jinja2.Template((WIN_DIR / "setup_template.jinja2").read_text()).render(**params)
+    iss = _render_template((WIN_DIR / "setup_template.jinja2").read_text(), params)
     iss_path = WIN_DIR / "installer_config.iss"
     iss_path.write_text(iss)
     try:
@@ -483,7 +497,7 @@ def _audit(target: str) -> None:
     prefix = {"macos": DIST / "osx", "linux": DIST / "linux" / "runtime", "windows": DIST / "win"}[target]
     if not prefix.exists():
         return
-    sizes = [(du_mb(d), d) for d in prefix.rglob("*") if d.is_dir()]
+    sizes = [(du_mb(d), d) for d in _walk_dirs(prefix)]
     sizes.sort(reverse=True)
     print("\n[audit] largest directories:")
     for mb, d in sizes[:30]:
