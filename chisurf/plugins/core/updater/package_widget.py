@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Set
 import logging
 
@@ -68,12 +69,16 @@ class PackageWorker(QThread):
             logger.error(f"Error in PackageWorker: {e}")
             self.finished.emit(False, None, str(e))
 
-class PackageManagerDialog(QDialog):
+class PackageManagerWidget(QWidget):
     """
-    A dialog for managing packages, environments, and channels.
+    An embeddable widget for managing packages, environments, and channels.
+
+    This is the reusable panel used both as a standalone window and inside the
+    unified Settings dialog. :class:`PackageManagerDialog` wraps it as a modal
+    dialog for backwards compatibility.
     """
     def __init__(self, parent=None):
-        """Initialize the dialog, create the ``PackageManager`` and load initial data.
+        """Initialize the widget, create the ``PackageManager`` and load initial data.
 
         Parameters
         ----------
@@ -81,8 +86,6 @@ class PackageManagerDialog(QDialog):
             The parent widget.
         """
         super().__init__(parent)
-        self.setWindowTitle("ChiSurf Package Manager")
-        self.resize(800, 600)
 
         # Initialize the package manager
         self.manager = PackageManager()
@@ -136,10 +139,6 @@ class PackageManagerDialog(QDialog):
         button_box.addWidget(refresh_btn)
 
         button_box.addStretch()
-
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
-        button_box.addWidget(close_btn)
 
         layout.addLayout(button_box)
 
@@ -668,3 +667,37 @@ class PackageManagerDialog(QDialog):
         worker.finished.connect(self._on_operation_finished)
         self._op_worker = worker
         worker.start()
+
+
+class PackageManagerDialog(QDialog):
+    """Modal dialog wrapper around :class:`PackageManagerWidget`.
+
+    Retained for backwards compatibility (standalone "Package Manager" window).
+    The actual UI lives in :class:`PackageManagerWidget`, which is also embedded
+    as a panel in the unified Settings dialog.
+    """
+
+    def __init__(self, parent=None):
+        """Build the dialog and embed a :class:`PackageManagerWidget`.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
+        super().__init__(parent)
+        self.setWindowTitle("ChiSurf Package Manager")
+        self.resize(800, 600)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.widget = PackageManagerWidget(self)
+        layout.addWidget(self.widget)
+
+        button_box = QHBoxLayout()
+        button_box.addStretch()
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        button_box.addWidget(close_btn)
+        layout.addLayout(button_box)

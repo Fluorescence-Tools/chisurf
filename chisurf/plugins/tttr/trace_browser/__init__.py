@@ -18,8 +18,6 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-import pyqtgraph as pg
-
 from qtpy.QtWidgets import (
     QApplication,
     QWidget,
@@ -49,6 +47,8 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, QEvent, QSize, QTimer, Signal
 from qtpy.QtGui import QPainter, QColor, QFont
+
+from chisurf.gui.widgets.fitting.scientific_spinbox import ScientificDoubleSpinBox
 
 from chisurf.core.plugin import load_manifest
 from chisurf.plugins.tttr.trace_browser.gui.client import TraceBrowserClient
@@ -525,9 +525,9 @@ class TraceBrowser(QWidget):
         self.window_ms_spin.valueChanged.connect(self._on_window_changed)
         ctrl_row.addWidget(self.window_ms_spin)
 
-        # Y-range controls (pyqtgraph SpinBox) - place Ymin above Ymax
+        # Y-range controls - place Ymin above Ymax
         ymin_label = QLabel("Ymin:", self.page1)
-        self.y_min_spin = pg.SpinBox(self.page1)
+        self.y_min_spin = ScientificDoubleSpinBox(self.page1)
         self.y_min_spin.setRange(-1e9, 1e12)
         self.y_min_spin.setDecimals(0)
         self.y_min_spin.setValue(0)
@@ -545,7 +545,7 @@ class TraceBrowser(QWidget):
             pass
 
         ymax_label = QLabel("Ymax:", self.page1)
-        self.y_max_spin = pg.SpinBox(self.page1)
+        self.y_max_spin = ScientificDoubleSpinBox(self.page1)
         self.y_max_spin.setRange(-1e9, 1e12)
         self.y_max_spin.setDecimals(0)
         self.y_max_spin.setValue(1000)

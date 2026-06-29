@@ -10,11 +10,14 @@ from typing import Any
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.core.mfdb.repository import MFDatabase
+from chisurf.core.settings import cs_settings
 from chisurf.plugins.core.lightpath_simulator.core.workflow import (
     MFDatabaseAdapter,
     _simulate_with_db,
     resolve_db_path,
 )
+
+from chisurf.gui.widgets.filtered_table import FilteredTableWidget
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +44,22 @@ def _normalize_pid(pid):
 def _make_combo(parent, probes, filter_key):
     combo = QtWidgets.QComboBox(parent)
     combo.setEditable(True)
+    combo.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+    if combo.completer():
+        combo.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        combo.completer().setFilterMode(QtCore.Qt.MatchContains)
     combo.addItem("None", None)
     for p in probes:
-        if p.get(filter_key):
+        match = False
+        if not filter_key:
+            match = True
+        elif filter_key.startswith("category:"):
+            cats = filter_key.split(":", 1)[1].split(",")
+            match = p.get("category") in cats
+        else:
+            match = bool(p.get(filter_key))
+            
+        if match:
             combo.addItem(p["name"], p["probe_id"])
     return combo
 
@@ -172,53 +188,48 @@ def _make_combo(parent, probes, filter_key):
 
 
 class _SingleProbeTable(QtWidgets.QWidget):
-    """Compact single-select probe table with spectra tooltips."""
+    """Compact single-select probe table with spectra tooltips using filterable table."""
 
     changed = QtCore.Signal()
 
-    def __init__(self, probes, db_path=None, filter_key=None, parent=None, show_header=True):
+    def __init__(self, probes, db_path=None, filter_key=None, parent=None, show_header=True, header_text="Probe"):
         super().__init__(parent)
         self.probes = probes
         self._db_path = db_path
         self._filter_key = filter_key
-        self._db_adapter = None
-        self._db_opened = False
-        self._show_header = show_header
+        self._header_text = header_text
         self._setup_ui()
+        self.populate()  # Populate table on creation
 
     def _setup_ui(self):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
 
-        self.table = QtWidgets.QTableWidget()
-        self.table.setColumnCount(1)
-        self.table.setHorizontalHeaderLabels(["Probe"])
-        self.table.setStyleSheet("""
-            QTableWidget { background: #1a1a1a; border: 1px solid #444; color: #eee; gridline-color: #333; font-size: 9px; }
-            QHeaderView::section { background: #2a2a2a; padding: 1px; border: 1px solid #444; font-size: 8px; color: #999; }
-            QTableWidget::item { padding: 0px; }
-            QTableWidget::item:selected { background: #3a6ea5; }
-        """)
-        hh = self.table.horizontalHeader()
-        hh.setVisible(self._show_header)
-        hh.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        vh = self.table.verticalHeader()
-        vh.setVisible(False)
-        vh.setDefaultSectionSize(16)
-        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
-        )
-        layout.addWidget(self.table)
-        self.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
-        )
-        self.table.itemSelectionChanged.connect(self.changed.emit)
-        self.populate()
+        self.filtered_table = FilteredTableWidget(parent=self)
+        self.filtered_table.set_item_factory(lambda item, key: _SpectraTooltipItem(
+            name=item.get("name", ""),
+            key=key,
+            render_fn=self._tooltip_html
+        ))
+        self.filtered_table.selectionChanged.connect(self.changed.emit)
+        layout.addWidget(self.filtered_table)
+
+    def _tooltip_html(self, key: int) -> str:
+        img = _render_spectra_thumbnail(key, self._ensure_db_adapter())
+        if not img:
+            return ""
+        name = ""
+        for p in self.probes:
+            if p.get("probe_id") == key:
+                name = p.get("name", "")
+                break
+        return f"<div style='text-align:center'><b>{name}</b><br>{img}</div>"
 
     def _ensure_db_adapter(self):
+        if not hasattr(self, "_db_adapter"):
+            self._db_adapter = None
+            self._db_opened = False
         if not self._db_opened and self._db_path:
             self._db_opened = True
             try:
@@ -227,55 +238,37 @@ class _SingleProbeTable(QtWidgets.QWidget):
                 self._db_adapter = None
         return self._db_adapter
 
-    def _tooltip_html(self, probe_id: int) -> str:
-        img = _render_spectra_thumbnail(probe_id, self._ensure_db_adapter())
-        if not img:
-            return ""
-        name = ""
-        for p in self.probes:
-            if p.get("probe_id") == probe_id:
-                name = p.get("name", "")
-                break
-        return f"<div style='text-align:center'><b>{name}</b><br>{img}</div>"
-
     def populate(self, selected_probe_id=None):
-        self.table.blockSignals(True)
-        self.table.setRowCount(0)
-        valid = [(p["probe_id"], p["name"]) for p in self.probes
-                 if not self._filter_key or p.get(self._filter_key)]
-        self.table.setRowCount(len(valid))
-        for row, (pid, name) in enumerate(valid):
-            item = _SpectraTooltipItem(name, pid, render_fn=self._tooltip_html)
-            item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            self.table.setItem(row, 0, item)
-            item.setData(QtCore.Qt.UserRole, pid)
-            if selected_probe_id is not None and _normalize_pid(pid) == _normalize_pid(selected_probe_id):
-                self.table.selectRow(row)
-        self.table.blockSignals(False)
+        # Filter probes by filter_key if specified
+        if self._filter_key:
+            if self._filter_key.startswith("category:"):
+                cats = self._filter_key.split(":", 1)[1].split(",")
+                items = [p for p in self.probes if p.get("category") in cats]
+            else:
+                items = [p for p in self.probes if p.get(self._filter_key)]
+        else:
+            items = self.probes
+        self.filtered_table.set_data(items, key_fn=lambda x: x.get("probe_id"))
+        self.filtered_table.set_filter_fn(lambda item, text: text.lower() in item.get("name", "").lower())
+        self.filtered_table.set_selected(selected_probe_id)
 
     def get_selected_probe_id(self):
-        rows = self.table.selectionModel().selectedRows()
-        if rows:
-            item = self.table.item(rows[0].row(), 0)
-            if item is not None:
-                return item.data(QtCore.Qt.UserRole)
-        return None
+        return self.filtered_table.get_selected()
 
     def set_selected_probe_id(self, pid):
-        pid = _normalize_pid(pid)
-        for row in range(self.table.rowCount()):
-            item = self.table.item(row, 0)
-            if item is not None and item.data(QtCore.Qt.UserRole) == pid:
-                self.table.selectRow(row)
-                return
+        self.filtered_table.set_selected(pid)
 
     def close_db(self):
-        if self._db_adapter is not None:
+        if hasattr(self, "_db_adapter") and self._db_adapter is not None:
             try:
                 self._db_adapter.db.close()
             except Exception:
                 pass
             self._db_adapter = None
+
+    def set_header_text(self, text: str) -> None:
+        """Change the table column header text (acts as the row label)."""
+        self.filtered_table.table.setHorizontalHeaderLabels([text])
 
 
 # ---------------------------------------------------------------------------
@@ -949,113 +942,34 @@ def load_last_config() -> dict | None:
 
 
 # ---------------------------------------------------------------------------
-# Sub-widgets
+# Settings persistence
 # ---------------------------------------------------------------------------
 
-class _SpectraTooltipItem(QtWidgets.QTableWidgetItem):
-    """QLabel-style item that lazily renders spectra tooltip on first hover."""
 
-    def __init__(self, text: str, probe_id: int, render_fn=None):
-        super().__init__(text)
-        self._probe_id = probe_id
-        self._render_fn = render_fn
-        self._cached_html = None
+def _persist_fret_setting(key: str, value: float) -> None:
+    """Persist a single fret setting to the user's YAML and in-memory dict."""
+    cs_settings.setdefault("fret", {})[key] = value
+    try:
+        from chisurf.core.settings.path_utils import get_path
+        import yaml
+        settings_file = get_path("settings") / "settings_chisurf.yaml"
+        data = {}
+        try:
+            with open(settings_file) as fh:
+                data = yaml.safe_load(fh) or {}
+        except Exception:
+            pass
+        fret = data.setdefault("fret", {})
+        fret[key] = value
+        with open(settings_file, "w") as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+    except Exception as exc:
+        logger.warning("Failed to persist fret setting %s: %s", key, exc)
 
-    def data(self, role):
-        if role == QtCore.Qt.ToolTipRole:
-            if self._cached_html is None and self._render_fn is not None:
-                self._cached_html = self._render_fn(self._probe_id) or ""
-            return self._cached_html
-        return super().data(role)
 
-
-def _render_spectra_thumbnail(probe_id: int, adapter: MFDatabaseAdapter | None) -> str:
-    """Render abs/em spectra as a small PNG embedded in an HTML img tag."""
-    if adapter is None:
-        return ""
-    abs_spec = adapter.get_probe_spectrum(probe_id, "absorption")
-    em_spec = adapter.get_probe_spectrum(probe_id, "emission")
-    if not abs_spec and not em_spec:
-        return ""
-
-    w, h = 300, 130
-    pm = QtGui.QPixmap(w, h)
-    pm.fill(QtCore.Qt.transparent)
-    p = QtGui.QPainter(pm)
-    p.setRenderHint(QtGui.QPainter.Antialiasing)
-
-    ml, mr, mt, mb = 10, 10, 5, 16
-    pw = w - ml - mr
-    ph = h - mt - mb
-
-    all_wl = []
-    if abs_spec:
-        all_wl.extend(abs_spec[0])
-    if em_spec:
-        all_wl.extend(em_spec[0])
-    if not all_wl:
-        p.end()
-        return ""
-
-    x_min, x_max = min(all_wl), max(all_wl)
-    x_range = x_max - x_min or 1
-
-    def to_px(wl):
-        return ml + (wl - x_min) / x_range * pw
-
-    pen = QtGui.QPen(QtGui.QColor("#555"))
-    p.setPen(pen)
-    p.drawLine(ml, mt, ml, h - mb)
-    p.drawLine(ml, h - mb, w - mr, h - mb)
-
-    if abs_spec:
-        pen = QtGui.QPen(QtGui.QColor("#4488ff"), 1.5)
-        p.setPen(pen)
-        wl, vals = abs_spec
-        vmax = max(vals) if max(vals) > 0 else 1
-        for i in range(len(wl) - 1):
-            p.drawLine(
-                int(to_px(wl[i])), int(h - mb - (vals[i] / vmax) * ph),
-                int(to_px(wl[i + 1])), int(h - mb - (vals[i + 1] / vmax) * ph),
-            )
-
-    if em_spec:
-        pen = QtGui.QPen(QtGui.QColor("#ff4444"), 1.5)
-        p.setPen(pen)
-        wl, vals = em_spec
-        vmax = max(vals) if max(vals) > 0 else 1
-        for i in range(len(wl) - 1):
-            p.drawLine(
-                int(to_px(wl[i])), int(h - mb - (vals[i] / vmax) * ph),
-                int(to_px(wl[i + 1])), int(h - mb - (vals[i + 1] / vmax) * ph),
-            )
-
-    # X-axis tick labels
-    tick_step = 50
-    tick_start = ((int(x_min) + tick_step - 1) // tick_step) * tick_step
-    fnt = p.font()
-    fnt.setPointSize(7)
-    p.setFont(fnt)
-    pen = QtGui.QPen(QtGui.QColor("#aaa"))
-    p.setPen(pen)
-    for wl in range(tick_start, int(x_max) + 1, tick_step):
-        if wl < x_min or wl > x_max:
-            continue
-        x = int(to_px(wl))
-        p.drawLine(x, h - mb, x, h - mb + 3)
-        txt = str(wl)
-        text_rect = p.boundingRect(QtCore.QRect(0, 0, 0, 0), QtCore.Qt.AlignCenter, txt)
-        p.drawText(x - text_rect.width() // 2, h - 2, txt)
-
-    p.end()
-
-    ba = QtCore.QByteArray()
-    buf = QtCore.QBuffer(ba)
-    buf.open(QtCore.QIODevice.WriteOnly)
-    pm.save(buf, "PNG")
-    buf.close()
-    b64 = ba.toBase64().data().decode()
-    return f'<img src="data:image/png;base64,{b64}" width="{w}" height="{h}">'
+# ---------------------------------------------------------------------------
+# Sub-widgets
+# ---------------------------------------------------------------------------
 
 
 class _DyeTableWidget(QtWidgets.QWidget):
@@ -1242,7 +1156,7 @@ class _EmissionSplitterTableWidget(QtWidgets.QWidget):
             type_cb.setCurrentIndex(idx)
         type_cb.currentIndexChanged.connect(self.changed.emit)
         self.table.setCellWidget(row, 0, type_cb)
-        probe_cb = _make_combo(self.table, self.probes, "has_trans")
+        probe_cb = _make_combo(self.table, self.probes, "category:dichroic,polarizer")
         _set_combo(probe_cb, probe_id)
         probe_cb.currentIndexChanged.connect(self.changed.emit)
         self.table.setCellWidget(row, 1, probe_cb)
@@ -1314,8 +1228,8 @@ class _DetectorTableWidget(QtWidgets.QWidget):
             parts = [r for r in range(self.table.rowCount())]
             name = f"Channel {len(parts)}"
         self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(name))
-        bp = _make_combo(self.table, self.probes, "has_trans")
-        qe = _make_combo(self.table, self.probes, "has_qe")
+        bp = _make_combo(self.table, self.probes, "category:filter")
+        qe = _make_combo(self.table, self.probes, "category:detector")
         _set_combo(bp, bp_pid)
         _set_combo(qe, qe_pid)
         bp.currentIndexChanged.connect(self.changed.emit)
@@ -1362,6 +1276,10 @@ class _DetectorTableWidget(QtWidgets.QWidget):
 
 
 from chisurf.gui.widgets.collapsible_box import CollapsibleBox as _CollapsibleBox
+from chisurf.gui.widgets.spectra_tooltip import (
+    TooltipItem as _SpectraTooltipItem,
+    render_spectra_thumbnail as _render_spectra_thumbnail,
+)
 
 # ---------------------------------------------------------------------------
 # Easy mode widget — load optical path (full graph) and change filters/dyes
@@ -1375,12 +1293,10 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         probes: list[dict],
         parent=None,
         db_path: str | None = None,
-        auto_fold_timeout_ms: int = 1500,
     ):
         super().__init__(parent)
         self.probes = probes
         self._db_path = db_path
-        self._auto_fold_timeout_ms = auto_fold_timeout_ms
         self._last_results: dict | None = None
         self._suppress_recalc = False
         self._suppress_form_sync = False
@@ -1398,6 +1314,7 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self._setup_ui()
         self._connect_signals()
         self._restore_last_config()
+        self._connect_controls()
 
     def _setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -1406,10 +1323,16 @@ class LightPathEasyWidget(QtWidgets.QWidget):
 
         # ── Preset toolbar ──
         bar = QtWidgets.QHBoxLayout()
-        bar.addWidget(QtWidgets.QLabel("Optical Path:"))
+        self.btn_save = QtWidgets.QPushButton("💾")
+        self.btn_save.setToolTip("Save preset")
+        self.btn_load = QtWidgets.QPushButton("📂")
+        self.btn_load.setToolTip("Load preset")
         self.preset_combo = QtWidgets.QComboBox()
-        self.preset_combo.setPlaceholderText("Select preset…")
-        self.btn_edit = QtWidgets.QPushButton("Edit…")
+        self.preset_combo.setPlaceholderText("Optical Path Presets…")
+        self.btn_edit = QtWidgets.QPushButton("✏️")
+        self.btn_edit.setToolTip("Edit in Full Simulator")
+        bar.addWidget(self.btn_save)
+        bar.addWidget(self.btn_load)
         bar.addWidget(self.preset_combo, 1)
         bar.addWidget(self.btn_edit)
         main_layout.addLayout(bar)
@@ -1426,35 +1349,196 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         scroll.setWidget(self.form_container)
         main_layout.addWidget(scroll, 1)
 
-        # ── Auto-recalc + auto-fold controls ──
-        ctrl_row = QtWidgets.QHBoxLayout()
+        self._refresh_preset_list()
+
+    # ── Dynamic form population ──
+
+    def _clear_form(self):
+        """Remove all dynamically added sections from the form layout."""
+        while self.form_layout.count():
+            item = self.form_layout.takeAt(0)
+            if item is None:
+                continue
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+        self._component_rows.clear()
+        self._splitter_tables.clear()
+        self._detector_widgets.clear()
+        self._exci_table = None
+        self._lasers_edit = None
+        self._sec_sim = None
+
+    def _populate_form(self, cfg: dict):
+        """Build collapsible sections from a config dict, keeping topology fixed."""
+        self._clear_form()
+
+        # ── Section: Optical Components (lasers, dichroic, splitters) ──
+        sec_optics = _CollapsibleBox("Optical Components", expanded=True)
+        self._component_rows.append(sec_optics)
+
+        # Lasers row
+        self._lasers_edit = QtWidgets.QLineEdit(cfg.get("lasers", "488:1.0, 640:1.0"))
+        self._lasers_edit.setPlaceholderText("e.g. 488:1.0, 561:0.5, 640:1.0")
+        self._lasers_edit.editingFinished.connect(self._schedule_recalc)
+        sec_optics.add_row("Lasers:", self._lasers_edit)
+
+        # Excitation dichroic — table header acts as the label
+        self._exci_table = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="category:dichroic", header_text="Exci. Dichroic")
+        self._exci_table.set_selected_probe_id(cfg.get("excitation_dichroic_probe_id"))
+        self._exci_table.changed.connect(self._schedule_recalc)
+        sec_optics.add_widget(self._exci_table)
+
+        # Emission splitters — each table header acts as the label
+        splitters = cfg.get("emission_splitters", [])
+        if not splitters:
+            legacy_pid = _normalize_pid(cfg.get("emission_splitter_probe_id"))
+            legacy_type = cfg.get("emission_splitter_type", "Dichroic")
+            if legacy_pid is not None:
+                splitters = [{"type": legacy_type, "probe_id": legacy_pid}]
+
+        self._splitter_tables = []
+        for i, sp in enumerate(splitters):
+            sp_type = sp.get("type", "Dichroic")
+            tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="category:dichroic,polarizer", header_text=f"Splitter {i + 1}")
+            tbl._splitter_type = sp_type
+            tbl.table.setProperty("_splitter_type", sp_type)
+            tbl.set_selected_probe_id(sp.get("probe_id"))
+            tbl.changed.connect(self._schedule_recalc)
+            sec_optics.add_widget(tbl)
+            self._splitter_tables.append(tbl)
+
+        # Placeholder splitter rows when detectors outnumber splitters
+        detectors = cfg.get("detectors", [])
+        n_det = max(len(splitters) + 1, len(detectors))
+        while len(detectors) < n_det:
+            detectors.append({"name": f"Channel {len(detectors) + 1}"})
+
+        n_missing = n_det - 1 - len(splitters)
+        splitter_idx = len(splitters) + 1
+        for i in range(n_missing):
+            tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="category:dichroic,polarizer", header_text=f"Splitter {splitter_idx}")
+            tbl._splitter_type = "Dichroic"
+            tbl.table.setProperty("_splitter_type", "Dichroic")
+            tbl.changed.connect(self._schedule_recalc)
+            sec_optics.add_widget(tbl)
+            self._splitter_tables.append(tbl)
+            splitter_idx += 1
+
+        self.form_layout.addWidget(sec_optics)
+
+        # ── Section: Detectors ──
+        sec_channels = _CollapsibleBox("Detectors", expanded=True)
+        self._component_rows.append(sec_channels)
+
+        self._detector_widgets = []
+        is_polarizer = _is_polarizer_template(detectors[:n_det])
+        det_grid_w = QtWidgets.QWidget()
+        det_grid_w.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
+        det_grid = QtWidgets.QGridLayout(det_grid_w)
+        det_grid.setContentsMargins(0, 0, 0, 0)
+        det_grid.setSpacing(2)
+        det_grid.setColumnStretch(0, 1)
+        det_grid.setColumnStretch(1, 1)
+
+        # Column headers row (row 0)
+        _hdr_style = "color: #9ba3af; font-size: 9px; font-weight: bold; padding: 1px 4px;"
+        for col_idx, col_label in enumerate(["Bandpass", "QE"]):
+            lbl = QtWidgets.QLabel(col_label)
+            lbl.setStyleSheet(_hdr_style)
+            lbl.setAlignment(QtCore.Qt.AlignCenter)
+            det_grid.addWidget(lbl, 0, col_idx)
+        det_grid.setRowStretch(0, 0)
+
+        for i, det in enumerate(detectors[:n_det]):
+            det_name = det.get("name", f"Channel {i + 1}")
+            if is_polarizer:
+                color_idx, pol = _split_detector_name(det_name)
+                if color_idx == 0:
+                    color_idx = i // 2 + 1
+                if pol:
+                    label = f"C{color_idx}&thinsp;<sub>{pol}</sub>"
+                else:
+                    label = f"C{color_idx}"
+            else:
+                label = f"C{i + 1}"
+
+            bp_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
+                                       filter_key="category:filter", show_header=True, header_text=label)
+            bp_tbl.set_selected_probe_id(det.get("bandpass_probe_id"))
+            bp_tbl.changed.connect(self._schedule_recalc)
+            det_grid.addWidget(bp_tbl, i + 1, 0)
+
+            qe_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
+                                       filter_key="category:detector", show_header=True, header_text="QE")
+            qe_tbl.set_selected_probe_id(det.get("qe_probe_id"))
+            qe_tbl.changed.connect(self._schedule_recalc)
+            det_grid.addWidget(qe_tbl, i + 1, 1)
+
+            det_grid.setRowStretch(i + 1, 1)
+
+            self._detector_widgets.append({"bp": bp_tbl, "qe": qe_tbl, "name": det_name})
+
+        sec_channels.add_widget(det_grid_w)
+        self.form_layout.addWidget(sec_channels)
+
+        # ── Section: Fluorophores ──
+        sec_dyes = _CollapsibleBox("Fluorophores", expanded=True)
+        self._component_rows.append(sec_dyes)
+        self.dye_table = _DyeTableWidget(self.probes, db_path=self._db_path)
+        dyes = cfg.get("dyes", {})
+        if dyes:
+            self.dye_table.set_selected_dyes(dyes)
+        self.dye_table.dyeSelectionChanged.connect(self._schedule_recalc)
+        sec_dyes.add_widget(self.dye_table)
+        self.form_layout.addWidget(sec_dyes)
+
+        # ── Section: Simulation (controls, parameters, results) ──
+        sec_sim = _CollapsibleBox("Simulation", expanded=True)
+        self._sec_sim = sec_sim
+        self._component_rows.append(sec_sim)
+
+        fret_cfg = cs_settings.get("fret", {})
+        kappa2_default = fret_cfg.get("kappa2", 0.6667)
+        n_default = fret_cfg.get("n", 1.33)
+
         self.auto_recalc_cb = QtWidgets.QCheckBox("Auto recalculate")
         self.auto_recalc_cb.setChecked(True)
-        self.auto_fold_cb = QtWidgets.QCheckBox("Auto fold")
-        self.auto_fold_cb.setToolTip(
-            "Collapse each section automatically when the mouse leaves it"
-        )
-        self.auto_fold_cb.setChecked(False)
-        self.auto_fold_cb.toggled.connect(self._on_auto_fold_toggled)
-        ctrl_row.addWidget(self.auto_recalc_cb)
-        ctrl_row.addStretch(1)
-        ctrl_row.addWidget(self.auto_fold_cb)
-        main_layout.addLayout(ctrl_row)
-
-        # ── Buttons ──
-        btn_row = QtWidgets.QHBoxLayout()
         self.btn_calc = QtWidgets.QPushButton("Recalculate")
-        self.btn_calc.setStyleSheet("font-weight: bold; padding: 6px 16px;")
-        self.btn_full = QtWidgets.QPushButton("Open in Full Simulator")
-        btn_row.addWidget(self.btn_calc)
-        btn_row.addWidget(self.btn_full)
-        btn_row.addStretch()
-        main_layout.addLayout(btn_row)
+        self.btn_calc.setStyleSheet("font-weight: bold; padding: 4px 12px;")
+        self.kappa2_spin = QtWidgets.QDoubleSpinBox()
+        self.kappa2_spin.setRange(0, 4)
+        self.kappa2_spin.setSingleStep(0.1)
+        self.kappa2_spin.setValue(cfg.get("kappa2", kappa2_default))
+        self.kappa2_spin.valueChanged.connect(lambda v: _persist_fret_setting("kappa2", v))
+        self.kappa2_spin.valueChanged.connect(self._schedule_recalc)
+        self.n_spin = QtWidgets.QDoubleSpinBox()
+        self.n_spin.setRange(1.0, 2.0)
+        self.n_spin.setSingleStep(0.01)
+        self.n_spin.setValue(cfg.get("n", n_default))
+        self.n_spin.valueChanged.connect(lambda v: _persist_fret_setting("n", v))
+        self.n_spin.valueChanged.connect(self._schedule_recalc)
 
-        # ── Results ──
-        self.results_group = QtWidgets.QGroupBox("Simulation Results")
-        rl = QtWidgets.QVBoxLayout(self.results_group)
-        rl.setContentsMargins(4, 4, 4, 4)
+        sim_row = QtWidgets.QHBoxLayout()
+        sim_row.setSpacing(4)
+        k2_lbl = QtWidgets.QLabel("kappa²:")
+        k2_lbl.setStyleSheet("color: #9ba3af; font-size: 10px;")
+        n_lbl = QtWidgets.QLabel("n:")
+        n_lbl.setStyleSheet("color: #9ba3af; font-size: 10px;")
+        sim_row.addWidget(k2_lbl)
+        sim_row.addWidget(self.kappa2_spin)
+        sim_row.addWidget(n_lbl)
+        sim_row.addWidget(self.n_spin)
+        sim_row.addStretch()
+        sim_row.addWidget(self.auto_recalc_cb)
+        sim_row.addWidget(self.btn_calc)
+        sim_widget = QtWidgets.QWidget()
+        sim_widget.setLayout(sim_row)
+        sec_sim.add_widget(sim_widget)
+
         self.results_tabs = QtWidgets.QTabWidget()
         _result_tbl_style = """
             QTableWidget { background: #1a1a1a; border: 1px solid #444; color: #eee; gridline-color: #333; font-size: 10px; }
@@ -1480,187 +1564,46 @@ class LightPathEasyWidget(QtWidgets.QWidget):
         self.results_tabs.addTab(self.ex_table, "Excitation CT")
         self.results_tabs.addTab(self.em_table, "Emission CT")
         self.results_tabs.addTab(self.det_table, "Detected CT")
-        rl.addWidget(self.results_tabs)
-        self.results_group.setVisible(True)
-        main_layout.addWidget(self.results_group, 0)
-
-        self._refresh_preset_list()
-
-    # ── Dynamic form population ──
-
-    def _clear_form(self):
-        """Remove all dynamically added sections from the form layout."""
-        while self.form_layout.count():
-            item = self.form_layout.takeAt(0)
-            if item is None:
-                continue
-            widget = item.widget()
-            if widget is not None:
-                widget.setParent(None)
-                widget.deleteLater()
-        self._component_rows.clear()
-        self._splitter_tables.clear()
-        self._detector_widgets.clear()
-        self._exci_table = None
-        self._lasers_edit = None
-
-    def _populate_form(self, cfg: dict):
-        """Build collapsible sections from a config dict, keeping topology fixed."""
-        self._clear_form()
-        af = getattr(self, "auto_fold_cb", None)
-        auto_fold = bool(af.isChecked()) if af is not None else False
-
-        af_ms = self._auto_fold_timeout_ms
-
-        # ── Section: Optical Components (lasers, dichroic, splitters) ──
-        sec_optics = _CollapsibleBox("Optical Components", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
-        self._component_rows.append(sec_optics)
-
-        # Lasers row
-        self._lasers_edit = QtWidgets.QLineEdit(cfg.get("lasers", "488:1.0, 640:1.0"))
-        self._lasers_edit.setPlaceholderText("e.g. 488:1.0, 561:0.5, 640:1.0")
-        self._lasers_edit.editingFinished.connect(self._schedule_recalc)
-        sec_optics.add_row("Lasers:", self._lasers_edit)
-
-        # Excitation dichroic
-        self._exci_table = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="has_trans")
-        self._exci_table.set_selected_probe_id(cfg.get("excitation_dichroic_probe_id"))
-        self._exci_table.changed.connect(self._schedule_recalc)
-        sec_optics.add_row("Exci. Dichroic:", self._exci_table)
-
-        # Emission splitters
-        splitters = cfg.get("emission_splitters", [])
-        if not splitters:
-            legacy_pid = _normalize_pid(cfg.get("emission_splitter_probe_id"))
-            legacy_type = cfg.get("emission_splitter_type", "Dichroic")
-            if legacy_pid is not None:
-                splitters = [{"type": legacy_type, "probe_id": legacy_pid}]
-
-        self._splitter_tables = []
-        for i, sp in enumerate(splitters):
-            sp_type = sp.get("type", "Dichroic")
-            tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="has_trans")
-            tbl._splitter_type = sp_type
-            tbl.table.setProperty("_splitter_type", sp_type)
-            tbl.set_selected_probe_id(sp.get("probe_id"))
-            tbl.changed.connect(self._schedule_recalc)
-            sec_optics.add_row(f"Splitter {i + 1}:", tbl)
-            self._splitter_tables.append(tbl)
-
-        # Placeholder splitter rows when detectors outnumber splitters
-        detectors = cfg.get("detectors", [])
-        n_det = max(len(splitters) + 1, len(detectors))
-        while len(detectors) < n_det:
-            detectors.append({"name": f"Channel {len(detectors) + 1}"})
-
-        n_missing = n_det - 1 - len(splitters)
-        for i in range(n_missing):
-            tbl = _SingleProbeTable(self.probes, db_path=self._db_path, filter_key="has_trans")
-            tbl._splitter_type = "Dichroic"
-            tbl.table.setProperty("_splitter_type", "Dichroic")
-            tbl.changed.connect(self._schedule_recalc)
-            sec_optics.add_row(f"Splitter {len(splitters) + 1}:", tbl)
-            self._splitter_tables.append(tbl)
-
-        self.form_layout.addWidget(sec_optics)
-
-        # ── Section: Channels ──
-        sec_channels = _CollapsibleBox("Channels", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
-        self._component_rows.append(sec_channels)
-
-        self._detector_widgets = []
-        is_polarizer = _is_polarizer_template(detectors[:n_det])
-        det_grid_w = QtWidgets.QWidget()
-        det_grid_w.setSizePolicy(
+        self.results_tabs.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
-        det_grid = QtWidgets.QGridLayout(det_grid_w)
-        det_grid.setContentsMargins(0, 0, 0, 0)
-        det_grid.setSpacing(2)
-        det_grid.setColumnStretch(0, 0)
-        det_grid.setColumnMinimumWidth(0, 32)
-        det_grid.setColumnStretch(1, 1)
-        det_grid.setColumnStretch(2, 1)
+        sec_sim.add_widget(self.results_tabs, 1)
 
-        # Column headers row (row 0) — replaces per-table "Probe" headers
-        _hdr_style = "color: #9ba3af; font-size: 9px; font-weight: bold; padding: 1px 4px;"
-        for col_idx, col_label in enumerate(["Bandpass", "QE"], start=1):
-            lbl = QtWidgets.QLabel(col_label)
-            lbl.setStyleSheet(_hdr_style)
-            lbl.setAlignment(QtCore.Qt.AlignCenter)
-            det_grid.addWidget(lbl, 0, col_idx)
-        det_grid.setRowStretch(0, 0)
+        self.form_layout.addWidget(sec_sim, 1)
 
-        for i, det in enumerate(detectors[:n_det]):
-            det_name = det.get("name", f"Channel {i + 1}")
-            if is_polarizer:
-                color_idx, pol = _split_detector_name(det_name)
-                if color_idx == 0:
-                    color_idx = i // 2 + 1
-                label = f"C{color_idx}_{pol}" if pol else f"C{color_idx}"
-            else:
-                label = f"C{i + 1}"
-
-            lbl = QtWidgets.QLabel(label)
-            lbl.setStyleSheet("font-weight: bold; font-size: 10px;")
-            lbl.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
-            det_grid.addWidget(lbl, i + 1, 0)
-
-            bp_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
-                                       filter_key="has_trans", show_header=False)
-            bp_tbl.set_selected_probe_id(det.get("bandpass_probe_id"))
-            bp_tbl.changed.connect(self._schedule_recalc)
-            det_grid.addWidget(bp_tbl, i + 1, 1)
-
-            qe_tbl = _SingleProbeTable(self.probes, db_path=self._db_path,
-                                       filter_key="has_qe", show_header=False)
-            qe_tbl.set_selected_probe_id(det.get("qe_probe_id"))
-            qe_tbl.changed.connect(self._schedule_recalc)
-            det_grid.addWidget(qe_tbl, i + 1, 2)
-
-            det_grid.setRowStretch(i + 1, 1)
-
-            self._detector_widgets.append({"bp": bp_tbl, "qe": qe_tbl, "name": det_name})
-
-        sec_channels.add_widget(det_grid_w)
-        self.form_layout.addWidget(sec_channels, 1)  # stretch=1: claims available vertical space
-
-        # ── Section: Filter Dyes ──
-        sec_dyes = _CollapsibleBox("Filter Dyes", expanded=True, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
-        self._component_rows.append(sec_dyes)
-        self.dye_table = _DyeTableWidget(self.probes, db_path=self._db_path)
-        dyes = cfg.get("dyes", {})
-        if dyes:
-            self.dye_table.set_selected_dyes(dyes)
-        self.dye_table.dyeSelectionChanged.connect(self._schedule_recalc)
-        sec_dyes.add_widget(self.dye_table)
-        self.form_layout.addWidget(sec_dyes)
-
-        # ── Section: Parameters (collapsed by default to save space) ──
-        sec_params = _CollapsibleBox("Parameters", expanded=False, auto_fold=auto_fold, auto_fold_delay_ms=af_ms)
-        self._component_rows.append(sec_params)
-        self.kappa2_spin = QtWidgets.QDoubleSpinBox()
-        self.kappa2_spin.setRange(0, 4)
-        self.kappa2_spin.setSingleStep(0.1)
-        self.kappa2_spin.setValue(cfg.get("kappa2", 0.6667))
-        self.n_spin = QtWidgets.QDoubleSpinBox()
-        self.n_spin.setRange(1.0, 2.0)
-        self.n_spin.setSingleStep(0.01)
-        self.n_spin.setValue(cfg.get("n", 1.33))
-        self.kappa2_spin.valueChanged.connect(self._schedule_recalc)
-        self.n_spin.valueChanged.connect(self._schedule_recalc)
-        sec_params.add_row("kappa²:", self.kappa2_spin)
-        sec_params.add_row("n:", self.n_spin)
-        self.form_layout.addWidget(sec_params)
+        # Dynamically surrender/claim vertical space when Simulation is collapsed/expanded
+        sec_sim.toggled.connect(self._on_sec_sim_toggled)
 
     # ── Signals ──
 
     def _connect_signals(self):
+        self.btn_save.clicked.connect(self._on_save_preset)
+        self.btn_load.clicked.connect(self._on_load_preset)
         self.preset_combo.currentIndexChanged.connect(self._on_preset_selected)
         self.btn_edit.clicked.connect(self._on_edit)
-        self.btn_calc.clicked.connect(self.recalculate)
-        self.btn_full.clicked.connect(self._on_open_full)
-        self.auto_recalc_cb.toggled.connect(self._on_auto_recalc)
+
+    def _connect_controls(self):
+        """Connect signals for controls created by _populate_form."""
+        if hasattr(self, 'btn_calc') and self.btn_calc is not None:
+            self.btn_calc.clicked.connect(self.recalculate)
+        if hasattr(self, 'auto_recalc_cb') and self.auto_recalc_cb is not None:
+            self.auto_recalc_cb.toggled.connect(self._on_auto_recalc)
+
+    def _rebuild_graph(self, cfg: dict | None = None) -> None:
+        """Replace the parent Full Simulator graph with a fresh one from *cfg*."""
+        if cfg is None:
+            cfg = self._get_config()
+        graph = build_easy_graph(cfg)
+        from chisurf.plugins.core.lightpath_simulator.gui.tool import LightPathSimulatorWidget
+        parent = self.parentWidget()
+        while parent is not None and not isinstance(parent, LightPathSimulatorWidget):
+            parent = parent.parentWidget()
+        if parent is not None:
+            parent._is_syncing_easy = True
+            try:
+                parent.load_graph_from_dict(graph)
+            finally:
+                parent._is_syncing_easy = False
 
     # ── Preset management ──
 
@@ -1713,6 +1656,8 @@ class LightPathEasyWidget(QtWidgets.QWidget):
             if "nodes" in cfg:
                 cfg = _graph_to_config(cfg)
             self._populate_form(cfg)
+            self._connect_controls()
+            self._rebuild_graph(cfg)
             loaded = True
         except Exception as exc:
             QtWidgets.QMessageBox.critical(self, "Load Failed", str(exc))
@@ -1721,6 +1666,38 @@ class LightPathEasyWidget(QtWidgets.QWidget):
             self._suppress_form_sync = False
         if loaded:
             self._schedule_recalc()
+
+    # ── Save / Load presets ──
+
+    def _on_save_preset(self):
+        name, ok = QtWidgets.QInputDialog.getText(self, "Save Preset", "Preset name:")
+        if not ok or not name:
+            return
+        EASY_PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+        path = EASY_PRESETS_DIR / f"{name.strip()}.json"
+        cfg = self._get_config()
+        save_easy_preset(cfg, path)
+        self._refresh_preset_list()
+
+    def _on_load_preset(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Load Preset", str(EASY_PRESETS_DIR), "JSON (*.json)"
+        )
+        if not path:
+            return
+        try:
+            cfg = load_easy_preset(path)
+            self._suppress_recalc = True
+            self._suppress_form_sync = True
+            self._populate_form(cfg)
+            self._connect_controls()
+            self._rebuild_graph(cfg)
+        except Exception as exc:
+            QtWidgets.QMessageBox.warning(self, "Load Failed", str(exc))
+        finally:
+            self._suppress_recalc = False
+            self._suppress_form_sync = False
+        self._schedule_recalc()
 
     # ── Edit → opens Full Simulator ──
 
@@ -1738,19 +1715,16 @@ class LightPathEasyWidget(QtWidgets.QWidget):
             w = LightPathSimulatorWidget()
             w.show()
 
-    # ── Auto fold ──
-
-    def _on_auto_fold_toggled(self, checked: bool) -> None:
-        """Apply auto-fold setting to all live _CollapsibleBox sections."""
-        for w in self._component_rows:
-            if isinstance(w, _CollapsibleBox):
-                w.auto_fold = checked
-
     # ── Auto recalculate ──
 
     def _on_auto_recalc(self, checked: bool):
         if checked:
             self._schedule_recalc()
+
+    def _on_sec_sim_toggled(self, expanded: bool):
+        idx = self.form_layout.indexOf(self._sec_sim)
+        if idx >= 0:
+            self.form_layout.setStretch(idx, 1 if expanded else 0)
 
     def _schedule_recalc(self):
         if self._suppress_recalc:
@@ -1761,21 +1735,10 @@ class LightPathEasyWidget(QtWidgets.QWidget):
             self._graph_sync_timer.start(400)
 
     def _sync_to_graph(self):
-        """Push current Easy Mode config into the parent Full Simulator graph in-place."""
+        """Push current Easy Mode config into the parent Full Simulator, rebuilding the graph."""
         if self._suppress_form_sync:
             return
-        from chisurf.plugins.core.lightpath_simulator.gui.tool import LightPathSimulatorWidget
-        parent = self.parentWidget()
-        while parent is not None and not isinstance(parent, LightPathSimulatorWidget):
-            parent = parent.parentWidget()
-        if parent is None:
-            return
-        cfg = self._get_config()
-        parent._is_syncing_easy = True
-        try:
-            parent._update_easy_config_in_place(cfg)
-        finally:
-            parent._is_syncing_easy = False
+        self._rebuild_graph()
 
     # ── Config ──
 
@@ -1820,7 +1783,6 @@ class LightPathEasyWidget(QtWidgets.QWidget):
                 result = _simulate_with_db(graph, db)
             self._last_results = result
             self._show_results(result)
-            self.results_group.setVisible(True)
             self._save_last_config()
         except Exception as exc:
             logger.error("Easy mode simulation failed: %s", exc)
@@ -1885,32 +1847,6 @@ class LightPathEasyWidget(QtWidgets.QWidget):
                 item.setTextAlignment(QtCore.Qt.AlignCenter)
                 table.setItem(ri, ci, item)
 
-    def _on_open_full(self):
-        cfg = self._get_config()
-        graph = build_easy_graph(cfg)
-        from chisurf.plugins.core.lightpath_simulator.gui.tool import LightPathSimulatorWidget
-        parent = self.parentWidget()
-        while parent is not None and not isinstance(parent, LightPathSimulatorWidget):
-            parent = parent.parentWidget()
-        self._suppress_form_sync = True
-        try:
-            if parent is not None:
-                parent._is_syncing_easy = True
-                try:
-                    parent.load_graph_from_dict(graph)
-                finally:
-                    parent._is_syncing_easy = False
-            else:
-                w = LightPathSimulatorWidget()
-                w._is_syncing_easy = True
-                try:
-                    w.load_graph_from_dict(graph)
-                finally:
-                    w._is_syncing_easy = False
-                w.show()
-        finally:
-            self._suppress_form_sync = False
-
     def get_optical_config(self) -> dict:
         cfg = self._get_config()
         if self._last_results:
@@ -1932,7 +1868,6 @@ class LightPathEasyWidget(QtWidgets.QWidget):
                 self._fill_table(self.ex_table, cm.get("excitation", {}))
                 self._fill_table(self.em_table, cm.get("emission", {}))
                 self._fill_table(self.det_table, cm.get("detected", {}))
-                self.results_group.setVisible(True)
         self._suppress_recalc = False
         self._suppress_form_sync = False
 

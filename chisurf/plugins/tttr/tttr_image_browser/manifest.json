@@ -3,18 +3,40 @@
   "version": "2.0.0",
   "display_name": "Imaging:Tools:Image Browser",
   "description": "Browse TTTR files in a folder and preview intensity images for all DetectorWizard-defined detector windows.",
-  "authors": ["Thomas-Otavio Peulen"],
-  "categories": ["Imaging", "Tools"],
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Imaging",
+    "Tools"
+  ],
   "icon": "icon.png",
   "state_namespace": "tttr_image_browser",
   "state_schema": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-      "selected_files": {"type": "array", "items": {"type": "string"}},
-      "current_folder": {"type": ["string", "null"]},
-      "setup_settings": {"type": ["object", "null"]},
-      "max_side": {"type": "integer"}
+      "selected_files": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "current_folder": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "setup_settings": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "max_side": {
+        "type": "integer"
+      }
     }
   },
   "statefulness": {
@@ -35,30 +57,71 @@
       "summary": "List TTTR image files and metadata for a folder.",
       "params_schema": {
         "type": "object",
-        "required": ["folder"],
+        "required": [
+          "folder"
+        ],
         "properties": {
-          "folder": {"type": "string"},
-          "recursive": {"type": "boolean"},
-          "setup_settings": {"type": ["object", "null"]}
+          "folder": {
+            "type": "string"
+          },
+          "recursive": {
+            "type": "boolean"
+          },
+          "setup_settings": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
         }
       },
-      "result_schema": {"type": "object"},
+      "result_schema": {
+        "type": "object"
+      },
       "long_running": false,
       "cancelable": false
     },
     {
       "name": "tttr_image_browser.metadata.get",
       "summary": "Load TTTR Image Browser ratings and annotations.",
-      "params_schema": {"type": "object", "required": ["folder"], "properties": {"folder": {"type": "string"}}},
-      "result_schema": {"type": "object"},
+      "params_schema": {
+        "type": "object",
+        "required": [
+          "folder"
+        ],
+        "properties": {
+          "folder": {
+            "type": "string"
+          }
+        }
+      },
+      "result_schema": {
+        "type": "object"
+      },
       "long_running": false,
       "cancelable": false
     },
     {
       "name": "tttr_image_browser.metadata.set",
       "summary": "Save TTTR Image Browser ratings and annotations.",
-      "params_schema": {"type": "object", "required": ["folder", "metadata"], "properties": {"folder": {"type": "string"}, "metadata": {"type": "object"}}},
-      "result_schema": {"type": "object"},
+      "params_schema": {
+        "type": "object",
+        "required": [
+          "folder",
+          "metadata"
+        ],
+        "properties": {
+          "folder": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      },
+      "result_schema": {
+        "type": "object"
+      },
       "long_running": false,
       "cancelable": false
     },
@@ -67,15 +130,33 @@
       "summary": "Load binned image mosaic for preview.",
       "params_schema": {
         "type": "object",
-        "required": ["path"],
+        "required": [
+          "path"
+        ],
         "properties": {
-          "path": {"type": "string"},
-          "setup_settings": {"type": ["object", "null"]},
-          "max_side": {"type": "integer"},
-          "cache_folder": {"type": ["string", "null"]}
+          "path": {
+            "type": "string"
+          },
+          "setup_settings": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "max_side": {
+            "type": "integer"
+          },
+          "cache_folder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
-      "result_schema": {"type": "object"},
+      "result_schema": {
+        "type": "object"
+      },
       "long_running": false,
       "cancelable": false
     },
@@ -84,14 +165,31 @@
       "summary": "Export intensity images (per combo) as TIFF stacks.",
       "params_schema": {
         "type": "object",
-        "required": ["paths", "output_dir"],
+        "required": [
+          "paths",
+          "output_dir"
+        ],
         "properties": {
-          "paths": {"type": "array", "items": {"type": "string"}},
-          "output_dir": {"type": "string"},
-          "setup_settings": {"type": ["object", "null"]}
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "setup_settings": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
         }
       },
-      "result_schema": {"type": "object"},
+      "result_schema": {
+        "type": "object"
+      },
       "long_running": true,
       "cancelable": false
     },
@@ -109,5 +207,6 @@
       "topic": "tttr_image_browser.state.*",
       "description": "State patch events for TTTR image browser plugin"
     }
-  ]
+  ],
+  "menu_hidden": true
 }

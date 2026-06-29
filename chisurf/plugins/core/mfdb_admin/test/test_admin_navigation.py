@@ -66,20 +66,20 @@ def test_panels_flattened_with_separators_and_views(db, qapp):
     # the previously-orphaned workflow views are now reachable
     for n in ("Studies", "Protocols", "Lifecycle", "Calibrations", "Reagent Lots", "Pipelines"):
         assert n in names
-    # the fluorophore curation view is integrated from the fluorophore_db plugin
-    assert "Fluorophores" in names
+    # the spectra/optical component curation view is integrated from the optical_components module
+    assert "Spectra" in names
     # nav items carry emoji icons
     assert any((p.get("icon") or "") for p in w.panels if p.get("entity_key"))
 
 
 def test_fluorophore_panel_and_rpc_integrated(db, qapp):
-    from chisurf.plugins.core.mfdb_admin.gui.fluorophore_view import FluorophoreDock
+    from chisurf.plugins.core.mfdb_admin.gui.optical_components import OpticalComponentDock
 
     w = _make_widget(db)
-    row = w._row_by_name["Fluorophores"]
+    row = w._row_by_name["Spectra"]
     w.nav_list.setCurrentRow(row)
     inst = w._unwrap(w.panels[row]["instance"])
-    assert isinstance(inst, FluorophoreDock)
+    assert isinstance(inst, OpticalComponentDock)
     # fluorophores.* RPC handlers are registered with the admin dispatcher
     res = w.client._call("fluorophores.list", {"limit": 1})
     assert "probes" in res and "total" in res

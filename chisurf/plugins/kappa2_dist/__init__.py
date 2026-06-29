@@ -1,40 +1,35 @@
-"""
-Kappa2 Distribution
+"""K² Distribution calculator for FRET orientation factors.
 
-This plugin provides tools for calculating and visualizing the distribution of the orientation factor κ² 
-for Förster Resonance Energy Transfer (FRET) experiments.
-
-Features:
-- Calculate κ² distributions using different models (Wobbling-in-Cone, Diffusion-during-Lifetime)
-- Visualize the distribution of κ² values
-- Calculate the effect of κ² uncertainty on apparent FRET distances
-- Support for known and unknown donor-acceptor orientations
-- Incorporate steady-state anisotropy measurements to estimate fluorophore mobility
-
-The orientation factor κ² is a critical parameter in FRET that describes the relative orientation 
-of the donor emission dipole and the acceptor absorption dipole. It affects the calculation of 
-the Förster radius (R₀) and consequently the distance measurements derived from FRET experiments.
-
-In most FRET applications, κ² is assumed to be 2/3 (≈0.667), which is valid only when both 
-fluorophores undergo isotropic rotational diffusion that is much faster than the fluorescence 
-lifetime. However, in many biological systems, this assumption may not hold due to restricted 
-rotational mobility of the fluorophores.
-
-This plugin allows researchers to model more realistic κ² distributions based on experimental 
-anisotropy data, providing more accurate distance measurements in FRET experiments where the 
-standard assumptions about fluorophore mobility may not apply.
+Provides a GUI tool (``Kappa2Dist``) for computing and visualising the
+orientation-factor distribution p(κ²) using Wobbling-in-Cone (WIC),
+Diffusion-with-Traps (DWT) and isotropic models.  The widget is built
+via AutoForm (PRD-40) from ``k2dist.view.json``.
 """
 
-import sys
-from .k2dgui import Kappa2Dist
+from __future__ import annotations
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:FRET:Kappa2 Distribution"
+from pathlib import Path
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:FRET:Kappa2 Distribution"
+
+from .k2dgui import Kappa2Dist  # noqa: E402
+
+__all__ = ["Kappa2Dist"]
+
 if __name__ == "plugin":
-    # Create an instance of the Kappa2Dist class
     window = Kappa2Dist()
-    # Show the window
+    if _manifest is not None:
+        apply_manifest_statefulness(window, _manifest)
     window.show()
+    try:
+        window.raise_()
+        window.activateWindow()
+    except Exception:
+        pass

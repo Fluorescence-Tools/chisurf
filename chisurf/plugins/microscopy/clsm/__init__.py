@@ -28,6 +28,7 @@ CLSM acquisition systems.
 import clsmview.gui
 
 name = "Imaging:CLSM-Draw"
+menu_hidden = True
 
 import sys
 

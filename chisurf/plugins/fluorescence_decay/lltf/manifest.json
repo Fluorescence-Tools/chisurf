@@ -1,0 +1,23 @@
+{
+  "id": "lltf",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:Lazy Lifetime Analysis",
+  "description": "Lazy Lifetime Analysis for TCSPC fluorescence decay data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence decay"],
+  "state_namespace": "lltf",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorescence_decay.lltf.lltf_gui:LLTFGUIWizard",
+    "cli": "lltf=chisurf.plugins.fluorescence_decay.lltf.core.cli:cli"
+  },
+  "experimental": true,
+  "experimental_message": "Lazy Lifetime Analysis is experimental and not yet validated",
+  "menu_hidden": true
+}

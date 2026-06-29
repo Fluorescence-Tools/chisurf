@@ -5,8 +5,8 @@ import os
 # Ensure we can import the plugin
 sys.path.append(os.getcwd())
 
-from chisurf.plugins.fcs.fcs_2d.api import correlate_tttr, fit_mem_2d
-from chisurf.plugins.fcs.fcs_2d.fit import TwoDMEMFitter, OneDMEMFitter, GlobalTwoDMEMFitter, RateMatrixFitter
+from chisurf.plugins.fcs.flc_2d.api import correlate_tttr, fit_mem_2d
+from chisurf.plugins.fcs.flc_2d.fit import TwoDMEMFitter, OneDMEMFitter, GlobalTwoDMEMFitter, RateMatrixFitter
 
 def test_imports():
     print("Testing imports from modular fit package...")

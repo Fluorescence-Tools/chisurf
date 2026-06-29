@@ -425,3 +425,102 @@ def test_value_section_binds_scalar_attributes(qapp):
     ws.editor.setText("bye")
     ws.editor.editingFinished.emit()
     assert m.grp.label == "bye"
+
+
+# ---- LifetimeMixtureNewModel (AutoForm-based lifetime mixer) ---------------
+
+@pytest.fixture
+def mixture_model():
+    """Build a LifetimeMixtureNewModel for AutoForm tests."""
+    try:
+        import chisurf.core.fitting.fit as fit_mod
+        from chisurf.core.data import DataCurve
+        from chisurf.core.models.tcspc.lifetime import LifetimeMixtureNewModel
+    except Exception as exc:
+        pytest.skip(f"mixture model import failed: {exc}")
+    x = np.linspace(0, 25, 256)
+    data = DataCurve(x=x, y=np.ones_like(x))
+    fit = fit_mod.Fit(model_class=LifetimeMixtureNewModel, data=data)
+    return fit.model
+
+
+def test_mixture_new_model_is_pure(qapp, mixture_model):
+    """LifetimeMixtureNewModel is Qt-free — AutoForm builds its editor.
+
+    The class-level ``name`` is the menu label; the instance's ``name`` is set
+    to the class name by Base.__init__ (same convention as LifetimeNewModel).
+    """
+    from qtpy import QtWidgets
+    from chisurf.core.models.tcspc.lifetime import LifetimeMixtureNewModel
+    assert not isinstance(mixture_model, QtWidgets.QWidget)
+    # class attribute is the menu/registry label
+    assert LifetimeMixtureNewModel.name == "Lifetime mixer (new)"
+
+
+def test_mixture_new_model_view_spec_has_fit_mixer(qapp, mixture_model):
+    """The view spec loaded from mix_model.view.json declares a fit_mixer section."""
+    from chisurf.core.models import view_spec as vs
+    spec = mixture_model.view_spec()
+    customs = [s for s in spec.flat_sections() if isinstance(s, vs.CustomSection)]
+    mixer = next((s for s in customs if s.key == "fit_mixer"), None)
+    assert mixer is not None, "mix_model.view.json must contain a fit_mixer custom section"
+
+
+def test_mixture_new_model_fit_mixer_section_registered(qapp):
+    """The fit_mixer custom section is registered in the section registry."""
+    from chisurf.gui.autoform.sections.registry import get_section_factory
+    assert get_section_factory("fit_mixer") is not None
+
+
+def test_mixture_new_model_autoform_renders(qapp, mixture_model):
+    """AutoForm builds a non-empty editor from mix_model.view.json."""
+    from chisurf.gui.autoform import AutoForm
+    w = AutoForm(mixture_model)
+    # At least some widgets were created (convolve params etc.)
+    assert w._layout.count() > 0
+
+
+def test_mixture_new_model_fit_mixer_widget_renders(qapp, mixture_model):
+    """The FitMixerWidget renders and exposes its controls."""
+    from chisurf.gui.autoform.sections.builtin import FitMixerWidget
+    w = FitMixerWidget(model=mixture_model)
+    assert w.cb is not None  # fit combo box
+    assert w.fit_list is not None  # added-fits list
+    assert w._fractions_container is not None
+
+
+def test_mixture_new_model_append_pop_updates_fractions(qapp, mixture_model):
+    """append_model / pop_model change _fractions; FitMixerWidget._rebuild_fractions
+    must not raise and the fraction count matches the model state."""
+    import numpy as np
+    import chisurf.core.fitting.fit as fit_mod
+    from chisurf.core.data import DataCurve
+    from chisurf.core.models.tcspc.lifetime import LifetimeModel
+    from chisurf.gui.autoform.sections.builtin import FitMixerWidget
+
+    # Build a donor lifetime fit to mix in
+    x = np.linspace(0, 25, 256)
+    data = DataCurve(x=x, y=np.ones_like(x))
+    donor_fit = fit_mod.Fit(model_class=LifetimeModel, data=data)
+
+    widget = FitMixerWidget(model=mixture_model)
+    assert len(mixture_model._fractions) == 0
+
+    # Manually append (simulating what _on_add does via the UI)
+    mixture_model.append_model(donor_fit.model, "x_1")
+    widget._rebuild_fractions()  # must not raise
+    assert len(mixture_model._fractions) == 1
+
+    # Remove it back
+    mixture_model.pop_model(0)
+    widget._rebuild_fractions()
+    assert len(mixture_model._fractions) == 0
+
+
+def test_mixture_new_model_build_editor(qapp, mixture_model):
+    """build_model_editor returns an AutoForm widget for the pure mixture model."""
+    from chisurf.gui.widgets.models.model_editor import build_model_editor
+    from chisurf.gui.autoform import AutoForm
+    editor = build_model_editor(mixture_model)
+    assert isinstance(editor, AutoForm)
+    assert editor.model is mixture_model

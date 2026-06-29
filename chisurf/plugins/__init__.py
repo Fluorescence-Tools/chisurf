@@ -114,22 +114,28 @@ def _read_plugin_metadata(init_py: pathlib.Path):
     cli_entrypoint = None
     cli_only = False
     menu_hidden = False
+
+    def _string_literal(value):
+        """Return a string literal value from modern or legacy AST nodes."""
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            return value.value
+        ast_str = getattr(ast, "Str", None)
+        if ast_str is not None and isinstance(value, ast_str):
+            return value.s
+        return None
+
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
         for target in getattr(node, "targets", []):
             if isinstance(target, ast.Name) and target.id == "name":
-                value = node.value
-                if isinstance(value, ast.Constant) and isinstance(value.value, str):
-                    plugin_name = value.value
-                elif isinstance(value, ast.Str):
-                    plugin_name = value.s
+                literal = _string_literal(node.value)
+                if literal is not None:
+                    plugin_name = literal
             if isinstance(target, ast.Name) and target.id == "cli_entrypoint":
-                value = node.value
-                if isinstance(value, ast.Constant) and isinstance(value.value, str):
-                    cli_entrypoint = value.value.strip()
-                elif isinstance(value, ast.Str):
-                    cli_entrypoint = value.s.strip()
+                literal = _string_literal(node.value)
+                if literal is not None:
+                    cli_entrypoint = literal.strip()
             if isinstance(target, ast.Name) and target.id == "cli_only":
                 value = node.value
                 # Support simple boolean literals like ``cli_only = True``.

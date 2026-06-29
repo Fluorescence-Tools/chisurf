@@ -35,6 +35,8 @@ class Project:
     ui_state: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
     extra: Dict[str, Any] = field(default_factory=dict)
+    dependency_edges: List[Dict[str, Any]] = field(default_factory=list)
+    parameters: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert this project into a deterministic JSON-serializable dictionary."""
@@ -55,6 +57,8 @@ class Project:
             "fits": self.fits,
             "ui": self.ui_state,
             "extra": self.extra,
+            "dependency_edges": self.dependency_edges,
+            "parameters": self.parameters,
         }
 
     @classmethod
@@ -85,6 +89,8 @@ class Project:
             ui_state=data.get("ui") or {},
             metadata=metadata,
             extra=data.get("extra") or {},
+            dependency_edges=data.get("dependency_edges") or [],
+            parameters=data.get("parameters") or {},
         )
 
     def get_dataset(self, uid: str) -> Optional[Dict[str, Any]]:

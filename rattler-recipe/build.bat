@@ -12,6 +12,18 @@ git submodule sync --recursive
 git submodule update --init --recursive --force
 
 
+:: Build Burbulator C++ shared library
+set BURB_SRC=src\csrc\burbulator
+set BURB_BUILD=build\burbulator_cmake
+set BURB_OUT_DIR=chisurf\plugins\core\acq\tcspc_devices\simulation
+mkdir %BURB_BUILD%
+cmake -S %BURB_SRC% -B %BURB_BUILD% -DCMAKE_BUILD_TYPE=Release
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+cmake --build %BURB_BUILD% --config Release
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+copy %BURB_BUILD%\bin\*.dll %BURB_OUT_DIR%\ /Y
+if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+
 :: Build chinet (pure Python package)
 cd %ROOT_DIR%
 %PYTHON% -m pip install .\modules\chinet --no-deps --prefix=%PREFIX%

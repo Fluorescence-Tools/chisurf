@@ -467,6 +467,12 @@ def find_bursts(arr, max_gap=0):
     return bursts
 
 
+@nb.njit(cache=True)
+def _fill_gaps_helper(arr: np.ndarray, starts: np.ndarray, stops: np.ndarray, small_gaps: np.ndarray) -> None:
+    for idx in small_gaps:
+        arr[stops[idx]:starts[idx + 1]] = 1
+
+
 def fill_small_gaps_in_array(arr, max_gap):
     """
     Fill small gaps (sequences of zeros) between bursts of ones in a binary array.
@@ -505,7 +511,6 @@ def fill_small_gaps_in_array(arr, max_gap):
     small_gaps = np.where(gaps <= max_gap)[0]
 
     # Fill small gaps by setting the values in those gaps to 1
-    for idx in small_gaps:
-        arr[stops[idx]:starts[idx + 1]] = 1
+    _fill_gaps_helper(arr, starts, stops, small_gaps)
 
     return arr

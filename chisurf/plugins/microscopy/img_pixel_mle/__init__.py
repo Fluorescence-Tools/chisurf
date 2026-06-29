@@ -25,6 +25,15 @@ Analytical Chemistry, 73(9), 2078-2086. https://doi.org/10.1021/ac000877g
 """
 
 name = "Imaging:Lifetime:Pixel-wise lifetime MLE"
+cli_entrypoint = "img-pixel-mle=chisurf.plugins.microscopy.img_pixel_mle.cli:cli"
+
+from pathlib import Path as _Path
+import json as _json
+
+_manifest_path = _Path(__file__).parent / "manifest.json"
+if _manifest_path.exists():
+    _manifest = _json.loads(_manifest_path.read_text())
+    name = _manifest.get("display_name", name)
 
 from .imgmle import LifetimeMleAnalysisWizard
 

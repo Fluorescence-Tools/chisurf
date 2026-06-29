@@ -5,22 +5,21 @@ from typing import Optional
 from qtpy import QtWidgets
 
 def open_forster_calculator(owner: QtWidgets.QWidget) -> None:
-    """Open the Spectra Viewer plugin to calculate Förster radius."""
+    """Open the Förster radius calculator widget using MFDB spectra."""
     if not hasattr(owner, '_forster_calculator_window'):
         try:
-            from chisurf.plugins._dev.spectra_viewer import SpectraViewerWidget
-            # The SpectraViewerWidget requires an empty constructor, and creates its own window
-            owner._forster_calculator_window = SpectraViewerWidget()
-            
-            # TODO: needs docstring
+            from chisurf.gui.widgets.models.tcspc.forster_calculator_dialog import (
+                ForsterCalculatorWidget,
+            )
+            owner._forster_calculator_window = ForsterCalculatorWidget()
+
             def on_forster_radius_calculated(r0_angstrom: float):
-                """Handle calculated Forster radius from plugin."""
                 try:
                     fret_params = getattr(owner, "fret_parameters", None)
                     if fret_params is not None:
                         # Set the Forster radius on the parameter
                         fret_params.forster_radius = float(r0_angstrom)
-                        
+
                         # Try to update the GUI widget if possible
                         try:
                             param = getattr(fret_params, "_forster_radius", None)
@@ -34,7 +33,7 @@ def open_forster_calculator(owner: QtWidgets.QWidget) -> None:
                                     widget_value.blockSignals(False)
                         except Exception:
                             pass
-                            
+
                         # Update the model
                         update = getattr(owner, "update", None)
                         if callable(update):
@@ -45,20 +44,20 @@ def open_forster_calculator(owner: QtWidgets.QWidget) -> None:
                 except Exception as ex:
                     import logging
                     logging.warning(f"Failed to populate Forster radius: {ex}")
-            
+
             from qtpy import QtCore
             owner._forster_calculator_window.forster_radius_calculated.connect(
                 on_forster_radius_calculated, type=QtCore.Qt.UniqueConnection
             )
-            
+
         except Exception as e:
             QtWidgets.QMessageBox.critical(
                 owner,
                 "Error",
-                f"Could not load Spectra Viewer plugin:\n{e}"
+                f"Could not open Förster radius calculator:\n{e}"
             )
             return
-            
+
     # Show and bring to front
     owner._forster_calculator_window.show()
     owner._forster_calculator_window.raise_()

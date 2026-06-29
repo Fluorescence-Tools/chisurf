@@ -1,0 +1,74 @@
+{
+  "id": "img_pixel_mle",
+  "version": "2.0.0",
+  "display_name": "Imaging:Lifetime:Pixel-wise MLE",
+  "description": "Pixel-wise MLE lifetime analysis for TTTR imaging data.",
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Imaging",
+    "Lifetime"
+  ],
+  "icon": "\ud83d\udd2c",
+  "state_namespace": "img_pixel_mle",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_pixel_mle.gui.tool:ImgPixelMleTool",
+    "cli": "img-pixel-mle=chisurf.plugins.microscopy.img_pixel_mle.cli:cli",
+    "services": "chisurf.plugins.microscopy.img_pixel_mle.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "img_pixel_mle.analyze.run",
+      "summary": "Run pixel-wise MLE on TTTR imaging data.",
+      "params_schema": {
+        "type": "object",
+        "required": [
+          "files",
+          "irf_file"
+        ],
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "irf_file": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object"
+          }
+        }
+      },
+      "result_schema": {
+        "type": "object"
+      },
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "img_pixel_mle.contract.describe",
+      "summary": "Return the RPC contract.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "img_pixel_mle.state.*",
+      "description": "State patch events"
+    }
+  ],
+  "menu_hidden": true
+}

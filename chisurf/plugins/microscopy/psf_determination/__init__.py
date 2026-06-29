@@ -1048,3 +1048,28 @@ if __name__ == "__main__":
     win = PSFDeterminationWidget()
     win.show()
     sys.exit(app.exec_())
+
+# ---------------------------------------------------------------------------
+# New-style manifest loading
+# ---------------------------------------------------------------------------
+from pathlib import Path as _Path
+import json as _json
+
+_manifest_path = _Path(__file__).parent / "manifest.json"
+if _manifest_path.exists():
+    _manifest = _json.loads(_manifest_path.read_text())
+    name = _manifest.get("display_name", name)
+
+cli_entrypoint = "psf-determination=chisurf.plugins.microscopy.psf_determination.cli:cli"
+
+
+def __getattr__(attr_name: str):
+    """Lazy Qt gate for new-style entrypoints."""
+    if attr_name == "PsfDeterminationTool":
+        from .gui.tool import PsfDeterminationTool as _cls
+        globals()["PsfDeterminationTool"] = _cls
+        return _cls
+    raise AttributeError(f"module {__name__!r} has no attribute {attr_name!r}")
+
+
+__all__ = ["PSFDeterminationWidget", "PsfDeterminationTool", "gaussian_3d"]

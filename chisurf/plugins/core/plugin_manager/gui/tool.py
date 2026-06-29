@@ -264,6 +264,60 @@ class PluginManagerWidget(QWidget):
         # Create layout
         main_layout = QVBoxLayout(self)
 
+        # Create top toolbar layout
+        toolbar_layout = QHBoxLayout()
+        toolbar_layout.setContentsMargins(0, 0, 0, 10)
+        
+        save_button = QPushButton("💾 Save Settings")
+        save_button.setToolTip("Save all plugin settings to configuration file")
+        save_button.clicked.connect(self.save_settings)
+        toolbar_layout.addWidget(save_button)
+
+        refresh_button = QPushButton("🔄 Refresh Plugins")
+        refresh_button.setToolTip("Reload the list of available plugins")
+        refresh_button.clicked.connect(self.load_plugins)
+        toolbar_layout.addWidget(refresh_button)
+
+        import_button = QPushButton("📥 Import Plugin")
+        import_button.setToolTip("Import a new plugin from an external directory or ZIP file")
+        import_button.clicked.connect(self.import_plugin)
+        toolbar_layout.addWidget(import_button)
+
+        toolbar_layout.addSpacing(20)
+
+        self.hide_disabled_checkbox = QCheckBox("🙈 Hide Disabled")
+        self.hide_disabled_checkbox.setToolTip("Do not show disabled plugins in the list")
+        self.hide_disabled_checkbox.setChecked(self.hide_disabled_plugins)
+        self.hide_disabled_checkbox.stateChanged.connect(self.on_hide_disabled_changed)
+        toolbar_layout.addWidget(self.hide_disabled_checkbox)
+
+        toolbar_layout.addSpacing(20)
+
+        mode_label = QLabel("🧠 Statefulness:")
+        mode_label.setToolTip("Global policy for remembering plugin window states")
+        toolbar_layout.addWidget(mode_label)
+
+        self.statefulness_mode_combo = QComboBox()
+        self.statefulness_mode_combo.setToolTip("Global policy for remembering plugin window states")
+        self.statefulness_mode_combo.addItems([
+            "Plugin default",
+            "Enable all",
+            "Disable all",
+        ])
+        mode_index = {
+            "plugin_default": 0,
+            "enabled": 1,
+            "force_enabled": 1,
+            "disabled": 2,
+            "force_disabled": 2,
+        }.get(str(self.statefulness_mode).lower(), 0)
+        self.statefulness_mode_combo.setCurrentIndex(mode_index)
+        self.statefulness_mode_combo.currentTextChanged.connect(self.on_statefulness_mode_changed)
+        toolbar_layout.addWidget(self.statefulness_mode_combo)
+
+        toolbar_layout.addStretch()
+        main_layout.addLayout(toolbar_layout)
+
         # Create splitter for list and details
         splitter = QSplitter(Qt.Horizontal)
         main_layout.addWidget(splitter)
@@ -298,7 +352,7 @@ class PluginManagerWidget(QWidget):
         name_layout.addWidget(self.plugin_name_label)
 
         # Add rename button
-        self.rename_button = QPushButton("Rename")
+        self.rename_button = QPushButton("✏️ Rename")
         self.rename_button.clicked.connect(self.on_rename_plugin)
         self.rename_button.setEnabled(False)
         name_layout.addWidget(self.rename_button)
@@ -308,17 +362,17 @@ class PluginManagerWidget(QWidget):
 
         # Plugin status
         status_layout = QHBoxLayout()
-        self.disabled_checkbox = QCheckBox("Disable plugin")
+        self.disabled_checkbox = QCheckBox("🚫 Disable plugin")
         self.disabled_checkbox.stateChanged.connect(self.on_disabled_changed)
         status_layout.addWidget(self.disabled_checkbox)
 
         # Toolbar placement
-        self.toolbar_checkbox = QCheckBox("Show in toolbar")
+        self.toolbar_checkbox = QCheckBox("📌 Show in toolbar")
         self.toolbar_checkbox.stateChanged.connect(self.on_toolbar_changed)
         status_layout.addWidget(self.toolbar_checkbox)
 
         # Statefulness override
-        self.statefulness_checkbox = QCheckBox("Remember window state")
+        self.statefulness_checkbox = QCheckBox("🧠 Remember window state")
         self.statefulness_checkbox.setTristate(True)
         self.statefulness_checkbox.stateChanged.connect(self.on_statefulness_changed)
         status_layout.addWidget(self.statefulness_checkbox)
@@ -331,11 +385,11 @@ class PluginManagerWidget(QWidget):
         order_label = QLabel("Plugin Order:")
         order_layout.addWidget(order_label)
 
-        self.move_up_button = QPushButton("Move Up")
+        self.move_up_button = QPushButton("⬆️ Move Up")
         self.move_up_button.clicked.connect(self.on_move_up)
         order_layout.addWidget(self.move_up_button)
 
-        self.move_down_button = QPushButton("Move Down")
+        self.move_down_button = QPushButton("⬇️ Move Down")
         self.move_down_button.clicked.connect(self.on_move_down)
         order_layout.addWidget(self.move_down_button)
 
@@ -375,27 +429,27 @@ class PluginManagerWidget(QWidget):
         icon_source_layout.addLayout(icon_path_layout)
 
         icon_button_layout = QHBoxLayout()
-        self.browse_icon_button = QPushButton("Choose Image")
+        self.browse_icon_button = QPushButton("📁 Choose Image")
         self.browse_icon_button.clicked.connect(self.on_choose_icon_image)
         self.browse_icon_button.setEnabled(False)
         icon_button_layout.addWidget(self.browse_icon_button)
 
-        self.apply_icon_button = QPushButton("Use Image")
+        self.apply_icon_button = QPushButton("✅ Use Image")
         self.apply_icon_button.clicked.connect(self.on_apply_icon_image)
         self.apply_icon_button.setEnabled(False)
         icon_button_layout.addWidget(self.apply_icon_button)
 
-        self.generate_icon_button = QPushButton("Generate")
+        self.generate_icon_button = QPushButton("🪄 Generate")
         self.generate_icon_button.clicked.connect(self.on_generate_icon)
         self.generate_icon_button.setEnabled(False)
         icon_button_layout.addWidget(self.generate_icon_button)
 
-        self.edit_icon_button = QPushButton("Edit")
+        self.edit_icon_button = QPushButton("✏️ Edit")
         self.edit_icon_button.clicked.connect(self.on_edit_icon)
         self.edit_icon_button.setEnabled(False)
         icon_button_layout.addWidget(self.edit_icon_button)
 
-        self.clear_icon_button = QPushButton("Clear")
+        self.clear_icon_button = QPushButton("🗑️ Clear")
         self.clear_icon_button.clicked.connect(self.on_clear_icon)
         self.clear_icon_button.setEnabled(False)
         icon_button_layout.addWidget(self.clear_icon_button)
@@ -429,62 +483,7 @@ class PluginManagerWidget(QWidget):
 
         splitter.addWidget(details_group)
 
-        # Create settings group
-        settings_group = QGroupBox("Global Plugin Settings")
-        settings_layout = QVBoxLayout(settings_group)
 
-        # Hide disabled plugins checkbox
-        self.hide_disabled_checkbox = QCheckBox("Hide disabled plugins")
-        self.hide_disabled_checkbox.setChecked(self.hide_disabled_plugins)
-        self.hide_disabled_checkbox.stateChanged.connect(self.on_hide_disabled_changed)
-        settings_layout.addWidget(self.hide_disabled_checkbox)
-
-        mode_layout = QHBoxLayout()
-        mode_label = QLabel("Plugin statefulness:")
-        mode_layout.addWidget(mode_label)
-        self.statefulness_mode_combo = QComboBox()
-        self.statefulness_mode_combo.addItems([
-            "Plugin default",
-            "Enable all",
-            "Disable all",
-        ])
-        mode_index = {
-            "plugin_default": 0,
-            "enabled": 1,
-            "force_enabled": 1,
-            "disabled": 2,
-            "force_disabled": 2,
-        }.get(str(self.statefulness_mode).lower(), 0)
-        self.statefulness_mode_combo.setCurrentIndex(mode_index)
-        self.statefulness_mode_combo.currentTextChanged.connect(self.on_statefulness_mode_changed)
-        mode_layout.addWidget(self.statefulness_mode_combo)
-        mode_layout.addStretch()
-        settings_layout.addLayout(mode_layout)
-
-        statefulness_hint = QLabel(
-            "Per-plugin checkbox: checked = force remember, "
-            "unchecked = force forget, partial = plugin default."
-        )
-        statefulness_hint.setWordWrap(True)
-        settings_layout.addWidget(statefulness_hint)
-
-        main_layout.addWidget(settings_group)
-
-        # Create buttons
-        button_layout = QHBoxLayout()
-        save_button = QPushButton("Save Settings")
-        save_button.clicked.connect(self.save_settings)
-        button_layout.addWidget(save_button)
-
-        refresh_button = QPushButton("Refresh Plugin List")
-        refresh_button.clicked.connect(self.load_plugins)
-        button_layout.addWidget(refresh_button)
-
-        import_button = QPushButton("Import Plugin")
-        import_button.clicked.connect(self.import_plugin)
-        button_layout.addWidget(import_button)
-
-        main_layout.addLayout(button_layout)
 
         # Load plugins
         self.load_plugins()
@@ -566,25 +565,6 @@ class PluginManagerWidget(QWidget):
             try:
                 module = importlib.import_module(module_path)
 
-                # Import all submodules to ensure they're properly loaded
-                package_path = module.__path__ if hasattr(module, '__path__') else None
-                if package_path:
-                    # Temporarily add the plugin directory to sys.path for relative imports
-                    original_sys_path = sys.path.copy()
-                    for path in package_path:
-                        if path not in sys.path:
-                            sys.path.insert(0, path)
-
-                    try:
-                        for _, submodule_name, is_pkg in pkgutil.walk_packages(package_path, f"{module_path}."):
-                            try:
-                                importlib.import_module(submodule_name)
-                            except Exception as sub_e:
-                                print(f"Error importing submodule {submodule_name}: {sub_e}")
-                    finally:
-                        # Restore the original sys.path
-                        sys.path = original_sys_path
-
                 name = getattr(module, 'name', plugin_name)
                 manifest = load_manifest(pathlib.Path(package_dir) / "manifest.json")
                 statefulness_key = self._statefulness_key(name, module_name, manifest)
@@ -598,7 +578,7 @@ class PluginManagerWidget(QWidget):
                 )
 
                 # Create list item
-                display_name = f"{name} [{source}] ({self._statefulness_summary(statefulness_key)})"
+                display_name = f"{clean_name} [{source}] ({self._statefulness_summary(statefulness_key)})"
                 item = QListWidgetItem(display_name)
                 # Track plugins by full module path so nested packages are unique
                 item.setData(Qt.UserRole, module_path)
@@ -615,7 +595,7 @@ class PluginManagerWidget(QWidget):
                 if is_disabled:
                     item.setForeground(Qt.gray)
                     item.setText(
-                        f"{name} [DISABLED] [{source}] "
+                        f"{clean_name} [DISABLED] [{source}] "
                         f"({self._statefulness_summary(statefulness_key)})"
                     )
 

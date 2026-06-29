@@ -14,5 +14,5 @@ class SetupChannelDefinitionWidget(QtWidgets.QWidget):
         super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.page = DetectorWizardPage(show_save=True)
+        self.page = DetectorWizardPage(None, self, show_save=False)
         layout.addWidget(self.page)

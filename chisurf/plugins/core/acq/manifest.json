@@ -1,0 +1,28 @@
+{
+  "id": "acq",
+  "version": "1.0.0",
+  "display_name": "Main:Tools:Acquisition",
+  "description": "Single-Molecule Acquisition plugin",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Acquisition"],
+  "icon": "icon.png",
+  "state_namespace": "acq",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.acq.gui.tool:SMAcquisitionManager",
+    "cli": "photon-acquisition=chisurf.plugins.core.acq.standalone:main"
+  }
+}

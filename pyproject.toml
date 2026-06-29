@@ -53,6 +53,8 @@ dependencies = [
     "matplotlib",
     "python-docx",
     "markdown",
+    "msgpack>=1.1.2",
+    "msgpack-numpy",
     "mdtraj",
     "ipython",
     "click",
@@ -122,7 +124,7 @@ namespaces = true
     "*.ui", "*.css", "*.qss",
     "*.png", "*.svg",
     "*.csv", "*.npy", "*.dat",
-    "*.dll", "*.so", "*.pyd", "*.ipynb",
+    "*.dll", "*.so", "*.dylib", "*.pyd", "*.ipynb",
     "*.db", "*.txt", "*.dic"
 ]
 "chisurf.settings.constants" = ["*.json"]

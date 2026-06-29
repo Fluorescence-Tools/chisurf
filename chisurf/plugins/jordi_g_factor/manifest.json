@@ -36,5 +36,6 @@
       "name": "jordi_g_factor.archive_g_factor",
       "summary": "Register reference decay and archive G-factor calibration in MFDB."
     }
-  ]
+ ],
+ "menu_hidden": true
 }

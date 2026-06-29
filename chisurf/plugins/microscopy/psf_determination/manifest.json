@@ -1,0 +1,81 @@
+{
+  "id": "psf_determination",
+  "version": "2.0.0",
+  "display_name": "Imaging:PSF Determination",
+  "description": "3D Gaussian PSF fitting and bead detection for confocal microscopy.",
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Imaging"
+  ],
+  "icon": "\ud83d\udd2c",
+  "state_namespace": "psf_determination",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.psf_determination.gui.tool:PsfDeterminationTool",
+    "cli": "psf-determination=chisurf.plugins.microscopy.psf_determination.cli:cli",
+    "services": "chisurf.plugins.microscopy.psf_determination.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "psf_determination.fit.run",
+      "summary": "Fit 3D Gaussian PSF to a bead stack.",
+      "params_schema": {
+        "type": "object",
+        "required": [
+          "stack_path"
+        ],
+        "properties": {
+          "stack_path": {
+            "type": "string"
+          },
+          "pixel_size_nm": {
+            "type": "number"
+          },
+          "z_step_nm": {
+            "type": "number"
+          },
+          "roi_xy": {
+            "type": "integer"
+          },
+          "roi_z": {
+            "type": "integer"
+          },
+          "pixels_per_frame": {
+            "type": "integer"
+          },
+          "min_distance": {
+            "type": "number"
+          }
+        }
+      },
+      "result_schema": {
+        "type": "object"
+      },
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "psf_determination.contract.describe",
+      "summary": "Return the RPC contract.",
+      "params_schema": {},
+      "result_schema": {},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "psf_determination.state.*",
+      "description": "State patch events"
+    }
+  ],
+  "menu_hidden": true
+}

@@ -7,14 +7,13 @@ import json
 import logging
 import os
 import threading
-from typing import Dict, Optional
 import numpy as np
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import chisurf
 from chisurf.plugins.chimol.chimol.renderer.view import MolView
-from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
-from ..core import av, docking, engine, io, results, sampling, screening, evaluate, pair_selection
+from chisurf.plugins.modelling.fps_json_editor.gui.editor import FpsJsonEditor
+from ..core import av, docking, engine, io, results, screening, evaluate, pair_selection
 from ..core.io import read_fps_json
 
 try:
@@ -938,13 +937,13 @@ class FretDockWizard(QtWidgets.QMainWindow):
         main_layout.addLayout(shared_layout)
 
         self.tabs = QtWidgets.QTabWidget()
-        self.label_structure = LabelStructure()
+        self.fps_json_editor = FpsJsonEditor()
         self.dock_widget = _DockWidget()
         self.screen_widget = _ScreenWidget()
         self.evaluator_widget = _EvaluatorWidget()
         self.pair_select_widget = _PairSelectWidget()
 
-        self.tabs.addTab(self.label_structure, "Edit fps.json")
+        self.tabs.addTab(self.fps_json_editor, "Edit fps.json")
         self.tabs.addTab(self.dock_widget, "Docking")
         self.tabs.addTab(self.screen_widget, "Screening")
         self.tabs.addTab(self.evaluator_widget, "Evaluators")
@@ -996,7 +995,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
         os.makedirs(project_dir, exist_ok=True)
 
         # Copy and update reference PDB
-        ref_pdb_path = self.label_structure.position_panel._pdb_path
+        ref_pdb_path = self.fps_json_editor.position_panel._pdb_path
         new_ref_pdbs = []
         if ref_pdb_path:
             for p in [x.strip() for x in ref_pdb_path.split(",") if x.strip()]:
@@ -1011,8 +1010,8 @@ class FretDockWizard(QtWidgets.QMainWindow):
                     new_ref_pdbs.append(dest)
                 else:
                     new_ref_pdbs.append(p)
-            self.label_structure.position_panel._pdb_path = ",".join(new_ref_pdbs)
-            self.label_structure.position_panel.pdb_filename_edit.setText(",".join(new_ref_pdbs))
+            self.fps_json_editor.position_panel._pdb_path = ",".join(new_ref_pdbs)
+            self.fps_json_editor.position_panel.pdb_filename_edit.setText(",".join(new_ref_pdbs))
 
         # Copy and update docking PDBs
         dock_pdbs = self.dock_widget.pdb_path.text()
@@ -1065,7 +1064,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
 
         # Write fps_json file
         fps_filename = "project.fps.json"
-        fps_payload = self.label_structure.fps_json_payload
+        fps_payload = self.fps_json_editor.fps_json_payload
         write_fps_json(os.path.join(project_dir, fps_filename), 
                        fps_payload.get("Positions", {}),
                        fps_payload.get("Distances", {}),
@@ -1075,7 +1074,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
         ui_fret = {
             "fps_json": fps_payload,
             "fps_json_file": fps_filename,
-            "reference_pdb": to_rel(self.label_structure.position_panel._pdb_path, project_dir),
+            "reference_pdb": to_rel(self.fps_json_editor.position_panel._pdb_path, project_dir),
             "docking": {
                 "fps_path": to_rel_single(self.shared_fps_path.text(), project_dir),
                 "pdb_path": to_rel(self.dock_widget.pdb_path.text(), project_dir),
@@ -1167,7 +1166,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
                     print(f"Error loading {fps_file}: {e}")
 
         if fps_payload:
-            self.label_structure.fps_json_payload = fps_payload
+            self.fps_json_editor.fps_json_payload = fps_payload
 
         # Load reference PDB structure
         ref_pdb = ui_fret.get("reference_pdb")
@@ -1176,7 +1175,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
             paths = [p.strip() for p in ref_pdb_abs.split(",") if p.strip()]
             if any(os.path.exists(p) for p in paths):
                 try:
-                    self.label_structure.position_panel.load_structure(ref_pdb_abs)
+                    self.fps_json_editor.position_panel.load_structure(ref_pdb_abs)
                 except Exception as e:
                     print(f"Error loading reference PDB {ref_pdb_abs}: {e}")
 
@@ -1304,7 +1303,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
                 fps_payload["Distances"] = distances
                 if score_sets:
                     fps_payload["χ²"] = score_sets
-                self.label_structure.fps_json_payload = fps_payload
+                self.fps_json_editor.fps_json_payload = fps_payload
             except Exception as e:
                 print(f"Error loading fps.json to editor: {e}")
 

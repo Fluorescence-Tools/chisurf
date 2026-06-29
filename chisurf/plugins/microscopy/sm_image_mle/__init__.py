@@ -401,8 +401,8 @@ class MainWindow(QtWidgets.QMainWindow):
       - Settings: for all CLI parameters (including the three new segmentation fields)
       - Browser: view processed molecule images and decay plots
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("PTU Processor GUI")
         self.resize(980, 600)
         self._central = QtWidgets.QWidget()
@@ -773,4 +773,27 @@ if __name__ == "plugin":
     window.show()
 
 name = "Imaging:Lifetime:Molecule-wise MLE"
-cli_entrypoint = "sm-image-mle=chisurf.plugins.microscopy.sm_image_mle.sm_image_mle:cli"
+cli_entrypoint = "sm-image-mle=chisurf.plugins.microscopy.sm_image_mle.cli:cli"
+
+# ---------------------------------------------------------------------------
+# New-style manifest loading
+# ---------------------------------------------------------------------------
+from pathlib import Path as _Path
+import json as _json
+
+_manifest_path = _Path(__file__).parent / "manifest.json"
+if _manifest_path.exists():
+    _manifest = _json.loads(_manifest_path.read_text())
+    name = _manifest.get("display_name", name)
+
+
+def __getattr__(attr_name: str):
+    """Lazy Qt gate for new-style entrypoints."""
+    if attr_name == "SmImageMleTool":
+        from .gui.tool import SmImageMleTool as _cls
+        globals()["SmImageMleTool"] = _cls
+        return _cls
+    raise AttributeError(f"module {__name__!r} has no attribute {attr_name!r}")
+
+
+__all__ = ["MainWindow", "SmImageMleTool", "FileListWidget", "Worker", "BrowserWidget"]

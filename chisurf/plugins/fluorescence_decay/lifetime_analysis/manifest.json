@@ -1,0 +1,20 @@
+{
+  "id": "lifetime_analysis",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:Decay Analysis",
+  "description": "Integrated fluorescence lifetime analysis tools with IRF estimation, MaxEnt MEM, Lazy Lifetime Analysis, microtime histograms, and Jordi G-factor calibration.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence decay"],
+  "state_namespace": "lifetime_analysis",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "lifetime_analysis_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorescence_decay.lifetime_analysis.gui.tool:LifetimeAnalysisTool"
+  },
+  "menu_hidden": false
+}

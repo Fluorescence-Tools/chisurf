@@ -1,0 +1,20 @@
+{
+  "id": "updater",
+  "version": "1.0.0",
+  "display_name": "Setup:Updates & Packages",
+  "description": "Update checker/installer and conda package manager. Surfaced as panels inside the unified Settings dialog.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Setup"],
+  "icon": "📦",
+  "menu_hidden": true,
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "updater_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.updater:UpdaterWidget"
+  }
+}

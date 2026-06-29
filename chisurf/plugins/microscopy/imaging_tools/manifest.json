@@ -1,0 +1,13 @@
+{
+  "id": "imaging_tools",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Image Tools",
+  "description": "Unified imaging toolbox: Image Browser, CLSM Draw, Molecule-wise MLE, Pixel-wise MLE, PSF Determination.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy"],
+  "icon": "🔬",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.imaging_tools.gui.tool:ImagingToolsTool"
+  }
+}

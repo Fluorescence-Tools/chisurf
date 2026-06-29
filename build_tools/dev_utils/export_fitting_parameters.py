@@ -258,7 +258,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=None,
         help=(
             "Output JSON path (defaults to chisurf/settings/constants/"
-            "fitting_parameters.json)."
+            "parameter_registry.json)."
         ),
     )
     parser.add_argument(
@@ -279,7 +279,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     if args.output is not None:
         out_path = Path(args.output).resolve()
     else:
-        out_path = source_root / "settings" / "constants" / "fitting_parameters.json"
+        out_path = source_root / "settings" / "constants" / "parameter_registry.json"
 
     discovered = _discover_fitting_parameters(source_root, include_tests=args.include_tests)
     existing = _load_existing_registry(out_path)

@@ -51,21 +51,33 @@ if [[ "${target_platform}" == linux-* ]] && [[ -x /usr/bin/gcc ]] && [[ -x /usr/
   export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX}"
 fi
 
-# 4) Install local modules
+# 4) Build Burbulator C++ shared library
+BURB_SRC="src/csrc/burbulator"
+BURB_BUILD="build/burbulator_cmake"
+BURB_OUT_DIR="chisurf/plugins/core/acq/tcspc_devices/simulation"
+mkdir -p "$BURB_BUILD"
+cmake -S "$BURB_SRC" -B "$BURB_BUILD" -DCMAKE_BUILD_TYPE=Release ${CMAKE_ARGS:-}
+cmake --build "$BURB_BUILD" --config Release
+if [[ "$target_platform" == win-* ]]; then
+  cp "$BURB_BUILD/bin/"*.dll "$BURB_OUT_DIR/"
+else
+  cp "$BURB_BUILD/lib/"libburbulator.* "$BURB_OUT_DIR/"
+fi
 
+# 5) Install local modules
 "$PY" -m pip install ./modules/clsmview    --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/ndxplorer   --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/quest       --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 
-# 5) Install chinet (pure Python, no CMake/SWIG needed)
+# 6) Install chinet (pure Python, no CMake/SWIG needed)
 "$PY" -m pip install ./modules/chinet --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 
-# 6) Versioning
+# 8) Versioning
 echo "Building ChiSurf version: $PKG_VERSION"
 cp chisurf/info.py chisurf/info.py.bak
 sed -i.tmp "s/__version__ = .*/__version__ = '$PKG_VERSION'/" chisurf/info.py
 
-# 7) Install main module
+# 9) Install main module
 "$PY" -m pip install . --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 
 # Restore original info.py

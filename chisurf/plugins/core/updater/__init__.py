@@ -33,8 +33,9 @@ try:
 except ImportError:
     persist_plugin_state = lambda n: lambda c: c
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "Help:Updates and Packages"
+# Plugin metadata (display name, icon, menu visibility) is defined in
+# manifest.json. This plugin is menu_hidden and surfaced as panels inside the
+# unified Settings dialog (Setup:Settings -> Updates / Packages).
 
 class UpdaterWorker(QtCore.QThread):
     finished = QtCore.Signal(bool, object, str)
@@ -193,19 +194,19 @@ class UpdaterWidget(QtWidgets.QWidget):
         version_layout.addWidget(self.version_dropdown)
         layout.addLayout(version_layout)
 
-        # Buttons
+        # Buttons with emoji icons
         button_layout = QtWidgets.QHBoxLayout()
-        self.check_button = QtWidgets.QPushButton("Check for Updates")
+        self.check_button = QtWidgets.QPushButton(" 🔍  Check for Updates")
         self.check_button.clicked.connect(self.check_for_updates)
         button_layout.addWidget(self.check_button)
 
-        self.update_button = QtWidgets.QPushButton("Update Now")
+        self.update_button = QtWidgets.QPushButton(" ⬇️  Update Now")
         self.update_button.clicked.connect(self.update_chisurf)
         self.update_button.setEnabled(False)  # Disabled until updates are available
         button_layout.addWidget(self.update_button)
 
         # Open Package Manager button
-        self.pkg_manager_button = QtWidgets.QPushButton("Package Manager")
+        self.pkg_manager_button = QtWidgets.QPushButton(" 🗂️  Package Manager")
         try:
             self.pkg_manager_button.setToolTip("Open the package manager to manage packages in your environment.")
             self.pkg_manager_button.clicked.connect(self.open_pkg_manager)

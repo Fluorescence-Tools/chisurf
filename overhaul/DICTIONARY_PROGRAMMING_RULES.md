@@ -19,8 +19,8 @@ Every persisted dictionary item should declare:
 - `_item.mandatory_code`
 - `_item_enumeration.value` for controlled values
 - `_item_default.value` for defaulted values
-- `_chisurf_schema.table_name`
-- `_chisurf_schema.column_name`
+- `_mfdb_schema.table_name`
+- `_mfdb_schema.column_name`
 
 ## Idempotent Identity Rows
 

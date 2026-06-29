@@ -209,6 +209,15 @@ class MetadataEditor(QtWidgets.QWidget):
 
     def set_data(self, data: List[Dict[str, str]]) -> None:
         """Replace all rows with metadata from *data*."""
+        # Collect keys from loaded records that aren't in ALL_METADATA_KEYS so
+        # they still appear as autocomplete options in the per-row comboboxes.
+        extra: List[str] = []
+        for item in data:
+            k = item.get("key", "")
+            if k and k not in ALL_METADATA_KEYS and k not in extra:
+                extra.append(k)
+        self._extra_keys: List[str] = extra
+
         self._suppress_change = True
         self.table.setRowCount(0)
         for item in data:
@@ -248,10 +257,11 @@ class MetadataEditor(QtWidgets.QWidget):
         return item.text().strip() if item is not None else ""
 
     def _make_key_combo(self, row: int) -> MetadataKeyComboBox:
-        """Create a popluated MetadataKeyComboBox for a table row."""
+        """Create a populated MetadataKeyComboBox for a table row."""
         combo = MetadataKeyComboBox()
         combo.setEditable(True)
-        combo.addItems(ALL_METADATA_KEYS)
+        all_keys = ALL_METADATA_KEYS + getattr(self, "_extra_keys", [])
+        combo.addItems(all_keys)
         for idx, key in enumerate(ALL_METADATA_KEYS):
             combo.setItemData(idx, key_description(key), Qt.UserRole + 1)
         comp = combo.completer()

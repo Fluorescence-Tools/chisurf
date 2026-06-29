@@ -1,9 +1,10 @@
 # Developer tools for parameter registry
 
 This directory contains small, maintenance-oriented scripts that help keep
-`chisurf`'s global **fitting-parameter registry**
-(`chisurf/settings/constants/fitting_parameters.json`) in sync with the
-codebase and with the FCS/TCSPC model definitions.
+`chisurf`'s global **parameter registry**
+(`chisurf/settings/constants/parameter_registry.json`) in sync with the
+codebase and with the FCS/TCSPC model definitions, as well as with the
+flrCIF standard dictionary used by MFDB export.
 
 These tools are **for developers** and are not part of the public API.
 They are typically run from the repository root using the Python module
@@ -21,7 +22,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   - Collects parameter name, location (module/file/line, class, function),
     and selected keyword arguments (`description`, `label_text`, `fixed`,
     `bounds_on`, `lb`, `ub`).
-  - Merges results into `fitting_parameters.json`, preserving any existing
+  - Merges results into `parameter_registry.json`, preserving any existing
     descriptions, keywords, aliases, and label texts.
   - Adds/updates a `sources` list per parameter with references to where
     that parameter is used in the code.
@@ -32,7 +33,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   # From the repository root
   python -m build_tools.dev_utils.export_fitting_parameters \
       --root chisurf \
-      --output chisurf/settings/constants/fitting_parameters.json
+      --output chisurf/settings/constants/parameter_registry.json
 
   # Optionally include tests in the scan
   python -m build_tools.dev_utils.export_fitting_parameters --include-tests
@@ -61,7 +62,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   python -m build_tools.dev_utils.export_fcs_parameters \
       --root chisurf \
       --yaml chisurf/models/fcs/models.yaml \
-      --output chisurf/settings/constants/fitting_parameters.json
+      --output chisurf/settings/constants/parameter_registry.json
   ```
 
 - **`export_tcspc_parameters.py`**  
@@ -86,7 +87,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   python -m build_tools.dev_utils.export_tcspc_parameters \
       --root chisurf \
       --json chisurf/models/tcspc/tcspc.models.json \
-      --output chisurf/settings/constants/fitting_parameters.json
+      --output chisurf/settings/constants/parameter_registry.json
   ```
 
 - **`fill_fcs_descriptions.py`**  
@@ -95,7 +96,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   the parameter symbol (e.g. `N`, `td1`, `a`, `bt1`, etc.). Existing
   non-empty descriptions are left untouched.
 
-  - Walks all `fcs.*` entries in `fitting_parameters.json`.
+  - Walks all `fcs.*` entries in `parameter_registry.json`.
   - If `description` is empty/missing, generates a generic but physically
     meaningful text and merges FCS-related keywords.
   - Never overwrites user-provided descriptions.
@@ -105,7 +106,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   ```bash
   python -m build_tools.dev_utils.fill_fcs_descriptions \
       --root chisurf \
-      --output chisurf/settings/constants/fitting_parameters.json
+      --output chisurf/settings/constants/parameter_registry.json
   ```
 
 - **`fill_tcspc_descriptions.py`**  
@@ -128,7 +129,7 @@ interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
   ```bash
   python -m build_tools.dev_utils.fill_tcspc_descriptions \
       --root chisurf \
-      --output chisurf/settings/constants/fitting_parameters.json
+      --output chisurf/settings/constants/parameter_registry.json
   ```
 
 ---

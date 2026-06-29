@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 
-from ..core.av import _HAS_LABELLIB, _HAS_IMP_BFF, _LABELLIB_BACKEND, select_backend
-from ..core.engine import RigidBody, DistanceRestraint, SpringParameters
+from ..core.av import _HAS_IMP_BFF, _HAS_LABELLIB, select_backend
+from ..core.engine import DistanceRestraint, RigidBody
 from ..core.sampling import run_metropolis
 
 
@@ -79,8 +79,6 @@ def test_select_backend_labellib():
     if not _HAS_LABELLIB:
         pytest.skip("LabelLib is not available on this system")
 
-    # Set to False first
-    global _LABELLIB_BACKEND
     select_backend("labellib")
     from ..core import av
     assert av._LABELLIB_BACKEND is True
@@ -90,6 +88,89 @@ def test_select_backend_invalid_raises():
     """Verify that select_backend with an invalid name raises ValueError."""
     with pytest.raises(ValueError, match="Unknown backend name"):
         select_backend("invalid_backend_name")
+
+
+def test_select_backend_auto_prefers_imp_bff_off_windows(monkeypatch):
+    """Verify auto backend selection prefers IMP.bff on non-Windows systems."""
+    from ..core import av
+
+    monkeypatch.setattr(av, "_LABELLIB_BACKEND", av._LABELLIB_BACKEND)
+    monkeypatch.setattr(av, "_HAS_LABELLIB", True)
+    monkeypatch.setattr(av, "_HAS_IMP_BFF", True)
+    monkeypatch.setattr(av.sys, "platform", "darwin")
+
+    av.select_backend("auto")
+
+    assert av._LABELLIB_BACKEND is False
+
+
+def test_select_backend_auto_prefers_labellib_on_windows(monkeypatch):
+    """Verify auto backend selection keeps LabelLib first on Windows."""
+    from ..core import av
+
+    monkeypatch.setattr(av, "_LABELLIB_BACKEND", av._LABELLIB_BACKEND)
+    monkeypatch.setattr(av, "_HAS_LABELLIB", True)
+    monkeypatch.setattr(av, "_HAS_IMP_BFF", True)
+    monkeypatch.setattr(av.sys, "platform", "win32")
+
+    av.select_backend("auto")
+
+    assert av._LABELLIB_BACKEND is True
+
+
+def test_select_backend_auto_uses_labellib_when_imp_bff_api_missing(monkeypatch):
+    """Verify auto selection treats incomplete IMP.bff as unavailable."""
+    from ..core import av
+
+    monkeypatch.setattr(av, "_LABELLIB_BACKEND", av._LABELLIB_BACKEND)
+    monkeypatch.setattr(av, "_HAS_LABELLIB", True)
+    monkeypatch.setattr(av, "_HAS_IMP_BFF", False)
+    monkeypatch.setattr(av.sys, "platform", "darwin")
+
+    av.select_backend("auto")
+
+    assert av._LABELLIB_BACKEND is True
+
+
+def test_compute_av_falls_back_to_labellib_when_imp_bff_fails(monkeypatch):
+    """Verify a broken IMP.bff runtime path falls back to LabelLib."""
+    from ..core import av
+
+    calls = []
+
+    def fake_imp_bff(*args, **kwargs):
+        raise AttributeError("module 'IMP.bff' has no attribute 'AV'")
+
+    def fake_labellib(atoms, source_xyz, linker_length, linker_width, radii, disc_step):
+        calls.append((atoms, source_xyz, linker_length, linker_width, radii, disc_step))
+        return av.AccessibleVolume(
+            points=np.array([[1.0, 2.0, 3.0, 1.0]], dtype=float),
+            density=np.ones((1, 1, 1), dtype=np.float32),
+            grid_origin=np.zeros(3),
+            grid_step=float(disc_step),
+            grid_shape=(1, 1, 1),
+            attachment_point=np.asarray(source_xyz, dtype=float),
+        )
+
+    monkeypatch.setattr(av, "_LABELLIB_BACKEND", False)
+    monkeypatch.setattr(av, "_HAS_IMP_BFF", True)
+    monkeypatch.setattr(av, "_HAS_LABELLIB", True)
+    monkeypatch.setattr(av, "_av_imp_bff", fake_imp_bff)
+    monkeypatch.setattr(av, "_av_labellib", fake_labellib)
+
+    result = av.compute_av(
+        atoms=np.array([[0.0, 0.0, 0.0, 1.7]], dtype=float),
+        source_xyz=np.array([1.0, 2.0, 3.0], dtype=float),
+        linker_length=20.0,
+        linker_width=4.5,
+        radii=(5.0, 0.0, 0.0),
+        disc_step=0.5,
+        pdb_path="dummy.pdb",
+        source_info={"chain_identifier": "A", "residue_seq_number": 1, "atom_name": "CA"},
+    )
+
+    assert result.n_points == 1
+    assert calls
 
 
 def test_info_backends_at_least_one_available():

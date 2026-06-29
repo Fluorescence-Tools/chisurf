@@ -15,6 +15,7 @@ class SessionState:
     datasets: List[Any] = field(default_factory=list)
     fits: List[Any] = field(default_factory=list)
     experiments: Dict[str, Any] = field(default_factory=dict)
+    plugins: Dict[str, Any] = field(default_factory=dict)
     current_experiment: Optional[str] = None
     current_setup: Optional[str] = None
     current_fit_uid: Optional[str] = None
@@ -113,6 +114,7 @@ class SessionState:
         self.datasets.clear()
         self.fits.clear()
         self.experiments.clear()
+        self.plugins.clear()
         self.current_experiment = None
         self.current_setup = None
         self.current_fit_uid = None
@@ -156,6 +158,12 @@ class SessionState:
             "dataset_count": len(self.datasets),
             "fit_count": len(self.fits),
             "experiment_names": sorted(self.experiments.keys()),
+            "plugins": {
+                name: plugin_state.to_dict()
+                if hasattr(plugin_state, "to_dict")
+                else plugin_state
+                for name, plugin_state in self.plugins.items()
+            },
             "current_experiment": self.current_experiment,
             "current_setup": self.current_setup,
             "current_fit_uid": self.current_fit_uid,

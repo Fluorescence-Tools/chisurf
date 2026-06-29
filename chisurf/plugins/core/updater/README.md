@@ -31,7 +31,9 @@ After the update completes, the user needs to restart ChiSurf manually to apply 
 
 ## Usage
 
-1. Launch the plugin from the ChiSurf menu: Help > Check for Updates
+1. Open the unified Settings dialog and select the **Updates** panel
+   (and **Packages** for the conda package manager). The plugin is
+   `menu_hidden`, so it is no longer launched from the ribbon/menu directly.
 2. The plugin will display the current version of ChiSurf
 3. Click "Check for Updates" to check if updates are available
 4. If updates are available, the "Update Now" button will be enabled

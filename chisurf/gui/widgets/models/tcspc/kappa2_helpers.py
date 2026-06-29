@@ -52,7 +52,7 @@ def setup_kappa2_controls(
 
     calc_r0_btn = QtWidgets.QToolButton()
     calc_r0_btn.setText("calc R0")
-    calc_r0_btn.setToolTip("Open the Spectra Viewer plugin to calculate the Förster radius (R0) from spectra")
+    calc_r0_btn.setToolTip("Open the Förster radius calculator to compute R₀ from MFDB spectra")
     mode_layout.addWidget(calc_r0_btn)
     calc_r0_btn.clicked.connect(lambda: open_forster_calculator(owner))
 

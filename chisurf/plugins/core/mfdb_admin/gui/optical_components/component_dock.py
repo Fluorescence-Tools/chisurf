@@ -15,6 +15,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from chisurf.gui.widgets.general import apply_compact_table_style
 
 from .component_detail_form import ComponentDetailForm
+from .duplicates_dialog import DuplicatesDialog
 from chisurf.gui.widgets.spectrum_view import SpectrumView
 
 _PROPERTY_MAP = {
@@ -64,7 +65,7 @@ class OpticalComponentDock(QtWidgets.QWidget):
                     "key": "fluorophore",
                     "label": "Fluorophores",
                     "icon": "🌈",
-                    "categories": ["fluorophore", "organic_dye", "protein", "other"],
+                    "categories": ["fluorophore", "organic_dye", "protein", "quantum_dot", "nanoparticle", "other"],
                     "columns": [
                         ["ID", "probe_id"],
                         ["Name", "chromophore_name"],
@@ -185,6 +186,12 @@ class OpticalComponentDock(QtWidgets.QWidget):
         self._ai_btn.setToolTip("Run deterministic checks on the selected item")
         self._ai_btn.clicked.connect(self._on_ai_triage)
         layout.addWidget(self._ai_btn)
+        
+        self._dup_btn = QtWidgets.QToolButton()
+        self._dup_btn.setText("👯 Find Duplicates")
+        self._dup_btn.setToolTip("Find and merge duplicate components")
+        self._dup_btn.clicked.connect(self._on_find_duplicates)
+        layout.addWidget(self._dup_btn)
 
         layout.addStretch()
         return widget
@@ -487,6 +494,49 @@ class OpticalComponentDock(QtWidgets.QWidget):
             self.refresh()
         except Exception as exc:
             self._set_status(f"AI triage failed: {exc}")
+
+    def _on_find_duplicates(self) -> None:
+        try:
+            self._set_status("Fetching probes...")
+            QtWidgets.QApplication.processEvents()
+            result = self._client._call("fluorophores.find_duplicates", {})
+            probes = result.get("probes", [])
+            
+            # Filter probes to only match the currently active component's categories
+            active_cats = set(self._active_component.get("categories", []))
+            if active_cats:
+                probes = [p for p in probes if p.get("category", "other") in active_cats]
+                
+            if not probes:
+                QtWidgets.QMessageBox.information(self, "Find Duplicates", "No probes found for the active category.")
+                self._set_status("No probes found")
+                return
+            self._progress = QtWidgets.QProgressDialog("Analyzing probes for duplicates...", "Cancel", 0, 100, self)
+            self._progress.setWindowTitle("Finding Duplicates")
+            self._progress.setWindowModality(QtCore.Qt.WindowModal)
+            self._progress.setValue(0)
+            
+            from .duplicates_dialog import DuplicateFinderThread
+            self._dup_thread = DuplicateFinderThread(probes, self)
+            self._dup_thread.progress.connect(self._progress.setValue)
+            self._progress.canceled.connect(self._dup_thread.requestInterruption)
+            
+            def on_finished(duplicate_groups):
+                if not self._progress.wasCanceled():
+                    self._progress.close()
+                    if not duplicate_groups:
+                        QtWidgets.QMessageBox.information(self, "Find Duplicates", "No potential duplicates found.")
+                        self._set_status("No duplicates found")
+                        return
+                    dialog = DuplicatesDialog(duplicate_groups, self._client, self)
+                    if dialog.exec() == QtWidgets.QDialog.Accepted:
+                        self.refresh()
+                        
+            self._dup_thread.finished_groups.connect(on_finished)
+            self._dup_thread.start()
+            
+        except Exception as exc:
+            self._set_status(f"Find duplicates failed: {exc}")
 
     # ------------------------------------------------------------------
     # Checkbox-driven multi-spectra overlay

@@ -1,0 +1,7 @@
+LIBRARY burbulator_x64.dll
+
+EXPORTS
+
+smdif_ov3_c
+data2spc132_tac_c
+rotdiff_c

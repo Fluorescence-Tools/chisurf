@@ -300,7 +300,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Fill missing descriptions for TCSPC parameters in "
-            "fitting_parameters.json using generic TCSPC-aware heuristics."
+            "parameter_registry.json using generic TCSPC-aware heuristics."
         )
     )
     parser.add_argument(
@@ -315,7 +315,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         default=None,
         help=(
             "Output JSON path (defaults to chisurf/settings/constants/"
-            "fitting_parameters.json under --root)."
+            "parameter_registry.json under --root)."
         ),
     )
     return parser.parse_args(argv)
@@ -331,7 +331,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     if args.output is not None:
         out_path = Path(args.output).resolve()
     else:
-        out_path = source_root / "settings" / "constants" / "fitting_parameters.json"
+        out_path = source_root / "settings" / "constants" / "parameter_registry.json"
 
     existing = _load_existing_registry(out_path)
     if not isinstance(existing, dict):

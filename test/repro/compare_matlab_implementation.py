@@ -15,8 +15,8 @@ from pathlib import Path
 plugin_path = Path(__file__).parent.parent / "chisurf" / "plugins" / "fcs" / "fcs_2d"
 sys.path.insert(0, str(plugin_path.parent.parent.parent))
 
-from chisurf.plugins.fcs.fcs_2d.core import TwoDFDCreator
-from chisurf.plugins.fcs.fcs_2d.fitting import TwoDMEMFitter
+from chisurf.plugins.fcs.flc_2d.core import TwoDFDCreator
+from chisurf.plugins.fcs.flc_2d.fitting import TwoDMEMFitter
 
 def load_matlab_data():
     """Load MATLAB reference data."""

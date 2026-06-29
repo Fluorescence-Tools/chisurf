@@ -119,15 +119,15 @@ structure_data = safe_open_file(
     error_message="Error opening structure.json file"
 )
 
-# Optional registry of fitting-parameter metadata used to enrich parameter
+# Optional registry of parameter metadata used to enrich parameter
 # descriptions in the GUI. This is populated by the command
 # ``python -m build_tools.dev_utils.export_fitting_parameters`` and can be
 # edited by the user.
-fitting_parameters = safe_open_file(
-    file_path=package_directory / 'constants' / 'fitting_parameters.json',
+parameter_registry = safe_open_file(
+    file_path=package_directory / 'constants' / 'parameter_registry.json',
     processor=json.load,
     default_value={},
-    error_message="Error opening fitting_parameters.json file"
+    error_message="Error opening parameter_registry.json file"
 )
 
 eps = sys.float_info.epsilon

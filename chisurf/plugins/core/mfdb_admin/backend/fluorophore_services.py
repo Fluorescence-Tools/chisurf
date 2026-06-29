@@ -31,7 +31,7 @@ def _db():
 
 def handle_list_probes(
     verification_status: str | None = None,
-    category: str | None = None,
+    category: str | list[str] | None = None,
     source: str | None = None,
     search: str | None = None,
     limit: int = 200,
@@ -45,8 +45,12 @@ def handle_list_probes(
         clauses.append("p.verification_status = ?")
         params.append(verification_status)
     if category:
-        clauses.append("p.category = ?")
-        params.append(category)
+        if isinstance(category, list):
+            clauses.append("p.category IN (" + ",".join("?" * len(category)) + ")")
+            params.extend(category)
+        else:
+            clauses.append("p.category = ?")
+            params.append(category)
     if source:
         clauses.append("p.source = ?")
         params.append(source)
@@ -55,7 +59,7 @@ def handle_list_probes(
         params.append(f"%{search}%")
     where = " AND ".join(clauses)
     # Surface the common optical properties (stored in optical_properties, not on
-    # the probe row) so the list table can show Abs max / Em max / QY.
+    # the probe row) so the list table can show Abs max / Em max / QY, etc.
     op = (
         "(SELECT property_value FROM optical_properties o "
         "WHERE o.probe_id = p.probe_id AND o.property_name = ? AND o.deleted_at IS NULL LIMIT 1)"
@@ -65,9 +69,19 @@ def handle_list_probes(
             f"SELECT COUNT(*) FROM probes p WHERE {where}", params
         ).fetchone()[0]
         rows = db.conn.execute(
-            f"SELECT p.*, {op} AS abs_max, {op} AS em_max, {op} AS qy "
+            f"SELECT p.*, "
+            f"{op} AS abs_max, "
+            f"{op} AS em_max, "
+            f"{op} AS qy, "
+            f"{op} AS cut_on, "
+            f"{op} AS cut_off, "
+            f"{op} AS center_wavelength, "
+            f"{op} AS bandwidth, "
+            f"{op} AS optical_density "
             f"FROM probes p WHERE {where} ORDER BY p.chromophore_name LIMIT ? OFFSET ?",
-            ["abs_max", "em_max", "qy"] + params + [limit, offset],
+            ["abs_max", "em_max", "qy",
+             "Cut-On Wavelength (nm)", "Cut-Off Wavelength (nm)",
+             "Center Wavelength (nm)", "Bandwidth (nm)", "Optical Density"] + params + [limit, offset],
         ).fetchall()
     return {
         "probes": [dict(r) for r in rows],
@@ -148,11 +162,20 @@ def handle_set_probe_quality(
 
 def handle_import_reference_set(
     mark_verified: bool = False,
+    replace: bool = False,
+    source_path: str | None = None,
     auth: dict | None = None,
 ) -> dict[str, Any]:
-    """Import fluorophore reference data from the bundled spectra.db."""
+    """Import optical-component reference data from a scraped spectra.db.
+
+    With ``replace=True`` the existing reference probes (and their spectra /
+    optical properties) are purged first, so the messy set is rebuilt cleanly
+    from the scrape instead of merged into.
+    """
     with _db() as db:
-        counts = db.import_reference_set(mark_verified=mark_verified)
+        counts = db.import_reference_set(
+            source_path=source_path, mark_verified=mark_verified, replace=replace,
+        )
     return {"ok": True, **counts}
 
 
@@ -237,6 +260,177 @@ def handle_list_probe_types(
     return {"probe_types": [dict(r) for r in types]}
 
 
+def handle_find_duplicates(
+    auth: dict | None = None,
+) -> dict[str, Any]:
+    """Return all probe data for the frontend to compute duplicate groupings."""
+    with _db() as db:
+        rows = db.conn.execute(
+            f"SELECT p.probe_id, p.chromophore_name, p.category, p.source, p.verification_status "
+            f"FROM probes p WHERE p.deleted_at IS NULL"
+        ).fetchall()
+        
+        probes = [dict(r) for r in rows]
+        
+        # Fetch all optical properties
+        prop_rows = db.conn.execute("SELECT probe_id, property_name, property_value FROM optical_properties WHERE deleted_at IS NULL").fetchall()
+        prop_map = {}
+        for r in prop_rows:
+            pid = r["probe_id"]
+            if pid not in prop_map:
+                prop_map[pid] = {}
+            prop_map[pid][r["property_name"]] = r["property_value"]
+            
+        # Fetch spectra types
+        spec_rows = db.conn.execute("SELECT probe_id, spectrum_type FROM spectra WHERE deleted_at IS NULL").fetchall()
+        spectra_map = {}
+        for r in spec_rows:
+            pid = r["probe_id"]
+            if pid not in spectra_map:
+                spectra_map[pid] = []
+            spectra_map[pid].append(r["spectrum_type"])
+            
+        for p in probes:
+            pid = p["probe_id"]
+            p["optical_properties"] = prop_map.get(pid, {})
+            # for backwards compatibility with any existing logic relying on these fields:
+            p["abs_max"] = p["optical_properties"].get("abs_max")
+            p["em_max"] = p["optical_properties"].get("em_max")
+            p["spectra_types"] = spectra_map.get(pid, [])
+            
+    return {"probes": probes}
+
+
+def handle_get_spectra_batch(
+    probe_ids: list[int],
+    auth: dict | None = None,
+) -> dict[str, Any]:
+    """Fetch all spectra data for a batch of probes."""
+    import json
+    if not probe_ids:
+        return {"spectra": []}
+        
+    with _db() as db:
+        placeholders = ",".join("?" for _ in probe_ids)
+        rows = db.conn.execute(
+            f"""
+            SELECT probe_id, spectrum_type, wavelengths, intensity_values 
+            FROM spectra 
+            WHERE probe_id IN ({placeholders}) AND deleted_at IS NULL
+            """,
+            probe_ids
+        ).fetchall()
+        
+        spectra = []
+        for r in rows:
+            w = r["wavelengths"]
+            i = r["intensity_values"]
+            
+            if isinstance(w, bytes):
+                w = list(np.frombuffer(w, dtype=np.float64))
+            elif isinstance(w, str):
+                w = json.loads(w)
+                
+            if isinstance(i, bytes):
+                i = list(np.frombuffer(i, dtype=np.float64))
+            elif isinstance(i, str):
+                i = json.loads(i)
+                
+            spectra.append({
+                "probe_id": r["probe_id"],
+                "spectrum_type": r["spectrum_type"],
+                "wavelengths": w,
+                "intensity_values": i
+            })
+            
+    return {"spectra": spectra}
+
+
+def handle_merge_probes(
+    primary_id: int,
+    duplicate_ids: list[int],
+    auth: dict | None = None,
+) -> dict[str, Any]:
+    """Merge duplicate probes into a primary probe.
+    
+    Copies unique optical properties and spectra from duplicates to the primary.
+    Soft-deletes the duplicate probes.
+    Enforces that the longest name across the merged group is kept for the primary.
+    Auto-merges spectra: keeps primary's spectra, pulls in missing ones, ignores overlaps.
+    """
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    
+    with _db() as db:
+        # Verify primary exists
+        primary = db.conn.execute(
+            "SELECT * FROM probes WHERE probe_id = ? AND deleted_at IS NULL", (primary_id,)
+        ).fetchone()
+        if not primary:
+            raise ValueError(f"Primary probe {primary_id} not found or deleted")
+            
+        # 1. Gather all data from primary and duplicates
+        all_ids = [primary_id] + [d for d in duplicate_ids if d != primary_id]
+        placeholders = ",".join("?" for _ in all_ids)
+        probe_rows = db.conn.execute(
+            f"SELECT probe_id, chromophore_name, category, source FROM probes WHERE probe_id IN ({placeholders}) AND deleted_at IS NULL",
+            all_ids
+        ).fetchall()
+        
+        longest_name = primary["chromophore_name"]
+        best_category = primary["category"]
+        best_source = primary["source"]
+        
+        for r in probe_rows:
+            if r["chromophore_name"] and len(r["chromophore_name"]) > len(longest_name):
+                longest_name = r["chromophore_name"]
+            if not best_category and r["category"]:
+                best_category = r["category"]
+            if not best_source and r["source"]:
+                best_source = r["source"]
+                
+        if longest_name != primary["chromophore_name"] or best_category != primary["category"] or best_source != primary["source"]:
+            db.conn.execute(
+                "UPDATE probes SET chromophore_name = ?, category = ?, source = ?, updated_at = ? WHERE probe_id = ?",
+                (longest_name, best_category, best_source, now, primary_id)
+            )
+            
+        # 2. Merge data from duplicates
+        for dup_id in duplicate_ids:
+            if dup_id == primary_id:
+                continue
+                
+            # Move optical properties that the primary doesn't already have
+            db.conn.execute(
+                """
+                INSERT OR IGNORE INTO optical_properties (probe_id, property_name, property_value, unit, details, created_at, updated_at)
+                SELECT ?, property_name, property_value, unit, details, created_at, updated_at
+                FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL
+                """,
+                (primary_id, dup_id)
+            )
+            
+            # Move spectra that the primary doesn't already have
+            # (INSERT OR IGNORE drops duplicates of the same spectrum_type because of the UNIQUE constraint)
+            db.conn.execute(
+                """
+                INSERT OR IGNORE INTO spectra (probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details, created_at, updated_at)
+                SELECT ?, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details, created_at, updated_at
+                FROM spectra WHERE probe_id = ? AND deleted_at IS NULL
+                """,
+                (primary_id, dup_id)
+            )
+            
+            # Soft delete the duplicate probe and its properties/spectra
+            db.conn.execute("UPDATE probes SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
+            db.conn.execute("UPDATE optical_properties SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
+            db.conn.execute("UPDATE spectra SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
+            
+        db.conn.commit()
+        
+    return {"ok": True, "merged_into": primary_id, "deleted": duplicate_ids}
+
+
 def register_services(dispatcher: Any) -> None:
     """Register all fluorophore RPC handlers with the dispatcher.
 
@@ -257,3 +451,6 @@ def register_services(dispatcher: Any) -> None:
     dispatcher.register("fluorophores.forster_radius.lookup", _kw(handle_lookup_forster_radius))
     dispatcher.register("fluorophores.ai_triage", _kw(handle_run_ai_triage))
     dispatcher.register("fluorophores.probe_types.list", _kw(handle_list_probe_types))
+    dispatcher.register("fluorophores.find_duplicates", _kw(handle_find_duplicates))
+    dispatcher.register("fluorophores.merge", _kw(handle_merge_probes))
+    dispatcher.register("fluorophores.get_spectra_batch", _kw(handle_get_spectra_batch))

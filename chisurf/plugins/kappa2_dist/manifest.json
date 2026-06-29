@@ -1,0 +1,36 @@
+{
+  "id": "kappa2_dist",
+  "version": "1.1.0",
+  "display_name": "Structure:FRET:Kappa2 Distribution",
+  "description": "Calculate and visualise the k² orientation-factor distribution for FRET using WIC, DWT, or isotropic models.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "FRET"],
+  "icon": "icon.png",
+  "state_namespace": "kappa2_dist",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "last_settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.kappa2_dist.k2dgui:Kappa2Dist",
+    "cli": "chisurf.plugins.kappa2_dist.__main__:main",
+    "services": "chisurf.plugins.kappa2_dist.backend.services:register_services"
+  },
+  "rpc_methods": [
+    "kappa2_dist.compute"
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}

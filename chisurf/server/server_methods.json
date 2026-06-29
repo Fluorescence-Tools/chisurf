@@ -36,6 +36,12 @@
     {"rpc": "session_snapshot", "service": "session_svc.session_snapshot"},
     {"rpc": "session_restore", "service": "session_svc.session_restore", "event_bus": true},
 
+    {"rpc": "detector_setups.list", "service": "detector_setups.list_setups"},
+    {"rpc": "detector_setups.get", "service": "detector_setups.get_setup"},
+    {"rpc": "detector_setups.save", "service": "detector_setups.save_setup"},
+    {"rpc": "detector_setups.current", "service": "detector_setups.get_current"},
+    {"rpc": "detector_setups.set_current", "service": "detector_setups.set_current"},
+
     {"rpc": "model_finalize", "service": "models.model_finalize"},
     {"rpc": "model_set_parse_function", "service": "models.model_set_parse_function"},
     {"rpc": "ping", "service": "fits.ping"},

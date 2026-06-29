@@ -149,16 +149,16 @@ class StyleManagerWidget(QWidget):
         self.file_combo.currentIndexChanged.connect(self.on_file_selected)
         
         # Buttons
-        self.new_button = QPushButton("New")
+        self.new_button = QPushButton("✨ New")
         self.new_button.clicked.connect(self.on_new_file)
         
-        self.save_button = QPushButton("Save")
+        self.save_button = QPushButton("💾 Save")
         self.save_button.clicked.connect(self.on_save_file)
         
-        self.apply_button = QPushButton("Apply")
+        self.apply_button = QPushButton("✅ Apply")
         self.apply_button.clicked.connect(self.on_apply_style)
         
-        self.clear_button = QPushButton("Clear All Styles")
+        self.clear_button = QPushButton("🗑️ Clear All Styles")
         self.clear_button.clicked.connect(self.on_clear_styles)
         
         # Add widgets to top layout

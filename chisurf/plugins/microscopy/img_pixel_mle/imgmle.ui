@@ -1110,7 +1110,7 @@
   <customwidget>
    <class>FileListWidget</class>
    <extends>QListWidget</extends>
-   <header>imgmle</header>
+   <header>chisurf.plugins.microscopy.img_pixel_mle.imgmle</header>
   </customwidget>
  </customwidgets>
  <resources/>

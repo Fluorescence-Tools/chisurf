@@ -12,7 +12,80 @@ index of the point with the largest geometric curvature in log-log space.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+
 import numpy as np
+
+
+@dataclass
+class LCurveData:
+    """A sampled L-curve plus its detected corner — the general, GUI-free L-curve model.
+
+    This is the shared data model behind the reusable L-curve component: any regularized
+    inversion (Tikhonov, NNLS, MEM, ...) can populate it via :func:`sample_lcurve` and any
+    view (the AutoForm ``lcurve`` section) can render it, so the L-curve is consistent
+    across tools and fits.
+
+    Attributes
+    ----------
+    reg
+        Regularization weights tested (linear).
+    residual_norm
+        Misfit norm ``||A x - b||`` at each weight (the L-curve x-axis).
+    solution_norm
+        Solution (semi-)norm ``||L x||`` at each weight (the L-curve y-axis).
+    corner_index
+        Index of the detected corner (``None`` if undetermined).
+    """
+
+    reg: np.ndarray
+    residual_norm: np.ndarray
+    solution_norm: np.ndarray
+    corner_index: int | None = None
+
+    @property
+    def corner_reg(self) -> float | None:
+        """Regularization weight at the corner (``None`` if undetermined)."""
+        if self.corner_index is None:
+            return None
+        return float(self.reg[self.corner_index])
+
+    @property
+    def corner_point(self) -> tuple[float, float] | None:
+        """``(residual_norm, solution_norm)`` at the corner (``None`` if undetermined)."""
+        if self.corner_index is None:
+            return None
+        return float(self.residual_norm[self.corner_index]), float(
+            self.solution_norm[self.corner_index]
+        )
+
+
+def sample_lcurve(
+    solve: Callable[[float], tuple[float, float]],
+    regs: Sequence[float],
+) -> LCurveData:
+    """Sample an L-curve from a solver and locate its corner.
+
+    Parameters
+    ----------
+    solve
+        Callable mapping a regularization weight to ``(residual_norm, solution_norm)``.
+    regs
+        Regularization weights to evaluate (typically log-spaced).
+
+    Returns
+    -------
+    LCurveData
+        The sampled curve with the corner index from :func:`discrete_lcurve_corner`.
+    """
+    regs = np.asarray(list(regs), dtype=float)
+    rho = np.empty(regs.size)
+    eta = np.empty(regs.size)
+    for i, r in enumerate(regs):
+        rho[i], eta[i] = solve(float(r))
+    corner = discrete_lcurve_corner(rho, eta)
+    return LCurveData(reg=regs, residual_norm=rho, solution_norm=eta, corner_index=corner)
 
 
 def csvd(A: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

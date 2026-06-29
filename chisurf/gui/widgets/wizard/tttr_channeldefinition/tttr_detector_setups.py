@@ -2,7 +2,10 @@ import json
 import pathlib
 from typing import Any
 
-from qtpy.QtWidgets import QCheckBox, QMessageBox
+# NOTE: Qt is imported lazily inside ``load_detector_setups`` (only the
+# missing-file warning dialog needs it).  Keeping this module import-time
+# Qt-free lets the Qt-free server reuse ``load_detector_setups`` /
+# ``save_detector_setups`` from ``chisurf.server.services.detector_setups``.
 
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.settings.path_utils import get_path
@@ -247,6 +250,8 @@ def load_detector_setups(file_path=None, db_path=None, skip_migration=False, use
             pass
 
         if show_warning and is_default and app_running and not _module_warning_shown("detector_setups_file"):
+            from qtpy.QtWidgets import QCheckBox, QMessageBox
+
             _mark_warning_shown("detector_setups_file")
             msg = QMessageBox()
             msg.setWindowTitle("Detector setups file not found")

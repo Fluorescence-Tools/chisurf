@@ -16,12 +16,7 @@ from chisurf.plugins.core.lightpath_simulator.backend.simulator import (
     OpticalPathSimulator,
 )
 
-PLUGIN_SPECTRA_DATABASE = (
-    Path(__file__).resolve().parents[3]
-    / "_dev"
-    / "fluorophore_db"
-    / "spectra.db"
-)
+
 
 
 class MFDatabaseAdapter:
@@ -99,12 +94,7 @@ def resolve_db_path(db_path: str | None = None) -> str:
     if configured:
         return str(configured)
 
-    default_path = resolve_database_path()
-    if _has_optical_component_spectra(default_path):
-        return str(default_path)
-    if PLUGIN_SPECTRA_DATABASE.exists():
-        return str(PLUGIN_SPECTRA_DATABASE)
-    return str(default_path)
+    return str(resolve_database_path())
 
 
 def _configured_spectra_db_path() -> Path | None:
@@ -125,19 +115,7 @@ def _configured_spectra_db_path() -> Path | None:
     return None
 
 
-def _has_optical_component_spectra(db_path: Path) -> bool:
-    """Return whether an MFDB contains filter or detector spectra for LPS."""
-    try:
-        with MFDatabase(str(db_path)) as db:
-            rows = db.conn.execute(
-                """SELECT 1 FROM spectra
-                   WHERE spectrum_type IN ('transmission', 'quantum_efficiency')
-                     AND deleted_at IS NULL
-                   LIMIT 1"""
-            ).fetchone()
-            return rows is not None
-    except Exception:
-        return False
+
 
 
 def _utc_stamp() -> str:
@@ -391,6 +369,7 @@ def get_probes_info(db_path: str | None = None) -> dict[str, Any]:
                 {
                     "probe_id": probe_id,
                     "name": probe.get("chromophore_name") or probe.get("name") or f"Probe {probe_id}",
+                    "category": probe.get("category", "other"),
                     "has_abs": "absorption" in types,
                     "has_em": "emission" in types,
                     "has_trans": "transmission" in types,

@@ -258,3 +258,64 @@ def test_parameter_group_table_section_hashable():
     # works in sets
     _ = {s1, s2, s3}  # no error
     assert len({s1, s2, s3}) == 2
+
+
+def _make_mixture_model():
+    """Build a LifetimeMixtureNewModel against a tiny in-memory fit, or skip."""
+    import pytest
+    try:
+        import chisurf.core.fitting.fit as fit_mod
+        from chisurf.core.data import DataCurve
+        from chisurf.core.models.tcspc.lifetime import LifetimeMixtureNewModel
+    except Exception as exc:
+        pytest.skip(f"mixture model import failed: {exc}")
+    x = np.linspace(0, 25, 256)
+    data = DataCurve(x=x, y=np.ones_like(x))
+    try:
+        fit = fit_mod.Fit(model_class=LifetimeMixtureNewModel, data=data)
+        return fit.model
+    except Exception as exc:
+        pytest.skip(f"mixture model construction failed: {exc}")
+
+
+def test_mix_model_view_spec_structure():
+    """LifetimeMixtureNewModel exposes a pure-data view spec from mix_model.view.json."""
+    model = _make_mixture_model()
+    spec = model.view_spec()
+
+    assert isinstance(spec, vs.ModelView)
+    targets = spec.section_targets()
+    for expected in ("convolve", "generic", "corrections"):
+        assert expected in targets, f"missing section target {expected!r}"
+
+    # The mixture panel declares a custom fit_mixer section
+    customs = [s for s in spec.flat_sections() if isinstance(s, vs.CustomSection)]
+    mixer = next((s for s in customs if s.key == "fit_mixer"), None)
+    assert mixer is not None, "mix_model.view.json must have a fit_mixer custom section"
+
+    # Plot keys are pure strings
+    plot_keys = [p.key for p in spec.plots]
+    assert "line" in plot_keys and "residual" in plot_keys and "distribution" in plot_keys
+
+
+def test_mix_model_has_irf_curve_input():
+    """The mix model editor declares an IRF curve input so convolution works."""
+    model = _make_mixture_model()
+    spec = model.view_spec()
+    irf = next(
+        (s for s in spec.flat_sections()
+         if isinstance(s, vs.CurveInputSection) and s.select_action == "model.change_irf"),
+        None,
+    )
+    assert irf is not None, "mix_model.view.json must expose an IRF curve input"
+
+
+def test_mix_model_view_spec_file_exists():
+    """mix_model.view.json is on disk next to lifetime.py."""
+    import pathlib
+    import inspect
+    from chisurf.core.models.tcspc.lifetime import LifetimeMixtureNewModel
+
+    src = inspect.getfile(LifetimeMixtureNewModel)
+    json_path = pathlib.Path(src).parent / "mix_model.view.json"
+    assert json_path.exists(), f"mix_model.view.json not found at {json_path}"

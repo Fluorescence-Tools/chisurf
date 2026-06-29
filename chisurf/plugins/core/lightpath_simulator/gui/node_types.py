@@ -218,10 +218,19 @@ def get_optical_node_factory(probes: List[Dict[str, Any]], spectra_type: str, fa
             combo.completer().setFilterMode(QtCore.Qt.MatchContains)
         combo.addItem("None", None)
         
-        # Populate with database-free probe info
-        has_key = "has_trans" if spectra_type == "transmission" else "has_qe"
+        # Determine the target category based on node type
+        if "Filter" in fallback_label:
+            filter_fn = lambda p: p.get("category") == "filter" or (not p.get("category") and p.get("has_trans"))
+        elif "Splitter" in fallback_label:
+            filter_fn = lambda p: p.get("category") in ("dichroic", "polarizer") or (not p.get("category") and p.get("has_trans"))
+        elif "Detector" in fallback_label:
+            filter_fn = lambda p: p.get("category") == "detector" or (not p.get("category") and p.get("has_qe"))
+        else:
+            has_key = "has_trans" if spectra_type == "transmission" else "has_qe"
+            filter_fn = lambda p: bool(p.get(has_key))
+
         for p in probes:
-            if p.get(has_key):
+            if filter_fn(p):
                 combo.addItem(p["name"], p["probe_id"])
 
         curr = config.get("probe_id", config.get("spectrum_id"))

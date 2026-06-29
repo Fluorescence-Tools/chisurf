@@ -26,6 +26,42 @@ except Exception:
     rda_axis = build_fret_rda_axis(_rda_min, _rda_max, _rda_res, _rda_scale)
 
 
+def set_forster_radius_from_probes(
+    fret_params: FRETParameters,
+    donor_name: str,
+    acceptor_name: str,
+    db=None,
+) -> bool:
+    """Look up and set *R*\ :sub:`0` from the MFDB fluorophore database.
+
+    Calls :func:`lookup_forster_radius` and, when a value is found, updates
+    the ``forster_radius`` :class:`FittingParameter` in ``fret_params``.
+
+    Parameters
+    ----------
+    fret_params : FRETParameters
+        The parameter object to update.
+    donor_name : str
+        Donor chromophore name.
+    acceptor_name : str
+        Acceptor chromophore name.
+    db : MFDatabase, optional
+        Database handle. Resolved globally when ``None``.
+
+    Returns
+    -------
+    bool
+        ``True`` when a value was found and set.
+    """
+    from chisurf.core.fluorescence.fret.forster import lookup_forster_radius
+
+    r0 = lookup_forster_radius(donor_name, acceptor_name, db=db)
+    if r0 is not None:
+        fret_params.forster_radius = float(r0)
+        return True
+    return False
+
+
 class FRETParameters(FittingParameterGroup):
 
     name = "FRET-parameters"
@@ -954,6 +990,24 @@ class WormLikeChainModel(FRETModel):
             [1, 2, cs.core.settings.fret['rda_resolution']]
         )
         return dist
+
+    @property
+    def chain_length(self) -> float:
+        """Contour length of the worm-like chain (Å)."""
+        return self._chain_length.value
+
+    @chain_length.setter
+    def chain_length(self, v: float) -> None:
+        self._chain_length.value = v
+
+    @property
+    def persistence_length(self) -> float:
+        """Persistence length of the worm-like chain (Å)."""
+        return self._persistence_length.value
+
+    @persistence_length.setter
+    def persistence_length(self, v: float) -> None:
+        self._persistence_length.value = v
 
     @property
     def use_dye_linker(self):

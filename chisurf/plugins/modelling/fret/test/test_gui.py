@@ -3,13 +3,8 @@
 
 from __future__ import annotations
 
-import os
-import pytest
-import numpy as np
-from qtpy import QtWidgets
-
 from chisurf.plugins.modelling.fret.gui import FretDockWizard
-from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
+from chisurf.plugins.modelling.fps_json_editor.gui.editor import FpsJsonEditor
 
 
 def test_wizard_opens(qtbot):
@@ -25,9 +20,9 @@ def test_wizard_opens(qtbot):
     assert window.tabs.tabText(4) == "Pair Selection"
 
 
-def test_label_structure_panels(qtbot):
-    """Verify that LabelStructure editor initializes sub-panels correctly."""
-    editor = LabelStructure()
+def test_fps_json_editor_panels(qtbot):
+    """Verify that FpsJsonEditor initializes sub-panels correctly."""
+    editor = FpsJsonEditor()
     qtbot.addWidget(editor)
 
     assert editor.position_panel is not None
@@ -40,9 +35,9 @@ def test_label_structure_panels(qtbot):
     assert len(editor.positions) == 0
 
 
-def test_label_structure_payload_roundtrip(qtbot):
-    """Test loading and modifying configurations in LabelStructure editor."""
-    editor = LabelStructure()
+def test_fps_json_editor_payload_roundtrip(qtbot):
+    """Test loading and modifying configurations in FpsJsonEditor."""
+    editor = FpsJsonEditor()
     qtbot.addWidget(editor)
 
     payload = {

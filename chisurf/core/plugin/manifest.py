@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import pathlib
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -12,20 +12,20 @@ class RPCMethodSpec:
 
     name: str
     summary: str = ""
-    params_schema: Optional[Dict[str, Any]] = None
-    result_schema: Optional[Dict[str, Any]] = None
+    params_schema: dict[str, Any] | None = None
+    result_schema: dict[str, Any] | None = None
     long_running: bool = False
     cancelable: bool = False
-    events: List[str] = field(default_factory=list)
+    events: list[str] = field(default_factory=list)
 
 
 @dataclass
 class PluginEntrypoints:
     """Plugin entrypoint strings."""
 
-    gui: Optional[str] = None
-    cli: Optional[str] = None
-    services: Optional[str] = None
+    gui: str | None = None
+    cli: str | None = None
+    services: str | None = None
 
 
 @dataclass
@@ -33,7 +33,7 @@ class PluginWindowState:
     """Window-state persistence settings for a plugin."""
 
     enabled: bool = True
-    settings_key: Optional[str] = None
+    settings_key: str | None = None
 
 
 @dataclass
@@ -56,19 +56,24 @@ class PluginManifest:
     version: str
     display_name: str = ""
     description: str = ""
-    authors: List[str] = field(default_factory=list)
-    categories: List[str] = field(default_factory=list)
-    icon: Optional[str] = None
+    authors: list[str] = field(default_factory=list)
+    categories: list[str] = field(default_factory=list)
+    icon: str | None = None
 
-    state_namespace: Optional[str] = None
-    state_schema: Optional[Dict[str, Any]] = None
+    state_namespace: str | None = None
+    state_schema: dict[str, Any] | None = None
     statefulness: PluginStatefulness = field(default_factory=PluginStatefulness)
 
     entrypoints: PluginEntrypoints = field(default_factory=PluginEntrypoints)
-    rpc_methods: List[RPCMethodSpec] = field(default_factory=list)
-    events: List[Dict[str, Any]] = field(default_factory=list)
+    rpc_methods: list[RPCMethodSpec] = field(default_factory=list)
+    events: list[dict[str, Any]] = field(default_factory=list)
 
-    dependencies: Dict[str, str] = field(default_factory=dict)
+    dependencies: dict[str, str] = field(default_factory=dict)
+
+    #: Mark a tool as experimental / not yet validated. Hosts (e.g. the meta-tool shell)
+    #: surface this with a warning banner and a flagged navigation entry.
+    experimental: bool = False
+    experimental_message: str = ""
 
     # Legacy fields for backward compat
     menu_hidden: bool = False
@@ -76,7 +81,7 @@ class PluginManifest:
     deprecation_message: str = ""
 
     @staticmethod
-    def _parse_statefulness(data: Dict[str, Any]) -> PluginStatefulness:
+    def _parse_statefulness(data: dict[str, Any]) -> PluginStatefulness:
         """Parse plugin statefulness settings from manifest data."""
         raw = data.get("statefulness", {})
         if isinstance(raw, bool):
@@ -98,7 +103,7 @@ class PluginManifest:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> PluginManifest:
+    def from_dict(cls, data: dict[str, Any]) -> PluginManifest:
         entrypoints_data = data.get("entrypoints", {})
         entrypoints = PluginEntrypoints(
             gui=entrypoints_data.get("gui"),
@@ -134,12 +139,14 @@ class PluginManifest:
             rpc_methods=methods,
             events=data.get("events", []),
             dependencies=data.get("dependencies", {}),
+            experimental=data.get("experimental", False),
+            experimental_message=data.get("experimental_message", ""),
             menu_hidden=data.get("menu_hidden", False),
             deprecated=data.get("deprecated", False),
             deprecation_message=data.get("deprecation_message", ""),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "version": self.version,
@@ -176,6 +183,8 @@ class PluginManifest:
             ],
             "events": list(self.events),
             "dependencies": dict(self.dependencies),
+            "experimental": self.experimental,
+            "experimental_message": self.experimental_message,
             "menu_hidden": self.menu_hidden,
             "deprecated": self.deprecated,
             "deprecation_message": self.deprecation_message,
@@ -185,7 +194,7 @@ class PluginManifest:
         return json.dumps(self.to_dict(), indent=indent)
 
 
-def load_manifest(path: pathlib.Path | str) -> Optional[PluginManifest]:
+def load_manifest(path: pathlib.Path | str) -> PluginManifest | None:
     """Load and parse a ``manifest.json`` from *path*.
 
     Parameters
@@ -296,9 +305,9 @@ _MANIFEST_SCHEMA = {
 }
 
 
-def _validate_statefulness(data: Dict[str, Any]) -> List[str]:
+def _validate_statefulness(data: dict[str, Any]) -> list[str]:
     """Validate the manifest statefulness field."""
-    errors: List[str] = []
+    errors: list[str] = []
     statefulness = data.get("statefulness")
 
     if statefulness is None:
@@ -321,14 +330,14 @@ def _validate_statefulness(data: Dict[str, Any]) -> List[str]:
         errors.append("field 'statefulness.window.enabled' must be a boolean")
     if "settings_key" in window:
         settings_key = window["settings_key"]
-        if settings_key is not None and (
-            not isinstance(settings_key, str) or not settings_key
-        ):
-            errors.append("field 'statefulness.window.settings_key' must be a non-empty string or null")
+        if settings_key is not None and (not isinstance(settings_key, str) or not settings_key):
+            errors.append(
+                "field 'statefulness.window.settings_key' must be a non-empty string or null"
+            )
     return errors
 
 
-def validate_manifest(data: Dict[str, Any]) -> List[str]:
+def validate_manifest(data: dict[str, Any]) -> list[str]:
     """Validate manifest data against the standard schema.
 
     Parameters
@@ -342,7 +351,7 @@ def validate_manifest(data: Dict[str, Any]) -> List[str]:
         Validation errors. Empty list means valid.
 
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     if not isinstance(data, dict):
         return ["manifest must be a JSON object"]

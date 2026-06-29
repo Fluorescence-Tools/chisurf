@@ -124,7 +124,6 @@ def _visibility_from_mode(mode: int | None) -> str:
     other_bits = mode & 0o7
     if other_bits & PERM_READ:
         return "public"
-    conn_check = None
     return "private"
 
 
@@ -272,7 +271,8 @@ def save_project_handler(
                 (f"project_{project_id}",),
             ).fetchone()
             if branch_row:
-                branch_uuid = branch_row[0] if isinstance(branch_row, dict) else branch_row.get("branch_uuid")
+                branch_row = dict(branch_row)
+                branch_uuid = branch_row.get("branch_uuid")
             else:
                 branch_uuid = f"br_{_uuid.uuid4().hex[:12]}"
                 conn.execute(
@@ -289,7 +289,8 @@ def save_project_handler(
                 (parent_version_id,),
             ).fetchone()
             if parent_row:
-                parent_meta = _json_loads(parent_row[0] if not isinstance(parent_row, dict) else parent_row.get("metadata_json")) or {}
+                parent_row = dict(parent_row)
+                parent_meta = _json_loads(parent_row.get("metadata_json")) or {}
                 parent_vn = parent_meta.get("version_number", 0)
                 version_number = (parent_vn or 0) + 1
         else:
@@ -302,7 +303,8 @@ def save_project_handler(
                 (project_id, branch_uuid),
             ).fetchone()
             if max_vn_row:
-                max_vn = max_vn_row[0] if not isinstance(max_vn_row, dict) else max_vn_row.get("max_vn")
+                max_vn_row = dict(max_vn_row)
+                max_vn = max_vn_row.get("max_vn")
                 if max_vn:
                     version_number = int(max_vn) + 1
 
@@ -319,25 +321,26 @@ def save_project_handler(
             branch_uuid=branch_uuid,
             user_id=user_id,
             notes=notes or "",
+            project_name=project_name or "",
         )
 
-        if visibility == "public":
-            import chisurf.core.mfdb.auth as authmod
-            authmod.chmod(conn, principal, "mfdb_operation", version_id, 0o704)
-
-        db.add_audit_log(
-            action="archive",
-            target_type="project",
-            target_id=version_id,
-            details={
-                "project_id": project_id,
-                "project_name": project_name,
-                "version_number": version_number,
-                "branch_uuid": branch_uuid,
-                "user_id": user_id,
-                "artifact_count": len(result.get("dataset_artifacts", [])) + len(result.get("fit_artifacts", [])),
-            },
-        )
+        with db.transaction():
+            if visibility == "public":
+                import chisurf.core.mfdb.auth as authmod
+                authmod.chmod(conn, principal, "mfdb_operation", version_id, 0o704)
+            db.add_audit_log(
+                action="archive",
+                target_type="project",
+                target_id=version_id,
+                details={
+                    "project_id": project_id,
+                    "project_name": project_name,
+                    "version_number": version_number,
+                    "branch_uuid": branch_uuid,
+                    "user_id": user_id,
+                    "artifact_count": len(result.get("dataset_artifacts", [])) + len(result.get("fit_artifacts", [])),
+                },
+            )
 
         return {
             "ok": True,
@@ -355,6 +358,78 @@ def save_project_handler(
         return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
 
 
+def _reconstruct_payload(
+    db: MFDatabase,
+    version_id: str,
+    meta: dict[str, Any],
+) -> dict[str, Any]:
+    """Reconstruct a project payload from artifacts, or build empty default."""
+    from chisurf.core.mfdb.project_archiver import restore_project_from_artifacts
+    artifact_payload = restore_project_from_artifacts(db, version_id)
+    if artifact_payload:
+        return {
+            "project_format_version": 5,
+            "meta": {
+                "name": meta.get("project_name", ""),
+                "description": meta.get("notes", ""),
+                "project_id": meta.get("project_id", version_id),
+                "branch_uuid": meta.get("branch_uuid"),
+            },
+            "datasets": artifact_payload.get("datasets", {}),
+            "fits": artifact_payload.get("fits", []),
+            "experiments": artifact_payload.get("experiments", {}),
+            "ui": artifact_payload.get("ui_state", {}),
+            # carry the operation-history projection through to the loader, which
+            # rehydrates cs.history from extra.history_events (PRD-43)
+            "extra": artifact_payload.get("extra", {}),
+            "chinet_sessions": artifact_payload.get("chinet_sessions", []),
+            "parameters": artifact_payload.get("parameters", {}),
+            "dependency_edges": artifact_payload.get("dependency_edges", []),
+        }
+    return meta.get("fit_structure") or {
+        "project_format_version": 5,
+        "meta": {
+            "name": meta.get("project_name", ""),
+            "description": meta.get("notes", ""),
+            "project_id": meta.get("project_id", version_id),
+            "branch_uuid": meta.get("branch_uuid"),
+        },
+        "datasets": {},
+        "fits": [],
+        "experiments": {},
+        "ui": {},
+        "extra": {},
+        "chinet_sessions": [],
+        "parameters": {},
+        "dependency_edges": [],
+    }
+
+
+def _build_restore_payload(
+    db: MFDatabase,
+    conn: Any,
+    principal: Any,
+    target_id: str,
+) -> dict[str, Any]:
+    """Build the project restore payload for a given version ID."""
+    run = db.get_analysis_run_full(target_id)
+    if not run:
+        return service_error(f"Project not found: {target_id}", error_code=NOT_FOUND)
+    meta = run.get("metadata") or _json_loads(run.get("metadata_json")) or {}
+
+    payload = _reconstruct_payload(db, target_id, meta)
+
+    return {
+        "version_id": target_id,
+        "project_id": meta.get("project_id", target_id),
+        "version_number": meta.get("version_number", 1),
+        "branch_uuid": meta.get("branch_uuid"),
+        "project_name": meta.get("model_name", meta.get("project_name", "")),
+        "project_payload": payload,
+        "visibility": _get_project_visibility(conn, target_id),
+    }
+
+
 def restore_project_handler(
     auth: dict[str, Any] | None = None,
     version_id: str | None = None,
@@ -363,63 +438,24 @@ def restore_project_handler(
         principal, conn, db = _require_auth(auth)
         if version_id:
             require_access(conn, principal, "mfdb_operation", version_id, PERM_READ)
-            run = db.get_analysis_run_full(version_id)
-            if not run:
-                return service_error(f"Project version not found: {version_id}", error_code=NOT_FOUND)
-            meta = run.get("metadata") or _json_loads(run.get("metadata_json")) or {}
-
-            # Try artifact-based restore first (new-style)
-            from chisurf.core.mfdb.project_archiver import restore_project_from_artifacts
-            artifact_payload = restore_project_from_artifacts(db, version_id)
-
-            if artifact_payload:
-                # Reconstruct from artifacts
-                payload = {
-                    "project_format_version": 5,
-                    "meta": {
-                        "name": meta.get("project_name", ""),
-                        "description": meta.get("notes", ""),
-                        "project_id": meta.get("project_id", version_id),
-                        "branch_uuid": meta.get("branch_uuid"),
-                    },
-                    "datasets": artifact_payload.get("datasets", {}),
-                    "fits": artifact_payload.get("fits", []),
-                    "experiments": {},
-                    "ui": {},
-                    "extra": {},
-                }
-            else:
-                # Fallback: legacy JSON blob, or empty project payload
-                payload = meta.get("fit_structure") or {
-                    "project_format_version": 5,
-                    "meta": {
-                        "name": meta.get("project_name", ""),
-                        "description": meta.get("notes", ""),
-                        "project_id": meta.get("project_id", version_id),
-                        "branch_uuid": meta.get("branch_uuid"),
-                    },
-                    "datasets": {},
-                    "fits": [],
-                    "experiments": {},
-                    "ui": {},
-                    "extra": {},
-                }
-
+            result = _build_restore_payload(db, conn, principal, version_id)
+            if not result.get("ok", True):
+                return result
             db.add_audit_log(
                 action="restore",
                 target_type="project",
                 target_id=version_id,
-                details={"project_id": meta.get("project_id"), "project_name": meta.get("model_name")},
+                details={"project_id": result.get("project_id"), "project_name": result.get("project_name")},
             )
             return {
                 "ok": True,
-                "version_id": version_id,
-                "project_id": meta.get("project_id", version_id),
-                "version_number": meta.get("version_number", 1),
-                "branch_uuid": meta.get("branch_uuid"),
-                "project_name": meta.get("model_name", meta.get("project_name", "")),
-                "project_payload": payload,
-                "visibility": _get_project_visibility(conn, version_id),
+                "version_id": result["version_id"],
+                "project_id": result["project_id"],
+                "version_number": result["version_number"],
+                "branch_uuid": result["branch_uuid"],
+                "project_name": result["project_name"],
+                "project_payload": result["project_payload"],
+                "visibility": result["visibility"],
             }
         else:
             rows = conn.execute(
@@ -429,55 +465,29 @@ def restore_project_handler(
             ).fetchall()
             if not rows:
                 return service_error("No project found", error_code=NOT_FOUND)
-            latest_id = rows[0][0] if not isinstance(rows[0], dict) else rows[0].get("operation_id")
+            row0 = rows[0]
+            if not isinstance(row0, dict):
+                row0 = dict(row0)
+            latest_id = row0.get("operation_id")
             require_access(conn, principal, "mfdb_operation", latest_id, PERM_READ)
-            run = db.get_analysis_run_full(latest_id)
-            if not run:
-                return service_error(f"Project not found: {latest_id}", error_code=NOT_FOUND)
-            meta = run.get("metadata") or _json_loads(run.get("metadata_json")) or {}
-
-            # Try artifact-based restore first
-            from chisurf.core.mfdb.project_archiver import restore_project_from_artifacts
-            artifact_payload = restore_project_from_artifacts(db, latest_id)
-
-            if artifact_payload:
-                payload = {
-                    "project_format_version": 5,
-                    "meta": {
-                        "name": meta.get("project_name", ""),
-                        "project_id": meta.get("project_id", latest_id),
-                        "branch_uuid": meta.get("branch_uuid"),
-                    },
-                    "datasets": artifact_payload.get("datasets", {}),
-                    "fits": artifact_payload.get("fits", []),
-                    "experiments": {},
-                    "ui": {},
-                    "extra": {},
-                }
-            else:
-                payload = meta.get("fit_structure") or {
-                    "project_format_version": 5,
-                    "meta": {
-                        "name": meta.get("project_name", ""),
-                        "project_id": meta.get("project_id", latest_id),
-                        "branch_uuid": meta.get("branch_uuid"),
-                    },
-                    "datasets": {},
-                    "fits": [],
-                    "experiments": {},
-                    "ui": {},
-                    "extra": {},
-                }
-
+            result = _build_restore_payload(db, conn, principal, latest_id)
+            if not result.get("ok", True):
+                return result
+            db.add_audit_log(
+                action="restore",
+                target_type="project",
+                target_id=latest_id,
+                details={"project_id": result.get("project_id"), "project_name": result.get("project_name")},
+            )
             return {
                 "ok": True,
-                "version_id": latest_id,
-                "project_id": meta.get("project_id", latest_id),
-                "version_number": meta.get("version_number", 1),
-                "branch_uuid": meta.get("branch_uuid"),
-                "project_name": meta.get("model_name", meta.get("project_name", "")),
-                "project_payload": payload,
-                "visibility": _get_project_visibility(conn, latest_id),
+                "version_id": result["version_id"],
+                "project_id": result["project_id"],
+                "version_number": result["version_number"],
+                "branch_uuid": result["branch_uuid"],
+                "project_name": result["project_name"],
+                "project_payload": result["project_payload"],
+                "visibility": result["visibility"],
             }
     except Exception as exc:
         return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
@@ -575,9 +585,8 @@ def export_csp_handler(
             return service_error(f"Project version not found: {version_id}", error_code=NOT_FOUND)
 
         meta = run.get("metadata") or _json_loads(run.get("metadata_json")) or {}
-        payload = meta.get("fit_structure")
-        if not payload:
-            return service_error("No project payload found in this version", error_code=NOT_FOUND)
+
+        payload = _reconstruct_payload(db, version_id, meta)
 
         deps = _gather_project_dependencies(conn, db, version_id)
         export_meta = {
@@ -601,10 +610,18 @@ def export_csp_handler(
 
         file_refs = _collect_file_refs(payload)
         project_root = Path(meta.get("project_root", "."))
+        used_names: set[str] = set()
         for ref in file_refs:
             src = project_root / ref if not Path(ref).is_absolute() else Path(ref)
             if src.exists():
-                archive.write_file(str(src), str(src))
+                entry_name = f"{DATA_DIR}/{src.name}"
+                if entry_name in used_names:
+                    counter = 1
+                    while f"{DATA_DIR}/{src.stem}_{counter}{src.suffix}" in used_names:
+                        counter += 1
+                    entry_name = f"{DATA_DIR}/{src.stem}_{counter}{src.suffix}"
+                used_names.add(entry_name)
+                archive.write_file(entry_name, str(src))
 
         if target_path:
             archive.save(target_path)

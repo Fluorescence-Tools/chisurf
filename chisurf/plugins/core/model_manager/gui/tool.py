@@ -42,6 +42,23 @@ class ModelManagerWidget(QWidget):
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
+        # Create top toolbar layout
+        toolbar_layout = QHBoxLayout()
+        toolbar_layout.setContentsMargins(0, 0, 0, 10)
+        
+        save_button = QPushButton("💾 Save Settings")
+        save_button.setToolTip("Save all model settings to configuration file")
+        save_button.clicked.connect(self.save_settings)
+        toolbar_layout.addWidget(save_button)
+
+        refresh_button = QPushButton("🔄 Refresh Lists")
+        refresh_button.setToolTip("Reload the lists of models and experiments")
+        refresh_button.clicked.connect(self.load_all)
+        toolbar_layout.addWidget(refresh_button)
+        
+        toolbar_layout.addStretch()
+        main_layout.addLayout(toolbar_layout)
+
         # Display settings file location
         settings_file_group = QGroupBox("Settings File Location")
         settings_file_layout = QVBoxLayout(settings_file_group)
@@ -73,17 +90,7 @@ class ModelManagerWidget(QWidget):
         self.tab_widget.addTab(self.experiments_tab, "Experiments")
         self.setup_experiments_tab()
 
-        # Create buttons
-        button_layout = QHBoxLayout()
-        save_button = QPushButton("Save Settings")
-        save_button.clicked.connect(self.save_settings)
-        button_layout.addWidget(save_button)
 
-        refresh_button = QPushButton("Refresh Lists")
-        refresh_button.clicked.connect(self.load_all)
-        button_layout.addWidget(refresh_button)
-
-        main_layout.addLayout(button_layout)
 
         # Load models and experiments
         self.load_all()
@@ -118,7 +125,7 @@ class ModelManagerWidget(QWidget):
 
         # Model status
         status_layout = QHBoxLayout()
-        self.model_disabled_checkbox = QCheckBox("Disable model")
+        self.model_disabled_checkbox = QCheckBox("🚫 Disable model")
         self.model_disabled_checkbox.stateChanged.connect(self.on_model_disabled_changed)
         status_layout.addWidget(self.model_disabled_checkbox)
         status_layout.addStretch()
@@ -180,7 +187,7 @@ class ModelManagerWidget(QWidget):
 
         # Experiment status
         status_layout = QHBoxLayout()
-        self.experiment_disabled_checkbox = QCheckBox("Disable experiment")
+        self.experiment_disabled_checkbox = QCheckBox("🚫 Disable experiment")
         self.experiment_disabled_checkbox.stateChanged.connect(self.on_experiment_disabled_changed)
         status_layout.addWidget(self.experiment_disabled_checkbox)
         status_layout.addStretch()

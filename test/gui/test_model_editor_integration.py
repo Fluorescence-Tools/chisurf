@@ -163,3 +163,49 @@ def test_lifetime_pure_model_editor_is_populated_and_computes(qapp):
     model.update()
     y = np.asarray(model.y)
     assert y.size > 0 and np.all(np.isfinite(y)), "model did not compute a finite decay"
+
+
+# --------------------------------------------------------------------------
+# 3. LifetimeMixtureNewModel (AutoForm-based lifetime mixer) — end-to-end
+# --------------------------------------------------------------------------
+def test_lifetime_mixture_new_model_editor_renders_and_fit_mixer_section_exists(qapp):
+    """Walk the full add-fit path for the AutoForm-based Lifetime mixer and
+    assert: the editor builds, the fit_mixer custom section is present and
+    rendered, and the model computes a finite fallback decay (no components)."""
+    from qtpy import QtWidgets
+    from chisurf.core.models import view_spec as vs
+    from chisurf.gui.widgets.models.model_editor import build_model_editor, model_plot_specs
+    from chisurf.gui.autoform import AutoForm
+    from chisurf.gui.autoform.sections.builtin import FitMixerWidget
+
+    model_class = _resolve("chisurf.core.models.tcspc.lifetime.LifetimeMixtureNewModel")
+    assert model_class.name == "Lifetime mixer (new)"
+    fit = _make_fit(model_class)
+    model = fit.model
+
+    # (a) pure model — editor is AutoForm, not a QWidget-model
+    assert not isinstance(model, QtWidgets.QWidget)
+    editor = build_model_editor(model)
+    assert isinstance(editor, AutoForm)
+    QtWidgets.QVBoxLayout().addWidget(editor)  # must not raise
+
+    # (b) the view spec declares a fit_mixer custom section
+    spec = model.view_spec()
+    customs = [s for s in spec.flat_sections() if isinstance(s, vs.CustomSection)]
+    assert any(s.key == "fit_mixer" for s in customs), "no fit_mixer section in mix_model.view.json"
+
+    # (c) a FitMixerWidget is present in the rendered editor
+    mixer_widgets = editor.findChildren(FitMixerWidget)
+    assert mixer_widgets, "FitMixerWidget not found in rendered editor"
+
+    # (d) the IRF curve input is declared so the model can be convolved
+    curve_inputs = [s for s in spec.flat_sections() if isinstance(s, vs.CurveInputSection)]
+    assert any(s.select_action == "model.change_irf" for s in curve_inputs), "no IRF curve input"
+
+    # (e) plots resolve
+    assert model_plot_specs(model), "no plot specs resolved"
+
+    # (f) the model produces a finite fallback decay (no components added yet)
+    model.update()
+    y = np.asarray(model.y)
+    assert y.size > 0 and np.all(np.isfinite(y)), "model did not compute a finite fallback decay"

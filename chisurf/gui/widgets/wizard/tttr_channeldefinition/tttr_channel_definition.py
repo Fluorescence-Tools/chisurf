@@ -12,12 +12,20 @@ import json
 import pathlib
 import sys
 
+import numpy as np
+
+try:  # pyqtgraph is optional; the preview plot degrades gracefully without it
+    import pyqtgraph as pg
+except Exception:  # pragma: no cover - environment without pyqtgraph
+    pg = None
+
 from qtpy import uic as _uic
 from qtpy.QtCore import Signal, Qt
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QDialog,
     QFileDialog,
     QInputDialog,
     QLabel,
@@ -25,6 +33,7 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPushButton,
     QTableWidgetItem,
+    QToolButton,
     QVBoxLayout,
     QWidget,
     QWizard,
@@ -50,19 +59,37 @@ from .tttr_detector_setups import (
     load_detector_setups,
     save_detector_setups,
 )
+from chisurf.plugins.core.lightpath_simulator.core.workflow import (
+    get_probes_info,
+    resolve_db_path,
+)
+from chisurf.plugins.core.lightpath_simulator.gui.easy_mode import (
+    LightPathEasyDialog,
+)
 
-help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE) 
-window definition by clicking on the '...' button to define channels, or define your own PIE 
-and detector settings by editing the tables below. New PIE windows and detector windows can 
-be added by clicking the "Add" button next to the detector name field. The "Edit" button 
-displays a JSON file representing the data, and the "Save" button allows you to save your 
+help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE)
+window definition by clicking on the '...' button to define channels, or define your own PIE
+and detector settings by editing the tables below. New PIE windows and detector windows can
+be added by clicking the "Add" button next to the detector name field. The "Edit" button
+displays a JSON file representing the data, and the "Save" button allows you to save your
 channel configuration.
 
-You can also select from predefined setups using the Setup dropdown, or save your current 
+You can also select from predefined setups using the Setup dropdown, or save your current
 configuration as a new setup.
 
-The TTTR reading routine section allows you to specify the file type and time resolution 
+The TTTR reading routine section allows you to specify the file type and time resolution
 parameters used when reading TTTR files. These settings will be saved with your setup.
+
+IMPORTANT — micro-time units: PIE windows ("Start"/"End") and detector "Micro Time Ranges"
+are given in RAW micro-time channels of the TTTR file (typically 0 … a few thousand), i.e.
+the SAME units as the loaded data. They are NOT divided by the micro-time binning — binning
+only changes how the preview decay is displayed, never the stored ranges. A common mistake is
+to enter a range like 0-256 that only covers a small fraction of the data and therefore
+selects almost no photons (e.g. a proximity ratio that collapses to 0).
+
+Use "Read from file…" to load a dataset: the preview below shows the micro-time decay of your
+data with your PIE windows and detector ranges overlaid, so you can confirm the ranges cover
+the intended part of the decay before saving the setup.
 """
 
 # Initial PIE-Windows and Detectors
@@ -93,6 +120,16 @@ _initial_tttr_reading = {
 class DetectorWizardPage(QWizardPage):
     detectorsChanged = Signal()
 
+    def event(self, event):
+        # On macOS, QWizardPage C++ event implementation can cause the main window
+        # to lose focus when the page is embedded as a standard widget outside a QWizard.
+        # To prevent this focus-loss bug, we bypass QWizardPage.event and delegate
+        # directly to QWidget.event if we are not hosted inside a QWizard.
+        if self.wizard() is None:
+            return QWidget.event(self, event)
+        return super().event(event)
+
+
     def __init__(self, json_file=None, *args, show_edit_json=False, show_save=False,
                  show_setups_file=True, show_setup_selection=True, show_help=True,
                  show_tttr_reading=True, show_tables=True, show_add_inputs=True,
@@ -121,6 +158,7 @@ class DetectorWizardPage(QWizardPage):
         self.current_setup_name = None
         self.current_setups_file = str(DETECTOR_SETUPS_FILE)
         self._selected_detector_info = None
+        self._optical_config = None
         self.show_edit_json = show_edit_json
         self.show_save = show_save
         self.show_setups_file = show_setups_file
@@ -158,9 +196,14 @@ class DetectorWizardPage(QWizardPage):
         # Disabled by default; enabled when an owned setup is selected
         self.public_checkbox.setEnabled(False)
         self.setup_layout.insertWidget(self.setup_layout.count() - 1, self.public_checkbox)
+        self.setup_layout.insertSpacing(self.setup_layout.count() - 1, 15)
 
         # Calibration date snapshot combobox
         self.calibration_label = QLabel("Calibration:")
+        self.calibration_label.setToolTip(
+            "Select a calibration date snapshot. "
+            "'Latest' uses the most recent calibration values."
+        )
         self.calibration_label.setVisible(self.show_setup_selection)
         self.calibration_combo = QComboBox()
         self.calibration_combo.setToolTip(
@@ -201,7 +244,18 @@ class DetectorWizardPage(QWizardPage):
             self.help_text.setVisible(False)
         self.edit_json_button.setVisible(self.show_edit_json)
         self.save_button.setVisible(self.show_save)
-        
+
+        # Optical Setup button — opens the Light Path easy mode dialog
+        self.optical_setup_button = QPushButton("Optical Setup…")
+        self.optical_setup_button.setToolTip(
+            "Open Light Path easy mode to configure filters, "
+            "dyes, and compute Förster radii / cross-talk"
+        )
+        self.optical_setup_button.clicked.connect(self._on_optical_setup)
+        try:
+            self.controls.addWidget(self.optical_setup_button)
+        except Exception:
+            pass
         # Initialize file type combo
         self.file_type_combo.addItem("Auto")
         self.file_type_combo.addItems(list(tttrlib.TTTR.get_supported_container_names()))
@@ -213,6 +267,14 @@ class DetectorWizardPage(QWizardPage):
         self.macro_time_le.setText(str(_initial_tttr_reading["macro_time_resolution"]))
         self.micro_time_le.setText(str(_initial_tttr_reading["micro_time_resolution"]))
         self.micro_binning_combo.setCurrentText(str(_initial_tttr_reading["micro_time_binning"]))
+
+        # Plot toggle button in the TTTR section
+        self.plot_toggle_button = QToolButton()
+        self.plot_toggle_button.setText("📊 Plot")
+        self.plot_toggle_button.setCheckable(True)
+        self.plot_toggle_button.setToolTip("Show/hide micro-time decay preview plot")
+        self.plot_toggle_button.toggled.connect(self._toggle_plot_visibility)
+        self.tttr_layout.addWidget(self.plot_toggle_button, 4, 0, 1, 4)
         
         # Set table headers
         self.windows_form.setColumnCount(4)
@@ -275,6 +337,20 @@ class DetectorWizardPage(QWizardPage):
         except Exception:
             pass
 
+        # Micro-time preview: a decay histogram of a loaded dataset with the PIE
+        # windows and detector micro-time ranges overlaid, so users can see that
+        # their ranges actually cover the data (raw micro-time channel units).
+        # MUST be initialized BEFORE _load_data so that _load_data can restore
+        # persisted decays from the saved setup (otherwise they get overwritten).
+        self._microtime_counts = None
+        self._microtime_decay_file_path = None
+        self._microtime_per_channel_counts = {}
+        self._microtime_region_items = []
+        try:
+            self._setup_microtime_preview()
+        except Exception:  # pragma: no cover - preview must never break the wizard
+            pass
+
         # Load available setups
         self._load_available_setups()
 
@@ -313,6 +389,261 @@ class DetectorWizardPage(QWizardPage):
         """Only allow finishing the wizard after the user saved settings."""
         # QWizard queries this to enable/disable the Finish button
         return bool(getattr(self, "_allow_finish", False))
+
+    # ------------------------------------------------------------------
+    # Micro-time preview (data decay with PIE windows + detector ranges)
+    # ------------------------------------------------------------------
+    #: Distinct colors for detectors keyed by common names; others cycle.
+    _DETECTOR_COLORS = {
+        "green": (0, 200, 0),
+        "red": (220, 40, 40),
+        "yellow": (220, 200, 0),
+        "blue": (60, 120, 230),
+    }
+    _DETECTOR_CYCLE = [
+        (0, 200, 0), (220, 40, 40), (220, 200, 0), (60, 120, 230),
+        (200, 120, 0), (160, 60, 200), (0, 180, 180),
+    ]
+
+    def _setup_microtime_preview(self):
+        """Create the micro-time decay preview in a separate window."""
+        if pg is None:
+            self._microtime_plot = None
+            self._microtime_plot_window = None
+            return
+        self._microtime_plot_window = QDialog(self, Qt.Window)
+        self._microtime_plot_window.setWindowTitle("Micro-time Decay Preview")
+        self._microtime_plot_window.resize(700, 450)
+        vbox = QVBoxLayout(self._microtime_plot_window)
+        vbox.setContentsMargins(6, 6, 6, 6)
+        vbox.setSpacing(4)
+
+        self._microtime_plot = pg.PlotWidget(self._microtime_plot_window)
+        self._microtime_plot.setLabel("bottom", "Micro-time channel")
+        self._microtime_plot.setLabel("left", "Counts")
+        self._microtime_plot.setMinimumHeight(300)
+        self._microtime_plot.getPlotItem().setLogMode(False, True)
+        self._microtime_plot.addLegend(offset=(-10, 10))
+        vbox.addWidget(self._microtime_plot)
+
+        # Sync the toggle button when the window is closed by the user.
+        self._microtime_plot_window.finished.connect(
+            lambda: self._sync_plot_btn()
+        )
+
+        # Refresh overlays whenever the detector table changes.
+        try:
+            self.detectorsChanged.connect(self._refresh_microtime_preview)
+        except Exception:
+            pass
+
+    def _sync_plot_btn(self):
+        btn = getattr(self, "plot_toggle_button", None)
+        if btn is not None:
+            win = getattr(self, "_microtime_plot_window", None)
+            btn.setChecked(win is not None and win.isVisible())
+
+    def _toggle_plot_visibility(self, visible):
+        win = getattr(self, "_microtime_plot_window", None)
+        if win is None:
+            return
+        if visible:
+            win.show()
+            win.raise_()
+        else:
+            win.hide()
+
+    def set_microtime_data(self, counts, file_path=None):
+        """Set the micro-time histogram (counts per raw channel) to preview.
+
+        Parameters
+        ----------
+        counts : array-like or None
+            Histogram counts per raw micro-time channel.
+        file_path : str or None
+            Path of the TTTR file from which the histogram was derived.
+            Stored so it can be persisted with the setup.
+        """
+        try:
+            arr = np.asarray(counts, dtype=float).ravel()
+            self._microtime_counts = arr if arr.size else None
+        except Exception:
+            self._microtime_counts = None
+        self._microtime_decay_file_path = file_path
+        self._refresh_microtime_preview()
+
+    def set_microtime_per_channel_data(self, per_channel_counts, file_path=None):
+        """Store per-routing-channel microtime histograms.
+
+        Parameters
+        ----------
+        per_channel_counts : dict of int -> array-like
+            Routing channel number mapped to its microtime histogram.
+        file_path : str or None
+            Source TTTR file path.
+        """
+        if per_channel_counts:
+            self._microtime_per_channel_counts = {
+                k: np.asarray(v, dtype=float).ravel()
+                for k, v in per_channel_counts.items()
+            }
+        else:
+            self._microtime_per_channel_counts = {}
+        if file_path is not None:
+            self._microtime_decay_file_path = file_path
+        self._refresh_microtime_preview()
+
+    def _detector_color(self, name, index):
+        return self._DETECTOR_COLORS.get(
+            str(name).strip().lower(),
+            self._DETECTOR_CYCLE[index % len(self._DETECTOR_CYCLE)],
+        )
+
+    def _refresh_microtime_preview(self):
+        """Redraw the decay curve and the window/detector range overlays."""
+        plot = getattr(self, "_microtime_plot", None)
+        if plot is None:
+            return
+        plot_item = plot.getPlotItem()
+        # Clear previous region overlays (keep nothing stale).
+        for item in getattr(self, "_microtime_region_items", []):
+            try:
+                plot_item.removeItem(item)
+            except Exception:
+                pass
+        self._microtime_region_items = []
+        plot_item.clear()
+
+        counts = self._microtime_counts
+        if counts is not None and counts.size:
+            x = np.arange(counts.size + 1, dtype=float)
+            y = np.clip(counts, 0, None)
+            plot_item.plot(
+                x, y, stepMode=True, fillLevel=0,
+                brush=(120, 120, 120, 80), pen=pg.mkPen((180, 180, 180), width=1),
+                name="data",
+            )
+            x_max = float(counts.size)
+
+            # Overlay per-detector combined traces when detectors are defined,
+            # otherwise fall back to individual routing channel traces.
+            try:
+                settings = self.get_settings()
+            except Exception:
+                settings = {"windows": {}, "detectors": {}}
+
+            per_ch = getattr(self, "_microtime_per_channel_counts", {})
+            detectors = (settings.get("detectors", {}) or {})
+            if detectors and per_ch:
+                for idx, (name, info) in enumerate(detectors.items()):
+                    chs = (info or {}).get("chs", [])
+                    color = self._detector_color(name, idx)
+                    combined = None
+                    for ch in chs:
+                        ch_counts = per_ch.get(int(ch))
+                        if ch_counts is not None and ch_counts.size:
+                            if combined is None:
+                                combined = ch_counts.copy()
+                            else:
+                                combined += ch_counts
+                    if combined is not None:
+                        plot_item.plot(
+                            x, np.clip(combined, 0, None),
+                            stepMode=True, fillLevel=0,
+                            brush=(*color, 50), pen=pg.mkPen(color, width=1.5),
+                            name=name,
+                        )
+            elif per_ch:
+                ch_colors = [
+                    (200, 50, 50), (50, 150, 50), (50, 80, 200),
+                    (200, 150, 50), (150, 50, 150), (50, 180, 180),
+                    (200, 100, 50), (100, 100, 100),
+                ]
+                for idx, (ch, ch_counts) in enumerate(sorted(per_ch.items())):
+                    if ch_counts is not None and ch_counts.size:
+                        color = ch_colors[idx % len(ch_colors)]
+                        plot_item.plot(
+                            x, np.clip(ch_counts, 0, None),
+                            stepMode=True, fillLevel=0,
+                            brush=(*color, 40), pen=pg.mkPen(color, width=1),
+                            name=f"ch {ch}",
+                        )
+        else:
+            x_max = None
+            settings = {"windows": {}, "detectors": {}}
+
+        # PIE windows: movable bands that update the table on drag.
+        for name, (start, end) in (settings.get("windows", {}) or {}).items():
+            def _make_window_cb(wname=name):
+                def _cb():
+                    region = self.sender()
+                    r0, r1 = region.getRegion()
+                    s, e = int(round(r0)), int(round(r1))
+                    for r in range(self.windows_form.rowCount()):
+                        if self.windows_form.item(r, 0).text().strip() == wname:
+                            self.windows_form.cellWidget(r, 1).setText(str(s))
+                            self.windows_form.cellWidget(r, 2).setText(str(e))
+                            break
+                return _cb
+            self._add_preview_region(
+                start, end, (150, 150, 150), f"PIE: {name}",
+                alpha=40, on_changed=_make_window_cb(),
+            )
+
+        # Detector micro-time ranges: movable, color-coded per detector.
+        det_items = {}  # name -> list of (region, range_index)
+        for idx, (name, info) in enumerate((settings.get("detectors", {}) or {}).items()):
+            color = self._detector_color(name, idx)
+            ranges = (info or {}).get("micro_time_ranges", []) or []
+            det_items[name] = det_regions = []
+            for ri, (start, end) in enumerate(ranges):
+                def _make_det_cb(dname=name):
+                    def _cb():
+                        for row in range(self.detectors_form.rowCount()):
+                            if self.detectors_form.item(row, 0).text().strip() == dname:
+                                parts = []
+                                for reg, _ in det_items.get(dname, []):
+                                    rr0, rr1 = reg.getRegion()
+                                    parts.append(f"{int(round(rr0))}:{int(round(rr1))}")
+                                self.detectors_form.cellWidget(row, 2).setText(", ".join(parts))
+                                break
+                    return _cb
+                region = self._add_preview_region(
+                    start, end, color, str(name),
+                    alpha=70, on_changed=_make_det_cb(),
+                )
+                if region is not None:
+                    det_regions.append((region, ri))
+
+        if x_max is not None:
+            plot_item.setXRange(0, x_max, padding=0.02)
+
+    def _add_preview_region(self, start, end, color, label, alpha=60, on_changed=None):
+        plot = getattr(self, "_microtime_plot", None)
+        if plot is None:
+            return
+        try:
+            r0, r1 = float(start), float(end)
+        except (TypeError, ValueError):
+            return
+        if r1 < r0:
+            r0, r1 = r1, r0
+        brush = pg.mkBrush(color[0], color[1], color[2], alpha)
+        movable = on_changed is not None
+        region = pg.LinearRegionItem(
+            values=(r0, r1), movable=movable, brush=brush,
+            pen=pg.mkPen(color[0], color[1], color[2], width=1),
+        )
+        if on_changed is not None:
+            region.sigRegionChangeFinished.connect(on_changed)
+        region.setZValue(-10)
+        plot.addItem(region)
+        self._microtime_region_items.append(region)
+        text = pg.TextItem(label, color=color, anchor=(0, 1))
+        text.setPos(r0, 0)
+        plot.addItem(text)
+        self._microtime_region_items.append(text)
+        return region
 
     # The _with_label method is no longer needed as the UI file already includes labels for widgets
     # This method is kept for backward compatibility but is not used in the new implementation
@@ -484,6 +815,41 @@ class DetectorWizardPage(QWizardPage):
         # Update the effective resolution
         self._update_effective_resolution()
 
+        # Restore the microtime decay histogram if it was saved with the setup.
+        decay = data.get("_microtime_decay")
+        if isinstance(decay, dict) and "counts" in decay:
+            try:
+                counts = np.asarray(decay["counts"], dtype=float).ravel()
+                file_path = decay.get("file_path")
+                self._microtime_counts = counts if counts.size else None
+                self._microtime_decay_file_path = file_path
+            except Exception:
+                self._microtime_counts = None
+                self._microtime_decay_file_path = None
+        else:
+            self._microtime_counts = None
+            self._microtime_decay_file_path = None
+
+        # Restore per-routing-channel microtime histograms
+        per_ch_decay = data.get("_microtime_per_channel_decay")
+        if isinstance(per_ch_decay, dict) and "channels" in per_ch_decay:
+            try:
+                per_ch = {}
+                for ch_str, ch_counts in per_ch_decay["channels"].items():
+                    arr = np.asarray(ch_counts, dtype=float).ravel()
+                    if arr.size:
+                        per_ch[int(ch_str)] = arr
+                self._microtime_per_channel_counts = per_ch
+            except Exception:
+                self._microtime_per_channel_counts = {}
+        else:
+            self._microtime_per_channel_counts = {}
+
+        self._refresh_microtime_preview()
+
+        # Restore optical config (from easy mode dialog)
+        self._optical_config = data.get("optical_config")
+
         # re-enable
         self.windows_form.blockSignals(False)
         self.detectors_form.blockSignals(False)
@@ -495,9 +861,13 @@ class DetectorWizardPage(QWizardPage):
         row = self.windows_form.rowCount()
         self.windows_form.insertRow(row)
         self.windows_form.setItem(row, 0, QTableWidgetItem(name))
-        self.windows_form.setCellWidget(row, 1, QLineEdit(start))
-        self.windows_form.setCellWidget(row, 2, QLineEdit(end))
-        
+        start_le = QLineEdit(start)
+        end_le = QLineEdit(end)
+        self.windows_form.setCellWidget(row, 1, start_le)
+        self.windows_form.setCellWidget(row, 2, end_le)
+        for _le in (start_le, end_le):
+            _le.editingFinished.connect(self._refresh_microtime_preview)
+
         btn = QPushButton("🗑️")
         btn.setMaximumWidth(30)
         btn.setToolTip("Delete window")
@@ -521,7 +891,9 @@ class DetectorWizardPage(QWizardPage):
             item.setData(Qt.UserRole + 2, g_factor_calibration_id)
         self.detectors_form.setItem(row, 0, item)
         self.detectors_form.setCellWidget(row, 1, QLineEdit(ch_text))
-        self.detectors_form.setCellWidget(row, 2, QLineEdit(mtr_text))
+        mtr_le = QLineEdit(mtr_text)
+        self.detectors_form.setCellWidget(row, 2, mtr_le)
+        mtr_le.editingFinished.connect(self._refresh_microtime_preview)
         g_le = QLineEdit(g_factor)
         self.detectors_form.setCellWidget(row, 3, g_le)
         self._wire_g_factor_cell(row, g_le)
@@ -720,7 +1092,30 @@ class DetectorWizardPage(QWizardPage):
         }
 
         # Return the result
-        return {"windows": wins, "detectors": dets, "tttr_reading": tttr_reading}
+        result = {"windows": wins, "detectors": dets, "tttr_reading": tttr_reading}
+
+        # Include optical config from the easy mode dialog (if set)
+        if self._optical_config is not None:
+            result["optical_config"] = self._optical_config
+
+        # Persist the microtime decay histogram (if loaded) so it survives restarts.
+        counts = self._microtime_counts
+        fpath = self._microtime_decay_file_path
+        if counts is not None and fpath is not None:
+            result["_microtime_decay"] = {
+                "file_path": str(fpath),
+                "counts": counts.tolist(),
+            }
+
+        # Persist per-routing-channel microtime histograms
+        per_ch = getattr(self, "_microtime_per_channel_counts", {})
+        if per_ch and fpath is not None:
+            result["_microtime_per_channel_decay"] = {
+                "file_path": str(fpath),
+                "channels": {str(k): v.tolist() for k, v in per_ch.items()},
+            }
+
+        return result
 
     def channels(self):
         chs = {}
@@ -1133,6 +1528,38 @@ class DetectorWizardPage(QWizardPage):
                 self.setup_combo.setCurrentIndex(index)
         else:
             QMessageBox.critical(self, "Error", f"Failed to save setup '{setup_name}'.")
+
+    def _on_optical_setup(self):
+        """Open the Light Path easy mode dialog for optical configuration."""
+        # Fetch probes synchronously from MFDB
+        try:
+            probes_result = get_probes_info(resolve_db_path())
+            probes = probes_result.get("probes", [])
+        except Exception as exc:
+            QMessageBox.critical(
+                self, "MFDB Error",
+                f"Could not load probe catalogue:\n{exc}"
+            )
+            return
+
+        # Get detector names from the current wizard table
+        det_names = []
+        for r in range(self.detectors_form.rowCount()):
+            item = self.detectors_form.item(r, 0)
+            if item is not None:
+                name = item.text().strip()
+                if name:
+                    det_names.append(name)
+
+        dlg = LightPathEasyDialog(
+            probes,
+            parent=self,
+            detector_names=det_names if det_names else None,
+            optical_config=self._optical_config,
+            db_path=resolve_db_path(),
+        )
+        if dlg.exec_():
+            self._optical_config = dlg.get_optical_config()
 
     def _on_delete_setup(self):
         """Delete the current setup."""

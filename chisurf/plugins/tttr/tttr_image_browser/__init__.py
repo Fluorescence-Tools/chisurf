@@ -275,6 +275,26 @@ class TTTRImageBrowser(QWidget):
         self.page1.hide()
         self.page0.show()
 
+    def apply_setup_settings(self, payload: dict) -> None:
+        """Apply a shared detector definition and skip the local setup page.
+
+        Used when the browser is embedded in the Imaging Tools window, where a
+        single shared Setup panel publishes the detector definition over RPC.
+        Standalone use is unaffected — the local setup page remains available.
+        """
+        if not payload:
+            return
+        try:
+            self.detector_page.load_data_into_tables(payload)
+        except Exception:  # pragma: no cover - best-effort GUI sync
+            _log.debug("Could not load shared setup into detector page", exc_info=True)
+        self.setup_settings = payload
+        try:
+            self.page0.hide()
+            self.page1.show()
+        except Exception:  # pragma: no cover - best-effort GUI sync
+            _log.debug("Could not advance browser to image page", exc_info=True)
+
     def _on_pick_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select folder with TTTR files")
         if not folder:

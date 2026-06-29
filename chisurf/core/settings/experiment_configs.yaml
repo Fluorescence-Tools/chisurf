@@ -61,6 +61,10 @@ tcspc:
     - chisurf.gui.widgets.models.tcspc.WormLikeChainModelWidget
     - chisurf.gui.widgets.models.tcspc.ParseDecayModelWidget
     - chisurf.gui.widgets.models.tcspc.LifetimeMixtureModelWidget
+    # PRD-40: additive AutoForm prototype for the mixer. Pure compute model whose
+    # editor is auto-generated from mix_model.view.json by AutoModelWidget. Lives
+    # ALONGSIDE the proven widget above as the "Lifetime mixer (new)" entry.
+    - chisurf.core.models.tcspc.lifetime.LifetimeMixtureNewModel
     - chisurf.gui.widgets.models.tcspc.EtModelFreeWidget
     - chisurf.gui.widgets.models.tcspc.FRETStructureWidget
     - chisurf.gui.widgets.models.tcspc.MaxEntLifetimeModelWidget

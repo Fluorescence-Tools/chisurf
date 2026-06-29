@@ -33,6 +33,7 @@ chisurf/core/mfdb/data/_dictionary_cache.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
 !chisurf/gui/plots/lineplot/reference_presets.json
+!chisurf/plugins/core/lightpath_simulator/templates/*.json
 *.log
 *.pyc
 *.pyd
@@ -86,3 +87,13 @@ output/
 playground/*
 rattler-build-log.txt
 rattler-recipe/entry_points.json
+# local scratch / junk
+*.bak
+session-*.md
+dummy.db
+wrapper_test.spc
+scripts/*.txt
+# compiled burbulator lib (built by setup.py per-platform)
+chisurf/plugins/core/acq/tcspc_devices/simulation/*.dylib
+chisurf/plugins/core/acq/tcspc_devices/simulation/*.so
+chisurf/plugins/core/acq/tcspc_devices/simulation/*.dll

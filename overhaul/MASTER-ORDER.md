@@ -110,6 +110,9 @@ These make everything after cheaper and safer; do them right after 03/04.
   when connected, a burst selection (BID) registers to MFDB (reference, not a loose
   file) and the burst tools open BIDs from the dataset picker. Generalizes PRD-28
   to all BID producers/consumers; rides PRD-03/11/16 + PRD-10.
+- **PRD-43** Align GUI Operation History with MFDB Provenance — Phase 1 (store
+  history as a `project_history` artifact) is shippable now on PRD-03
+  infrastructure.  Phases 3–4 ride PRD-21/27.
 
 ## Dependency graph
 
@@ -131,6 +134,9 @@ PRD-21 ──► PRD-12        PRD-14        PRD-13        (Phase 3 — projecti
                   │
                   ▼
               PRD-24 (Phase 5, capstone)
+
+Cross-cutting:  PRD-43 Phase 1 ◄── PRD-03 (shippable now)
+                PRD-43 Phase 3–4 ◄── PRD-21 + PRD-27
 ```
 
 ## One-line rationale per architecture PRD
@@ -151,6 +157,7 @@ PRD-21 ──► PRD-12        PRD-14        PRD-13        (Phase 3 — projecti
   hand-maintained drift surface disappears.
 - **27** append-only provenance/state core (M) → audit, reproducibility, "what-if"
   branches; PRD-12/21 become projections, not parallel stores.
+- **43** GUI history alignment → preserve undo/redo history across DB save/restore; incrementally align with PRD-21/27 provenance.
 
 ## Recommended first action
 

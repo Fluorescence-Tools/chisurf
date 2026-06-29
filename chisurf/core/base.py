@@ -936,7 +936,7 @@ def safe_import(module_name: str, package_name: str = None, parent=None):
         title = f"Package {package_name} not available"
         text = (
             f"The package '{package_name}' is required but not installed.\n\n"
-            f"Please use ChiSurf's Package Manager (available in Help > Updates and Packages > Package Manager) "
+            f"Please use ChiSurf's Package Manager (available in Settings > Packages) "
             f"to install the '{package_name}' package."
         )
         _safe_import_notify(title, text)
