@@ -518,6 +518,15 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
                 self.editor.dateChanged.connect(
                     lambda d: self._commit(d.toString("yyyy-MM-dd"))
                 )
+        elif section.kind == "password":
+            self.editor = QtWidgets.QLineEdit()
+            self.editor.setEchoMode(QtWidgets.QLineEdit.Password)
+            if section.placeholder:
+                self.editor.setPlaceholderText(section.placeholder)
+            if current is not None:
+                self.editor.setText(str(current))
+            if not read_only:
+                self.editor.editingFinished.connect(lambda: self._commit(self.editor.text()))
         else:  # "str"
             self.editor = QtWidgets.QLineEdit()
             if section.placeholder:
@@ -744,6 +753,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.plot = pg.PlotWidget()
         if section.height:
             self.plot.setMaximumHeight(int(section.height))
+            self.plot.setMinimumHeight(int(section.height))
         if section.x_label:
             self.plot.setLabel("bottom", section.x_label)
         if section.y_label:
@@ -1000,3 +1010,167 @@ class ImageMapWidget(QtWidgets.QWidget):
 def _image_section_factory(model, target: str, **options):
     """Custom-section factory for a general 2D image dock (see :class:`ImageMapWidget`)."""
     return ImageMapWidget(model, target, **options)
+
+
+# --- fit mixer (LifetimeMixtureModel AutoForm section) ---------------------
+@register_section("fit_mixer")
+class FitMixerWidget(QtWidgets.QWidget):
+    """Fit-selector and fraction-parameter UI for the LifetimeMixture AutoForm section.
+
+    Provides a combo box of existing lifetime fits, add/remove controls, a list
+    of added components, and inline fraction-parameter widgets. Register it in a
+    ``.view.json`` as::
+
+        {"type": "custom", "key": "fit_mixer"}
+
+    The model must expose the ``LifetimeMixtureModel`` API:
+    ``lifetime_fits``, ``append_model(model, name)``, ``pop_model(idx)``,
+    ``_fractions`` and ``model_names``.
+    """
+
+    def __init__(self, model=None, target=None, parent=None, **options):
+        super().__init__(parent)
+        self._model = model
+
+        outer = QtWidgets.QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(2)
+
+        # Toolbar: combo + refresh + name field + "all" checkbox + add button
+        toolbar = QtWidgets.QHBoxLayout()
+        toolbar.setContentsMargins(0, 0, 0, 0)
+        toolbar.setSpacing(2)
+
+        self.cb = QtWidgets.QComboBox()
+        self.cb.setToolTip("Select a lifetime fit to add to the mixture.")
+        toolbar.addWidget(self.cb, 2)
+
+        refresh_btn = QtWidgets.QToolButton()
+        refresh_btn.setText("↻")
+        refresh_btn.setToolTip("Refresh the list of available lifetime fits.")
+        refresh_btn.clicked.connect(self._refresh_fit_list)
+        toolbar.addWidget(refresh_btn)
+
+        toolbar.addWidget(QtWidgets.QLabel("Name"))
+        self.name_edit = QtWidgets.QLineEdit()
+        self.name_edit.setPlaceholderText("fraction name…")
+        self.name_edit.setMaximumWidth(90)
+        self.name_edit.setToolTip("Name for the fraction parameter (default: x_N).")
+        toolbar.addWidget(self.name_edit)
+
+        self.all_cb = QtWidgets.QCheckBox("all")
+        self.all_cb.setToolTip("Add all listed fits at once.")
+        toolbar.addWidget(self.all_cb)
+
+        add_btn = QtWidgets.QToolButton()
+        add_btn.setText("add")
+        add_btn.setToolTip("Add the selected fit to the mixture.")
+        add_btn.clicked.connect(self._on_add)
+        toolbar.addWidget(add_btn)
+
+        outer.addLayout(toolbar)
+
+        # Current component list (double-click removes)
+        self.fit_list = QtWidgets.QListWidget()
+        self.fit_list.setMaximumHeight(80)
+        self.fit_list.setToolTip("Mixture components. Double-click a row to remove it.")
+        self.fit_list.doubleClicked.connect(self._on_remove)
+        outer.addWidget(self.fit_list)
+
+        # Fraction parameter widgets (rebuilt after each add/remove)
+        self._fractions_container = QtWidgets.QWidget()
+        self._fractions_layout = QtWidgets.QGridLayout(self._fractions_container)
+        self._fractions_layout.setContentsMargins(0, 0, 0, 0)
+        self._fractions_layout.setSpacing(2)
+        outer.addWidget(self._fractions_container)
+
+        self._refresh_fit_list()
+        self._rebuild_fractions()
+
+    # -- helpers ---------------------------------------------------------------
+
+    def _own_fit_index(self) -> int:
+        try:
+            import chisurf as cs
+            fit = getattr(self._model, "fit", None)
+            for i, fg in enumerate(cs.fits):
+                if fg is fit or fit in list(fg):
+                    return i
+        except Exception:
+            pass
+        return 0
+
+    def _dispatch_update(self) -> None:
+        try:
+            import chisurf as cs
+            cs.core.actions.dispatch("fit.update", {"fit_index": int(self._own_fit_index())})
+        except Exception:
+            pass
+
+    # -- slots -----------------------------------------------------------------
+
+    def _refresh_fit_list(self) -> None:
+        """Populate the combo box from the model's available lifetime fits."""
+        self.cb.clear()
+        for f in getattr(self._model, "lifetime_fits", []):
+            self.cb.addItem(f.name)
+
+    def _on_add(self) -> None:
+        """Add the selected fit(s) to the mixture."""
+        fits = getattr(self._model, "lifetime_fits", [])
+        if not fits:
+            return
+        idxs = list(range(len(fits))) if self.all_cb.isChecked() else [self.cb.currentIndex()]
+        for idx in idxs:
+            if not (0 <= idx < len(fits)):
+                continue
+            f = fits[idx]
+            i = self.fit_list.count() + 1
+            name = self.name_edit.text().strip() or f"x_{i}"
+            self.fit_list.addItem(f"{i}: {f.name}")
+            try:
+                self._model.append_model(f.model, name)
+            except Exception:
+                pass
+        self._dispatch_update()
+        self._rebuild_fractions()
+
+    def _on_remove(self) -> None:
+        """Remove the double-clicked fit from the mixture."""
+        idx = self.fit_list.currentRow()
+        if idx < 0:
+            return
+        self.fit_list.takeItem(idx)
+        try:
+            self._model.pop_model(idx)
+        except Exception:
+            pass
+        # Renumber remaining items to keep indices consistent
+        for i in range(self.fit_list.count()):
+            item = self.fit_list.item(i)
+            rest = item.text().split(": ", 1)[1] if ": " in item.text() else item.text()
+            item.setText(f"{i + 1}: {rest}")
+        self._dispatch_update()
+        self._rebuild_fractions()
+
+    def _rebuild_fractions(self) -> None:
+        """Recreate the fraction-parameter widget grid from the model's state."""
+        from chisurf.gui.widgets.fitting.parameter_widgets import make_fitting_parameter_widget
+
+        layout = self._fractions_layout
+        while layout.count():
+            item = layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
+
+        fractions = getattr(self._model, "_fractions", [])
+        model_names = getattr(self._model, "model_names", [f"x{i + 1}" for i in range(len(fractions))])
+        if not fractions:
+            return
+
+        layout.addWidget(QtWidgets.QLabel("Fraction"), 0, 0)
+        layout.addWidget(QtWidgets.QLabel("Model"), 0, 1)
+        for row, (frac, name) in enumerate(zip(fractions, model_names), start=1):
+            layout.addWidget(make_fitting_parameter_widget(frac, label_text=""), row, 0)
+            layout.addWidget(QtWidgets.QLabel(name), row, 1)

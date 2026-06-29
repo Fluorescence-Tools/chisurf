@@ -1,0 +1,75 @@
+{
+  "sections": [
+    {
+      "type": "choice",
+      "attr": "mode",
+      "label": "Endpoint",
+      "options": ["local", "server"],
+      "labels": ["Local file", "Server (ZMQ)"],
+      "style": "radio",
+      "description": "Where to add the staging components: a local MFDB file, or a running MFDB server."
+    },
+    {
+      "type": "value",
+      "attr": "db_path",
+      "label": "Local MFDB",
+      "kind": "str",
+      "placeholder": "leave blank for the resolved/connected MFDB",
+      "description": "Target MFDB SQLite path (local mode). Blank = the resolved live MFDB."
+    },
+    {
+      "type": "value",
+      "attr": "host",
+      "label": "Host",
+      "kind": "str",
+      "placeholder": "127.0.0.1",
+      "description": "MFDB server host (server mode)."
+    },
+    {
+      "type": "value",
+      "attr": "cmd_port",
+      "label": "Command port",
+      "kind": "int",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "ZMQ command port (server mode)."
+    },
+    {
+      "type": "value",
+      "attr": "pub_port",
+      "label": "Publish port",
+      "kind": "int",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "ZMQ publish port (server mode)."
+    },
+    {
+      "type": "value",
+      "attr": "user",
+      "label": "User",
+      "kind": "str",
+      "placeholder": "user id",
+      "description": "MFDB user for authentication (server mode)."
+    },
+    {
+      "type": "value",
+      "attr": "password",
+      "label": "Password",
+      "kind": "password",
+      "placeholder": "leave blank to try passwordless login",
+      "description": "MFDB password (server mode). Blank attempts passwordless login."
+    },
+    {
+      "type": "toggle",
+      "attr": "replace",
+      "label": "Replace existing reference set",
+      "description": "Purge the existing reference probes before importing (a backup is made for local files)."
+    },
+    {
+      "type": "toggle",
+      "attr": "mark_verified",
+      "label": "Mark imported as approved",
+      "description": "Stamp imported components as approved instead of unverified."
+    }
+  ]
+}

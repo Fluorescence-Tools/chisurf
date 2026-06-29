@@ -88,12 +88,55 @@ def test_spectra_tool_navigation_panels_build(qapp):
     tool = SpectraTool(db)
     assert isinstance(tool, NavigationPanelTool)
     names = [p.get("name") for p in tool.panels]
-    assert names == ["Overview", "Browse", "Download"]
+    assert names == ["Overview", "Browse", "Download", "Add to MFDB"]
     for i in range(len(tool.panels)):
         tool.nav_list.setCurrentRow(i)
         qapp.processEvents()
         assert isinstance(tool.panels[i].get("instance"), QtWidgets.QWidget)
     db.close()
+
+
+def test_add_to_mfdb_panel_local(qapp):
+    import tempfile, sqlite3
+
+    from chisurf.plugins.spectra_downloader.gui.add_to_mfdb_panel import AddToMfdbPanel
+
+    db = _staging_db()  # EGFP (protein) + SPCMxxA (detector)
+    panel = AddToMfdbPanel(db)
+    # AutoForm-backed endpoint/auth model with sane local defaults
+    assert panel._model.mode == "local"
+    assert panel._model.cmd_port == 8765
+    # add into a fresh local MFDB
+    mfdb = tempfile.mktemp(suffix=".mfdb")
+    panel._model.db_path = mfdb
+    panel._add_all()
+    qapp.processEvents()
+    cats = {
+        r[0]
+        for r in sqlite3.connect(mfdb).execute(
+            "SELECT category FROM probes WHERE deleted_at IS NULL"
+        )
+    }
+    assert {"protein", "detector"} <= cats
+    db.close()
+
+
+def test_autoform_password_kind_is_masked(qapp):
+    """The password ValueSection renders a masked QLineEdit."""
+    from qtpy import QtWidgets
+
+    from chisurf.core.dataspec import ValueSection, ModelView
+    from chisurf.gui.autoform import AutoForm
+
+    class _M:
+        secret = "hunter2"
+
+        def view_spec(self):
+            return ModelView(sections=[ValueSection(attr="secret", label="Secret", kind="password")])
+
+    form = AutoForm(_M())
+    edits = form.findChildren(QtWidgets.QLineEdit)
+    assert any(e.echoMode() == QtWidgets.QLineEdit.Password for e in edits)
 
 
 def test_overview_panel_counts(qapp):

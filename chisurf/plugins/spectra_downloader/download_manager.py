@@ -42,26 +42,8 @@ class DownloadPanel(QtWidgets.QWidget):
         self.info_layout.addWidget(self.browse_source_btn)
         self.layout.addLayout(self.info_layout)
 
-        # Scrapers write to their own staging DB; this row pushes that staging DB
-        # into the connected MFDB (the explicit stage-3 integration step).
-        self.push_layout = QtWidgets.QHBoxLayout()
-        self.push_layout.addWidget(QtWidgets.QLabel("Staging → MFDB:"))
-        self.replace_check = QtWidgets.QCheckBox("Replace existing")
-        self.replace_check.setToolTip(
-            "Purge the existing reference probes in the MFDB before importing "
-            "(a backup is made first)."
-        )
-        self.push_layout.addWidget(self.replace_check)
-        self.push_layout.addStretch()
-        self.browse_btn = QtWidgets.QPushButton("🔎 Browse staging DB")
-        self.browse_btn.setToolTip("Inspect the scraped staging database before pushing it.")
-        self.browse_btn.clicked.connect(self.browse_staging)
-        self.push_layout.addWidget(self.browse_btn)
-        self.push_btn = QtWidgets.QPushButton("⬆ Push to MFDB")
-        self.push_btn.setToolTip("Integrate the scraped staging database into the connected MFDB.")
-        self.push_btn.clicked.connect(self.push_to_mfdb)
-        self.push_layout.addWidget(self.push_btn)
-        self.layout.addLayout(self.push_layout)
+        # Adding the staging DB into the MFDB is its own dedicated panel
+        # (endpoint + authentication) — see gui/add_to_mfdb_panel.py.
 
         self.log_output = QtWidgets.QPlainTextEdit()
         self.log_output.setReadOnly(True)
@@ -145,48 +127,6 @@ class DownloadPanel(QtWidgets.QWidget):
         slug = self._source_slug(module) if module else None
         SpectraBrowserDialog(self.db, self, initial_source=slug).show()
 
-    def browse_staging(self):
-        """Open the data browser on the scraped staging database."""
-        from chisurf.plugins.spectra_downloader.browser import SpectraBrowserDialog
-
-        SpectraBrowserDialog(self.db, self).show()
-
-    def push_to_mfdb(self):
-        """Push the scraped staging database into the connected MFDB."""
-        if self.process is not None:
-            QtWidgets.QMessageBox.warning(self, "Running", "A task is already running.")
-            return
-
-        replace = self.replace_check.isChecked()
-        if replace:
-            ok = QtWidgets.QMessageBox.question(
-                self,
-                "Replace MFDB reference set",
-                "This purges the existing reference probes in the connected MFDB "
-                "and re-imports them from the scraped staging database.\n\n"
-                "A backup of the MFDB is made first. Continue?",
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                QtWidgets.QMessageBox.No,
-            )
-            if ok != QtWidgets.QMessageBox.Yes:
-                return
-
-        self.run_btn.setEnabled(False)
-        self.push_btn.setEnabled(False)
-        self.log_output.clear()
-        self.log_output.appendPlainText("--- Pushing staging DB to MFDB ---")
-
-        self.process = QtCore.QProcess(self)
-        self.process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
-        self.process.readyReadStandardOutput.connect(self.handle_stdout)
-        self.process.finished.connect(self.process_finished)
-
-        args = ["-m", "chisurf.plugins.spectra_downloader.cli", "push",
-                "--staging", str(self.db.db_path)]
-        if replace:
-            args.append("--replace")
-        self.process.start(sys.executable, args)
-
     def handle_stdout(self):
         """Append process output to the log view."""
         data = self.process.readAllStandardOutput()
@@ -200,7 +140,6 @@ class DownloadPanel(QtWidgets.QWidget):
         self.log_output.appendPlainText("--- Finished ---")
         self.process = None
         self.run_btn.setEnabled(True)
-        self.push_btn.setEnabled(True)
 
 
 class DownloadManagerDialog(QtWidgets.QDialog):
