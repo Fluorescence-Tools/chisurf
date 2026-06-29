@@ -121,6 +121,40 @@ def test_add_to_mfdb_panel_local(qapp):
     db.close()
 
 
+def test_add_to_mfdb_session_admin_gate(qapp):
+    """Admins add without a login; non-admins are refused (session-first)."""
+    import tempfile, sqlite3
+
+    from chisurf.core.mfdb.repository import MFDatabase
+    from chisurf.plugins.spectra_downloader.gui.add_to_mfdb_panel import AddToMfdbPanel
+
+    db = _staging_db()
+    panel = AddToMfdbPanel(db)
+
+    # target MFDB with an admin user_default and a non-admin guest
+    mfdb = tempfile.mktemp(suffix=".mfdb")
+    with MFDatabase(mfdb) as d:
+        d.add_user("user_default", "Default User", is_admin=1)
+        d.add_user("guest", "Guest", is_admin=0)
+    panel._model.db_path = mfdb
+    panel._model.password = ""  # no password — rely on the session
+
+    # admin → add succeeds with no login
+    panel._model.user = "user_default"
+    panel._add_all()
+    qapp.processEvents()
+    assert sqlite3.connect(mfdb).execute(
+        "SELECT COUNT(*) FROM probes WHERE deleted_at IS NULL"
+    ).fetchone()[0] >= 2
+
+    # non-admin → refused
+    panel._model.user = "guest"
+    panel._add_all()
+    qapp.processEvents()
+    assert "not an administrator" in panel._log.toPlainText()
+    db.close()
+
+
 def test_autoform_password_kind_is_masked(qapp):
     """The password ValueSection renders a masked QLineEdit."""
     from qtpy import QtWidgets

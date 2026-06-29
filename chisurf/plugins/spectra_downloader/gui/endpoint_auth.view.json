@@ -18,48 +18,6 @@
       "description": "Target MFDB SQLite path (local mode). Blank = the resolved live MFDB."
     },
     {
-      "type": "value",
-      "attr": "host",
-      "label": "Host",
-      "kind": "str",
-      "placeholder": "127.0.0.1",
-      "description": "MFDB server host (server mode)."
-    },
-    {
-      "type": "value",
-      "attr": "cmd_port",
-      "label": "Command port",
-      "kind": "int",
-      "minimum": 1,
-      "maximum": 65535,
-      "description": "ZMQ command port (server mode)."
-    },
-    {
-      "type": "value",
-      "attr": "pub_port",
-      "label": "Publish port",
-      "kind": "int",
-      "minimum": 1,
-      "maximum": 65535,
-      "description": "ZMQ publish port (server mode)."
-    },
-    {
-      "type": "value",
-      "attr": "user",
-      "label": "User",
-      "kind": "str",
-      "placeholder": "user id",
-      "description": "MFDB user for authentication (server mode)."
-    },
-    {
-      "type": "value",
-      "attr": "password",
-      "label": "Password",
-      "kind": "password",
-      "placeholder": "leave blank to try passwordless login",
-      "description": "MFDB password (server mode). Blank attempts passwordless login."
-    },
-    {
       "type": "toggle",
       "attr": "replace",
       "label": "Replace existing reference set",
@@ -70,6 +28,56 @@
       "attr": "mark_verified",
       "label": "Mark imported as approved",
       "description": "Stamp imported components as approved instead of unverified."
+    },
+    {
+      "type": "panel",
+      "title": "Advanced — connection & authentication",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "host",
+          "label": "Host",
+          "kind": "str",
+          "placeholder": "127.0.0.1",
+          "description": "MFDB server host (server mode)."
+        },
+        {
+          "type": "value",
+          "attr": "cmd_port",
+          "label": "Command port",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "ZMQ command port (server mode)."
+        },
+        {
+          "type": "value",
+          "attr": "pub_port",
+          "label": "Publish port",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "ZMQ publish port (server mode)."
+        },
+        {
+          "type": "value",
+          "attr": "user",
+          "label": "User",
+          "kind": "str",
+          "placeholder": "session user",
+          "description": "Authenticate as this user. Defaults to the current session user."
+        },
+        {
+          "type": "value",
+          "attr": "password",
+          "label": "Password",
+          "kind": "password",
+          "placeholder": "only needed if the session is not already authorized",
+          "description": "MFDB password. Not needed when the session user is already an administrator."
+        }
+      ]
     }
   ]
 }
