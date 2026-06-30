@@ -134,6 +134,38 @@ def _get_converter(forster_radius: float, sigma: float):
     return dc
 
 
+#: Converted-on-the-fly fps.json paths, keyed by (source .txt, pdb paths).
+_FPS_JSON_CACHE: Dict[Tuple[str, Tuple[str, ...]], str] = {}
+
+
+def ensure_fps_json(fps_path: str, pdb_paths: Sequence[str]) -> str:
+    """Return a path to an ``fps.json``, converting legacy C# files if needed.
+
+    Accepts either a native ``fps.json`` (returned as-is) or the original FPS /
+    C# tab-separated labelling file (``LPs*.txt``; the sibling ``Distances.txt``
+    is picked up automatically). The C# format is converted to ``fps.json`` once
+    and cached, so FPS-native inputs work end-to-end without a manual conversion
+    step. ``pdb_paths`` is needed to resolve atom indices to residues.
+    """
+    p = str(fps_path)
+    if p.endswith(".json"):
+        return p
+    key = (os.path.abspath(p), tuple(str(x) for x in pdb_paths))
+    cached = _FPS_JSON_CACHE.get(key)
+    if cached and os.path.exists(cached):
+        return cached
+    import tempfile
+
+    from . import io as _io
+    positions, distances, score_sets, extra = _io.read_fps_json(
+        p, pdb_paths=list(pdb_paths))
+    fd, out = tempfile.mkstemp(suffix=".fps.json", prefix="fps_")
+    os.close(fd)
+    _io.write_fps_json(out, positions, distances, score_sets or None, extra or None)
+    _FPS_JSON_CACHE[key] = out
+    return out
+
+
 #: One representative backbone bead per residue used for the coarse clash term.
 _COARSE_BACKBONE = ("CA", "P", "C1'", "C4'")
 
@@ -311,7 +343,7 @@ class DockingParameters:
 
 @dataclass
 class PairDistance:
-    """A single experimental-vs-model distance comparison."""
+    """A single experimental-vs-model distance comparison (FPS-style diagnostics)."""
 
     name: str
     position1: str
@@ -320,6 +352,36 @@ class PairDistance:
     distance_model: float
     distance_type: str
     forster_radius: float
+    error_neg: float = 0.0
+    error_pos: float = 0.0
+
+    @property
+    def residual(self) -> float:
+        """Model minus experimental distance (Angstrom)."""
+        return self.distance_model - self.distance_exp
+
+    @property
+    def chi2(self) -> float:
+        """Asymmetric chi2 contribution of this pair."""
+        d = self.residual
+        err = self.error_pos if d > 0 else self.error_neg
+        if not err:
+            return float("nan")
+        return (d / err) ** 2
+
+    @staticmethod
+    def _efficiency(distance: float, r0: float) -> float:
+        if not r0 or distance != distance:
+            return float("nan")
+        return 1.0 / (1.0 + (distance / r0) ** 6)
+
+    @property
+    def efficiency_model(self) -> float:
+        return self._efficiency(self.distance_model, self.forster_radius)
+
+    @property
+    def efficiency_exp(self) -> float:
+        return self._efficiency(self.distance_exp, self.forster_radius)
 
 
 @dataclass
@@ -342,7 +404,9 @@ class DockingResult:
             "score": self.score,
             "n_avs": self.n_avs,
             "n_distances": self.n_distances,
-            "pairs": [vars(p) for p in self.pairs],
+            "pairs": [{**vars(p), "residual": p.residual, "chi2": p.chi2,
+                       "E_exp": p.efficiency_exp, "E_model": p.efficiency_model}
+                      for p in self.pairs],
             "output_dir": self.output_dir,
             "rmf_file": self.rmf_file,
             "best_pdbs": list(self.best_pdbs),
@@ -436,6 +500,9 @@ def build_assembly(
             raise FileNotFoundError(f"PDB file not found: {p}")
     if not os.path.exists(fps_json_path):
         raise FileNotFoundError(f"fps.json not found: {fps_json_path}")
+
+    # Accept native fps.json or the legacy C# LPs/Distances .txt (auto-convert).
+    fps_json_path = ensure_fps_json(fps_json_path, pdb_paths)
 
     positions, _distances, _score_sets = _read_positions(fps_json_path)
 
@@ -568,6 +635,8 @@ def _collect_pairs(asm: "_Assembly") -> List[PairDistance]:
                 distance_model=float(model_d),
                 distance_type=str(d.get("distance_type", "RDAMean")),
                 forster_radius=float(d.get("Forster_radius", 52.0)),
+                error_neg=float(d.get("error_neg", 0.0)),
+                error_pos=float(d.get("error_pos", 0.0)),
             )
         )
     return pairs
@@ -581,10 +650,13 @@ def _write_score_csv(path: str, score: float, pairs: Sequence[PairDistance]) -> 
         w = csv.writer(fh)
         w.writerow(["# total_score", score])
         w.writerow(["name", "position1", "position2", "distance_type",
-                    "forster_radius", "distance_exp", "distance_model"])
+                    "forster_radius", "distance_exp", "distance_model",
+                    "residual", "chi2", "E_exp", "E_model"])
         for p in pairs:
             w.writerow([p.name, p.position1, p.position2, p.distance_type,
-                        p.forster_radius, p.distance_exp, p.distance_model])
+                        p.forster_radius, p.distance_exp, p.distance_model,
+                        round(p.residual, 3), round(p.chi2, 3),
+                        round(p.efficiency_exp, 4), round(p.efficiency_model, 4)])
 
 
 # ---------------------------------------------------------------------------
@@ -915,6 +987,8 @@ def dock_minimize(
             distance_model=model_obs,
             distance_type=str(d.get("distance_type", "")),
             forster_radius=fr,
+            error_neg=float(d.get("error_neg", 0.0)),
+            error_pos=float(d.get("error_pos", 0.0)),
         ))
 
     out_pdb = os.path.join(output_dir, "docked.pdb")

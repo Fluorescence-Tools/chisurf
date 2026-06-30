@@ -48,6 +48,18 @@ def info_backends():
     click.echo(f"\nActive backend: {active}")
 
 
+@main.command("convert-fps")
+@click.option("--lps", required=True, help="FPS/C# labelling positions .txt (LPs).")
+@click.option("--pdb", required=True, help="PDB file(s), comma-separated (for residue resolution).")
+@click.option("--out", "output", required=True, help="Output fps.json path.")
+def convert_fps(lps: str, pdb: str, output: str):
+    """Convert legacy FPS / C# LPs+Distances .txt files to a standard fps.json."""
+    positions, distances, score_sets, extra = io.read_fps_json(
+        lps, pdb_paths=_parse_pdb_paths(pdb))
+    io.write_fps_json(output, positions, distances, score_sets or None, extra or None)
+    click.echo(f"Wrote {output}: {len(positions)} positions, {len(distances)} distances")
+
+
 @main.command("info")
 @click.option("--fps", required=True, help="Path to labeling.fps.json file.")
 def info(fps: str):

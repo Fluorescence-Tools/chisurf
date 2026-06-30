@@ -380,7 +380,8 @@ class FretDockingTool(QtWidgets.QWidget):
 
     def _pick_fps(self) -> None:
         f, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select fps.json", "", "fps.json (*.json);;All files (*)")
+            self, "Select fps.json or FPS LPs .txt", "",
+            "FPS labelling (*.json *.txt);;All files (*)")
         if f:
             self._model.fps_json = f
             self._form.sync_fields()
