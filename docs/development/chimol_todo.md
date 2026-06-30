@@ -4,7 +4,7 @@ This document tracks general development tasks, command parity, structural, and 
 
 ## Command Parity (vs. PyMOL)
 
-Track the status of PyMOL-style commands and utilities. For a detailed design plan of the command subsystem, see [CMD_PLAN.md](../../notes/CMD_PLAN.md) (local-only dev note).
+Track the status of PyMOL-style commands and utilities. For a detailed design plan of the command subsystem, see [CMD_PLAN.md](../../notes/CHIMOL_CMD_PLAN.md) (local-only dev note).
 
 ### Completed Commands
 - [x] `split_chains` - Split structures into per-chain objects (moved from rendering mixin to lifecycle mixin, using `viewer.split_chains`).

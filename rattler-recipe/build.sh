@@ -52,9 +52,9 @@ if [[ "${target_platform}" == linux-* ]] && [[ -x /usr/bin/gcc ]] && [[ -x /usr/
 fi
 
 # 4) Build Burbulator C++ shared library
-BURB_SRC="src/csrc/burbulator"
-BURB_BUILD="build/burbulator_cmake"
 BURB_OUT_DIR="chisurf/plugins/core/acq/tcspc_devices/simulation"
+BURB_SRC="$BURB_OUT_DIR/csrc"
+BURB_BUILD="build/burbulator_cmake"
 mkdir -p "$BURB_BUILD"
 cmake -S "$BURB_SRC" -B "$BURB_BUILD" -DCMAKE_BUILD_TYPE=Release ${CMAKE_ARGS:-}
 cmake --build "$BURB_BUILD" --config Release

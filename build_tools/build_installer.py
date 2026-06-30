@@ -210,7 +210,7 @@ def make_runtime(prefix: Path, *, conda_extras: list[str], pip_nodeps: list[str]
     _install_imp_tricks(py, env)
 
     for mod in sorted(MODULES_DIR.iterdir()):
-        if mod.name in ("imp-tricks", "tttrconvert"):  # imp-tricks installed above; tttrconvert is retired
+        if mod.name == "imp-tricks":  # installed separately above
             continue
         if (mod / "setup.py").exists() or (mod / "pyproject.toml").exists():
             run([py, "-m", "pip", "install", mod, "--no-deps"], env=env)

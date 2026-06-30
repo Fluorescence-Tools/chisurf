@@ -108,8 +108,6 @@ chisurf/plugins/core/acq/tcspc_devices/simulation/*.dll
 # scripts in notes/ or scratch/ instead of the repo root so they stay ignored
 # without adding a line here per file.
 /notes/
-# old/removed module (kept local-only)
-/modules/tttrconvert/
 # stray generated test images
 /irf_*.png
 /modules/imp-tricks

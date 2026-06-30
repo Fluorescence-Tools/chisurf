@@ -12,7 +12,7 @@ from setuptools import setup, Command, find_packages
 
 HERE = pathlib.Path(__file__).parent.resolve()
 SIMULATION_DIR = HERE / "chisurf" / "plugins" / "core" / "acq" / "tcspc_devices" / "simulation"
-CSRC_DIR = HERE / "src" / "csrc" / "burbulator"
+CSRC_DIR = SIMULATION_DIR / "csrc"
 CMAKE_BUILD_DIR = HERE / "build" / "burbulator_cmake"
 
 
