@@ -26,16 +26,12 @@
 *.cpython-*.so
 *.egg-info
 *.exe
-*.json
-!chisurf/**/manifest.json
-!chisurf/core/mfdb/data/*.json
+# Don't ignore JSON wholesale -- most JSON here is source (*.view.json view
+# specs, manifest.json, registries, templates). Only ignore generated/cache
+# JSON explicitly.
 chisurf/core/mfdb/data/_dictionary_cache.json
-!chisurf/server/client_methods.json
 # Build-time generated static version (see setup.py / chisurf/core/info.py)
 chisurf/core/_version.py
-!chisurf/server/server_methods.json
-!chisurf/gui/plots/lineplot/reference_presets.json
-!chisurf/plugins/core/lightpath_simulator/templates/*.json
 *.log
 *.pyc
 *.pyd
