@@ -292,7 +292,7 @@ class PdaReader(ExperimentReader):
                                 )
                             except Exception:
                                 pass
-                            tt = tttrlib.TTTR(pf.as_posix(), self.reading_routine)
+                            tt = self._open_tttr(pf.as_posix(), self.reading_routine)
                             # Use vectorized selection once per file
                             ds = tt[idxs]
                         except Exception:
@@ -313,7 +313,7 @@ class PdaReader(ExperimentReader):
                     )
                 except Exception:
                     pass
-                t = tttrlib.TTTR(fn.as_posix(), self.reading_routine)
+                t = self._open_tttr(fn.as_posix(), self.reading_routine)
                 for fn in filename[1:]:
                     fn = pathlib.Path(fn)
                     if fn.is_file():
@@ -321,7 +321,7 @@ class PdaReader(ExperimentReader):
                             logging.info("PDA TRACE: appending TTTR file %s", str(fn))
                         except Exception:
                             pass
-                        d = tttrlib.TTTR(fn.as_posix(), self.reading_routine)
+                        d = self._open_tttr(fn.as_posix(), self.reading_routine)
                         t.append(d)
 
         if t is not None:

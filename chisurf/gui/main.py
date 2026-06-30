@@ -1410,6 +1410,34 @@ class Main(
         except Exception:
             pass
 
+    def onOpenDataLoadingSettings(self):
+        """Open the slow-storage staging (data-loading) settings dialog."""
+        try:
+            from chisurf.gui.widgets.staged_loading_settings import DataLoadingSettingsWidget
+        except Exception as e:
+            try:
+                cs.logging.error(f"Could not load DataLoadingSettingsWidget: {e}")
+            except Exception:
+                pass
+            return
+
+        dlg = getattr(self, "_data_loading_dialog", None)
+        if dlg is None or not isinstance(dlg, QtWidgets.QDialog):
+            dlg = QtWidgets.QDialog(self)
+            dlg.setWindowTitle("Data loading ...")
+            layout = QtWidgets.QVBoxLayout(dlg)
+            layout.setContentsMargins(8, 8, 8, 8)
+            layout.setSpacing(4)
+            layout.addWidget(DataLoadingSettingsWidget(dlg))
+            self._data_loading_dialog = dlg
+
+        dlg.show()
+        try:
+            dlg.raise_()
+            dlg.activateWindow()
+        except Exception:
+            pass
+
     def load_tools(self):
         ##########################################################
         #      Load toolbar plugins                              #
@@ -1430,6 +1458,13 @@ class Main(
         except Exception:
             # Fallback: append to the Settings menu
             self.menuSettings.addAction(self.actionFretRdaAxisSettings)
+        # Data-loading (slow-storage staging) settings dialog
+        self.actionDataLoadingSettings = QtWidgets.QAction("Data loading ...", self)
+        self.actionDataLoadingSettings.triggered.connect(self.onOpenDataLoadingSettings)
+        try:
+            self.menuSettings.insertAction(self.actionClear_local_settings, self.actionDataLoadingSettings)
+        except Exception:
+            self.menuSettings.addAction(self.actionDataLoadingSettings)
         # Reset local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(self.onClearLocalSettings)
         # Clear logging files, i.e., the log files in the user folder

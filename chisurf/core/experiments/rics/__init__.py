@@ -276,9 +276,9 @@ class RICSReader(ExperimentReader):
                 # TTTR ourselves, which is the pattern used throughout the
                 # tttrlib examples and avoids empty TTTR selections.
                 if self.reading_routine:
-                    tttr_all = tttrlib.TTTR(fn.as_posix(), self.reading_routine)
+                    tttr_all = self._open_tttr(fn.as_posix(), self.reading_routine)
                 else:
-                    tttr_all = tttrlib.TTTR(fn.as_posix())
+                    tttr_all = self._open_tttr(fn.as_posix())
 
                 # Attempt to estimate pixel and line durations from the
                 # TTTR header. For PTU files this uses the $TimePerPixel

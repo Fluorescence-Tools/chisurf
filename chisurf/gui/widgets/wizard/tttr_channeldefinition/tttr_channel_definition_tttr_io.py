@@ -12,6 +12,7 @@ from qtpy.QtWidgets import QFileDialog, QMessageBox, QLineEdit
 
 from chisurf.core.fio.fluorescence.bhfiles import BeckerHicklSetReader
 from chisurf.core.fio import write_jordi
+from chisurf.gui.widgets.staged_loading import load_with_progress
 from .tttr_detector_setups import load_detector_setups, save_detector_setups
 
 
@@ -112,7 +113,9 @@ def read_from_tttr_file(page):
             )
             _auto_save_decay_to_setup(page)
         elif path.lower().endswith('.spc'):
-            tttr = tttrlib.TTTR(path)
+            tttr = load_with_progress(page, tttrlib.TTTR, path, title="Reading calibration")
+            if tttr is None:
+                return
             header = tttr.get_header()
             page.macro_time_le.setText(str(header.macro_time_resolution * 1e9))
             page.micro_time_le.setText(str(header.micro_time_resolution * 1e12))
@@ -123,7 +126,9 @@ def read_from_tttr_file(page):
             )
             _auto_save_decay_to_setup(page)
         else:
-            tttr = tttrlib.TTTR(path)
+            tttr = load_with_progress(page, tttrlib.TTTR, path, title="Reading calibration")
+            if tttr is None:
+                return
             if len(tttr) == 0:
                 raise ValueError("File is not a supported TTTR file format or contains no events.")
             header = tttr.get_header()
@@ -169,7 +174,9 @@ def on_calc_g_factor(page, row=None):
         return
 
     try:
-        tttr = tttrlib.TTTR(path)
+        tttr = load_with_progress(page, tttrlib.TTTR, path, title="Reading TTTR file")
+        if tttr is None:
+            return
         if len(tttr) == 0:
             raise ValueError("File is not a supported TTTR file format or contains no events.")
         micro_time_binning = int(page.micro_binning_combo.currentText())

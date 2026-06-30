@@ -171,11 +171,22 @@ class PTUSplitter(QtWidgets.QWidget):
         # Default output folder is file's parent
         self.lineEdit_2.setText(str(p.parent))
 
-        # Create the TTTR object
-        if self.tttr_type is None:
-            self._tttr = tttrlib.TTTR(str(p))
-        else:
-            self._tttr = tttrlib.TTTR(str(p), self.tttr_type)
+        # Create the TTTR object. Loading runs off the GUI thread behind a
+        # progress dialog (with copy speed for slow/network files) so the
+        # interface never freezes; returns None if the user cancels.
+        from chisurf.gui.widgets.staged_loading import load_with_progress
+        tttr_type = self.tttr_type
+
+        def _load(local_path):
+            if tttr_type is None:
+                return tttrlib.TTTR(local_path)
+            return tttrlib.TTTR(local_path, tttr_type)
+
+        tttr = load_with_progress(self, _load, str(p), title="Loading TTTR file")
+        if tttr is None:
+            self.progressBar.setValue(0)
+            return
+        self._tttr = tttr
 
         if VERBOSE:
             QtWidgets.QMessageBox.information(

@@ -15,6 +15,7 @@ import chisurf.gui.widgets
 from chisurf import typing, logging
 from chisurf.core.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup
 from chisurf.core.actions import record_action
+from chisurf.core.fio.staging import StagingCancelled
 
 
 def _is_global_fit_dataset(dataset: typing.Any) -> bool:
@@ -497,7 +498,36 @@ def add_dataset(
                 )
             except Exception:
                 pass
-            dataset = experiment_reader.get_data(**kwargs)
+
+            # When a GUI is available, drive a progress dialog while large files
+            # are staged from slow/network storage. The read runs on the GUI
+            # thread, but the staging copy loop is pure Python and pumps
+            # processEvents via the dialog, so the interface stays responsive
+            # and shows transfer speed. Headless callers skip this entirely.
+            _stage_finish = None
+            if gui is not None and hasattr(experiment_reader, "set_stage_callbacks"):
+                try:
+                    from chisurf.gui.widgets.staged_loading import make_lazy_stage_dialog
+                    _p_cb, _c_cb, _stage_finish = make_lazy_stage_dialog(
+                        gui, "Loading data"
+                    )
+                    experiment_reader.set_stage_callbacks(_p_cb, _c_cb)
+                except Exception:
+                    _stage_finish = None
+
+            try:
+                dataset = experiment_reader.get_data(**kwargs)
+            except StagingCancelled:
+                # User cancelled the staging copy; abort the import silently.
+                return
+            finally:
+                if hasattr(experiment_reader, "set_stage_callbacks"):
+                    try:
+                        experiment_reader.set_stage_callbacks(None, None)
+                    except Exception:
+                        pass
+                if _stage_finish is not None:
+                    _stage_finish()
             try:
                 logging.info(
                     "PDA TRACE: core_data.add_dataset get_data returned object of type %s",

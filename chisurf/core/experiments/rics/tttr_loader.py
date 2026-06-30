@@ -87,11 +87,15 @@ def load_clsm_from_tttr(
     if tttr_type is None:
         tttr_type = _guess_tttr_type(path)
 
+    # Stage the file locally first if it is on slow storage (transparent;
+    # no progress callbacks at this free-function layer).
+    from chisurf.core.fio import staging
+
     if tttr_type is None:
         # Let tttrlib auto-detect type from header if possible
-        tttr = tttrlib.TTTR(str(path))  # type: ignore[call-arg]
+        tttr = staging.open_tttr(str(path))  # type: ignore[call-arg]
     else:
-        tttr = tttrlib.TTTR(str(path), tttr_type)  # type: ignore[call-arg]
+        tttr = staging.open_tttr(str(path), tttr_type)  # type: ignore[call-arg]
 
     if channels is None:
         channels = (0,)

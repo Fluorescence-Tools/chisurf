@@ -189,9 +189,9 @@ class TCSPCTTTRReader(TCSPCReader):
         """
         routine = getattr(self, "reading_routine", None)
         if routine:
-            tttr = tttrlib.TTTR(filename, routine)
+            tttr = self._open_tttr(filename, routine)
         else:
-            tttr = tttrlib.TTTR(filename)
+            tttr = self._open_tttr(filename)
         # Save header JSON for later metadata display (avoids re-reading the file)
         try:
             self._tttr_header_json = tttr.header.json

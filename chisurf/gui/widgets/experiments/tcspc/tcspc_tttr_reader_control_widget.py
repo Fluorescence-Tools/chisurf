@@ -515,10 +515,18 @@ class TCSPCTTTRReaderControlWidget(
             except Exception:
                 shift = 0
 
-            if routine:
-                tttr_all = tttrlib.TTTR(path.as_posix(), routine)
-            else:
-                tttr_all = tttrlib.TTTR(path.as_posix())
+            from chisurf.gui.widgets.staged_loading import load_with_progress
+
+            def _load(local_path):
+                if routine:
+                    return tttrlib.TTTR(local_path, routine)
+                return tttrlib.TTTR(local_path)
+
+            tttr_all = load_with_progress(
+                self, _load, path.as_posix(), title="Loading preview"
+            )
+            if tttr_all is None:  # user cancelled
+                return
 
             ts: list[np.ndarray] = []
             ys: list[np.ndarray] = []

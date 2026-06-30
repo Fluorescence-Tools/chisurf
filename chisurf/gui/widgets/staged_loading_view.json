@@ -1,0 +1,74 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Slow-storage staging",
+      "collapsed": false,
+      "description": "Large data files (e.g. TTTR) on slow or network storage are copied to a fast local cache first, behind a progress bar that shows transfer speed, so the interface does not freeze while reading.",
+      "sections": [
+        {
+          "type": "toggle",
+          "attr": "enabled",
+          "label": "Enable staging",
+          "description": "Copy slow/network files to a local cache before reading. Turn off to always read files in place."
+        },
+        {
+          "type": "value",
+          "attr": "threshold_mbps",
+          "label": "Slow below",
+          "kind": "float",
+          "decimals": 0,
+          "minimum": 1.0,
+          "maximum": 100000.0,
+          "step": 10.0,
+          "suffix": " MB/s",
+          "description": "Sources measured slower than this during a short head-read probe are staged locally. Local SSDs read at hundreds of MB/s; network shares are often much slower."
+        },
+        {
+          "type": "value",
+          "attr": "min_size_mb",
+          "label": "Min file size",
+          "kind": "float",
+          "decimals": 0,
+          "minimum": 0.0,
+          "maximum": 1000000.0,
+          "step": 8.0,
+          "suffix": " MB",
+          "description": "Files smaller than this are always read in place — staging tiny files is not worth the overhead."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Advanced",
+      "collapsed": true,
+      "description": "Fine-tuning for the probe and copy loop. The defaults are appropriate for most setups.",
+      "sections": [
+        {
+          "type": "value",
+          "attr": "chunk_mb",
+          "label": "Chunk size",
+          "kind": "float",
+          "decimals": 2,
+          "minimum": 0.25,
+          "maximum": 256.0,
+          "step": 1.0,
+          "suffix": " MB",
+          "description": "Block size for the probe and copy read loop. Larger chunks reduce overhead but update the progress bar less often."
+        },
+        {
+          "type": "value",
+          "attr": "probe_mb",
+          "label": "Probe size",
+          "kind": "float",
+          "decimals": 2,
+          "minimum": 0.5,
+          "maximum": 256.0,
+          "step": 1.0,
+          "suffix": " MB",
+          "description": "How much of the file head is read to estimate throughput before deciding whether to stage the rest."
+        }
+      ]
+    }
+  ]
+}

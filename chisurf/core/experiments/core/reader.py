@@ -114,6 +114,38 @@ class ExperimentReader(chisurf.core.base.Base):
         self._source_object_uuids: list[str] = []
         self._pending_sample_files: list[tuple[str, str, str]] = []
         self._derived_object_uuids: list[str] = []
+        # Optional GUI callbacks for slow-file staging progress (see
+        # set_stage_callbacks / _open_tttr). Left unset in headless use.
+        self._stage_progress_cb = None
+        self._stage_cancel_cb = None
+
+    def set_stage_callbacks(self, progress_cb=None, cancel_cb=None) -> None:
+        """Install progress/cancel callbacks used when staging slow files.
+
+        The GUI load path uses this to show copy progress and transfer speed
+        while a large file is fetched from slow/network storage; headless
+        callers leave these unset, in which case staging still happens
+        transparently but silently. See
+        :func:`chisurf.core.fio.staging.open_tttr`.
+        """
+        self._stage_progress_cb = progress_cb
+        self._stage_cancel_cb = cancel_cb
+
+    def _open_tttr(self, path, routine=None):
+        """Build a ``tttrlib.TTTR``, staging the file locally first if slow.
+
+        Drop-in replacement for ``tttrlib.TTTR(path[, routine])`` used by the
+        concrete TTTR readers so that loading from slow/network storage does
+        not block on a single opaque read and can report progress.
+        """
+        from chisurf.core.fio import staging
+
+        return staging.open_tttr(
+            path,
+            routine,
+            progress_cb=getattr(self, "_stage_progress_cb", None),
+            cancel_cb=getattr(self, "_stage_cancel_cb", None),
+        )
 
     @abc.abstractmethod
     def autofitrange(self, data: chisurf.core.base.Data, **kwargs) -> typing.Tuple[int, int]:

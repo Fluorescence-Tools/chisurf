@@ -236,6 +236,59 @@ def set_mfdb_login_settings(mfdb_settings: dict) -> bool:
         return False
 
 
+def set_data_loading_settings(data_loading_settings: dict) -> bool:
+    """Persist data-loading (slow-storage staging) settings in the user YAML.
+
+    Merges *data_loading_settings* into the ``data_loading`` section of
+    ``settings_chisurf.yaml`` and also updates the in-memory
+    ``chisurf.core.settings.cs_settings`` so the change takes effect without a
+    restart.
+
+    Parameters
+    ----------
+    data_loading_settings : dict
+        Keys understood by :func:`chisurf.core.fio.staging._settings`
+        (``enabled``, ``threshold_mbps``, ``min_size``, ``chunk_bytes``,
+        ``probe_bytes`` ...).
+
+    Returns
+    -------
+    bool
+        ``True`` when the settings file was written successfully.
+    """
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+        section = data.get('data_loading')
+        if not isinstance(section, dict):
+            section = {}
+            data['data_loading'] = section
+        section.update(data_loading_settings)
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+        # Reflect the change in the live settings dict.
+        try:
+            import chisurf.core.settings as _cs_settings
+
+            live = _cs_settings.cs_settings.get('data_loading')
+            if not isinstance(live, dict):
+                live = {}
+                _cs_settings.cs_settings['data_loading'] = live
+            live.update(data_loading_settings)
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
+
+
 def set_use_ribbon_interface(use_ribbon: bool) -> bool:
     """Persist the ribbon interface state in the user's settings YAML.
 

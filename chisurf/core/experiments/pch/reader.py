@@ -299,9 +299,9 @@ class PCHReader(ExperimentReader):
             return group
 
         if self.reading_routine:
-            tttr = tttrlib.TTTR(fn.as_posix(), self.reading_routine)
+            tttr = self._open_tttr(fn.as_posix(), self.reading_routine)
         else:
-            tttr = tttrlib.TTTR(fn.as_posix())
+            tttr = self._open_tttr(fn.as_posix())
 
         chs = self._get_channels()
         mtr = self._get_micro_time_range()
