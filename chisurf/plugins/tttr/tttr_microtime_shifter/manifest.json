@@ -6,6 +6,7 @@
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["TTTR", "Editor"],
   "icon": "icon.png",
+  "menu_hidden": true,
   "state_namespace": "microtime_shifter",
   "state_schema": {
     "$schema": "http://json-schema.org/draft-07/schema#",

@@ -14,7 +14,11 @@ _manifest = load_manifest(Path(__file__).with_name("manifest.json"))
 if _manifest is not None:
     name = _manifest.display_name
 
-__all__ = ["MicrotimeShifterTool"]
+# Aggregated into the TTTR Tools toolbox (tttr_toolbox); hidden as a top-level
+# menu entry (also set in manifest.json) but still standalone-launchable.
+menu_hidden = True
+
+__all__ = ["MicrotimeShifterTool", "menu_hidden"]
 
 
 def __getattr__(name: str):

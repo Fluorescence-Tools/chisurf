@@ -26,3 +26,7 @@ complete customization of the header information.
 """
 
 name = "TTTR:Editor:PTU Header editor"
+
+# Aggregated into the TTTR Tools toolbox (tttr_toolbox); hidden as a top-level
+# menu entry but still importable and standalone-launchable.
+menu_hidden = True

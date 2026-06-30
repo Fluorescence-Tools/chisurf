@@ -1,0 +1,77 @@
+{
+  "_comment": "Declarative AutoForm layout for the TTTR Split / Convert tool. The file pickers, the run/progress bar and the batch list are custom sections (drag-drop + tttrlib); everything else is built-in foldable panels with choice/value/toggle controls.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Input / Output",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {"type": "custom", "key": "splitter_io"},
+        {
+          "type": "choice",
+          "attr": "input_format",
+          "label": "Input format",
+          "options_source": "input_format_options",
+          "description": "Force an input container type, or Auto to detect it from the file."
+        },
+        {
+          "type": "choice",
+          "attr": "output_format",
+          "label": "Output format",
+          "options_source": "output_format_options",
+          "description": "Container format written to disk; differs from input ⇒ transcode."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Split options",
+      "collapsible": true,
+      "collapsed": false,
+      "n_col": 1,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "photons_per_file_k",
+          "label": "Photons/file",
+          "kind": "int",
+          "suffix": " k",
+          "minimum": 100,
+          "maximum": 999999999,
+          "step": 100,
+          "description": "Photons per output file (×1000) when 'Split into files' is on."
+        },
+        {
+          "type": "choice",
+          "attr": "microtime_binning",
+          "label": "µ-time binning",
+          "options": ["1", "2", "4", "8", "16"],
+          "description": "Micro-time binning factor (clamped to ≥8 for SPC containers)."
+        },
+        {
+          "type": "toggle_row",
+          "items": [
+            {"attr": "split_files", "label": "Split into files",
+             "description": "Split into chunks of N photons; off = a single output file."},
+            {"attr": "reset_macro_times", "label": "Reset macro times",
+             "description": "Macro times of each output file restart at zero."},
+            {"attr": "keep_original", "label": "Keep original",
+             "description": "Leave the source file in place (off = delete after writing)."}
+          ]
+        }
+      ]
+    },
+    {"type": "custom", "key": "splitter_run"},
+    {
+      "type": "panel",
+      "title": "Batch",
+      "collapsible": true,
+      "collapsed": true,
+      "description": "Process many files with the options above; folders are scanned recursively for .ptu.",
+      "sections": [
+        {"type": "custom", "key": "splitter_batch"}
+      ]
+    }
+  ]
+}

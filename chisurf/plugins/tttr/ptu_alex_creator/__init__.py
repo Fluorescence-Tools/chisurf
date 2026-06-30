@@ -24,3 +24,7 @@ to make ALEX data compatible with PIE analysis workflows.
 """
 
 name = "Tools:Converter:ALEX Creator"
+
+# Aggregated into the TTTR Tools toolbox (tttr_toolbox); hidden as a top-level
+# menu entry but still importable and standalone-launchable.
+menu_hidden = True
