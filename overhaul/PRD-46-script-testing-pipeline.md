@@ -2,8 +2,8 @@
 
 ## Problem
 
-ChiSurf ships runnable example scripts (e.g. `scripts/protein_unfolding_fret_line.py`,
-`scripts/protein_unfolding_gui.py`) that exercise the core model API end-to-end.
+ChiSurf ships runnable example scripts (e.g. `examples/scripts/protein_unfolding_fret_line.py`,
+`examples/scripts/protein_unfolding_gui.py`) that exercise the core model API end-to-end.
 They are currently **outside the automated test suite**: no CI job runs them, no
 assertion checks their output, and regressions in the public model API go
 undetected until a user manually runs a script and notices something is wrong.
