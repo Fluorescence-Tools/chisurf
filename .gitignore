@@ -108,10 +108,6 @@ chisurf/plugins/core/acq/tcspc_devices/simulation/*.dll
 # scripts in notes/ or scratch/ instead of the repo root so they stay ignored
 # without adding a line here per file.
 /notes/
-chisurf/gui/widgets/node_editor/NODE_EDITOR_ENHANCEMENT_PLAN.md
-chisurf/plugins/chimol/CMD_PLAN.md
-chisurf/plugins/core/lightpath_simulator/BUGS.md
-chisurf/plugins/core/mfdb_admin/OVERHAUL_PLAN.md
 # old/removed module (kept local-only)
 /modules/tttrconvert/
 # stray generated test images
