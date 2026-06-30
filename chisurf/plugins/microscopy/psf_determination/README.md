@@ -2,6 +2,25 @@
 
 This plugin provides **3D Point Spread Function (PSF) characterization** for fluorescence microscopy based on 3D Gaussian PSF fits to bead scans.
 
+## Architecture (new-style plugin)
+
+Like `burst_selection` / `flc_2d` / `clsm`, the plugin is split into Qt-free and
+GUI layers:
+
+- `api/` — pure, Qt-free computation (`gaussian_3d`, `extract_roi`,
+  `fit_3d_gaussian`, `detect_beads`, `fit_all_beads`) plus dataclasses and the
+  RPC contract.
+- `backend/services.py` — ZMQ/JSON-RPC handlers (`psf_determination.fit.run`).
+- `cli/main.py` — the `psf-determination fit-stack` / `contract` command-line
+  interface (headless batch fitting).
+- `gui/` — the interactive tool. A Qt-free `PsfViewModel` (`gui/view_model.py`)
+  is rendered entirely by **AutoForm** from `gui/psf.view.json`: the parameters
+  and action bar are dock panels, and the bead stack uses AutoForm's reusable
+  **3D `image` section** (z-slider, click-to-pick beads, green detected-bead
+  markers, the yellow fitted-FWHM circle). The x/y/z profiles are declarative
+  `plot` panels. All compute happens in `api/` via the view-model, so the whole
+  workflow is testable headlessly (see `test/test_view_model.py`).
+
 ## Features
 
 ### Current Implementation
@@ -36,8 +55,8 @@ This plugin provides **3D Point Spread Function (PSF) characterization** for flu
 ## Usage
 
 1. **Launch the plugin**
-   - From ChiSurf: `Plugins → Imaging:PSF Determination`
-   - Or run directly: `python -m chisurf.plugins.psf_determination`
+   - From ChiSurf: the **Image Tools** toolbox → *PSF Determination* panel.
+   - Headless batch: `psf-determination fit-stack STACK.tif --csv out.csv`
 
 2. **Load a bead scan**
    - Click `Load Stack`.

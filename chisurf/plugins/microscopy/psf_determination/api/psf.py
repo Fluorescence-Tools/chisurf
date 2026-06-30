@@ -13,7 +13,63 @@ import numpy as np
 from scipy.optimize import least_squares
 
 if TYPE_CHECKING:
-    from .models import PsfFitResult, PsfSettings
+    pass
+
+
+def load_stack(path: str) -> np.ndarray:
+    """Read an image stack from *path* into a ``(z, y, x)`` ``float32`` array.
+
+    Reads multi-page TIFFs as a 3-D volume (``imread`` returns only the first
+    page, so a z-stack would otherwise collapse to a single slice). A 2-D image
+    becomes a 1-slice stack; an RGB(A) image is reduced to its first channel.
+
+    Parameters
+    ----------
+    path:
+        Path to a TIFF (or other imageio-readable) image/volume.
+
+    Returns
+    -------
+    numpy.ndarray
+        3-D array with axes ``(z, y, x)``.
+    """
+    try:
+        import imageio.v2 as imageio  # type: ignore[import]
+    except ImportError:  # pragma: no cover - optional dependency
+        import imageio  # type: ignore[import, no-redef]
+
+    # Multi-page TIFFs (the usual bead-scan format) only stack correctly through
+    # ``mimread``; ``imread``/``volread`` return just the first page. ``mimread``
+    # also wraps a single 2-D image as a 1-frame list, so it covers both. Fall
+    # back to ``volread``/``imread`` for formats ``mimread`` cannot handle.
+    arr = None
+    for reader, kwargs in (
+        (getattr(imageio, "mimread", None), {"memtest": False}),
+        (getattr(imageio, "volread", None), {}),
+        (imageio.imread, {}),
+    ):
+        if reader is None:
+            continue
+        try:
+            arr = np.asarray(reader(path, **kwargs))
+            break
+        except Exception:
+            arr = None
+    if arr is None:
+        raise OSError(f"Could not read image stack: {path}")
+
+    arr = arr.astype(np.float32)
+    if arr.ndim == 2:
+        arr = arr[np.newaxis, ...]
+    elif arr.ndim == 4 and arr.shape[-1] in (3, 4):
+        # (z, y, x, c) stack of RGB(A) frames → first channel.
+        arr = arr[..., 0]
+    elif arr.ndim == 3 and arr.shape[-1] in (3, 4) and arr.shape[0] not in (3, 4):
+        # A single 2-D RGB(A) image read as (y, x, c) → first channel, 1 slice.
+        arr = arr[..., 0][np.newaxis, ...]
+    elif arr.ndim != 3:
+        raise ValueError(f"Expected a 2D or 3D image stack, got shape {arr.shape}.")
+    return arr
 
 
 def gaussian_3d(coords: np.ndarray, params: np.ndarray | list) -> np.ndarray:
@@ -34,9 +90,7 @@ def gaussian_3d(coords: np.ndarray, params: np.ndarray | list) -> np.ndarray:
     z_c, y_c, x_c, sigma_z, sigma_y, sigma_x, amplitude, offset = params
     z, y, x = coords[:, 0], coords[:, 1], coords[:, 2]
     exponent = -0.5 * (
-        ((z - z_c) / sigma_z) ** 2
-        + ((y - y_c) / sigma_y) ** 2
-        + ((x - x_c) / sigma_x) ** 2
+        ((z - z_c) / sigma_z) ** 2 + ((y - y_c) / sigma_y) ** 2 + ((x - x_c) / sigma_x) ** 2
     )
     return amplitude * np.exp(exponent) + offset
 
@@ -107,14 +161,17 @@ def fit_3d_gaussian(roi: np.ndarray) -> dict:
     z_c_init, y_c_init, x_c_init = idx_max
 
     p0 = [
-        z_c_init, y_c_init, x_c_init,
-        nz / 5.0, ny / 5.0, nx / 5.0,
-        amplitude_init, offset_init,
+        z_c_init,
+        y_c_init,
+        x_c_init,
+        nz / 5.0,
+        ny / 5.0,
+        nx / 5.0,
+        amplitude_init,
+        offset_init,
     ]
 
-    z_grid, y_grid, x_grid = np.meshgrid(
-        np.arange(nz), np.arange(ny), np.arange(nx), indexing="ij"
-    )
+    z_grid, y_grid, x_grid = np.meshgrid(np.arange(nz), np.arange(ny), np.arange(nx), indexing="ij")
     coords = np.stack([z_grid.ravel(), y_grid.ravel(), x_grid.ravel()], axis=1)
     data_flat = roi.ravel()
 
@@ -239,37 +296,57 @@ def fit_all_beads(
     list of dict
         One dict per bead with keys matching :class:`~.models.PsfFitResult`.
     """
-    from .models import PsfFitResult
-
     results = []
     for idx, (z0, y0, x0) in enumerate(detected_beads):
         roi, _ = extract_roi(stack, z0, y0, x0, roi_xy, roi_z)
         if roi is None:
-            results.append({
-                "index": idx, "x_px": x0, "y_px": y0, "z_slice": z0,
-                "sigma_x_px": float("nan"), "sigma_y_px": float("nan"),
-                "sigma_z_px": float("nan"), "fwhm_x_nm": float("nan"),
-                "fwhm_y_nm": float("nan"), "fwhm_z_nm": float("nan"),
-                "fwhm_xy_nm": float("nan"), "sigma_xy_nm": float("nan"),
-                "sigma_z_nm": float("nan"), "axial_ratio": float("nan"),
-                "success": False, "cost": float("nan"),
-                "error": "ROI out of bounds",
-            })
+            results.append(
+                {
+                    "index": idx,
+                    "x_px": x0,
+                    "y_px": y0,
+                    "z_slice": z0,
+                    "sigma_x_px": float("nan"),
+                    "sigma_y_px": float("nan"),
+                    "sigma_z_px": float("nan"),
+                    "fwhm_x_nm": float("nan"),
+                    "fwhm_y_nm": float("nan"),
+                    "fwhm_z_nm": float("nan"),
+                    "fwhm_xy_nm": float("nan"),
+                    "sigma_xy_nm": float("nan"),
+                    "sigma_z_nm": float("nan"),
+                    "axial_ratio": float("nan"),
+                    "success": False,
+                    "cost": float("nan"),
+                    "error": "ROI out of bounds",
+                }
+            )
             continue
 
         try:
             fit = fit_3d_gaussian(roi)
         except Exception as exc:
-            results.append({
-                "index": idx, "x_px": x0, "y_px": y0, "z_slice": z0,
-                "sigma_x_px": float("nan"), "sigma_y_px": float("nan"),
-                "sigma_z_px": float("nan"), "fwhm_x_nm": float("nan"),
-                "fwhm_y_nm": float("nan"), "fwhm_z_nm": float("nan"),
-                "fwhm_xy_nm": float("nan"), "sigma_xy_nm": float("nan"),
-                "sigma_z_nm": float("nan"), "axial_ratio": float("nan"),
-                "success": False, "cost": float("nan"),
-                "error": str(exc),
-            })
+            results.append(
+                {
+                    "index": idx,
+                    "x_px": x0,
+                    "y_px": y0,
+                    "z_slice": z0,
+                    "sigma_x_px": float("nan"),
+                    "sigma_y_px": float("nan"),
+                    "sigma_z_px": float("nan"),
+                    "fwhm_x_nm": float("nan"),
+                    "fwhm_y_nm": float("nan"),
+                    "fwhm_z_nm": float("nan"),
+                    "fwhm_xy_nm": float("nan"),
+                    "sigma_xy_nm": float("nan"),
+                    "sigma_z_nm": float("nan"),
+                    "axial_ratio": float("nan"),
+                    "success": False,
+                    "cost": float("nan"),
+                    "error": str(exc),
+                }
+            )
             continue
 
         params = fit["params"]
@@ -283,16 +360,26 @@ def fit_all_beads(
         sigma_z_nm = sigma_z * z_step_nm
         axial_ratio = sigma_z_nm / sigma_xy_nm if sigma_xy_nm > 0 else math.nan
 
-        results.append({
-            "index": idx, "x_px": x0, "y_px": y0, "z_slice": z0,
-            "sigma_x_px": float(sigma_x), "sigma_y_px": float(sigma_y),
-            "sigma_z_px": float(sigma_z),
-            "fwhm_x_nm": fwhm_x_nm, "fwhm_y_nm": fwhm_y_nm,
-            "fwhm_z_nm": fwhm_z_nm, "fwhm_xy_nm": fwhm_xy_nm,
-            "sigma_xy_nm": sigma_xy_nm, "sigma_z_nm": sigma_z_nm,
-            "axial_ratio": axial_ratio,
-            "success": fit["success"], "cost": fit["cost"],
-            "error": None,
-        })
+        results.append(
+            {
+                "index": idx,
+                "x_px": x0,
+                "y_px": y0,
+                "z_slice": z0,
+                "sigma_x_px": float(sigma_x),
+                "sigma_y_px": float(sigma_y),
+                "sigma_z_px": float(sigma_z),
+                "fwhm_x_nm": fwhm_x_nm,
+                "fwhm_y_nm": fwhm_y_nm,
+                "fwhm_z_nm": fwhm_z_nm,
+                "fwhm_xy_nm": fwhm_xy_nm,
+                "sigma_xy_nm": sigma_xy_nm,
+                "sigma_z_nm": sigma_z_nm,
+                "axial_ratio": axial_ratio,
+                "success": fit["success"],
+                "cost": fit["cost"],
+                "error": None,
+            }
+        )
 
     return results

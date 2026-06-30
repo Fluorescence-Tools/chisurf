@@ -1,0 +1,104 @@
+{
+  "_comment": "Single dock-area layout for the PSF Determination tool. Settings render as compact foldable panels; the bead stack uses AutoForm's reusable 3D `image` section (z-slider + click-to-pick + bead markers + fit-ROI circle); the x/y/z profiles are declarative `plot` sections. All panels are draggable docks.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "PSF Determination",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "custom", "key": "psf_controls"},
+            {
+              "type": "panel",
+              "title": "PSF parameters",
+              "n_col": 1,
+              "collapsed": false,
+              "sections": [
+                {"type": "value", "attr": "pixel_size_nm", "label": "Pixel (nm)", "kind": "float",
+                 "decimals": 2, "minimum": 1.0, "maximum": 1000.0, "step": 1.0,
+                 "description": "Lateral camera/scanner pixel size in nm; scales σx/σy to physical FWHM."},
+                {"type": "value", "attr": "z_step_nm", "label": "Z step (nm)", "kind": "float",
+                 "decimals": 2, "minimum": 1.0, "maximum": 10000.0, "step": 10.0,
+                 "description": "Axial distance between z-slices in nm; scales σz to physical FWHM."},
+                {"type": "value", "attr": "roi_xy", "label": "ROI xy (px)", "kind": "int",
+                 "minimum": 3, "maximum": 200,
+                 "description": "Lateral ROI size (pixels) cut around a bead for the 3D Gaussian fit."},
+                {"type": "value", "attr": "roi_z", "label": "ROI z (sl)", "kind": "int",
+                 "minimum": 3, "maximum": 200,
+                 "description": "Axial ROI size (slices) cut around a bead for the 3D Gaussian fit."}
+              ]
+            },
+            {
+              "type": "panel",
+              "title": "Detection",
+              "n_col": 1,
+              "collapsed": false,
+              "sections": [
+                {"type": "value", "attr": "pixels_per_frame", "label": "Px/frame", "kind": "int",
+                 "minimum": 1, "maximum": 100000,
+                 "description": "Expected bright pixels per frame; sets the adaptive quantile threshold for bead detection."},
+                {"type": "value", "attr": "min_distance", "label": "Min dist (px)", "kind": "float",
+                 "decimals": 1, "minimum": 1.0, "maximum": 1000.0, "step": 1.0,
+                 "description": "Minimum lateral distance between accepted beads (pixels); rejects clustered candidates."}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "custom",
+          "key": "image",
+          "target": "stack_image",
+          "title": "Stack",
+          "description": "Bead stack: use the z-slider to browse slices, click a bead to select+fit it. Green squares mark detected beads on the current slice; the yellow circle is the fitted lateral FWHM.",
+          "options": {
+            "colormap": true,
+            "colormap_attr": "colormap",
+            "select_attr": "selected_bead",
+            "on_pick": "on_pick",
+            "markers_source": "detected_beads_zyx",
+            "roi_source": "fit_circle"
+          }
+        },
+        {
+          "type": "plot",
+          "source": "x_profile_series",
+          "title": "x-profile",
+          "x_label": "x (pixels)",
+          "y_label": "intensity (a.u.)",
+          "legend": true,
+          "description": "Intensity along x through the fitted bead centre (data) with the Gaussian fit overlay."
+        },
+        {
+          "type": "plot",
+          "source": "y_profile_series",
+          "title": "y-profile",
+          "x_label": "y (pixels)",
+          "y_label": "intensity (a.u.)",
+          "legend": true,
+          "description": "Intensity along y through the fitted bead centre (data) with the Gaussian fit overlay."
+        },
+        {
+          "type": "plot",
+          "source": "z_profile_series",
+          "title": "z-profile",
+          "x_label": "z (slices)",
+          "y_label": "intensity (a.u.)",
+          "legend": true,
+          "description": "Intensity along z through the fitted bead centre (data) with the Gaussian fit overlay."
+        },
+        {
+          "type": "panel",
+          "title": "Fit Results",
+          "n_col": 1,
+          "sections": [
+            {"type": "value", "attr": "results_text", "label": "", "kind": "text", "read_only": true,
+             "description": "Latest single-bead fit report or batch summary."}
+          ]
+        }
+      ]
+    }
+  ]
+}

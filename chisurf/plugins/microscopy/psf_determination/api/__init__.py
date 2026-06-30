@@ -2,22 +2,23 @@
 
 from __future__ import annotations
 
-from .models import PsfSettings, PsfFitResult
 from .contract import (
-    PLUGIN_ID,
     CONTRACT_VERSION,
-    METHOD_FIT,
     METHOD_CONTRACT,
+    METHOD_FIT,
+    PLUGIN_ID,
     contract_descriptor,
-    service_success,
     service_error,
+    service_success,
 )
+from .models import PsfFitResult, PsfSettings
 from .psf import (
-    gaussian_3d,
+    detect_beads,
     extract_roi,
     fit_3d_gaussian,
-    detect_beads,
     fit_all_beads,
+    gaussian_3d,
+    load_stack,
 )
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "contract_descriptor",
     "service_success",
     "service_error",
+    "load_stack",
     "gaussian_3d",
     "extract_roi",
     "fit_3d_gaussian",

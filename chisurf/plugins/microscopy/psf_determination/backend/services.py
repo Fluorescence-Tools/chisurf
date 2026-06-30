@@ -6,11 +6,11 @@ import logging
 from typing import Any
 
 from ..api.contract import (
-    METHOD_FIT,
     METHOD_CONTRACT,
+    METHOD_FIT,
     contract_descriptor,
-    service_success,
     service_error,
+    service_success,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,29 +33,25 @@ def _handle_fit(params: dict[str, Any]) -> dict[str, Any]:
         pixels_per_frame = int(params.get("pixels_per_frame", 20))
         min_distance = float(params.get("min_distance", 5.0))
 
-        try:
-            import imageio.v2 as imageio  # type: ignore[import]
-        except ImportError:
-            import imageio  # type: ignore[import, no-redef]
-        import numpy as np
+        from ..api.psf import detect_beads, fit_all_beads, load_stack
 
-        data = imageio.imread(stack_path)
-        arr = np.asarray(data, dtype=np.float32)
-        if arr.ndim == 2:
-            arr = arr[np.newaxis, ...]
-        elif arr.ndim == 3 and arr.shape[-1] in (3, 4):
-            arr = arr[..., 0][np.newaxis, ...]
+        arr = load_stack(stack_path)
 
-        from ..api.psf import detect_beads, fit_all_beads
-
-        beads = detect_beads(arr, roi_xy=roi_xy, roi_z=roi_z,
-                             pixels_per_frame=pixels_per_frame, min_distance=min_distance)
+        beads = detect_beads(
+            arr,
+            roi_xy=roi_xy,
+            roi_z=roi_z,
+            pixels_per_frame=pixels_per_frame,
+            min_distance=min_distance,
+        )
         results = fit_all_beads(arr, beads, roi_xy, roi_z, pixel_nm, z_step_nm)
 
-        return service_success({
-            "n_beads": len(beads),
-            "fits": results,
-        })
+        return service_success(
+            {
+                "n_beads": len(beads),
+                "fits": results,
+            }
+        )
     except Exception as exc:
         logger.exception("psf_determination.fit.run failed")
         return service_error(exc)

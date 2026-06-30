@@ -907,20 +907,51 @@ def apply_colormap(image_view, name: str) -> None:
 
 
 class ImageMapWidget(QtWidgets.QWidget):
-    """General 2D image dock bound to ``model.<target>()`` with an optional colour selector.
+    """General image dock bound to ``model.<target>()``.
 
-    Declare it in a view.json as a ``custom`` section so any tool can show a 2D map::
+    Optional colour selection, brush/draw, 3D stack browsing and click-to-pick
+    selection.
+
+    Declare it in a view.json as a ``custom`` section so any tool can show a map::
 
         {"type": "custom", "key": "image", "target": "spectrum_image", "title": "Map",
          "options": {"colormap": true, "colormap_attr": "colormap"}}
 
+    The image source may be 2D ``(y, x)`` or 3D ``(z, y, x)``; a 3D array is shown
+    with pyqtgraph's built-in z-slider (axis 0 = slice) and the current slice is
+    preserved across refreshes.
+
     The colour control lives *in the plot* (a small combo above the image), so it is
-    portable and needs no separate settings panel. ``options``:
+    portable and needs no separate settings panel. Colour ``options``:
 
     * ``colormap`` (bool) — show the embedded colormap selector (default ``False``).
     * ``default_colormap`` (str) — initial colormap (default ``"viridis"``).
     * ``colormap_attr`` (str) — optional model attribute to read/write the chosen colormap,
       so it persists and can be shared between several image docks.
+
+    Brush / draw ``options`` turn the dock into a paintable pixel selector (e.g. for
+    CLSM pixel selection, FLIM masks, ROI painting). Brush mode is enabled when
+    ``selection_attr`` is given:
+
+    * ``selection_attr`` (str) — model attribute holding the 2D selection mask; the
+      widget reads it on refresh and writes it back while painting.
+    * ``brush_kernel_source`` (str) — model method returning the draw kernel (so the
+      tool owns brush size/shape/erase); falls back to a 1×1 kernel.
+    * ``on_draw`` (str) — model method called after a stroke (e.g. to recompute a decay).
+    * ``live_attr`` (str) — model attribute (bool) gating ``on_draw`` during a drag.
+
+    Point-pick / overlay ``options`` (independent of brush mode) let a tool select a
+    single point in the image (e.g. a bead in a PSF stack) and draw overlays:
+
+    * ``select_attr`` (str) — model attribute that receives the picked ``(z, y, x)``
+      tuple on a left-click (``z`` is the current slice; ``0`` for a 2D image). A red
+      marker is drawn at the pick.
+    * ``on_pick`` (str) — model method called after a pick (e.g. to fit the bead).
+    * ``markers_source`` (str) — model method returning a list of ``(z, y, x)``
+      points; those on the current slice are drawn as green square markers.
+    * ``roi_source`` (str) — model method returning ``{"x", "y", "r", "z"}`` (or
+      ``None``); draws a non-interactive yellow circle of radius ``r`` at ``(x, y)``
+      when the current slice matches ``z``.
     """
 
     #: marker so :meth:`AutoForm.refresh_plots` re-reads this widget.
@@ -934,6 +965,14 @@ class ImageMapWidget(QtWidgets.QWidget):
         colormap: bool = False,
         default_colormap: str = "viridis",
         colormap_attr: str | None = None,
+        selection_attr: str | None = None,
+        brush_kernel_source: str | None = None,
+        on_draw: str | None = None,
+        live_attr: str | None = None,
+        select_attr: str | None = None,
+        on_pick: str | None = None,
+        markers_source: str | None = None,
+        roi_source: str | None = None,
         **options,
     ):
         super().__init__()
@@ -943,6 +982,21 @@ class ImageMapWidget(QtWidgets.QWidget):
         self._cmap = default_colormap
         self._image = None
         self._combo = None
+        # brush state
+        self._selection_attr = selection_attr
+        self._brush_kernel_source = brush_kernel_source
+        self._on_draw = on_draw
+        self._live_attr = live_attr
+        self._overlay = None
+        # point-pick / overlay state
+        self._select_attr = select_attr
+        self._on_pick = on_pick
+        self._markers_source = markers_source
+        self._roi_source = roi_source
+        self._pick_marker = None
+        self._marker_items = []
+        self._roi_item = None
+        self._ndim = 2
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(2)
@@ -968,9 +1022,16 @@ class ImageMapWidget(QtWidgets.QWidget):
             self._image.ui.roiBtn.hide()
             self._image.ui.menuBtn.hide()
             lay.addWidget(self._image, 1)
+            if self._selection_attr:
+                self._setup_brush(pg)
+            if self._select_attr or self._on_pick:
+                self._image.getView().scene().sigMouseClicked.connect(self._on_clicked)
+            if self._markers_source or self._roi_source:
+                self._connect_slice_changed()
         except Exception:  # pragma: no cover - pyqtgraph optional
             lay.addWidget(QtWidgets.QLabel("pyqtgraph not available"))
 
+    # ── colormap ───────────────────────────────────────────────────────
     def _current_cmap(self) -> str:
         if self._cmap_attr:
             return str(getattr(self._model, self._cmap_attr, self._cmap))
@@ -983,8 +1044,193 @@ class ImageMapWidget(QtWidgets.QWidget):
         if self._image is not None:
             apply_colormap(self._image, name)
 
+    # ── brush / draw ───────────────────────────────────────────────────
+    def _setup_brush(self, pg) -> None:
+        """Add a paintable selection overlay on top of the image."""
+        self._overlay = pg.ImageItem()
+        self._overlay.setCompositionMode(QtGui.QPainter.CompositionMode_Plus)
+        self._image.getView().addItem(self._overlay)
+        self._overlay.hoverEvent = self._hover_event
+        self._overlay.mouseDragEvent = self._draw_event
+        self._apply_kernel()
+
+    def _apply_kernel(self) -> None:
+        if self._overlay is None:
+            return
+        import numpy as np
+
+        kernel = None
+        if self._brush_kernel_source:
+            fn = getattr(self._model, self._brush_kernel_source, None)
+            if callable(fn):
+                try:
+                    kernel = np.asarray(fn())
+                except Exception:  # pragma: no cover - defensive
+                    kernel = None
+        if kernel is None:
+            kernel = np.ones((1, 1))
+        cx, cy = kernel.shape[0] // 2, kernel.shape[1] // 2
+        self._overlay.setDrawKernel(kernel, mask=kernel, center=(cx, cy), mode="add")
+
+    def _live(self) -> bool:
+        if self._live_attr:
+            return bool(getattr(self._model, self._live_attr, True))
+        return True
+
+    def _hover_event(self, event) -> None:
+        if self._image is None:
+            return
+        base = self._image.getImageItem().image
+        if base is None or event.isExit():
+            self._image.getView().setToolTip("")
+            return
+        pos = event.pos()
+        i = int(max(0, min(pos.y(), base.shape[0] - 1)))
+        j = int(max(0, min(pos.x(), base.shape[1] - 1)))
+        self._image.getView().setToolTip(f"pixel ({i}, {j}) = {base[i, j]:g}")
+
+    def _draw_event(self, event) -> None:
+        if event.button() != QtCore.Qt.LeftButton:
+            return
+        event.accept()
+        if event.isStart():
+            self._apply_kernel()
+        self._overlay.drawAt(event.pos(), event)
+        if self._selection_attr:
+            import numpy as np
+
+            setattr(self._model, self._selection_attr, np.asarray(self._overlay.image))
+        if self._on_draw and self._live():
+            fn = getattr(self._model, self._on_draw, None)
+            if callable(fn):
+                fn()
+
+    # ── point pick / overlays ──────────────────────────────────────────
+    def _current_z(self) -> int:
+        """Return the currently displayed slice index (0 for a 2D image)."""
+        if self._ndim < 3 or self._image is None:
+            return 0
+        try:
+            return int(self._image.currentIndex)
+        except Exception:
+            return 0
+
+    def _connect_slice_changed(self) -> None:
+        """Redraw per-slice markers/ROI when the z-slider moves."""
+        try:
+            self._image.timeLine.sigPositionChanged.connect(self._redraw_overlays)
+        except Exception:
+            try:
+                self._image.sigTimeChanged.connect(self._redraw_overlays)
+            except Exception:
+                pass
+
+    def _on_clicked(self, event) -> None:
+        """Left-click in the image → write ``(z, y, x)`` and call ``on_pick``."""
+        if self._image is None:
+            return
+        item = self._image.getImageItem()
+        scene_pos = event.scenePos()
+        if not item.sceneBoundingRect().contains(scene_pos):
+            return
+        point = item.mapFromScene(scene_pos)
+        x, y = int(point.x()), int(point.y())
+        z = self._current_z()
+        base = item.image
+        if base is not None:
+            ny, nx = base.shape[:2]
+            if not (0 <= x < nx and 0 <= y < ny):
+                return
+        if self._select_attr:
+            try:
+                setattr(self._model, self._select_attr, (z, y, x))
+            except Exception:  # pragma: no cover - defensive
+                logging.warning(f"ImageMapWidget: could not set {self._select_attr!r}")
+        if self._on_pick:
+            fn = getattr(self._model, self._on_pick, None)
+            if callable(fn):
+                try:
+                    fn()
+                except Exception:  # pragma: no cover - model-defined
+                    logging.warning(f"ImageMapWidget: on_pick {self._on_pick!r} failed")
+        self._redraw_overlays()
+
+    def _redraw_overlays(self, *args) -> None:
+        """Redraw pick marker, per-slice detected-point markers and the ROI circle."""
+        if self._image is None:
+            return
+        import pyqtgraph as pg
+
+        view = self._image.getView()
+        z = self._current_z()
+
+        # detected-point markers (green squares) on the current slice
+        for m in self._marker_items:
+            view.removeItem(m)
+        self._marker_items = []
+        if self._markers_source:
+            fn = getattr(self._model, self._markers_source, None)
+            pts = fn() if callable(fn) else None
+            if pts:
+                xs = [int(p[2]) for p in pts if int(p[0]) == z]
+                ys = [int(p[1]) for p in pts if int(p[0]) == z]
+                if xs:
+                    marker = pg.ScatterPlotItem(
+                        xs,
+                        ys,
+                        pen=pg.mkPen("g", width=1),
+                        brush=pg.mkBrush(0, 255, 0, 120),
+                        size=8,
+                        symbol="s",
+                    )
+                    marker.setZValue(5)
+                    view.addItem(marker)
+                    self._marker_items.append(marker)
+
+        # selected-point marker (red circle)
+        if self._pick_marker is not None:
+            view.removeItem(self._pick_marker)
+            self._pick_marker = None
+        if self._select_attr:
+            sel = getattr(self._model, self._select_attr, None)
+            if sel is not None and int(sel[0]) == z:
+                self._pick_marker = pg.ScatterPlotItem(
+                    [int(sel[2])],
+                    [int(sel[1])],
+                    pen=pg.mkPen("r", width=2),
+                    brush=None,
+                    size=15,
+                    symbol="o",
+                )
+                self._pick_marker.setZValue(9)
+                view.addItem(self._pick_marker)
+
+        # fitted lateral-FWHM circle (yellow)
+        if self._roi_item is not None:
+            view.removeItem(self._roi_item)
+            self._roi_item = None
+        if self._roi_source:
+            fn = getattr(self._model, self._roi_source, None)
+            roi = fn() if callable(fn) else None
+            if roi and int(roi.get("z", z)) == z:
+                r = float(roi["r"])
+                cx, cy = float(roi["x"]), float(roi["y"])
+                try:
+                    self._roi_item = pg.CircleROI(
+                        [cx - r, cy - r],
+                        [2 * r, 2 * r],
+                        pen=pg.mkPen("y", width=2),
+                        movable=False,
+                        resizable=False,
+                    )
+                    self._roi_item.setZValue(10)
+                    view.addItem(self._roi_item)
+                except Exception:  # pragma: no cover - CircleROI optional
+                    self._roi_item = None
+
+    # ── refresh ────────────────────────────────────────────────────────
     def refresh(self) -> None:
-        """Re-read the model image and redraw with the current colormap."""
+        """Re-read the model image (and selection) and redraw with the colormap."""
         if self._image is None:
             return
         import numpy as np
@@ -1002,8 +1248,31 @@ class ImageMapWidget(QtWidgets.QWidget):
                 if i >= 0:
                     self._combo.setCurrentIndex(i)
                 self._combo.blockSignals(False)
-        self._image.setImage(np.asarray(img, dtype=float), autoLevels=True)
+        data = np.asarray(img, dtype=float)
+        self._ndim = data.ndim
+        if data.ndim == 3:
+            # Preserve the current slice across refreshes; map axes so the
+            # displayed image is (y, x) = (axis 1, axis 2) of a (z, y, x) stack.
+            try:
+                prev = int(self._image.currentIndex)
+            except Exception:
+                prev = 0
+            self._image.setImage(data, autoLevels=True, axes={"t": 0, "x": 2, "y": 1})
+            if 0 <= prev < data.shape[0]:
+                self._image.setCurrentIndex(prev)
+        else:
+            self._image.setImage(data, autoLevels=True)
         apply_colormap(self._image, self._current_cmap())
+        if self._overlay is not None and self._selection_attr:
+            sel = getattr(self._model, self._selection_attr, None)
+            sel = (
+                np.zeros_like(data)
+                if sel is None or np.shape(sel) != data.shape
+                else np.asarray(sel)
+            )
+            self._overlay.setImage(sel)
+        if self._markers_source or self._roi_source or self._select_attr:
+            self._redraw_overlays()
 
 
 @register_section("image")

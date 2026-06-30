@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
 
 
 @dataclass
@@ -38,4 +37,4 @@ class PsfFitResult:
     axial_ratio: float
     success: bool
     cost: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
