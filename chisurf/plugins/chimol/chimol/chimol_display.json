@@ -1,0 +1,261 @@
+{
+  "_version": 2,
+  "background": "k",
+  "defaults": {
+    "color_mode": "by_sequence"
+  },
+  "grid": {
+    "size": 20.0,
+    "spacing": 1.0
+  },
+  "info_overlay": {
+    "max_width": 260,
+    "min_width": 180,
+    "full_height": true
+  },
+  "cartoon": {
+    "radius_scale": 0.01,
+    "min_radius": 0.5,
+    "segments_circle": 18,
+    "subdivisions": 7,
+    "cartoon_sampling": 7,
+    "tube_radius": 0.5,
+    "tube_quality": 18,
+    "ao_radius": 4.0,
+    "ao_max_neighbors": 16,
+    "ao_strength": 0.45,
+    "style": "ribbon",
+    "profile_segments": 20,
+    "spline_tension": 0.3,
+    "loop_radius": 0.2,
+    "loop_quality": 14,
+    "rect_width": 0.4,
+    "rect_length": 1.4,
+    "oval_width": 0.25,
+    "oval_length": 1.35,
+    "oval_quality": 20,
+    "arrow_sampling": 2,
+    "ss_shapes": {
+      "helix": {
+        "width": 0.5,
+        "thickness": 1.35,
+        "profile_power": 1.6
+      },
+      "strand": {
+        "width": 1.8,
+        "thickness": 1.5,
+        "arrow_scale": 0.2,
+        "profile_power": 18.0
+      },
+      "coil": {
+        "width": 0.5,
+        "thickness": 0.5,
+        "profile_power": 2.2
+      }
+    }
+  },
+  "balls": {
+    "size_scale": 0.04,
+    "min_size": 3.0,
+    "radius_multiplier": 1.0,
+    "ao_radius": 4.0,
+    "ao_max_neighbors": 24,
+    "ao_strength": 0.5,
+    "max_atoms": 8000
+  },
+  "dots": {
+    "size_px": 8.0,
+    "max_points": 250000,
+    "alpha": 1.0,
+    "base_color": [0.8, 0.8, 1.0, 1.0],
+    "px_mode": true
+  },
+  "surface": {
+    "size_scale": 0.03,
+    "min_size": 2.5,
+    "ao_radius": 4.5,
+    "ao_max_neighbors": 24,
+    "ao_strength": 0.6,
+    "alpha": 0.85,
+    "max_points": 10000,
+    "color_mode": "ao_gray",
+    "base_color": [0.85, 0.85, 0.92, 1.0],
+    "grid_spacing": 0.8,
+    "iso_value": 0.5,
+    "padding": 3.0,
+    "max_dim": 96,
+    "mesh_sigma_factor": 1.0,
+    "mesh_sigma_default": 1.8,
+    "method": "gaussian",
+    "probe_radius": 1.4
+  },
+  "metaball": {
+    "field_function": "wyvill",
+    "iso_value": 0.15,
+    "grid_spacing": 0.6,
+    "padding": 5.0,
+    "max_dim": 128,
+    "alpha": 0.6,
+    "ao_strength": 0.5,
+    "ao_radius": 4.5,
+    "shininess": 120.0,
+    "specular_strength": 1.0,
+    "rim_strength": 0.6,
+    "rim_power": 4.0,
+    "surface_only": true,
+    "surface_radius": 5.0,
+    "surface_max_neighbors": 20
+  },
+  "sticks": {
+    "width": 2.0,
+    "radius": 0.15,
+    "segments_circle": 12,
+    "max_bonds": 20000,
+    "bond_max_length": 1.9,
+    "ambient_occlusion": false
+  },
+  "colors": {
+    "base": [0.8, 0.8, 1.0, 1.0],
+    "aa_groups": {
+      "hydrophobic": [0.4, 0.8, 0.4, 1.0],
+      "polar": [0.4, 0.7, 0.9, 1.0],
+      "positive": [0.3, 0.3, 0.9, 1.0],
+      "negative": [0.9, 0.3, 0.3, 1.0],
+      "gly": [0.8, 0.8, 0.8, 1.0]
+    },
+    "secondary_structure": {
+      "helix": [0.3, 0.3, 0.9, 1.0],
+      "strand": [0.9, 0.3, 0.3, 1.0],
+      "coil": [0.9, 0.9, 0.7, 1.0]
+    },
+    "sequence_gradient": {
+      "start": [0.95, 0.45, 0.25, 1.0],
+      "end": [0.25, 0.55, 0.95, 1.0]
+    },
+    "element_cpk": {
+      "H": [1.0, 1.0, 1.0, 1.0],
+      "C": [0.5, 0.5, 0.5, 1.0],
+      "N": [0.0, 0.0, 1.0, 1.0],
+      "O": [1.0, 0.0, 0.0, 1.0],
+      "S": [1.0, 1.0, 0.0, 1.0],
+      "P": [1.0, 0.65, 0.0, 1.0],
+      "default": [0.8, 0.8, 0.8, 1.0]
+    }
+  },
+  "selection": {
+    "color": [1.0, 1.0, 0.0, 1.0],
+    "size_scale": 0.08,
+    "min_size": 6.0,
+    "max_size": 24.0,
+    "alpha": 0.4,
+    "click_radius_px": 8.0,
+    "px_mode": false
+  },
+  "layout": {
+    "root_margins": [4, 4, 4, 4],
+    "root_spacing": 4
+  },
+  "sequence": {
+    "residue_tick_step": 20,
+    "selection_color": [1.0, 0.95, 0.4, 1.0],
+    "selection_text_color": [0.1, 0.1, 0.1, 1.0],
+    "number_step": 5,
+    "font_family": "Courier New",
+    "font_size": 9,
+    "font_bold": true,
+    "number_font_bold": true,
+    "number_height": 16,
+    "residue_height": 20,
+    "number_color": [0.25, 0.25, 0.25, 1.0],
+    "number_bg_color": [0.12, 0.12, 0.12, 1.0],
+    "independent_scroll": false,
+    "seq_view": true,
+    "seq_view_gap_mode": 1,
+    "seq_view_label_spacing": 5,
+    "seq_view_format": 0,
+    "seq_view_color": -1,
+    "seq_view_fill_color": -1,
+    "seq_view_label_color": [1.0, 1.0, 1.0, 1.0],
+    "seq_view_overlay": false
+  },
+  "backbone_trace": {
+    "protein_atoms": ["CA"],
+    "nucleic_atoms": ["P", "O5'", "C5'", "C4'", "C3'", "O3'", "C1'", "C1*"]
+  },
+  "lighting": {
+    "light_direction": [0.0, 0.0, 1.0],
+    "ambient_strength": 0.45,
+    "specular_strength": 0.25,
+    "shininess": 40.0,
+    "rim_strength": 0.18,
+    "rim_power": 2.4
+  },
+  "camera": {
+    "near_clip": 0.03,
+    "far_clip": 2000.0,
+    "min_near_clip": 0.005,
+    "max_near_clip": 5.0,
+    "clip_wheel_scale": 0.85,
+    "mouse_mode": "pymol"
+  },
+  "ray": {
+    "ambient": 0.14,
+    "diffuse": 0.45,
+    "reflect_power": 1.0,
+    "specular": 0.25,
+    "shininess": 40.0,
+    "direct_specular": 0.30,
+    "direct_specular_power": 55.0,
+    "legacy_lighting": 0.0,
+    "antialias": 2,
+    "shadow": true,
+    "shadow_fudge": 0.001,
+    "shadow_decay_factor": 0.2,
+    "shadow_decay_range": 1.8,
+    "gamma": 2.2,
+    "depth_cue": true,
+    "fog_start": 0.45,
+    "fog_intensity": 1.0,
+    "color_blend": true,
+    "color_blend_red": 0.17,
+    "color_blend_green": 0.25,
+    "color_blend_blue": 0.14,
+    "light_directions": [[0.0, 0.0, 1.0], [0.5, 0.3, 1.0]]
+  },
+  "bg_rgb": [0.0, 0.0, 0.0],
+  "orthoscopic": false,
+  "field_of_view": 20.0,
+  "depth_cue": true,
+  "fog": 1.0,
+  "fog_start": 0.45,
+  "cartoon_color": -1,
+  "cartoon_transparency": 0.0,
+  "cartoon_loop_radius": 0.2,
+  "cartoon_tube_radius": 0.5,
+  "cartoon_oval_width": 0.25,
+  "cartoon_oval_length": 1.35,
+  "cartoon_rect_width": 0.4,
+  "cartoon_rect_length": 1.4,
+  "cartoon_fancy_helices": false,
+  "cartoon_fancy_sheets": false,
+  "cartoon_flat_sheets": true,
+  "cartoon_smooth_loops": false,
+  "cartoon_trace_atoms": false,
+  "sphere_color": -1,
+  "sphere_scale": 1.0,
+  "stick_color": -1,
+  "stick_radius": 0.25,
+  "stick_transparency": 0.0,
+  "line_color": -1,
+  "line_width": 1.4,
+  "ribbon_color": -1,
+  "ribbon_width": 0.75,
+  "ray_trace_mode": 0,
+  "ray_trace_frames": 0,
+  "ray_shadow": true,
+  "specular": 0.5,
+  "shininess": 55.0,
+  "ambient": 0.2,
+  "direct": 0.45,
+  "light_count": 2
+}

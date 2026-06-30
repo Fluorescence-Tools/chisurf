@@ -1,0 +1,57 @@
+{"sections":[
+{"type":"dock_area","title":"2D-FLCS","sections":[
+
+    {"type":"panel","title":"Settings","collapsed":false,"sections":[
+      {"type":"panel","title":"2D-FDC","collapsed":false,"sections":[
+    {"type":"value","attr":"dT_ms","label":"lag","kind":"float","decimals":3,"minimum":0.0,"maximum":1000000.0,"step":0.1,"description":"Macro-time lag dT at which the 2D fluorescence-decay correlation is built. Pick a value within the dynamics timescale to see lifetime cross-peaks."},
+    {"type":"value","attr":"ddT_ms","label":"win","kind":"float","decimals":3,"minimum":0.0,"maximum":1000000.0,"step":0.1,"description":"Half-width of the macro-time lag window (ddT). Wider = more photon pairs but coarser lag resolution."},
+    {"type":"value","attr":"tmin_ns","label":"tmin","kind":"float","decimals":3,"minimum":0.0,"maximum":1000.0,"description":"Lower micro-time gate (ns) for the decay axis."},
+    {"type":"value","attr":"tmax_ns","label":"tmax","kind":"float","decimals":3,"minimum":0.0,"maximum":1000.0,"description":"Upper micro-time gate (ns) for the decay axis."},
+        {"type":"value","attr":"max_bins","label":"bins","kind":"int","minimum":16,"maximum":256,"description":"Block-rebin the 2D-FDC down to this many bins before inversion (speed vs resolution)."}
+      ]},
+      {"type":"panel","title":"Lifetime inversion","collapsed":false,"sections":[
+        {"type":"choice","attr":"fit_mode","label":"method","style":"radio","options":["tikhonov","nnls","mem"],"labels":["Tikhonov","NNLS","MEM"],"description":"Inverse-Laplace solver: Tikhonov (closed-form, fastest), NNLS (strict non-negativity, default), or maximum-entropy (faithful, slower)."},
+    {"type":"value","attr":"n_components","label":"grid","kind":"int","minimum":4,"maximum":80,"description":"Number of log-spaced trial lifetimes in the inversion basis."},
+    {"type":"value","attr":"tau_min_ns","label":"τmin","kind":"float","decimals":3,"minimum":0.01,"maximum":100.0,"step":0.1,"description":"Smallest trial lifetime (ns)."},
+    {"type":"value","attr":"tau_max_ns","label":"τmax","kind":"float","decimals":3,"minimum":0.1,"maximum":1000.0,"step":0.5,"description":"Largest trial lifetime (ns)."},
+    {"type":"value","attr":"log10_reg","label":"log λ","kind":"float","decimals":2,"minimum":-12.0,"maximum":6.0,"step":0.5,"description":"Regularisation as log10(reg); 0 selects it automatically by L-curve."}
+      ]},
+      {"type":"panel","title":"IRF","collapsed":false,"sections":[
+        {"type":"choice","attr":"irf_mode","label":"source","style":"combo","options":["synthetic","detect","file","none"],"labels":["Synthetic","Detect","File","None"],"description":"How the IRF used for lifetime deconvolution is obtained. Synthetic = Gaussian pulse; Detect = place a synthetic pulse at the decay's prompt rise; File = IRF opened via 📈 Open IRF; None = tail-fit without an IRF."},
+        {"type":"value","attr":"irf_center_ns","label":"center","kind":"float","decimals":3,"minimum":0.0,"maximum":100.0,"step":0.05,"description":"Centre (prompt position) of the synthetic IRF in ns. Ignored for Detect/File/None."},
+        {"type":"value","attr":"irf_fwhm_ns","label":"FWHM","kind":"float","decimals":3,"minimum":0.001,"maximum":10.0,"step":0.02,"description":"Full width at half maximum of the synthetic IRF (ns)."},
+        {"type":"value","attr":"irf_shape","label":"skew","kind":"float","decimals":2,"minimum":-2.0,"maximum":2.0,"step":0.1,"description":"Skewness of the synthetic IRF pulse (0 = symmetric Gaussian)."},
+    {"type":"toggle","attr":"irf_rise_scan","label":"rise","description":"When running the 1D-MEM, scan the IRF rise position and average the distributions around the optimum (port of TK_MyMain_Search_RiseIRF_1DMEM); reduces the IRF-timing systematic."}
+      ]},
+      {"type":"panel","title":"Dynamics","collapsed":false,"sections":[
+    {"type":"toggle","attr":"compute_dynamics","label":"corr","description":"After resolving the lifetimes, compute the species-resolved (lifetime-filtered) correlation and fit the interconversion relaxation time + rate matrix."},
+        {"type":"value","attr":"n_casc","label":"cascades","kind":"int","minimum":1,"maximum":40,"description":"Multi-tau cascades for the filtered correlation."}
+      ]},
+      {"type":"panel","title":"Kinetics (advanced)","collapsed":true,"sections":[
+    {"type":"toggle","attr":"run_global_mem","label":"gMEM","description":"Build 2D-FDCs at several lags and jointly invert them with one shared lifetime distribution (global multi-lag 2D-MEM). Advanced; state separation is ill-conditioned for equal-brightness data."},
+        {"type":"value","attr":"n_lags","label":"lags","kind":"int","minimum":2,"maximum":24,"description":"Number of macro-time lags for the global multi-lag MEM / kinetics scan."}
+      ]},
+      {"type":"panel","title":"1D-MEM + Gaussian","collapsed":true,"sections":[
+        {"type":"toggle","attr":"run_1d_mem","label":"run","description":"Also build the 1D-FDC (zero-lag decay coincidence) and fit it with the explicit maximum-entropy method ported from the MATLAB toolbox, then decompose the distribution into Gaussian lifetime components."},
+        {"type":"value","attr":"mem_reg","label":"λ","kind":"float","decimals":2,"minimum":0.1,"maximum":100000.0,"step":5.0,"description":"Initial MEM regulator (RegulatorConst). Larger = smoother; the schedule relaxes it over outer iterations."},
+        {"type":"choice","attr":"mem_mi_type","label":"prior","style":"combo","options":[0,1,2,3],"labels":["flat","self","blend","Gaussian"],"description":"Entropy prior model (mi) ported from TK_mi_ModelFunction: 0 flat (resolution-weighted), 1 self (current dist.), 2 blend, 3 Gaussian."},
+        {"type":"value","attr":"gaussian_components","label":"peaks","kind":"int","minimum":1,"maximum":6,"description":"Number of Gaussian lifetime components to fit to the MEM distribution."}
+      ]},
+      {"type":"panel","title":"Simulator","collapsed":true,"sections":[
+        {"type":"value","attr":"sim_tau1_ns","label":"τ₁","kind":"float","decimals":3,"minimum":0.01,"maximum":100.0,"step":0.1,"description":"Fluorescence lifetime of state 1 (ns)."},
+        {"type":"value","attr":"sim_tau2_ns","label":"τ₂","kind":"float","decimals":3,"minimum":0.01,"maximum":100.0,"step":0.1,"description":"Fluorescence lifetime of state 2 (ns)."},
+        {"type":"value","attr":"sim_k12","label":"k₁₂","kind":"float","decimals":2,"minimum":0.0,"maximum":1000000.0,"step":1.0,"description":"Transition rate state 1 → 2 (1/s)."},
+        {"type":"value","attr":"sim_k21","label":"k₂₁","kind":"float","decimals":2,"minimum":0.0,"maximum":1000000.0,"step":1.0,"description":"Transition rate state 2 → 1 (1/s)."},
+        {"type":"value","attr":"sim_intensity_cps","label":"cps","kind":"float","decimals":1,"minimum":1.0,"maximum":100000000.0,"step":1000.0,"description":"Per-state brightness in counts per second (equal for both states)."},
+    {"type":"value","attr":"sim_time_s","label":"time","kind":"float","decimals":2,"minimum":0.1,"maximum":100000.0,"step":10.0,"description":"Acquisition time to simulate (s). Use the Sim button to generate and load the stream."}
+      ]}
+    ]},
+
+  {"type":"custom","key":"image","target":"spectrum_image","title":"2D-FLCS map","options":{"colormap":true,"colormap_attr":"colormap"},"description":"Inverted lifetime-lifetime distribution P (the 2D-FLCS map); its diagonal is the marginal lifetime spectrum, off-diagonals encode lifetime exchange."},
+    {"type":"custom","key":"image","target":"residual_image","title":"2D residual","options":{"colormap":true,"colormap_attr":"colormap"},"description":"Residual of the 2D inversion (data − model); should be structureless noise for a good fit."},
+    {"type":"plot","source":"lifetime_series","title":"Lifetime distribution","x_label":"lifetime τ (ns)","y_label":"amplitude","log_x":true,"description":"Resolved fluorescence-lifetime distribution; overlaid with the 1D-MEM and its Gaussian fit when enabled."},
+    {"type":"plot","source":"correlation_series","title":"Species correlation","x_label":"lag t_c (s)","y_label":"G","log_x":true,"description":"Lifetime-filtered species auto- and cross-correlations; their relaxation encodes the interconversion."},
+    {"type":"custom","key":"lcurve","target":"lcurve_data","title":"L-curve","description":"Residual vs solution norm of the 1D lifetime inversion (log-log); the highlighted corner is the auto-selected regularization weight."},
+    {"type":"plot","source":"irf_series","title":"IRF","x_label":"time (ns)","y_label":"norm.","description":"The active IRF (cyan) and the decay it deconvolves (yellow), both peak-normalized."}
+  ]}
+]}

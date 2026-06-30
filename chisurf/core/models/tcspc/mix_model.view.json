@@ -1,0 +1,59 @@
+{
+  "_comment": "Editor layout for LifetimeMixtureNewModel (AutoForm/PRD-40). The standard TCSPC nuisance groups are inherited; the Mixture panel drives the fit-selection and fraction controls via the custom fit_mixer section.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Convolution",
+      "sections": [
+        {"type": "curve_input", "target": "convolve", "label": "IRF", "select_action": "model.change_irf", "unload_action": "model.unload_irf", "index_key": "irf_idx", "name_key": "irf_name", "name_attr": "irf"},
+        {"type": "choice", "target": "convolve", "attr": "mode", "label": "Type", "options": ["per", "exp", "full"], "style": "radio"},
+        {"type": "toggle", "target": "convolve", "attr": "do_convolution", "label": "Convolve"},
+        {"type": "parameter_group", "target": "convolve", "collapsible": false}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Generic",
+      "sections": [
+        {"type": "parameter_group", "target": "generic", "collapsible": false}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Corrections",
+      "collapsed": true,
+      "sections": [
+        {"type": "curve_input", "target": "corrections", "label": "Lin. table", "select_action": "model.set_linearization", "unload_action": "model.unload_lintable", "index_key": "idx", "name_key": "lin_name"},
+        {"type": "choice", "target": "corrections", "attr": "window_function", "label": "Smoothing", "options_source": "window_function_types"},
+        {
+          "type": "toggle_row",
+          "items": [
+            {"target": "corrections", "attr": "correct_pile_up", "label": "Pile-up"},
+            {"target": "corrections", "attr": "correct_dnl", "label": "DNL"},
+            {"target": "corrections", "attr": "reverse", "label": "Reverse"}
+          ]
+        },
+        {"type": "parameter_group", "target": "corrections", "collapsible": false}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Mixture",
+      "sections": [
+        {
+          "type": "custom",
+          "key": "fit_mixer",
+          "description": "Select existing lifetime fits, add them with mixing fractions, and double-click a row to remove it."
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {"key": "line", "options": {"scale_x": "lin", "d_scaley": "log", "r_scaley": "lin", "x_label": "time (ns)", "y_label": "counts"}},
+    {"key": "fit_table", "options": {}},
+    {"key": "fit_info", "options": {}},
+    {"key": "parameter_scan", "options": {}},
+    {"key": "distribution", "options": {"distribution_options": {"Lifetime": {"attribute": "lifetime_spectrum", "accessor": "interleaved_to_two_columns", "accessor_kwargs": {"sort": true}, "curve_options": {"stepMode": false, "connect": false, "bar_mode": "sticks", "symbol": "o"}}}}},
+    {"key": "residual", "options": {}}
+  ]
+}

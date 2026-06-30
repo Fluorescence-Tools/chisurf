@@ -1,0 +1,45 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Parameters",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "donor_qy",
+          "label": "Donor QY",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "step": 0.01,
+          "description": "Donor fluorescence quantum yield."
+        },
+        {
+          "type": "value",
+          "attr": "acceptor_emax",
+          "label": "Acceptor ε_max",
+          "kind": "float",
+          "decimals": 0,
+          "minimum": 0.0,
+          "maximum": 1000000.0,
+          "step": 1000,
+          "suffix": " M⁻¹ cm⁻¹",
+          "description": "Acceptor molar extinction coefficient at peak absorption."
+        },
+        {
+          "type": "value",
+          "attr": "refractive_index",
+          "label": "Refractive index n",
+          "kind": "float",
+          "decimals": 3,
+          "minimum": 1.0,
+          "maximum": 2.0,
+          "step": 0.01,
+          "description": "Refractive index of the medium."
+        }
+      ]
+    }
+  ]
+}

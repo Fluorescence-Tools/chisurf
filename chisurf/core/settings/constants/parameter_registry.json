@@ -1,0 +1,5755 @@
+{
+  "parameters": {
+    "AtB": {
+      "aliases": [],
+      "description": "Model parameter AtB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.AtB",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 116,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "BG": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.BG",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 190,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "BR": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.BR",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 194,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "BtA": {
+      "aliases": [],
+      "description": "Model parameter BtA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.BtA",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 117,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "D": {
+      "aliases": [],
+      "description": "Model parameter D used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.D",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 165,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": null
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 213,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 507,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        },
+        {
+          "bounds_on": true,
+          "class": "AVDecayModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/av_decay.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 111,
+          "module": "chisurf.core.models.tcspc.av_decay",
+          "ub": null
+        }
+      ]
+    },
+    "E_FRET": {
+      "aliases": [],
+      "description": "Apparent FRET efficiency parameter E_FRET (0e00..1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.E_FRET",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "efficiency"
+      ],
+      "label_texts": [
+        "E<sub>FRET</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "FRETParameters",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": "E<sub>FRET</sub>",
+          "lb": 0.0,
+          "line": 122,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": 1.0
+        }
+      ]
+    },
+    "N": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.N",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 97,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 1000000000.0
+        }
+      ]
+    },
+    "N1": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.N1",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 109,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "N2": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.N2",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 127,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "N3": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.N3",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 145,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "QYA": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.QYA",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 213,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "QYD": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.QYD",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 208,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "R0": {
+      "aliases": [],
+      "description": "Frster radius R0 of the donor-acceptor pair.",
+      "flrcif_item_id": "_flr_chisurf_parameter.R0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "Forster radius",
+        "distance"
+      ],
+      "label_texts": [
+        "R<sub>0</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "FRETParameters",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "R<sub>0</sub>",
+          "lb": null,
+          "line": 79,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": null
+        }
+      ]
+    },
+    "aT": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.aT",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 579,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 0.99
+        }
+      ]
+    },
+    "alpha": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.alpha",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 186,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "b": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.b",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 125,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 10.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 82,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 10.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 801,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 10.0
+        }
+      ]
+    },
+    "ba": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.ba",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 146,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 1.0
+        }
+      ]
+    },
+    "bg": {
+      "aliases": [],
+      "description": "Constant background level added to the time-resolved decay curve (counts per time channel).",
+      "flrcif_item_id": "_flr_chisurf_parameter.bg",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "background",
+        "offset",
+        "counts"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Generic",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 124,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "bg0": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.bg0",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Background",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 71,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "bg1": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.bg1",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Background",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 75,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "bt": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.bt",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 155,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": null
+        }
+      ]
+    },
+    "cont": {
+      "aliases": [],
+      "description": "Model parameter cont used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.cont",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "AVDecayModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/av_decay.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 112,
+          "module": "chisurf.core.models.tcspc.av_decay",
+          "ub": null
+        }
+      ]
+    },
+    "cpm": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.cpm",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 187,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": null
+        },
+        {
+          "bounds_on": false,
+          "class": "ParseFCSWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/parse_fcs_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 53,
+          "module": "chisurf.gui.widgets.models.fcs.parse_fcs_widget",
+          "ub": null
+        }
+      ]
+    },
+    "cpm_all": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.cpm_all",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 196,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": null
+        },
+        {
+          "bounds_on": false,
+          "class": "ParseFCSWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/parse_fcs_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 65,
+          "module": "chisurf.gui.widgets.models.fcs.parse_fcs_widget",
+          "ub": null
+        }
+      ]
+    },
+    "dt": {
+      "aliases": [],
+      "description": "Time bin width of the TCSPC histogram (time per channel).",
+      "flrcif_item_id": "_flr_chisurf_parameter.dt",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "time bin",
+        "resolution"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 753,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "dtMT[ns]": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.dtMT[ns]",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "DecaySimulationParameter",
+          "description_in_code": null,
+          "file": "chisurf/fluorescence/simulation/dye_diffusion.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 92,
+          "module": "chisurf.fluorescence.simulation.dye_diffusion",
+          "ub": null
+        }
+      ]
+    },
+    "dtTAC[ns]": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.dtTAC[ns]",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "DecaySimulationParameter",
+          "description_in_code": null,
+          "file": "chisurf/fluorescence/simulation/dye_diffusion.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 93,
+          "module": "chisurf.fluorescence.simulation.dye_diffusion",
+          "ub": null
+        }
+      ]
+    },
+    "eps1": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.eps1",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 100,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "eps2": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.eps2",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 118,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "eps3": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.eps3",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "PchMultiComponentModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/pch/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 136,
+          "module": "chisurf.gui.widgets.models.pch.widgets",
+          "ub": 1000000.0
+        }
+      ]
+    },
+    "fcs.C": {
+      "aliases": [
+        "C"
+      ],
+      "description": "Dimensionless factor C used in the rotational correlation / anisotropy term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_C",
+      "keywords": [
+        "FCS",
+        "anisotropy",
+        "rotation"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "C"
+    },
+    "fcs.N": {
+      "aliases": [
+        "N"
+      ],
+      "description": "Average number of fluorescent particles in the observation volume. In standard FCS models the correlation amplitude scales roughly as 1/N.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_N",
+      "keywords": [
+        "FCS",
+        "number of molecules",
+        "concentration",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion",
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss",
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching",
+            "Abnormal diffusion",
+            "Autocorrelation with biexponential anisotropy term",
+            "Simple 2D diffusion",
+            "Simple 2D diffusion & 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "N"
+    },
+    "fcs.N3": {
+      "aliases": [
+        "N3"
+      ],
+      "description": "Average number of fluorescent particles in the observation volume. In standard FCS models the correlation amplitude scales roughly as 1/N.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_N3",
+      "keywords": [
+        "FCS",
+        "number of molecules",
+        "concentration",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 3D diffusion & 5x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "N3"
+    },
+    "fcs.a": {
+      "aliases": [
+        "a"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Abnormal diffusion"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a"
+    },
+    "fcs.a1": {
+      "aliases": [
+        "a1"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a1",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion",
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a1"
+    },
+    "fcs.a2": {
+      "aliases": [
+        "a2"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a2",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a2"
+    },
+    "fcs.a21": {
+      "aliases": [
+        "a21"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a21",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a21"
+    },
+    "fcs.a22": {
+      "aliases": [
+        "a22"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a22",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a22"
+    },
+    "fcs.a31": {
+      "aliases": [
+        "a31"
+      ],
+      "description": "Fractional amplitude or population of this diffusion/kinetic component (dimensionless, typically between 0 and 1).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_a31",
+      "keywords": [
+        "FCS",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "a31"
+    },
+    "fcs.aR": {
+      "aliases": [
+        "aR"
+      ],
+      "description": "Amplitude of a relaxation or anticorrelation term (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aR",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "Simple 2D diffusion & 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aR"
+    },
+    "fcs.aR1": {
+      "aliases": [
+        "aR1"
+      ],
+      "description": "Amplitude of a relaxation or anticorrelation term (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aR1",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aR1"
+    },
+    "fcs.aR2": {
+      "aliases": [
+        "aR2"
+      ],
+      "description": "Amplitude of a relaxation or anticorrelation term (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aR2",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aR2"
+    },
+    "fcs.aRa": {
+      "aliases": [
+        "aRa"
+      ],
+      "description": "Amplitude of a relaxation or anticorrelation term (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aRa",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aRa"
+    },
+    "fcs.aab": {
+      "aliases": [
+        "aab"
+      ],
+      "description": "Amplitude of the photon antibunching term (very fast correlation component).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aab",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "triplet",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aab"
+    },
+    "fcs.ab1": {
+      "aliases": [
+        "ab1"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ab1",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ab1"
+    },
+    "fcs.ab2": {
+      "aliases": [
+        "ab2"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ab2",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ab2"
+    },
+    "fcs.ab3": {
+      "aliases": [
+        "ab3"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ab3",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ab3"
+    },
+    "fcs.ab4": {
+      "aliases": [
+        "ab4"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ab4",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ab4"
+    },
+    "fcs.aba": {
+      "aliases": [
+        "aba"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aba",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aba"
+    },
+    "fcs.aba1": {
+      "aliases": [
+        "aba1"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aba1",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aba1"
+    },
+    "fcs.aba2": {
+      "aliases": [
+        "aba2"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aba2",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aba2"
+    },
+    "fcs.aba3": {
+      "aliases": [
+        "aba3"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aba3",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aba3"
+    },
+    "fcs.aba4": {
+      "aliases": [
+        "aba4"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aba4",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aba4"
+    },
+    "fcs.abf": {
+      "aliases": [
+        "abf"
+      ],
+      "description": "Total amplitude factor for a group of anticorrelation components.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abf",
+      "keywords": [
+        "FCS",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abf"
+    },
+    "fcs.abt": {
+      "aliases": [
+        "abt"
+      ],
+      "description": "Time constant of an antibunching or anticorrelation component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anticorrelation",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt"
+    },
+    "fcs.abt1": {
+      "aliases": [
+        "abt1"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt1",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt1"
+    },
+    "fcs.abt2": {
+      "aliases": [
+        "abt2"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt2",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt2"
+    },
+    "fcs.abt3": {
+      "aliases": [
+        "abt3"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt3",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt3"
+    },
+    "fcs.abt4": {
+      "aliases": [
+        "abt4"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt4",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt4"
+    },
+    "fcs.abt5": {
+      "aliases": [
+        "abt5"
+      ],
+      "description": "Amplitude of an individual antibunching / anisotropy / anticorrelation component (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_abt5",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "anisotropy",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "abt5"
+    },
+    "fcs.af": {
+      "aliases": [
+        "af"
+      ],
+      "description": "Overall amplitude factor for a set of anticorrelation components.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_af",
+      "keywords": [
+        "FCS",
+        "anticorrelation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "af"
+    },
+    "fcs.aroc": {
+      "aliases": [
+        "aroc"
+      ],
+      "description": "Amplitude of the rotational correlation (anisotropy) contribution.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_aroc",
+      "keywords": [
+        "FCS",
+        "anisotropy",
+        "rotation",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "aroc"
+    },
+    "fcs.b": {
+      "aliases": [
+        "b"
+      ],
+      "description": "Additive baseline/offset of the correlation function.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_b",
+      "keywords": [
+        "FCS",
+        "baseline",
+        "offset",
+        "background"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion",
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss",
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching",
+            "Abnormal diffusion",
+            "Autocorrelation with biexponential anisotropy term",
+            "Simple 2D diffusion",
+            "Simple 2D diffusion & 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "b"
+    },
+    "fcs.ba": {
+      "aliases": [
+        "ba"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 1 global bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba"
+    },
+    "fcs.ba1": {
+      "aliases": [
+        "ba1"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba1",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba1"
+    },
+    "fcs.ba11": {
+      "aliases": [
+        "ba11"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba11",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba11"
+    },
+    "fcs.ba12": {
+      "aliases": [
+        "ba12"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba12",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba12"
+    },
+    "fcs.ba2": {
+      "aliases": [
+        "ba2"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba2",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba2"
+    },
+    "fcs.ba21": {
+      "aliases": [
+        "ba21"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba21",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba21"
+    },
+    "fcs.ba22": {
+      "aliases": [
+        "ba22"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba22",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba22"
+    },
+    "fcs.ba3": {
+      "aliases": [
+        "ba3"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba3",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba3"
+    },
+    "fcs.ba31": {
+      "aliases": [
+        "ba31"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba31",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba31"
+    },
+    "fcs.ba32": {
+      "aliases": [
+        "ba32"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba32",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba32"
+    },
+    "fcs.ba4": {
+      "aliases": [
+        "ba4"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba4",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba4"
+    },
+    "fcs.ba5": {
+      "aliases": [
+        "ba5"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba5",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba5"
+    },
+    "fcs.ba6": {
+      "aliases": [
+        "ba6"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba6",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba6"
+    },
+    "fcs.ba7": {
+      "aliases": [
+        "ba7"
+      ],
+      "description": "Fractional amplitude of a dark or bunching state (e.g. triplet or blinking); dimensionless and typically between 0 and 1.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_ba7",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "ba7"
+    },
+    "fcs.bs2": {
+      "aliases": [
+        "bs2"
+      ],
+      "description": "Stretching exponent for a stretched-exponential relaxation term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bs2",
+      "keywords": [
+        "FCS",
+        "stretched exponential",
+        "relaxation",
+        "exponent"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bs2"
+    },
+    "fcs.bs21": {
+      "aliases": [
+        "bs21"
+      ],
+      "description": "Stretching exponent for a stretched-exponential relaxation term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bs21",
+      "keywords": [
+        "FCS",
+        "stretched exponential",
+        "relaxation",
+        "exponent"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bs21"
+    },
+    "fcs.bs22": {
+      "aliases": [
+        "bs22"
+      ],
+      "description": "Stretching exponent for a stretched-exponential relaxation term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bs22",
+      "keywords": [
+        "FCS",
+        "stretched exponential",
+        "relaxation",
+        "exponent"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bs22"
+    },
+    "fcs.bt": {
+      "aliases": [
+        "bt"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 1 global bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt"
+    },
+    "fcs.bt1": {
+      "aliases": [
+        "bt1"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt1",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt1"
+    },
+    "fcs.bt11": {
+      "aliases": [
+        "bt11"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt11",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt11"
+    },
+    "fcs.bt12": {
+      "aliases": [
+        "bt12"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt12",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt12"
+    },
+    "fcs.bt2": {
+      "aliases": [
+        "bt2"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt2",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt2"
+    },
+    "fcs.bt21": {
+      "aliases": [
+        "bt21"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt21",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt21"
+    },
+    "fcs.bt22": {
+      "aliases": [
+        "bt22"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt22",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp."
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt22"
+    },
+    "fcs.bt3": {
+      "aliases": [
+        "bt3"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt3",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt3"
+    },
+    "fcs.bt31": {
+      "aliases": [
+        "bt31"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt31",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt31"
+    },
+    "fcs.bt32": {
+      "aliases": [
+        "bt32"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt32",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt32"
+    },
+    "fcs.bt4": {
+      "aliases": [
+        "bt4"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt4",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt4"
+    },
+    "fcs.bt5": {
+      "aliases": [
+        "bt5"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt5",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt5"
+    },
+    "fcs.bt6": {
+      "aliases": [
+        "bt6"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt6",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt6"
+    },
+    "fcs.bt7": {
+      "aliases": [
+        "bt7"
+      ],
+      "description": "Correlation/relaxation time constant of a dark or bunching state.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_bt7",
+      "keywords": [
+        "FCS",
+        "bunching",
+        "triplet",
+        "dark state",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "3D Gauss, 7 bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "bt7"
+    },
+    "fcs.s": {
+      "aliases": [
+        "s"
+      ],
+      "description": "Structure parameter s = z0 / w0 describing the axial-to-radial extent of the detection volume.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_s",
+      "keywords": [
+        "FCS",
+        "structure parameter",
+        "PSF",
+        "geometry"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "3D Gauss",
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching",
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "s"
+    },
+    "fcs.tR": {
+      "aliases": [
+        "tR"
+      ],
+      "description": "Relaxation or anticorrelation time constant of a kinetic component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tR",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "kinetics",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "Simple 2D diffusion & 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tR"
+    },
+    "fcs.tR1": {
+      "aliases": [
+        "tR1"
+      ],
+      "description": "Relaxation or anticorrelation time constant of a kinetic component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tR1",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "kinetics",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tR1"
+    },
+    "fcs.tR2": {
+      "aliases": [
+        "tR2"
+      ],
+      "description": "Relaxation or anticorrelation time constant of a kinetic component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tR2",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "kinetics",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tR2"
+    },
+    "fcs.tR3": {
+      "aliases": [
+        "tR3"
+      ],
+      "description": "Relaxation or anticorrelation time constant of a kinetic component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tR3",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "kinetics",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 3x anticorrelation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tR3"
+    },
+    "fcs.tRa": {
+      "aliases": [
+        "tRa"
+      ],
+      "description": "Relaxation or anticorrelation time constant of a kinetic component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tRa",
+      "keywords": [
+        "FCS",
+        "relaxation",
+        "kinetics",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tRa"
+    },
+    "fcs.tab": {
+      "aliases": [
+        "tab"
+      ],
+      "description": "Correlation time of the photon antibunching term (fast time scale).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tab",
+      "keywords": [
+        "FCS",
+        "antibunching",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tab"
+    },
+    "fcs.tb1": {
+      "aliases": [
+        "tb1"
+      ],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tb1",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tb1"
+    },
+    "fcs.tb2": {
+      "aliases": [
+        "tb2"
+      ],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tb2",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tb2"
+    },
+    "fcs.tb3": {
+      "aliases": [
+        "tb3"
+      ],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tb3",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tb3"
+    },
+    "fcs.tb4": {
+      "aliases": [
+        "tb4"
+      ],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_tb4",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "tb4"
+    },
+    "fcs.td": {
+      "aliases": [
+        "td"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion & 5x relaxation & photon antibunching",
+            "3D Gauss",
+            "3D Gauss, 1 bunching",
+            "3D Gauss, 1 bunching + 1 anti-bunching",
+            "3D Gauss, 1 bunching + 1+5 anti-bunching",
+            "3D Gauss, 1 exp. bunch, 1 stretched exp. bunch",
+            "3D Gauss, 2 bunching",
+            "3D Gauss, 2 bunching + 1 anti-bunching",
+            "3D Gauss, 3 bunching",
+            "3D Gauss, 7 bunching",
+            "Abnormal diffusion",
+            "Autocorrelation with biexponential anisotropy term",
+            "Simple 2D diffusion",
+            "Simple 2D diffusion & 1x relaxation"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td"
+    },
+    "fcs.td1": {
+      "aliases": [
+        "td1"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td1",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion",
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td1"
+    },
+    "fcs.td2": {
+      "aliases": [
+        "td2"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td2",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2 comp 3D Gauss, 3 individual bunch",
+            "2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.",
+            "2x 2D diffusion",
+            "2x 2D diffusion & 1x anticorrelation",
+            "2x 2D diffusion & 1x anticorrelation, 1x relaxation",
+            "2x 2D diffusion & 1x relaxation",
+            "2x 2D diffusion & 3x anticorrelation",
+            "2x 2D diffusion & 3x relaxation",
+            "2x 2D diffusion, 4x relaxation and photon antibunching",
+            "2x2D Gauss, 1 bunching + 5 anti-correlation",
+            "3D Gauss, 2 diffusion terms, 1 global bunching",
+            "3D Gauss, 2 diffusion terms, 2 global bunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td2"
+    },
+    "fcs.td21": {
+      "aliases": [
+        "td21"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td21",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td21"
+    },
+    "fcs.td22": {
+      "aliases": [
+        "td22"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td22",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td22"
+    },
+    "fcs.td3": {
+      "aliases": [
+        "td3"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td3",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x 3D diffusion & 5x relaxation & photon antibunching",
+            "1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation",
+            "2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td3"
+    },
+    "fcs.td31": {
+      "aliases": [
+        "td31"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td31",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td31"
+    },
+    "fcs.td32": {
+      "aliases": [
+        "td32"
+      ],
+      "description": "Characteristic diffusion time of this component (time scale on which particles traverse the observation volume).",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_td32",
+      "keywords": [
+        "FCS",
+        "diffusion",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "td32"
+    },
+    "fcs.trc1": {
+      "aliases": [
+        "trc1"
+      ],
+      "description": "Rotational correlation time used in the anisotropy / rotational diffusion term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_trc1",
+      "keywords": [
+        "FCS",
+        "anisotropy",
+        "rotation",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "trc1"
+    },
+    "fcs.trc2trc1": {
+      "aliases": [
+        "trc2trc1"
+      ],
+      "description": "Rotational correlation time used in the anisotropy / rotational diffusion term.",
+      "flrcif_item_id": "_flr_chisurf_parameter.fcs_trc2trc1",
+      "keywords": [
+        "FCS",
+        "anisotropy",
+        "rotation",
+        "correlation time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "fcs",
+          "models": [
+            "Autocorrelation with biexponential anisotropy term"
+          ],
+          "origin": "chisurf\\models\\fcs\\models.yaml"
+        }
+      ],
+      "symbol": "trc2trc1"
+    },
+    "g": {
+      "aliases": [],
+      "description": "Model parameter g used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.g",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Anisotropy",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 217,
+          "module": "chisurf.core.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ]
+    },
+    "gG": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.gG",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 198,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "gR": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.gR",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 203,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "ik": {
+      "aliases": [],
+      "description": "Shape parameter of the synthetic IRF model.",
+      "flrcif_item_id": "_flr_chisurf_parameter.ik",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "IRF",
+        "shape"
+      ],
+      "label_texts": [
+        "IRF<sub>k</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "IRF<sub>k</sub>",
+          "lb": null,
+          "line": 808,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "irf_start": {
+      "aliases": [],
+      "description": "Start index (or time) of the IRF region used for convolution.",
+      "flrcif_item_id": "_flr_chisurf_parameter.irf_start",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "IRF",
+        "window",
+        "start"
+      ],
+      "label_texts": [
+        "IRF<sub>start</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "IRF<sub>start</sub>",
+          "lb": null,
+          "line": 774,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "irf_stop": {
+      "aliases": [],
+      "description": "Stop index (or time) of the IRF region used for convolution.",
+      "flrcif_item_id": "_flr_chisurf_parameter.irf_stop",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "IRF",
+        "window",
+        "stop"
+      ],
+      "label_texts": [
+        "IRF<sub>stop</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "IRF<sub>stop</sub>",
+          "lb": null,
+          "line": 780,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "iw": {
+      "aliases": [],
+      "description": "Width parameter of the synthetic IRF model.",
+      "flrcif_item_id": "_flr_chisurf_parameter.iw",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "IRF",
+        "width"
+      ],
+      "label_texts": [
+        "IRF<sub>w</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "IRF<sub>w</sub>",
+          "lb": null,
+          "line": 802,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "k2": {
+      "aliases": [],
+      "description": "Orientation factor  governing dipole-dipole coupling in FRET.",
+      "flrcif_item_id": "_flr_chisurf_parameter.k2",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "orientation factor",
+        "kappa2"
+      ],
+      "label_texts": [
+        "&kappa;<sup>2</sup>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "FRETParameters",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "&kappa;<sup>2</sup>",
+          "lb": 0.0,
+          "line": 86,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": 4.0
+        }
+      ]
+    },
+    "kQ": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.kQ",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "ProteinQuenchingWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/fluorescence/av/__init__.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 62,
+          "module": "chisurf.gui.widgets.fluorescence.av",
+          "ub": null
+        }
+      ]
+    },
+    "l": {
+      "aliases": [],
+      "description": "Model parameter l used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.l",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "WormLikeChainModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 813,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": null
+        }
+      ]
+    },
+    "l1": {
+      "aliases": [],
+      "description": "Model parameter l1 used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.l1",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Anisotropy",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 222,
+          "module": "chisurf.core.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ]
+    },
+    "l2": {
+      "aliases": [],
+      "description": "Model parameter l2 used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.l2",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Anisotropy",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 227,
+          "module": "chisurf.core.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ]
+    },
+    "lb": {
+      "aliases": [],
+      "description": "Lamp background level subtracted from the instrument response function.",
+      "flrcif_item_id": "_flr_chisurf_parameter.lb",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "lamp",
+        "background",
+        "IRF"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 788,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": 1.0
+        }
+      ]
+    },
+    "line_dur": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.line_dur",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 242,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 10000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 534,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 10000.0
+        }
+      ]
+    },
+    "lp": {
+      "aliases": [],
+      "description": "Model parameter lp used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.lp",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "WormLikeChainModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 828,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": null
+        }
+      ]
+    },
+    "mA": {
+      "aliases": [],
+      "description": "Model parameter mA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.mA",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 125,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "mB": {
+      "aliases": [],
+      "description": "Model parameter mB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.mB",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 126,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "n": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.n",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 204,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000000000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 498,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000000000.0
+        }
+      ]
+    },
+    "n curves": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.n curves",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "DecaySimulationParameter",
+          "description_in_code": null,
+          "file": "chisurf/fluorescence/simulation/dye_diffusion.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 95,
+          "module": "chisurf.fluorescence.simulation.dye_diffusion",
+          "ub": null
+        }
+      ]
+    },
+    "n photons": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.n photons",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "DecaySimulationParameter",
+          "description_in_code": null,
+          "file": "chisurf/fluorescence/simulation/dye_diffusion.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 96,
+          "module": "chisurf.fluorescence.simulation.dye_diffusion",
+          "ub": null
+        }
+      ]
+    },
+    "n0": {
+      "aliases": [],
+      "description": "Initial number of excited donor molecules used to scale the model decay to the experimental counts.",
+      "flrcif_item_id": "_flr_chisurf_parameter.n0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "normalization",
+        "excited molecules"
+      ],
+      "label_texts": [
+        "n<sub>0</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": "n<sub>0</sub>",
+          "lb": null,
+          "line": 746,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "nPh_bg": {
+      "aliases": [],
+      "description": "Output: estimated number of background photons in the TCSPC trace based on background level and measurement timing settings.",
+      "flrcif_item_id": "_flr_chisurf_parameter.nPh_bg",
+      "keywords": [
+        "TCSPC",
+        "background",
+        "photons",
+        "output"
+      ],
+      "label_texts": [
+        "nPh(Bg)"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "GenericWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/generic.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "nPh(Bg)",
+          "lb": null,
+          "line": 120,
+          "module": "chisurf.gui.widgets.models.tcspc.generic",
+          "ub": null
+        }
+      ],
+      "symbol": "nPh_bg"
+    },
+    "nPh_fl": {
+      "aliases": [],
+      "description": "Output: estimated number of fluorescence photons (after background subtraction) in the TCSPC trace.",
+      "flrcif_item_id": "_flr_chisurf_parameter.nPh_fl",
+      "keywords": [
+        "TCSPC",
+        "fluorescence",
+        "photons",
+        "output"
+      ],
+      "label_texts": [
+        "nPh(Fl)"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "GenericWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/generic.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "nPh(Fl)",
+          "lb": null,
+          "line": 127,
+          "module": "chisurf.gui.widgets.models.tcspc.generic",
+          "ub": null
+        }
+      ],
+      "symbol": "nPh_fl"
+    },
+    "nPh_max": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.nPh_max",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 237,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "nPh_min": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.nPh_min",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PdaFretNuisance",
+          "description_in_code": null,
+          "file": "chisurf/core/models/pda/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 233,
+          "module": "chisurf.core.models.pda.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "nTAC": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.nTAC",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "DecaySimulationParameter",
+          "description_in_code": null,
+          "file": "chisurf/fluorescence/simulation/dye_diffusion.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 94,
+          "module": "chisurf.fluorescence.simulation.dye_diffusion",
+          "ub": null
+        }
+      ]
+    },
+    "n_rh": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.n_rh",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 10.0,
+          "line": 783,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 400.0
+        }
+      ]
+    },
+    "n_td": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.n_td",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 10.0,
+          "line": 64,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 400.0
+        }
+      ]
+    },
+    "offset": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.offset",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 222,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 516,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        }
+      ]
+    },
+    "pureA": {
+      "aliases": [],
+      "description": "Model parameter pureA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.pureA",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 119,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "pureB": {
+      "aliases": [],
+      "description": "Model parameter pureB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.pureB",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 120,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "pxl_dur": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.pxl_dur",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.01,
+          "line": 233,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.01,
+          "line": 525,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        }
+      ]
+    },
+    "pxl_size": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.pxl_size",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1.0,
+          "line": 251,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 10000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1.0,
+          "line": 543,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 10000.0
+        }
+      ]
+    },
+    "r0": {
+      "aliases": [],
+      "description": "Frster radius R0 of the donor-acceptor pair.",
+      "flrcif_item_id": "_flr_chisurf_parameter.r0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "Forster radius",
+        "distance"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Anisotropy",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 212,
+          "module": "chisurf.core.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ]
+    },
+    "r_ss_i": {
+      "aliases": [],
+      "description": "Intensity-domain steady-state anisotropy. For dual-channel data, ChiSurf background-corrects VV and VH (per-channel metadata when available), compensates objective mixing via l1/l2, and evaluates rS,I from channel sums using the ChiSurf convention r = (VV - VH) / (g*VV + 2*VH). For single-channel fallback, VM is reconstructed from the active anisotropy model before summation.",
+      "flrcif_item_id": "_flr_chisurf_parameter.r_ss_i",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "steady state",
+        "intensity"
+      ],
+      "label_texts": [
+        "r<sub>S,I</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "r<sub>S,I</sub>",
+          "lb": null,
+          "line": 313,
+          "module": "chisurf.gui.widgets.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "r_S,I"
+    },
+    "r_ss_l": {
+      "aliases": [],
+      "description": "Lifetime-domain steady-state anisotropy derived from the model lifetime spectrum and rotational spectrum. This value is model-predicted (spectrum/integral domain) and does not depend on direct VV/VH channel integration.",
+      "flrcif_item_id": "_flr_chisurf_parameter.r_ss_l",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "steady state",
+        "lifetime"
+      ],
+      "label_texts": [
+        "r<sub>S,L</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "r<sub>S,L</sub>",
+          "lb": null,
+          "line": 297,
+          "module": "chisurf.gui.widgets.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "r_S,L"
+    },
+    "rc_ele": {
+      "aliases": [],
+      "description": "Model parameter rc_ele used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rc_ele",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "AVDecayModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/av_decay.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 114,
+          "module": "chisurf.core.models.tcspc.av_decay",
+          "ub": null
+        }
+      ]
+    },
+    "reg": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.reg",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 37,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 3.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 756,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 3.0
+        }
+      ]
+    },
+    "rep": {
+      "aliases": [],
+      "description": "Laser repetition rate of the excitation source.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rep",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "repetition rate",
+        "laser",
+        "frequency"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 759,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "rh_max": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.rh_max",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.01,
+          "line": 774,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 1000.0
+        }
+      ]
+    },
+    "rh_min": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.rh_min",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 765,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 1000.0
+        }
+      ]
+    },
+    "rics.D": {
+      "aliases": [],
+      "description": "Diffusion coefficient D in \u00b5m\u00b2/s.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_D",
+      "keywords": [
+        "RICS",
+        "diffusion",
+        "mobility"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "D"
+    },
+    "rics.aT": {
+      "aliases": [],
+      "description": "Triplet/blinking fraction a_T (0\u20131).",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_aT",
+      "keywords": [
+        "RICS",
+        "triplet",
+        "blinking",
+        "fraction"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "aT"
+    },
+    "rics.line_dur": {
+      "aliases": [
+        "line_duration"
+      ],
+      "description": "Time between successive scanned lines in milliseconds.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_line_dur",
+      "keywords": [
+        "RICS",
+        "imaging",
+        "timing",
+        "line scan"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "line_dur"
+    },
+    "rics.n": {
+      "aliases": [],
+      "description": "Average number of fluorescent molecules in the observation volume N. RICS/ICS amplitude G(0) is proportional to 1/N.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_n",
+      "keywords": [
+        "RICS",
+        "ICS",
+        "number of molecules",
+        "concentration"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "n"
+    },
+    "rics.offset": {
+      "aliases": [],
+      "description": "Additive offset of the correlation function.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_offset",
+      "keywords": [
+        "RICS",
+        "baseline",
+        "correlation"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "offset"
+    },
+    "rics.pxl_dur": {
+      "aliases": [
+        "pixel_duration"
+      ],
+      "description": "Pixel dwell time (line scan) in microseconds.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_pxl_dur",
+      "keywords": [
+        "RICS",
+        "imaging",
+        "timing",
+        "pixel dwell time"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "pxl_dur"
+    },
+    "rics.pxl_size": {
+      "aliases": [
+        "pixel_size"
+      ],
+      "description": "Pixel size in the sample plane in nanometers.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_pxl_size",
+      "keywords": [
+        "RICS",
+        "imaging",
+        "pixel size",
+        "spatial sampling"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "pxl_size"
+    },
+    "rics.tauT": {
+      "aliases": [],
+      "description": "Triplet/blinking correlation time \u03c4_T in milliseconds.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_tauT",
+      "keywords": [
+        "RICS",
+        "triplet",
+        "blinking",
+        "kinetics"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "tauT"
+    },
+    "rics.w_r": {
+      "aliases": [],
+      "description": "Radial waist of the detection PSF in \u00b5m.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_w_r",
+      "keywords": [
+        "RICS",
+        "PSF",
+        "waist",
+        "radial"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "w_r"
+    },
+    "rics.w_z": {
+      "aliases": [],
+      "description": "Axial waist of the detection PSF in \u00b5m.",
+      "flrcif_item_id": "_flr_chisurf_parameter.rics_w_z",
+      "keywords": [
+        "RICS",
+        "PSF",
+        "waist",
+        "axial"
+      ],
+      "label_texts": [],
+      "sources": [],
+      "symbol": "w_z"
+    },
+    "s": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.s",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.1,
+          "line": 106,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 20.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.1,
+          "line": 73,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 20.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.1,
+          "line": 792,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 20.0
+        }
+      ]
+    },
+    "sc": {
+      "aliases": [],
+      "description": "Relative amplitude of a prompt scattering contribution that is added to the model decay.",
+      "flrcif_item_id": "_flr_chisurf_parameter.sc",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "scatter",
+        "prompt",
+        "amplitude"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "Generic",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 117,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": 100.0
+        }
+      ]
+    },
+    "slowf": {
+      "aliases": [],
+      "description": "Model parameter slowf used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.slowf",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "AVDecayModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/av_decay.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 113,
+          "module": "chisurf.core.models.tcspc.av_decay",
+          "ub": null
+        }
+      ]
+    },
+    "start": {
+      "aliases": [],
+      "description": "Start time (or channel) of the fit/convolution window.",
+      "flrcif_item_id": "_flr_chisurf_parameter.start",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "fit window",
+        "start"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 764,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "stop": {
+      "aliases": [],
+      "description": "Stop time (or channel) of the fit/convolution window.",
+      "flrcif_item_id": "_flr_chisurf_parameter.stop",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "fit window",
+        "stop"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 769,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "t0": {
+      "aliases": [],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.t0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [
+        "&tau;<sub>0</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "FRETParameters",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "&tau;<sub>0</sub>",
+          "lb": null,
+          "line": 72,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": null
+        }
+      ]
+    },
+    "tBg": {
+      "aliases": [],
+      "description": "Measurement time of the background acquisition.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tBg",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "background",
+        "measurement time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "Generic",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 128,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": 1000000000.0
+        }
+      ]
+    },
+    "tDead": {
+      "aliases": [],
+      "description": "Model parameter tDead used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tDead",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Corrections",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 377,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "tMeas": {
+      "aliases": [],
+      "description": "Measurement time of the main TCSPC experiment.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tMeas",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "measurement time",
+        "experiment"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "Generic",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 136,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": 1000000000.0
+        }
+      ]
+    },
+    "tau0": {
+      "aliases": [],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tau0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "AVDecayModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/av_decay.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 110,
+          "module": "chisurf.core.models.tcspc.av_decay",
+          "ub": null
+        }
+      ]
+    },
+    "tauD": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.tauD",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 175,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": null
+        }
+      ]
+    },
+    "tauT": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.tauT",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 1e-06,
+          "line": 570,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1.0
+        }
+      ]
+    },
+    "tcspc.Ddye": {
+      "aliases": [
+        "Ddye"
+      ],
+      "description": "Translational diffusion coefficient of the fluorescent dye.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_Ddye",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "diffusion",
+        "coefficient"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "Ddye"
+    },
+    "tcspc.Nq": {
+      "aliases": [
+        "Nq"
+      ],
+      "description": "Effective number or concentration of quenchers in the interaction volume.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_Nq",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "quenchers",
+        "concentration",
+        "quenching"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "Nq"
+    },
+    "tcspc.Rdye": {
+      "aliases": [
+        "Rdye"
+      ],
+      "description": "Characteristic interaction radius or distance parameter for the dye\u00113quencher system.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_Rdye",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "distance",
+        "interaction radius",
+        "quenching"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "Rdye"
+    },
+    "tcspc.Vav": {
+      "aliases": [
+        "Vav"
+      ],
+      "description": "Effective averaging volume used in the transient-quenching model.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_Vav",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "volume",
+        "quenching model"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "Vav"
+    },
+    "tcspc.a": {
+      "aliases": [
+        "a"
+      ],
+      "description": "Pre-exponential amplitude or population fraction of this decay component (dimensionless contribution to the overall time-resolved signal).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_a",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching Empirical"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "a"
+    },
+    "tcspc.a1": {
+      "aliases": [
+        "a1"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_a1",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "1-Lifetime",
+            "1-Lifetime, 1-Rate",
+            "2-Lifetimes",
+            "2-Lifetimes, 1-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate",
+            "3-Lifetimes",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "a1"
+    },
+    "tcspc.a2": {
+      "aliases": [
+        "a2"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_a2",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetimes",
+            "2-Lifetimes, 1-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate",
+            "3-Lifetimes",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "a2"
+    },
+    "tcspc.a3": {
+      "aliases": [
+        "a3"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_a3",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "3-Lifetimes"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "a3"
+    },
+    "tcspc.aD": {
+      "aliases": [
+        "aD"
+      ],
+      "description": "Fraction of donors subject to additional quenching or rate channels (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_aD",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "donor fraction",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "1-Lifetime, 1-Rate, 0-Rate"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "aD"
+    },
+    "tcspc.aDA": {
+      "aliases": [
+        "aDA"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_aDA",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "aDA"
+    },
+    "tcspc.aDAA": {
+      "aliases": [
+        "aDAA"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_aDAA",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "aDAA"
+    },
+    "tcspc.aDO": {
+      "aliases": [
+        "aDO"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_aDO",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "aDO"
+    },
+    "tcspc.ad1": {
+      "aliases": [
+        "ad1"
+      ],
+      "description": "Pre-exponential amplitude of this decay component (fractional contribution to the overall time-resolved signal; dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_ad1",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "ad1"
+    },
+    "tcspc.af1A": {
+      "aliases": [
+        "af1A"
+      ],
+      "description": "Pre-exponential amplitude or population fraction of this decay component (dimensionless contribution to the overall time-resolved signal).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_af1A",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "amplitude",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "af1A"
+    },
+    "tcspc.b": {
+      "aliases": [
+        "b"
+      ],
+      "description": "Empirical coefficient of the sqrt(time) term in the transient-quenching decay model; controls deviations from a pure single-exponential decay.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_b",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "empirical",
+        "transient quenching"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching Empirical"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "b"
+    },
+    "tcspc.kQ": {
+      "aliases": [
+        "kQ"
+      ],
+      "description": "Quenching rate constant added to the inverse lifetime (1/tau + kQ).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_kQ",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "quenching",
+        "rate constant"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "1-Lifetime, 1-Rate",
+            "1-Lifetime, 1-Rate, 0-Rate",
+            "2-Lifetimes, 1-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "kQ"
+    },
+    "tcspc.kf1A": {
+      "aliases": [
+        "kf1A"
+      ],
+      "description": "Effective FRET or energy-transfer rate constant for this channel.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_kf1A",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "rate constant",
+        "energy transfer"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "kf1A"
+    },
+    "tcspc.kf1AA": {
+      "aliases": [
+        "kf1AA"
+      ],
+      "description": "Effective FRET or energy-transfer rate constant for this channel.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_kf1AA",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "rate constant",
+        "energy transfer"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "kf1AA"
+    },
+    "tcspc.kf2A": {
+      "aliases": [
+        "kf2A"
+      ],
+      "description": "Effective FRET or energy-transfer rate constant for this channel.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_kf2A",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "FRET",
+        "rate constant",
+        "energy transfer"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "kf2A"
+    },
+    "tcspc.p0": {
+      "aliases": [
+        "p0"
+      ],
+      "description": "Overall normalization or intensity at time zero of the decay curve.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_p0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "normalization",
+        "initial intensity"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "1-Lifetime, 1-Rate, 0-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate",
+            "Transient-Quenching",
+            "Transient-Quenching Empirical"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "p0"
+    },
+    "tcspc.tau0": {
+      "aliases": [
+        "tau0"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_tau0",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "Transient-Quenching",
+            "Transient-Quenching 2-state"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "tau0"
+    },
+    "tcspc.tau1": {
+      "aliases": [
+        "tau1"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_tau1",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "1-Lifetime",
+            "1-Lifetime, 1-Rate",
+            "1-Lifetime, 1-Rate, 0-Rate",
+            "2-Lifetimes",
+            "2-Lifetimes, 1-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate",
+            "3-Lifetimes"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "tau1"
+    },
+    "tcspc.tau2": {
+      "aliases": [
+        "tau2"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_tau2",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetimes",
+            "2-Lifetimes, 1-Rate",
+            "2-Lifetimes, 1-Rate, 0-Rate",
+            "3-Lifetimes"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "tau2"
+    },
+    "tcspc.tau3": {
+      "aliases": [
+        "tau3"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_tau3",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "3-Lifetimes"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "tau3"
+    },
+    "tcspc.td1": {
+      "aliases": [
+        "td1"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_td1",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "td1"
+    },
+    "tcspc.td2": {
+      "aliases": [
+        "td2"
+      ],
+      "description": "Fluorescence lifetime or characteristic decay time of this component.",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_td2",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "decay time"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetime, 2-Rates, 1-Higher-order"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "td2"
+    },
+    "tcspc.xD": {
+      "aliases": [
+        "xD"
+      ],
+      "description": "Fraction of donors subject to additional quenching or rate channels (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.tcspc_xD",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "donor fraction",
+        "population fraction"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "family": "tcspc",
+          "models": [
+            "2-Lifetimes, 1-Rate, 0-Rate"
+          ],
+          "origin": "chisurf\\models\\tcspc\\tcspc.models.json"
+        }
+      ],
+      "symbol": "xD"
+    },
+    "td_max": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.td_max",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 55,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": null
+        }
+      ]
+    },
+    "td_min": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.td_min",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": true,
+          "class": "MaxEntFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 46,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": null
+        }
+      ]
+    },
+    "temp": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.temp",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.0,
+          "line": 136,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 100.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 821,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 200.0
+        }
+      ]
+    },
+    "ts": {
+      "aliases": [],
+      "description": "Additional temporal shift applied to align IRF and decay.",
+      "flrcif_item_id": "_flr_chisurf_parameter.ts",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "timeshift",
+        "alignment"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "Convolve",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": null,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 796,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "vh_bg_int": {
+      "aliases": [],
+      "description": "Background-corrected summed VH intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.",
+      "flrcif_item_id": "_flr_chisurf_parameter.vh_bg_int",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "background",
+        "VH"
+      ],
+      "label_texts": [
+        "VH<sub>bg-corr</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "VH<sub>bg-corr</sub>",
+          "lb": null,
+          "line": 514,
+          "module": "chisurf.gui.widgets.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "VH_bg-corr"
+    },
+    "vv_bg_int": {
+      "aliases": [],
+      "description": "Background-corrected summed VV intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.",
+      "flrcif_item_id": "_flr_chisurf_parameter.vv_bg_int",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "background",
+        "VV"
+      ],
+      "label_texts": [
+        "VV<sub>bg-corr</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/tcspc/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "VV<sub>bg-corr</sub>",
+          "lb": null,
+          "line": 500,
+          "module": "chisurf.gui.widgets.models.tcspc.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "VV_bg-corr"
+    },
+    "w": {
+      "aliases": [],
+      "description": "Model parameter w used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.w",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "WormLikeChainModel",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 821,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": null
+        }
+      ]
+    },
+    "w0": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.w0",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "DyeShapeFCSModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/dye_volume_widget.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 10.0,
+          "line": 116,
+          "module": "chisurf.gui.widgets.models.fcs.dye_volume_widget",
+          "ub": 5000.0
+        },
+        {
+          "bounds_on": true,
+          "class": "MaxEntRHModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/fcs/maxent_widget.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 10.0,
+          "line": 812,
+          "module": "chisurf.gui.widgets.models.fcs.maxent_widget",
+          "ub": 5000.0
+        }
+      ]
+    },
+    "w_r": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.w_r",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 260,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 100.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 552,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 100.0
+        }
+      ]
+    },
+    "w_z": {
+      "aliases": [],
+      "description": "",
+      "flrcif_item_id": "_flr_chisurf_parameter.w_z",
+      "keywords": [],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "RicsSimpleModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 269,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        },
+        {
+          "bounds_on": false,
+          "class": "RicsTripletModel",
+          "description_in_code": null,
+          "file": "chisurf/gui/widgets/models/rics/widgets.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": 0.001,
+          "line": 561,
+          "module": "chisurf.gui.widgets.models.rics.widgets",
+          "ub": 1000.0
+        }
+      ]
+    },
+    "win-size": {
+      "aliases": [],
+      "description": "Model parameter win-size used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.win_size",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "Corrections",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/nusiance.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 378,
+          "module": "chisurf.core.models.tcspc.nusiance",
+          "ub": null
+        }
+      ]
+    },
+    "xA": {
+      "aliases": [],
+      "description": "Model parameter xA used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.xA",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 122,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "xB": {
+      "aliases": [],
+      "description": "Model parameter xB used in TCSPC decay models. Refer to the specific model documentation for the detailed physical meaning.",
+      "flrcif_item_id": "_flr_chisurf_parameter.xB",
+      "keywords": [
+        "TCSPC",
+        "lifetime"
+      ],
+      "label_texts": [],
+      "sources": [
+        {
+          "bounds_on": null,
+          "class": "PDDEM",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/pddem.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": null,
+          "lb": null,
+          "line": 123,
+          "module": "chisurf.core.models.tcspc.pddem",
+          "ub": null
+        }
+      ]
+    },
+    "xDOnly": {
+      "aliases": [],
+      "description": "Fraction of donors subject to additional quenching or rate channels (dimensionless).",
+      "flrcif_item_id": "_flr_chisurf_parameter.xDOnly",
+      "keywords": [
+        "TCSPC",
+        "lifetime",
+        "donor fraction",
+        "population fraction"
+      ],
+      "label_texts": [
+        "x<sup>(D,0)</sup>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "FRETParameters",
+          "description_in_code": null,
+          "file": "chisurf/core/models/tcspc/fret.py",
+          "fixed": false,
+          "function": "__init__",
+          "label_text": "x<sup>(D,0)</sup>",
+          "lb": 0.0,
+          "line": 93,
+          "module": "chisurf.core.models.tcspc.fret",
+          "ub": 1.0
+        }
+      ]
+    }
+  },
+  "version": 1
+}

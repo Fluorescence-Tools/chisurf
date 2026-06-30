@@ -1,0 +1,140 @@
+{
+  "_meta": {
+    "description": "Supported file formats for chisurf experiment readers",
+    "version": 1,
+    "keys": {
+      "extensions": "List of file extensions (with leading dot)",
+      "name": "Human-readable format name",
+      "description": "Brief format description",
+      "tttrlib_container": "tttrlib container type for TTTR-based formats",
+      "reading_routine": "Reading routine passed to tttrlib.TTTR()",
+      "experiments": "List of compatible experiment reader types"
+    }
+  },
+  ".ptu": {
+    "name": "PicoQuant PTU",
+    "description": "PicoQuant unified TTTR file format",
+    "tttrlib_container": "PTU",
+    "reading_routine": "PTU",
+    "experiments": ["pda", "tcspc", "fcs", "pch", "rics"]
+  },
+  ".ht3": {
+    "name": "PicoQuant HT3",
+    "description": "PicoQuant HydraHarp TTTR mode",
+    "tttrlib_container": "HT3",
+    "reading_routine": "HT3",
+    "experiments": ["pda", "tcspc", "fcs", "pch", "rics"]
+  },
+  ".pt3": {
+    "name": "PicoQuant PT3",
+    "description": "PicoQuant TimeHarp 260 / Picoharp TTTR mode",
+    "tttrlib_container": null,
+    "reading_routine": "PT3",
+    "experiments": ["pda", "tcspc", "fcs"]
+  },
+  ".spc": {
+    "name": "Becker & Hickl SPC",
+    "description": "Becker & Hickl SPC-130 / SPC-600 series",
+    "tttrlib_container": "SPC-130",
+    "reading_routine": "SPC-130",
+    "experiments": ["pda", "tcspc", "fcs"]
+  },
+  ".sm": {
+    "name": "SM (single-molecule)",
+    "description": "Single-molecule data format (e.g. from SymPhoTime)",
+    "tttrlib_container": "SM",
+    "reading_routine": "SM",
+    "experiments": ["tcspc"]
+  },
+  ".h5": {
+    "name": "HDF5 / Photon-HDF5",
+    "description": "Hierarchical Data Format, often Photon-HDF5",
+    "tttrlib_container": "PHOTON-HDF5",
+    "reading_routine": "PHOTON-HDF5",
+    "experiments": ["pda", "tcspc", "fcs", "pch", "rics"]
+  },
+  ".hdf5": {
+    "name": "HDF5 / Photon-HDF5",
+    "description": "Hierarchical Data Format, often Photon-HDF5",
+    "tttrlib_container": "PHOTON-HDF5",
+    "reading_routine": "PHOTON-HDF5",
+    "experiments": ["pda", "tcspc", "fcs", "pch", "rics"]
+  },
+  ".raw": {
+    "name": "CZ-RAW",
+    "description": "Carl Zeiss raw data format",
+    "tttrlib_container": "CZ-RAW",
+    "reading_routine": "CZ-RAW",
+    "experiments": ["tcspc"]
+  },
+  ".phu": {
+    "name": "PicoQuant PHU",
+    "description": "PicoQuant PHU (routing / histogram) format",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": []
+  },
+  ".ht2": {
+    "name": "PicoQuant HT2",
+    "description": "PicoQuant HydraHarp histogram mode",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": []
+  },
+  ".t3r": {
+    "name": "PicoQuant T3R",
+    "description": "PicoQuant TimeHarp 260 routing (TTTR mode)",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["tcspc"]
+  },
+  ".t2r": {
+    "name": "PicoQuant T2R",
+    "description": "PicoQuant TimeHarp 260 routing (T2 mode)",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["tcspc"]
+  },
+  ".csv": {
+    "name": "CSV / Text",
+    "description": "Comma-separated values or general text data",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["fcs", "pda"]
+  },
+  ".txt": {
+    "name": "Text",
+    "description": "Plain text data file",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["fcs", "pda"]
+  },
+  ".spc132": {
+    "name": "Becker & Hickl SPC-132",
+    "description": "Becker & Hickl SPC-132 FIFO mode",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["tcspc"]
+  },
+  ".fcs": {
+    "name": "ISS FCS",
+    "description": "ISS FCS data file",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["fcs"]
+  },
+  ".thd": {
+    "name": "TCSPC histogram data",
+    "description": "Generic TCSPC histogram data",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["tcspc"]
+  },
+  ".pqres": {
+    "name": "PicoQuant result",
+    "description": "PicoQuant FLIM / FCS result file",
+    "tttrlib_container": null,
+    "reading_routine": null,
+    "experiments": ["tcspc"]
+  }
+}

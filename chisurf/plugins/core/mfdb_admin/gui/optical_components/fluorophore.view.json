@@ -1,0 +1,132 @@
+{
+  "sections": [
+    {
+      "type": "value",
+      "attr": "probe_id",
+      "label": "Probe ID",
+      "kind": "str",
+      "read_only": true,
+      "description": "MFDB probe identifier."
+    },
+    {
+      "type": "value",
+      "attr": "chromophore_name",
+      "label": "Name",
+      "kind": "str",
+      "read_only": true,
+      "description": "Chromophore / fluorophore name."
+    },
+    {
+      "type": "value",
+      "attr": "category",
+      "label": "Category",
+      "kind": "str",
+      "read_only": true,
+      "description": "Probe category (organic_dye, protein, nucleic_acid, ...)."
+    },
+    {
+      "type": "value",
+      "attr": "type_name",
+      "label": "Type",
+      "kind": "str",
+      "read_only": true,
+      "description": "Probe type."
+    },
+    {
+      "type": "value",
+      "attr": "abs_max",
+      "label": "Abs max",
+      "kind": "str",
+      "read_only": true,
+      "description": "Absorption maximum (nm)."
+    },
+    {
+      "type": "value",
+      "attr": "em_max",
+      "label": "Em max",
+      "kind": "str",
+      "read_only": true,
+      "description": "Emission maximum (nm)."
+    },
+    {
+      "type": "value",
+      "attr": "qy",
+      "label": "QY",
+      "kind": "str",
+      "read_only": true,
+      "description": "Fluorescence quantum yield."
+    },
+    {
+      "type": "value",
+      "attr": "ext_coeff",
+      "label": "Extinction",
+      "kind": "str",
+      "read_only": true,
+      "description": "Molar extinction coefficient (M^-1 cm^-1)."
+    },
+    {
+      "type": "value",
+      "attr": "lifetime",
+      "label": "Lifetime",
+      "kind": "str",
+      "read_only": true,
+      "description": "Fluorescence lifetime (ns)."
+    },
+    {
+      "type": "value",
+      "attr": "verification_status",
+      "label": "Status",
+      "kind": "str",
+      "read_only": true,
+      "description": "Verification status: unverified / needs_review / approved / rejected."
+    },
+    {
+      "type": "value",
+      "attr": "quality",
+      "label": "Quality",
+      "kind": "str",
+      "read_only": true,
+      "description": "Quality grade: unknown / low / medium / high."
+    },
+    {
+      "type": "value",
+      "attr": "source",
+      "label": "Source",
+      "kind": "str",
+      "read_only": true,
+      "description": "Provenance source (fpbase, atto, spectra_db, user, ...)."
+    },
+    {
+      "type": "value",
+      "attr": "source_ref",
+      "label": "Source ref",
+      "kind": "str",
+      "read_only": true,
+      "description": "Source reference / URL / accession."
+    },
+    {
+      "type": "value",
+      "attr": "verified_by",
+      "label": "Verified by",
+      "kind": "str",
+      "read_only": true,
+      "description": "User who approved/rejected this probe."
+    },
+    {
+      "type": "value",
+      "attr": "verified_at",
+      "label": "Verified at",
+      "kind": "str",
+      "read_only": true,
+      "description": "Timestamp of the verification decision."
+    },
+    {
+      "type": "value",
+      "attr": "description",
+      "label": "Description",
+      "kind": "str",
+      "read_only": true,
+      "description": "Free-text probe description."
+    }
+  ]
+}

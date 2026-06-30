@@ -1,0 +1,113 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "",
+      "collapsible": false,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "model_type",
+          "label": "Model",
+          "options": ["cone", "diffusion", "isotropic"],
+          "labels": ["WIC (Cone)", "DWT (Diffusion)", "Isotropic"],
+          "style": "radio",
+          "description": "Wobbling-in-Cone, Diffusion-with-Traps, or isotropic orientation model."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Anisotropy Parameters",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value", "attr": "r_0", "label": "r\u2080 (fund.)", "kind": "float",
+          "decimals": 3, "minimum": 0.0, "maximum": 0.4, "step": 0.01,
+          "description": "Fundamental anisotropy of the dye."
+        },
+        {
+          "type": "value", "attr": "r_Dinf", "label": "r_D\u221e", "kind": "float",
+          "decimals": 3, "minimum": 0.0, "maximum": 0.4, "step": 0.01,
+          "description": "Residual anisotropy of the donor without FRET."
+        },
+        {
+          "type": "value", "attr": "r_Ainf", "label": "r_A\u221e", "kind": "float",
+          "decimals": 3, "minimum": 0.0, "maximum": 0.4, "step": 0.01,
+          "description": "Residual anisotropy of direct-excited acceptor."
+        },
+        {
+          "type": "value", "attr": "r_ADinf", "label": "r_AD\u221e", "kind": "float",
+          "decimals": 3, "minimum": 0.0, "maximum": 0.4, "step": 0.001,
+          "description": "Residual anisotropy of FRET-sensitised acceptor."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Calculation Options",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value", "attr": "kappa2_true", "label": "true \u03ba\u00b2", "kind": "float",
+          "decimals": 3, "minimum": 0.0, "maximum": 4.0, "step": 0.01,
+          "description": "Assumed orientation factor used for R_app / R_DA."
+        },
+        {
+          "type": "value", "attr": "fret_efficiency", "label": "FRET E", "kind": "float",
+          "decimals": 3, "minimum": 0.001, "maximum": 0.999, "step": 0.01,
+          "description": "FRET efficiency (used for DWT model)."
+        },
+        {
+          "type": "value", "attr": "step", "label": "Step (\u00b0)", "kind": "float",
+          "decimals": 2, "minimum": 0.01, "maximum": 10.0, "step": 0.1,
+          "description": "Angular step size for the WIC grid search."
+        },
+        {
+          "type": "value", "attr": "n_bins", "label": "Bins", "kind": "int",
+          "minimum": 5, "maximum": 999, "step": 1,
+          "description": "Number of bins in the \u03ba\u00b2 histogram."
+        },
+        {
+          "type": "toggle", "attr": "rAD_known", "label": "r_AD known (use \u03b4)",
+          "description": "When checked, use the \u03b4 angle computed from residual anisotropies."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Results",
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "value", "attr": "k2_mean", "label": "Mean \u03ba\u00b2", "kind": "float",
+          "decimals": 4, "read_only": true
+        },
+        {
+          "type": "value", "attr": "k2_sd", "label": "SD \u03ba\u00b2", "kind": "float",
+          "decimals": 4, "read_only": true
+        },
+        {
+          "type": "value", "attr": "Rapp_mean", "label": "Mean R_app/R_DA", "kind": "float",
+          "decimals": 4, "read_only": true
+        },
+        {
+          "type": "value", "attr": "RappSD", "label": "SD R_app/R_DA", "kind": "float",
+          "decimals": 4, "read_only": true
+        },
+        {
+          "type": "value", "attr": "delta_deg", "label": "\u03b4 (deg)", "kind": "float",
+          "decimals": 2, "read_only": true
+        }
+      ]
+    },
+    {
+      "type": "plot",
+      "source": "kappa2_plot_series",
+      "x_label": "\u03ba\u00b2",
+      "y_label": "p(\u03ba\u00b2)",
+      "height": 200,
+      "legend": false
+    }
+  ]
+}
