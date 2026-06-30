@@ -40,13 +40,14 @@ emcee = "*"
 pyopengl = "*"
 pytables = "*"
 guidata = "*"
-guiqwt = "*"
 python-docx = "*"
 qtconsole = "*"
 hmmlearn = "*"
 latexify-py = "*"
 pygments = "*"
-pyarrow = "*"
+# pyarrow-core: only arrays + compute + csv are used (ndxplorer); avoids the
+# heavy libarrow-all components. Keep in sync with rattler-recipe/recipe.yaml.
+pyarrow-core = "*"
 boost-histogram = "*"
 sqlalchemy = ">=2.0"
 

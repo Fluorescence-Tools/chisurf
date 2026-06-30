@@ -48,8 +48,11 @@ pipeline on every platform; only the final wrap differs:
    `labellib`, `latexify-py`, `imp-tricks` (from `modules/imp-tricks` if present,
    else cloned from GitLab), the local `modules/*` (chinet/clsmview/ndxplorer/
    quest), and `tttrlib` (conda on mac/linux, pip on Windows).
-3. `strip_bloat()` — slim the env: drop unused Qt5 modules, strip debug symbols,
-   remove build tools, test suites, headers, `pip`/`wheel`, `__pycache__`.
+3. `strip_bloat()` — slim the env: drop unused Qt5 modules, remove build tools,
+   dependency test suites, headers, `pip`/`wheel`, `__pycache__`; trim ChiSurf's
+   own test data, bundled examples and structural-potential source artifacts; and
+   gzip the bundled mmCIF dictionaries (`.dic` → `.dic.gz`, read transparently at
+   runtime). Runs in an isolated child process, so a failure only warns.
 4. Wrap into the platform installer.
 
 Useful flags: `--no-build` (reuse an existing conda package), `--audit` (print
@@ -64,3 +67,7 @@ the largest dirs in the runtime env), `--platform {linux,macos,windows}`.
 ### Versioning
 - Override with `CHISURF_VERSION` (PEP 440). If unset, the version is derived
   from git tags by `rattler-recipe/generate_version.py` (falls back to `YY.devN`).
+- The build freezes the resolved version into `chisurf/core/_version.py` (via
+  `setup.py`), so the installed app reads a static string instead of spawning
+  git on every `import chisurf`. Editable/`develop` installs skip this and stay
+  git-derived (see `chisurf/core/info.py`).
