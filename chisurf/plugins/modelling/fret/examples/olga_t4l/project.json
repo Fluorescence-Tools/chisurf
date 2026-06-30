@@ -1,0 +1,49 @@
+{
+  "project_format_version": 4,
+  "meta": {
+    "name": "olga_t4l_example",
+    "description": "Olga T4L MD trajectory screening example project",
+    "created": "2026-06-08T08:00:00"
+  },
+  "datasets": {},
+  "experiments": {},
+  "fits": [],
+  "links": [],
+  "ui": {
+    "fret_dock_wizard": {
+      "fps_json_file": "screening_tutorial.fps.json",
+      "reference_pdb": "3GUN_NMSim_cl-rep-001.pdb",
+      "docking": {
+        "fps_path": "",
+        "pdb_path": "",
+        "out_path": "dock_out",
+        "max_iter": 50000,
+        "max_force": 100.0,
+        "n_trials": 3,
+        "k_clash": 10.0
+      },
+      "screening": {
+        "fps_path": "screening_tutorial.fps.json",
+        "pdb_dir": ".",
+        "out_path": "screening.csv",
+        "n_threads": 4
+      },
+      "evaluator": {
+        "fps_path": "screening_tutorial.fps.json",
+        "input_type": "MDTraj Trajectory",
+        "input_path": "3GUN_NMSim_cl-rep-001.pdb",
+        "traj_path": "3GUN_NMSim_cl-rep_894.dcd",
+        "out_path": "evaluation_results.csv",
+        "backend": "auto"
+      },
+      "pair_select": {
+        "fps_path": "pair_selection_tutorial.fps.json",
+        "pdb_dir": ".",
+        "out_path": "pair_selection_report.txt",
+        "max_pairs": 3,
+        "err_spin": 5.0,
+        "backend": "auto"
+      }
+    }
+  }
+}

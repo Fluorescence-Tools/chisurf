@@ -1,0 +1,86 @@
+{
+    "AV File": {
+        "D36_AV": {
+            "only_shell": false,
+            "openDX": false,
+            "position_name": "D36",
+            "write_dir": ""
+        }
+    },
+    "Distances": {
+        "36_132": {
+            "Forster_radius": 52,
+            "distance": 37.6,
+            "distance_type": "RDAMean",
+            "error_neg": 5.8,
+            "error_pos": 5.8,
+            "position1_name": "D36",
+            "position2_name": "A132"
+        },
+        "60_132": {
+            "Forster_radius": 52,
+            "distance": 49.2,
+            "distance_type": "RDAMean",
+            "error_neg": 5.3,
+            "error_pos": 5.3,
+            "position1_name": "D60",
+            "position2_name": "A132"
+        }
+    },
+    "Positions": {
+        "A132": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 22,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASN",
+            "residue_seq_number": 132,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": ""
+        },
+        "D36": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 20,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 36,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": ""
+        },
+        "D60": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 20,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LYS",
+            "residue_seq_number": 60,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": ""
+        }
+    }
+}

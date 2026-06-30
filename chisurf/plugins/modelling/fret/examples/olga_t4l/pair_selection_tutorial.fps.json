@@ -1,0 +1,3240 @@
+{
+    "Mean FRET Efficiencies": {
+        "A115_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A115",
+            "position2_name": "A116"
+        },
+        "A115_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A115",
+            "position2_name": "A117"
+        },
+        "A115_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A115",
+            "position2_name": "A118"
+        },
+        "A115_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A115",
+            "position2_name": "A119"
+        },
+        "A115_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A115",
+            "position2_name": "A120"
+        },
+        "A116_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A116",
+            "position2_name": "A117"
+        },
+        "A116_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A116",
+            "position2_name": "A118"
+        },
+        "A116_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A116",
+            "position2_name": "A119"
+        },
+        "A116_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A116",
+            "position2_name": "A120"
+        },
+        "A117_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A117",
+            "position2_name": "A118"
+        },
+        "A117_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A117",
+            "position2_name": "A119"
+        },
+        "A117_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A117",
+            "position2_name": "A120"
+        },
+        "A118_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A118",
+            "position2_name": "A119"
+        },
+        "A118_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A118",
+            "position2_name": "A120"
+        },
+        "A119_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A119",
+            "position2_name": "A120"
+        },
+        "A35_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A115"
+        },
+        "A35_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A116"
+        },
+        "A35_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A117"
+        },
+        "A35_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A118"
+        },
+        "A35_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A119"
+        },
+        "A35_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A120"
+        },
+        "A35_A36": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A36"
+        },
+        "A35_A37": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A37"
+        },
+        "A35_A38": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A38"
+        },
+        "A35_A39": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A39"
+        },
+        "A35_A40": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A40"
+        },
+        "A35_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A41"
+        },
+        "A35_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A42"
+        },
+        "A35_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A43"
+        },
+        "A35_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A44"
+        },
+        "A35_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A45"
+        },
+        "A35_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A46"
+        },
+        "A35_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A47"
+        },
+        "A35_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A48"
+        },
+        "A35_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A49"
+        },
+        "A35_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A50"
+        },
+        "A35_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A85"
+        },
+        "A35_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A86"
+        },
+        "A35_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A87"
+        },
+        "A35_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A88"
+        },
+        "A35_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A89"
+        },
+        "A35_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A90"
+        },
+        "A35_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A91"
+        },
+        "A35_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A92"
+        },
+        "A35_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A93"
+        },
+        "A35_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A94"
+        },
+        "A35_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A35",
+            "position2_name": "A95"
+        },
+        "A36_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A115"
+        },
+        "A36_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A116"
+        },
+        "A36_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A117"
+        },
+        "A36_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A118"
+        },
+        "A36_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A119"
+        },
+        "A36_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A120"
+        },
+        "A36_A37": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A37"
+        },
+        "A36_A38": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A38"
+        },
+        "A36_A39": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A39"
+        },
+        "A36_A40": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A40"
+        },
+        "A36_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A41"
+        },
+        "A36_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A42"
+        },
+        "A36_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A43"
+        },
+        "A36_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A44"
+        },
+        "A36_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A45"
+        },
+        "A36_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A46"
+        },
+        "A36_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A47"
+        },
+        "A36_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A48"
+        },
+        "A36_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A49"
+        },
+        "A36_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A50"
+        },
+        "A36_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A85"
+        },
+        "A36_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A86"
+        },
+        "A36_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A87"
+        },
+        "A36_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A88"
+        },
+        "A36_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A89"
+        },
+        "A36_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A90"
+        },
+        "A36_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A91"
+        },
+        "A36_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A92"
+        },
+        "A36_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A93"
+        },
+        "A36_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A94"
+        },
+        "A36_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A36",
+            "position2_name": "A95"
+        },
+        "A37_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A115"
+        },
+        "A37_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A116"
+        },
+        "A37_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A117"
+        },
+        "A37_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A118"
+        },
+        "A37_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A119"
+        },
+        "A37_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A120"
+        },
+        "A37_A38": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A38"
+        },
+        "A37_A39": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A39"
+        },
+        "A37_A40": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A40"
+        },
+        "A37_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A41"
+        },
+        "A37_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A42"
+        },
+        "A37_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A43"
+        },
+        "A37_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A44"
+        },
+        "A37_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A45"
+        },
+        "A37_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A46"
+        },
+        "A37_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A47"
+        },
+        "A37_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A48"
+        },
+        "A37_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A49"
+        },
+        "A37_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A50"
+        },
+        "A37_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A85"
+        },
+        "A37_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A86"
+        },
+        "A37_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A87"
+        },
+        "A37_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A88"
+        },
+        "A37_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A89"
+        },
+        "A37_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A90"
+        },
+        "A37_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A91"
+        },
+        "A37_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A92"
+        },
+        "A37_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A93"
+        },
+        "A37_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A94"
+        },
+        "A37_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A37",
+            "position2_name": "A95"
+        },
+        "A38_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A115"
+        },
+        "A38_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A116"
+        },
+        "A38_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A117"
+        },
+        "A38_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A118"
+        },
+        "A38_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A119"
+        },
+        "A38_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A120"
+        },
+        "A38_A39": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A39"
+        },
+        "A38_A40": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A40"
+        },
+        "A38_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A41"
+        },
+        "A38_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A42"
+        },
+        "A38_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A43"
+        },
+        "A38_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A44"
+        },
+        "A38_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A45"
+        },
+        "A38_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A46"
+        },
+        "A38_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A47"
+        },
+        "A38_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A48"
+        },
+        "A38_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A49"
+        },
+        "A38_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A50"
+        },
+        "A38_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A85"
+        },
+        "A38_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A86"
+        },
+        "A38_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A87"
+        },
+        "A38_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A88"
+        },
+        "A38_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A89"
+        },
+        "A38_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A90"
+        },
+        "A38_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A91"
+        },
+        "A38_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A92"
+        },
+        "A38_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A93"
+        },
+        "A38_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A94"
+        },
+        "A38_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A38",
+            "position2_name": "A95"
+        },
+        "A39_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A115"
+        },
+        "A39_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A116"
+        },
+        "A39_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A117"
+        },
+        "A39_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A118"
+        },
+        "A39_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A119"
+        },
+        "A39_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A120"
+        },
+        "A39_A40": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A40"
+        },
+        "A39_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A41"
+        },
+        "A39_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A42"
+        },
+        "A39_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A43"
+        },
+        "A39_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A44"
+        },
+        "A39_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A45"
+        },
+        "A39_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A46"
+        },
+        "A39_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A47"
+        },
+        "A39_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A48"
+        },
+        "A39_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A49"
+        },
+        "A39_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A50"
+        },
+        "A39_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A85"
+        },
+        "A39_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A86"
+        },
+        "A39_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A87"
+        },
+        "A39_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A88"
+        },
+        "A39_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A89"
+        },
+        "A39_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A90"
+        },
+        "A39_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A91"
+        },
+        "A39_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A92"
+        },
+        "A39_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A93"
+        },
+        "A39_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A94"
+        },
+        "A39_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A39",
+            "position2_name": "A95"
+        },
+        "A40_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A115"
+        },
+        "A40_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A116"
+        },
+        "A40_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A117"
+        },
+        "A40_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A118"
+        },
+        "A40_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A119"
+        },
+        "A40_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A120"
+        },
+        "A40_A41": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A41"
+        },
+        "A40_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A42"
+        },
+        "A40_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A43"
+        },
+        "A40_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A44"
+        },
+        "A40_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A45"
+        },
+        "A40_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A46"
+        },
+        "A40_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A47"
+        },
+        "A40_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A48"
+        },
+        "A40_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A49"
+        },
+        "A40_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A50"
+        },
+        "A40_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A85"
+        },
+        "A40_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A86"
+        },
+        "A40_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A87"
+        },
+        "A40_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A88"
+        },
+        "A40_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A89"
+        },
+        "A40_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A90"
+        },
+        "A40_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A91"
+        },
+        "A40_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A92"
+        },
+        "A40_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A93"
+        },
+        "A40_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A94"
+        },
+        "A40_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A40",
+            "position2_name": "A95"
+        },
+        "A41_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A115"
+        },
+        "A41_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A116"
+        },
+        "A41_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A117"
+        },
+        "A41_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A118"
+        },
+        "A41_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A119"
+        },
+        "A41_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A120"
+        },
+        "A41_A42": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A42"
+        },
+        "A41_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A43"
+        },
+        "A41_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A44"
+        },
+        "A41_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A45"
+        },
+        "A41_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A46"
+        },
+        "A41_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A47"
+        },
+        "A41_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A48"
+        },
+        "A41_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A49"
+        },
+        "A41_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A50"
+        },
+        "A41_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A85"
+        },
+        "A41_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A86"
+        },
+        "A41_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A87"
+        },
+        "A41_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A88"
+        },
+        "A41_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A89"
+        },
+        "A41_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A90"
+        },
+        "A41_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A91"
+        },
+        "A41_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A92"
+        },
+        "A41_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A93"
+        },
+        "A41_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A94"
+        },
+        "A41_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A41",
+            "position2_name": "A95"
+        },
+        "A42_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A115"
+        },
+        "A42_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A116"
+        },
+        "A42_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A117"
+        },
+        "A42_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A118"
+        },
+        "A42_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A119"
+        },
+        "A42_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A120"
+        },
+        "A42_A43": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A43"
+        },
+        "A42_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A44"
+        },
+        "A42_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A45"
+        },
+        "A42_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A46"
+        },
+        "A42_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A47"
+        },
+        "A42_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A48"
+        },
+        "A42_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A49"
+        },
+        "A42_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A50"
+        },
+        "A42_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A85"
+        },
+        "A42_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A86"
+        },
+        "A42_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A87"
+        },
+        "A42_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A88"
+        },
+        "A42_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A89"
+        },
+        "A42_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A90"
+        },
+        "A42_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A91"
+        },
+        "A42_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A92"
+        },
+        "A42_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A93"
+        },
+        "A42_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A94"
+        },
+        "A42_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A42",
+            "position2_name": "A95"
+        },
+        "A43_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A115"
+        },
+        "A43_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A116"
+        },
+        "A43_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A117"
+        },
+        "A43_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A118"
+        },
+        "A43_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A119"
+        },
+        "A43_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A120"
+        },
+        "A43_A44": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A44"
+        },
+        "A43_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A45"
+        },
+        "A43_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A46"
+        },
+        "A43_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A47"
+        },
+        "A43_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A48"
+        },
+        "A43_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A49"
+        },
+        "A43_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A50"
+        },
+        "A43_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A85"
+        },
+        "A43_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A86"
+        },
+        "A43_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A87"
+        },
+        "A43_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A88"
+        },
+        "A43_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A89"
+        },
+        "A43_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A90"
+        },
+        "A43_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A91"
+        },
+        "A43_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A92"
+        },
+        "A43_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A93"
+        },
+        "A43_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A94"
+        },
+        "A43_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A43",
+            "position2_name": "A95"
+        },
+        "A44_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A115"
+        },
+        "A44_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A116"
+        },
+        "A44_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A117"
+        },
+        "A44_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A118"
+        },
+        "A44_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A119"
+        },
+        "A44_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A120"
+        },
+        "A44_A45": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A45"
+        },
+        "A44_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A46"
+        },
+        "A44_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A47"
+        },
+        "A44_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A48"
+        },
+        "A44_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A49"
+        },
+        "A44_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A50"
+        },
+        "A44_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A85"
+        },
+        "A44_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A86"
+        },
+        "A44_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A87"
+        },
+        "A44_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A88"
+        },
+        "A44_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A89"
+        },
+        "A44_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A90"
+        },
+        "A44_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A91"
+        },
+        "A44_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A92"
+        },
+        "A44_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A93"
+        },
+        "A44_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A94"
+        },
+        "A44_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A44",
+            "position2_name": "A95"
+        },
+        "A45_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A115"
+        },
+        "A45_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A116"
+        },
+        "A45_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A117"
+        },
+        "A45_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A118"
+        },
+        "A45_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A119"
+        },
+        "A45_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A120"
+        },
+        "A45_A46": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A46"
+        },
+        "A45_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A47"
+        },
+        "A45_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A48"
+        },
+        "A45_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A49"
+        },
+        "A45_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A50"
+        },
+        "A45_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A85"
+        },
+        "A45_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A86"
+        },
+        "A45_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A87"
+        },
+        "A45_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A88"
+        },
+        "A45_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A89"
+        },
+        "A45_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A90"
+        },
+        "A45_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A91"
+        },
+        "A45_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A92"
+        },
+        "A45_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A93"
+        },
+        "A45_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A94"
+        },
+        "A45_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A45",
+            "position2_name": "A95"
+        },
+        "A46_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A115"
+        },
+        "A46_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A116"
+        },
+        "A46_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A117"
+        },
+        "A46_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A118"
+        },
+        "A46_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A119"
+        },
+        "A46_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A120"
+        },
+        "A46_A47": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A47"
+        },
+        "A46_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A48"
+        },
+        "A46_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A49"
+        },
+        "A46_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A50"
+        },
+        "A46_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A85"
+        },
+        "A46_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A86"
+        },
+        "A46_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A87"
+        },
+        "A46_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A88"
+        },
+        "A46_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A89"
+        },
+        "A46_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A90"
+        },
+        "A46_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A91"
+        },
+        "A46_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A92"
+        },
+        "A46_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A93"
+        },
+        "A46_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A94"
+        },
+        "A46_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A46",
+            "position2_name": "A95"
+        },
+        "A47_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A115"
+        },
+        "A47_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A116"
+        },
+        "A47_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A117"
+        },
+        "A47_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A118"
+        },
+        "A47_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A119"
+        },
+        "A47_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A120"
+        },
+        "A47_A48": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A48"
+        },
+        "A47_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A49"
+        },
+        "A47_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A50"
+        },
+        "A47_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A85"
+        },
+        "A47_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A86"
+        },
+        "A47_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A87"
+        },
+        "A47_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A88"
+        },
+        "A47_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A89"
+        },
+        "A47_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A90"
+        },
+        "A47_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A91"
+        },
+        "A47_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A92"
+        },
+        "A47_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A93"
+        },
+        "A47_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A94"
+        },
+        "A47_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A47",
+            "position2_name": "A95"
+        },
+        "A48_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A115"
+        },
+        "A48_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A116"
+        },
+        "A48_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A117"
+        },
+        "A48_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A118"
+        },
+        "A48_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A119"
+        },
+        "A48_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A120"
+        },
+        "A48_A49": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A49"
+        },
+        "A48_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A50"
+        },
+        "A48_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A85"
+        },
+        "A48_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A86"
+        },
+        "A48_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A87"
+        },
+        "A48_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A88"
+        },
+        "A48_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A89"
+        },
+        "A48_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A90"
+        },
+        "A48_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A91"
+        },
+        "A48_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A92"
+        },
+        "A48_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A93"
+        },
+        "A48_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A94"
+        },
+        "A48_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A48",
+            "position2_name": "A95"
+        },
+        "A49_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A115"
+        },
+        "A49_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A116"
+        },
+        "A49_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A117"
+        },
+        "A49_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A118"
+        },
+        "A49_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A119"
+        },
+        "A49_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A120"
+        },
+        "A49_A50": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A50"
+        },
+        "A49_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A85"
+        },
+        "A49_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A86"
+        },
+        "A49_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A87"
+        },
+        "A49_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A88"
+        },
+        "A49_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A89"
+        },
+        "A49_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A90"
+        },
+        "A49_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A91"
+        },
+        "A49_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A92"
+        },
+        "A49_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A93"
+        },
+        "A49_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A94"
+        },
+        "A49_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A49",
+            "position2_name": "A95"
+        },
+        "A50_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A115"
+        },
+        "A50_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A116"
+        },
+        "A50_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A117"
+        },
+        "A50_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A118"
+        },
+        "A50_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A119"
+        },
+        "A50_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A120"
+        },
+        "A50_A85": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A85"
+        },
+        "A50_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A86"
+        },
+        "A50_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A87"
+        },
+        "A50_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A88"
+        },
+        "A50_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A89"
+        },
+        "A50_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A90"
+        },
+        "A50_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A91"
+        },
+        "A50_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A92"
+        },
+        "A50_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A93"
+        },
+        "A50_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A94"
+        },
+        "A50_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A50",
+            "position2_name": "A95"
+        },
+        "A85_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A115"
+        },
+        "A85_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A116"
+        },
+        "A85_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A117"
+        },
+        "A85_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A118"
+        },
+        "A85_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A119"
+        },
+        "A85_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A120"
+        },
+        "A85_A86": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A86"
+        },
+        "A85_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A87"
+        },
+        "A85_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A88"
+        },
+        "A85_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A89"
+        },
+        "A85_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A90"
+        },
+        "A85_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A91"
+        },
+        "A85_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A92"
+        },
+        "A85_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A93"
+        },
+        "A85_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A94"
+        },
+        "A85_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A85",
+            "position2_name": "A95"
+        },
+        "A86_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A115"
+        },
+        "A86_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A116"
+        },
+        "A86_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A117"
+        },
+        "A86_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A118"
+        },
+        "A86_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A119"
+        },
+        "A86_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A120"
+        },
+        "A86_A87": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A87"
+        },
+        "A86_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A88"
+        },
+        "A86_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A89"
+        },
+        "A86_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A90"
+        },
+        "A86_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A91"
+        },
+        "A86_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A92"
+        },
+        "A86_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A93"
+        },
+        "A86_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A94"
+        },
+        "A86_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A86",
+            "position2_name": "A95"
+        },
+        "A87_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A115"
+        },
+        "A87_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A116"
+        },
+        "A87_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A117"
+        },
+        "A87_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A118"
+        },
+        "A87_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A119"
+        },
+        "A87_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A120"
+        },
+        "A87_A88": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A88"
+        },
+        "A87_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A89"
+        },
+        "A87_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A90"
+        },
+        "A87_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A91"
+        },
+        "A87_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A92"
+        },
+        "A87_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A93"
+        },
+        "A87_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A94"
+        },
+        "A87_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A87",
+            "position2_name": "A95"
+        },
+        "A88_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A115"
+        },
+        "A88_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A116"
+        },
+        "A88_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A117"
+        },
+        "A88_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A118"
+        },
+        "A88_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A119"
+        },
+        "A88_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A120"
+        },
+        "A88_A89": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A89"
+        },
+        "A88_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A90"
+        },
+        "A88_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A91"
+        },
+        "A88_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A92"
+        },
+        "A88_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A93"
+        },
+        "A88_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A94"
+        },
+        "A88_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A88",
+            "position2_name": "A95"
+        },
+        "A89_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A115"
+        },
+        "A89_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A116"
+        },
+        "A89_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A117"
+        },
+        "A89_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A118"
+        },
+        "A89_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A119"
+        },
+        "A89_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A120"
+        },
+        "A89_A90": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A90"
+        },
+        "A89_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A91"
+        },
+        "A89_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A92"
+        },
+        "A89_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A93"
+        },
+        "A89_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A94"
+        },
+        "A89_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A89",
+            "position2_name": "A95"
+        },
+        "A90_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A115"
+        },
+        "A90_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A116"
+        },
+        "A90_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A117"
+        },
+        "A90_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A118"
+        },
+        "A90_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A119"
+        },
+        "A90_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A120"
+        },
+        "A90_A91": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A91"
+        },
+        "A90_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A92"
+        },
+        "A90_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A93"
+        },
+        "A90_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A94"
+        },
+        "A90_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A90",
+            "position2_name": "A95"
+        },
+        "A91_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A115"
+        },
+        "A91_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A116"
+        },
+        "A91_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A117"
+        },
+        "A91_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A118"
+        },
+        "A91_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A119"
+        },
+        "A91_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A120"
+        },
+        "A91_A92": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A92"
+        },
+        "A91_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A93"
+        },
+        "A91_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A94"
+        },
+        "A91_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A91",
+            "position2_name": "A95"
+        },
+        "A92_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A115"
+        },
+        "A92_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A116"
+        },
+        "A92_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A117"
+        },
+        "A92_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A118"
+        },
+        "A92_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A119"
+        },
+        "A92_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A120"
+        },
+        "A92_A93": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A93"
+        },
+        "A92_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A94"
+        },
+        "A92_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A92",
+            "position2_name": "A95"
+        },
+        "A93_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A115"
+        },
+        "A93_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A116"
+        },
+        "A93_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A117"
+        },
+        "A93_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A118"
+        },
+        "A93_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A119"
+        },
+        "A93_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A120"
+        },
+        "A93_A94": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A94"
+        },
+        "A93_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A93",
+            "position2_name": "A95"
+        },
+        "A94_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A115"
+        },
+        "A94_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A116"
+        },
+        "A94_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A117"
+        },
+        "A94_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A118"
+        },
+        "A94_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A119"
+        },
+        "A94_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A120"
+        },
+        "A94_A95": {
+            "Forster_radius": 52,
+            "position1_name": "A94",
+            "position2_name": "A95"
+        },
+        "A95_A115": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A115"
+        },
+        "A95_A116": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A116"
+        },
+        "A95_A117": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A117"
+        },
+        "A95_A118": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A118"
+        },
+        "A95_A119": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A119"
+        },
+        "A95_A120": {
+            "Forster_radius": 52,
+            "position1_name": "A95",
+            "position2_name": "A120"
+        }
+    },
+    "Positions": {
+        "A115": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "THR",
+            "residue_seq_number": 115,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 115 and not name CA CB C N O"
+        },
+        "A116": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASN",
+            "residue_seq_number": 116,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 116 and not name CA CB C N O"
+        },
+        "A117": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 117,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 117 and not name CA CB C N O"
+        },
+        "A118": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LEU",
+            "residue_seq_number": 118,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 118 and not name CA CB C N O"
+        },
+        "A119": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ARG",
+            "residue_seq_number": 119,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 119 and not name CA CB C N O"
+        },
+        "A120": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "MET",
+            "residue_seq_number": 120,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 120 and not name CA CB C N O"
+        },
+        "A35": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LYS",
+            "residue_seq_number": 35,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 35 and not name CA CB C N O"
+        },
+        "A36": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 36,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 36 and not name CA CB C N O"
+        },
+        "A37": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "PRO",
+            "residue_seq_number": 37,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 37 and not name CA CB C N O"
+        },
+        "A38": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 38,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 38 and not name CA CB C N O"
+        },
+        "A39": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LEU",
+            "residue_seq_number": 39,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 39 and not name CA CB C N O"
+        },
+        "A40": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASN",
+            "residue_seq_number": 40,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 40 and not name CA CB C N O"
+        },
+        "A41": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ALA",
+            "residue_seq_number": 41,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 41 and not name CA CB C N O"
+        },
+        "A42": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ALA",
+            "residue_seq_number": 42,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 42 and not name CA CB C N O"
+        },
+        "A43": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LYS",
+            "residue_seq_number": 43,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 43 and not name CA CB C N O"
+        },
+        "A44": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 44,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 44 and not name CA CB C N O"
+        },
+        "A45": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "GLU",
+            "residue_seq_number": 45,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 45 and not name CA CB C N O"
+        },
+        "A46": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LEU",
+            "residue_seq_number": 46,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 46 and not name CA CB C N O"
+        },
+        "A47": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASP",
+            "residue_seq_number": 47,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 47 and not name CA CB C N O"
+        },
+        "A48": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LYS",
+            "residue_seq_number": 48,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 48 and not name CA CB C N O"
+        },
+        "A49": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ALA",
+            "residue_seq_number": 49,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 49 and not name CA CB C N O"
+        },
+        "A50": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ILE",
+            "residue_seq_number": 50,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 50 and not name CA CB C N O"
+        },
+        "A85": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LYS",
+            "residue_seq_number": 85,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 85 and not name CA CB C N O"
+        },
+        "A86": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "PRO",
+            "residue_seq_number": 86,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 86 and not name CA CB C N O"
+        },
+        "A87": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "VAL",
+            "residue_seq_number": 87,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 87 and not name CA CB C N O"
+        },
+        "A88": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "TYR",
+            "residue_seq_number": 88,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 88 and not name CA CB C N O"
+        },
+        "A89": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASP",
+            "residue_seq_number": 89,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 89 and not name CA CB C N O"
+        },
+        "A90": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "SER",
+            "residue_seq_number": 90,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 90 and not name CA CB C N O"
+        },
+        "A91": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "LEU",
+            "residue_seq_number": 91,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 91 and not name CA CB C N O"
+        },
+        "A92": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ASP",
+            "residue_seq_number": 92,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 92 and not name CA CB C N O"
+        },
+        "A93": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ALA",
+            "residue_seq_number": 93,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 93 and not name CA CB C N O"
+        },
+        "A94": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "VAL",
+            "residue_seq_number": 94,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 94 and not name CA CB C N O"
+        },
+        "A95": {
+            "allowed_sphere_radius": 1,
+            "anchor_atoms": "",
+            "atom_name": "CB",
+            "chain_identifier": "A",
+            "chain_weighting": false,
+            "contact_volume_thickness": 0,
+            "contact_volume_trapped_fraction": -1,
+            "linker_length": 21,
+            "linker_width": 2,
+            "min_sphere_volume_fraction": 0,
+            "radius1": 3.5,
+            "residue_name": "ARG",
+            "residue_seq_number": 95,
+            "simulation_grid_resolution": 0.9,
+            "simulation_type": "AV1",
+            "strip_mask": "chain A and resid 95 and not name CA CB C N O"
+        }
+    }
+}

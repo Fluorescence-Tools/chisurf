@@ -1,0 +1,114 @@
+{
+  "id": "clsm",
+  "version": "2.0.0",
+  "display_name": "Imaging:CLSM-Draw",
+  "description": "Create CLSM-TTTR image representations, select pixels interactively, and export fluorescence-decay histograms.",
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Imaging",
+    "Lifetime"
+  ],
+  "icon": "icon.png",
+  "state_namespace": "clsm_draw",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.clsm.gui.tool:CLSMPixelSelect",
+    "cli": "clsm=chisurf.plugins.microscopy.clsm.cli:cli",
+    "services": "chisurf.plugins.microscopy.clsm.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "clsm.setups.list",
+      "summary": "List built-in CLSM acquisition-setup presets.",
+      "params_schema": {"type": "object"},
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "clsm.image.info",
+      "summary": "Load a TTTR file, build a CLSM image and report its dimensions.",
+      "params_schema": {
+        "type": "object",
+        "required": ["filename"],
+        "properties": {
+          "filename": {"type": "string"},
+          "setup_name": {"type": "string"},
+          "channels": {"type": "array", "items": {"type": "integer"}}
+        }
+      },
+      "result_schema": {"type": "object"},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "clsm.image.representation",
+      "summary": "Compute an intensity / mean-micro-time image representation.",
+      "params_schema": {
+        "type": "object",
+        "required": ["filename"],
+        "properties": {
+          "filename": {"type": "string"},
+          "image_type": {"type": "string"},
+          "n_ph_min": {"type": "integer"},
+          "frame_mode": {"type": "string"},
+          "output_path": {"type": "string"}
+        }
+      },
+      "result_schema": {"type": "object"},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "clsm.decay.extract",
+      "summary": "Extract a decay histogram from a pixel selection.",
+      "params_schema": {
+        "type": "object",
+        "required": ["filename"],
+        "properties": {
+          "filename": {"type": "string"},
+          "mask_path": {"type": "string"},
+          "threshold": {"type": "number"},
+          "tac_coarsening": {"type": "integer"},
+          "stack_frames": {"type": "boolean"}
+        }
+      },
+      "result_schema": {"type": "object"},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "clsm.frc.compute",
+      "summary": "Compute the Fourier Ring Correlation of an image representation.",
+      "params_schema": {
+        "type": "object",
+        "required": ["filename"],
+        "properties": {
+          "filename": {"type": "string"},
+          "bin_width": {"type": "number"}
+        }
+      },
+      "result_schema": {"type": "object"},
+      "long_running": true,
+      "cancelable": false
+    },
+    {
+      "name": "clsm.contract.describe",
+      "summary": "Return the RPC contract descriptor.",
+      "params_schema": {"type": "object"},
+      "result_schema": {"type": "object"},
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [],
+  "menu_hidden": true
+}

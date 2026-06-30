@@ -1,0 +1,26 @@
+[
+  {
+    "trial": 0,
+    "converged": false,
+    "iterations": 50000,
+    "energy": 90.75219307655563,
+    "clash_energy": 13.279366535806133,
+    "restraint_energy": 77.4728265407495
+  },
+  {
+    "trial": 1,
+    "converged": false,
+    "iterations": 50000,
+    "energy": 148.8014498765404,
+    "clash_energy": 64.78963157190164,
+    "restraint_energy": 84.01181830463878
+  },
+  {
+    "trial": 2,
+    "converged": false,
+    "iterations": 50000,
+    "energy": 130.89007064030164,
+    "clash_energy": 34.2552991684601,
+    "restraint_energy": 96.63477147184156
+  }
+]

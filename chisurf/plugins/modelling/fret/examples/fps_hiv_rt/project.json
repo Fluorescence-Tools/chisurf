@@ -1,0 +1,49 @@
+{
+  "project_format_version": 4,
+  "meta": {
+    "name": "fps_hiv_rt_example",
+    "description": "FPS HIV:RT complex multi-body docking example project",
+    "created": "2026-06-08T08:00:00"
+  },
+  "datasets": {},
+  "experiments": {},
+  "fits": [],
+  "links": [],
+  "ui": {
+    "fret_dock_wizard": {
+      "fps_json_file": "hiv_rt.fps.json",
+      "reference_pdb": "protein_1R0A.pdb,dna.pdb",
+      "docking": {
+        "fps_path": "hiv_rt.fps.json",
+        "pdb_path": "protein_1R0A.pdb,dna.pdb",
+        "out_path": "dock_out",
+        "max_iter": 50000,
+        "max_force": 100.0,
+        "n_trials": 3,
+        "k_clash": 10.0
+      },
+      "screening": {
+        "fps_path": "",
+        "pdb_dir": "",
+        "out_path": "screening.csv",
+        "n_threads": 4
+      },
+      "evaluator": {
+        "fps_path": "",
+        "input_type": "Single PDB File",
+        "input_path": "",
+        "traj_path": "",
+        "out_path": "evaluation_results.csv",
+        "backend": "auto"
+      },
+      "pair_select": {
+        "fps_path": "",
+        "pdb_dir": "",
+        "out_path": "pair_selection_report.txt",
+        "max_pairs": 3,
+        "err_spin": 5.0,
+        "backend": "auto"
+      }
+    }
+  }
+}
