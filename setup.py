@@ -4,7 +4,7 @@ import subprocess
 import sys
 import pathlib
 from distutils.command.build import build as _build
-from setuptools import setup, Command, find_packages
+from setuptools import setup, Command
 
 # ---------------------------------------------------------------------------
 # Burbulator C++ shared-library build helpers
@@ -143,7 +143,8 @@ except ImportError:
 setup(
     name="chisurf",
     version=os.environ.get("CHISURF_VERSION", "26.dev0"),
-    packages=find_packages(),
+    # Package discovery (incl. the vendored ``chinet`` package) is configured in
+    # pyproject.toml's [tool.setuptools.packages.find].
     include_package_data=True,
     zip_safe=False,
     cmdclass={

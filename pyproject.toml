@@ -115,7 +115,10 @@ zip-safe = false
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["chisurf*"]
+# Discover chisurf from the repo root and the vendored, pure-Python chinet
+# package from modules/chinet, so installing chisurf also installs chinet.
+where = [".", "modules/chinet"]
+include = ["chisurf*", "chinet*"]
 namespaces = true
 
 [tool.setuptools.package-data]

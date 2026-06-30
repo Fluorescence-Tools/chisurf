@@ -68,9 +68,8 @@ fi
 "$PY" -m pip install ./modules/clsmview    --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/ndxplorer   --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/quest       --no-deps --no-build-isolation -vv --prefix="$PREFIX"
-
-# 6) Install chinet (pure Python, no CMake/SWIG needed)
-"$PY" -m pip install ./modules/chinet --no-deps --no-build-isolation -vv --prefix="$PREFIX"
+# chinet is the vendored pure-Python package and ships as part of the chisurf
+# install in step 9 (see pyproject [tool.setuptools.packages.find]).
 
 # 7) Install imp-tricks (external IMP mixin, pure Python) — use the local checkout
 #    if present (dev builds), otherwise clone it from GitLab (CI builds).
