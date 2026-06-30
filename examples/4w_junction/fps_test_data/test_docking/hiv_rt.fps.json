@@ -1,0 +1,329 @@
+{
+  "Positions": {
+    "p66_Q6C": {
+      "chain_identifier": "A",
+      "residue_seq_number": 6,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p66_T27C": {
+      "chain_identifier": "A",
+      "residue_seq_number": 27,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p66_E194C": {
+      "chain_identifier": "A",
+      "residue_seq_number": 194,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p66_K287C": {
+      "chain_identifier": "A",
+      "residue_seq_number": 287,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p51_Q6C": {
+      "chain_identifier": "B",
+      "residue_seq_number": 6,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p51_K173C": {
+      "chain_identifier": "B",
+      "residue_seq_number": 173,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p51_E194C": {
+      "chain_identifier": "B",
+      "residue_seq_number": 194,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p51_K281C": {
+      "chain_identifier": "B",
+      "residue_seq_number": 281,
+      "atom_name": "CB",
+      "linker_length": 20.0,
+      "linker_width": 4.5,
+      "radius1": 3.5,
+      "radius2": 0.0,
+      "radius3": 0.0,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV1",
+      "body_id": 0
+    },
+    "p_1bp": {
+      "chain_identifier": "P",
+      "residue_seq_number": 822,
+      "atom_name": "OP2",
+      "linker_length": 22.0,
+      "linker_width": 4.5,
+      "radius1": 11.0,
+      "radius2": 3.0,
+      "radius3": 1.5,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV3",
+      "body_id": 1
+    },
+    "p_10bp": {
+      "chain_identifier": "P",
+      "residue_seq_number": 813,
+      "atom_name": "C5",
+      "linker_length": 23.0,
+      "linker_width": 4.5,
+      "radius1": 11.0,
+      "radius2": 3.0,
+      "radius3": 1.5,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV3",
+      "body_id": 1
+    },
+    "p_19bp": {
+      "chain_identifier": "P",
+      "residue_seq_number": 804,
+      "atom_name": "N7",
+      "linker_length": 23.0,
+      "linker_width": 4.5,
+      "radius1": 11.0,
+      "radius2": 3.0,
+      "radius3": 1.5,
+      "simulation_grid_resolution": 1.5,
+      "simulation_type": "AV3",
+      "body_id": 1
+    }
+  },
+  "Distances": {
+    "p66_Q6C_p_1bp": {
+      "position1_name": "p66_Q6C",
+      "position2_name": "p_1bp",
+      "distance": 45.7,
+      "error_neg": 4.5,
+      "error_pos": 4.5,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_Q6C_p_10bp": {
+      "position1_name": "p66_Q6C",
+      "position2_name": "p_10bp",
+      "distance": 45.8,
+      "error_neg": 4.5,
+      "error_pos": 4.5,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_Q6C_p_19bp": {
+      "position1_name": "p66_Q6C",
+      "position2_name": "p_19bp",
+      "distance": 72.5,
+      "error_neg": 6.4,
+      "error_pos": 6.4,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_T27C_p_1bp": {
+      "position1_name": "p66_T27C",
+      "position2_name": "p_1bp",
+      "distance": 29.6,
+      "error_neg": 2.8,
+      "error_pos": 2.8,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_T27C_p_19bp": {
+      "position1_name": "p66_T27C",
+      "position2_name": "p_19bp",
+      "distance": 72.5,
+      "error_neg": 6.4,
+      "error_pos": 6.4,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_E194C_p_1bp": {
+      "position1_name": "p66_E194C",
+      "position2_name": "p_1bp",
+      "distance": 40.8,
+      "error_neg": 3.1,
+      "error_pos": 3.1,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_E194C_p_10bp": {
+      "position1_name": "p66_E194C",
+      "position2_name": "p_10bp",
+      "distance": 44.3,
+      "error_neg": 3.2,
+      "error_pos": 3.2,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_E194C_p_19bp": {
+      "position1_name": "p66_E194C",
+      "position2_name": "p_19bp",
+      "distance": 83.4,
+      "error_neg": 6.1,
+      "error_pos": 6.1,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_K287C_p_1bp": {
+      "position1_name": "p66_K287C",
+      "position2_name": "p_1bp",
+      "distance": 43.9,
+      "error_neg": 4.5,
+      "error_pos": 4.5,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p66_K287C_p_19bp": {
+      "position1_name": "p66_K287C",
+      "position2_name": "p_19bp",
+      "distance": 45.0,
+      "error_neg": 4.4,
+      "error_pos": 4.4,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_Q6C_p_1bp": {
+      "position1_name": "p51_Q6C",
+      "position2_name": "p_1bp",
+      "distance": 71.3,
+      "error_neg": 10.5,
+      "error_pos": 9.8,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_Q6C_p_19bp": {
+      "position1_name": "p51_Q6C",
+      "position2_name": "p_19bp",
+      "distance": 65.4,
+      "error_neg": 6.2,
+      "error_pos": 6.2,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_K173C_p_1bp": {
+      "position1_name": "p51_K173C",
+      "position2_name": "p_1bp",
+      "distance": 59.7,
+      "error_neg": 6.0,
+      "error_pos": 6.0,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_K173C_p_10bp": {
+      "position1_name": "p51_K173C",
+      "position2_name": "p_10bp",
+      "distance": 62.3,
+      "error_neg": 6.2,
+      "error_pos": 6.2,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_K173C_p_19bp": {
+      "position1_name": "p51_K173C",
+      "position2_name": "p_19bp",
+      "distance": 66.8,
+      "error_neg": 6.6,
+      "error_pos": 6.6,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_E194C_p_1bp": {
+      "position1_name": "p51_E194C",
+      "position2_name": "p_1bp",
+      "distance": 70.6,
+      "error_neg": 13.9,
+      "error_pos": 12.9,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_E194C_p_10bp": {
+      "position1_name": "p51_E194C",
+      "position2_name": "p_10bp",
+      "distance": 67.7,
+      "error_neg": 5.1,
+      "error_pos": 5.1,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_E194C_p_19bp": {
+      "position1_name": "p51_E194C",
+      "position2_name": "p_19bp",
+      "distance": 55.0,
+      "error_neg": 4.1,
+      "error_pos": 4.1,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_K281C_p_10bp": {
+      "position1_name": "p51_K281C",
+      "position2_name": "p_10bp",
+      "distance": 80.8,
+      "error_neg": 7.8,
+      "error_pos": 7.8,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    },
+    "p51_K281C_p_19bp": {
+      "position1_name": "p51_K281C",
+      "position2_name": "p_19bp",
+      "distance": 34.7,
+      "error_neg": 3.5,
+      "error_pos": 3.5,
+      "distance_type": "RDAMeanE",
+      "Forster_radius": 52.0
+    }
+  }
+}

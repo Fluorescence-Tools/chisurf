@@ -1,0 +1,22 @@
+{
+  "fret_docking_project_version": 1,
+  "name": "fps_hiv_rt",
+  "description": "FRET-restrained two-body docking of the HIV-RT protein (1R0A) against its DNA, scored with IMP.bff accessible volumes. Loadable in the FRET Docking tool and runnable from the CLI.",
+  "operation": "dock",
+  "method": "minimize",
+  "pdb_paths": [
+    "protein_1R0A.pdb",
+    "dna.pdb"
+  ],
+  "fps_json": "hiv_rt.fps.json",
+  "output_dir": "dock_out",
+  "score_set": "",
+  "params": {
+    "n_frames": 500,
+    "mc_steps": 10,
+    "n_best": 20,
+    "fixed_body": 0,
+    "sigma_da": 6.0,
+    "simulated_annealing": false
+  }
+}

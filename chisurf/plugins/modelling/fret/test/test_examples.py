@@ -68,59 +68,6 @@ def test_evaluate_olga_structure():
         assert np.isfinite(r.value)
 
 
-def test_4w_junction_docking():
-    """Verify the 4w junction multi-body docking example works end-to-end."""
-    test_dir = os.path.join(
-        os.path.dirname(__file__),
-        "../../../../../examples/4w_junction/fps_test_data/test_docking/"
-    )
-    lps_path = os.path.join(test_dir, "LPs_no_template_old_protein.txt")
-    protein_pdb = os.path.join(test_dir, "protein_1R0A.pdb")
-    dna_pdb = os.path.join(test_dir, "dna.pdb")
-
-    assert os.path.exists(lps_path)
-    assert os.path.exists(protein_pdb)
-    assert os.path.exists(dna_pdb)
-
-    # 1. Parse configuration
-    pdb_paths = [protein_pdb, dna_pdb]
-    positions, distances, _, _ = _io.read_fps_json(lps_path, pdb_paths=pdb_paths)
-
-    assert len(positions) > 0
-    assert len(distances) > 0
-    # Verify body IDs are assigned
-    body_ids = {p["body_id"] for p in positions.values()}
-    assert body_ids == {0, 1}
-
-    # 2. Run docking
-    from ..core import docking as _docking
-    from ..core.engine import SpringParameters
-    
-    params = SpringParameters(max_iterations=5)
-    results, avs, bodies = _docking.run_docking(
-        pdb_paths,
-        positions,
-        distances,
-        params=params,
-        n_trials=1,
-    )
-
-    assert len(results) == 1
-    assert not results[0].converged
-    assert len(bodies) == 2
-    assert len(avs) > 0
-
-    # 3. Write output
-    from ..core import results as _results
-    with tempfile.TemporaryDirectory() as tmpdir:
-        atoms_per_body = [b.atoms_local for b in bodies]
-        written = _results.write_docking_results_pdb(results, atoms_per_body, tmpdir)
-        assert len(written) == 2
-        for p in written:
-            assert os.path.exists(p)
-            assert os.path.getsize(p) > 0
-
-
 def test_project_save_load():
     """Verify that project save and load functions work correctly via Project schema."""
     from chisurf.core.project import Project

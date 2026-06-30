@@ -9,7 +9,7 @@ import json
 import click
 import numpy as np
 
-from ..core import av, docking, engine, io, results, sampling, screening, refine, bootstrap, evaluate, pair_selection
+from ..core import av, engine, io, results, screening, evaluate, pair_selection
 
 
 def _parse_pdb_paths(pdb_arg: str) -> list[str]:
@@ -76,245 +76,6 @@ def info(fps: str):
         )
     if score_sets:
         click.echo(f"\nScore sets: {list(score_sets.keys())}")
-
-
-@main.command("dock")
-@click.option("--fps", required=True, help="Path to labeling.fps.json.")
-@click.option("--pdb", required=True, help="Path to input PDB (or comma-separated paths for multi-body).")
-@click.option("--output", required=True, help="Output directory to save docking results.")
-@click.option("--n-trials", default=3, show_default=True, type=int, help="Number of independent docking trials.")
-@click.option("--max-iterations", default=50000, show_default=True, type=int, help="Maximum number of simulation iterations.")
-@click.option("--max-force", default=100.0, show_default=True, type=float, help="Maximum simulation force threshold.")
-@click.option("--k-clash", default=10.0, show_default=True, type=float, help="Spring constant for inter-body clash repulsion.")
-@click.option("--f-tol", default=0.1, type=float, help="Force tolerance for convergence.")
-@click.option("--t-tol", default=0.01, type=float, help="Torque tolerance for convergence.")
-@click.option("--av-backend", default="auto", type=click.Choice(["auto", "labellib", "imp-bff"]), help="Accessible Volume backend.")
-def dock(fps: str, pdb: str, output: str, n_trials: int, max_iterations: int, max_force: float, k_clash: float, f_tol: float, t_tol: float, av_backend: str):
-    """Run FRET-restrained rigid-body docking."""
-    av.select_backend(av_backend)
-    pdb_paths = _parse_pdb_paths(pdb)
-    positions, distances, _score_sets, _extra = io.read_fps_json(fps, pdb_paths=pdb_paths)
-    
-    params = engine.SpringParameters(
-        max_iterations=max_iterations,
-        max_force=max_force,
-        k_clash=k_clash,
-        F_tolerance=f_tol,
-        T_tolerance=t_tol,
-    )
-    res_list, avs, bodies = docking.run_docking(
-        pdb_paths,
-        positions,
-        distances,
-        params=params,
-        n_trials=n_trials,
-    )
-    
-    os.makedirs(output, exist_ok=True)
-    atoms_per_body = [b.atoms_local for b in bodies]
-    results.write_docking_results_pdb(res_list, atoms_per_body, output)
-    
-    summary_path = os.path.join(output, "summary.json")
-    summary = [
-        {
-            "trial": i,
-            "converged": sr.converged,
-            "iterations": sr.iterations,
-            "energy": sr.energy,
-            "clash_energy": sr.clash_energy,
-            "restraint_energy": sr.restraint_energy,
-        }
-        for i, sr in enumerate(res_list)
-    ]
-    with open(summary_path, "w") as f:
-        json.dump(summary, f, indent=2)
-        
-    click.echo(f"Wrote {len(res_list)} docking results to {output}/")
-    click.echo(f"Converged: {sum(1 for sr in res_list if sr.converged)} / {len(res_list)}")
-
-
-@main.command("refine")
-@click.option("--fps", required=True, help="Path to labeling.fps.json.")
-@click.option("--pdb", required=True, help="Path to input PDB.")
-@click.option("--output", required=True, help="Output directory to save refined structure.")
-@click.option("--n-cycles", default=3, show_default=True, type=int, help="Number of refinement cycles.")
-@click.option("--max-iterations", default=10000, type=int, help="Max iterations per spring cycle.")
-@click.option("--k-clash", default=10.0, type=float, help="Clash spring constant.")
-@click.option("--av-backend", default="auto", type=click.Choice(["auto", "labellib", "imp-bff"]), help="Accessible Volume backend.")
-def refine_cmd(fps: str, pdb: str, output: str, n_cycles: int, max_iterations: int, k_clash: float, av_backend: str):
-    """Run iterative refinement (docking + AV recalculation)."""
-    av.select_backend(av_backend)
-    pdb_paths = _parse_pdb_paths(pdb)
-    positions, distances, _score_sets, _extra = io.read_fps_json(fps, pdb_paths=pdb_paths)
-
-    atoms_xyzr_list = [av.load_structure_with_vdw(p) for p in pdb_paths]
-    atoms_xyzr = atoms_xyzr_list[0] if atoms_xyzr_list else np.zeros((0, 4))
-    avs = av.compute_avs_for_structure(atoms_xyzr, positions, pdb_path=pdb_paths)
-
-    body_map = {pname: int(pdef.get("body_id", 0)) for pname, pdef in positions.items()}
-    n_bodies = max(max(body_map.values()) + 1 if body_map else 1, len(pdb_paths))
-
-    bodies = []
-    for bi in range(n_bodies):
-        b_atoms_xyzr = atoms_xyzr_list[bi] if bi < len(atoms_xyzr_list) else atoms_xyzr
-        b_xyz = b_atoms_xyzr[:, :3]
-        com = b_xyz.mean(axis=0) if b_xyz.shape[0] > 0 else np.zeros(3)
-        local_coords = b_xyz - com
-        local_xyzr = np.column_stack([local_coords, b_atoms_xyzr[:, 3]])
-        rb = engine.RigidBody(
-            name=f"body_{bi}",
-            atoms_local=local_xyzr,
-            com=com.copy(),
-            rotation=np.eye(3),
-            translation=com.copy(),
-            mass=float(b_xyz.shape[0]) if b_xyz.shape[0] > 0 else 1.0,
-            inertia=np.eye(3) * 1000.0,
-        )
-        bodies.append(rb)
-
-    restraints = []
-    for dname, ddef in distances.items():
-        p1 = ddef["position1_name"]
-        p2 = ddef["position2_name"]
-        if p1 not in avs or p2 not in avs:
-            continue
-        if not avs[p1].has_volume or not avs[p2].has_volume:
-            continue
-        b1 = body_map.get(p1, 0)
-        b2 = body_map.get(p2, 0)
-        offset_a = avs[p1].mean_position - bodies[b1].com
-        offset_b = avs[p2].mean_position - bodies[b2].com
-        rst = engine.DistanceRestraint(
-            name=dname,
-            body_a=b1,
-            offset_a=offset_a,
-            body_b=b2,
-            offset_b=offset_b,
-            distance_exp=float(ddef.get("distance", 0.0)),
-            error_neg=float(ddef.get("error_neg", 5.0)),
-            error_pos=float(ddef.get("error_pos", 5.0)),
-            distance_type=str(ddef.get("distance_type", "RDAMean")),
-            forster_radius=float(ddef.get("Forster_radius", 52.0)),
-            active=True,
-        )
-        restraints.append(rst)
-
-    params = engine.SpringParameters(
-        max_iterations=max_iterations,
-        k_clash=k_clash,
-    )
-    final_bodies = refine.run_refinement(
-        bodies,
-        restraints,
-        positions,
-        atoms_xyzr,
-        params=params,
-        n_cycles=n_cycles,
-    )
-
-    os.makedirs(output, exist_ok=True)
-    for bi, body in enumerate(final_bodies):
-        out_path = os.path.join(output, f"refined_body_{bi}.pdb")
-        io.write_pdb(body.global_coords(), out_path)
-    click.echo(f"Refinement complete. Saved {len(final_bodies)} body structures to {output}/")
-
-
-@main.command("bootstrap")
-@click.option("--fps", required=True, help="Path to labeling.fps.json.")
-@click.option("--pdb", required=True, help="Path to input PDB.")
-@click.option("--output", required=True, help="Output directory to save error distribution.")
-@click.option("--n-bootstrap", default=100, show_default=True, type=int, help="Number of bootstrap iterations.")
-@click.option("--max-iterations", default=10000, type=int, help="Max iterations per fit.")
-@click.option("--k-clash", default=10.0, type=float, help="Clash spring constant.")
-@click.option("--av-backend", default="auto", type=click.Choice(["auto", "labellib", "imp-bff"]), help="Accessible Volume backend.")
-def bootstrap_cmd(fps: str, pdb: str, output: str, n_bootstrap: int, max_iterations: int, k_clash: float, av_backend: str):
-    """Run parametric bootstrap error estimation."""
-    av.select_backend(av_backend)
-    positions, distances, _score_sets, _extra = io.read_fps_json(fps)
-    params = engine.SpringParameters(
-        max_iterations=max_iterations,
-        k_clash=k_clash,
-    )
-    boot_res = bootstrap.run_bootstrap(
-        pdb,
-        positions,
-        distances,
-        params=params,
-        n_bootstrap=n_bootstrap,
-    )
-    os.makedirs(output, exist_ok=True)
-    results.write_bootstrap_results(boot_res, output)
-    click.echo(f"Bootstrap complete. Results written to {output}/")
-
-
-@main.command("sample")
-@click.option("--fps", required=True, help="Path to labeling.fps.json.")
-@click.option("--pdb", required=True, help="Path to input PDB.")
-@click.option("--output", required=True, help="Output directory to save sample structures.")
-@click.option("--n-samples", default=1000, show_default=True, type=int, help="Number of Monte Carlo samples.")
-@click.option("--step-size", default=0.5, type=float, help="Metropolis step size in angstroms/radians.")
-@click.option("--av-backend", default="auto", type=click.Choice(["auto", "labellib", "imp-bff"]), help="Accessible Volume backend.")
-def sample_cmd(fps: str, pdb: str, output: str, n_samples: int, step_size: float, av_backend: str):
-    """Run Metropolis Monte Carlo sampling."""
-    av.select_backend(av_backend)
-    positions, distances, _score_sets, _extra = io.read_fps_json(fps)
-    
-    atoms_xyzr = av.load_structure_with_vdw(pdb)
-    com = atoms_xyzr[:, :3].mean(axis=0)
-    local_xyzr = atoms_xyzr.copy()
-    local_xyzr[:, :3] -= com
-    body = engine.RigidBody(
-        name="body_0",
-        atoms_local=local_xyzr,
-        com=com.copy(),
-        rotation=np.eye(3),
-        translation=com.copy(),
-        mass=float(atoms_xyzr.shape[0]) if atoms_xyzr.shape[0] > 0 else 1.0,
-        inertia=np.eye(3) * 1000.0,
-    )
-    
-    avs = av.compute_avs_for_structure(atoms_xyzr, positions, pdb_path=pdb)
-    restraints = []
-    for dname, ddef in distances.items():
-        p1 = ddef["position1_name"]
-        p2 = ddef["position2_name"]
-        if p1 not in avs or p2 not in avs:
-            continue
-        offset_a = avs[p1].mean_position - body.com
-        offset_b = avs[p2].mean_position - body.com
-        rst = engine.DistanceRestraint(
-            name=dname,
-            body_a=0,
-            offset_a=offset_a,
-            body_b=0,
-            offset_b=offset_b,
-            distance_exp=float(ddef.get("distance", 0.0)),
-            error_neg=float(ddef.get("error_neg", 5.0)),
-            error_pos=float(ddef.get("error_pos", 5.0)),
-            distance_type=str(ddef.get("distance_type", "RDAMean")),
-            forster_radius=float(ddef.get("Forster_radius", 52.0)),
-            active=True,
-        )
-        restraints.append(rst)
-
-    samples = sampling.run_metropolis_sampling(
-        [body],
-        restraints,
-        n_samples=n_samples,
-        step_size=step_size,
-    )
-    os.makedirs(output, exist_ok=True)
-    out_pdb = os.path.join(output, "sampled_trajectory.pdb")
-    
-    with open(out_pdb, "w") as f:
-        for idx, s in enumerate(samples):
-            f.write(f"MODEL     {idx + 1:4d}\n")
-            b_global = s.rotations[0] @ body.atoms_local[:, :3].T + s.translations[0][:, np.newaxis]
-            for atom_idx, xyz in enumerate(b_global.T):
-                f.write(f"ATOM  {atom_idx+1:5d}  CA  ALA A   1    {xyz[0]:8.3f}{xyz[1]:8.3f}{xyz[2]:8.3f}  1.00  0.00\n")
-            f.write("ENDMDL\n")
-            
-    click.echo(f"Generated {len(samples)} samples. Saved trajectory to {out_pdb}")
 
 
 @main.command("screen")
@@ -404,6 +165,136 @@ def select_pairs_cmd(fps: str, pdb_dir: str, output: str, max_pairs: int, err: f
         selected_pair_names, decay, output, rmsds.mean()
     )
     click.echo(f"Pair selection complete. Saved decay report to {output}")
+
+
+# ---------------------------------------------------------------------------
+# IMP + IMP.bff engine (the maintained backend; thin shim around IMP.pmi)
+# ---------------------------------------------------------------------------
+
+
+@main.group("imp")
+def imp_group():
+    """FRET docking via the IMP + IMP.bff engine (PMI-based)."""
+    pass
+
+
+def _split_pdbs(pdb):
+    return [p.strip() for p in pdb.split(",")] if "," in pdb else [pdb]
+
+
+@imp_group.command("info")
+def imp_info():
+    """Report IMP/IMP.bff backend availability."""
+    from ..api import operations as ops
+    click.echo(json.dumps(ops.backend_info(), indent=2))
+
+
+@imp_group.command("score")
+@click.option("--pdb", required=True, help="PDB file(s), comma-separated for multi-body.")
+@click.option("--fps", "fps_json", required=True, help="fps.json labelling/distance file.")
+@click.option("--score-set", default="", help="Named score set (default: all).")
+@click.option("--out", "output_csv", default=None, help="Write per-pair distances CSV.")
+@click.option("--mean-position/--full-av", default=False, help="Fast mean-AV vs full AV recompute.")
+def imp_score(pdb, fps_json, score_set, output_csv, mean_position):
+    """Score a structure against FRET restraints."""
+    from ..api import operations as ops
+    res = ops.score({"pdb_paths": _split_pdbs(pdb), "fps_json": fps_json,
+                     "score_set": score_set, "output_csv": output_csv,
+                     "mean_position_restraint": mean_position})
+    click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("dock")
+@click.option("--pdb", required=True, help="One PDB per rigid body, comma-separated.")
+@click.option("--fps", "fps_json", required=True)
+@click.option("--out", "output_dir", required=True, help="Output directory (RMF/PDB/CSV).")
+@click.option("--frames", "n_frames", default=500, type=int)
+@click.option("--mc-steps", default=10, type=int)
+@click.option("--score-set", default="")
+@click.option("--n-best", default=20, type=int)
+@click.option("--anneal/--no-anneal", "simulated_annealing", default=False)
+@click.option("--fixed-body", default=0, type=int)
+@click.option("--sigma-da", "sigma_da", default=6.0, type=float,
+              help="Mean-position transfer-function width (Angstrom).")
+@click.option("--method", default="minimize", type=click.Choice(["minimize", "mc"]),
+              help="minimize = fast IMP conjugate-gradient docking (default); mc = replica-exchange MC.")
+def imp_dock(pdb, fps_json, output_dir, n_frames, mc_steps, score_set,
+             n_best, simulated_annealing, fixed_body, sigma_da, method):
+    """Run FRET-restrained rigid-body docking (minimisation or Monte-Carlo)."""
+    from ..api import operations as ops
+    res = ops.dock({"pdb_paths": _split_pdbs(pdb), "fps_json": fps_json,
+                    "output_dir": output_dir, "n_frames": n_frames,
+                    "mc_steps": mc_steps, "score_set": score_set, "n_best": n_best,
+                    "simulated_annealing": simulated_annealing, "fixed_body": fixed_body,
+                    "sigma_da": sigma_da, "method": method})
+    click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("dock-project")
+@click.option("--project", "project_path", required=True,
+              help="Docking project .json (bundles PDBs, fps.json and parameters).")
+@click.option("--out", "output_dir", default=None,
+              help="Override the project's output directory.")
+@click.option("--frames", "n_frames", default=None, type=int,
+              help="Override the number of MC frames (e.g. a quick smoke run).")
+@click.option("--mc-steps", default=None, type=int, help="Override MC steps per frame.")
+@click.option("--n-best", default=None, type=int, help="Override number of best models kept.")
+@click.option("--method", default=None, type=click.Choice(["minimize", "mc"]),
+              help="Override the docking method (minimize / mc).")
+def imp_dock_project(project_path, output_dir, n_frames, mc_steps, n_best, method):
+    """Run FRET docking from a saved project file."""
+    from ..api import operations as ops
+    overrides = {"output_dir": output_dir, "n_frames": n_frames,
+                 "mc_steps": mc_steps, "n_best": n_best, "method": method}
+    res = ops.dock_project(project_path, overrides)
+    click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("refine")
+@click.option("--pdb", required=True)
+@click.option("--fps", "fps_json", required=True)
+@click.option("--out", "output_dir", required=True)
+@click.option("--steps", default=500, type=int)
+@click.option("--score-set", default="")
+def imp_refine(pdb, fps_json, output_dir, steps, score_set):
+    """Conjugate-gradient local refinement of a pose."""
+    from ..api import operations as ops
+    res = ops.refine({"pdb_paths": _split_pdbs(pdb), "fps_json": fps_json,
+                      "output_dir": output_dir, "steps": steps, "score_set": score_set})
+    click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("screen")
+@click.option("--pdb", required=True, help="PDB files/dirs, comma-separated.")
+@click.option("--fps", "fps_json", required=True)
+@click.option("--score-set", default="")
+@click.option("--out", "output_csv", default=None)
+def imp_screen(pdb, fps_json, score_set, output_csv):
+    """Score and rank a structure library."""
+    from ..api import operations as ops
+    res = ops.screen({"pdb_inputs": _split_pdbs(pdb), "fps_json": fps_json,
+                      "score_set": score_set, "output_csv": output_csv})
+    click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("errors")
+@click.option("--pdb", required=True)
+@click.option("--fps", "fps_json", required=True)
+@click.option("--out", "output_dir", required=True)
+@click.option("--trials", "n_trials", default=10, type=int)
+@click.option("--frames", "n_frames", default=200, type=int)
+@click.option("--score-set", default="")
+@click.option("--method", default="minimize", type=click.Choice(["minimize", "mc"]))
+@click.option("--workers", "n_workers", default=None, type=int,
+              help="Parallel worker processes (default: CPU count; 1 = serial).")
+def imp_errors(pdb, fps_json, output_dir, n_trials, n_frames, score_set, method, n_workers):
+    """Repeated-trial docking error estimation (trials run in parallel)."""
+    from ..api import operations as ops
+    res = ops.estimate_errors({"pdb_paths": _split_pdbs(pdb), "fps_json": fps_json,
+                               "output_dir": output_dir, "n_trials": n_trials,
+                               "n_frames": n_frames, "score_set": score_set,
+                               "method": method, "n_workers": n_workers})
+    click.echo(json.dumps(res, indent=2))
 
 
 if __name__ == "__main__":

@@ -3,21 +3,19 @@
 
 from __future__ import annotations
 
-from chisurf.plugins.modelling.fret.gui import FretDockWizard
+from chisurf.plugins.modelling.fret.gui import FretDockingTool
 from chisurf.plugins.modelling.fps_json_editor.gui.editor import FpsJsonEditor
 
 
-def test_wizard_opens(qtbot):
-    """The wizard window opens without errors."""
-    window = FretDockWizard()
+def test_docking_tool_opens(qtbot):
+    """The AutoForm docking tool opens and renders its form."""
+    window = FretDockingTool()
     qtbot.addWidget(window)
-    assert window.windowTitle() == "FRET Docking & Screening"
-    assert window.tabs.count() == 5
-    assert window.tabs.tabText(0) == "Edit fps.json"
-    assert window.tabs.tabText(1) == "Docking"
-    assert window.tabs.tabText(2) == "Screening"
-    assert window.tabs.tabText(3) == "Evaluators"
-    assert window.tabs.tabText(4) == "Pair Selection"
+    assert "Docking" in window.windowTitle()
+    # AutoForm rendered the view.json into field widgets
+    from chisurf.gui.autoform.sections.builtin import ValueWidget
+    assert window._form.findChildren(ValueWidget)
+    assert window._model.operation == "dock"
 
 
 def test_fps_json_editor_panels(qtbot):

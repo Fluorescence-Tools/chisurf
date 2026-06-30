@@ -1,0 +1,41 @@
+{
+  "id": "fret_docking",
+  "version": "1.0.0",
+  "display_name": "Structure:FRET:Docking & Screening",
+  "description": "FRET-restrained rigid-body docking, refinement, structure-library screening and error estimation using IMP + IMP.bff accessible volumes (a thin shim around IMP.pmi).",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "FRET"],
+  "icon": "icon.png",
+  "state_namespace": "fret_docking",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "last_settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.modelling.fret.gui.dock_tool:FretDockingTool",
+    "cli": "fret=chisurf.plugins.modelling.fret.cli.main:main",
+    "services": "chisurf.plugins.modelling.fret.backend.services:register_services"
+  },
+  "rpc_methods": [
+    "fret.info_backends",
+    "fret.dock",
+    "fret.refine",
+    "fret.score",
+    "fret.screen",
+    "fret.estimate_errors"
+  ],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": true,
+  "deprecated": false
+}

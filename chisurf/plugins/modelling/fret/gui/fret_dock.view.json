@@ -1,0 +1,83 @@
+{
+  "_comment": "AutoForm view scheme for the FRET docking tool (IMP + IMP.bff). Short labels; detail lives in tooltips (description). Compute runs in dock_tool.py via api.operations.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Inputs",
+      "description": "Structures and FRET restraints to model.",
+      "sections": [
+        {"type": "value", "attr": "pdb_paths", "label": "PDB(s)", "kind": "str",
+         "placeholder": "protein.pdb, dna.pdb",
+         "description": "One PDB per rigid body, comma-separated. Each body_id in the fps.json maps to one PDB."},
+        {"type": "value", "attr": "fps_json", "label": "fps.json", "kind": "str",
+         "placeholder": "labelling.fps.json",
+         "description": "Labelling positions and experimental distances (fps.json)."},
+        {"type": "value", "attr": "output_dir", "label": "Output", "kind": "str",
+         "placeholder": "out/",
+         "description": "Directory for RMF trajectory, best-scoring PDBs and the score CSV."},
+        {"type": "choice", "attr": "operation", "label": "Op",
+         "options": ["dock", "refine", "screen", "score"], "style": "combo",
+         "description": "dock = rigid-body docking; refine = CG minimisation; screen = rank a library; score = single structure."},
+        {"type": "choice", "attr": "method", "label": "Method",
+         "options": ["minimize", "mc"], "style": "combo",
+         "description": "Docking engine: minimize = fast IMP conjugate-gradient energy minimisation (default); mc = replica-exchange Monte-Carlo sampling."},
+        {"type": "value", "attr": "score_set", "label": "Score set", "kind": "str",
+         "description": "Named chi2 score set in the fps.json (empty = all distances)."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Docking",
+      "description": "Docking controls (FPS-style: runs, iterations, clash, refinement).",
+      "sections": [
+        {"type": "value", "attr": "n_repeats", "label": "Runs", "kind": "int",
+         "minimum": 1, "maximum": 1000,
+         "description": "Number of independent docking runs from random starts (FPS n_trials). >1 estimates the score spread; each run is plotted and listed in the results table and runs in parallel."},
+        {"type": "value", "attr": "n_frames", "label": "Iterations", "kind": "int",
+         "minimum": 1, "maximum": 100000, "step": 50,
+         "description": "Maximum docking iterations per run (FPS max_iter) — conjugate-gradient steps for minimize, Monte-Carlo frames for mc."},
+        {"type": "value", "attr": "ev_weight", "label": "Clash k", "kind": "float",
+         "decimals": 1, "minimum": 0.0, "maximum": 1000.0, "step": 1.0,
+         "description": "Excluded-volume / clash penalty weight (FPS k_clash)."},
+        {"type": "value", "attr": "refine_av_cycles", "label": "Refine", "kind": "int",
+         "minimum": 0, "maximum": 20,
+         "description": "FPS-style refinement cycles after docking: re-compute the accessible volumes on the docked structure (real AV calc, accounting for inter-body occlusion) and re-minimise. 0 = none."},
+        {"type": "value", "attr": "fixed_body", "label": "Fixed body", "kind": "int",
+         "minimum": 0, "maximum": 100,
+         "description": "body_id kept fixed as the reference; the others are mobile."},
+        {"type": "value", "attr": "sigma_da", "label": "sigma_DA", "kind": "float",
+         "decimals": 1, "minimum": 0.0, "maximum": 30.0, "step": 0.5, "suffix": " A",
+         "description": "Width of the mean-position transfer function (FPS distance distribution width)."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Monte-Carlo (mc method only)",
+      "description": "Only used when Method = mc; ignored by the default minimize docking.",
+      "sections": [
+        {"type": "value", "attr": "mc_steps", "label": "MC steps", "kind": "int",
+         "minimum": 1, "maximum": 1000,
+         "description": "Monte-Carlo steps per frame."},
+        {"type": "value", "attr": "n_best", "label": "Keep best", "kind": "int",
+         "minimum": 0, "maximum": 1000,
+         "description": "Number of best-scoring PDB models to write."},
+        {"type": "toggle", "attr": "simulated_annealing", "label": "Anneal",
+         "description": "Enable the PMI simulated-annealing temperature schedule."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Results",
+      "description": "Populated after a run completes.",
+      "sections": [
+        {"type": "value", "attr": "status", "label": "Status", "kind": "str", "read_only": true,
+         "description": "Outcome of the last run."},
+        {"type": "value", "attr": "score", "label": "Score", "kind": "float", "decimals": 2,
+         "read_only": true,
+         "description": "Total restraint score (FRET chi2 + excluded volume)."},
+        {"type": "value", "attr": "n_distances", "label": "Distances", "kind": "int", "read_only": true,
+         "description": "Number of experimental distances scored."}
+      ]
+    }
+  ]
+}

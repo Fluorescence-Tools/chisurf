@@ -25,7 +25,7 @@ description = (
 cli_entrypoint = "fret=chisurf.plugins.modelling.fret.cli.main:main"
 
 # Expose core modules and actions.
-from .core import av, clash, distance, docking, engine, io, results, sampling, screening, refine, bootstrap, evaluate, pair_selection, olga_greedy, trajectory
+from .core import av, distance, engine, io, results, screening, evaluate, pair_selection, olga_greedy, trajectory
 from .core.io import load_structure, write_pdb
 from .core.av import compute_av, compute_avs_for_structure, load_structure_with_vdw
 from .core.distance import (
@@ -35,15 +35,20 @@ from .core.distance import (
     model_distance,
     chi2_score,
 )
-from .core.docking import run_docking
 from .core.screening import score_single_structure, screen_structure_library
-from .core.sampling import run_metropolis
-from .core.engine import SpringEngine, RigidBody, DistanceRestraint, SpringParameters
+from .core.engine import RigidBody, DistanceRestraint, SpringParameters
+# IMP + IMP.bff PMI-based docking engine — the maintained backend (replaces the
+# removed hand-rolled spring/Verlet engine).
+from .core import imp_engine
+from .core.imp_engine import DockingParameters, DockingResult, dock, refine, screen, score
 
 # ChiSurf plugin entry point.
 if __name__ == "plugin":
-    from .gui import FretDockWizard
+    # ``FretDockingTool`` is the maintained AutoForm-based GUI driven by the
+    # IMP/IMP.bff engine; the legacy ``FretDockWizard`` (and its spring engine)
+    # has been removed.
+    from .gui import FretDockingTool
 
-    window = FretDockWizard()
+    window = FretDockingTool()
     window.show()
 
