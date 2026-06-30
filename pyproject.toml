@@ -133,32 +133,21 @@ namespaces = true
 version = {attr = "chisurf.core.info.__version__"}
 
 [tool.pytest.ini_options]
-addopts = "--cov=chisurf --cov-report=html"
+# Coverage is opt-in (use `pixi run test-cov`); keeping it off by default avoids
+# dumping .coverage*/htmlcov into the repo root on every test run.
+addopts = ""
 norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "rattler-recipe", "repro"]
 testpaths = ["test", "chisurf/plugins/burst/burst_selection/tests"]
 markers = [
     "slow: marks tests as slow (reader-heavy) and excluded from default runs",
 ]
 
-[tool.pytest-cov]
-# Minimum coverage thresholds as defined in the test coverage plan
-# >80% for core logic, >60% for GUI
-[tool.pytest-cov.report]
-precision = 2
-show_missing = true
-skip_covered = false
-skip_empty = true
-sort = "Covered"
-
-[tool.pytest-cov.html]
-directory = "htmlcov"
-show_contexts = true
-
-[tool.pytest-cov.coverage]
-# Enforce minimum coverage thresholds
-# These thresholds will be enforced in CI/CD pipelines
-[tool.pytest-cov.coverage.run]
+# Coverage.py config (read by pytest-cov on `pixi run test-cov`). Output is
+# redirected under build/ (gitignored) so coverage never clutters the repo root.
+# Target thresholds from the test coverage plan: >80% core, >60% GUI.
+[tool.coverage.run]
 source = ["chisurf"]
+data_file = "build/coverage/.coverage"
 omit = [
     "*/test/*",
     "*/tests/*",
@@ -168,12 +157,19 @@ omit = [
     "*/rattler-recipe/*",
 ]
 
-[tool.pytest-cov.coverage.fail_under]
-# Target coverage thresholds from the test coverage plan
-# >80% for core logic, >60% for GUI
-# We'll set a conservative overall threshold of 70% to start
-# and can be adjusted based on actual coverage analysis
-min = 70
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+skip_empty = true
+sort = "Cover"
+
+[tool.coverage.html]
+directory = "build/coverage/html"
+show_contexts = true
+
+[tool.coverage.xml]
+output = "build/coverage/coverage.xml"
 
 [tool.ruff]
 target-version = "py310"

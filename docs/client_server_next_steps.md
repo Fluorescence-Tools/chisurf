@@ -4,7 +4,7 @@ This is the short handoff for future work. For architecture details, read:
 
 1. [`architecture_client_server.md`](architecture_client_server.md)
 2. [`client_server_migration_plan.md`](client_server_migration_plan.md)
-3. `CLEANUP.md`
+3. [`CLEANUP.md`](../overhaul/CLEANUP.md)
 
 ## Current State
 

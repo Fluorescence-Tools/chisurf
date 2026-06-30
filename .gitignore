@@ -104,13 +104,10 @@ chisurf/plugins/core/acq/tcspc_devices/simulation/*.dll
 /CLAUDE.md
 /AGENTS.md
 /AGENT/
-# internal dev notes (kept local-only)
-/BUGS.md
-/BUGS_FIXED.md
-/FRET_SUPERSET_IMPLEMENTATION_PLAN.md
-/OBJECT_STORE_IMPLEMENTATION.md
-/TODO_metadata_tooltips.md
-/TODO_sample_database_bugs.md
+# internal dev notes / scratch (kept local-only). Drop loose notes & throwaway
+# scripts in notes/ or scratch/ instead of the repo root so they stay ignored
+# without adding a line here per file.
+/notes/
 chisurf/gui/widgets/node_editor/NODE_EDITOR_ENHANCEMENT_PLAN.md
 chisurf/plugins/chimol/CMD_PLAN.md
 chisurf/plugins/core/lightpath_simulator/BUGS.md
