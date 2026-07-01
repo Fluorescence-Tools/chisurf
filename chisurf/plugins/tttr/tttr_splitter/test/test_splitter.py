@@ -41,7 +41,7 @@ def test_tool_builds_with_autoform(qapp, qtbot):
     # the custom sections must be registered (imported by gui.tool)
     from chisurf.gui.autoform.sections.registry import get_section_factory
 
-    for key in ("splitter_io", "splitter_run", "splitter_batch"):
+    for key in ("splitter_io", "splitter_run", "splitter_batch_run", "path_list"):
         assert get_section_factory(key) is not None
 
 

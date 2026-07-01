@@ -12,9 +12,8 @@ the Qt-free :class:`~..view_model.CountRateViewModel`. Imported (registered) by
 from __future__ import annotations
 
 import logging
-import os
 
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from chisurf.gui.autoform.sections.registry import register_section
 
@@ -61,72 +60,30 @@ def count_rate_channels(model, target=None, **options):
 # ---------------------------------------------------------------------------
 
 
-@register_section("count_rate_files")
-def count_rate_files(model, target=None, **options):
-    """AutoForm factory for the file list and Load/Clear/Calculate/Save actions."""
-    return _FilesSection(model)
+@register_section("count_rate_run")
+def count_rate_run(model, target=None, **options):
+    """AutoForm factory for the Calculate / Save action bar.
+
+    The file list is the general ``path_list`` section (target ``files``); this
+    bar only computes and exports.
+    """
+    return _RunSection(model)
 
 
-class _FilesSection(QtWidgets.QWidget):
-    """Drag-drop TTTR file list with Load/Clear/Calculate/Save tool-buttons."""
+class _RunSection(QtWidgets.QWidget):
+    """Calculate + Save action bar for the count-rate analysis."""
 
     def __init__(self, model, parent=None):
         super().__init__(parent)
         self._model = model
-        self.setAcceptDrops(True)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.setSpacing(4)
-
-        bar = QtWidgets.QHBoxLayout()
-        bar.setContentsMargins(0, 0, 0, 0)
-        bar.addWidget(_tool_button("📂 Load", "Load TTTR files.", self._load))
-        bar.addWidget(_tool_button("🗑 Clear", "Clear the file list.", self._model.clear))
+        bar = QtWidgets.QHBoxLayout(self)
+        bar.setContentsMargins(2, 2, 2, 2)
         bar.addStretch(1)
         bar.addWidget(
             _tool_button("📈 Calculate", "Compute count rates for all files.", self._calculate)
         )
         bar.addWidget(_tool_button("💾 Save", "Save the results table as text.", self._save))
-        layout.addLayout(bar)
-
-        self._list = QtWidgets.QListWidget()
-        self._list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        layout.addWidget(self._list, 1)
-
-        self._model.add_observer(self._on_model_event)
-        self._refresh_list()
-
-    # ── drag-drop ───────────────────────────────────────────────────────
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        paths = [u.toLocalFile() for u in (event.mimeData().urls() or []) if u.toLocalFile()]
-        if paths:
-            self._model.add_files(paths)
-            event.acceptProposedAction()
-
-    # ── model wiring ────────────────────────────────────────────────────
-    def _on_model_event(self, event: str) -> None:
-        if event == "files":
-            self._refresh_list()
-
-    def _refresh_list(self) -> None:
-        self._list.clear()
-        for path in self._model.files:
-            self._list.addItem(os.path.basename(path))
-
-    # ── actions ─────────────────────────────────────────────────────────
-    def _load(self) -> None:
-        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
-            self, "Load TTTR Files", "", "All Files (*)"
-        )
-        if paths:
-            self._model.add_files(list(paths))
 
     def _calculate(self) -> None:
         reason = self._model.can_compute()
@@ -208,4 +165,4 @@ class _ResultsSection(QtWidgets.QWidget):
                 self._table.setItem(r, c, QtWidgets.QTableWidgetItem(val))
 
 
-__all__ = ["count_rate_channels", "count_rate_files", "count_rate_results"]
+__all__ = ["count_rate_channels", "count_rate_run", "count_rate_results"]

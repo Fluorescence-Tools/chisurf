@@ -16,7 +16,7 @@ def test_count_rate_analyzer_creation(qapp, qtbot):
     assert isinstance(widget, QtWidgets.QWidget)
     assert "Count Rate" in widget.windowTitle()
     assert isinstance(widget.auto_form, AutoForm)
-    for key in ("count_rate_channels", "count_rate_files", "count_rate_results"):
+    for key in ("count_rate_channels", "count_rate_run", "count_rate_results", "path_list"):
         assert get_section_factory(key) is not None
 
 

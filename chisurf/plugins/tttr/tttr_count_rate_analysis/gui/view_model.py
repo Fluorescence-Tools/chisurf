@@ -60,7 +60,8 @@ class CountRateViewModel:
                 logger.debug("count-rate observer failed", exc_info=True)
 
     def update(self) -> None:
-        """AutoForm hook after a bound field changes (no bound fields; no-op)."""
+        """AutoForm hook: the ``path_list`` section wrote ``files`` — refresh views."""
+        self.notify("files")
 
     # ── file list ──────────────────────────────────────────────────────
     def add_files(self, paths: list[str]) -> None:

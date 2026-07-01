@@ -74,7 +74,22 @@
           "collapsed": true,
           "description": "Process many files with the options above; folders are scanned recursively for .ptu.",
           "sections": [
-            {"type": "custom", "key": "splitter_batch"}
+            {
+              "type": "custom",
+              "key": "path_list",
+              "target": "batch_files",
+              "options": {
+                "title": "PTU files (drop files or folders)",
+                "extensions": [".ptu"],
+                "add_folders": true
+              }
+            },
+            {
+              "type": "toggle",
+              "attr": "batch_use_parent",
+              "label": "Use file's parent as output folder"
+            },
+            {"type": "custom", "key": "splitter_batch_run"}
           ]
         }
       ]

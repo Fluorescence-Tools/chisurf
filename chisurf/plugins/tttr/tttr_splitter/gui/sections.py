@@ -75,61 +75,6 @@ def _enable_folder_drop(line_edit: QtWidgets.QLineEdit, on_folder) -> None:
     line_edit.dropEvent = dropEvent
 
 
-class _PtuFileDropList(QtWidgets.QListWidget):
-    """List widget that accepts dropped files/folders and collects ``.ptu`` files."""
-
-    changed = QtCore.Signal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAcceptDrops(True)
-        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.setDropIndicatorShown(True)
-        self.setDefaultDropAction(QtCore.Qt.CopyAction)
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event: QtGui.QDragMoveEvent):
-        event.acceptProposedAction()
-
-    def dropEvent(self, event: QtGui.QDropEvent):
-        paths = [
-            pathlib.Path(u.toLocalFile())
-            for u in (event.mimeData().urls() or [])
-            if u.toLocalFile()
-        ]
-        if paths:
-            self.add_paths([p for p in paths if p.exists()])
-        event.acceptProposedAction()
-
-    def add_paths(self, paths: list[pathlib.Path]):
-        files: list[pathlib.Path] = []
-        for p in paths:
-            if p.is_dir():
-                files.extend(self._collect_ptu_files(p))
-            elif p.is_file() and p.suffix.lower() == ".ptu":
-                files.append(p.resolve())
-        existing = {self.item(i).text() for i in range(self.count())}
-        added = False
-        for f in sorted(set(map(str, files))):
-            if f not in existing:
-                self.addItem(f)
-                added = True
-        if added:
-            self.changed.emit()
-
-    @staticmethod
-    def _collect_ptu_files(folder: pathlib.Path) -> list[pathlib.Path]:
-        try:
-            return [p.resolve() for p in folder.rglob("*.ptu") if p.is_file()]
-        except Exception:
-            return []
-
-
 # ---------------------------------------------------------------------------
 # splitter_io — input file + output folder pickers (drag-drop)
 # ---------------------------------------------------------------------------
@@ -290,14 +235,19 @@ class _RunSection(QtWidgets.QWidget):
 # ---------------------------------------------------------------------------
 
 
-@register_section("splitter_batch")
-def splitter_batch(model, target=None, **options):
-    """AutoForm factory for the batch file list and its controls."""
-    return _BatchSection(model)
+@register_section("splitter_batch_run")
+def splitter_batch_run(model, target=None, **options):
+    """AutoForm factory for the batch Start button + progress bar.
+
+    The file list is the general ``path_list`` section (target ``batch_files``)
+    and the parent-folder toggle is a declarative ``toggle``; this section only
+    runs the batch.
+    """
+    return _BatchRunSection(model)
 
 
-class _BatchSection(QtWidgets.QWidget):
-    """Drag-drop list of PTU files/folders processed with the current options."""
+class _BatchRunSection(QtWidgets.QWidget):
+    """Start button + progress for the batch splitter run."""
 
     def __init__(self, model, parent=None):
         super().__init__(parent)
@@ -308,84 +258,26 @@ class _BatchSection(QtWidgets.QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(4)
 
-        info = QtWidgets.QLabel(
-            "Drop PTU files and/or folders below (folders are scanned recursively)."
-        )
-        info.setWordWrap(True)
-        layout.addWidget(info)
-
-        self._list = _PtuFileDropList()
-        self._list.changed.connect(self._sync_files)
-        layout.addWidget(self._list, 1)
-
-        self._chk_parent = QtWidgets.QCheckBox("Use file's parent as output folder")
-        self._chk_parent.setChecked(bool(self._model.batch_use_parent))
-        self._chk_parent.toggled.connect(
-            lambda v: setattr(self._model, "batch_use_parent", bool(v))
-        )
-        layout.addWidget(self._chk_parent)
-
-        btn_row = QtWidgets.QHBoxLayout()
-        btn_row.setContentsMargins(0, 0, 0, 0)
-        self._btn_add_files = _tool_button("➕ Files", self._add_files, "Add PTU files.")
-        self._btn_add_folders = _tool_button(
-            "📁 Folder", self._add_folder, "Add a folder (scanned recursively)."
-        )
-        self._btn_remove = _tool_button(
-            "➖ Remove", self._remove_selected, "Remove selected entries."
-        )
-        self._btn_clear = _tool_button("🗑 Clear", self._clear, "Clear the list.")
-        for b in (self._btn_add_files, self._btn_add_folders, self._btn_remove, self._btn_clear):
-            btn_row.addWidget(b)
-        btn_row.addStretch(1)
-        self._btn_start = _tool_button(
-            "▶ Start batch", self._start, "Process every file with the options above."
-        )
-        btn_row.addWidget(self._btn_start)
-        layout.addLayout(btn_row)
-
+        row = QtWidgets.QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
         self._progress = QtWidgets.QProgressBar()
         self._progress.setRange(0, 100)
         self._progress.setValue(0)
-        layout.addWidget(self._progress)
+        row.addWidget(self._progress, 1)
+        self._btn_start = _tool_button(
+            "▶ Start batch", self._start, "Process every file with the options above."
+        )
+        row.addWidget(self._btn_start)
+        layout.addLayout(row)
 
-    # ── list management ─────────────────────────────────────────────────
-    def _sync_files(self) -> None:
-        self._model.batch_files = [self._list.item(i).text() for i in range(self._list.count())]
-
-    def _add_files(self) -> None:
-        dlg = QtWidgets.QFileDialog(self, "Select PTU files")
-        dlg.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
-        dlg.setNameFilter("PTU files (*.ptu)")
-        if dlg.exec_():
-            self._list.add_paths([pathlib.Path(f) for f in dlg.selectedFiles()])
-            self._sync_files()
-
-    def _add_folder(self) -> None:
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select a folder")
-        if folder:
-            self._list.add_paths([pathlib.Path(folder)])
-            self._sync_files()
-
-    def _remove_selected(self) -> None:
-        for it in self._list.selectedItems():
-            self._list.takeItem(self._list.row(it))
-        self._sync_files()
-
-    def _clear(self) -> None:
-        self._list.clear()
-        self._sync_files()
-
-    # ── run ─────────────────────────────────────────────────────────────
     def _start(self) -> None:
         if self._running:
             return
-        self._sync_files()
         if not self._model.batch_files:
             QtWidgets.QMessageBox.information(self, "No files", "Add PTU files or folders first.")
             return
         self._running = True
-        self._set_enabled(False)
+        self._btn_start.setEnabled(False)
         try:
             count = self._model.run_batch(file_progress_cb=self._on_file)
             self._progress.setValue(100)
@@ -394,23 +286,11 @@ class _BatchSection(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Batch failed", str(exc))
         finally:
             self._running = False
-            self._set_enabled(True)
+            self._btn_start.setEnabled(True)
 
     def _on_file(self, index: int, count: int, path: str) -> None:
         self._progress.setValue(int(index * 100 / max(1, count)))
         QtWidgets.QApplication.processEvents()
-
-    def _set_enabled(self, enabled: bool) -> None:
-        for w in (
-            self._list,
-            self._chk_parent,
-            self._btn_add_files,
-            self._btn_add_folders,
-            self._btn_remove,
-            self._btn_clear,
-            self._btn_start,
-        ):
-            w.setEnabled(enabled)
 
 
 # ---------------------------------------------------------------------------
@@ -440,4 +320,4 @@ def _tool_button(text: str, slot, tooltip: str = "") -> QtWidgets.QToolButton:
     return btn
 
 
-__all__ = ["splitter_io", "splitter_run", "splitter_batch"]
+__all__ = ["splitter_io", "splitter_run", "splitter_batch_run"]

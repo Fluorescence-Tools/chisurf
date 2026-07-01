@@ -17,7 +17,13 @@
           "type": "panel",
           "title": "Files",
           "sections": [
-            {"type": "custom", "key": "count_rate_files"}
+            {
+              "type": "custom",
+              "key": "path_list",
+              "target": "files",
+              "options": {"title": "TTTR files (drop files or folders)", "add_folders": true}
+            },
+            {"type": "custom", "key": "count_rate_run"}
           ]
         },
         {
