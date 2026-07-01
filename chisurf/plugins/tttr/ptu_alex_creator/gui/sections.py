@@ -161,7 +161,9 @@ class _BatchSection(QtWidgets.QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(4)
 
-        info = QtWidgets.QLabel("Drop .sm (or other TTTR) files to convert each or merge into one.")
+        info = QtWidgets.QLabel(
+            "Drop .sm (or other TTTR) files or folders to convert each or merge into one."
+        )
         info.setWordWrap(True)
         layout.addWidget(info)
 
@@ -187,6 +189,7 @@ class _BatchSection(QtWidgets.QWidget):
         btn_row = QtWidgets.QHBoxLayout()
         btn_row.setContentsMargins(0, 0, 0, 0)
         btn_row.addWidget(_tool_button("➕ Files", "Add TTTR files.", self._add_files))
+        btn_row.addWidget(_tool_button("📁 Folder", "Add a folder (scanned for TTTR files).", self._add_folder))
         btn_row.addWidget(_tool_button("🗑 Clear", "Clear the list.", self._model.clear_batch))
         btn_row.addStretch(1)
         btn_row.addWidget(_tool_button("⚙️ Run batch", "Convert each / merge into one.", self._run))
@@ -205,15 +208,34 @@ class _BatchSection(QtWidgets.QWidget):
         else:
             event.ignore()
 
+    #: TTTR file extensions collected when a folder is dropped.
+    _TTTR_EXTS = {".sm", ".ptu", ".ht3", ".spc", ".hdf", ".h5", ".raw"}
+
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        paths = [
-            u.toLocalFile()
-            for u in (event.mimeData().urls() or [])
-            if u.toLocalFile() and pathlib.Path(u.toLocalFile()).is_file()
-        ]
+        dropped = [u.toLocalFile() for u in (event.mimeData().urls() or []) if u.toLocalFile()]
+        paths = self._expand_paths(dropped)
         if paths:
             self._model.add_batch_files(paths)
             event.acceptProposedAction()
+
+    def _expand_paths(self, dropped: list[str]) -> list[str]:
+        """Expand a mixed drop of files and folders into a TTTR file list.
+
+        Files are taken as-is; folders are scanned recursively for files whose
+        extension is a known TTTR container.
+        """
+        out: list[str] = []
+        for item in dropped:
+            p = pathlib.Path(item)
+            if p.is_file():
+                out.append(str(p))
+            elif p.is_dir():
+                out.extend(
+                    str(f)
+                    for f in sorted(p.rglob("*"))
+                    if f.is_file() and f.suffix.lower() in self._TTTR_EXTS
+                )
+        return out
 
     # ── model wiring ────────────────────────────────────────────────────
     def _on_model_event(self, event: str) -> None:
@@ -229,6 +251,11 @@ class _BatchSection(QtWidgets.QWidget):
         )
         if paths:
             self._model.add_batch_files(list(paths))
+
+    def _add_folder(self) -> None:
+        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Add a folder of TTTR files")
+        if folder:
+            self._model.add_batch_files(self._expand_paths([folder]))
 
     def _browse_output(self) -> None:
         folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select output folder")

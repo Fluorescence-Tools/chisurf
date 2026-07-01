@@ -45,6 +45,25 @@ def test_manifest_and_cli_and_rpc():
     assert "alex.convert" in list_methods() and "alex.merge" in list_methods()
 
 
+def test_batch_drop_expands_files_and_folders(qapp, qtbot, tmp_path):
+    from chisurf.plugins.tttr.ptu_alex_creator.gui.sections import _BatchSection
+    from chisurf.plugins.tttr.ptu_alex_creator.gui.view_model import AlexViewModel
+
+    (tmp_path / "m1.sm").write_text("")
+    (tmp_path / "m2.sm").write_text("")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "m3.ptu").write_text("")
+    (tmp_path / "notes.txt").write_text("")
+
+    section = _BatchSection(AlexViewModel())
+    qtbot.addWidget(section)
+    # a folder drop expands recursively to TTTR files only; plain files pass through
+    names = sorted(pathlib.Path(p).name for p in section._expand_paths([str(tmp_path)]))
+    assert names == ["m1.sm", "m2.sm", "m3.ptu"]
+    multi = section._expand_paths([str(tmp_path / "m1.sm"), str(tmp_path / "m2.sm")])
+    assert len(multi) == 2
+
+
 def test_tool_builds_with_autoform(qapp, qtbot):
     from chisurf.gui.autoform import AutoForm
     from chisurf.gui.autoform.sections.registry import get_section_factory
