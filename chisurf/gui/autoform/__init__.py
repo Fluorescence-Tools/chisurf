@@ -6,6 +6,7 @@ out of ``chisurf.gui.widgets.models.auto_model_widget`` (PRD-38), where it was
 scoped to fitting models, so settings, metadata and tool panels can be rendered
 the same way. ``AutoModelWidget`` remains as a backwards-compatible alias.
 """
+
 from __future__ import annotations
 
 from chisurf.gui.autoform.auto_form import AutoForm, AutoModelWidget

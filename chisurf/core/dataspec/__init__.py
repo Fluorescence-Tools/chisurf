@@ -217,6 +217,10 @@ class PanelSection(Section):
     collapsed: bool = False
     #: Optional condition that folds the panel: ``{target, attr, equals}``.
     collapsed_when: typing.Optional[typing.Mapping[str, typing.Any]] = None
+    #: How many label/field pairs to pack per row for the panel's simple fields
+    #: (value/choice/toggle). ``None`` uses the renderer default; ``1`` gives a
+    #: single-column form layout that saves horizontal space in narrow docks.
+    n_col: typing.Optional[int] = None
     #: Ordered child sections rendered inside the panel.
     sections: typing.Tuple[Section, ...] = ()
 
@@ -251,6 +255,19 @@ class ChoiceSection(Section):
     value_key: str = "value"
     #: Render hint: ``"combo"`` or ``"radio"``.
     style: str = "combo"
+    #: For combo style: allow free-typing in addition to picking (editable combo).
+    #: Typed text that is not among ``options`` is committed verbatim. Ignored for
+    #: ``"radio"`` style.
+    editable: bool = False
+    #: Optional model *method* invoked with the chosen value on change (for tool
+    #: view-models that are not in the action registry). Complements ``attr``.
+    call: str = ""
+    #: Optional model methods backing an add/remove button pair next to a combo
+    #: (managed/dynamic combos). ``remove`` is called with the current value.
+    add_action: str = ""
+    add_label: str = "+"
+    remove_action: str = ""
+    remove_label: str = "−"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -283,11 +300,14 @@ class ValueSection(Section):
     """
 
     label: str = "Value"
-    #: One of ``"int"``, ``"float"``, ``"str"``, ``"text"`` (multi-line) or
-    #: ``"date"`` (ISO ``yyyy-MM-dd``).
+    #: One of ``"int"``, ``"float"``, ``"str"``, ``"text"`` (multi-line),
+    #: ``"date"`` (ISO ``yyyy-MM-dd``) or ``"file"`` (line edit + browse button).
     kind: str = "str"
     #: Attribute on the target group to get/set (direct-binding mode).
     attr: typing.Optional[str] = None
+    #: Optional model *method* invoked with the new value on change (tool view-models);
+    #: for ``kind="file"`` it is called with the chosen path after picking.
+    call: str = ""
     #: Action dispatched on change instead of ``setattr`` (action-binding mode).
     set_action: str = ""
     #: Fixed payload merged into the dispatch.
@@ -316,6 +336,19 @@ class ToggleRowSection(Section):
     """
 
     items: typing.Tuple[typing.Mapping[str, str], ...] = ()
+
+
+@dataclasses.dataclass(frozen=True)
+class ButtonRowSection(Section):
+    """A horizontal row of action buttons, each invoking a model method.
+
+    Each entry in ``buttons`` is a mapping with keys ``label``, ``action`` (the
+    model method called with no arguments on click) and optional ``description``.
+    Lets tool toolbars (load / clear / export …) be authored in JSON instead of a
+    custom widget.
+    """
+
+    buttons: typing.Tuple[typing.Mapping[str, str], ...] = ()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -369,6 +402,85 @@ class DockAreaSection(Section):
     sections: typing.Tuple[Section, ...] = ()
     #: Optional minimum height (pixels) for the dock area (0 = unconstrained).
     height: int = 0
+    #: When set, the dock arrangement (splits/tabs/sizes) is remembered across
+    #: sessions under this plugin-unique settings key (typically the plugin's
+    #: ``state_namespace``).
+    persist: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class InfoSection(Section):
+    """A read-only rich-text (HTML/Markdown) display block.
+
+    The declarative counterpart of the hand-written ``QTextBrowser`` panels used
+    for help text and live status (settings health, optional-dependency checks).
+    The content is either the static ``text`` field, or — when ``source`` is set
+    — the string returned by that zero-argument model method, re-read whenever the
+    form refreshes (so status panels stay live). ``is_markdown`` renders the
+    content as Markdown instead of HTML.
+    """
+
+    #: Static content shown when ``source`` is empty. HTML unless ``is_markdown``.
+    text: str = ""
+    #: Optional model *method* (no args) returning the content string; when set it
+    #: overrides ``text`` and is re-read on every ``refresh``.
+    source: str = ""
+    #: Render ``text``/``source`` as Markdown rather than HTML.
+    is_markdown: bool = False
+    #: Optional minimum height in pixels (0 = let the content size the block).
+    height: int = 0
+
+
+@dataclasses.dataclass(frozen=True)
+class WizardStepSection(Section):
+    """One step (page) of a :class:`WizardSection`.
+
+    Renders its ordered ``sections`` as the step body (bound to the same model as
+    the surrounding form, exactly like a :class:`PanelSection`). ``title`` names
+    the step in the navigation list; ``subtitle`` is shown above the body. A step
+    can be marked ``optional`` (never blocks navigation) and can declare a
+    ``complete_when`` condition — ``{"target", "attr", "equals"}``, the same shape
+    as :attr:`PanelSection.collapsed_when` — used to show a ✓ and (when the wizard
+    is ``linear``) to gate the *Next* button.
+    """
+
+    #: Sub-heading shown above the step body.
+    subtitle: str = ""
+    #: Optional emoji/icon shown next to the step in the navigation list.
+    icon: str = ""
+    #: Ordered child sections making up the step body.
+    sections: typing.Tuple[Section, ...] = ()
+    #: When ``True`` the step never blocks navigation even in a linear wizard.
+    optional: bool = False
+    #: Condition marking the step complete: ``{target, attr, equals}``.
+    complete_when: typing.Optional[typing.Mapping[str, typing.Any]] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class WizardSection(Section):
+    """A directed, two-column stepper hosting an ordered list of steps.
+
+    The declarative wizard primitive: a left navigation list of :class:`steps
+    <WizardStepSection>` plus a right content pane and a Back/Next/Finish bar —
+    the same two-column arrangement as the Settings tool, but guided. Each step's
+    body is authored as ordinary sections, so an entire multi-page wizard is
+    described in a ``.view.json`` with no Qt. Reusable for any wizard, not just
+    onboarding.
+
+    When ``linear`` is set, *Next* is disabled until the current step is complete
+    (its ``complete_when`` holds, or it is ``optional``); prior steps stay
+    clickable so the user can revisit them.
+    """
+
+    #: Ordered steps of the wizard.
+    steps: typing.Tuple[WizardStepSection, ...] = ()
+    #: Width (pixels) of the left navigation column.
+    nav_width: int = 200
+    #: Gate *Next* on step completion when ``True``.
+    linear: bool = False
+    #: When set, the last-viewed step index is remembered across sessions under
+    #: this settings key (typically the plugin's ``state_namespace``).
+    persist: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -431,10 +543,14 @@ _SECTION_TYPES = {
     "choice": ChoiceSection,
     "toggle": ToggleSection,
     "toggle_row": ToggleRowSection,
+    "button_row": ButtonRowSection,
     "value": ValueSection,
     "custom": CustomSection,
     "plot": PlotSection,
     "dock_area": DockAreaSection,
+    "info": InfoSection,
+    "wizard": WizardSection,
+    "wizard_step": WizardStepSection,
 }
 
 
@@ -463,9 +579,16 @@ def _section_from_dict(d: typing.Mapping[str, typing.Any]) -> Section:
     # panels nest child sections — parse them recursively
     if "sections" in kwargs and kwargs["sections"] is not None:
         kwargs["sections"] = tuple(_section_from_dict(s) for s in kwargs["sections"])
-    # ToggleRowSection items must be a tuple of plain dicts
+    # wizard steps nest like panels; a step dict need not spell out its type.
+    if "steps" in kwargs and kwargs["steps"] is not None:
+        kwargs["steps"] = tuple(
+            _section_from_dict({"type": "wizard_step", **dict(s)}) for s in kwargs["steps"]
+        )
+    # ToggleRowSection items / ButtonRowSection buttons must be tuples of plain dicts
     if "items" in kwargs and kwargs["items"] is not None:
         kwargs["items"] = tuple(dict(item) for item in kwargs["items"])
+    if "buttons" in kwargs and kwargs["buttons"] is not None:
+        kwargs["buttons"] = tuple(dict(b) for b in kwargs["buttons"])
     return cls(**kwargs)
 
 
@@ -708,6 +831,9 @@ __all__ = [
     "ToggleSection",
     "ValueSection",
     "CustomSection",
+    "InfoSection",
+    "WizardSection",
+    "WizardStepSection",
     "FittingParameterSection",
     "PlotSpec",
     "ModelView",

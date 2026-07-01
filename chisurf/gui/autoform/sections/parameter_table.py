@@ -49,6 +49,7 @@ COLUMN_IDS = [m[0] for m in COLUMN_META]
 
 # ── boolean checkbox delegate ───────────────────────────────────────────
 
+
 class _BooleanToggleDelegate(QtWidgets.QStyledItemDelegate):
     """Click-to-toggle checkbox rendered centered in the cell."""
 
@@ -85,9 +86,8 @@ class _BooleanToggleDelegate(QtWidgets.QStyledItemDelegate):
             else option.widget.style()
         )
         cb_opt = QtWidgets.QStyleOptionButton()
-        cb_opt.state = (
-            QtWidgets.QStyle.State_Enabled
-            | (QtWidgets.QStyle.State_On if checked else QtWidgets.QStyle.State_Off)
+        cb_opt.state = QtWidgets.QStyle.State_Enabled | (
+            QtWidgets.QStyle.State_On if checked else QtWidgets.QStyle.State_Off
         )
         cb_opt.rect = self._checkbox_rect(option)
         style.drawControl(QtWidgets.QStyle.CE_CheckBox, cb_opt, painter)
@@ -118,6 +118,7 @@ class _BooleanToggleDelegate(QtWidgets.QStyledItemDelegate):
 
 
 # ── table model ─────────────────────────────────────────────────────────
+
 
 class ParameterGroupTableModel(QtCore.QAbstractTableModel):
     """Table model exposing a list of :class:`FittingParameter` objects.
@@ -302,6 +303,7 @@ class ParameterGroupTableModel(QtCore.QAbstractTableModel):
 def _isfinite(v: typing.Any) -> bool:
     try:
         import numpy as np
+
         return bool(np.isfinite(v))
     except Exception:
         return True
@@ -319,6 +321,7 @@ def _parse_bool(value: typing.Any) -> bool:
 
 
 # ── table widget ────────────────────────────────────────────────────────
+
 
 class ParameterGroupTableWidget(QtWidgets.QWidget):
     """A ``QTableView`` that edits a list of :class:`FittingParameter` objects.
@@ -386,9 +389,15 @@ class ParameterGroupTableWidget(QtWidgets.QWidget):
             except Exception:
                 pass
         hh.setMinimumSectionSize(40)
-        _default_widths = {COL_NAME: 100, COL_VALUE: 80, COL_FIXED: 55,
-                           COL_BOUNDS_LO: 65, COL_BOUNDS_HI: 65,
-                           COL_BOUNDS_ON: 60, COL_ERROR: 65}
+        _default_widths = {
+            COL_NAME: 100,
+            COL_VALUE: 80,
+            COL_FIXED: 55,
+            COL_BOUNDS_LO: 65,
+            COL_BOUNDS_HI: 65,
+            COL_BOUNDS_ON: 60,
+            COL_ERROR: 65,
+        }
         for col, w in _default_widths.items():
             try:
                 self._table.setColumnWidth(col, w)

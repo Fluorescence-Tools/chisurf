@@ -351,8 +351,17 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
             self._apply_tooltip(self, *self._radios)
         else:
             self.combo = QtWidgets.QComboBox()
+            if section.editable:
+                self.combo.setEditable(True)
+                self.combo.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
             self._populate_combo(current)
             self.combo.currentIndexChanged.connect(self._on_index_changed)
+            if section.editable:
+                # Commit free-typed text (not necessarily among the options) on
+                # focus-out / Enter, so a hand-entered model id is preserved.
+                self.combo.lineEdit().editingFinished.connect(
+                    lambda: self._commit(self.combo.currentText().strip())
+                )
             layout.addWidget(self.combo, 1)
             self._apply_tooltip(self, self.combo)
             # Optional +/- buttons for managed (dynamic) combos driven by model methods.
@@ -385,11 +394,17 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
         self.combo.clear()
         for label in self._labels():
             self.combo.addItem(label)
+        matched = False
         if current is not None:
             for i, opt in enumerate(self._options):
                 if str(opt) == str(current):
                     self.combo.setCurrentIndex(i)
+                    matched = True
                     break
+        # An editable combo may hold a value the option list does not contain
+        # (a hand-typed model id); show it verbatim in the line edit.
+        if not matched and current is not None and self.combo.isEditable():
+            self.combo.setEditText(str(current))
         self.combo.blockSignals(False)
 
     def _on_index_changed(self, idx) -> None:
@@ -422,12 +437,15 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
         if cur is None:
             return
         if self.combo is not None:
-            for i, opt in enumerate(self._options):
-                if str(opt) == str(cur):
-                    self.combo.blockSignals(True)
-                    self.combo.setCurrentIndex(i)
-                    self.combo.blockSignals(False)
-                    break
+            if self.combo.isEditable():
+                self._populate_combo(cur)
+            else:
+                for i, opt in enumerate(self._options):
+                    if str(opt) == str(cur):
+                        self.combo.blockSignals(True)
+                        self.combo.setCurrentIndex(i)
+                        self.combo.blockSignals(False)
+                        break
         else:
             for opt, rb in zip(self._options, self._radios):
                 if str(opt) == str(cur):
@@ -535,9 +553,61 @@ class ButtonRowWidget(QtWidgets.QWidget):
         layout.addStretch(1)
 
     def _call(self, action: str) -> None:
+        # Flush an in-progress field edit before running the action. Fields commit
+        # on focus-out (``editingFinished``), but a NoFocus tool button does not
+        # blur the editor on click, so a value typed and not yet committed (e.g. an
+        # API key) would otherwise be missed. Clearing focus fires that commit
+        # synchronously before the action reads the model.
+        focused = QtWidgets.QApplication.focusWidget()
+        if focused is not None and focused is not self and self.isAncestorOf(focused) is False:
+            focused.clearFocus()
         fn = getattr(self._model, action, None)
         if callable(fn):
             fn()
+
+
+class InfoWidget(QtWidgets.QTextBrowser):
+    """Read-only rich-text (HTML/Markdown) block for an :class:`InfoSection`.
+
+    Shows the section's static ``text`` or, when ``source`` is set, the string
+    returned by that zero-arg model method — re-read on :meth:`refresh` so live
+    status panels update with the model. Opts into ``AUTOFORM_REFRESH`` so
+    ``AutoForm.refresh_plots()`` keeps it current.
+    """
+
+    is_form_field = False
+    AUTOFORM_REFRESH = True
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._section = section
+        self.setOpenExternalLinks(False)
+        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        if getattr(section, "height", 0):
+            self.setMinimumHeight(int(section.height))
+        self.refresh()
+
+    def _content(self) -> str:
+        source = getattr(self._section, "source", "")
+        if source:
+            fn = getattr(self._model, source, None)
+            if callable(fn):
+                try:
+                    return str(fn() or "")
+                except Exception:  # pragma: no cover - defensive
+                    logging.warning(f"InfoWidget: source {source!r} failed", exc_info=True)
+                    return ""
+        return str(getattr(self._section, "text", "") or "")
+
+    def refresh(self) -> None:
+        """Re-read the content (static or from ``source``) and re-render it."""
+        content = self._content()
+        if getattr(self._section, "is_markdown", False):
+            self.setMarkdown(content)
+        else:
+            self.setHtml(content)
 
 
 class _FocusOutPlainTextEdit(QtWidgets.QPlainTextEdit):
@@ -625,7 +695,7 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             self._set_date_from(current)
             if not read_only:
                 self.editor.dateChanged.connect(lambda d: self._commit(d.toString("yyyy-MM-dd")))
-        elif section.kind == "password":
+        elif section.kind in ("password", "secret"):
             self.editor = QtWidgets.QLineEdit()
             self.editor.setEchoMode(QtWidgets.QLineEdit.Password)
             if section.placeholder:
@@ -661,7 +731,21 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             browse.setToolTip("Browse…")
             browse.clicked.connect(self._browse_file)
             layout.addWidget(browse)
+        # A "secret" field is a masked input with a reveal toggle (e.g. API keys),
+        # while a plain "password" field stays masked with no reveal affordance.
+        if section.kind == "secret":
+            self.reveal = QtWidgets.QToolButton()
+            self.reveal.setCheckable(True)
+            self.reveal.setText("👁")
+            self.reveal.setToolTip("Show / hide")
+            self.reveal.toggled.connect(self._toggle_secret)
+            layout.addWidget(self.reveal)
         self._apply_tooltip(self, self.editor)
+
+    def _toggle_secret(self, checked: bool) -> None:
+        """Reveal or mask a ``kind="secret"`` field's contents."""
+        mode = QtWidgets.QLineEdit.Normal if checked else QtWidgets.QLineEdit.Password
+        self.editor.setEchoMode(mode)
 
     def _commit_file(self, path: str) -> None:
         """Commit a file path only when it actually changed (avoids reloads)."""

@@ -1,0 +1,151 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "API Configuration",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "provider",
+          "label": "Provider",
+          "call": "set_provider",
+          "options": ["openai", "mistral", "local", "custom"],
+          "labels": [
+            "OpenAI (ChatGPT)",
+            "Mistral",
+            "Local (Ollama, LMStudio, ...)",
+            "Custom (OpenAI-compatible)"
+          ],
+          "description": "Configure one endpoint per provider. Switching reloads that provider's saved values."
+        },
+        {
+          "type": "button_row",
+          "buttons": [
+            {
+              "label": "🔑 Sign in via browser",
+              "action": "sign_in",
+              "description": "Open the provider's console to create or copy an API key."
+            }
+          ]
+        },
+        {
+          "type": "value",
+          "attr": "base_url",
+          "label": "Base URL",
+          "kind": "str",
+          "placeholder": "https://api.openai.com/v1",
+          "description": "OpenAI-compatible API base URL for the selected provider."
+        },
+        {
+          "type": "value",
+          "attr": "api_key",
+          "label": "API Key",
+          "kind": "secret",
+          "call": "apply_token",
+          "placeholder": "Paste API key — it is saved and tested automatically",
+          "description": "Bearer token for the endpoint. Pasting a key auto-saves it and tests the connection. Not needed for most local servers."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Models",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "text_model",
+          "label": "Text model",
+          "editable": true,
+          "options_source": "available_text_models",
+          "description": "Used for chat, code editing, explanations, and other text tasks. Type a model id or pick from fetched models."
+        },
+        {
+          "type": "choice",
+          "attr": "image_model",
+          "label": "Image model",
+          "editable": true,
+          "options_source": "available_image_models",
+          "description": "Used only for plugin icon and other image-generation tasks."
+        },
+        {
+          "type": "button_row",
+          "buttons": [
+            {
+              "label": "⬇ Fetch models",
+              "action": "fetch_models",
+              "description": "Query the endpoint's /models list and split it into text and image models."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Generation Settings",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "temperature",
+          "label": "Temperature",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "step": 0.1,
+          "decimals": 2,
+          "description": "Sampling temperature (0 = deterministic, higher = more random)."
+        },
+        {
+          "type": "value",
+          "attr": "top_p",
+          "label": "Top-p",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "step": 0.05,
+          "decimals": 2,
+          "description": "Nucleus-sampling probability mass."
+        },
+        {
+          "type": "value",
+          "attr": "max_tokens",
+          "label": "Max tokens",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Maximum number of tokens to generate per response."
+        }
+      ]
+    },
+    {
+      "type": "button_row",
+      "buttons": [
+        {
+          "label": "🔌 Test connection",
+          "action": "test_connection",
+          "description": "Check the endpoint responds to a /models request."
+        },
+        {
+          "label": "💾 Save",
+          "action": "save",
+          "description": "Persist the current provider's settings to ~/.chisurf/ai_api_settings.json."
+        },
+        {
+          "label": "↺ Reset",
+          "action": "reset",
+          "description": "Reset the current provider's fields to defaults (not saved until you press Save)."
+        }
+      ]
+    },
+    {
+      "type": "info",
+      "source": "status_source",
+      "height": 32
+    }
+  ]
+}

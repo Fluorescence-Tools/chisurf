@@ -6,6 +6,7 @@ module is the GUI-side counterpart: it maps those keys to real plot classes and
 custom-section factories. Keeping the mapping here — and only here — is what
 lets the model layer stay GUI-free while still driving a rich UI.
 """
+
 from __future__ import annotations
 
 from chisurf import typing
@@ -75,5 +76,6 @@ def resolve_plot_specs(view) -> typing.List[typing.Tuple[type, dict]]:
 def _fitting_parameter_section_factory(model, target: str, **opts):
     """Render a single FittingParameter as a FittingParameterWidget."""
     from chisurf.gui.widgets.fitting.parameter_widgets import FittingParameterWidget
+
     fp = getattr(model, target)
     return FittingParameterWidget(fitting_parameter=fp, **opts)

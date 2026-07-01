@@ -35,6 +35,26 @@ REMOVE_BUTTON_STYLE = (
 )
 
 
+def _make_field_shrinkable(field) -> None:
+    """Let a field's editors shrink so the form scales to narrow docks/panels.
+
+    Spin boxes and combo boxes default to a wide intrinsic minimum (the value text
+    plus arrows, or the longest combo item), which forces the compact two-column
+    grid to overflow horizontally instead of sharing the available width. Drop that
+    floor and let the column stretch decide the width so the editors track the panel.
+    """
+    field.setMinimumWidth(0)
+    editors = field.findChildren(
+        (QtWidgets.QAbstractSpinBox, QtWidgets.QComboBox, QtWidgets.QLineEdit)
+    )
+    for editor in editors:
+        editor.setMinimumWidth(0)
+        editor.setSizePolicy(QtWidgets.QSizePolicy.Expanding, editor.sizePolicy().verticalPolicy())
+        if isinstance(editor, QtWidgets.QComboBox):
+            editor.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToMinimumContentsLengthWithIcon)
+            editor.setMinimumContentsLength(3)
+
+
 def _align_label_columns(param_widgets):
     """Give a batch of fitting-parameter rows one shared label width.
 
@@ -153,14 +173,16 @@ class AutoForm(QtWidgets.QWidget):
             except Exception:
                 pass
 
-    def _emit_sections(self, section_list, emit):
+    def _emit_sections(self, section_list, emit, fields_per_row=None):
         """Build sections, grouping consecutive simple fields into one form.
 
         Field sections (value / choice / toggle, marked ``is_form_field``) are
         accumulated and flushed into a single compact ``QGridLayout`` that packs
-        ``FIELDS_PER_ROW`` label/field pairs per row to save vertical space;
-        any other section (panel, parameter grid, curve input) flushes the run
-        and is emitted full-width.
+        ``fields_per_row`` label/field pairs per row (defaulting to
+        ``FIELDS_PER_ROW``) to save vertical space; passing ``1`` gives a
+        single-column form layout that saves horizontal space. Any other section
+        (panel, parameter grid, curve input) flushes the run and is emitted
+        full-width.
         """
         pending = []
 
@@ -172,7 +194,7 @@ class AutoForm(QtWidgets.QWidget):
             grid.setContentsMargins(0, 0, 0, 0)
             grid.setHorizontalSpacing(6)
             grid.setVerticalSpacing(2)
-            per_row = max(1, FIELDS_PER_ROW)
+            per_row = max(1, fields_per_row or FIELDS_PER_ROW)
             for i, field in enumerate(pending):
                 r, c = divmod(i, per_row)
                 col = c * 2
@@ -184,6 +206,7 @@ class AutoForm(QtWidgets.QWidget):
                 # Fields stretch horizontally to share the available width; the
                 # field columns carry the stretch, the label columns stay fixed.
                 field.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+                _make_field_shrinkable(field)
                 grid.addWidget(label, r, col)
                 grid.addWidget(field, r, col + 1)
                 grid.setColumnStretch(col + 1, 1)
@@ -237,6 +260,10 @@ class AutoForm(QtWidgets.QWidget):
             from .sections.builtin import ToggleRowWidget
 
             return ToggleRowWidget(self.model, section)
+        if isinstance(section, vs.ButtonRowSection):
+            from .sections.builtin import ButtonRowWidget
+
+            return ButtonRowWidget(self.model, section)
         if isinstance(section, vs.ValueSection):
             from .sections.builtin import ValueWidget
 
@@ -247,6 +274,12 @@ class AutoForm(QtWidgets.QWidget):
             return PlotWidget(self.model, section)
         if isinstance(section, vs.DockAreaSection):
             return self._build_dock_area(section)
+        if isinstance(section, vs.WizardSection):
+            return self._build_wizard(section)
+        if isinstance(section, vs.InfoSection):
+            from .sections.builtin import InfoWidget
+
+            return InfoWidget(self.model, section)
         if isinstance(section, vs.ParameterGroupTableSection):
             return self._build_parameter_group_table(section)
         if isinstance(section, vs.ParameterGroupSection):
@@ -380,7 +413,7 @@ class AutoForm(QtWidgets.QWidget):
 
     def _build_panel(self, section: vs.PanelSection):
         box = self._make_fold_box(section)
-        self._emit_sections(section.sections, box.add_widget)
+        self._emit_sections(section.sections, box.add_widget, fields_per_row=section.n_col)
         return box
 
     def _build_dock_area(self, section: vs.DockAreaSection):
@@ -411,11 +444,18 @@ class AutoForm(QtWidgets.QWidget):
                     inner = QtWidgets.QWidget()
                     lay = QtWidgets.QVBoxLayout(inner)
                     lay.setContentsMargins(0, 0, 0, 0)
-                    self._emit_sections(child.sections, lay.addWidget)
-                    # Distribute spare vertical space across the sub-panels so the settings
-                    # stretch to fill the dock instead of leaving a gap at the bottom.
+                    self._emit_sections(child.sections, lay.addWidget, fields_per_row=child.n_col)
+                    # Give spare vertical space to an expanding child (a plot/image) if the
+                    # panel has one; otherwise keep the fields top-aligned and compact with a
+                    # trailing stretch (so form rows don't spread into large gaps).
+                    expanding = False
                     for r in range(lay.count()):
-                        lay.setStretch(r, 1)
+                        w = lay.itemAt(r).widget()
+                        if w is not None and getattr(w, "_autoform_expanding", False):
+                            lay.setStretch(r, 1)
+                            expanding = True
+                    if not expanding:
+                        lay.addStretch(1)
                     inner.setSizePolicy(
                         QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
                     )
@@ -434,7 +474,50 @@ class AutoForm(QtWidgets.QWidget):
                 area.add_panel(widget, str(name))
             except Exception:
                 pass
+        # Remember the user's dock arrangement across sessions when the view asks
+        # for it (all panels are added by now, so restore-on-show can find them).
+        if getattr(section, "persist", ""):
+            try:
+                area.enable_persistence(section.persist)
+            except Exception:
+                pass
         return area
+
+    def _build_wizard(self, section: vs.WizardSection):
+        """Render a directed two-column wizard from a :class:`WizardSection`.
+
+        Each step's body is built with the same ``_emit_sections`` used everywhere
+        else, so the step controls bind to this form's model. The step-completion
+        predicate reuses the ``{target, attr, equals}`` condition evaluator so a
+        ``complete_when`` gates *Next* (in a linear wizard) and drives the ✓ mark.
+        """
+        from .sections.wizard_section import WizardWidget
+
+        pages = []
+        for step in section.steps:
+            body = QtWidgets.QWidget()
+            lay = QtWidgets.QVBoxLayout(body)
+            lay.setContentsMargins(0, 0, 0, 0)
+            self._emit_sections(step.sections, lay.addWidget)
+            # Give spare vertical space to an expanding child (an embedded editor
+            # or plot); otherwise keep the fields top-aligned with a trailing stretch.
+            expanding = False
+            for r in range(lay.count()):
+                w = lay.itemAt(r).widget()
+                if w is not None and getattr(w, "_autoform_expanding", False):
+                    lay.setStretch(r, 1)
+                    expanding = True
+            if not expanding:
+                lay.addStretch(1)
+            pages.append(body)
+
+        def _is_complete(index, _steps=section.steps):
+            cond = getattr(_steps[index], "complete_when", None)
+            # A step with no explicit condition is treated as complete (an
+            # informational step never blocks a linear wizard).
+            return True if not cond else self._collapsed_when(cond)
+
+        return WizardWidget(section, pages, _is_complete)
 
     def _collapsed_when(self, cond) -> bool:
         """Evaluate a ``{target, attr, equals}`` fold condition against the model."""

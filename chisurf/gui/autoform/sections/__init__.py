@@ -7,10 +7,13 @@ resolve a model's :class:`~chisurf.core.models.view_spec.ModelView`.
 
 from __future__ import annotations
 
-from . import builtin  # noqa: F401  (side effect: populate the registry)
-from . import chimol_section  # noqa: F401  (registers the "chimol" section)
-from . import path_list_section  # noqa: F401  (registers the "path_list" section)
-from . import waterfall_section  # noqa: F401  (registers the "waterfall" section)
+from . import (
+    builtin,  # noqa: F401  (side effect: populate the registry)
+    chimol_section,  # noqa: F401  (registers the "chimol" section)
+    embed_section,  # noqa: F401  (registers the "embed" section)
+    path_list_section,  # noqa: F401  (registers the "path_list" section)
+    waterfall_section,  # noqa: F401  (registers the "waterfall" section)
+)
 from .registry import (
     get_plot_class,
     get_section_factory,
