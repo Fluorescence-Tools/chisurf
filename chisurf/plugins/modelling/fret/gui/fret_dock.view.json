@@ -49,7 +49,9 @@
          "options": ["auto", "labellib", "imp-bff"], "style": "combo",
          "description": "Accessible-volume backend for distance distributions / screening."},
         {"type": "toggle", "attr": "save_distributions", "label": "P(R_DA)",
-         "description": "After docking, compute and export the full P(R_DA) distance distributions (real AV convolution) to distance_distributions.csv."}
+         "description": "After docking, compute and export the full P(R_DA) distance distributions (real AV convolution) to distance_distributions.csv."},
+        {"type": "toggle", "attr": "save_trajectory", "label": "Movie",
+         "description": "Save the docking trajectory (minimize) so the 3D preview can animate the docking path with the movie slider."}
       ]
     },
     {

@@ -346,6 +346,9 @@ class DockingParameters:
     #: AV backend for the (optional) distance-distribution recompute:
     #: "auto" | "labellib" | "imp-bff".
     av_backend: str = "auto"
+    #: Minimisation docking only — save the docking trajectory (~30 frames of the
+    #: minimisation path) as traj/frame_*.pdb so the 3D preview can animate it.
+    save_trajectory: bool = False
 
 
 @dataclass
@@ -940,7 +943,19 @@ def dock_minimize(
     logger.set_period(max(1, n_iter // 100))
     cg.add_optimizer_state(logger)
 
-    def _optimize(n):
+    # Optional docking-trajectory frames (for the 3D preview movie).
+    traj_dir = os.path.join(output_dir, "traj")
+    traj_frames: List[str] = []
+
+    def _write_frame():
+        if not params.save_trajectory:
+            return
+        os.makedirs(traj_dir, exist_ok=True)
+        fp = os.path.join(traj_dir, f"frame_{len(traj_frames):04d}.pdb")
+        IMP.atom.write_pdb(root, fp)
+        traj_frames.append(fp)
+
+    def _optimize(n, record=False):
         """Run CG in chunks so a cooperative stop is honoured promptly.
 
         Cancellation between chunks (plain Python) is reliable; raising from
@@ -948,16 +963,24 @@ def dock_minimize(
         stop responsive while barely affecting the conjugate-gradient descent.
         """
         chunk = min(100, max(20, n // 20))
+        n_chunks = max(1, (n + chunk - 1) // chunk)
+        stride = max(1, n_chunks // 30)  # cap at ~30 trajectory frames
+        if record:
+            _write_frame()  # starting pose
         done = 0
+        c = 0
         while done < n:
             if stop_check is not None and stop_check():
                 return True
             cg.optimize(min(chunk, n - done))
             done += chunk
+            c += 1
+            if record and c % stride == 0:
+                _write_frame()
         return False
 
     # Phase 1 — dock on the isolated-context AV mean positions + transfer fn.
-    stopped = _optimize(n_iter)
+    stopped = _optimize(n_iter, record=params.save_trajectory)
 
     # Phase 2 — FPS-style AV refinement: with the partner now docked alongside,
     # re-sample each AV so inter-body occlusion shifts its mean position, move the
@@ -998,6 +1021,8 @@ def dock_minimize(
             error_pos=float(d.get("error_pos", 0.0)),
         ))
 
+    if params.save_trajectory and not stopped:
+        _write_frame()  # final docked pose closes the trajectory
     out_pdb = os.path.join(output_dir, "docked.pdb")
     IMP.atom.write_pdb(root, out_pdb)
     score_csv = os.path.join(output_dir, "scores.csv")
@@ -1007,7 +1032,7 @@ def dock_minimize(
              "n_mobile": len(mobile), "convergence_csv": conv_csv,
              "coarse_clash": bool(params.coarse_clash),
              "refine_av_cycles": int(params.refine_av_cycles),
-             "stopped": stopped}
+             "stopped": stopped, "trajectory": traj_frames}
     if params.save_distributions and not stopped:
         try:
             from . import av as _av

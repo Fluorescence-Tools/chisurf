@@ -40,6 +40,8 @@ class DockRequest:
     save_distributions: bool = False
     #: AV backend for distributions/screening: "auto" | "labellib" | "imp-bff".
     av_backend: str = "auto"
+    #: Save the docking-trajectory frames (minimize) for the preview movie.
+    save_trajectory: bool = False
 
 
 @dataclass

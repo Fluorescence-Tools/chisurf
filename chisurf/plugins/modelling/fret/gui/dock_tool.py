@@ -81,6 +81,7 @@ class _DockingModel:
         self.simulated_annealing = False
         self.save_distributions = False
         self.av_backend = "auto"
+        self.save_trajectory = False
         # results
         self.status = ""
         self.score = 0.0
@@ -128,6 +129,7 @@ class _DockingModel:
                 "ev_weight": self.ev_weight,
                 "save_distributions": self.save_distributions,
                 "av_backend": self.av_backend,
+                "save_trajectory": self.save_trajectory,
             }
             if int(self.n_repeats) > 1:
                 req["n_trials"] = int(self.n_repeats)
@@ -723,9 +725,13 @@ class FretDockingTool(QtWidgets.QWidget):
                   (data.get("best_pdbs") or [None])[0])],
                 best_trial=0, kind=kind,
             )
+            # Prefer the docking trajectory (movie) when saved, else the
+            # n-best models — both step through the ChiMol frame slider.
+            traj = data.get("extra", {}).get("trajectory") or []
             best_pdbs = data.get("best_pdbs") or []
-            if best_pdbs:
-                self._show_structure(best_pdbs)  # n_best models -> frames
+            frames = traj if len(traj) > 1 else best_pdbs
+            if frames:
+                self._show_structure(frames)
             if stopped or data.get("extra", {}).get("stopped"):
                 self._set_status(f"stopped (score {self._model.score:.1f})")
             else:

@@ -61,6 +61,7 @@ def dock(req: Union[DockRequest, dict], stop_check=None) -> Dict:
         refine_av_cycles=r.refine_av_cycles,
         save_distributions=r.save_distributions,
         av_backend=r.av_backend,
+        save_trajectory=r.save_trajectory,
     )
     if r.method == "minimize":
         # A single minimisation is a deterministic, local refinement of the input
