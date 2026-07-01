@@ -54,21 +54,64 @@ class ChiMolSectionWidget(QtWidgets.QWidget):
         self._host.setMinimumHeight(int(height))
         layout.addWidget(self._host, 1)
 
+        # Movie navigator: prev / play / next / slider / counter. Always shown
+        # (disabled when there is a single frame) so the control is discoverable.
         row = QtWidgets.QHBoxLayout()
+        row.setContentsMargins(4, 2, 4, 2)
+        self._btn_prev = QtWidgets.QToolButton()
+        self._btn_prev.setText("⏮")
+        self._btn_prev.setToolTip("Previous model")
+        self._btn_prev.clicked.connect(lambda: self._step(-1))
+        self._btn_play = QtWidgets.QToolButton()
+        self._btn_play.setText("▶")
+        self._btn_play.setCheckable(True)
+        self._btn_play.setToolTip("Play / pause through the models")
+        self._btn_play.toggled.connect(self._on_play)
+        self._btn_next = QtWidgets.QToolButton()
+        self._btn_next.setText("⏭")
+        self._btn_next.setToolTip("Next model")
+        self._btn_next.clicked.connect(lambda: self._step(1))
         self._slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self._slider.setMinimum(0)
         self._slider.setMaximum(0)
         self._slider.valueChanged.connect(self._on_slider)
-        self._label = QtWidgets.QLabel("—")
-        row.addWidget(QtWidgets.QLabel("Model"))
+        self._label = QtWidgets.QLabel("0 / 0")
+        self._label.setMinimumWidth(60)
+        self._label.setAlignment(QtCore.Qt.AlignCenter)
+        for wdg in (self._btn_prev, self._btn_play, self._btn_next):
+            row.addWidget(wdg)
         row.addWidget(self._slider, 1)
         row.addWidget(self._label)
-        self._slider_bar = QtWidgets.QWidget()
-        self._slider_bar.setLayout(row)
-        self._slider_bar.setVisible(False)
-        layout.addWidget(self._slider_bar)
+        self._nav_bar = QtWidgets.QWidget()
+        self._nav_bar.setLayout(row)
+        layout.addWidget(self._nav_bar)
 
+        self._play_timer = QtCore.QTimer(self)
+        self._play_timer.setInterval(400)
+        self._play_timer.timeout.connect(lambda: self._step(1, wrap=True))
+
+        self._set_nav_enabled(False)
         self.refresh()
+
+    def _set_nav_enabled(self, enabled: bool) -> None:
+        for wdg in (self._btn_prev, self._btn_play, self._btn_next, self._slider):
+            wdg.setEnabled(enabled)
+
+    def _step(self, delta: int, wrap: bool = False) -> None:
+        if self._n_frames <= 1:
+            return
+        idx = self._slider.value() + delta
+        if wrap:
+            idx %= self._n_frames
+        idx = max(0, min(idx, self._n_frames - 1))
+        self._slider.setValue(idx)
+
+    def _on_play(self, playing: bool) -> None:
+        self._btn_play.setText("⏸" if playing else "▶")
+        if playing and self._n_frames > 1:
+            self._play_timer.start()
+        else:
+            self._play_timer.stop()
 
     # -- data --------------------------------------------------------------
     def _paths(self):
@@ -156,8 +199,8 @@ class ChiMolSectionWidget(QtWidgets.QWidget):
         self._slider.setMaximum(max(0, self._n_frames - 1))
         self._slider.setValue(0)
         self._slider.blockSignals(False)
-        self._slider_bar.setVisible(self._n_frames > 1)
-        self._label.setText(f"1 / {self._n_frames}" if self._n_frames > 1 else "—")
+        self._set_nav_enabled(self._n_frames > 1)
+        self._label.setText(f"1 / {self._n_frames}")
 
     def _on_slider(self, idx: int) -> None:
         viewer = self._viewer or None
