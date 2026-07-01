@@ -85,6 +85,8 @@ class _DockingModel:
         self.status = ""
         self.score = 0.0
         self.n_distances = 0
+        # structure(s) shown in the 3D preview (str or list of PDB paths)
+        self.preview_models = []
 
     def view_spec(self):
         """Return the AutoForm view spec from ``fret_dock.view.json``."""
@@ -243,8 +245,7 @@ class FretDockingTool(QtWidgets.QWidget):
         self._dialog = None
         self._t0 = 0.0
         self._total = 1
-        self._shown_pdb = None      # path currently in the 3D preview
-        self._pending_pdb = None    # path queued by the debounce timer
+        self._pending_pdb = None    # models queued by the preview debounce timer
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -313,14 +314,14 @@ class FretDockingTool(QtWidgets.QWidget):
         self._plot.setToolTip(
             "Total restraint score vs step (CG iteration or MC frame; one curve per trial).")
 
-        # Structure preview (ChiMol/MolView) — created lazily (needs PyMOL).
-        self._molview = None
-        self._molview_host = QtWidgets.QWidget()
-        QtWidgets.QVBoxLayout(self._molview_host).setContentsMargins(0, 0, 0, 0)
+        # Structure preview: reusable AutoForm ChiMol section (viewer + frame
+        # slider) bound to the model's ``preview_models`` list.
+        from chisurf.gui.autoform.sections.chimol_section import ChiMolSectionWidget
+        self._structure_view = ChiMolSectionWidget(self._model, "preview_models")
 
         self._dock_area.addTab(self._table, "📊 Results")
         self._dock_area.addTab(self._plot, "📈 Score")
-        self._dock_area.addTab(self._molview_host, "🧬 Structure")
+        self._dock_area.addTab(self._structure_view, "🧬 Structure")
 
         # Polls the trace file(s) to drive the progress dialog and score plot.
         self._timer = QtCore.QTimer(self)
@@ -337,64 +338,23 @@ class FretDockingTool(QtWidgets.QWidget):
         self._preview_timer.setInterval(180)
         self._preview_timer.timeout.connect(self._load_pending_structure)
 
-    # -- structure preview (ChiMol viewer) ---------------------------------
-    def _ensure_molview(self):
-        """Create the ChiMol MolView on first use; return it or None."""
-        if self._molview is not None:
-            return self._molview or None
-        try:
-            from chisurf.plugins.chimol.chimol.renderer.view import MolView
-            self._molview = MolView(self._molview_host)
-            self._molview_host.layout().addWidget(self._molview)
-            self._molview_objects = []
-        except Exception:
-            placeholder = QtWidgets.QLabel(
-                "3D preview needs the ChiMol plugin (install via the package manager).")
-            placeholder.setAlignment(QtCore.Qt.AlignCenter)
-            placeholder.setWordWrap(True)
-            self._molview_host.layout().addWidget(placeholder)
-            self._molview = False  # tried-and-failed
-        return self._molview or None
+    # -- structure preview (AutoForm ChiMol section) -----------------------
+    def _show_structure(self, paths) -> None:
+        """Queue structure(s) for the 3D preview (debounced via the model attr).
 
-    def _show_structure(self, path) -> None:
-        """Queue ``path`` for the 3D preview (debounced, deduped)."""
-        if not path or path == self._shown_pdb or not pathlib.Path(path).exists():
+        ``paths`` may be a single path or a list; a list of same-shape docked
+        models becomes a frame-stepped trajectory in the ChiMol section.
+        """
+        models = [paths] if isinstance(paths, (str, pathlib.Path)) else list(paths or [])
+        if models == list(self._model.preview_models):
             return
-        self._pending_pdb = str(path)
+        self._pending_pdb = models
         self._preview_timer.start()
 
     def _load_pending_structure(self) -> None:
-        path = self._pending_pdb
-        if not path or path == self._shown_pdb or not pathlib.Path(path).exists():
-            return
-        mv = self._ensure_molview()
-        if mv is None:
-            return
+        self._model.preview_models = list(self._pending_pdb or [])
         try:
-            import numpy as _np
-            from chisurf.plugins.chimol.chimol.io.structure import load_structure_payload
-            try:
-                from chisurf.core.structure import Structure as _Struct
-            except Exception:
-                _Struct = None
-            structure, coords = load_structure_payload(
-                pathlib.Path(path), structure_factory=_Struct)
-            name = pathlib.Path(path).stem
-            if structure is not None:
-                oid = mv.add_structure(structure, name=name, source_path=str(path))
-            elif coords is not None:
-                oid = mv.add_coordinates(
-                    _np.asarray(coords, dtype=float), name=name, source_path=str(path))
-            else:
-                return
-            # remove the previous preview so objects don't accumulate (slow render)
-            for old in getattr(self, "_molview_objects", []):
-                try:
-                    mv.remove_object(old)
-                except Exception:
-                    pass
-            self._molview_objects = [oid]
-            self._shown_pdb = path
+            self._structure_view.refresh()
         except Exception:
             pass
 
@@ -738,6 +698,10 @@ class FretDockingTool(QtWidgets.QWidget):
                     if unc.get("mobile_rmsf_mean") == unc.get("mobile_rmsf_mean")
                     and unc.get("n_models", 0) >= 2 else "")
             self._model.status = head + spread + prec
+            # step through all docked solutions with the ChiMol frame slider
+            models = [d["best_pdb"] for d in details if d.get("best_pdb")]
+            if models:
+                self._show_structure(models)
         elif "score" in data:  # single dock / refine / score
             self._model.score = float(data.get("score") or 0.0)
             self._model.n_distances = int(data.get("n_distances") or 0)
@@ -746,6 +710,9 @@ class FretDockingTool(QtWidgets.QWidget):
                   (data.get("best_pdbs") or [None])[0])],
                 best_trial=0, kind=kind,
             )
+            best_pdbs = data.get("best_pdbs") or []
+            if best_pdbs:
+                self._show_structure(best_pdbs)  # n_best models -> frames
             if stopped or data.get("extra", {}).get("stopped"):
                 self._model.status = f"stopped (score {self._model.score:.1f})"
         elif "ranked" in data:
