@@ -51,6 +51,7 @@ def test_included_plugins_are_menu_hidden():
         "chisurf.plugins.tttr.ptu_header_edit",
         "chisurf.plugins.tttr.tttr_splitter",
         "chisurf.plugins.tttr.tttr_count_rate_analysis",
+        "chisurf.plugins.tttr.audifier",
     ):
         m = importlib.import_module(mod)
         assert getattr(m, "menu_hidden", False) is True, mod

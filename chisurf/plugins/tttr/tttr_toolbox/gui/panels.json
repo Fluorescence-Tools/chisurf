@@ -39,6 +39,13 @@
       "role": "count_rate",
       "entrypoint": "chisurf.plugins.tttr.tttr_count_rate_analysis.gui.tool:CountRateAnalyzer",
       "description": "Count rates per detector channel across many TTTR files, with mean/std and a per-file plot."
+    },
+    {
+      "name": "Audifier",
+      "icon": "🎵",
+      "role": "audifier",
+      "entrypoint": "chisurf.plugins.tttr.audifier.gui.tool:TTTRAudifierWidget",
+      "description": "Convert TTTR photon streams to audio, with a live micro-time / lifetime waterfall preview."
     }
   ]
 }

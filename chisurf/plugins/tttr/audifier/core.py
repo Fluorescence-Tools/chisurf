@@ -6,20 +6,18 @@ Core logic for loading TTTR files and converting to audio.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple, Union
-
 import math
 import wave
-import struct
+from collections.abc import Iterable
+from dataclasses import dataclass
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 # -----------------------------
 # Data model
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class TTTRData:
@@ -32,26 +30,28 @@ class TTTRData:
     macro_time_unit_s: seconds per macro tick
     micro_time_unit_s: seconds per microtime bin (optional; only for plotting labels)
     """
-    routing: np.ndarray          # shape (N,), int
-    macro_ticks: np.ndarray      # shape (N,), int
-    micro_bins: np.ndarray       # shape (N,), int
+
+    routing: np.ndarray  # shape (N,), int
+    macro_ticks: np.ndarray  # shape (N,), int
+    micro_bins: np.ndarray  # shape (N,), int
     macro_time_unit_s: float
-    micro_time_unit_s: Optional[float] = None
+    micro_time_unit_s: float | None = None
 
 
 CHORD_INTERVALS = {
-    "major":       [0, 4, 7],
-    "minor":       [0, 3, 7],
-    "diminished":  [0, 3, 6],
-    "augmented":   [0, 4, 8],
-    "sus4":        [0, 5, 7],
-    "major7":      [0, 4, 7, 11],
-    "minor7":      [0, 3, 7, 10],
-    "dom7":        [0, 4, 7, 10],
-    "power":       [0, 7],
+    "major": [0, 4, 7],
+    "minor": [0, 3, 7],
+    "diminished": [0, 3, 6],
+    "augmented": [0, 4, 8],
+    "sus4": [0, 5, 7],
+    "major7": [0, 4, 7, 11],
+    "minor7": [0, 3, 7, 10],
+    "dom7": [0, 4, 7, 10],
+    "power": [0, 7],
 }
 
-def _chord_freqs(root_hz: float, chord_type: str) -> List[float]:
+
+def _chord_freqs(root_hz: float, chord_type: str) -> list[float]:
     intervals = CHORD_INTERVALS.get(chord_type, [0, 4, 7])
     return [root_hz * _semitones_to_ratio(s) for s in intervals]
 
@@ -68,6 +68,7 @@ class ChannelConfig:
     micro_max: Exclusive microtime bin upper bound
     gain: Linear gain multiplier for this channel
     """
+
     note_hz: float
     chord_type: str = "major"
     pitch_semitones: float = 0.0
@@ -80,6 +81,7 @@ class ChannelConfig:
 # TTTR loading (tttrlib)
 # -----------------------------
 
+
 def load_tttr_with_tttrlib(path: str) -> TTTRData:
     """
     Load a TTTR file using tttrlib.
@@ -89,9 +91,7 @@ def load_tttr_with_tttrlib(path: str) -> TTTRData:
     try:
         import tttrlib  # type: ignore
     except Exception as e:
-        raise ImportError(
-            "tttrlib not available. Install or pass arrays via TTTRData."
-        ) from e
+        raise ImportError("tttrlib not available. Install or pass arrays via TTTRData.") from e
 
     tttr = tttrlib.TTTR(path)
 
@@ -103,11 +103,11 @@ def load_tttr_with_tttrlib(path: str) -> TTTRData:
     micro = np.asarray(tttr.micro_times, dtype=np.int32)
 
     # Macro time unit
-    macro_unit_s = getattr(tttr.header, 'macro_time_resolution', None)
+    macro_unit_s = getattr(tttr.header, "macro_time_resolution", None)
     if macro_unit_s is None:
-        macro_unit_s = getattr(tttr.header, 'macro_time_unit', None)
+        macro_unit_s = getattr(tttr.header, "macro_time_unit", None)
     if macro_unit_s is None:
-        macro_unit_s = getattr(tttr.header, 'macro_time_calibration', None)
+        macro_unit_s = getattr(tttr.header, "macro_time_calibration", None)
     if macro_unit_s is None:
         macro_unit_s = 1e-9  # default 1 ns
     else:
@@ -116,11 +116,11 @@ def load_tttr_with_tttrlib(path: str) -> TTTRData:
         macro_unit_s = float(macro_unit_s)
 
     # Micro time unit (optional)
-    micro_unit_s = getattr(tttr.header, 'micro_time_resolution', None)
+    micro_unit_s = getattr(tttr.header, "micro_time_resolution", None)
     if micro_unit_s is None:
-        micro_unit_s = getattr(tttr.header, 'micro_time_unit', None)
+        micro_unit_s = getattr(tttr.header, "micro_time_unit", None)
     if micro_unit_s is None:
-        micro_unit_s = getattr(tttr.header, 'micro_time_calibration', None)
+        micro_unit_s = getattr(tttr.header, "micro_time_calibration", None)
     if micro_unit_s is not None:
         if callable(micro_unit_s):
             micro_unit_s = micro_unit_s()
@@ -138,6 +138,7 @@ def load_tttr_with_tttrlib(path: str) -> TTTRData:
 # -----------------------------
 # Audio synthesis helpers
 # -----------------------------
+
 
 def _semitones_to_ratio(semitones: float) -> float:
     return 2.0 ** (semitones / 12.0)
@@ -184,12 +185,13 @@ def _smooth_envelope(x: np.ndarray, attack_samps: int, release_samps: int) -> np
 # Core: binning + mapping photons → sound
 # -----------------------------
 
+
 def bin_photons(
     data: TTTRData,
     bin_width_s: float,
     channels: Iterable[int],
-    channel_cfg: Dict[int, ChannelConfig],
-) -> Tuple[np.ndarray, np.ndarray]:
+    channel_cfg: dict[int, ChannelConfig],
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Bin photons into macrotime bins, returning:
     - bin_edges_ticks (int64) length (B+1)
@@ -211,7 +213,7 @@ def bin_photons(
     ticks_per_bin = max(1, int(round(bin_width_s / data.macro_time_unit_s)))
     n_bins = int(math.ceil((t1 - t0) / ticks_per_bin))
 
-    edges = (t0 + np.arange(n_bins + 1, dtype=np.int64) * ticks_per_bin)
+    edges = t0 + np.arange(n_bins + 1, dtype=np.int64) * ticks_per_bin
 
     # Assign each photon to a macro bin index
     bin_idx = ((macro - t0) // ticks_per_bin).astype(np.int64)
@@ -257,8 +259,8 @@ def counts_to_envelopes(
     env_out = np.zeros_like(x, dtype=np.float64)
 
     # Internal knobs (kept internal so signature stays identical)
-    k_sigma = 4.0          # higher => more silence, only strong bursts pass
-    min_thresh = 1.0       # at least 1 photon above baseline
+    k_sigma = 4.0  # higher => more silence, only strong bursts pass
+    min_thresh = 1.0  # at least 1 photon above baseline
     use_robust_ref = 99.0  # percentile for normalization
 
     for j in range(n_ch):
@@ -310,6 +312,7 @@ def counts_to_envelopes(
 # ---------------------------------------------------------------------------
 # New synthesis helpers — continuous mode
 # ---------------------------------------------------------------------------
+
 
 def _upsample_envelope(env: np.ndarray, frame_samps: int) -> np.ndarray:
     """
@@ -373,7 +376,7 @@ def _normalize_rms(y: np.ndarray, target_rms: float = 0.06) -> np.ndarray:
     """
     if len(y) == 0:
         return y
-    rms = np.sqrt(np.mean(y ** 2))
+    rms = np.sqrt(np.mean(y**2))
     if rms > 1e-12:
         y = y * (target_rms / rms)
     # tanh soft clip — gentle saturation rather than hard limiting
@@ -385,12 +388,13 @@ def _normalize_rms(y: np.ndarray, target_rms: float = 0.06) -> np.ndarray:
 # Old ping-train synthesis (kept for backward compatibility)
 # ---------------------------------------------------------------------------
 
+
 def _synthesize_ping(
     envelopes: np.ndarray,
     frame_width_s: float,
     sample_rate: int,
-    channels: List[int],
-    channel_cfg: Dict[int, ChannelConfig],
+    channels: list[int],
+    channel_cfg: dict[int, ChannelConfig],
     master_gain: float = 0.8,
 ) -> np.ndarray:
     """Original per-frame ping-train synthesis.  See `synthesize_audio_from_envelopes`."""
@@ -451,12 +455,13 @@ def _synthesize_ping(
 # New continuous synthesis — smooth, legato, with reverb
 # ---------------------------------------------------------------------------
 
+
 def _synthesize_continuous(
     envelopes: np.ndarray,
     frame_width_s: float,
     sample_rate: int,
-    channels: List[int],
-    channel_cfg: Dict[int, ChannelConfig],
+    channels: list[int],
+    channel_cfg: dict[int, ChannelConfig],
     master_gain: float = 0.8,
 ) -> np.ndarray:
     """
@@ -529,12 +534,13 @@ def _synthesize_continuous(
 # Public dispatcher
 # ---------------------------------------------------------------------------
 
+
 def synthesize_audio_from_envelopes(
     envelopes: np.ndarray,
     frame_width_s: float,
     sample_rate: int,
-    channels: List[int],
-    channel_cfg: Dict[int, ChannelConfig],
+    channels: list[int],
+    channel_cfg: dict[int, ChannelConfig],
     master_gain: float = 0.8,
     continuous: bool = False,
 ) -> np.ndarray:
@@ -550,21 +556,29 @@ def synthesize_audio_from_envelopes(
     """
     if continuous:
         return _synthesize_continuous(
-            envelopes, frame_width_s, sample_rate,
-            channels, channel_cfg, master_gain,
+            envelopes,
+            frame_width_s,
+            sample_rate,
+            channels,
+            channel_cfg,
+            master_gain,
         )
     return _synthesize_ping(
-        envelopes, frame_width_s, sample_rate,
-        channels, channel_cfg, master_gain,
+        envelopes,
+        frame_width_s,
+        sample_rate,
+        channels,
+        channel_cfg,
+        master_gain,
     )
 
 
 def tttr_to_wav(
     data: TTTRData,
     out_wav_path: str,
-    channels: List[int],
-    channel_cfg: Dict[int, ChannelConfig],
-    bin_width_s: float = 0.02,   # 20 ms “audio frame”
+    channels: list[int],
+    channel_cfg: dict[int, ChannelConfig],
+    bin_width_s: float = 0.02,  # 20 ms “audio frame”
     sample_rate: int = 44100,
     env_mode: str = "log",
     env_floor: float = 0.0,
@@ -572,7 +586,7 @@ def tttr_to_wav(
     attack_frames: int = 2,
     release_frames: int = 6,
     master_gain: float = 0.8,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     End-to-end: bin photons → envelopes → synthesize → write WAV.
 
@@ -611,15 +625,16 @@ def tttr_to_wav(
 # Waterfall plot (macro bins × microtime histogram)
 # -----------------------------
 
+
 def compute_microtime_waterfall(
     data: TTTRData,
-    channel: Optional[int] = None,
+    channel: int | None = None,
     macro_bin_width_s: float = 0.05,
-    micro_bins_range: Optional[Tuple[int, int]] = None,
+    micro_bins_range: tuple[int, int] | None = None,
     n_micro_bins: int = 256,
-    micro_gate: Optional[Tuple[int, int]] = None,
-    channels: Optional[List[int]] = None,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    micro_gate: tuple[int, int] | None = None,
+    channels: list[int] | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Waterfall matrix W with shape (n_macro_bins, n_micro_bins_plot)
     where each row is a microtime histogram for a macrotime window.
@@ -640,7 +655,7 @@ def compute_microtime_waterfall(
 
     mask = np.ones_like(macro, dtype=bool)
     if channel is not None:
-        mask &= (routing == channel)
+        mask &= routing == channel
 
     if channels is not None:
         mask &= np.isin(routing, channels)
@@ -719,18 +734,18 @@ def plot_waterfall(
 
 DEFAULT_CHORD_MAP = {
     # Each routing channel gets a root frequency + chord quality
-    0: (261.63, "major"),       # C4  major
-    1: (293.66, "minor"),       # D4  minor
-    2: (329.63, "minor"),       # E4  minor
-    3: (349.23, "major"),       # F4  major
-    4: (392.00, "major"),       # G4  major
-    5: (440.00, "minor"),       # A4  minor
+    0: (261.63, "major"),  # C4  major
+    1: (293.66, "minor"),  # D4  minor
+    2: (329.63, "minor"),  # E4  minor
+    3: (349.23, "major"),  # F4  major
+    4: (392.00, "major"),  # G4  major
+    5: (440.00, "minor"),  # A4  minor
     6: (466.16, "diminished"),  # Bb4 diminished → tense, resolves
-    7: (493.88, "dom7"),        # B4  dom7 → bluesy
-    8: (523.25, "major"),       # C5  major
-    9: (587.33, "minor7"),      # D5  minor7 → floaty
-    10: (659.26, "major7"),     # E5  major7 → dreamy
-    11: (698.46, "power"),      # F5  power → stark
+    7: (493.88, "dom7"),  # B4  dom7 → bluesy
+    8: (523.25, "major"),  # C5  major
+    9: (587.33, "minor7"),  # D5  minor7 → floaty
+    10: (659.26, "major7"),  # E5  major7 → dreamy
+    11: (698.46, "power"),  # F5  power → stark
 }
 
 CHORD_TYPE_NAMES = list(CHORD_INTERVALS.keys())
@@ -738,12 +753,12 @@ CHORD_TYPE_NAMES = list(CHORD_INTERVALS.keys())
 
 def make_default_channel_cfg(
     channels: Iterable[int],
-    micro_defaults: Tuple[int, int] = (0, 4096),
-    pitch_adjust_semitones: Optional[Dict[int, float]] = None,
-    micro_gates: Optional[Dict[int, Tuple[int, int]]] = None,
-    chord_types: Optional[Dict[int, str]] = None,
-    gains: Optional[Dict[int, float]] = None,
-) -> Dict[int, ChannelConfig]:
+    micro_defaults: tuple[int, int] = (0, 4096),
+    pitch_adjust_semitones: dict[int, float] | None = None,
+    micro_gates: dict[int, tuple[int, int]] | None = None,
+    chord_types: dict[int, str] | None = None,
+    gains: dict[int, float] | None = None,
+) -> dict[int, ChannelConfig]:
     """
     Create a per-channel config dict quickly, with chord assignments.
 
@@ -755,7 +770,7 @@ def make_default_channel_cfg(
     chord_types = chord_types or {}
     gains = gains or {}
 
-    cfg: Dict[int, ChannelConfig] = {}
+    cfg: dict[int, ChannelConfig] = {}
     for ch in channels:
         root, default_chord = DEFAULT_CHORD_MAP.get(
             ch, (261.63 * _semitones_to_ratio((ch % 12) * 2.0), "major")
