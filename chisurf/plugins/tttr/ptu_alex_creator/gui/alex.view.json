@@ -87,7 +87,17 @@
               "style": "radio",
               "description": "Convert every file to its own ALEX output, or merge them all into one."
             },
-            {"type": "custom", "key": "alex_batch"}
+            {
+              "type": "custom",
+              "key": "path_list",
+              "target": "batch_files",
+              "options": {
+                "title": "Files (drop .sm files or folders)",
+                "extensions": [".sm", ".ptu", ".ht3", ".spc", ".hdf", ".h5", ".raw"],
+                "add_folders": true
+              }
+            },
+            {"type": "custom", "key": "alex_batch_run"}
           ]
         }
       ]

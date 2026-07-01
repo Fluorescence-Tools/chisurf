@@ -142,34 +142,27 @@ class _ActionsSection(QtWidgets.QWidget):
 # ---------------------------------------------------------------------------
 
 
-@register_section("alex_batch")
-def alex_batch(model, target=None, **options):
-    """AutoForm factory for the batch convert/merge file list and controls."""
-    return _BatchSection(model)
+@register_section("alex_batch_run")
+def alex_batch_run(model, target=None, **options):
+    """AutoForm factory for the batch output-folder row and Run button.
+
+    The file list itself is the general ``path_list`` section (target
+    ``batch_files``); this section only carries the output folder and Run.
+    """
+    return _BatchRunSection(model)
 
 
-class _BatchSection(QtWidgets.QWidget):
-    """Drag-drop list of ALEX files batch-converted or merged with current settings."""
+class _BatchRunSection(QtWidgets.QWidget):
+    """Output-folder picker + Run button for the ALEX batch convert/merge."""
 
     def __init__(self, model, parent=None):
         super().__init__(parent)
         self._model = model
         self._running = False
-        self.setAcceptDrops(True)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(4)
-
-        info = QtWidgets.QLabel(
-            "Drop .sm (or other TTTR) files or folders to convert each or merge into one."
-        )
-        info.setWordWrap(True)
-        layout.addWidget(info)
-
-        self._list = QtWidgets.QListWidget()
-        self._list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        layout.addWidget(self._list, 1)
 
         out_row = QtWidgets.QHBoxLayout()
         out_row.setContentsMargins(0, 0, 0, 0)
@@ -186,76 +179,13 @@ class _BatchSection(QtWidgets.QWidget):
         out_row.addWidget(out_browse)
         layout.addLayout(out_row)
 
-        btn_row = QtWidgets.QHBoxLayout()
-        btn_row.setContentsMargins(0, 0, 0, 0)
-        btn_row.addWidget(_tool_button("➕ Files", "Add TTTR files.", self._add_files))
-        btn_row.addWidget(_tool_button("📁 Folder", "Add a folder (scanned for TTTR files).", self._add_folder))
-        btn_row.addWidget(_tool_button("🗑 Clear", "Clear the list.", self._model.clear_batch))
-        btn_row.addStretch(1)
-        btn_row.addWidget(_tool_button("⚙️ Run batch", "Convert each / merge into one.", self._run))
-        layout.addLayout(btn_row)
-
+        run_row = QtWidgets.QHBoxLayout()
+        run_row.setContentsMargins(0, 0, 0, 0)
         self._status = QtWidgets.QLabel("")
         self._status.setStyleSheet("color: #888;")
-        layout.addWidget(self._status)
-
-        self._model.add_observer(self._on_model_event)
-
-    # ── drag-drop ───────────────────────────────────────────────────────
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    #: TTTR file extensions collected when a folder is dropped.
-    _TTTR_EXTS = {".sm", ".ptu", ".ht3", ".spc", ".hdf", ".h5", ".raw"}
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        dropped = [u.toLocalFile() for u in (event.mimeData().urls() or []) if u.toLocalFile()]
-        paths = self._expand_paths(dropped)
-        if paths:
-            self._model.add_batch_files(paths)
-            event.acceptProposedAction()
-
-    def _expand_paths(self, dropped: list[str]) -> list[str]:
-        """Expand a mixed drop of files and folders into a TTTR file list.
-
-        Files are taken as-is; folders are scanned recursively for files whose
-        extension is a known TTTR container.
-        """
-        out: list[str] = []
-        for item in dropped:
-            p = pathlib.Path(item)
-            if p.is_file():
-                out.append(str(p))
-            elif p.is_dir():
-                out.extend(
-                    str(f)
-                    for f in sorted(p.rglob("*"))
-                    if f.is_file() and f.suffix.lower() in self._TTTR_EXTS
-                )
-        return out
-
-    # ── model wiring ────────────────────────────────────────────────────
-    def _on_model_event(self, event: str) -> None:
-        if event == "batch":
-            self._list.clear()
-            for p in self._model.batch_files:
-                self._list.addItem(p)
-
-    # ── actions ─────────────────────────────────────────────────────────
-    def _add_files(self) -> None:
-        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
-            self, "Add ALEX files", "", "TTTR/SM files (*.sm *.ptu *.ht3 *.spc);;All Files (*)"
-        )
-        if paths:
-            self._model.add_batch_files(list(paths))
-
-    def _add_folder(self) -> None:
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Add a folder of TTTR files")
-        if folder:
-            self._model.add_batch_files(self._expand_paths([folder]))
+        run_row.addWidget(self._status, 1)
+        run_row.addWidget(_tool_button("⚙️ Run batch", "Convert each / merge into one.", self._run))
+        layout.addLayout(run_row)
 
     def _browse_output(self) -> None:
         folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select output folder")
@@ -285,4 +215,4 @@ class _BatchSection(QtWidgets.QWidget):
             self._running = False
 
 
-__all__ = ["alex_actions", "alex_batch"]
+__all__ = ["alex_actions", "alex_batch_run"]
