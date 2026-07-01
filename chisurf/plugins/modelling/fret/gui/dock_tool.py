@@ -79,6 +79,8 @@ class _DockingModel:
         self.sigma_da = 6.0
         self.ev_weight = 1.0
         self.simulated_annealing = False
+        self.save_distributions = False
+        self.av_backend = "auto"
         # results
         self.status = ""
         self.score = 0.0
@@ -122,6 +124,8 @@ class _DockingModel:
                 "score_set": self.score_set, "method": self.method,
                 "refine_av_cycles": self.refine_av_cycles,
                 "ev_weight": self.ev_weight,
+                "save_distributions": self.save_distributions,
+                "av_backend": self.av_backend,
             }
             if int(self.n_repeats) > 1:
                 req["n_trials"] = int(self.n_repeats)
@@ -651,7 +655,11 @@ class FretDockingTool(QtWidgets.QWidget):
                 else f"{data['n_trials']} trials{par}"
             spread = (f": mean {data['score_mean']:.1f} ± {data['score_std']:.1f}"
                       if details else "")
-            self._model.status = head + spread
+            unc = data.get("uncertainty") or {}
+            prec = (f"; precision {unc['mobile_rmsf_mean']:.1f} Å"
+                    if unc.get("mobile_rmsf_mean") == unc.get("mobile_rmsf_mean")
+                    and unc.get("n_models", 0) >= 2 else "")
+            self._model.status = head + spread + prec
         elif "score" in data:  # single dock / refine / score
             self._model.score = float(data.get("score") or 0.0)
             self._model.n_distances = int(data.get("n_distances") or 0)

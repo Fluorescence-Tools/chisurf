@@ -59,6 +59,8 @@ def dock(req: Union[DockRequest, dict], stop_check=None) -> Dict:
         score_set=r.score_set,
         fixed_body=r.fixed_body,
         refine_av_cycles=r.refine_av_cycles,
+        save_distributions=r.save_distributions,
+        av_backend=r.av_backend,
     )
     if r.method == "minimize":
         # A single minimisation is a deterministic, local refinement of the input
@@ -138,6 +140,7 @@ def estimate_errors(req: Union[ErrorRequest, dict], stop_check=None) -> Dict:
         fixed_body=r.fixed_body, sigma_da=r.sigma_da,
         simulated_annealing=r.simulated_annealing, score_set=r.score_set,
         refine_av_cycles=r.refine_av_cycles, ev_weight=r.ev_weight,
+        save_distributions=r.save_distributions, av_backend=r.av_backend,
     )
     data = imp_engine.estimate_errors(
         r.pdb_paths, r.fps_json, r.output_dir, n_trials=r.n_trials, params=params,

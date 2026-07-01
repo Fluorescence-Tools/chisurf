@@ -339,6 +339,13 @@ class DockingParameters:
     #: shifts the mean positions) and re-minimise. 0 disables refinement
     #: (default — refinement re-runs the one-time AV calc and is opt-in).
     refine_av_cycles: int = 0
+    #: Minimisation docking only — after docking, compute and export the full
+    #: P(R_DA) distance distributions (real AV convolution) to
+    #: ``distance_distributions.csv``. Off by default (recomputes AVs).
+    save_distributions: bool = False
+    #: AV backend for the (optional) distance-distribution recompute:
+    #: "auto" | "labellib" | "imp-bff".
+    av_backend: str = "auto"
 
 
 @dataclass
@@ -995,6 +1002,24 @@ def dock_minimize(
     IMP.atom.write_pdb(root, out_pdb)
     score_csv = os.path.join(output_dir, "scores.csv")
     _write_score_csv(score_csv, total, pairs)
+
+    extra = {"method": "minimize", "iterations": n_iter,
+             "n_mobile": len(mobile), "convergence_csv": conv_csv,
+             "coarse_clash": bool(params.coarse_clash),
+             "refine_av_cycles": int(params.refine_av_cycles),
+             "stopped": stopped}
+    if params.save_distributions and not stopped:
+        try:
+            from . import av as _av
+            from . import distributions as _distr
+            _av.select_backend(params.av_backend)
+            positions, dists, _ss = _read_positions(ensure_fps_json(fps_json_path, pdb_paths))
+            res = _distr.compute_distance_distributions(
+                out_pdb, positions, dists,
+                out_csv=os.path.join(output_dir, "distance_distributions.csv"))
+            extra["distributions_csv"] = res.get("distributions_csv")
+        except Exception:
+            pass
     return DockingResult(
         score=total,
         n_avs=len(avs),
@@ -1003,11 +1028,7 @@ def dock_minimize(
         output_dir=output_dir,
         best_pdbs=[out_pdb],
         score_csv=score_csv,
-        extra={"method": "minimize", "iterations": n_iter,
-               "n_mobile": len(mobile), "convergence_csv": conv_csv,
-               "coarse_clash": bool(params.coarse_clash),
-               "refine_av_cycles": int(params.refine_av_cycles),
-               "stopped": stopped},
+        extra=extra,
     )
 
 
@@ -1192,6 +1213,11 @@ def estimate_errors(
     trial_dirs = [d["output_dir"] for d in details]
     finite = [s for s in scores if s == s]
     best_trial = min(details, key=lambda d: d["score"])["trial"] if finite else None
+
+    # Model precision: superpose the per-run best models on the fixed body and
+    # report per-atom RMSF (written to uncertainty.pdb / uncertainty.csv).
+    uncertainty = _model_uncertainty(details, pdb_paths, params, output_dir)
+
     return {
         "scores": scores,
         "score_mean": statistics.fmean(finite) if finite else float("nan"),
@@ -1201,7 +1227,25 @@ def estimate_errors(
         "trial_details": details,
         "best_trial": best_trial,
         "n_workers": used_workers,
+        "uncertainty": uncertainty,
     }
+
+
+def _model_uncertainty(details, pdb_paths, params, output_dir):
+    """Compute FPS-style positional uncertainty across the per-run best models."""
+    best_pdbs = [d["best_pdb"] for d in details if d.get("best_pdb")]
+    if len(best_pdbs) < 2:
+        return None
+    try:
+        from . import uncertainty as _unc
+        fixed_idx = int(params.fixed_body) if int(params.fixed_body) < len(pdb_paths) else 0
+        _lines, _xyz, fchains = _unc._read_pdb_atoms(pdb_paths[fixed_idx])
+        return _unc.estimate_position_uncertainty(
+            best_pdbs, sorted(set(fchains.tolist())),
+            out_pdb=os.path.join(output_dir, "uncertainty.pdb"),
+            out_csv=os.path.join(output_dir, "uncertainty.csv"))
+    except Exception:
+        return None
 
 
 def _run_one_trial(seed, tdir, pdb_paths, fps_json_path, params, method):

@@ -230,16 +230,38 @@ def imp_score(pdb, fps_json, score_set, output_csv, mean_position):
               help="Mean-position transfer-function width (Angstrom).")
 @click.option("--method", default="minimize", type=click.Choice(["minimize", "mc"]),
               help="minimize = fast IMP conjugate-gradient docking (default); mc = replica-exchange MC.")
+@click.option("--refine", "refine_av_cycles", default=0, type=int,
+              help="FPS-style AV-recompute refinement cycles after docking.")
+@click.option("--save-distributions", is_flag=True, default=False,
+              help="Export full P(R_DA) distance distributions to distance_distributions.csv.")
 def imp_dock(pdb, fps_json, output_dir, n_frames, mc_steps, score_set,
-             n_best, simulated_annealing, fixed_body, sigma_da, method):
+             n_best, simulated_annealing, fixed_body, sigma_da, method,
+             refine_av_cycles, save_distributions):
     """Run FRET-restrained rigid-body docking (minimisation or Monte-Carlo)."""
     from ..api import operations as ops
     res = ops.dock({"pdb_paths": _split_pdbs(pdb), "fps_json": fps_json,
                     "output_dir": output_dir, "n_frames": n_frames,
                     "mc_steps": mc_steps, "score_set": score_set, "n_best": n_best,
                     "simulated_annealing": simulated_annealing, "fixed_body": fixed_body,
-                    "sigma_da": sigma_da, "method": method})
+                    "sigma_da": sigma_da, "method": method,
+                    "refine_av_cycles": refine_av_cycles,
+                    "save_distributions": save_distributions})
     click.echo(json.dumps(res, indent=2))
+
+
+@imp_group.command("distributions")
+@click.option("--pdb", required=True, help="Structure (e.g. a docked PDB).")
+@click.option("--fps", "fps_json", required=True)
+@click.option("--out", "output_csv", required=True, help="Output distance_distributions.csv.")
+@click.option("--av-backend", default="auto", type=click.Choice(["auto", "labellib", "imp-bff"]))
+def imp_distributions(pdb, fps_json, output_csv, av_backend):
+    """Compute full P(R_DA) distance distributions for a structure."""
+    from ..core import av as _av
+    from ..core import distributions as _distr
+    _av.select_backend(av_backend)
+    positions, distances, _ss, _extra = io.read_fps_json(fps_json, pdb_paths=_split_pdbs(pdb))
+    res = _distr.compute_distance_distributions(pdb, positions, distances, out_csv=output_csv)
+    click.echo(f"Wrote {output_csv}: {len(res['pairs'])} distributions")
 
 
 @imp_group.command("dock-project")

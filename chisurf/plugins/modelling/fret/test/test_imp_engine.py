@@ -93,6 +93,32 @@ def test_estimate_errors_parallel(tmp_path):
 
 
 @needs_example
+def test_estimate_errors_reports_uncertainty(tmp_path):
+    """Repeated docking superposes models and reports per-atom RMSF precision."""
+    params = imp_engine.DockingParameters(n_frames=120, coarse_clash=True)
+    res = imp_engine.estimate_errors(
+        [_PROTEIN, _DNA], _FPS, str(tmp_path), n_trials=2, params=params, n_workers=1)
+    unc = res["uncertainty"]
+    assert unc is not None and unc["n_models"] == 2
+    assert unc["mobile_rmsf_mean"] == unc["mobile_rmsf_mean"]  # finite
+    assert os.path.exists(unc["uncertainty_pdb"]) and os.path.exists(unc["uncertainty_csv"])
+
+
+@needs_example
+def test_dock_minimize_saves_distributions(tmp_path):
+    """save_distributions exports a P(R_DA) table over the docked structure."""
+    import csv
+    params = imp_engine.DockingParameters(
+        n_frames=100, shuffle_max_translation=0.0, save_distributions=True)
+    res = imp_engine.dock_minimize([_PROTEIN, _DNA], _FPS, str(tmp_path), params)
+    csv_path = res.extra.get("distributions_csv")
+    assert csv_path and os.path.exists(csv_path)
+    rows = list(csv.reader(open(csv_path)))
+    assert rows[0][0] == "R_DA" and len(rows[0]) > 1  # R_DA + per-pair columns
+    assert len(rows) > 10  # several R_DA bins
+
+
+@needs_example
 def test_refine_runs(tmp_path):
     res = imp_engine.refine([_PROTEIN, _DNA], _FPS, str(tmp_path), steps=20)
     assert res.best_pdbs and os.path.exists(res.best_pdbs[0])

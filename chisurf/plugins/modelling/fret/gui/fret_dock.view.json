@@ -47,7 +47,12 @@
          "description": "body_id kept fixed as the reference; the others are mobile."},
         {"type": "value", "attr": "sigma_da", "label": "sigma_DA", "kind": "float",
          "decimals": 1, "minimum": 0.0, "maximum": 30.0, "step": 0.5, "suffix": " A",
-         "description": "Width of the mean-position transfer function (FPS distance distribution width)."}
+         "description": "Width of the mean-position transfer function (FPS distance distribution width)."},
+        {"type": "choice", "attr": "av_backend", "label": "AV backend",
+         "options": ["auto", "labellib", "imp-bff"], "style": "combo",
+         "description": "Accessible-volume backend for distance distributions / screening."},
+        {"type": "toggle", "attr": "save_distributions", "label": "P(R_DA)",
+         "description": "After docking, compute and export the full P(R_DA) distance distributions (real AV convolution) to distance_distributions.csv."}
       ]
     },
     {

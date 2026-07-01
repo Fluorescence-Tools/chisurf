@@ -36,6 +36,10 @@ class DockRequest:
     #: FPS-style refinement cycles (minimize only): re-sample AVs on the docked
     #: structure (real AV calc) and re-minimise. 0 = no refinement.
     refine_av_cycles: int = 0
+    #: Export full P(R_DA) distance distributions after docking.
+    save_distributions: bool = False
+    #: AV backend for distributions/screening: "auto" | "labellib" | "imp-bff".
+    av_backend: str = "auto"
 
 
 @dataclass
@@ -90,6 +94,8 @@ class ErrorRequest:
     method: str = "minimize"
     refine_av_cycles: int = 0
     ev_weight: float = 1.0
+    save_distributions: bool = False
+    av_backend: str = "auto"
     #: Parallel worker processes for the trials (None -> CPU count, 1 -> serial).
     n_workers: Optional[int] = None
 
