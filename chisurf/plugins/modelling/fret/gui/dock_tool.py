@@ -243,6 +243,8 @@ class FretDockingTool(QtWidgets.QWidget):
         self._dialog = None
         self._t0 = 0.0
         self._total = 1
+        self._shown_pdb = None      # path currently in the 3D preview
+        self._pending_pdb = None    # path queued by the debounce timer
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -328,6 +330,13 @@ class FretDockingTool(QtWidgets.QWidget):
         self._run_op = None
         self._curves = {}
 
+        # Debounce structure-preview loads: rapid row changes (e.g. arrow keys)
+        # coalesce into a single load once the selection settles.
+        self._preview_timer = QtCore.QTimer(self)
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(180)
+        self._preview_timer.timeout.connect(self._load_pending_structure)
+
     # -- structure preview (ChiMol viewer) ---------------------------------
     def _ensure_molview(self):
         """Create the ChiMol MolView on first use; return it or None."""
@@ -348,8 +357,15 @@ class FretDockingTool(QtWidgets.QWidget):
         return self._molview or None
 
     def _show_structure(self, path) -> None:
-        """Load ``path`` into the ChiMol viewer, replacing the previous preview."""
-        if not path or not pathlib.Path(path).exists():
+        """Queue ``path`` for the 3D preview (debounced, deduped)."""
+        if not path or path == self._shown_pdb or not pathlib.Path(path).exists():
+            return
+        self._pending_pdb = str(path)
+        self._preview_timer.start()
+
+    def _load_pending_structure(self) -> None:
+        path = self._pending_pdb
+        if not path or path == self._shown_pdb or not pathlib.Path(path).exists():
             return
         mv = self._ensure_molview()
         if mv is None:
@@ -361,13 +377,6 @@ class FretDockingTool(QtWidgets.QWidget):
                 from chisurf.core.structure import Structure as _Struct
             except Exception:
                 _Struct = None
-            # hide whatever was shown before so the preview shows one structure
-            for oid in getattr(self, "_molview_objects", []):
-                try:
-                    mv.set_object_visible(oid, False)
-                except Exception:
-                    pass
-            self._molview_objects = []
             structure, coords = load_structure_payload(
                 pathlib.Path(path), structure_factory=_Struct)
             name = pathlib.Path(path).stem
@@ -378,7 +387,14 @@ class FretDockingTool(QtWidgets.QWidget):
                     _np.asarray(coords, dtype=float), name=name, source_path=str(path))
             else:
                 return
-            self._molview_objects.append(oid)
+            # remove the previous preview so objects don't accumulate (slow render)
+            for old in getattr(self, "_molview_objects", []):
+                try:
+                    mv.remove_object(old)
+                except Exception:
+                    pass
+            self._molview_objects = [oid]
+            self._shown_pdb = path
         except Exception:
             pass
 
