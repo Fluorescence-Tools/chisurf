@@ -152,6 +152,33 @@ def test_deer_lcurve_plot_and_compute(qapp, model_path):
     assert xs is not None and len(xs) > 2
 
 
+@pytest.mark.parametrize("model_path", DEER_MODELS)
+def test_deer_pr_confidence_band(qapp, model_path):
+    """Every model exposes a bootstrap P(r) confidence band that brackets P."""
+    from chisurf.gui.plots.deer_pr import DeerPrCIPlot
+    from chisurf.gui.widgets.models.model_editor import model_plot_specs
+
+    fit = _make_deer_fit(_resolve(model_path))
+    model = fit.model
+    fit.xmin, fit.xmax = 0, len(fit.data.y)
+    fit.run()
+
+    out = model.compute_uncertainty(n_boot=40)
+    assert out is not None
+    r, best, lo, hi = (np.asarray(a, dtype=float) for a in out)
+    assert r.size == best.size == lo.size == hi.size > 0
+    assert np.all(np.isfinite(lo)) and np.all(np.isfinite(hi))
+    # band brackets the point estimate and has non-negative width somewhere
+    assert np.all(lo <= best + 1e-9) and np.all(best <= hi + 1e-9)
+    assert np.any(hi - lo > 0)
+
+    # the "pr_ci" plot key resolves to the band plot and renders
+    assert any(cls is DeerPrCIPlot for cls, _ in model_plot_specs(model))
+    plot = DeerPrCIPlot(fit=fit, n_boot=20)
+    plot.update()
+    assert plot._best.getData()[0] is not None and len(plot._best.getData()[0]) > 0
+
+
 def test_deer_gaussian_fit_recovers_distance(qapp):
     """A least-squares run recovers the true mean distance from clean data."""
     model_class = _resolve("chisurf.core.models.deer.deer.DeerGaussianModel")

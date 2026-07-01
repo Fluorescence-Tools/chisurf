@@ -92,6 +92,10 @@
       }
     },
     {
+      "key": "pr_ci",
+      "options": {}
+    },
+    {
       "key": "fit_info",
       "options": {}
     },

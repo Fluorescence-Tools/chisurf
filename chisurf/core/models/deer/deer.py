@@ -315,6 +315,91 @@ class _DeerModelBase(ModelCurve):
         f = (np.asarray(v, dtype=float) / (s * np.clip(b, 1e-9, None)) - (1.0 - lam)) / lam
         return k_mat, r, f
 
+    def _form_factor_from(self, v: np.ndarray):
+        """Return ``(K, r, F)`` for an arbitrary signal ``v`` at current nuisance.
+
+        Same construction as :meth:`_current_form_factor` but for a supplied
+        trace (used by the uncertainty bootstrap).
+        """
+        from chisurf.core.models.deer.kernel import background as _bg
+
+        t_raw, _ = self._time_and_data()
+        if t_raw is None:
+            return None
+        t = t_raw - self.modulation.zero_time
+        r = self._r if self._r is not None else self._build_r(t)
+        k_mat = self._get_kernel(t, r)
+        b = _bg(t, self.background.model, self.background.k, self.background.d)
+        lam = float(np.clip(self.modulation.mod_depth, 1e-3, 1.0))
+        s = self.modulation.scale or 1.0
+        f = (np.asarray(v, dtype=float) / (s * np.clip(b, 1e-9, None)) - (1.0 - lam)) / lam
+        return k_mat, r, f
+
+    def _data_sigma(self) -> float:
+        """Return the per-point noise level used for the parametric bootstrap."""
+        meta, data = _deer_meta(self.fit)
+        s = meta.get("noise_level")
+        if isinstance(s, (int, float)) and s > 0:
+            return float(s)
+        ey = getattr(data, "ey", None)
+        try:
+            m = float(np.median(np.asarray(ey, dtype=float)))
+            if np.isfinite(m) and m > 0:
+                return m
+        except Exception:
+            pass
+        return 1e-2
+
+    def _pr_bootstrap(self, v_b: np.ndarray) -> np.ndarray | None:
+        """Return a ``P(r)`` realisation for a noisy signal ``v_b``.
+
+        Implemented per model (fast re-inversion for model-free; local shape
+        re-fit for parametric). ``None`` means "no uncertainty available".
+        """
+        return None
+
+    def compute_uncertainty(self, n_boot: int = 120, ci: float = 95.0, seed: int = 0):
+        """Return ``(r, p_best, p_lo, p_hi)`` — a bootstrap confidence band on P(r).
+
+        A parametric (residual) bootstrap: Gaussian noise at the data noise level
+        is repeatedly added to the fitted trace, ``P(r)`` is re-derived for each
+        realisation (nuisance parameters held at their fitted values), and the
+        pointwise ``ci``% percentile band is returned. ``None`` when the model
+        does not support it or there is no data.
+        """
+        self.update_model()
+        r = self._r
+        p_best = self._p_r
+        if r is None or p_best is None:
+            return None
+        v_model = np.asarray(self.y, dtype=float)
+        if v_model.size == 0:
+            return None
+        sigma = self._data_sigma()
+        rng = np.random.default_rng(seed)
+        reals: list[np.ndarray] = []
+        for _ in range(int(n_boot)):
+            v_b = v_model + rng.normal(0.0, sigma, size=v_model.shape)
+            try:
+                p_b = self._pr_bootstrap(v_b)
+            except Exception:
+                p_b = None
+            if p_b is not None and np.size(p_b) == np.size(p_best) and np.all(np.isfinite(p_b)):
+                reals.append(np.asarray(p_b, dtype=float))
+        if len(reals) < 5:
+            return r, p_best, p_best, p_best
+        arr = np.vstack(reals)
+        half = (100.0 - float(ci)) / 2.0
+        lo = np.percentile(arr, half, axis=0)
+        hi = np.percentile(arr, 100.0 - half, axis=0)
+        p_best = np.asarray(p_best, dtype=float)
+        # Envelope the pointwise band so it always contains the fitted estimate
+        # (a sharp peak whose position jitters can otherwise poke above the upper
+        # pointwise percentile — confusing in a plot).
+        lo = np.minimum(lo, p_best)
+        hi = np.maximum(hi, p_best)
+        return r, p_best, lo, hi
+
     def _get_kernel(self, t: np.ndarray, r: np.ndarray) -> np.ndarray:
         """Return a cached dipolar kernel for the current ``(t, r)`` axes."""
         key = (t.shape[0], r.shape[0], float(t[0]), float(t[-1]), float(r[0]), float(r[-1]))
@@ -360,6 +445,43 @@ class DeerGaussianModel(_DeerModelBase):
             mod_depth=mo.mod_depth, bg_model=bg.model, bg_k=bg.k, bg_d=bg.d,
             scale=mo.scale, kernel=self._get_kernel(t, r))
 
+    def _pr_bootstrap(self, v_b):
+        """Re-fit the Gaussian shape parameters to a noisy trace (nuisance fixed)."""
+        from scipy.optimize import least_squares
+
+        from chisurf.core.models.deer.kernel import dd_gauss_multi, deer_signal
+
+        t_raw, _ = self._time_and_data()
+        if t_raw is None:
+            return None
+        t = t_raw - self.modulation.zero_time
+        r = self._r if self._r is not None else self._build_r(t)
+        k_mat = self._get_kernel(t, r)
+        mo, bg, g = self.modulation, self.background, self.gaussians
+        n = len(g)
+        m0, s0 = g.means, g.sigmas
+        a0 = np.array([abs(p.value) for p in g._amps], dtype=float)
+        x0 = np.concatenate([m0, s0, a0[1:]]) if n > 1 else np.concatenate([m0, s0])
+
+        def unpack(x):
+            mm = x[:n]
+            ss = np.abs(x[n:2 * n])
+            aa = np.concatenate([[a0[0]], np.abs(x[2 * n:])]) if n > 1 else np.array([a0[0]])
+            return mm, ss, aa
+
+        def resid(x):
+            mm, ss, aa = unpack(x)
+            p = dd_gauss_multi(r, mm, ss, aa)
+            vm = deer_signal(t, r, p, mo.mod_depth, bg.model, bg.k, bg.d, mo.scale, kernel=k_mat)
+            return vm - v_b
+
+        try:
+            res = least_squares(resid, x0, method="lm", max_nfev=60)
+            mm, ss, aa = unpack(res.x)
+        except Exception:
+            mm, ss, aa = m0, s0, a0
+        return dd_gauss_multi(r, mm, ss, aa)
+
 
 class DeerRiceModel(_DeerModelBase):
     """DEER model with a single 3D-Rice distance component."""
@@ -379,6 +501,32 @@ class DeerRiceModel(_DeerModelBase):
             t, r, rc.nu, rc.sigma,
             mod_depth=mo.mod_depth, bg_model=bg.model, bg_k=bg.k, bg_d=bg.d,
             scale=mo.scale, kernel=self._get_kernel(t, r))
+
+    def _pr_bootstrap(self, v_b):
+        """Re-fit the Rice shape parameters to a noisy trace (nuisance fixed)."""
+        from scipy.optimize import least_squares
+
+        from chisurf.core.models.deer.kernel import dd_rice, deer_signal
+
+        t_raw, _ = self._time_and_data()
+        if t_raw is None:
+            return None
+        t = t_raw - self.modulation.zero_time
+        r = self._r if self._r is not None else self._build_r(t)
+        k_mat = self._get_kernel(t, r)
+        mo, bg, rc = self.modulation, self.background, self.rice
+
+        def resid(x):
+            p = dd_rice(r, x[0], abs(x[1]))
+            vm = deer_signal(t, r, p, mo.mod_depth, bg.model, bg.k, bg.d, mo.scale, kernel=k_mat)
+            return vm - v_b
+
+        try:
+            res = least_squares(resid, [rc.nu, rc.sigma], method="lm", max_nfev=50)
+            nu, sig = res.x[0], abs(res.x[1])
+        except Exception:
+            nu, sig = rc.nu, rc.sigma
+        return dd_rice(r, nu, sig)
 
 
 class DeerTikhonovModel(_DeerModelBase):
@@ -408,6 +556,18 @@ class DeerTikhonovModel(_DeerModelBase):
             method=getattr(reg, "method", "gcv"), kernel=self._get_kernel(t, r))
         self._alpha_used = alpha_used
         return v_model, p_r
+
+    def _pr_bootstrap(self, v_b):
+        """Re-invert P(r) for a noisy trace at the fitted regularisation weight."""
+        ff = self._form_factor_from(v_b)
+        if ff is None:
+            return None
+        k_mat, r, f = ff
+        alpha = self._alpha_used if self._alpha_used and self._alpha_used > 0 else None
+        p, _ = _m.tikhonov_distance_distribution(
+            k_mat, r, f, alpha=alpha,
+            method=getattr(self.regularization, "method", "gcv"))
+        return p
 
     def compute_lcurve(self) -> dict | None:
         """Return the Tikhonov L-curve for the current parameters.
@@ -459,6 +619,19 @@ class DeerMaxEntModel(_DeerModelBase):
         self._remember_alpha(reg, alpha_used)
         self._alpha_used = alpha_used
         return v_model, p_r
+
+    def _pr_bootstrap(self, v_b):
+        """Re-invert P(r) for a noisy trace at the fitted entropy weight."""
+        from chisurf.core.models.deer.maxent import maxent_distance_distribution
+
+        ff = self._form_factor_from(v_b)
+        if ff is None:
+            return None
+        k_mat, r, f = ff
+        alpha = self._alpha_used if self._alpha_used and self._alpha_used > 0 else None
+        p, _ = maxent_distance_distribution(
+            k_mat, r, f, sigma=self._noise_level(), alpha=alpha, n_iter=400)
+        return p
 
     def compute_lcurve(self) -> dict | None:
         """Return the MaxEnt L-curve (residual vs roughness) for current params."""

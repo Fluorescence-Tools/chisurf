@@ -29,6 +29,27 @@ def get_deer_distance_distribution(fit_group, **kwargs):
     return np.asarray(p, dtype=float), np.asarray(r, dtype=float)
 
 
+def get_deer_pr_ci(fit_group, n_boot: int = 120, **kwargs):
+    """Return ``(r, p_best, p_lo, p_hi)`` — P(r) with a bootstrap confidence band.
+
+    Falls back to ``(r, P, P, P)`` (zero-width band) when uncertainty is
+    unavailable. Distances are in Å.
+    """
+    model = _model(fit_group)
+    fn = getattr(model, "compute_uncertainty", None)
+    if not callable(fn):
+        r, p = get_deer_distance_distribution(fit_group)
+        return r, p, p, p
+    try:
+        out = fn(n_boot=n_boot)
+    except Exception:
+        out = None
+    if out is None:
+        p, r = get_deer_distance_distribution(fit_group)
+        return r, p, p, p
+    return out
+
+
 def get_deer_background(fit_group, **kwargs):
     """Return ``(t, B)`` — the intermolecular background trace over the data axis."""
     from chisurf.core.models.deer.kernel import background as _bg
