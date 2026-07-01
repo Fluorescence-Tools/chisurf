@@ -4,6 +4,7 @@
     {
       "type": "dock_area",
       "title": "PTU Header Editor",
+      "persist": "ptu_header_edit",
       "sections": [
         {
           "type": "panel",

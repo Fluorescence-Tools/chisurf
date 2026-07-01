@@ -4,6 +4,7 @@
     {
       "type": "dock_area",
       "title": "ALEX Creator",
+      "persist": "ptu_alex_creator",
       "sections": [
         {
           "type": "panel",
