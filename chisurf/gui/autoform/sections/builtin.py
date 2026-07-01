@@ -50,6 +50,7 @@ register_plot("fit_table", lambda: _plots().FitTablePlot)
 register_plot("parameter_scan", lambda: _plots().ParameterScanPlot)
 register_plot("distribution", lambda: _plots().DistributionPlot)
 register_plot("residual2d", lambda: _plots().Residual2DPlot)
+register_plot("lcurve", lambda: _plots().LCurvePlot)
 
 
 def resolve_distribution_options(options: dict) -> dict:

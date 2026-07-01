@@ -1,0 +1,107 @@
+{
+  "_comment": "Editor layout for the model-free (MaxEnt) DEER model (DeerMaxEntModel). PRD-38 model/view-spec split: compute stays in deer.py; this JSON is user-editable.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Entropy regularisation",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "regularization",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Modulation",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "modulation",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Background",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "choice",
+          "target": "background",
+          "attr": "model",
+          "label": "Model",
+          "options": [
+            "hom3d",
+            "exp",
+            "strexp"
+          ]
+        },
+        {
+          "type": "parameter_group",
+          "target": "background",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Distance grid",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "grid",
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "line",
+      "options": {
+        "scale_x": "lin",
+        "d_scaley": "lin",
+        "r_scaley": "lin",
+        "x_label": "t (\u00b5s)",
+        "y_label": "V(t)"
+      }
+    },
+    {
+      "key": "distribution",
+      "options": {
+        "distribution_options": {
+          "r (\u00c5)": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.deer.common:get_deer_distance_distribution",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all"
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "lcurve",
+      "options": {}
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "residual",
+      "options": {}
+    }
+  ]
+}

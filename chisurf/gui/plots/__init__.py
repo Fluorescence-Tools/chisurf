@@ -11,6 +11,7 @@ try:
 except Exception:
     pass
 from chisurf.gui.plots.distribution import DistributionPlot
+from chisurf.gui.plots.lcurve import LCurvePlot
 from chisurf.gui.plots.fitinfo import *
 from chisurf.gui.plots.lineplot import *
 from chisurf.gui.plots.parameter_scan import ParameterScanPlot

@@ -18,6 +18,9 @@ experiment_types:
   pda:
     name: PDA
     hidden: false
+  deer:
+    name: DEER
+    hidden: false
   stopped_flow:
     name: Stopped flow
     hidden: true
@@ -111,6 +114,21 @@ pda:
     - chisurf.core.models.pda.dynamic.PdaDynamicTwoStateModel
     - chisurf.core.models.pda.dynamic_mc.PdaDynamicThreeStateModel
     - chisurf.core.models.pda.anisotropy.PdaAnisotropyModel
+
+deer:
+  readers:
+    - reader_class: chisurf.core.experiments.deer.DeerReader
+      reader_params:
+        name: DEER (BES3T/CSV)
+      controller_class: chisurf.gui.widgets.experiments.deer.DeerController
+      controller_params:
+        name: DEER (BES3T/CSV)
+  models:
+    # Native DEER models (self-contained, numpy/scipy only); AutoForm-rendered (PRD-38).
+    - chisurf.core.models.deer.deer.DeerGaussianModel
+    - chisurf.core.models.deer.deer.DeerRiceModel
+    - chisurf.core.models.deer.deer.DeerTikhonovModel
+    - chisurf.core.models.deer.deer.DeerMaxEntModel
 
 fcs:
   readers:
