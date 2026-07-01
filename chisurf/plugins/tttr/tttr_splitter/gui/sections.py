@@ -251,9 +251,11 @@ class _RunSection(QtWidgets.QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(6)
 
-        self._btn = QtWidgets.QPushButton("Convert / Split")
-        self._btn.setToolTip("Split / convert the loaded TTTR file into the output folder.")
-        self._btn.clicked.connect(self._run)
+        self._btn = _tool_button(
+            "✂️ Convert / Split",
+            self._run,
+            "Split / convert the loaded TTTR file into the output folder.",
+        )
         layout.addWidget(self._btn)
 
         self._progress = QtWidgets.QProgressBar()
@@ -325,15 +327,20 @@ class _BatchSection(QtWidgets.QWidget):
 
         btn_row = QtWidgets.QHBoxLayout()
         btn_row.setContentsMargins(0, 0, 0, 0)
-        self._btn_add_files = _tool_button("Add Files…", self._add_files)
-        self._btn_add_folders = _tool_button("Add Folder…", self._add_folder)
-        self._btn_remove = _tool_button("Remove", self._remove_selected)
-        self._btn_clear = _tool_button("Clear", self._clear)
+        self._btn_add_files = _tool_button("➕ Files", self._add_files, "Add PTU files.")
+        self._btn_add_folders = _tool_button(
+            "📁 Folder", self._add_folder, "Add a folder (scanned recursively)."
+        )
+        self._btn_remove = _tool_button(
+            "➖ Remove", self._remove_selected, "Remove selected entries."
+        )
+        self._btn_clear = _tool_button("🗑 Clear", self._clear, "Clear the list.")
         for b in (self._btn_add_files, self._btn_add_folders, self._btn_remove, self._btn_clear):
             btn_row.addWidget(b)
         btn_row.addStretch(1)
-        self._btn_start = QtWidgets.QPushButton("Start batch")
-        self._btn_start.clicked.connect(self._start)
+        self._btn_start = _tool_button(
+            "▶ Start batch", self._start, "Process every file with the options above."
+        )
         btn_row.addWidget(self._btn_start)
         layout.addLayout(btn_row)
 
@@ -422,8 +429,13 @@ def _row(*widgets: QtWidgets.QWidget) -> QtWidgets.QWidget:
     return box
 
 
-def _tool_button(text: str, slot) -> QtWidgets.QPushButton:
-    btn = QtWidgets.QPushButton(text)
+def _tool_button(text: str, slot, tooltip: str = "") -> QtWidgets.QToolButton:
+    """Build a ``QToolButton`` with an emoji label (house style) and optional tip."""
+    btn = QtWidgets.QToolButton()
+    btn.setText(text)
+    if tooltip:
+        btn.setToolTip(tooltip)
+    btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
     btn.clicked.connect(slot)
     return btn
 

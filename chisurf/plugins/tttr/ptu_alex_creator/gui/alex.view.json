@@ -1,0 +1,78 @@
+{
+  "_comment": "Declarative AutoForm layout for the ALEX Creator tool: a dock area with a collapsible Controls panel (file loader, formats, ALEX period/shift) and the live micro-time histogram plot.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "ALEX Creator",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "custom", "key": "alex_actions"},
+            {
+              "type": "panel",
+              "title": "Formats",
+              "n_col": 1,
+              "collapsed": false,
+              "sections": [
+                {
+                  "type": "choice",
+                  "attr": "input_format",
+                  "label": "Input",
+                  "options_source": "input_format_options",
+                  "description": "Force the input container type, or Auto to detect it from the file."
+                },
+                {
+                  "type": "choice",
+                  "attr": "output_format",
+                  "label": "Output",
+                  "options_source": "output_format_options",
+                  "description": "Container format written when saving (differs from input ⇒ transcode)."
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "title": "ALEX modulation",
+              "n_col": 1,
+              "collapsed": false,
+              "sections": [
+                {
+                  "type": "value",
+                  "attr": "alex_period",
+                  "label": "Period",
+                  "kind": "int",
+                  "minimum": 1,
+                  "maximum": 1000000,
+                  "step": 100,
+                  "description": "ALEX alternation period (macro-time units) mapped onto micro-time."
+                },
+                {
+                  "type": "value",
+                  "attr": "period_shift",
+                  "label": "Shift",
+                  "kind": "int",
+                  "minimum": -1000000,
+                  "maximum": 1000000,
+                  "step": 1,
+                  "description": "Phase shift of the ALEX period before the macro→micro mapping."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "plot",
+          "source": "histogram_series",
+          "title": "ALEX micro-time histogram",
+          "x_label": "Micro-time bin",
+          "y_label": "Counts",
+          "legend": false,
+          "description": "Micro-time histogram after mapping the ALEX period/shift; updates live."
+        }
+      ]
+    }
+  ]
+}

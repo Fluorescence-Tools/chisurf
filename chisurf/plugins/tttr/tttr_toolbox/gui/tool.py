@@ -102,9 +102,9 @@ def _embed_mainwindow(mw: QtWidgets.QWidget) -> QtWidgets.QWidget:
 
 
 def _alex_creator(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.ptu_alex_creator.wizard import AlexPTUCreator
+    from chisurf.plugins.tttr.ptu_alex_creator.gui.tool import AlexPTUCreator
 
-    return _embed_mainwindow(AlexPTUCreator())
+    return AlexPTUCreator()
 
 
 def _microtime_shifter(parent: TttrToolboxTool) -> QtWidgets.QWidget:
@@ -114,9 +114,9 @@ def _microtime_shifter(parent: TttrToolboxTool) -> QtWidgets.QWidget:
 
 
 def _ptu_header_editor(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.ptu_header_edit.wizard import TagsEditor, json_data
+    from chisurf.plugins.tttr.ptu_header_edit.gui.tool import TagsEditor
 
-    return _embed_mainwindow(TagsEditor(json_data))
+    return TagsEditor()
 
 
 def _split_convert(parent: TttrToolboxTool) -> QtWidgets.QWidget:

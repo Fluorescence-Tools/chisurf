@@ -1,7 +1,6 @@
-"""
-ALEX Creator
+"""ALEX Creator plugin.
 
-This plugin provides tools for converting and processing Alternating Laser Excitation (ALEX) 
+This plugin provides tools for converting and processing Alternating Laser Excitation (ALEX)
 data in Time-Tagged Time-Resolved (TTTR) files. It allows users to:
 
 1. Load TTTR files, including SM format files
@@ -10,8 +9,8 @@ data in Time-Tagged Time-Resolved (TTTR) files. It allows users to:
 4. Visualize the resulting micro time histogram
 5. Save the processed data as a new PTU file
 
-The plugin implements essential module operations on macro time stored in micro time, 
-enabling ALEX data to be processed with the same pipelines as Pulsed Interleaved Excitation 
+The plugin implements essential module operations on macro time stored in micro time,
+enabling ALEX data to be processed with the same pipelines as Pulsed Interleaved Excitation
 (PIE) data. This is particularly useful for:
 
 - Converting between different TTTR file formats
@@ -28,3 +27,22 @@ name = "Tools:Converter:ALEX Creator"
 # Aggregated into the TTTR Tools toolbox (tttr_toolbox); hidden as a top-level
 # menu entry but still importable and standalone-launchable.
 menu_hidden = True
+
+__all__ = ["AlexPTUCreator"]
+
+
+def __getattr__(attr_name: str):
+    """Lazy Qt import gate (no Qt import as a package side effect)."""
+    if attr_name == "AlexPTUCreator":
+        from .gui.tool import AlexPTUCreator as _cls
+
+        globals()["AlexPTUCreator"] = _cls
+        return _cls
+    raise AttributeError(f"module {__name__!r} has no attribute {attr_name!r}")
+
+
+if __name__ == "plugin":
+    from .gui.tool import AlexPTUCreator
+
+    window = AlexPTUCreator()
+    window.show()

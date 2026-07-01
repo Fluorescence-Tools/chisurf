@@ -1,0 +1,35 @@
+{
+  "_comment": "Declarative AutoForm layout for the PTU Header Editor: a dock area with the editable tag table (custom section) and a collapsible read-only JSON preview.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "PTU Header Editor",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Header tags",
+          "collapsed": false,
+          "sections": [
+            {"type": "custom", "key": "header_table"}
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "JSON",
+          "collapsed": true,
+          "n_col": 1,
+          "sections": [
+            {
+              "type": "value",
+              "attr": "json_text",
+              "label": "",
+              "kind": "text",
+              "read_only": true,
+              "description": "Live JSON view of the full PTU header with the edited tags."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
