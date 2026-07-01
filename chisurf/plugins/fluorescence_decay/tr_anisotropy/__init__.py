@@ -1,24 +1,24 @@
-"""
-Time-Resolved Anisotropy Plugin
+"""Time-resolved anisotropy wizard plugin.
 
-This plugin provides tools for analyzing time-resolved fluorescence anisotropy data.
-It allows users to:
-1. Load and process polarization-resolved fluorescence decay data
-2. Set up and visualize rotation spectra and lifetime components
-3. Create and manage anisotropy fits with multiple rotation correlation times
-4. Analyze rotational diffusion of fluorophores in different environments
-
-Time-resolved anisotropy is a powerful technique for studying the rotational motion
-of fluorophores, providing insights into molecular size, shape, flexibility, and
-interactions. This plugin implements a wizard-based interface that guides users
-through the process of setting up and analyzing anisotropy decay data, from data
-loading to model fitting and result visualization.
-
-The plugin supports multiple rotation correlation times and lifetime components,
-making it suitable for analyzing complex systems with heterogeneous rotational
-dynamics or multiple fluorophore populations.
+Guided construction of a linked VV/VH global anisotropy fit. The plugin follows
+the new standard: a Qt-free :mod:`.core` (IRF correction, spectrum I/O, the VV/VH
+link plan) reused by both the GUI and CLI, a declarative :mod:`.gui` (AutoForm
+over ``anisotropy.view.json`` with embedded interactive widgets) and a :mod:`.cli`.
 """
 
-name = "Spectroscopy:Fluorescence decay:Anisotropy-Wizard"
+from pathlib import Path
 
-from .wizard import *
+from chisurf.core.plugin import load_manifest
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Spectroscopy:Fluorescence decay:Anisotropy-Wizard"
+
+
+if __name__ == "plugin":
+    from .gui.tool import AnisotropyWizard
+
+    _wizard = AnisotropyWizard()
+    _wizard.show()

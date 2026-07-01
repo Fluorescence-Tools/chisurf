@@ -1,66 +1,48 @@
-# Batch Analysis Plugin
+# Batch-Analysis
 
-This plugin provides a wizard interface for processing multiple files with the same fit model.
+Apply one **pre-optimised template fit** to many datasets or files in a single
+pass and export the consolidated results.
 
-## Features
+Before batch processing, load a representative dataset, create a fit for it and
+**manually optimise its parameters** — those parameter values seed every run, so
+good starting values are what make the batch results reliable.
 
-- Select multiple files for batch processing
-- Choose a fit method to apply to all files
-- Run the fits and save results to a CSV file
-- View the results in a table
-- Consistent parameter application across multiple datasets
+## Workflow (GUI wizard)
 
-## Overview
+1. **Welcome** — overview.
+2. **Loaded data** *(optional)* — tick datasets already loaded in ChiSurf.
+3. **Files & fit** — drop files (or a folder) and pick the template fit.
+4. **Run** — choose a results CSV path and run. Each item is restored to the
+   template parameters, fitted, and its parameters + reduced χ² recorded.
+5. **Results** — a per-parameter results table.
 
-The Batch Analysis plugin streamlines the process of applying the same analysis method to multiple data files. 
-This is particularly useful for experiments that generate numerous similar datasets that need to be analyzed with the 
-same model and parameters.
+Alongside the CSV the tool writes a **DOCX report** (per-item screenshots +
+consolidated table) and a **ZIP** of the per-run numeric exports.
 
-The initial parameter values are taken from the template fit. Before batch processing, you should manually optimize the 
-parameters of this template fit using data similar to the files you plan to process to ensure reliable and meaningful 
-results.
+## Architecture (new plugin standard)
 
-## Requirements
+```
+batch_analysis/
+  manifest.json           plugin metadata + gui/cli entrypoints
+  core/runner.py          Qt-free batch runner + CSV/DOCX/ZIP exporters
+  gui/view_model.py       BatchViewModel (state, info sources, run action)
+  gui/tool.py             AutoForm host (BatchProcessingWizard)
+  gui/loaded_datasets.py  embedded dataset check-list widget
+  batch.view.json         declarative wizard layout (AutoForm)
+  cli/main.py             `batch-analysis run` / `batch-analysis report`
+  test/                   headless tests (no Qt / no live session)
+```
 
-- Python packages:
-  - PyQt5
-  - numpy
-  - pandas (for CSV export)
-  - matplotlib (for plotting)
+The numeric work lives entirely in `core/runner.py` (no Qt), so it is exercised
+by headless tests and reused by both the GUI and the CLI.
 
-## Usage
+## CLI
 
-1. Launch the plugin from the ChiSurf menu: Tools > Batch-Analysis
-2. Create and optimize a template fit with one representative dataset
-3. Select multiple files for batch processing
-4. Choose the fit method to apply to all files
-5. Configure processing options:
-   - Parameter constraints
-   - Output format
-   - Result handling
-6. Run the batch process
-7. View results in the table and export to CSV
+```bash
+# from a ChiSurf session (csc), fit a set of files with template fit 0
+csc batch-analysis run --list-fits
+csc batch-analysis run --file a.sm --file b.sm --fit-index 0 -o results.csv
 
-## Applications
-
-- Processing large datasets from high-throughput experiments
-- Analyzing time series data with consistent parameters
-- Comparing results across multiple samples or conditions
-- Automating routine analysis tasks
-- Ensuring consistent analysis methodology across datasets
-
-## Benefits
-
-- Saves time by automating repetitive analysis tasks
-- Ensures consistent analysis methodology across datasets
-- Provides organized output of results for easy comparison
-- Reduces human error in applying analysis parameters
-- Facilitates high-throughput data processing workflows
-
-## License
-
-This plugin is part of the ChiSurf package and is distributed under the same license.
-
-## Author
-
-This plugin was created as part of the ChiSurf project.
+# regenerate a DOCX report from an existing results CSV (fully headless)
+csc batch-analysis report results.csv --docx report.docx
+```

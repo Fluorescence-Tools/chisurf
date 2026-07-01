@@ -1,0 +1,99 @@
+{
+  "_comment": "Time-resolved anisotropy wizard. Rendered by AutoForm from AnisotropyViewModel (gui/view_model.py). Interactive IRF/region and component tables are embedded widgets; numerics live in core/.",
+  "sections": [
+    {
+      "type": "wizard",
+      "nav_width": 230,
+      "linear": false,
+      "persist": "tr_anisotropy",
+      "steps": [
+        {
+          "title": "Welcome",
+          "icon": "🔬",
+          "subtitle": "Build a linked VV/VH global anisotropy fit.",
+          "sections": [
+            {"type": "info", "source": "welcome_html", "height": 260}
+          ]
+        },
+        {
+          "title": "Data",
+          "icon": "📂",
+          "subtitle": "Select the polarisation-resolved IRF and decay files.",
+          "complete_when": {"attr": "data_ready", "equals": "True"},
+          "sections": [
+            {"type": "value", "label": "IRF VV", "kind": "file", "attr": "irf_vv_path",
+             "description": "Vertical-excitation, vertical-emission IRF file."},
+            {"type": "value", "label": "IRF VH", "kind": "file", "attr": "irf_vh_path",
+             "description": "Vertical-excitation, horizontal-emission IRF file."},
+            {"type": "value", "label": "Data VV", "kind": "file", "attr": "data_vv_path",
+             "description": "Vertical-excitation, vertical-emission sample decay."},
+            {"type": "value", "label": "Data VH", "kind": "file", "attr": "data_vh_path",
+             "description": "Vertical-excitation, horizontal-emission sample decay."},
+            {"type": "info", "source": "data_html", "height": 120}
+          ]
+        },
+        {
+          "title": "Normalize IRF",
+          "icon": "📈",
+          "subtitle": "Pick a background region; IRFs are subtracted and intensity-matched.",
+          "sections": [
+            {
+              "type": "custom",
+              "key": "embed",
+              "options": {
+                "widget": "chisurf.plugins.fluorescence_decay.tr_anisotropy.gui.irf_widget:IrfNormalizationWidget",
+                "pass_model": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Corrections",
+          "icon": "⚙️",
+          "subtitle": "Instrumental g-factor and channel-mixing corrections.",
+          "sections": [
+            {"type": "value", "label": "g-factor", "kind": "float", "attr": "g_factor",
+             "decimals": 4, "step": 0.01,
+             "description": "Detection-efficiency ratio between the VV and VH channels."},
+            {"type": "value", "label": "l1", "kind": "float", "attr": "l1", "decimals": 4, "step": 0.01,
+             "description": "Channel-mixing correction factor l1."},
+            {"type": "value", "label": "l2", "kind": "float", "attr": "l2", "decimals": 4, "step": 0.01,
+             "description": "Channel-mixing correction factor l2."}
+          ]
+        },
+        {
+          "title": "Components",
+          "icon": "🧬",
+          "subtitle": "Define the lifetime and rotation spectra.",
+          "complete_when": {"attr": "components_ready", "equals": "True"},
+          "sections": [
+            {
+              "type": "custom",
+              "key": "embed",
+              "options": {
+                "widget": "chisurf.plugins.fluorescence_decay.tr_anisotropy.gui.components_widget:ComponentsWidget",
+                "pass_model": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Finish",
+          "icon": "🎉",
+          "subtitle": "Create the linked VV/VH global anisotropy fit.",
+          "optional": true,
+          "sections": [
+            {"type": "info", "source": "finish_html", "height": 240},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "✅ Create fits", "action": "create_fits",
+                 "description": "Create the VV, VH and global fits with all parameters linked."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

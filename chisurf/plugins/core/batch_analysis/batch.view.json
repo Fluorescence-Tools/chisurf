@@ -1,0 +1,93 @@
+{
+  "_comment": "Batch-Analysis wizard. Rendered by AutoForm from BatchViewModel. Apply one template fit to many datasets/files; see gui/view_model.py.",
+  "sections": [
+    {
+      "type": "wizard",
+      "nav_width": 220,
+      "linear": false,
+      "persist": "batch_analysis",
+      "steps": [
+        {
+          "title": "Welcome",
+          "icon": "📋",
+          "subtitle": "Apply one template fit to many datasets or files.",
+          "sections": [
+            {"type": "info", "source": "welcome_html", "height": 260}
+          ]
+        },
+        {
+          "title": "Loaded data",
+          "icon": "🗂️",
+          "subtitle": "Optionally pick datasets already loaded in ChiSurf.",
+          "sections": [
+            {
+              "type": "custom",
+              "key": "embed",
+              "options": {
+                "widget": "chisurf.plugins.core.batch_analysis.gui.loaded_datasets:LoadedDatasetSelector",
+                "pass_model": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Files & fit",
+          "icon": "📁",
+          "subtitle": "Drop files to process and choose the template fit.",
+          "complete_when": {"attr": "fit_selected", "equals": "True"},
+          "sections": [
+            {
+              "type": "custom",
+              "key": "path_list",
+              "target": "files",
+              "options": {"title": "Files to process", "add_folders": true},
+              "description": "Drag-drop files (or add a folder) to fit with the template."
+            },
+            {
+              "type": "choice",
+              "label": "Template fit",
+              "attr": "selected_fit_name",
+              "options_source": "fit_names",
+              "description": "The pre-optimised fit whose parameters seed every run."
+            }
+          ]
+        },
+        {
+          "title": "Run",
+          "icon": "▶️",
+          "subtitle": "Choose where to save results, then run the batch.",
+          "complete_when": {"attr": "has_results", "equals": "True"},
+          "sections": [
+            {"type": "info", "source": "selection_html", "height": 130},
+            {
+              "type": "value",
+              "label": "Results CSV",
+              "kind": "file",
+              "attr": "save_path",
+              "description": "Destination CSV. A DOCX report and a ZIP of per-run exports are written alongside."
+            },
+            {
+              "type": "button_row",
+              "buttons": [
+                {
+                  "label": "▶️ Run batch",
+                  "action": "run",
+                  "description": "Run the template fit over every selected dataset/file."
+                }
+              ]
+            },
+            {"type": "info", "source": "status_html", "height": 100}
+          ]
+        },
+        {
+          "title": "Results",
+          "icon": "📊",
+          "subtitle": "Per-parameter results of the last run.",
+          "sections": [
+            {"type": "info", "source": "results_html"}
+          ]
+        }
+      ]
+    }
+  ]
+}

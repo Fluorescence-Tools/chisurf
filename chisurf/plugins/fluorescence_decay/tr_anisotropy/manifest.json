@@ -1,0 +1,24 @@
+{
+  "id": "tr_anisotropy",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Fluorescence decay:Anisotropy-Wizard",
+  "description": "Guided setup of a linked VV/VH global time-resolved anisotropy fit: load polarised decays, background-correct the IRFs, set instrument corrections and define lifetime/rotation spectra.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Fluorescence decay"],
+  "icon": "icon.png",
+  "state_namespace": "tr_anisotropy",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.fluorescence_decay.tr_anisotropy.gui.tool:AnisotropyWizard",
+    "cli": "anisotropy=chisurf.plugins.fluorescence_decay.tr_anisotropy.cli:cli"
+  },
+  "rpc_methods": [],
+  "dependencies": {},
+  "menu_hidden": true
+}

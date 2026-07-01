@@ -1,49 +1,65 @@
-# TR Anisotropy Plugin
+# Time-Resolved Anisotropy Wizard
 
-This plugin provides tools for analyzing time-resolved fluorescence anisotropy data.
+Guided construction of a **linked VV/VH global anisotropy fit** from
+polarisation-resolved fluorescence decays.
 
-## Implementation Notes
+## Workflow (GUI wizard)
 
-- Uses ChiSurf's logging system instead of print statements for better log management
-- Logs important events such as loading/saving settings and error conditions
+1. **Welcome** — overview.
+2. **Data** — select the VV/VH IRF and sample-decay files.
+3. **Normalize IRF** — drag a background region on the interactive plot; the VV/VH
+   IRFs are background-subtracted and intensity-matched (30 %–80 % default region).
+4. **Corrections** — set the g-factor and l1/l2 channel-mixing factors.
+5. **Components** — define the lifetime and rotation spectra.
+6. **Finish** — create the VV, VH and global fits with all parameters linked.
 
-## Features
-
-- Load and process polarization-resolved fluorescence decay data
-- Set up and visualize rotation spectra and lifetime components
-- Create and manage anisotropy fits with multiple rotation correlation times
-- Analyze rotational diffusion of fluorophores in different environments
-- Intelligent background region selection that automatically sets the initial region to 30%-80% of the data range, optimized for typical IRF profiles
-- Enhanced visualization with prominent background-corrected IRF (thicker lines) and semi-transparent (60% alpha) non-corrected IRF for better visual distinction
-- Interactive legend that clearly identifies VV/VH and raw/corrected IRF curves
-
-## User Settings
-
-The plugin stores user-specific settings in the ChiSurf user settings directory:
+## Architecture (new plugin standard)
 
 ```
-<user_settings_path>/plugins/tr_anisotropy/
+tr_anisotropy/
+  manifest.json               plugin metadata + gui/cli entrypoints
+  core/irf.py                 Qt-free IRF background subtraction + normalisation
+  core/spectra.py             lifetime/rotation spectrum I/O (*.spk.json)
+  core/fits.py                VV/VH parameter link/constraint plan (as data)
+  gui/view_model.py           AnisotropyViewModel (state, loading, fit creation)
+  gui/tool.py                 AutoForm host (AnisotropyWizard / ChisurfWizard alias)
+  gui/irf_widget.py           embedded interactive IRF region selector (pyqtgraph)
+  gui/components_widget.py    embedded lifetime/rotation spectrum tables
+  anisotropy.view.json        declarative wizard layout (AutoForm)
+  cli/main.py                 `anisotropy irf-correct` / `anisotropy spectrum`
+  test/                       headless tests (no Qt)
 ```
 
-### wizard.spk.json
+The scientific numerics (IRF correction, spectrum persistence, the VV↔VH link
+plan) live in the Qt-free `core/` package, so they are unit-tested without a GUI
+and reused by the CLI. The genuinely interactive pieces (the draggable IRF
+background region and the component tables) are small embedded Qt widgets.
 
-This file contains default lifetime and rotation spectrum settings for the anisotropy wizard. When the wizard is first opened, it:
+**Fix vs. the legacy wizard:** the old component tables used opposite column
+orders in their *add* buttons versus their *load* path, so manually added
+lifetime/rotation components were silently swapped (amplitude ↔ value). Both
+tables now use one consistent **amplitude, value** order, matching how the
+spectra are stored and consumed.
 
-1. Checks if wizard.spk.json exists in the user settings directory
-2. If it doesn't exist, copies the default file from the plugin directory
-3. Loads the settings from the file in the user settings directory
-4. This ensures that user-specific settings are preserved between sessions
+## CLI
 
-When saving settings:
-1. The Save button saves directly to the current file without asking for a filename
-2. Auto-save is performed when moving between wizard pages
-3. If the file was previously saved to a different location than the default, it is also copied to the default location
-4. A backup of the previous default file is created with the `.backup.json` extension
+```bash
+# background-correct and intensity-match a VV/VH IRF pair (headless)
+csc anisotropy irf-correct --vv irf_vv.txt --vh irf_vh.txt --lb 300 --ub 800
 
-## Jordi Format Support
+# print the stored default lifetime/rotation spectra
+csc anisotropy spectrum
+```
 
-The plugin supports the Jordi format, which contains both VV and VH data in a single file. When `cs.current_setup.is_jordi = True`:
+## User settings
 
-1. Only one file is required for IRF and one for data
-2. The UI is updated to reflect this
-3. The files are loaded with the appropriate polarization parameters
+Spectra are stored under `<user_settings>/plugins/tr_anisotropy/wizard.spk.json`
+(seeded from the packaged default on first use; a `.backup.json` is kept when the
+default is overwritten). Instrument corrections are stored in
+`<user_settings>/anisotropy_corrections.json`.
+
+## Jordi format
+
+When `cs.current_setup.is_jordi` is set, a single IRF file and a single data file
+hold both polarisations; the loader reads each twice with the VV/VH polarisation
+set accordingly (put the combined file in the VV fields).
