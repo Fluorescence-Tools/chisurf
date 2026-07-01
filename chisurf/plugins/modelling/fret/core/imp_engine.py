@@ -516,37 +516,18 @@ def build_assembly(
 
     positions, _distances, _score_sets = _read_positions(fps_json_path)
 
-    # Chains referenced by each body (used to prune colliding chains when
-    # several PDBs are loaded into one hierarchy).
-    body_chains: Dict[int, set] = {}
-    for p in positions.values():
-        b = int(p.get("body_id", 0))
-        ch = p.get("chain_identifier")
-        if ch:
-            body_chains.setdefault(b, set()).add(str(ch))
-
     model = IMP.Model()
     root = IMP.atom.Hierarchy.setup_particle(IMP.Particle(model, "root"))
 
-    multi = len(pdb_paths) > 1
     rigid_bodies: Dict[int, "IMP.core.RigidBody"] = {}
     body_of_pdb: List[int] = []
     for idx, pdb in enumerate(pdb_paths):
         body_id = _body_for_pdb_index(idx, len(pdb_paths), positions)
+        # Load each PDB as-is (like FPS) — no chain pruning. IMP.bff resolves
+        # labelling positions by body/molecule, so duplicate chain IDs across
+        # bodies are not ambiguous, and complete molecules (e.g. both strands of
+        # a dsDNA) are kept. Waters/hydrogens are dropped as usual for AV/clash.
         sel = IMP.atom.NonWaterNonHydrogenPDBSelector()
-        # With multiple PDBs, only drop chains whose IDs are *labelled by another
-        # body* (those would make the AV label lookup ambiguous). Keep every
-        # other chain so complete molecules load — e.g. both strands of a dsDNA
-        # even when only one strand carries a label.
-        other_labeled = set()
-        for bid, chs in body_chains.items():
-            if bid != body_id:
-                other_labeled |= chs
-        other_labeled -= body_chains.get(body_id, set())
-        if multi and other_labeled:
-            sel = IMP.atom.AndPDBSelector(
-                sel, IMP.atom.NotPDBSelector(
-                    IMP.atom.ChainPDBSelector(sorted(other_labeled))))
         h = IMP.atom.read_pdb(str(pdb), model, sel)
         root.add_child(h)
         body_of_pdb.append(body_id)
@@ -980,7 +961,12 @@ def dock_minimize(
         while done < n:
             if stop_check is not None and stop_check():
                 return True
-            cg.optimize(min(chunk, n - done))
+            try:
+                cg.optimize(min(chunk, n - done))
+            except IMP.ModelException:
+                # CG can fail on a near-singular gradient (e.g. a severe clash
+                # right after a random shuffle); keep the best pose reached.
+                break
             done += chunk
             c += 1
             if record and c % stride == 0:
