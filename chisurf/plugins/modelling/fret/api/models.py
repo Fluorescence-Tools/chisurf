@@ -98,6 +98,7 @@ class ErrorRequest:
     ev_weight: float = 1.0
     save_distributions: bool = False
     av_backend: str = "auto"
+    save_trajectory: bool = False
     #: Parallel worker processes for the trials (None -> CPU count, 1 -> serial).
     n_workers: Optional[int] = None
 
