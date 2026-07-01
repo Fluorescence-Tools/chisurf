@@ -72,6 +72,23 @@
           "y_label": "Counts",
           "legend": false,
           "description": "Micro-time histogram after mapping the ALEX period/shift; updates live."
+        },
+        {
+          "type": "panel",
+          "title": "Batch",
+          "collapsed": true,
+          "sections": [
+            {
+              "type": "choice",
+              "attr": "batch_mode",
+              "label": "Mode",
+              "options": ["convert", "merge"],
+              "labels": ["Convert each", "Merge into one"],
+              "style": "radio",
+              "description": "Convert every file to its own ALEX output, or merge them all into one."
+            },
+            {"type": "custom", "key": "alex_batch"}
+          ]
         }
       ]
     }

@@ -22,11 +22,19 @@ The conversion process preserves all event data while transforming the time info
 to make ALEX data compatible with PIE analysis workflows.
 """
 
-name = "Tools:Converter:ALEX Creator"
+from pathlib import Path as _Path
+
+from chisurf.core.plugin import load_manifest as _load_manifest
+
+_manifest = _load_manifest(_Path(__file__).with_name("manifest.json"))
+name = _manifest.display_name if _manifest is not None else "Tools:Converter:ALEX Creator"
 
 # Aggregated into the TTTR Tools toolbox (tttr_toolbox); hidden as a top-level
-# menu entry but still importable and standalone-launchable.
+# menu entry but still importable and standalone-launchable, and CLI/RPC-exposed.
 menu_hidden = True
+
+# Expose the plugin CLI through chisurf.core.cli.
+cli_entrypoint = "alex=chisurf.plugins.tttr.ptu_alex_creator.cli.main:cli"
 
 __all__ = ["AlexPTUCreator"]
 

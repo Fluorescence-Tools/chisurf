@@ -104,14 +104,14 @@ class _ActionsSection(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Invalid file", f"'{path}' is not a valid file.")
             return
         try:
-            import tttrlib
-
             from chisurf.gui.widgets.staged_loading import load_with_progress
 
-            tttr_type = self._model.tttr_filetype
+            from .. import core
+
+            tttr_type = core.resolve_filetype(self._model.input_format, path)
 
             def _read(local_path):
-                return tttrlib.TTTR(local_path, tttr_type)
+                return core.load(local_path, tttr_type)
 
             tttr = load_with_progress(self, _read, str(path), title="Loading TTTR file")
             if tttr is None:
@@ -137,4 +137,125 @@ class _ActionsSection(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Error", f"Cannot save:\n{exc}")
 
 
-__all__ = ["alex_actions"]
+# ---------------------------------------------------------------------------
+# alex_batch — batch convert / merge of many (.sm) files
+# ---------------------------------------------------------------------------
+
+
+@register_section("alex_batch")
+def alex_batch(model, target=None, **options):
+    """AutoForm factory for the batch convert/merge file list and controls."""
+    return _BatchSection(model)
+
+
+class _BatchSection(QtWidgets.QWidget):
+    """Drag-drop list of ALEX files batch-converted or merged with current settings."""
+
+    def __init__(self, model, parent=None):
+        super().__init__(parent)
+        self._model = model
+        self._running = False
+        self.setAcceptDrops(True)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(4)
+
+        info = QtWidgets.QLabel("Drop .sm (or other TTTR) files to convert each or merge into one.")
+        info.setWordWrap(True)
+        layout.addWidget(info)
+
+        self._list = QtWidgets.QListWidget()
+        self._list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        layout.addWidget(self._list, 1)
+
+        out_row = QtWidgets.QHBoxLayout()
+        out_row.setContentsMargins(0, 0, 0, 0)
+        out_row.addWidget(QtWidgets.QLabel("Output folder"))
+        self._out_edit = QtWidgets.QLineEdit()
+        self._out_edit.setPlaceholderText("Output folder (for Convert / merged file)")
+        self._out_edit.editingFinished.connect(
+            lambda: setattr(self._model, "batch_output_folder", self._out_edit.text().strip())
+        )
+        out_row.addWidget(self._out_edit, 1)
+        out_browse = QtWidgets.QToolButton()
+        out_browse.setText("…")
+        out_browse.clicked.connect(self._browse_output)
+        out_row.addWidget(out_browse)
+        layout.addLayout(out_row)
+
+        btn_row = QtWidgets.QHBoxLayout()
+        btn_row.setContentsMargins(0, 0, 0, 0)
+        btn_row.addWidget(_tool_button("➕ Files", "Add TTTR files.", self._add_files))
+        btn_row.addWidget(_tool_button("🗑 Clear", "Clear the list.", self._model.clear_batch))
+        btn_row.addStretch(1)
+        btn_row.addWidget(_tool_button("⚙️ Run batch", "Convert each / merge into one.", self._run))
+        layout.addLayout(btn_row)
+
+        self._status = QtWidgets.QLabel("")
+        self._status.setStyleSheet("color: #888;")
+        layout.addWidget(self._status)
+
+        self._model.add_observer(self._on_model_event)
+
+    # ── drag-drop ───────────────────────────────────────────────────────
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        paths = [
+            u.toLocalFile()
+            for u in (event.mimeData().urls() or [])
+            if u.toLocalFile() and pathlib.Path(u.toLocalFile()).is_file()
+        ]
+        if paths:
+            self._model.add_batch_files(paths)
+            event.acceptProposedAction()
+
+    # ── model wiring ────────────────────────────────────────────────────
+    def _on_model_event(self, event: str) -> None:
+        if event == "batch":
+            self._list.clear()
+            for p in self._model.batch_files:
+                self._list.addItem(p)
+
+    # ── actions ─────────────────────────────────────────────────────────
+    def _add_files(self) -> None:
+        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            self, "Add ALEX files", "", "TTTR/SM files (*.sm *.ptu *.ht3 *.spc);;All Files (*)"
+        )
+        if paths:
+            self._model.add_batch_files(list(paths))
+
+    def _browse_output(self) -> None:
+        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select output folder")
+        if folder:
+            self._out_edit.setText(folder)
+            self._model.batch_output_folder = folder
+
+    def _run(self) -> None:
+        if self._running:
+            return
+        reason = self._model.can_run_batch()
+        if reason is not None:
+            QtWidgets.QMessageBox.warning(self, "Cannot run batch", reason)
+            return
+        self._running = True
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            outputs = self._model.run_batch()
+            self._status.setText(f"Wrote {len(outputs)} file(s).")
+            QtWidgets.QMessageBox.information(
+                self, "Batch complete", f"Wrote {len(outputs)} file(s)."
+            )
+        except Exception as exc:  # noqa: BLE001
+            QtWidgets.QMessageBox.critical(self, "Batch failed", str(exc))
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+            self._running = False
+
+
+__all__ = ["alex_actions", "alex_batch"]

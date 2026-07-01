@@ -1,10 +1,8 @@
 """Qt-free view-model backing the ALEX Creator tool.
 
-:class:`AlexViewModel` holds the ALEX-to-micro-time conversion settings that
-AutoForm binds its controls to, performs the conversion through :mod:`tttrlib`,
-and exposes the resulting micro-time histogram for the declarative ``plot``
-section. Free of Qt so it is unit-testable headlessly; the GUI
-(``gui.tool`` + ``gui.sections``) owns Qt concerns and drives this model.
+Thin state holder that binds AutoForm controls and delegates every computation to
+the plugin's Qt-free :mod:`..core` / :mod:`..api` layers (shared with the CLI and
+RPC backend). Owns no conversion logic itself.
 
 Mirrors :class:`chisurf.plugins.tttr.tttr_splitter.gui.view_model.SplitterViewModel`.
 """
@@ -12,32 +10,19 @@ Mirrors :class:`chisurf.plugins.tttr.tttr_splitter.gui.view_model.SplitterViewMo
 from __future__ import annotations
 
 import logging
-import os
 import pathlib
 from collections.abc import Callable
 
-import numpy as np
-import tttrlib
+from .. import core
+from ..api import AlexRequest, run
 
 logger = logging.getLogger(__name__)
 
 _VIEW_JSON = pathlib.Path(__file__).parent / "alex.view.json"
 
-# container name → (extension stem, record-type id, container id)
-_CONTAINER_INFO = {
-    "PTU": ("ptu", 4, 0),
-    "HT3": ("ht3", 4, 1),
-    "SPC-130": ("spc", 7, 2),
-    "SPC-600_256": ("spc", 8, 3),
-    "SPC-600_4096": ("spc", 9, 4),
-    "PHOTON-HDF5": ("hdf", 4, 5),
-    "CZ-RAW": ("raw", 10, 6),
-    "SM": ("sm", 11, 7),
-}
-
 
 class AlexViewModel:
-    """State + logic for the ALEX Creator tool (no Qt)."""
+    """State + view wiring for the ALEX Creator tool (logic lives in ``core``)."""
 
     def view_spec(self):
         """Resolve AutoForm's view spec from the authored ``alex.view.json``."""
@@ -52,11 +37,17 @@ class AlexViewModel:
         self.alex_period = 8000
         self.period_shift = 0
 
-        # ── runtime state ──────────────────────────────────────────────
+        # ── single-file preview state ───────────────────────────────────
         self.input_file = ""
         self._tttr = None
-        self._processed = None
         self._observers: list[Callable[[str], None]] = []
+
+        # ── batch state ────────────────────────────────────────────────
+        #: files to batch-process (typically ``.sm`` ALEX measurements).
+        self.batch_files: list[str] = []
+        #: ``"convert"`` = one ALEX file out per input; ``"merge"`` = one combined file.
+        self.batch_mode = "convert"
+        self.batch_output_folder = ""
 
     # ── observer hook ──────────────────────────────────────────────────
     def add_observer(self, cb: Callable[[str], None]) -> None:
@@ -78,66 +69,40 @@ class AlexViewModel:
     # ── AutoForm options sources ───────────────────────────────────────
     def input_format_options(self) -> list[str]:
         """Input container choices: ``Auto`` plus every tttrlib container name."""
-        return ["Auto", *tttrlib.TTTR.get_supported_container_names()]
+        return core.input_format_options()
 
     def output_format_options(self) -> list[str]:
         """Output container choices (every supported tttrlib container name)."""
-        return list(tttrlib.TTTR.get_supported_container_names())
-
-    @property
-    def tttr_filetype(self) -> str | None:
-        """The forced input container, ``None`` when ``Auto`` (let tttrlib infer)."""
-        if self.input_format != "Auto":
-            return self.input_format
-        if self.input_file and os.path.exists(self.input_file):
-            file_type_int = tttrlib.inferTTTRFileType(self.input_file)
-            names = tttrlib.TTTR.get_supported_container_names()
-            if file_type_int is not None and 0 <= file_type_int < len(names):
-                return names[file_type_int]
-        return None
+        return core.supported_containers()
 
     @property
     def has_data(self) -> bool:
         """Whether a TTTR file is loaded and ready to convert/save."""
         return self._tttr is not None
 
-    # ── loading ────────────────────────────────────────────────────────
+    # ── loading (preview) ───────────────────────────────────────────────
     def load(self, path: str) -> None:
         """Load a TTTR file from *path* and refresh the preview."""
         self.input_file = path
-        self._tttr = tttrlib.TTTR(path, self.tttr_filetype)
-        self._processed = None
+        self._tttr = core.load(path, core.resolve_filetype(self.input_format, path))
         self.notify("loaded")
 
     def set_tttr(self, tttr, path: str) -> None:
         """Store an already-loaded TTTR object and its source path."""
         self.input_file = str(path)
         self._tttr = tttr
-        self._processed = None
         self.notify("loaded")
-
-    # ── conversion / preview ───────────────────────────────────────────
-    def _compute_processed(self):
-        """Apply the ALEX→micro-time conversion to a fresh copy of the file."""
-        if self._tttr is None or not self.input_file:
-            self._processed = None
-            return None
-        tt = tttrlib.TTTR(self.input_file, self.tttr_filetype)
-        tt.alex_to_microtime(int(self.alex_period), int(self.period_shift))
-        self._processed = tt
-        return tt
 
     def histogram_series(self) -> list[dict]:
         """Return the ALEX micro-time histogram for the ``plot`` section."""
-        tt = self._compute_processed()
-        if tt is None:
+        if self._tttr is None or not self.input_file:
             return []
-        period = int(self.alex_period)
-        counts = np.bincount(tt.micro_times, minlength=period)[:period]
-        bins = np.arange(period)
+        filetype = core.resolve_filetype(self.input_format, self.input_file)
+        counts = core.alex_histogram(self.input_file, self.alex_period, self.period_shift, filetype)
+        bins = list(range(len(counts)))
         return [{"x": bins, "y": counts, "name": "ALEX µ-time", "color": "#4488ff", "width": 1}]
 
-    # ── save ───────────────────────────────────────────────────────────
+    # ── single-file save ────────────────────────────────────────────────
     def can_save(self) -> str | None:
         """Return ``None`` when a save can run, else a human-readable reason."""
         if self._tttr is None:
@@ -146,36 +111,63 @@ class AlexViewModel:
 
     def default_save_name(self) -> str:
         """Suggested output filename for the current output container."""
-        ext = _CONTAINER_INFO.get(self.output_format, ("ptu", 0, 0))[0]
-        base = pathlib.Path(self.input_file).stem if self.input_file else "alex"
-        return f"{base}_alex.{ext}"
+        return core.default_output_name(self.input_file, self.output_format)
 
     def save(self, path: str) -> None:
-        """Write the ALEX-converted file to *path* in the chosen container."""
-        if self._processed is None:
-            self._compute_processed()
-        if self._processed is None:
-            raise ValueError("Failed to process TTTR data")
-        tt = self._processed
-        out_name = self.output_format
+        """Write the ALEX-converted single file to *path*."""
+        if self._tttr is None:
+            raise ValueError("Please load a TTTR file first.")
+        core.convert_file(
+            self.input_file,
+            path,
+            self.alex_period,
+            self.period_shift,
+            self.output_format,
+            self.input_format,
+        )
 
-        if out_name != self.input_format and out_name != "Auto":
-            ext, rec, cont = _CONTAINER_INFO.get(out_name, ("ptu", 4, 0))
-            header = tt.header
-            header.tttr_container_type = cont
-            header.tttr_record_type = rec
-            if out_name == "PTU":
-                # PTU via HydraHarp wants the special tag group 0x00010304.
-                header.set_tag("TTResultFormat_TTTRRecType", 0x00010304, 268435464)
-                header.set_tag("TTResultFormat_BitsPerRecord", 32, 268435464)
-                header.set_tag("MeasDesc_RecordType", rec, 268435464)
-            else:
-                # 268435464 == 0x10000008 (Int8) — the tag value type tttrlib expects.
-                header.set_tag("TTResultFormat_TTTRRecType", rec, 268435464)
-                header.set_tag("MeasDesc_RecordType", rec, 268435464)
-            tt.write(path, header)
-        else:
-            tt.write(path)
+    # ── batch ───────────────────────────────────────────────────────────
+    def add_batch_files(self, paths: list[str]) -> None:
+        """Add unique files to the batch list."""
+        added = False
+        for p in paths:
+            if p and p not in self.batch_files:
+                self.batch_files.append(p)
+                added = True
+        if added:
+            self.notify("batch")
+
+    def clear_batch(self) -> None:
+        """Empty the batch file list."""
+        self.batch_files = []
+        self.notify("batch")
+
+    def can_run_batch(self) -> str | None:
+        """Return ``None`` when a batch run can proceed, else a reason string."""
+        if not self.batch_files:
+            return "Add .sm (or other TTTR) files to the batch list first."
+        if self.batch_mode == "convert" and not self.batch_output_folder.strip():
+            return "Choose an output folder for the converted files."
+        return None
+
+    def run_batch(self) -> list[str]:
+        """Convert each batch file, or merge them all, per :attr:`batch_mode`.
+
+        Returns the list of written output paths.
+        """
+        reason = self.can_run_batch()
+        if reason is not None:
+            raise ValueError(reason)
+        request = AlexRequest(
+            files=list(self.batch_files),
+            alex_period=int(self.alex_period),
+            period_shift=int(self.period_shift),
+            output_format=self.output_format,
+            input_format=self.input_format,
+            mode=self.batch_mode,
+            output_dir=self.batch_output_folder.strip(),
+        )
+        return run(request).output_paths
 
 
 __all__ = ["AlexViewModel"]

@@ -1,8 +1,9 @@
-"""Tests for the AutoForm-based ALEX Creator tool."""
+"""Tests for the ALEX Creator plugin (core / api / cli / gui split + batch)."""
 
 from __future__ import annotations
 
 import pathlib
+import shutil
 
 import pytest
 
@@ -19,13 +20,29 @@ def test_view_model_defaults_and_options():
     assert m.alex_period == 8000
     assert m.input_format_options()[0] == "Auto"
     assert "PTU" in m.output_format_options()
-    assert m.can_save() is not None  # nothing loaded yet
+    assert m.can_save() is not None  # nothing loaded
+    assert m.can_run_batch() is not None  # no batch files
 
 
 def test_view_spec_loads():
     from chisurf.plugins.tttr.ptu_alex_creator.gui.view_model import AlexViewModel
 
     assert AlexViewModel().view_spec() is not None
+
+
+def test_manifest_and_cli_and_rpc():
+    from pathlib import Path
+
+    from chisurf.core.plugin import load_manifest
+    from chisurf.plugins.tttr.ptu_alex_creator.backend.services import list_methods
+    from chisurf.plugins.tttr.ptu_alex_creator.cli.main import cli
+
+    m = load_manifest(Path(__file__).resolve().parents[1] / "manifest.json")
+    assert m is not None
+    assert m.entrypoints.gui and m.entrypoints.cli and m.entrypoints.services
+    assert len(m.rpc_methods) == 4
+    assert set(cli.commands) == {"convert", "merge"}
+    assert "alex.convert" in list_methods() and "alex.merge" in list_methods()
 
 
 def test_tool_builds_with_autoform(qapp, qtbot):
@@ -37,24 +54,55 @@ def test_tool_builds_with_autoform(qapp, qtbot):
     qtbot.addWidget(w)
     assert isinstance(w.auto_form, AutoForm)
     assert get_section_factory("alex_actions") is not None
+    assert get_section_factory("alex_batch") is not None
 
 
 @pytest.mark.skipif(not _PTU.exists(), reason="sample PTU not available")
-def test_alex_histogram_and_save(tmp_path):
+def test_core_convert_and_histogram(tmp_path):
     import tttrlib
 
-    from chisurf.plugins.tttr.ptu_alex_creator.gui.view_model import AlexViewModel
+    from chisurf.plugins.tttr.ptu_alex_creator import core
 
-    m = AlexViewModel()
-    m.load(str(_PTU))
-    assert m.has_data
+    n = len(tttrlib.TTTR(str(_PTU)))
+    out = tmp_path / "single_alex.ptu"
+    core.convert_file(str(_PTU), str(out), 8000, 0, "PTU", "Auto")
+    assert out.exists() and len(tttrlib.TTTR(str(out))) == n
 
-    m.alex_period = 4000
-    series = m.histogram_series()
-    assert series and len(series[0]["y"]) == 4000
+    hist = core.alex_histogram(str(_PTU), 4000, 0, core.resolve_filetype("Auto", str(_PTU)))
+    assert len(hist) == 4000 and int(hist.sum()) == n
 
-    out = tmp_path / "alex_out.ptu"
-    m.output_format = "PTU"
-    m.save(str(out))
-    assert out.exists()
-    assert len(tttrlib.TTTR(str(out))) > 0
+
+@pytest.mark.skipif(not _PTU.exists(), reason="sample PTU not available")
+def test_api_batch_convert_and_merge(tmp_path):
+    import tttrlib
+
+    from chisurf.plugins.tttr.ptu_alex_creator.api import AlexRequest, run
+
+    n = len(tttrlib.TTTR(str(_PTU)))
+    f1 = tmp_path / "a.ptu"
+    f2 = tmp_path / "b.ptu"
+    shutil.copy(_PTU, f1)
+    shutil.copy(_PTU, f2)
+
+    conv = run(
+        AlexRequest(
+            files=[str(f1), str(f2)],
+            output_format="PTU",
+            mode="convert",
+            output_dir=str(tmp_path / "out"),
+        )
+    )
+    assert len(conv.output_paths) == 2
+    assert all(pathlib.Path(p).exists() for p in conv.output_paths)
+
+    merged = run(
+        AlexRequest(
+            files=[str(f1), str(f2)],
+            output_format="PTU",
+            mode="merge",
+            output_path=str(tmp_path / "m.ptu"),
+        )
+    )
+    assert len(merged.output_paths) == 1
+    # merge concatenates every photon from both files
+    assert len(tttrlib.TTTR(merged.output_paths[0])) == 2 * n

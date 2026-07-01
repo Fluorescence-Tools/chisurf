@@ -1,0 +1,22 @@
+{
+  "id": "ptu_alex_creator",
+  "version": "2.0.0",
+  "display_name": "Tools:Converter:ALEX Creator",
+  "description": "Convert ALEX macro-time modulation into micro-time (single, batch or merged), for PIE-style analysis of .sm and other TTTR files.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["TTTR", "Converter"],
+  "icon": "icon.png",
+  "menu_hidden": true,
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.tttr.ptu_alex_creator.gui.tool:AlexPTUCreator",
+    "cli": "alex=chisurf.plugins.tttr.ptu_alex_creator.cli.main:cli",
+    "services": "chisurf.plugins.tttr.ptu_alex_creator.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "alex.convert", "summary": "Convert one ALEX file per input to micro-time.", "long_running": true, "cancelable": false},
+    {"name": "alex.merge", "summary": "Merge several ALEX files into a single micro-time file.", "long_running": true, "cancelable": false},
+    {"name": "alex.histogram", "summary": "Return the ALEX micro-time histogram of a file.", "long_running": false, "cancelable": false},
+    {"name": "alex.contract.describe", "summary": "Describe the ALEX Creator workflow contract.", "long_running": false, "cancelable": false}
+  ]
+}
