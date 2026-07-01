@@ -1,7 +1,7 @@
 {
   "id": "fret_line",
   "version": "1.0.0",
-  "display_name": "FRET:FRET Line Generator",
+  "display_name": "Spectroscopy:FRET:FRET Line Generator",
   "description": "Compute static, dynamic, WLC, and mixture FRET lines for parameter ranges. Results are suitable for overlaying on smFRET 2D histograms in ndxplorer.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["FRET", "Analysis"],
@@ -29,6 +29,6 @@
   "rpc_methods": [],
   "events": [],
   "dependencies": {},
-  "menu_hidden": false,
+  "menu_hidden": true,
   "deprecated": false
 }

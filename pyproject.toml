@@ -112,6 +112,7 @@ csg_tttr_image_browser = "chisurf.plugins.tttr_image_browser.__main__:main"
 csg_batch_analysis = "chisurf.plugins.core.batch_analysis.__main__:main"
 csg_anisotropy = "chisurf.plugins.fluorescence_decay.tr_anisotropy.__main__:main"
 csg_wizards = "chisurf.plugins.core.wizards.__main__:main"
+csg_calculators = "chisurf.plugins.calculator.hub.__main__:main"
 chisurf_update = "chisurf.plugins.updater.__main__:main"
 
 [tool.setuptools]
