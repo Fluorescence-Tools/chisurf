@@ -38,10 +38,14 @@ class ChiMolSectionWidget(QtWidgets.QWidget):
 
     AUTOFORM_REFRESH = True  # AutoForm.refresh_plots() will call refresh()
 
-    def __init__(self, model, target: str, *, height: int = 320, **options) -> None:
+    def __init__(self, model, target: str, *, height: int = 320,
+                 scale_factor: float = 1.0, **options) -> None:
         super().__init__()
         self._model = model
         self._target = target
+        # PDB / ChiSurf coordinates are in Angstrom; ChiMol's default scale of 10
+        # assumes nanometer input, so pass 1.0 (matches the proteinMC viewer).
+        self._scale_factor = float(scale_factor)
         self._viewer = None
         self._object_id = None
         self._loaded_key = None       # dedupe signature of the last load
@@ -128,7 +132,10 @@ class ChiMolSectionWidget(QtWidgets.QWidget):
             return self._viewer or None
         try:
             from chisurf.plugins.chimol.chimol.renderer.view import MolView
-            self._viewer = MolView(self._host)
+            try:
+                self._viewer = MolView(self._host, scale_factor=self._scale_factor)
+            except TypeError:  # older MolView without the kwarg
+                self._viewer = MolView(self._host)
             self._host.layout().addWidget(self._viewer)
         except Exception:
             placeholder = QtWidgets.QLabel(
