@@ -16,7 +16,7 @@ import time
 import traceback
 
 import pyqtgraph as pg
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.core.dataspec import load_view_spec
 
@@ -296,6 +296,8 @@ class FretDockingTool(QtWidgets.QWidget):
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
         self._table.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
+        self._table.setAlternatingRowColors(True)
+        self._table.verticalHeader().setVisible(False)
         self._table.itemSelectionChanged.connect(self._on_row_selected)
         self._table.setSortingEnabled(True)  # click a header (e.g. Score) to sort
         self._table.setToolTip(
@@ -563,13 +565,22 @@ class FretDockingTool(QtWidgets.QWidget):
         self._highlight_best()
 
     def _highlight_best(self) -> None:
-        """Green the best-scoring (top) row after the best-first sort."""
+        """Mark the best-scoring (top) row after the best-first sort.
+
+        A muted dark-green fill with white text (readable on light and dark
+        themes); other rows keep the view's default colours.
+        """
+        best_bg = QtGui.QColor(27, 94, 32)   # green 900 — contrasts with white
+        best_fg = QtGui.QColor(255, 255, 255)
+        clear = QtGui.QBrush()               # empty brush -> theme default
         for r in range(self._table.rowCount()):
-            bg = QtCore.Qt.green if r == 0 else QtCore.Qt.transparent
+            is_best = r == 0
             for c in range(self._table.columnCount()):
                 it = self._table.item(r, c)
-                if it is not None:
-                    it.setBackground(bg)
+                if it is None:
+                    continue
+                it.setBackground(QtGui.QBrush(best_bg) if is_best else clear)
+                it.setForeground(QtGui.QBrush(best_fg) if is_best else clear)
 
     # -- run / modal progress ----------------------------------------------
     def _make_dialog(self, op: str, n_trials: int):
