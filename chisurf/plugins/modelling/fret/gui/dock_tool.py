@@ -323,6 +323,11 @@ class FretDockingTool(QtWidgets.QWidget):
         self._dock_area.addTab(self._plot, "📈 Score")
         self._dock_area.addTab(self._structure_view, "🧬 Structure")
 
+        # Status line (bottom) — outcome / score of the last run.
+        self._statusbar = QtWidgets.QStatusBar(self)
+        self._statusbar.setSizeGripEnabled(False)
+        layout.addWidget(self._statusbar)
+
         # Polls the trace file(s) to drive the progress dialog and score plot.
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(400)
@@ -476,7 +481,7 @@ class FretDockingTool(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(
                 self, "Save failed", traceback.format_exc()[-2000:])
             return
-        self._model.status = f"saved {pathlib.Path(f).name}"
+        self._set_status(f"saved {pathlib.Path(f).name}")
         self._form.sync_fields()
 
     # -- results plot / table ---------------------------------------------
@@ -641,7 +646,7 @@ class FretDockingTool(QtWidgets.QWidget):
         if self._model.operation in ("dock", "refine", "screen"):
             self._model.ensure_output_dir()
         op, params = self._model.build_params()
-        self._model.status = "running…"
+        self._set_status("running…")
         self._form.sync_fields()
         self._act_run.setEnabled(False)
         self._start_progress(op)
@@ -658,9 +663,17 @@ class FretDockingTool(QtWidgets.QWidget):
         self._worker.stopped.connect(self._thread.quit)
         self._thread.start()
 
+    def _set_status(self, msg: str) -> None:
+        """Store and show the run status in the bottom statusbar."""
+        self._model.status = msg
+        try:
+            self._statusbar.showMessage(msg)
+        except Exception:
+            pass
+
     def _on_stopped(self) -> None:
         self._stop_progress()
-        self._model.status = "stopped"
+        self._set_status("stopped")
         self._form.sync_fields()
         self._act_run.setEnabled(True)
 
@@ -674,7 +687,7 @@ class FretDockingTool(QtWidgets.QWidget):
         stopped = self._stop_event.is_set()
         self._stop_progress()
         data = result.get("data", {})
-        self._model.status = result.get("status", "ok")
+        self._set_status(result.get("status", "ok"))
         kind = self._sampling_kind()
         if "trial_details" in data:  # repeated docking (error estimation)
             details = data["trial_details"]
@@ -697,7 +710,7 @@ class FretDockingTool(QtWidgets.QWidget):
             prec = (f"; precision {unc['mobile_rmsf_mean']:.1f} Å"
                     if unc.get("mobile_rmsf_mean") == unc.get("mobile_rmsf_mean")
                     and unc.get("n_models", 0) >= 2 else "")
-            self._model.status = head + spread + prec
+            self._set_status(head + spread + prec)
             # step through all docked solutions with the ChiMol frame slider
             models = [d["best_pdb"] for d in details if d.get("best_pdb")]
             if models:
@@ -714,16 +727,20 @@ class FretDockingTool(QtWidgets.QWidget):
             if best_pdbs:
                 self._show_structure(best_pdbs)  # n_best models -> frames
             if stopped or data.get("extra", {}).get("stopped"):
-                self._model.status = f"stopped (score {self._model.score:.1f})"
+                self._set_status(f"stopped (score {self._model.score:.1f})")
+            else:
+                self._set_status(
+                    f"{kind}: score {self._model.score:.2f} · "
+                    f"{self._model.n_distances} distances")
         elif "ranked" in data:
             self._model.n_distances = len(data["ranked"])
-            self._model.status = f"ranked {len(data['ranked'])} structures"
+            self._set_status(f"ranked {len(data['ranked'])} structures")
         self._form.sync_fields()
         self._act_run.setEnabled(True)
 
     def _on_failed(self, tb: str) -> None:
         self._stop_progress()
-        self._model.status = "error (see message)"
+        self._set_status("error (see message)")
         self._form.sync_fields()
         self._act_run.setEnabled(True)
         QtWidgets.QMessageBox.critical(self, "FRET docking failed", tb[-2000:])

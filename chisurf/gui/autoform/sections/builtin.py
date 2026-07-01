@@ -7,13 +7,31 @@ layer references these by string only; the concrete classes live here.
 
 from __future__ import annotations
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
 import chisurf.core.math.datatools
 from chisurf import logging
 
 from .registry import register_plot, register_section
+
+
+def _wrap_tooltip(text: str, width: int = 56) -> str:
+    """Word-wrap a tooltip so long descriptions break over several lines.
+
+    Existing explicit line breaks are preserved; each paragraph is wrapped to
+    ``width`` characters (Qt renders newlines in plain-text tooltips).
+    """
+    import textwrap
+
+    text = str(text or "").strip()
+    if not text:
+        return ""
+    lines = []
+    for para in text.splitlines():
+        para = para.strip()
+        lines.append(textwrap.fill(para, width=width) if para else "")
+    return "\n".join(lines)
 
 
 # --- plots -----------------------------------------------------------------
@@ -193,8 +211,20 @@ class CurveInputWidget(QtWidgets.QWidget):
 
 
 # --- choice / toggle inputs ------------------------------------------------
-def _resolve_options_source(name: str):
-    """Resolve a named option list (e.g. ``"window_function_types"``)."""
+def _resolve_options_source(name: str, model=None):
+    """Resolve a named option list.
+
+    Prefers a model-backed source — an attribute or zero-arg method named *name*
+    on *model* returning a list (so tool view-models can drive dynamic combos);
+    otherwise falls back to the built-in named sources.
+    """
+    if model is not None and hasattr(model, name):
+        try:
+            src = getattr(model, name)
+            return list(src() if callable(src) else src)
+        except Exception as exc:  # pragma: no cover - defensive
+            logging.warning(f"ChoiceWidget: model options_source {name!r} failed: {exc}")
+            return []
     sources = {
         "window_function_types": lambda: list(chisurf.core.math.signal.window_function_types),
     }
@@ -218,7 +248,7 @@ class _BoundControlMixin:
         Qt does not propagate a parent widget's tooltip to its children, so the
         interactive editor needs its own copy for the help to show on hover.
         """
-        desc = getattr(self._section, "description", "")
+        desc = _wrap_tooltip(getattr(self._section, "description", ""))
         if not desc:
             return
         for w in widgets:
@@ -266,6 +296,13 @@ class _BoundControlMixin:
                 obj = group if group is not None else self._model
                 if obj is not None:
                     setattr(obj, section.attr, value)
+            # Tool view-models (not in the action registry) can request a direct
+            # model-method call with the new value.
+            call = getattr(section, "call", "")
+            if call:
+                fn = getattr(self._model, call, None)
+                if callable(fn):
+                    fn(value)
             # Only nudge the fit machinery when the bound object actually belongs
             # to a fit. Generic AutoForm consumers (settings/tool dialogs) have no
             # ``fit`` and must not trigger a recompute.
@@ -294,21 +331,16 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        options = list(section.options)
-        if not options and section.options_source:
-            options = _resolve_options_source(section.options_source)
-        self._options = options
-        _labels = list(getattr(section, "labels", ()))
-        _has_labels = bool(_labels) and len(_labels) == len(options)
+        self._options = self._resolve_opts()
         current = self._current_value()
 
         self.combo = None
         self._radios = []
         if section.style == "radio":
             self._button_group = QtWidgets.QButtonGroup(self)
-            for i, opt in enumerate(options):
-                display = _labels[i] if _has_labels else str(opt)
-                rb = QtWidgets.QRadioButton(display)
+            _labels = self._labels()
+            for i, opt in enumerate(self._options):
+                rb = QtWidgets.QRadioButton(_labels[i])
                 if current is not None and str(opt) == str(current):
                     rb.setChecked(True)
                 rb.toggled.connect(lambda checked, v=opt: self._commit(v) if checked else None)
@@ -319,26 +351,73 @@ class ChoiceWidget(_BoundControlMixin, QtWidgets.QWidget):
             self._apply_tooltip(self, *self._radios)
         else:
             self.combo = QtWidgets.QComboBox()
-            for i, opt in enumerate(options):
-                display = _labels[i] if _has_labels else str(opt)
-                self.combo.addItem(display)
-            # Match initial selection by option value, not displayed text
-            if current is not None:
-                for i, opt in enumerate(options):
-                    if str(opt) == str(current):
-                        self.combo.setCurrentIndex(i)
-                        break
-
-            def _on_index_changed(idx, _opts=options):
-                if 0 <= idx < len(_opts):
-                    self._commit(_opts[idx])
-
-            self.combo.currentIndexChanged.connect(_on_index_changed)
+            self._populate_combo(current)
+            self.combo.currentIndexChanged.connect(self._on_index_changed)
             layout.addWidget(self.combo, 1)
             self._apply_tooltip(self, self.combo)
+            # Optional +/- buttons for managed (dynamic) combos driven by model methods.
+            if section.add_action:
+                add_btn = QtWidgets.QToolButton()
+                add_btn.setText(section.add_label)
+                add_btn.clicked.connect(self._on_add)
+                layout.addWidget(add_btn)
+            if section.remove_action:
+                del_btn = QtWidgets.QToolButton()
+                del_btn.setText(section.remove_label)
+                del_btn.clicked.connect(self._on_remove)
+                layout.addWidget(del_btn)
+
+    def _resolve_opts(self) -> list:
+        section = self._section
+        options = list(section.options)
+        if not options and section.options_source:
+            options = _resolve_options_source(section.options_source, self._model)
+        return options
+
+    def _labels(self) -> list:
+        labels = list(getattr(self._section, "labels", ()))
+        if labels and len(labels) == len(self._options):
+            return [str(x) for x in labels]
+        return [str(o) for o in self._options]
+
+    def _populate_combo(self, current) -> None:
+        self.combo.blockSignals(True)
+        self.combo.clear()
+        for label in self._labels():
+            self.combo.addItem(label)
+        if current is not None:
+            for i, opt in enumerate(self._options):
+                if str(opt) == str(current):
+                    self.combo.setCurrentIndex(i)
+                    break
+        self.combo.blockSignals(False)
+
+    def _on_index_changed(self, idx) -> None:
+        if 0 <= idx < len(self._options):
+            self._commit(self._options[idx])
+
+    def _on_add(self) -> None:
+        fn = getattr(self._model, self._section.add_action, None)
+        if callable(fn):
+            fn()
+        self._rebuild_options()
+
+    def _on_remove(self) -> None:
+        fn = getattr(self._model, self._section.remove_action, None)
+        if callable(fn):
+            fn(self._current_value())
+        self._rebuild_options()
+
+    def _rebuild_options(self) -> None:
+        """Re-read the model-backed option list and restore the current value."""
+        self._options = self._resolve_opts()
+        if self.combo is not None:
+            self._populate_combo(self._current_value())
 
     def sync(self) -> None:
-        """Re-read the model value into the control without firing signals."""
+        """Re-read the model value (and dynamic options) without firing signals."""
+        if self._section.options_source:
+            self._rebuild_options()
         cur = self._current_value()
         if cur is None:
             return
@@ -412,7 +491,7 @@ class ToggleRowWidget(QtWidgets.QWidget):
             label = item.get("label", attr)
             group = getattr(model, target, model) if target else model
             cb = QtWidgets.QCheckBox(label)
-            desc = item.get("description", "")
+            desc = _wrap_tooltip(item.get("description", ""))
             if desc:
                 cb.setToolTip(desc)
             cb.setChecked(bool(getattr(group, attr, False)))
@@ -427,6 +506,38 @@ class ToggleRowWidget(QtWidgets.QWidget):
             cb.toggled.connect(_on_toggle)
             layout.addWidget(cb)
         layout.addStretch(1)
+
+
+class ButtonRowWidget(QtWidgets.QWidget):
+    """A horizontal row of action buttons for a :class:`ButtonRowSection`.
+
+    Each button dict has keys ``label``, ``action`` (a zero-arg model method) and
+    optional ``description``. Lets tool toolbars be authored declaratively.
+    """
+
+    is_form_field = False
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(parent)
+        self._model = model
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        for item in section.buttons:
+            btn = QtWidgets.QToolButton()
+            btn.setText(item.get("label", ""))
+            desc = _wrap_tooltip(item.get("description", ""))
+            if desc:
+                btn.setToolTip(desc)
+            action = item.get("action", "")
+            btn.clicked.connect(lambda checked=False, a=action: self._call(a))
+            layout.addWidget(btn)
+        layout.addStretch(1)
+
+    def _call(self, action: str) -> None:
+        fn = getattr(self._model, action, None)
+        if callable(fn):
+            fn()
 
 
 class _FocusOutPlainTextEdit(QtWidgets.QPlainTextEdit):
@@ -506,18 +617,14 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             if current is not None:
                 self.editor.setPlainText(str(current))
             if not read_only:
-                self.editor.editingFinished.connect(
-                    lambda: self._commit(self.editor.toPlainText())
-                )
+                self.editor.editingFinished.connect(lambda: self._commit(self.editor.toPlainText()))
         elif section.kind == "date":
             self.editor = QtWidgets.QDateEdit()
             self.editor.setCalendarPopup(True)
             self.editor.setDisplayFormat("yyyy-MM-dd")
             self._set_date_from(current)
             if not read_only:
-                self.editor.dateChanged.connect(
-                    lambda d: self._commit(d.toString("yyyy-MM-dd"))
-                )
+                self.editor.dateChanged.connect(lambda d: self._commit(d.toString("yyyy-MM-dd")))
         elif section.kind == "password":
             self.editor = QtWidgets.QLineEdit()
             self.editor.setEchoMode(QtWidgets.QLineEdit.Password)
@@ -527,6 +634,14 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
                 self.editor.setText(str(current))
             if not read_only:
                 self.editor.editingFinished.connect(lambda: self._commit(self.editor.text()))
+        elif section.kind == "file":
+            self.editor = QtWidgets.QLineEdit()
+            if section.placeholder:
+                self.editor.setPlaceholderText(section.placeholder)
+            if current is not None:
+                self.editor.setText(str(current))
+            if not read_only:
+                self.editor.editingFinished.connect(lambda: self._commit_file(self.editor.text()))
         else:  # "str"
             self.editor = QtWidgets.QLineEdit()
             if section.placeholder:
@@ -540,7 +655,24 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             if isinstance(self.editor, QtWidgets.QAbstractSpinBox):
                 self.editor.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         layout.addWidget(self.editor, 1)
+        if section.kind == "file" and not read_only:
+            browse = QtWidgets.QToolButton()
+            browse.setText("…")
+            browse.setToolTip("Browse…")
+            browse.clicked.connect(self._browse_file)
+            layout.addWidget(browse)
         self._apply_tooltip(self, self.editor)
+
+    def _commit_file(self, path: str) -> None:
+        """Commit a file path only when it actually changed (avoids reloads)."""
+        if path and path != str(self._current_value() or ""):
+            self._commit(path)
+
+    def _browse_file(self) -> None:
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, self._section.label or "Open file")
+        if path:
+            self.editor.setText(path)
+            self._commit_file(path)
 
     def _set_date_from(self, value) -> None:
         """Set the QDateEdit from an ISO ``yyyy-MM-dd`` string (or leave default)."""
@@ -1361,6 +1493,7 @@ class FitMixerWidget(QtWidgets.QWidget):
     def _own_fit_index(self) -> int:
         try:
             import chisurf as cs
+
             fit = getattr(self._model, "fit", None)
             for i, fg in enumerate(cs.fits):
                 if fg is fit or fit in list(fg):
@@ -1372,6 +1505,7 @@ class FitMixerWidget(QtWidgets.QWidget):
     def _dispatch_update(self) -> None:
         try:
             import chisurf as cs
+
             cs.core.actions.dispatch("fit.update", {"fit_index": int(self._own_fit_index())})
         except Exception:
             pass
@@ -1434,7 +1568,9 @@ class FitMixerWidget(QtWidgets.QWidget):
                 w.setParent(None)
 
         fractions = getattr(self._model, "_fractions", [])
-        model_names = getattr(self._model, "model_names", [f"x{i + 1}" for i in range(len(fractions))])
+        model_names = getattr(
+            self._model, "model_names", [f"x{i + 1}" for i in range(len(fractions))]
+        )
         if not fractions:
             return
 

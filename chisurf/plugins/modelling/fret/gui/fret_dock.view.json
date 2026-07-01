@@ -56,29 +56,16 @@
       "type": "panel",
       "title": "Monte-Carlo (mc method only)",
       "description": "Only used when Method = mc; ignored by the default minimize docking.",
+      "collapsed": true,
       "sections": [
         {"type": "value", "attr": "mc_steps", "label": "MC steps", "kind": "int",
          "minimum": 1, "maximum": 1000,
          "description": "Monte-Carlo steps per frame."},
         {"type": "value", "attr": "n_best", "label": "Keep best", "kind": "int",
          "minimum": 0, "maximum": 1000,
-         "description": "Number of best-scoring PDB models to write."},
+         "description": "Number of best-scoring PDB models to write (and step through in the 3D preview)."},
         {"type": "toggle", "attr": "simulated_annealing", "label": "Anneal",
          "description": "Enable the PMI simulated-annealing temperature schedule."}
-      ]
-    },
-    {
-      "type": "panel",
-      "title": "Results",
-      "description": "Populated after a run completes.",
-      "sections": [
-        {"type": "value", "attr": "status", "label": "Status", "kind": "str", "read_only": true,
-         "description": "Outcome of the last run."},
-        {"type": "value", "attr": "score", "label": "Score", "kind": "float", "decimals": 2,
-         "read_only": true,
-         "description": "Total restraint score (FRET chi2 + excluded volume)."},
-        {"type": "value", "attr": "n_distances", "label": "Distances", "kind": "int", "read_only": true,
-         "description": "Number of experimental distances scored."}
       ]
     }
   ]
