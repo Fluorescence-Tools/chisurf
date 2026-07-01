@@ -1,0 +1,97 @@
+{
+  "_comment": "Editor layout for the anisotropy PDA model (PdaAnisotropyModel). PRD-38 model/view-spec split: compute stays in anisotropy.py; this JSON is user-editable.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Calibration / background",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "nuisance",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Anisotropy species",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "dynamic_group",
+          "target": "species",
+          "rows_source": "_species_parameter_rows",
+          "row_width": 2,
+          "append_method": "append",
+          "remove_method": "pop",
+          "min_rows": 1,
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "distribution",
+      "options": {
+        "with_residual_panel": true,
+        "distribution_options": {
+          "S_par/(S_par+S_perp)": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distribution",
+            "accessor_kwargs": {
+              "kw_hist": {
+                "x_max": 1.0,
+                "x_min": 0.0,
+                "log_x": false,
+                "n_bins": 81,
+                "n_min": 10,
+                "histogram": "S1/(S0+S1)"
+              }
+            },
+            "scale_x": "lin",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true,
+              "symbol": [
+                "None",
+                "None",
+                "None"
+              ],
+              "pen": [
+                "b",
+                "r",
+                "k"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "residual",
+      "options": {}
+    },
+    {
+      "key": "residual2d",
+      "options": {
+        "accessor": "chisurf.core.models.pda.common:get_pda_residual_image",
+        "accessor_kwargs": {
+          "weighted": true
+        }
+      }
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "parameter_scan",
+      "options": {}
+    }
+  ]
+}

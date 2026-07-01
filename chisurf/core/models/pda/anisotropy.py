@@ -5,9 +5,8 @@ import tttrlib
 
 import chisurf as cs
 import chisurf.core.math.datatools
-
+from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.core.models.model import ModelCurve
-from chisurf.core.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.core.models.pda.common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
 
 
@@ -116,6 +115,18 @@ class PdaAnisotropySpecies(FittingParameterGroup):
         except Exception:
             return np.zeros(0, dtype=np.float64)
 
+    def _species_parameter_rows(self) -> list:
+        """Return species interleaved as (amplitude_i, r_i) pairs.
+
+        Used by the data-driven (AutoForm) editor's ``dynamic_group`` section
+        so each row pairs a species amplitude with its anisotropy.
+        """
+        rows = []
+        for amp, r in zip(self._amplitudes, self._anisotropies):
+            rows.append(amp)
+            rows.append(r)
+        return rows
+
     def finalize(self) -> None:
         """Synchronize internal amplitudes with any normalization rules."""
         amps = self.amplitudes
@@ -138,7 +149,6 @@ class PdaAnisotropySpecies(FittingParameterGroup):
         **kwargs,
     ) -> None:
         """Append a new anisotropy species (amplitude, r)."""
-
         n = len(self)
         i = n + 1
         amp_param = FittingParameter(
@@ -180,7 +190,6 @@ class PdaAnisotropySpecies(FittingParameterGroup):
 
     def build_probability_spectrum(self, G: float, l1: float, l2: float) -> np.ndarray:
         """Return interleaved (amplitude, p_par, ...) spectrum for tttrlib.Pda."""
-
         amps = self.amplitudes
         rs = self.anisotropies
         if amps.size == 0 or rs.size == 0:
@@ -260,11 +269,14 @@ class PdaAnisotropyModel(ModelCurve):
 
     name = "PDA-anisotropy"
 
+    #: Declarative AutoForm layout (PRD-38 model/view-spec split).
+    view_spec_file = "anisotropy.view.json"
+
     def __init__(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
         nuisance: PdaAnisotropyNuisance | None = None,
-        species: "PdaAnisotropySpecies | None" = None,
+        species: PdaAnisotropySpecies | None = None,
         kw_hist: dict | None = None,
         **kwargs,
     ):
@@ -404,7 +416,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     # --- Residuals (can reuse the existing PDA machinery) -------------
 
-    def _get_1d_residuals(self, fit: "cs.core.fitting.fit.Fit") -> np.ndarray:
+    def _get_1d_residuals(self, fit: cs.core.fitting.fit.Fit) -> np.ndarray:
         """Return 1D weighted residuals for the anisotropy histogram.
 
         The helper :func:`pda_1d_residuals_from_s1s2` constructs a 1D
@@ -424,7 +436,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     def get_wres(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:

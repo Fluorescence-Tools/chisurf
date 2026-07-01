@@ -1,0 +1,218 @@
+{
+  "_comment": "Editor layout for the Gaussian-distance PDA model (PdaGaussianDistanceModel). PRD-38 model/view-spec split: compute stays in pdagauss.py; this JSON is user-editable.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "FRET parameters",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "fret_parameters",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Distance distribution",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "toggle",
+          "target": "distances",
+          "attr": "limited_width",
+          "label": "Limited width (\u03c3 = p%\u00b7R)"
+        },
+        {
+          "type": "dynamic_group",
+          "target": "distances",
+          "rows_source": "_distance_parameter_rows",
+          "row_width": 3,
+          "append_method": "append",
+          "remove_method": "pop",
+          "component_title": "G",
+          "min_rows": 1,
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Corrections / nuisance",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "nuisance",
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "distribution",
+      "options": {
+        "with_residual_panel": true,
+        "distribution_options": {
+          "S1/(S0+S1)": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distribution",
+            "accessor_kwargs": {
+              "kw_hist": {
+                "x_max": 1.0,
+                "x_min": 0.0,
+                "log_x": false,
+                "n_bins": 81,
+                "n_min": 10,
+                "histogram": "S1/(S0+S1)"
+              }
+            },
+            "scale_x": "lin",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true,
+              "symbol": [
+                "None",
+                "None",
+                "None"
+              ],
+              "pen": [
+                "b",
+                "r",
+                "k"
+              ]
+            }
+          },
+          "S0/S1": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distribution",
+            "accessor_kwargs": {
+              "kw_hist": {
+                "x_max": 500.0,
+                "x_min": 0.01,
+                "log_x": true,
+                "n_bins": 81,
+                "n_min": 10,
+                "histogram": "S0/S1"
+              }
+            },
+            "scale_x": "log",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true,
+              "symbol": [
+                "None",
+                "None",
+                "None"
+              ],
+              "pen": [
+                "b",
+                "r",
+                "k"
+              ]
+            }
+          },
+          "Distance P(R)": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distance_distribution",
+            "scale_x": "lin",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true
+            },
+            "accessor_kwargs": {}
+          },
+          "E (FRET efficiency)": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distribution",
+            "accessor_kwargs": {
+              "kw_hist": {
+                "x_max": 1.0,
+                "x_min": 0.0,
+                "log_x": false,
+                "n_bins": 81,
+                "n_min": 10,
+                "histogram": "E"
+              }
+            },
+            "scale_x": "lin",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true,
+              "symbol": [
+                "None",
+                "None",
+                "None"
+              ],
+              "pen": [
+                "b",
+                "r",
+                "k"
+              ]
+            }
+          },
+          "R [\u00c5]": {
+            "attribute": "fit",
+            "accessor": "chisurf.core.models.pda.common:get_pda_distribution",
+            "accessor_kwargs": {
+              "kw_hist": {
+                "x_max": 100.0,
+                "x_min": 20.0,
+                "log_x": false,
+                "n_bins": 81,
+                "n_min": 10,
+                "histogram": "R"
+              }
+            },
+            "scale_x": "lin",
+            "curve_options": {
+              "stepMode": false,
+              "connect": "all",
+              "multi_curve": true,
+              "symbol": [
+                "None",
+                "None",
+                "None"
+              ],
+              "pen": [
+                "b",
+                "r",
+                "k"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "residual",
+      "options": {}
+    },
+    {
+      "key": "residual2d",
+      "options": {
+        "accessor": "chisurf.core.models.pda.common:get_pda_residual_image",
+        "accessor_kwargs": {
+          "weighted": true
+        }
+      }
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "parameter_scan",
+      "options": {}
+    }
+  ]
+}

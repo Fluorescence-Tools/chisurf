@@ -291,7 +291,7 @@ class DistributionPlot(plotbase.Plot):
             pass
         r = ds['accessor'](
             self.fit.model.__getattribute__(ds['attribute']),
-            **ds['accessor_kwargs']
+            **ds.get('accessor_kwargs', {})
         )
 
         # Helper to drop curves with no finite support. This prevents

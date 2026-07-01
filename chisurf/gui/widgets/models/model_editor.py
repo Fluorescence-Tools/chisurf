@@ -125,21 +125,23 @@ def model_plot_specs(model):
     if view is not None:
         try:
             from chisurf.gui.autoform.sections.builtin import (
+                _resolve_accessor,
                 resolve_distribution_options,
             )
             from chisurf.gui.autoform.sections.registry import resolve_plot_specs
             specs = resolve_plot_specs(view)
             if specs:
-                # resolve string accessors (e.g. distribution plots) to callables
-                return [
-                    (
-                        cls,
-                        resolve_distribution_options(opts)
-                        if "distribution_options" in opts
-                        else opts,
-                    )
-                    for cls, opts in specs
-                ]
+                resolved = []
+                for cls, opts in specs:
+                    opts = dict(opts)
+                    # distribution plots keep accessors under distribution_options
+                    if "distribution_options" in opts:
+                        opts = resolve_distribution_options(opts)
+                    # other plots (e.g. residual2d) may name a top-level accessor
+                    if isinstance(opts.get("accessor"), str):
+                        opts["accessor"] = _resolve_accessor(opts["accessor"])
+                    resolved.append((cls, opts))
+                return resolved
         except Exception as exc:  # pragma: no cover - defensive
             logging.debug(f"model_plot_specs: resolve failed, using legacy: {exc}")
 

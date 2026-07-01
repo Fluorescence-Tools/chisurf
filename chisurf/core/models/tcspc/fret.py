@@ -32,7 +32,7 @@ def set_forster_radius_from_probes(
     acceptor_name: str,
     db=None,
 ) -> bool:
-    """Look up and set *R*\ :sub:`0` from the MFDB fluorophore database.
+    r"""Look up and set *R*\ :sub:`0` from the MFDB fluorophore database.
 
     Calls :func:`lookup_forster_radius` and, when a value is found, updates
     the ``forster_radius`` :class:`FittingParameter` in ``fret_params``.
@@ -142,7 +142,7 @@ class FRETParameters(FittingParameterGroup):
         )
         self._xDonly = FittingParameter(
             name='xDOnly',
-            label_text='x<sup>(D,0)</sup>',
+            label_text='x<sub>D,0</sub>',
             value=xDOnly,
             fixed=False,
             lb=0.0,

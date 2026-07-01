@@ -9,23 +9,19 @@ were previously defined in :mod:`cs.core.models.pda.simple` and have
 been moved here for clarity.
 """
 
-from chisurf import typing
-
-import math
-import tttrlib
 
 import numpy as np
+import tttrlib
 
 import chisurf as cs
 import chisurf.core.math.datatools
-
-from chisurf.core.fitting.parameter import FittingParameterGroup, FittingParameter
-from chisurf.core.models.model import ModelCurve
-from chisurf.core.models.pda.nusiance import PdaFretNuisance
-from chisurf.core.models.pda.common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
 import chisurf.core.math.functions.distributions
 import chisurf.core.models.tcspc.fret
+from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.core.fluorescence.general import distance_to_fret_efficiency
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.models.pda.common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
+from chisurf.core.models.pda.nusiance import PdaFretNuisance
 
 
 class PdaGaussianDistances(FittingParameterGroup):
@@ -110,11 +106,25 @@ class PdaGaussianDistances(FittingParameterGroup):
         for i, p in enumerate(self._amplitudes):
             p.value = amplitudes[i]
 
+    def _distance_parameter_rows(self) -> list:
+        """Return components interleaved as (mean_i, sigma_i, amplitude_i) triples.
+
+        Used by the data-driven (AutoForm) editor's ``dynamic_group`` section
+        (row_width=3) so each Gaussian component groups its distance, width and
+        amplitude.
+        """
+        rows = []
+        for m, s, a in zip(self._means, self._sigmas, self._amplitudes):
+            rows.append(m)
+            rows.append(s)
+            rows.append(a)
+        return rows
+
     def append(
         self,
-        mean: float,
-        sigma: float,
-        amplitude: float,
+        mean: float = 50.0,
+        sigma: float = 6.0,
+        amplitude: float = 1.0,
     ):
         """Append a new Gaussian component.
 
@@ -132,6 +142,7 @@ class PdaGaussianDistances(FittingParameterGroup):
         m = FittingParameter(
             value=mean,
             name=f"R(P,{i})",
+            label_text=f"R<sub>P,{i}</sub>",
             lb=0.0,
             ub=100.0,
             bounds_on=True,
@@ -139,6 +150,7 @@ class PdaGaussianDistances(FittingParameterGroup):
         s = FittingParameter(
             value=sigma,
             name=f"s(P,{i})",
+            label_text=f"s<sub>P,{i}</sub>",
             lb=1.0,
             ub=20.0,
             bounds_on=True,
@@ -146,6 +158,7 @@ class PdaGaussianDistances(FittingParameterGroup):
         a = FittingParameter(
             value=amplitude,
             name=f"x(P,{i})",
+            label_text=f"x<sub>P,{i}</sub>",
         )
         self._means.append(m)
         self._sigmas.append(s)
@@ -190,6 +203,9 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     name = "PDA-Gaussian-distance"
 
+    #: Declarative AutoForm layout (PRD-38 model/view-spec split).
+    view_spec_file = "pdagauss.view.json"
+
     def __str__(self):
         """Return a string representation of the Gaussian-distance PDA model."""
         s = super().__str__()
@@ -197,7 +213,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def __init__(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
         nuisance: PdaFretNuisance | None = None,
         distances: PdaGaussianDistances | None = None,
         kw_hist: dict | None = None,
@@ -226,6 +242,11 @@ class PdaGaussianDistanceModel(ModelCurve):
             distances = PdaGaussianDistances(name="pda_distances", fit=fit, **kwargs)
         self.nuisance = nuisance
         self.distances = distances
+
+        # Bootstrap one Gaussian component so the editor/model have something
+        # to show before the user adds components (previously done by widget).
+        if len(self.distances) == 0:
+            self.distances.append()
 
         self.fret_parameters = cs.core.models.tcspc.fret.FRETParameters(
             enable_fret_efficiency=False
@@ -316,42 +337,12 @@ class PdaGaussianDistanceModel(ModelCurve):
         QYD_val = float(QYD)
         QYA_val = float(QYA)
 
-        # Derived legacy-style crosstalk parameters (alpha-style), expressed
-        # as fractions in [0, 1]. These are analogous to the old PDA "alpha"
-        # parameters but computed from the more general detector-efficiency
-        # and crosstalk description. They are stored on the nuisance group as
-        # fixed, read-only FittingParameters, similar to CPM in FCS widgets.
+        # Derived MFD correction factors (alpha, alpha_A, gamma, delta),
+        # computed from the detector-efficiency / crosstalk / excitation
+        # description and stored as fixed, read-only outputs on the nuisance
+        # group (similar to CPM in FCS widgets).
         try:
-            # Donor bleed-through into red for a donor-only sample:
-            #   alpha = R_D0 / (G_D0 + R_D0)
-            # with G_D0 ∝ gG * cGD and R_D0 ∝ gR * cRD.
-            num_d = gR_val * cRD_val
-            den_d = gG_val * cGD_val + num_d
-            if den_d > 0.0 and np.isfinite(den_d):
-                alpha_d = num_d / den_d
-            else:
-                alpha_d = float("nan")
-
-            # Acceptor bleed-through into green for an acceptor-only sample:
-            #   alpha_A = G_A0 / (G_A0 + R_A0)
-            # with G_A0 ∝ gG * cGA and R_A0 ∝ gR * cRA.
-            num_a = gG_val * cGA_val
-            den_a = gR_val * cRA_val + num_a
-            if den_a > 0.0 and np.isfinite(den_a):
-                alpha_a = num_a / den_a
-            else:
-                alpha_a = float("nan")
-
-            try:
-                n._alpha.value = alpha_d
-                n._alpha.fixed = True
-            except Exception:
-                pass
-            try:
-                n._alpha_A.value = alpha_a
-                n._alpha_A.fixed = True
-            except Exception:
-                pass
+            n.update_correction_factors()
         except Exception:
             pass
 
@@ -457,7 +448,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def _get_1d_residuals(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
     ) -> np.ndarray:
         """Compute 1D weighted residuals from the S1S2 histogram.
 
@@ -484,7 +475,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def _get_cached_photon_number_mask(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
     ) -> np.ndarray | None:
         """Return a cached photon-number mask for 2D PDA residuals.
 
@@ -574,7 +565,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def get_wres(
         self,
-        fit: "cs.core.fitting.fit.Fit",
+        fit: cs.core.fitting.fit.Fit,
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:

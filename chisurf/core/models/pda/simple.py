@@ -13,25 +13,23 @@ Only a subset of the functionality is exercised in doctests; all
 examples avoid real TTTR files and heavy computation.
 """
 
-from chisurf import typing
-
 import math
-import tttrlib
 
 import numpy as np
+import tttrlib
 
 import chisurf as cs
 import chisurf.core.curve
 import chisurf.core.math.datatools
-
-from chisurf.core.fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf import typing
+from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.core.models.model import ModelCurve
-from chisurf.core.models.pda.nusiance import Background
+from chisurf.core.models.pda.nusiance import Background, PdaPhotonRange
+
 from .common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
 
 
 class ProbCh0(FittingParameterGroup):
-
     """Probability and channel-0 parameters for discrete PDA species.
 
     The group holds per-species amplitudes and ``pch0`` (probability of
@@ -143,6 +141,19 @@ class ProbCh0(FittingParameterGroup):
         """Link to another ProbCh0 group, or unlink by passing None."""
         if isinstance(v, ProbCh0) or v is None:
             self._link = v
+
+    def _pch0_parameter_rows(self) -> list:
+        """Return species parameters interleaved as (amplitude_i, pch0_i) pairs.
+
+        Used by the data-driven (AutoForm) editor's ``dynamic_group`` section so
+        each row pairs a species amplitude with its channel-0 probability
+        (x1, p1, x2, p2, ...).
+        """
+        rows = []
+        for amplitude, pch0 in zip(self._amplitudes, self._pch0):
+            rows.append(amplitude)
+            rows.append(pch0)
+        return rows
 
     def update(self):
         """Synchronize internal amplitude values from the (possibly normalized) property."""
@@ -295,6 +306,10 @@ class PdaSimpleModel(ModelCurve):
 
     name = "PDA-discrete"
 
+    #: Declarative AutoForm layout (PRD-38 model/view-spec split). The editor
+    #: is rendered from this JSON next to the module; compute stays in Python.
+    view_spec_file = "simple.view.json"
+
     def __str__(self):
         """Return a string representation of the discrete PDA model."""
         s = super().__str__()
@@ -305,6 +320,7 @@ class PdaSimpleModel(ModelCurve):
             fit: cs.core.fitting.fit.Fit,
             background: Background = None,
             pch0: ProbCh0 = None,
+            nuisance: PdaPhotonRange = None,
             kw_hist: dict = None,
             **kwargs
     ):
@@ -318,6 +334,8 @@ class PdaSimpleModel(ModelCurve):
             Background parameter group.
         pch0 : ProbCh0, optional
             Probability-and-channel-0 species group.
+        nuisance : PdaPhotonRange, optional
+            Photon-number range (nPh_min/nPh_max) gating group.
         kw_hist : dict, optional
             Histogram settings for 1D residuals.
         **kwargs
@@ -329,8 +347,16 @@ class PdaSimpleModel(ModelCurve):
             background = Background(name='background', fit=fit, **kwargs)
         if pch0 is None:
             pch0 = ProbCh0(name='pCh0', fit=fit, **kwargs)
+        if nuisance is None:
+            nuisance = PdaPhotonRange(name='pda_photon_range', fit=fit, **kwargs)
         self.background = background
         self.pch0 = pch0
+        self.nuisance = nuisance
+
+        # Bootstrap one species so the editor and model have something to show
+        # even before the user adds components (previously done by the widget).
+        if len(self.pch0) == 0:
+            self.pch0.append()
 
         if kw_hist is None:
             kw_hist = {
@@ -521,4 +547,3 @@ class PdaSimpleModel(ModelCurve):
         super().set_state(state)
 
 # Backwards-compatible re-exports of Gaussian-distance PDA models.
-from .pdagauss import PdaGaussianDistances, PdaGaussianDistanceModel

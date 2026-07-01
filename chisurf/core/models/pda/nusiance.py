@@ -14,21 +14,39 @@ combined with higher-level PDA models such as
 ``chisurf.core.models.pda.simple.PdaGaussianDistanceModel``.
 """
 
-import numpy as np
-import scipy.stats
 
-import chisurf.core.data
-import chisurf.core.experiments
-import chisurf.core.math
-import chisurf.core.fluorescence
-from chisurf.core.curve import Curve
-from chisurf.core.fitting.parameter import (
-    FittingParameterGroup, FittingParameter
-)
+from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
+
+
+def _matrix_cell(matrix, row, col, default=0.0):
+    """Look up ``matrix[row][col]`` in a lightpath ``rows/columns/values`` payload.
+
+    The lightpath simulator returns each matrix as
+    ``{"rows": [...], "columns": [...], "values": [[...]], ...}`` (see
+    ``LightPathSimulator._matrix_from_records``). Returns ``default`` when the
+    row/column labels are absent.
+    """
+    try:
+        rows = list(matrix.get("rows", []))
+        cols = list(matrix.get("columns", []))
+        values = matrix.get("values", [])
+        ri = rows.index(str(row))
+        ci = cols.index(str(col))
+        return float(values[ri][ci])
+    except Exception:
+        return default
+
+
+def _first_matrix_row(matrix):
+    """Return the first row label of a lightpath ``rows/columns/values`` matrix."""
+    try:
+        rows = list(matrix.get("rows", []))
+        return rows[0] if rows else None
+    except Exception:
+        return None
 
 
 class Background(FittingParameterGroup):
-
     """Background count-rate parameters for two detection channels.
 
     The group exposes two scalar parameters, ``bg0`` and ``bg1``, which
@@ -97,7 +115,6 @@ class Background(FittingParameterGroup):
 
 
 class PdaFretNuisance(FittingParameterGroup):
-
     """Nuisance parameters for discrete PDA/FRET models.
 
     This parameter group collects experimental factors that influence the
@@ -277,6 +294,40 @@ class PdaFretNuisance(FittingParameterGroup):
             return float("nan")
 
     @property
+    def gamma(self) -> float:
+        """Detection-correction factor gamma (read-only, computed).
+
+        The standard MFD gamma factor is the ratio of acceptor to donor
+        detection efficiency (including quantum yields),
+
+            gamma = (gR * cRA * QYA) / (gG * cGD * QYD)
+
+        It is populated by PDA models from the more general
+        detector-efficiency / crosstalk description and is not varied
+        during fitting.
+        """
+        try:
+            return float(self._gamma.value)
+        except Exception:
+            return float("nan")
+
+    @property
+    def delta(self) -> float:
+        """Direct-excitation factor delta (read-only, computed).
+
+        Probability of directly exciting the acceptor relative to the donor
+        at the donor excitation wavelength,
+
+            delta = ExAG / ExDG
+
+        Populated by PDA models; not varied during fitting.
+        """
+        try:
+            return float(self._delta.value)
+        except Exception:
+            return float("nan")
+
+    @property
     def nPh_min(self) -> float:
         """Minimum photon number for PDA gating."""
         return self._nPh_min.value
@@ -295,6 +346,100 @@ class PdaFretNuisance(FittingParameterGroup):
     def nPh_max(self, v: float):
         """Set maximum photon number for PDA gating."""
         self._nPh_max.value = v
+
+    def update_correction_factors(self) -> None:
+        """Recompute the read-only alpha / gamma / delta correction factors.
+
+        These derive from the detector efficiencies (gG/gR), the emission
+        crosstalk matrix (cGD/cGA/cRD/cRA), the quantum yields (QYD/QYA) and
+        the excitation probabilities (ExDG/ExAG). They mirror the standard MFD
+        correction factors and are exposed as fixed, output-only parameters
+        (like CPM in the FCS widgets).
+        """
+        eps = 1e-12
+        gG = float(self.gG)
+        gR = float(self.gR)
+        cGD = float(self.cGD)
+        cGA = float(self.cGA)
+        cRD = float(self.cRD)
+        cRA = float(self.cRA)
+        QYD = float(self.QYD)
+        QYA = float(self.QYA)
+        ExDG = float(self.ExDG)
+        ExAG = float(self.ExAG)
+
+        # alpha: donor bleed-through into red for a donor-only sample.
+        num_d = gR * cRD
+        den_d = gG * cGD + num_d
+        alpha_d = num_d / den_d if den_d > eps else float("nan")
+        # alpha_A: acceptor bleed-through into green for an acceptor-only sample.
+        num_a = gG * cGA
+        den_a = gR * cRA + num_a
+        alpha_a = num_a / den_a if den_a > eps else float("nan")
+        # gamma: acceptor/donor detection ratio (incl. quantum yields).
+        den_g = gG * cGD * QYD
+        gamma = (gR * cRA * QYA) / den_g if den_g > eps else float("nan")
+        # delta: direct acceptor excitation relative to donor excitation.
+        delta = ExAG / ExDG if abs(ExDG) > eps else float("nan")
+
+        for param, value in (
+            (self._alpha, alpha_d),
+            (self._alpha_A, alpha_a),
+            (self._gamma, gamma),
+            (self._delta, delta),
+        ):
+            try:
+                param.value = value
+                param.fixed = True
+            except Exception:
+                pass
+
+    def apply_lightpath_matrices(
+        self,
+        matrices: dict,
+        donor: str,
+        acceptor: str,
+        green_detector: str,
+        red_detector: str,
+        green_laser: str | None = None,
+    ) -> None:
+        """Populate excitation/crosstalk parameters from a lightpath result.
+
+        Consumes the ``crosstalk_matrices`` dict produced by the light-path
+        simulator (``LightPathSimulator.get_crosstalk_matrices()`` /
+        ``simulate_lightpath(...)['crosstalk_matrices']``). It maps the
+        excitation matrix (laser x dye) onto ExDG/ExAG and the emission matrix
+        (dye x detector) onto the cGD/cGA/cRD/cRA emission-detection matrix,
+        then refreshes the derived alpha/gamma/delta factors.
+
+        Parameters
+        ----------
+        matrices : dict
+            ``{"excitation": {...}, "emission": {...}, ...}`` where each matrix
+            is a ``{"rows", "columns", "values"}`` payload.
+        donor, acceptor : str
+            Dye labels for the donor and acceptor.
+        green_detector, red_detector : str
+            Detector labels for the green (donor) and red (acceptor) channels.
+        green_laser : str, optional
+            Laser label for donor excitation. Defaults to the first laser row
+            in the excitation matrix.
+        """
+        exc = matrices.get("excitation", {}) if isinstance(matrices, dict) else {}
+        emi = matrices.get("emission", {}) if isinstance(matrices, dict) else {}
+
+        laser = green_laser if green_laser is not None else _first_matrix_row(exc)
+        if laser is not None:
+            self.ExDG = _matrix_cell(exc, laser, donor, self.ExDG)
+            self.ExAG = _matrix_cell(exc, laser, acceptor, self.ExAG)
+
+        # Emission/detection crosstalk (dye x detector).
+        self.cGD = _matrix_cell(emi, donor, green_detector, self.cGD)
+        self.cRD = _matrix_cell(emi, donor, red_detector, self.cRD)
+        self.cGA = _matrix_cell(emi, acceptor, green_detector, self.cGA)
+        self.cRA = _matrix_cell(emi, acceptor, red_detector, self.cRA)
+
+        self.update_correction_factors()
 
     def __init__(self, name: str = 'PDA-FRET-nuisance', **kwargs):
         """Initialize the PDA FRET nuisance parameter group.
@@ -385,12 +530,30 @@ class PdaFretNuisance(FittingParameterGroup):
         self._alpha = FittingParameter(
             value=float("nan"),
             name='alpha',
+            label_text='&alpha;<sub>D</sub>',
             fixed=True,
             is_output=True,
         )
         self._alpha_A = FittingParameter(
             value=float("nan"),
             name='alpha_A',
+            label_text='&alpha;<sub>A</sub>',
+            fixed=True,
+            is_output=True,
+        )
+        # Derived MFD correction factors (read-only outputs, like alpha):
+        # gamma (acceptor/donor detection ratio) and delta (direct excitation).
+        self._gamma = FittingParameter(
+            value=float("nan"),
+            name='gamma',
+            label_text='&gamma;',
+            fixed=True,
+            is_output=True,
+        )
+        self._delta = FittingParameter(
+            value=float("nan"),
+            name='delta',
+            label_text='&delta;',
             fixed=True,
             is_output=True,
         )
@@ -412,11 +575,13 @@ class PdaFretNuisance(FittingParameterGroup):
         self._nPh_min = FittingParameter(
             value=default_nmin,
             name='nPh_min',
+            label_text='N<sub>Ph,min</sub>',
             fixed=True,
         )
         self._nPh_max = FittingParameter(
             value=default_nmax,
             name='nPh_max',
+            label_text='N<sub>Ph,max</sub>',
             fixed=True,
         )
 
@@ -470,10 +635,12 @@ class PdaPhotonRange(FittingParameterGroup):
         self._nPh_min = FittingParameter(
             value=default_nmin,
             name='nPh_min',
+            label_text='N<sub>Ph,min</sub>',
             fixed=True,
         )
         self._nPh_max = FittingParameter(
             value=default_nmax,
             name='nPh_max',
+            label_text='N<sub>Ph,max</sub>',
             fixed=True,
         )

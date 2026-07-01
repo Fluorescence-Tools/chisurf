@@ -104,9 +104,13 @@ pda:
       controller_params:
         name: PTU/HT3/SPC
   models:
-    - chisurf.gui.widgets.models.pda.PdaSimpleModelWidget
-    - chisurf.gui.widgets.models.pda.PdaGaussianDistanceModelWidget
-    - chisurf.gui.widgets.models.pda.PdaAnisotropyModelWidget
+    # AutoForm-rendered pure models (PRD-38 model/view-spec split). The
+    # build_model_editor seam wraps these via view_spec() -> *.view.json.
+    - chisurf.core.models.pda.simple.PdaSimpleModel
+    - chisurf.core.models.pda.pdagauss.PdaGaussianDistanceModel
+    - chisurf.core.models.pda.dynamic.PdaDynamicTwoStateModel
+    - chisurf.core.models.pda.dynamic_mc.PdaDynamicThreeStateModel
+    - chisurf.core.models.pda.anisotropy.PdaAnisotropyModel
 
 fcs:
   readers:
@@ -182,8 +186,11 @@ rics:
       controller_class: chisurf.gui.widgets.experiments.rics.RICSController
       controller_params: {}
   models:
-    - chisurf.gui.widgets.models.rics.RicsSimpleModelWidget
-    - chisurf.gui.widgets.models.rics.RicsTripletModelWidget
+    # AutoForm-rendered pure models (PRD-38 model/view-spec split).
+    - chisurf.core.models.rics.rics.RicsSimpleModel
+    - chisurf.core.models.rics.rics.RicsTripletModel
+    - chisurf.core.models.rics.rics.RicsImmobileModel
+    - chisurf.core.models.rics.rics.RicsFlowModel
 
 pch:
   readers:

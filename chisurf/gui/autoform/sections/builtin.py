@@ -49,6 +49,7 @@ register_plot("fit_info", lambda: _plots().FitInfo)
 register_plot("fit_table", lambda: _plots().FitTablePlot)
 register_plot("parameter_scan", lambda: _plots().ParameterScanPlot)
 register_plot("distribution", lambda: _plots().DistributionPlot)
+register_plot("residual2d", lambda: _plots().Residual2DPlot)
 
 
 def resolve_distribution_options(options: dict) -> dict:
@@ -66,10 +67,32 @@ def resolve_distribution_options(options: dict) -> dict:
             cfg = dict(cfg)
             accessor = cfg.get("accessor")
             if isinstance(accessor, str):
-                cfg["accessor"] = getattr(chisurf.core.math.datatools, accessor, None)
+                cfg["accessor"] = _resolve_accessor(accessor)
             new_dist[name] = cfg
         resolved["distribution_options"] = new_dist
     return resolved
+
+
+def _resolve_accessor(accessor: str):
+    """Resolve a distribution-plot accessor name to a callable.
+
+    Bare names (e.g. ``"interleaved_to_two_columns"``) resolve against
+    :mod:`chisurf.core.math.datatools`. A dotted or ``module:function`` path
+    (e.g. ``"chisurf.core.models.pda.common:get_pda_distribution"``) is imported
+    directly, so model-specific Qt-free accessors stay authorable in JSON.
+    """
+    if ":" in accessor or "." in accessor:
+        import importlib
+
+        if ":" in accessor:
+            mod_name, _, func_name = accessor.partition(":")
+        else:
+            mod_name, _, func_name = accessor.rpartition(".")
+        try:
+            return getattr(importlib.import_module(mod_name), func_name, None)
+        except Exception:
+            return None
+    return getattr(chisurf.core.math.datatools, accessor, None)
 
 
 # --- curve inputs ----------------------------------------------------------
@@ -724,6 +747,15 @@ class ValueWidget(_BoundControlMixin, QtWidgets.QWidget):
             self.editor.setReadOnly(True)
             if isinstance(self.editor, QtWidgets.QAbstractSpinBox):
                 self.editor.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        # A ``text`` field flagged ``expand`` fills spare vertical space (e.g. a
+        # JSON/log preview) instead of staying at its compact minimum height; the
+        # form layout reads ``_autoform_expanding`` to hand it the stretch.
+        if section.kind == "text" and getattr(section, "expand", False):
+            self._autoform_expanding = True
+            self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            self.editor.setSizePolicy(
+                QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            )
         layout.addWidget(self.editor, 1)
         if section.kind == "file" and not read_only:
             browse = QtWidgets.QToolButton()
