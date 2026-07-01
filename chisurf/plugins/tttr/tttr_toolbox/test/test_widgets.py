@@ -19,8 +19,41 @@ def test_tttr_tools_uses_shared_navigation_shell(qapp, qtbot):
     assert any("Split / Convert" in n for n in names)
     assert any("Count Rate Analysis" in n for n in names)
 
-    # panels load lazily: only the default (first) panel is instantiated initially
-    assert all(p.get("instance") is None for p in w.panels[1:])
+    # panels load lazily: only the first + the (possibly persisted) current panel
+    # are instantiated; every other panel stays a placeholder.
+    kept = {0, w.nav_list.currentRow()}
+    assert all(
+        p.get("instance") is None
+        for i, p in enumerate(w.panels)
+        if i not in kept and not p.get("separator")
+    )
+
+
+def test_toolbox_remembers_window_and_selection(qapp, qtbot, tmp_path):
+    """The toolbox persists geometry, splitter and the selected panel."""
+    from qtpy import QtCore
+
+    from chisurf.plugins.tttr.tttr_toolbox.gui.tool import TttrToolboxTool
+
+    # Isolate to a throwaway ini file so the real user settings are untouched.
+    ini = str(tmp_path / "toolbox.ini")
+
+    def _settings():
+        return QtCore.QSettings(ini, QtCore.QSettings.IniFormat)
+
+    w = TttrToolboxTool()
+    qtbot.addWidget(w)
+    assert w._settings_key == "tttr_toolbox"
+    w._settings = _settings
+    w.resize(1180, 760)
+    w.nav_list.setCurrentRow(6)  # Count Rate Analysis
+    w._save_window_state()
+
+    w2 = TttrToolboxTool()
+    qtbot.addWidget(w2)
+    w2._settings = _settings
+    w2._restore_window_state()
+    assert w2.nav_list.currentRow() == 6
 
 
 def test_panels_are_data_driven_from_json():

@@ -45,6 +45,8 @@ class WaterfallSectionWidget(QtWidgets.QWidget):
 
     #: marker so :meth:`AutoForm.refresh_plots` re-reads this widget.
     AUTOFORM_REFRESH = True
+    #: marker so a hosting panel gives this section the spare vertical space.
+    _autoform_expanding = True
 
     def __init__(self, model, target: str, **options):
         super().__init__()
@@ -54,12 +56,16 @@ class WaterfallSectionWidget(QtWidgets.QWidget):
         self._show_position = bool(options.get("show_position", True))
         self._last_payload_id: int | None = None
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self._plot = WaterfallPlotWidget(self)
+        self._plot.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         if options.get("title"):
             self._plot.set_title(str(options["title"]))
-        layout.addWidget(self._plot)
+        layout.addWidget(self._plot, 1)
         self.refresh()
 
     @property

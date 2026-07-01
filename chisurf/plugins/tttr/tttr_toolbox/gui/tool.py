@@ -168,6 +168,7 @@ class TttrToolboxTool(NavigationPanelTool):
             minimum_size=(900, 600),
             initial_size=(1200, 750),
             navigation_width=210,
+            settings_key="tttr_toolbox",
         )
 
 

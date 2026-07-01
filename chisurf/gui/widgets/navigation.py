@@ -25,11 +25,16 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
         navigation_min_width: int | None = None,
         panel_margins: tuple[int, int, int, int] = (12, 12, 12, 12),
         searchable: bool = True,
+        settings_key: str | None = None,
     ) -> None:
         """Create a navigation shell.
 
         ``searchable`` (default ``True``) adds a search box at the top of the left
         pane that filters the navigation list to matching panels.
+
+        ``settings_key`` (when given) makes the window remember its geometry, the
+        left/right splitter sizes and the selected panel across sessions under
+        that plugin-unique key.
         """
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -40,7 +45,53 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
         self._panel_margins = panel_margins
         self._searchable = searchable
         self._navigation_min_width = navigation_min_width or navigation_width
+        self._settings_key = settings_key
         self._build_ui(navigation_width)
+        if settings_key:
+            self._restore_window_state()
+            self.splitter.splitterMoved.connect(lambda *_: self._save_window_state())
+            self.nav_list.currentRowChanged.connect(lambda *_: self._save_window_state())
+
+    # ── window-state persistence (opt-in via ``settings_key``) ──────────
+    def _settings(self):
+        return QtCore.QSettings("chisurf", f"NavigationPanelTool/{self._settings_key}")
+
+    def _save_window_state(self) -> None:
+        """Persist geometry, splitter sizes and the selected panel."""
+        if not self._settings_key:
+            return
+        try:
+            s = self._settings()
+            s.setValue("geometry", self.saveGeometry())
+            s.setValue("splitter", self.splitter.saveState())
+            s.setValue("current_row", int(self.nav_list.currentRow()))
+            s.sync()
+        except Exception:
+            pass
+
+    def _restore_window_state(self) -> None:
+        """Restore geometry, splitter sizes and the selected panel, if saved."""
+        try:
+            s = self._settings()
+            geometry = s.value("geometry")
+            if geometry is not None:
+                self.restoreGeometry(geometry)
+            splitter = s.value("splitter")
+            if splitter is not None:
+                self.splitter.restoreState(splitter)
+            row = s.value("current_row")
+            if row is not None:
+                row = int(row)
+                item = self.nav_list.item(row)
+                if item is not None and (item.flags() & QtCore.Qt.ItemIsSelectable):
+                    self.nav_list.setCurrentRow(row)
+        except Exception:
+            pass
+
+    def closeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        """Save the window state on close when persistence is enabled."""
+        self._save_window_state()
+        super().closeEvent(event)
 
     def _build_ui(self, navigation_width: int) -> None:
         """Build the navigation and stacked panel area."""
@@ -65,7 +116,9 @@ class NavigationPanelTool(QtWidgets.QMainWindow):
             self.nav_search = QtWidgets.QLineEdit()
             self.nav_search.setPlaceholderText("Search…")
             self.nav_search.setClearButtonEnabled(True)
-            self.nav_search.setStyleSheet("QLineEdit { margin: 6px 0px 2px 0px; padding: 4px 10px; }")
+            self.nav_search.setStyleSheet(
+                "QLineEdit { margin: 6px 0px 2px 0px; padding: 4px 10px; }"
+            )
             self.nav_search.textChanged.connect(self._on_search_changed)
             left_layout.addWidget(self.nav_search)
 
