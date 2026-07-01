@@ -463,7 +463,14 @@ class FitSubWindow(CustomMdiSubWindow):
                 pass
 
     def restore_fit_dock_layout_state(self) -> None:
-        """Restore the saved dock layout for this fit's model class."""
+        """Restore the saved dock layout for this fit's model class.
+
+        A saved layout that predates a newly-added plot tab would otherwise drop
+        that tab (``set_layout_state`` rebuilds the tab set from the saved keys).
+        So the saved layout is ignored when it is missing any plot that exists
+        now — the default view-spec tab order is used instead, and the next
+        rearrange re-saves the full set.
+        """
         try:
             settings = self._fit_dock_layout_settings()
             value = settings.value(self._fit_model_class_key())
@@ -473,6 +480,26 @@ class FitSubWindow(CustomMdiSubWindow):
                 state = value
             else:
                 return
+
+            saved_keys: set[str] = set()
+
+            def _collect(node):
+                if isinstance(node, dict):
+                    wk = node.get("widget_key")
+                    if isinstance(wk, str):
+                        saved_keys.add(wk)
+                    for v in node.values():
+                        _collect(v)
+                elif isinstance(node, list):
+                    for v in node:
+                        _collect(v)
+
+            _collect(state)
+            current_keys = {self._plot_widget_key(c) for c in self._plot_containers}
+            if current_keys - saved_keys:
+                # Saved layout is stale (a plot was added since) — skip restore.
+                return
+
             self.plot_tab_widget.set_layout_state(
                 state,
                 key_func=self._plot_widget_key,
