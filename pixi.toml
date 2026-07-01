@@ -27,6 +27,12 @@ pyqt = "*"
 pyqtgraph = "0.13.*"
 matplotlib = "*"
 scikit-image = "*"
+# Imaging I/O for RICS/ICS TIFF stacks. imagecodecs is required by tifffile to
+# decode LZW/other-compressed TIFFs; pillow is the multi-frame fallback.
+imageio = "*"
+tifffile = "*"
+imagecodecs = "*"
+pillow = "*"
 deprecation = "*"
 pandas = "*"
 scipy = "*"
@@ -43,7 +49,6 @@ guidata = "*"
 python-docx = "*"
 qtconsole = "*"
 hmmlearn = "*"
-latexify-py = "*"
 pygments = "*"
 # pyarrow-core: only arrays + compute + csv are used (ndxplorer); avoids the
 # heavy libarrow-all components. Keep in sync with rattler-recipe/recipe.yaml.
@@ -121,9 +126,6 @@ tttrlib = "*"
      "modules/ndxplorer/CMakeLists.txt",
      "modules/ndxplorer/setup.py",
  ] }
- build-clsmview = { cmd = "pip install -e modules/clsmview --no-deps", inputs = [     "modules/clsmview/setup.py",
-     "modules/clsmview/clsmview/**",
- ] }
  build-quest = { cmd = "pip install -e modules/quest --no-deps", inputs = [
      "modules/quest/pyproject.toml",
      "modules/quest/quest/**",
@@ -135,7 +137,6 @@ tttrlib = "*"
      ] }
      build-extensions = { depends-on = [
      "build-ndxplorer",
-     "build-clsmview",
      "build-quest",
      "build-chinet",
  ] }

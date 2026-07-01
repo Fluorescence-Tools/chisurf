@@ -1,0 +1,10 @@
+Image Correlation info file
+Pixel time [us]:	11.111100
+Line  time [ms]:	3.333300
+Frame time [s] :	1.000000
+Pixel size [nm]:	40.000000
+Region used [px]:	1,1,200,200	X Start, Y Start, X Stop, Y Stop
+Mean counts per pixel:	7.580432
+Frames Used:	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	50	
+Nothing subtracted
+Nothing added

@@ -62,6 +62,10 @@ dependencies = [
     "pyarrow",
     "ruff>=0.4",
     "sqlalchemy>=2.0",
+    "imageio",
+    "tifffile",
+    "imagecodecs",
+    "Pillow",
 ]
 
 [project.optional-dependencies]

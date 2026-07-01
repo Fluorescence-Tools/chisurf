@@ -1,0 +1,50 @@
+{
+  "_comment": "RICS simple 3D-diffusion model (RicsSimpleModel). PRD-38 split; compute in rics.py.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Diffusion",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "diffusion",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Imaging (acquisition)",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "imaging",
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "residual2d",
+      "options": {
+        "accessor": "chisurf.core.models.rics.rics:get_rics_residual_image",
+        "accessor_kwargs": {
+          "weighted": true
+        }
+      }
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "parameter_scan",
+      "options": {}
+    }
+  ]
+}

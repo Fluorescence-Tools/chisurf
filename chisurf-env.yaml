@@ -17,6 +17,12 @@ dependencies:
   - pyqtgraph
   - matplotlib
   - scikit-image
+  # Imaging I/O for RICS/ICS TIFF stacks (imagecodecs decodes LZW-compressed
+  # TIFFs for tifffile; pillow is the multi-frame fallback).
+  - imageio
+  - tifffile
+  - imagecodecs
+  - pillow
   - deprecation
   - pandas
   - scipy
@@ -31,8 +37,9 @@ dependencies:
   - python-docx
   - qtconsole
   - hmmlearn
-  - latexify-py
   - pygments
   - pyarrow-core
   - boost-histogram
   - hdf5
+  - pip:
+      - latexify-py

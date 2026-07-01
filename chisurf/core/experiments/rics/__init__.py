@@ -25,6 +25,45 @@ except Exception:  # pragma: no cover - optional dependency
         imageio = None
 
 
+def _load_tiff_stack(path: str) -> "np.ndarray":
+    """Load a (possibly multi-frame, compressed) TIFF into a NumPy array.
+
+    RICS TIFF stacks are frequently LZW-compressed and multi-page. ``tifffile``
+    (used by ``imageio``) needs the optional ``imagecodecs`` package to decode
+    LZW and reads a single frame via ``imageio.imread``; Pillow decodes LZW
+    natively and iterates every page. This helper prefers ``tifffile`` (full
+    stack, all dtypes) and falls back to Pillow, so RICS TIFFs load regardless
+    of ``imagecodecs`` availability.
+
+    Parameters
+    ----------
+    path : str
+        Path to the TIFF file.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape ``(n_frames, ny, nx)`` for a stack, or ``(ny, nx)`` /
+        ``(ny, nx, channels)`` for a single frame.
+    """
+    # 1) tifffile reads the entire stack and preserves dtype/bit-depth. It only
+    #    fails for compressions (e.g. LZW) when imagecodecs is missing.
+    try:
+        import tifffile
+
+        return np.asarray(tifffile.imread(path))
+    except Exception:
+        pass
+    # 2) Pillow fallback: decodes LZW natively and iterates all pages.
+    from PIL import Image, ImageSequence
+
+    with Image.open(path) as im:
+        frames = [np.asarray(frame) for frame in ImageSequence.Iterator(im)]
+    if not frames:
+        raise ValueError(f"No frames could be read from TIFF: {path}")
+    return np.asarray(frames[0]) if len(frames) == 1 else np.asarray(frames)
+
+
 class RICSReader(ExperimentReader):
 
     name: str = "RICS (TTTR/ICS)"
@@ -242,10 +281,12 @@ class RICSReader(ExperimentReader):
             images = None
             clsm = None
 
-            # Branch on file type: TIFF stack vs TTTR container
-            if suffix in (".tif", ".tiff") and imageio is not None:
-                data = imageio.imread(fn.as_posix())
-                arr = np.asarray(data)
+            # Branch on file type: TIFF stack vs TTTR container. Use a robust
+            # loader that handles multi-page + LZW-compressed TIFFs (the
+            # previous imageio.imread path read a single frame and failed on
+            # LZW without imagecodecs).
+            if suffix in (".tif", ".tiff"):
+                arr = np.asarray(_load_tiff_stack(fn.as_posix()))
                 # Normalize to a stack of shape (n_frames, ny, nx)
                 if arr.ndim == 2:
                     arr = arr[None, ...]
