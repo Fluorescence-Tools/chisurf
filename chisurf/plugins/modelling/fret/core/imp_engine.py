@@ -534,11 +534,19 @@ def build_assembly(
     for idx, pdb in enumerate(pdb_paths):
         body_id = _body_for_pdb_index(idx, len(pdb_paths), positions)
         sel = IMP.atom.NonWaterNonHydrogenPDBSelector()
-        # With multiple PDBs, keep only the chains this body actually uses so
-        # duplicate chain IDs across files do not collide during label lookup.
-        chains = body_chains.get(body_id)
-        if multi and chains:
-            sel = IMP.atom.AndPDBSelector(sel, IMP.atom.ChainPDBSelector(sorted(chains)))
+        # With multiple PDBs, only drop chains whose IDs are *labelled by another
+        # body* (those would make the AV label lookup ambiguous). Keep every
+        # other chain so complete molecules load — e.g. both strands of a dsDNA
+        # even when only one strand carries a label.
+        other_labeled = set()
+        for bid, chs in body_chains.items():
+            if bid != body_id:
+                other_labeled |= chs
+        other_labeled -= body_chains.get(body_id, set())
+        if multi and other_labeled:
+            sel = IMP.atom.AndPDBSelector(
+                sel, IMP.atom.NotPDBSelector(
+                    IMP.atom.ChainPDBSelector(sorted(other_labeled))))
         h = IMP.atom.read_pdb(str(pdb), model, sel)
         root.add_child(h)
         body_of_pdb.append(body_id)
