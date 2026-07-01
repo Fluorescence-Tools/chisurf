@@ -1,0 +1,42 @@
+{
+  "_comment": "Declarative AutoForm layout for the Count Rate Analysis tool: a persistent dock area with the detector channel-definition page, the drag-drop file list + actions, the per-file count-rate plot and the per-channel results table.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Count Rate Analysis",
+      "persist": "tttr_count_rate_analysis",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Channel Definition",
+          "sections": [
+            {"type": "custom", "key": "count_rate_channels"}
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "Files",
+          "sections": [
+            {"type": "custom", "key": "count_rate_files"}
+          ]
+        },
+        {
+          "type": "plot",
+          "source": "count_rate_series",
+          "title": "Count Rates",
+          "x_label": "File index",
+          "y_label": "Count rate (kHz)",
+          "legend": true,
+          "description": "Per-detector-channel count rate (kHz) for each loaded file."
+        },
+        {
+          "type": "panel",
+          "title": "Results",
+          "sections": [
+            {"type": "custom", "key": "count_rate_results"}
+          ]
+        }
+      ]
+    }
+  ]
+}

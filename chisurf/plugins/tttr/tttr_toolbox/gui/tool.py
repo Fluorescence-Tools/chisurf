@@ -16,7 +16,10 @@ panel (NavigationPanelTool renders an error panel) rather than the whole window.
 
 from __future__ import annotations
 
+import importlib
+import json
 import logging
+import pathlib
 
 from qtpy import QtCore, QtWidgets
 
@@ -96,75 +99,62 @@ def _embed_mainwindow(mw: QtWidgets.QWidget) -> QtWidgets.QWidget:
 
 
 # ---------------------------------------------------------------------------
-# Panel factory functions — each imported lazily to keep startup fast.
-# QMainWindow-based tools are flattened via ``_embed_mainwindow``.
+# Data-driven panel list
 # ---------------------------------------------------------------------------
+# Panels are declared in ``panels.json`` (name / icon / description / role plus a
+# ``entrypoint`` "module:Class" string and an optional ``embed`` flag). The
+# factory for each panel is generated here: it lazily imports the entrypoint,
+# instantiates it, and flattens QMainWindow tools via ``_embed_mainwindow`` when
+# ``embed`` is set. Adding a tool is therefore a single JSON entry — no Python.
+
+_PANELS_JSON = pathlib.Path(__file__).with_name("panels.json")
 
 
-def _alex_creator(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.ptu_alex_creator.gui.tool import AlexPTUCreator
-
-    return AlexPTUCreator()
-
-
-def _microtime_shifter(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.tttr_microtime_shifter.gui.tool import MicrotimeShifterTool
-
-    return _embed_mainwindow(MicrotimeShifterTool())
+def _resolve_entrypoint(entrypoint: str):
+    """Import ``"pkg.module:Attr"`` and return the referenced attribute."""
+    module_name, _, attr = entrypoint.partition(":")
+    module = importlib.import_module(module_name)
+    return getattr(module, attr)
 
 
-def _ptu_header_editor(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.ptu_header_edit.gui.tool import TagsEditor
+def _make_factory(entrypoint: str, embed: bool):
+    """Build a lazy panel factory from an entrypoint string + embed flag."""
 
-    return TagsEditor()
+    def factory(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
+        widget = _resolve_entrypoint(entrypoint)()
+        return _embed_mainwindow(widget) if embed else widget
 
-
-def _split_convert(parent: TttrToolboxTool) -> QtWidgets.QWidget:
-    from chisurf.plugins.tttr.tttr_splitter.gui.tool import PTUSplitter
-
-    return PTUSplitter()
+    return factory
 
 
-# ---------------------------------------------------------------------------
-# Panel list
-# ---------------------------------------------------------------------------
+def _load_panels(spec: dict) -> list[dict]:
+    """Translate the ``panels.json`` spec into NavigationPanelTool panel dicts."""
+    panels: list[dict] = []
+    for entry in spec.get("panels", []):
+        if entry.get("separator"):
+            panels.append(
+                {
+                    "name": "────────",
+                    "icon": "",
+                    "separator": True,
+                    "role": entry.get("role", "separator"),
+                }
+            )
+            continue
+        panels.append(
+            {
+                "name": entry["name"],
+                "icon": entry.get("icon", ""),
+                "description": entry.get("description", ""),
+                "role": entry["role"],
+                "factory": _make_factory(entry["entrypoint"], bool(entry.get("embed", False))),
+            }
+        )
+    return panels
 
-TTTR_PANELS: list[dict] = [
-    {
-        "name": "ALEX Creator",
-        "icon": "🔀",
-        "description": "Convert ALEX macro-time modulation into micro-time so ALEX data runs through PIE pipelines.",
-        "factory": _alex_creator,
-        "role": "alex_creator",
-    },
-    {
-        "name": "Micro-time Shifter",
-        "icon": "⏱️",
-        "description": "Apply global and per-channel micro-time shifts to TTTR files.",
-        "factory": _microtime_shifter,
-        "role": "microtime_shifter",
-    },
-    {
-        "name": "PTU Header Editor",
-        "icon": "🏷️",
-        "description": "View, edit, add and remove header tags in PicoQuant PTU files.",
-        "factory": _ptu_header_editor,
-        "role": "ptu_header_editor",
-    },
-    {
-        "name": "────────",
-        "icon": "",
-        "separator": True,
-        "role": "separator_split",
-    },
-    {
-        "name": "Split / Convert",
-        "icon": "✂️",
-        "description": "Split large TTTR files into segments and convert between container formats.",
-        "factory": _split_convert,
-        "role": "split_convert",
-    },
-]
+
+_PANEL_SPEC = json.loads(_PANELS_JSON.read_text())
+TTTR_PANELS: list[dict] = _load_panels(_PANEL_SPEC)
 
 
 class TttrToolboxTool(NavigationPanelTool):
@@ -172,7 +162,7 @@ class TttrToolboxTool(NavigationPanelTool):
 
     def __init__(self, parent=None):
         super().__init__(
-            title="🧰 TTTR Tools",
+            title=_PANEL_SPEC.get("title", "🧰 TTTR Tools"),
             panels=TTTR_PANELS,
             parent=parent,
             minimum_size=(900, 600),

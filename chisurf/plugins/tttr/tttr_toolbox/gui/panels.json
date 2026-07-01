@@ -1,0 +1,44 @@
+{
+  "_comment": "Data-driven panel list for the TTTR Tools toolbox. Each entry names a tool by its GUI entrypoint (module:Class); the toolbox lazily imports and instantiates it. Set \"embed\": true for QMainWindow tools that must be flattened into a plain panel. Add a tool by adding an entry here — no Python needed. Use {\"separator\": true} to group.",
+  "title": "🧰 TTTR Tools",
+  "panels": [
+    {
+      "name": "ALEX Creator",
+      "icon": "🔀",
+      "role": "alex_creator",
+      "entrypoint": "chisurf.plugins.tttr.ptu_alex_creator.gui.tool:AlexPTUCreator",
+      "description": "Convert ALEX macro-time modulation into micro-time so ALEX data runs through PIE pipelines."
+    },
+    {
+      "name": "Micro-time Shifter",
+      "icon": "⏱️",
+      "role": "microtime_shifter",
+      "entrypoint": "chisurf.plugins.tttr.tttr_microtime_shifter.gui.tool:MicrotimeShifterTool",
+      "embed": true,
+      "description": "Apply global and per-channel micro-time shifts to TTTR files."
+    },
+    {
+      "name": "PTU Header Editor",
+      "icon": "🏷️",
+      "role": "ptu_header_editor",
+      "entrypoint": "chisurf.plugins.tttr.ptu_header_edit.gui.tool:TagsEditor",
+      "description": "View, edit, add and remove header tags in PicoQuant PTU files."
+    },
+    {"separator": true, "role": "separator_split"},
+    {
+      "name": "Split / Convert",
+      "icon": "✂️",
+      "role": "split_convert",
+      "entrypoint": "chisurf.plugins.tttr.tttr_splitter.gui.tool:PTUSplitter",
+      "description": "Split large TTTR files into segments and convert between container formats."
+    },
+    {"separator": true, "role": "separator_analysis"},
+    {
+      "name": "Count Rate Analysis",
+      "icon": "📊",
+      "role": "count_rate",
+      "entrypoint": "chisurf.plugins.tttr.tttr_count_rate_analysis.gui.tool:CountRateAnalyzer",
+      "description": "Count rates per detector channel across many TTTR files, with mean/std and a per-file plot."
+    }
+  ]
+}
