@@ -18,7 +18,7 @@ class DeerPrCIPlot(plotbase.Plot):
 
     name = "P(r) 95% CI"
 
-    def __init__(self, fit, n_boot: int = 120, **kwargs):
+    def __init__(self, fit, n_boot: int = 60, **kwargs):
         """Build the P(r) plot with a fill-between confidence band."""
         super().__init__(fit=fit, **kwargs)
         self._n_boot = int(n_boot)
@@ -40,7 +40,14 @@ class DeerPrCIPlot(plotbase.Plot):
         return getattr(fit, "model", None)
 
     def update(self, *args, **kwargs) -> None:
-        """Recompute the bootstrap band and redraw."""
+        """Recompute the bootstrap band and redraw (only while the tab is shown).
+
+        The bootstrap is expensive, so it is skipped when this tab is not
+        visible — otherwise it would re-run on every fit iteration and stall the
+        fit. Switching to the tab triggers a fresh computation.
+        """
+        if not self.isVisible():
+            return
         model = self._model()
         fn = getattr(model, "compute_uncertainty", None)
         if not callable(fn):

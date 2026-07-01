@@ -172,9 +172,11 @@ def test_deer_pr_confidence_band(qapp, model_path):
     assert np.all(lo <= best + 1e-9) and np.all(best <= hi + 1e-9)
     assert np.any(hi - lo > 0)
 
-    # the "pr_ci" plot key resolves to the band plot and renders
+    # the "pr_ci" plot key resolves to the band plot and renders (when shown —
+    # the band recompute is skipped while the tab is hidden)
     assert any(cls is DeerPrCIPlot for cls, _ in model_plot_specs(model))
     plot = DeerPrCIPlot(fit=fit, n_boot=20)
+    plot.show()
     plot.update()
     assert plot._best.getData()[0] is not None and len(plot._best.getData()[0]) > 0
 
