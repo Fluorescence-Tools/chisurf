@@ -56,6 +56,8 @@ RICS_MODELS = [
     "chisurf.core.models.rics.rics.RicsTripletModel",
     "chisurf.core.models.rics.rics.RicsImmobileModel",
     "chisurf.core.models.rics.rics.RicsFlowModel",
+    "chisurf.core.models.rics.rics.RicsFullModel",
+    "chisurf.core.models.rics.rics.IcsGaussian2DModel",
 ]
 
 
@@ -117,8 +119,10 @@ def test_rics_compute_is_finite_for_adversarial_params():
     functions now take magnitudes / floor divisors (PAM |N|,|D| convention).
     """
     from chisurf.core.models.rics.models import (
+        ics_gaussian_2d,
         rics_diffusion_triplet,
         rics_flow,
+        rics_full,
         rics_immobile,
         rics_simple,
     )
@@ -138,9 +142,14 @@ def test_rics_compute_is_finite_for_adversarial_params():
             (rics_immobile, {"a_immobile": -3.0}),
             (rics_flow, {"v_x": -50.0, "v_y": 1e4}),
             (rics_diffusion_triplet, {"tauT": -1.0, "aT": 1.5}),
+            (rics_full, {"tauT": -1.0, "aT": 1.5, "n_immobile": -2.0, "w_immobile": 0.0, "shift_x": 30.0}),
+            (rics_full, {"n_immobile": -2.0, "two_d": True}),
         ]:
             out = fn(line_shift=ls, pixel_shift=ps, **{**kw, **extra})
             assert np.all(np.isfinite(out)), f"{fn.__name__} not finite for {kw}"
+    # anisotropic Gaussian with degenerate widths / angle
+    g = ics_gaussian_2d(ls, ps, amplitude=-1.0, sigma_1=0.0, sigma_2=0.0, angle=9.0)
+    assert np.all(np.isfinite(g))
 
 
 def test_rics_fit_is_stable(qapp):

@@ -1,0 +1,82 @@
+{
+  "_comment": "RICS full model (RicsFullModel): mobile diffusion + immobile + blinking + shift (PAM RICS_Mod_Imm_with_Shift / RICS_2D_Imm_with_blinking).",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Diffusion (mobile)",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "diffusion",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Triplet / blinking",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "triplet",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Immobile + shift",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "toggle",
+          "target": "immobile_shift",
+          "attr": "two_d",
+          "label": "2D (membrane) \u2014 drop w_z"
+        },
+        {
+          "type": "parameter_group",
+          "target": "immobile_shift",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Imaging (acquisition)",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "imaging",
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "residual2d",
+      "options": {
+        "accessor": "chisurf.core.models.rics.rics:get_rics_residual_image",
+        "accessor_kwargs": {
+          "weighted": true
+        }
+      }
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "parameter_scan",
+      "options": {}
+    }
+  ]
+}

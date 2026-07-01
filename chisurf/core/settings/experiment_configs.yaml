@@ -191,6 +191,8 @@ rics:
     - chisurf.core.models.rics.rics.RicsTripletModel
     - chisurf.core.models.rics.rics.RicsImmobileModel
     - chisurf.core.models.rics.rics.RicsFlowModel
+    - chisurf.core.models.rics.rics.RicsFullModel
+    - chisurf.core.models.rics.rics.IcsGaussian2DModel
 
 pch:
   readers:

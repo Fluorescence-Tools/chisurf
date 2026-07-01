@@ -1,0 +1,50 @@
+{
+  "_comment": "Anisotropic 2D-Gaussian ICS model (IcsGaussian2DModel; PAM 2D_Gaussian_2Sigmas_Angle_Cor). Pure spatial structure sizing.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Anisotropic Gaussian (2 sigma + angle)",
+      "collapsible": true,
+      "collapsed": false,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "gaussian",
+          "collapsible": false
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Imaging (pixel size)",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "parameter_group",
+          "target": "imaging",
+          "collapsible": false
+        }
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "key": "residual2d",
+      "options": {
+        "accessor": "chisurf.core.models.rics.rics:get_rics_residual_image",
+        "accessor_kwargs": {
+          "weighted": true
+        }
+      }
+    },
+    {
+      "key": "fit_info",
+      "options": {}
+    },
+    {
+      "key": "parameter_scan",
+      "options": {}
+    }
+  ]
+}
