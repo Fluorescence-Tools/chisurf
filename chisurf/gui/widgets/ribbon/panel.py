@@ -24,6 +24,9 @@ from .toolbutton import (
     RibbonSplitButton
 )
 
+#: MIME type used to identify a ribbon button dragged for in-panel reordering.
+_RIBBON_REORDER_MIME = "application/x-chisurf-ribbon-reorder"
+
 
 class RibbonPanelTitle(QtWidgets.QLabel):
     """Widget to display the title of a panel."""
@@ -165,6 +168,14 @@ class RibbonPanel(QtWidgets.QFrame):
         self._gridLayoutManager = RibbonGridLayoutManager(self._maxRows)
         self._widgets = []
         self._showPanelOptionButton = showPanelOptionButton
+
+        # Drag-and-drop reordering state
+        self.setAcceptDrops(True)
+        self._reorderStartPos = None
+        self._reorderStartObj = None
+        self._reorderCandidate = None
+        self._addSeq = 0
+        self._orderRestoreScheduled = False
 
         # Main layout
         self._mainLayout = QtWidgets.QVBoxLayout(self)
@@ -400,8 +411,12 @@ class RibbonPanel(QtWidgets.QFrame):
         :return: The added widget.
         """
         rowSpan = self.defaultRowSpan(rowSpan)
+        # Stable per-panel identity used to persist a custom button order
+        widget._ribbon_seq = self._addSeq
+        self._addSeq += 1
         self._widgets.append(widget)
-        
+        self._installReorderFilter(widget)
+
         # Save layout metadata for reflowing
         widget._ribbon_rowSpan = rowSpan
         widget._ribbon_colSpan = colSpan
@@ -430,7 +445,13 @@ class RibbonPanel(QtWidgets.QFrame):
             ribbon = ribbon.parent()
         if ribbon is not None and hasattr(ribbon, 'registerTargetButton'):
             ribbon.registerTargetButton(widget)
-            
+
+        # Apply any persisted custom order once all widgets of this panel have
+        # been added (a single-shot timer runs after the current call stack).
+        if not self._orderRestoreScheduled:
+            self._orderRestoreScheduled = True
+            QtCore.QTimer.singleShot(0, self._restoreButtonOrder)
+
         return widget
 
     addSmallWidget = functools.partialmethod(addWidget, rowSpan=Small)
@@ -504,6 +525,170 @@ class RibbonPanel(QtWidgets.QFrame):
         :return: A list of all the widgets in the panel.
         """
         return self._widgets
+
+    # ------------------------------------------------------------------
+    # Drag-and-drop reordering of buttons within the panel
+    # ------------------------------------------------------------------
+
+    def _installReorderFilter(self, widget: QtWidgets.QWidget):
+        """Enable drag-to-reorder for button widgets.
+
+        Only button widgets participate; input widgets (spin boxes, line
+        edits, sliders, ...) keep their normal mouse behaviour.
+
+        :param widget: The widget that was just added to the panel.
+        """
+        if isinstance(widget, RibbonSplitButton):
+            widget.actionButton().installEventFilter(self)
+            widget.menuButton().installEventFilter(self)
+        elif isinstance(widget, (RibbonToolButton, RibbonMenuButton, RibbonDelayedMenuButton)):
+            widget.installEventFilter(self)
+
+    def eventFilter(self, obj: QtCore.QObject, event: QtCore.QEvent) -> bool:
+        """Start a drag once the pointer moves far enough with the left button."""
+        et = event.type()
+        if et == QtCore.QEvent.Type.MouseButtonPress:
+            if event.button() == QtCore.Qt.MouseButton.LeftButton:
+                self._reorderStartPos = event.pos()
+                self._reorderStartObj = obj
+                self._reorderCandidate = self._ownerWidget(obj)
+            else:
+                self._reorderStartPos = None
+        elif et == QtCore.QEvent.Type.MouseMove:
+            if (
+                self._reorderStartPos is not None
+                and obj is self._reorderStartObj
+                and (event.buttons() & QtCore.Qt.MouseButton.LeftButton)
+            ):
+                distance = (event.pos() - self._reorderStartPos).manhattanLength()
+                if distance >= QtWidgets.QApplication.startDragDistance():
+                    candidate = self._reorderCandidate
+                    self._reorderStartPos = None
+                    self._reorderStartObj = None
+                    self._reorderCandidate = None
+                    self._startReorderDrag(candidate)
+                    return True
+        elif et == QtCore.QEvent.Type.MouseButtonRelease:
+            self._reorderStartPos = None
+            self._reorderStartObj = None
+            self._reorderCandidate = None
+        return super().eventFilter(obj, event)
+
+    def _ownerWidget(self, obj: QtCore.QObject) -> QtWidgets.QWidget | None:
+        """Return the panel-level widget owning ``obj`` (walks up the parents)."""
+        widget = obj
+        while widget is not None:
+            if widget in self._widgets:
+                return widget
+            widget = widget.parent()
+        return None
+
+    def _startReorderDrag(self, widget: QtWidgets.QWidget):
+        """Begin a drag operation for ``widget``."""
+        if widget is None or widget not in self._widgets:
+            return
+        index = self._widgets.index(widget)
+        drag = QtGui.QDrag(self)
+        mime = QtCore.QMimeData()
+        mime.setData(_RIBBON_REORDER_MIME, str(index).encode("ascii"))
+        drag.setMimeData(mime)
+        pixmap = widget.grab()
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(QtCore.QPoint(pixmap.width() // 2, pixmap.height() // 2))
+        drag.exec_(QtCore.Qt.DropAction.MoveAction)
+        # A finished QDrag can leave the source button visually "pressed".
+        if hasattr(widget, "setDown"):
+            widget.setDown(False)
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
+        """Accept only reorder drags originating from this panel."""
+        if event.source() is self and event.mimeData().hasFormat(_RIBBON_REORDER_MIME):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent):
+        """Keep accepting the drag while it hovers over the panel."""
+        if event.source() is self and event.mimeData().hasFormat(_RIBBON_REORDER_MIME):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QtGui.QDropEvent):
+        """Reorder the dragged button to the drop position."""
+        if event.source() is not self or not event.mimeData().hasFormat(_RIBBON_REORDER_MIME):
+            event.ignore()
+            return
+        try:
+            source_index = int(bytes(event.mimeData().data(_RIBBON_REORDER_MIME)).decode("ascii"))
+        except (ValueError, TypeError):
+            event.ignore()
+            return
+        target_index = self._dropIndexAt(event.pos())
+        self._moveWidget(source_index, target_index)
+        event.acceptProposedAction()
+
+    def _dropIndexAt(self, pos: QtCore.QPoint) -> int:
+        """Return the insertion index in ``self._widgets`` for a drop at ``pos``.
+
+        The index is chosen by comparing the drop x-coordinate against the
+        horizontal centre of each visible widget (the panel lays out
+        column-wise, left to right).
+        """
+        for widget in self._widgets:
+            if not widget.isVisible():
+                continue
+            container = widget.parentWidget()
+            geometry = (
+                container.geometry()
+                if isinstance(container, RibbonPanelItemWidget)
+                else widget.geometry()
+            )
+            if pos.x() < geometry.x() + geometry.width() / 2:
+                return self._widgets.index(widget)
+        return len(self._widgets)
+
+    def _moveWidget(self, source_index: int, target_index: int):
+        """Move the widget at ``source_index`` to ``target_index`` and persist."""
+        if not (0 <= source_index < len(self._widgets)):
+            return
+        insert_index = target_index - 1 if target_index > source_index else target_index
+        insert_index = max(0, min(insert_index, len(self._widgets) - 1))
+        if insert_index == source_index:
+            return  # dropped onto itself; nothing to do
+        widget = self._widgets.pop(source_index)
+        self._widgets.insert(insert_index, widget)
+        self.reflow()
+        self._saveButtonOrder()
+
+    def _panelStorageKey(self) -> str:
+        """Return the QSettings key that stores this panel's button order."""
+        category = self
+        while category is not None and 'Category' not in category.__class__.__name__:
+            category = category.parent()
+        category_title = (
+            category.title() if category is not None and hasattr(category, 'title') else "UnknownCategory"
+        )
+        return f"order/{category_title}::{self.title()}"
+
+    def _saveButtonOrder(self):
+        """Persist the current widget order to QSettings."""
+        settings = QtCore.QSettings("ChiSurf", "RibbonState")
+        order = [str(getattr(w, '_ribbon_seq', i)) for i, w in enumerate(self._widgets)]
+        settings.setValue(self._panelStorageKey(), order)
+
+    def _restoreButtonOrder(self):
+        """Reorder widgets to match a persisted custom order, if any."""
+        settings = QtCore.QSettings("ChiSurf", "RibbonState")
+        value = settings.value(self._panelStorageKey(), [])
+        order = value if isinstance(value, list) else [value] if value else []
+        if not order:
+            return
+        rank = {seq: idx for idx, seq in enumerate(order)}
+        default = len(order)
+        # Stable sort keeps widgets not present in the saved order in place.
+        self._widgets.sort(key=lambda w: rank.get(str(getattr(w, '_ribbon_seq', -1)), default))
+        self.reflow()
 
     def addButton(
         self,
