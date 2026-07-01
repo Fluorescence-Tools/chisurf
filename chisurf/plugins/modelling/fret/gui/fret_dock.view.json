@@ -6,9 +6,6 @@
       "title": "Inputs",
       "description": "Structures and FRET restraints to model.",
       "sections": [
-        {"type": "value", "attr": "pdb_paths", "label": "PDB(s)", "kind": "str",
-         "placeholder": "protein.pdb, dna.pdb",
-         "description": "One PDB per rigid body, comma-separated. Each body_id in the fps.json maps to one PDB."},
         {"type": "value", "attr": "fps_json", "label": "fps.json", "kind": "str",
          "placeholder": "labelling.fps.json",
          "description": "Labelling positions and experimental distances (fps.json)."},

@@ -257,15 +257,30 @@ class FretDockingTool(QtWidgets.QWidget):
         self._act_save = tb.addAction("💾 Save", self._save_project)
         self._act_save.setToolTip("Save the current inputs and parameters as a docking project.")
         tb.addSeparator()
-        tb.addAction("🧬 PDB(s)", self._pick_pdbs).setToolTip(
-            "Choose one or more PDB files (one per rigid body).")
+        tb.addAction("➕ Add PDB", self._pick_pdbs).setToolTip(
+            "Add one or more PDB files (one rigid body per file).")
+        tb.addAction("➖ Remove PDB", self._remove_pdb).setToolTip(
+            "Remove the selected PDB(s) from the list.")
         tb.addAction("🏷 fps.json", self._pick_fps).setToolTip(
-            "Choose the labelling/distance fps.json file.")
+            "Choose the labelling/distance fps.json (or FPS LPs .txt) file.")
         tb.addAction("📁 Output", self._pick_out).setToolTip("Choose the output directory.")
         tb.addSeparator()
         self._act_run = tb.addAction("▶️ Run", self._on_run)
-        self._act_run.setToolTip("Run docking with the current settings.")
+        self._act_run.setToolTip("Run docking; results are appended to the table.")
+        self._act_clear = tb.addAction("🧹 Clear", self._clear_results)
+        self._act_clear.setToolTip("Clear the results table and score plot.")
         layout.addWidget(tb)
+
+        # PDB rigid bodies as an editable list (one file per rigid body).
+        pdb_box = QtWidgets.QGroupBox("🧬 PDB rigid bodies (one per body)")
+        pv = QtWidgets.QVBoxLayout(pdb_box)
+        pv.setContentsMargins(6, 2, 6, 4)
+        self._pdb_list = QtWidgets.QListWidget()
+        self._pdb_list.setSelectionMode(QtWidgets.QListWidget.ExtendedSelection)
+        self._pdb_list.setMaximumHeight(90)
+        self._pdb_list.setToolTip("PDB files, one per rigid body; order = body_id 0,1,2…")
+        pv.addWidget(self._pdb_list)
+        layout.addWidget(pdb_box)
 
         self._form = AutoForm(self._model, parent=self)
         layout.addWidget(self._form)
@@ -378,9 +393,36 @@ class FretDockingTool(QtWidgets.QWidget):
         files, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self, "Select PDB file(s)", "", "PDB (*.pdb);;All files (*)")
         if files:
-            self._model.pdb_paths = ", ".join(files)
-            self._form.sync_fields()
+            for f in files:
+                self._add_pdb_item(f)
+            self._sync_pdb_model()
             self._show_structure(files[0])  # preview the chosen structure
+
+    def _add_pdb_item(self, path: str) -> None:
+        item = QtWidgets.QListWidgetItem(pathlib.Path(path).name)
+        item.setToolTip(path)
+        item.setData(QtCore.Qt.UserRole, path)
+        self._pdb_list.addItem(item)
+
+    def _pdb_paths_from_list(self):
+        return [self._pdb_list.item(i).data(QtCore.Qt.UserRole)
+                for i in range(self._pdb_list.count())]
+
+    def _sync_pdb_model(self) -> None:
+        """Mirror the PDB list into the model (comma-joined for the engine)."""
+        self._model.pdb_paths = ", ".join(self._pdb_paths_from_list())
+
+    def _set_pdb_list(self, paths) -> None:
+        self._pdb_list.clear()
+        for p in paths:
+            if p:
+                self._add_pdb_item(p)
+        self._sync_pdb_model()
+
+    def _remove_pdb(self) -> None:
+        for item in self._pdb_list.selectedItems():
+            self._pdb_list.takeItem(self._pdb_list.row(item))
+        self._sync_pdb_model()
 
     def _pick_fps(self) -> None:
         f, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -418,7 +460,7 @@ class FretDockingTool(QtWidgets.QWidget):
                 self, "Load failed", traceback.format_exc()[-2000:])
             return
         m = self._model
-        m.pdb_paths = ", ".join(proj.pdb_paths)
+        self._set_pdb_list(proj.pdb_paths)  # populates the list and m.pdb_paths
         m.fps_json = proj.fps_json
         m.output_dir = proj.output_dir
         m.operation = proj.operation or "dock"
@@ -493,14 +535,16 @@ class FretDockingTool(QtWidgets.QWidget):
                 curve.setData(frames, scores)
 
     def _fill_table(self, rows: list, best_trial=None, kind="dock") -> None:
-        """Populate the results table from ``[(trial, score, n_dist, pdb)]`` rows.
+        """Append ``[(trial, score, n_dist, pdb)]`` rows to the results table.
 
-        ``kind`` is the sampling type shown in the Type column (dock / refine /
-        mc). Numeric columns sort numerically; sorting is paused during the fill.
+        Runs accumulate — Run appends solutions, the Clear button empties the
+        table. ``kind`` is the sampling type shown in the Type column; numeric
+        columns sort numerically and the overall best score is highlighted.
         """
         self._table.setSortingEnabled(False)
-        self._table.setRowCount(len(rows))
-        for i, (trial, score, n_dist, pdb) in enumerate(rows):
+        for (trial, score, n_dist, pdb) in rows:
+            r = self._table.rowCount()
+            self._table.insertRow(r)
             score_txt = f"{score:.2f}" if score == score else "nan"
             items = [
                 _NumericItem(str(trial), float(trial)),
@@ -513,11 +557,19 @@ class FretDockingTool(QtWidgets.QWidget):
                 items[4].setToolTip(pdb)
                 items[4].setData(QtCore.Qt.UserRole, str(pdb))
             for c, item in enumerate(items):
-                if best_trial is not None and str(trial) == str(best_trial):
-                    item.setBackground(QtCore.Qt.green)
-                self._table.setItem(i, c, item)
+                self._table.setItem(r, c, item)
         self._table.setSortingEnabled(True)
         self._table.sortItems(2, QtCore.Qt.AscendingOrder)  # best score first
+        self._highlight_best()
+
+    def _highlight_best(self) -> None:
+        """Green the best-scoring (top) row after the best-first sort."""
+        for r in range(self._table.rowCount()):
+            bg = QtCore.Qt.green if r == 0 else QtCore.Qt.transparent
+            for c in range(self._table.columnCount()):
+                it = self._table.item(r, c)
+                if it is not None:
+                    it.setBackground(bg)
 
     # -- run / modal progress ----------------------------------------------
     def _make_dialog(self, op: str, n_trials: int):
@@ -534,9 +586,8 @@ class FretDockingTool(QtWidgets.QWidget):
         return dlg
 
     def _start_progress(self, op: str) -> None:
-        """Reset results, prime the trace files and open the modal dialog."""
+        """Prime the trace files and open the modal dialog (results are appended)."""
         self._run_op = op
-        self._clear_results()
         self._stop_event.clear()
         out = self._model.output_dir
         n_frames = max(1, int(self._model.n_frames))
