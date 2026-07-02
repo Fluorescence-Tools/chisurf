@@ -19,15 +19,41 @@ The CLSM plugin is particularly useful for fluorescence lifetime imaging microsc
 
 The plugin supports various TTTR file formats and microscope setups, with configurable parameters for frame markers, line markers, and pixel settings to accommodate different CLSM acquisition systems.
 
+## Architecture
+
+The plugin follows the standard ChiSurf core/api/rpc/cli split, with an
+AutoForm-driven GUI:
+
+| Path | Role |
+|------|------|
+| `core/` | Qt-free algorithms — FRC, image representations, decay extraction, setup presets. Safe to import headlessly. |
+| `api/` | `models.py` dataclasses, `contract.py` RPC contract, and `clsm.py` orchestration returning JSON-safe dicts. |
+| `backend/services.py` | `register_services(dispatcher)` wiring the `clsm.*` RPC methods. |
+| `client.py` | `ClsmClient`, transport-agnostic (in-process dispatcher or ZMQ). |
+| `cli/` | `csc clsm …` Click commands (`setups`, `info`, `representation`, `decay`, `frc`, `contract`). |
+| `gui/` | `view_model.py` (Qt-free state + logic), `clsm.view.json` (AutoForm layout), `sections.py` (custom imaging widgets), `tool.py` (the tool). |
+| `manifest.json` | Plugin id, entrypoints (gui/cli/services) and `rpc_methods`. |
+
+The static settings render as AutoForm fields; the dynamic control bar, the
+image-brush canvas and the ROI list are registered AutoForm `custom` sections;
+the decay and FRC plots are declarative `plot` sections.
+
+### Headless usage
+
+```bash
+csc clsm setups
+csc clsm info data.ptu --setup "Leica SP5" --channels 0,1
+csc clsm decay data.ptu --setup "Leica SP5" -c 0,1 --threshold 0.5 -o decay.txt
+csc clsm frc data.ptu --setup "Leica SP5" -c 0,1 -o frc.txt
+```
+
 ## Requirements
 
 - Python packages:
-  - PyQt5
-  - numpy
-  - matplotlib
-  - tttrlib (for TTTR file handling)
-  - clsmview (core functionality)
-  - scipy (for data processing)
+  - PyQt5, pyqtgraph
+  - numpy, scipy, numba
+  - scikit-image (ROI mask import/export)
+  - tttrlib (for TTTR/CLSM file handling)
 
 ## Usage
 

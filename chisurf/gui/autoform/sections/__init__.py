@@ -10,8 +10,10 @@ from __future__ import annotations
 from . import (
     builtin,  # noqa: F401  (side effect: populate the registry)
     chimol_section,  # noqa: F401  (registers the "chimol" section)
+    decay_conv_section,  # noqa: F401  (registers the "decay_conv" section)
     embed_section,  # noqa: F401  (registers the "embed" section)
     path_list_section,  # noqa: F401  (registers the "path_list" section)
+    phasor_section,  # noqa: F401  (registers the "phasor" section)
     waterfall_section,  # noqa: F401  (registers the "waterfall" section)
 )
 from .registry import (

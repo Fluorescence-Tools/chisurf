@@ -1179,6 +1179,25 @@ class ImageMapWidget(QtWidgets.QWidget):
     * ``colormap_attr`` (str) — optional model attribute to read/write the chosen colormap,
       so it persists and can be shared between several image docks.
 
+    Detector-channel ``options`` add an in-plot selector so one map dock can switch
+    between detector windows / channels (green/red/…) without a separate panel:
+
+    * ``channel_source`` (str) — model method returning the list of channel/window names.
+    * ``channel_attr`` (str) — model attribute that receives the picked name.
+    * ``channel_call`` (str) — model method called after a pick (e.g. ``refresh_display``);
+      called as ``fn(name)`` when it accepts an argument, else ``fn()``. Several docks
+      bound to the same attr stay in sync (each re-syncs its combo on refresh).
+
+    Movie ``options`` add frame-playback controls for a 3D ``(frame, y, x)`` stack
+    (the existing z-slider scrubs; these animate it):
+
+    * ``movie`` (bool) — show play/pause + loop + stop buttons and an fps selector
+      (default ``False``). The controls auto-disable when the current image is 2D.
+    * ``movie_fps`` (int) — initial playback speed (default ``10``).
+    * ``match_2d`` (bool) — render a 3D stack with the same axis mapping as the 2D
+      map docks, so a movie and its sibling maps share one orientation (default
+      ``False`` keeps the ``{x:2, y:1}`` mapping the PSF stack picker relies on).
+
     Brush / draw ``options`` turn the dock into a paintable pixel selector (e.g. for
     CLSM pixel selection, FLIM masks, ROI painting). Brush mode is enabled when
     ``selection_attr`` is given:
@@ -1215,6 +1234,12 @@ class ImageMapWidget(QtWidgets.QWidget):
         colormap: bool = False,
         default_colormap: str = "viridis",
         colormap_attr: str | None = None,
+        channel_source: str | None = None,
+        channel_attr: str | None = None,
+        channel_call: str | None = None,
+        movie: bool = False,
+        movie_fps: int = 10,
+        match_2d: bool = False,
         selection_attr: str | None = None,
         brush_kernel_source: str | None = None,
         on_draw: str | None = None,
@@ -1232,6 +1257,24 @@ class ImageMapWidget(QtWidgets.QWidget):
         self._cmap = default_colormap
         self._image = None
         self._combo = None
+        # detector-channel / window selector (in-plot combo)
+        self._channel_source = channel_source
+        self._channel_attr = channel_attr
+        self._channel_call = channel_call
+        self._channel_combo = None
+        # movie / frame playback (for 3D stacks)
+        self._movie = bool(movie)
+        self._movie_fps = int(movie_fps)
+        # When True, a 3D stack uses the SAME axis mapping as the 2D path, so a
+        # movie dock and its sibling 2D map docks render at identical orientation
+        # (the default {x:2,y:1} transposes the frame vs the 2D default {x:0,y:1}).
+        self._match_2d = bool(match_2d)
+        self._play_btn = None
+        self._loop_btn = None
+        self._stop_btn = None
+        self._fps_spin = None
+        self._playing = False
+        self._play_timer = None  # looping playback timer (wrap-around)
         # brush state
         self._selection_attr = selection_attr
         self._brush_kernel_source = brush_kernel_source
@@ -1250,21 +1293,8 @@ class ImageMapWidget(QtWidgets.QWidget):
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(2)
-        if colormap:
-            bar = QtWidgets.QHBoxLayout()
-            bar.setContentsMargins(4, 2, 4, 0)
-            bar.addStretch(1)
-            bar.addWidget(QtWidgets.QLabel("colormap"))
-            self._combo = QtWidgets.QComboBox()
-            self._combo.addItems(IMAGE_COLORMAPS)
-            self._combo.setToolTip("Colormap for this image")
-            cur = self._current_cmap()
-            idx = self._combo.findText(cur)
-            if idx >= 0:
-                self._combo.setCurrentIndex(idx)
-            self._combo.currentTextChanged.connect(self._on_cmap)
-            bar.addWidget(self._combo)
-            lay.addLayout(bar)
+        if colormap or self._channel_source or self._movie:
+            lay.addLayout(self._build_bar(colormap))
         try:
             import pyqtgraph as pg
 
@@ -1280,6 +1310,169 @@ class ImageMapWidget(QtWidgets.QWidget):
                 self._connect_slice_changed()
         except Exception:  # pragma: no cover - pyqtgraph optional
             lay.addWidget(QtWidgets.QLabel("pyqtgraph not available"))
+
+    # ── top control bar (channel selector · movie · colormap) ──────────
+    def _build_bar(self, colormap: bool) -> QtWidgets.QHBoxLayout:
+        """Build the in-plot control bar (detector channel · movie · colormap)."""
+        bar = QtWidgets.QHBoxLayout()
+        bar.setContentsMargins(4, 2, 4, 0)
+        # left: detector-channel / window selector
+        if self._channel_source:
+            bar.addWidget(QtWidgets.QLabel("channel"))
+            self._channel_combo = QtWidgets.QComboBox()
+            self._channel_combo.setToolTip("Detector channel / window shown in this map")
+            self._reload_channels()
+            self._channel_combo.currentTextChanged.connect(self._on_channel)
+            bar.addWidget(self._channel_combo)
+        bar.addStretch(1)
+        # middle: movie / frame playback (enabled only for 3D stacks)
+        if self._movie:
+            self._play_btn = QtWidgets.QToolButton()
+            self._play_btn.setText("▶")
+            self._play_btn.setToolTip("Play the frame stack (stops at the last frame)")
+            self._play_btn.clicked.connect(self._on_play_clicked)
+            bar.addWidget(self._play_btn)
+            self._loop_btn = QtWidgets.QToolButton()
+            self._loop_btn.setText("🔁")
+            self._loop_btn.setCheckable(True)
+            self._loop_btn.setChecked(True)  # loop by default
+            self._loop_btn.setToolTip("Loop playback (wrap around at the end)")
+            bar.addWidget(self._loop_btn)
+            self._stop_btn = QtWidgets.QToolButton()
+            self._stop_btn.setText("⏹")
+            self._stop_btn.setToolTip("Stop and return to the first frame")
+            self._stop_btn.clicked.connect(self._on_stop_clicked)
+            bar.addWidget(self._stop_btn)
+            self._fps_spin = QtWidgets.QSpinBox()
+            self._fps_spin.setRange(1, 120)
+            self._fps_spin.setValue(self._movie_fps)
+            self._fps_spin.setSuffix(" fps")
+            self._fps_spin.setToolTip("Playback speed (frames per second)")
+            self._fps_spin.valueChanged.connect(self._on_fps)
+            bar.addWidget(self._fps_spin)
+            self._set_movie_enabled(False)
+        # right: colormap selector
+        if colormap:
+            bar.addWidget(QtWidgets.QLabel("colormap"))
+            self._combo = QtWidgets.QComboBox()
+            self._combo.addItems(IMAGE_COLORMAPS)
+            self._combo.setToolTip("Colormap for this image")
+            cur = self._current_cmap()
+            idx = self._combo.findText(cur)
+            if idx >= 0:
+                self._combo.setCurrentIndex(idx)
+            self._combo.currentTextChanged.connect(self._on_cmap)
+            bar.addWidget(self._combo)
+        return bar
+
+    # ── detector-channel / window selector ─────────────────────────────
+    def _channel_names(self) -> list[str]:
+        """Return the selectable channel/window names from the model source."""
+        fn = getattr(self._model, self._channel_source, None) if self._channel_source else None
+        try:
+            names = list(fn()) if callable(fn) else []
+        except Exception:  # pragma: no cover - model-defined
+            names = []
+        return [str(n) for n in names]
+
+    def _reload_channels(self) -> None:
+        """(Re)populate the channel combo from the model, syncing to the bound attr."""
+        if self._channel_combo is None:
+            return
+        names = self._channel_names()
+        cur = str(getattr(self._model, self._channel_attr, "")) if self._channel_attr else ""
+        self._channel_combo.blockSignals(True)
+        self._channel_combo.clear()
+        self._channel_combo.addItems(names)
+        i = self._channel_combo.findText(cur)
+        if i >= 0:
+            self._channel_combo.setCurrentIndex(i)
+        self._channel_combo.blockSignals(False)
+
+    def _on_channel(self, name: str) -> None:
+        """Write the picked channel to the model and trigger its refresh."""
+        if self._channel_attr and hasattr(self._model, self._channel_attr):
+            setattr(self._model, self._channel_attr, name)
+        if self._channel_call:
+            fn = getattr(self._model, self._channel_call, None)
+            if callable(fn):
+                try:
+                    fn(name)
+                except TypeError:
+                    fn()
+                except Exception:  # pragma: no cover - model-defined
+                    logging.warning(f"ImageMapWidget: channel_call {self._channel_call!r} failed")
+
+    # ── movie / frame playback ─────────────────────────────────────────
+    def _set_movie_enabled(self, on: bool) -> None:
+        for w in (self._play_btn, self._loop_btn, self._stop_btn, self._fps_spin):
+            if w is not None:
+                w.setEnabled(bool(on))
+        if not on:
+            self._stop_play()
+
+    def _toggle_play(self) -> None:
+        self._stop_play() if self._playing else self._start_play()
+
+    def _on_play_clicked(self) -> None:
+        """Play/pause the frame stack."""
+        self._stop_play() if self._playing else self._start_play()
+
+    def _on_stop_clicked(self) -> None:
+        """Stop playback and return to the first frame."""
+        self._stop_play()
+        if self._image is not None:
+            try:
+                self._image.setCurrentIndex(0)
+            except Exception:  # pragma: no cover - pyqtgraph optional
+                pass
+
+    def _start_play(self) -> None:
+        # Own timer (not ImageView.play) so playback loops (wrap-around) instead
+        # of stopping at the last frame.
+        if self._image is None:
+            return
+        fps = int(self._fps_spin.value()) if self._fps_spin else self._movie_fps
+        if fps <= 0:
+            return
+        if self._play_timer is None:
+            self._play_timer = QtCore.QTimer(self)
+            self._play_timer.timeout.connect(self._advance_frame)
+        self._play_timer.start(int(1000 / max(fps, 1)))
+        self._playing = True
+        if self._play_btn is not None:
+            self._play_btn.setText("⏸")
+
+    def _advance_frame(self) -> None:
+        """Advance one frame; wrap to the start when Loop is on, else stop at the end."""
+        if self._image is None:
+            return
+        try:
+            data = getattr(self._image, "image", None)
+            n = int(data.shape[0]) if data is not None and getattr(data, "ndim", 0) >= 3 else 0
+            if n <= 1:
+                return
+            idx = int(self._image.currentIndex) + 1
+            loop = self._loop_btn.isChecked() if self._loop_btn is not None else True
+            if idx >= n:
+                if not loop:
+                    self._stop_play()
+                    return
+                idx = 0
+            self._image.setCurrentIndex(idx)
+        except Exception:  # pragma: no cover - pyqtgraph optional
+            pass
+
+    def _stop_play(self) -> None:
+        if self._play_timer is not None:
+            self._play_timer.stop()
+        self._playing = False
+        if self._play_btn is not None:
+            self._play_btn.setText("▶")
+
+    def _on_fps(self, value: int) -> None:
+        if self._playing:
+            self._start_play()  # restart at the new rate
 
     # ── colormap ───────────────────────────────────────────────────────
     def _current_cmap(self) -> str:
@@ -1498,16 +1691,24 @@ class ImageMapWidget(QtWidgets.QWidget):
                 if i >= 0:
                     self._combo.setCurrentIndex(i)
                 self._combo.blockSignals(False)
+        # keep the detector-channel combo in sync (options + current selection)
+        if self._channel_combo is not None:
+            self._reload_channels()
         data = np.asarray(img, dtype=float)
         self._ndim = data.ndim
+        # movie controls are meaningful only for a 3D (frame, y, x) stack
+        if self._movie:
+            self._set_movie_enabled(data.ndim == 3)
         if data.ndim == 3:
-            # Preserve the current slice across refreshes; map axes so the
-            # displayed image is (y, x) = (axis 1, axis 2) of a (z, y, x) stack.
+            # Preserve the current slice across refreshes. Default maps the frame
+            # to (y, x) = (axis 1, axis 2); ``match_2d`` instead uses {x:1,y:2} so
+            # the frame renders exactly like the 2D map docks (no 90° transpose).
             try:
                 prev = int(self._image.currentIndex)
             except Exception:
                 prev = 0
-            self._image.setImage(data, autoLevels=True, axes={"t": 0, "x": 2, "y": 1})
+            axes = {"t": 0, "x": 1, "y": 2} if self._match_2d else {"t": 0, "x": 2, "y": 1}
+            self._image.setImage(data, autoLevels=True, axes=axes)
             if 0 <= prev < data.shape[0]:
                 self._image.setCurrentIndex(prev)
         else:

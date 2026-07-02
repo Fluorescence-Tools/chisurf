@@ -1,0 +1,16 @@
+{
+  "id": "img_pixel_intensity",
+  "version": "1.0.0",
+  "display_name": "Imaging:Intensity",
+  "description": "Per-pixel intensity map; creates the standard imaging HDF5 (with source back-reference) that N&B / phasor / MLE enrich.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Imaging"],
+  "icon": "🔆",
+  "state_namespace": "img_pixel_intensity",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_pixel_intensity.gui.tool:ImgPixelIntensityTool",
+    "cli": "img-pixel-intensity=chisurf.plugins.microscopy.img_pixel_intensity.cli:cli"
+  },
+  "menu_hidden": true
+}

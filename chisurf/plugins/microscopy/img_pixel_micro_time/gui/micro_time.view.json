@@ -1,0 +1,32 @@
+{
+  "_comment": "Mean micro-time imaging tool. AutoForm over MicroTimeViewModel: a Controls dock (file + photon threshold; actions in the toolbar) and per-pixel Intensity / Mean micro-time map docks (reusable `image` section). The detector-window selector lives in each map (channel combo); the Frames dock plays the raw per-frame intensity stack. The mean micro-time is computed for every detector window from step-0 Setup.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Mean Micro-Time",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "value", "attr": "filename", "label": "TTTR file", "kind": "file",
+             "description": "PTU/HT3 imaging file; CLSM markers are auto-detected from the header."},
+            {"type": "value", "attr": "n_ph_min", "label": "Min. photons", "kind": "int",
+             "description": "Pixels with fewer photons than this are discriminated (set to 0); press Run to apply."},
+            {"type": "info", "source": "results_html", "height": 90}
+          ]
+        },
+        {"type": "custom", "key": "image", "target": "intensity_map", "title": "Intensity",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "mean_micro_time_map", "title": "Mean micro-time (ns)",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "mean_micro_time_frames", "title": "Mean micro-time movie",
+         "options": {"colormap": true, "colormap_attr": "colormap", "movie": true, "match_2d": true,
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}}
+      ]
+    }
+  ]
+}

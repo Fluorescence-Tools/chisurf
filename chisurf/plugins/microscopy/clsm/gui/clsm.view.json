@@ -1,0 +1,116 @@
+{
+  "_comment": "Single dock-area layout for the CLSM tool. Settings render as compact foldable panels; the image uses AutoForm's reusable brush+colormap `image` section; decay and FRC are declarative plot sections. All panels are draggable docks.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "persist": "clsm_draw",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "File",
+          "n_col": 1,
+          "sections": [
+            {"type": "value", "kind": "file", "attr": "filename", "label": "File", "call": "load_file",
+             "placeholder": "TTTR CLSM file or imaging .h5 …",
+             "description": "Load a TTTR CLSM file, or an imaging HDF5 (resolved to its source photon data via the stored back-reference); markers are auto-detected."},
+            {"type": "choice", "target": "setup", "attr": "setup_name", "label": "Setup",
+             "options_source": "setup_names", "call": "apply_preset",
+             "description": "Acquisition-setup preset."},
+            {"type": "value", "target": "setup", "attr": "channels_text", "kind": "str", "label": "Channels",
+             "description": "Routing channels, comma separated (e.g. 0,1)."},
+            {"type": "choice", "attr": "current_clsm_name", "label": "CLSM",
+             "options_source": "clsm_image_names", "add_action": "add_clsm", "remove_action": "remove_clsm",
+             "description": "CLSM images built for the selected channels (+ to create, − to remove)."},
+            {"type": "choice", "attr": "current_representation_name", "label": "Image",
+             "options_source": "representation_names", "call": "select_representation",
+             "add_action": "add_representation", "remove_action": "remove_representation",
+             "description": "Image representations (+ to create from the current CLSM image)."},
+            {"type": "button_row", "buttons": [
+              {"label": "Add decay → ChiSurf", "action": "to_chisurf_dataset",
+               "description": "Add the current selection's decay as a ChiSurf dataset."},
+              {"label": "Clear selection", "action": "clear_selection",
+               "description": "Clear the pixel selection."}
+            ]}
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "Acquisition",
+          "n_col": 1,
+          "sections": [
+            {"type": "value", "target": "setup", "attr": "tttr_type", "kind": "str", "label": "TTTR type"},
+            {"type": "value", "target": "setup", "attr": "routine", "kind": "str", "label": "Routine"},
+            {"type": "value", "target": "setup", "attr": "frame_marker_text", "kind": "str", "label": "Frame markers",
+             "description": "Frame marker numbers, comma separated."},
+            {"type": "value", "target": "setup", "attr": "line_start_marker", "kind": "int", "label": "Line start"},
+            {"type": "value", "target": "setup", "attr": "line_stop_marker", "kind": "int", "label": "Line stop"},
+            {"type": "value", "target": "setup", "attr": "event_type_marker", "kind": "int", "label": "Event marker"},
+            {"type": "value", "target": "setup", "attr": "pixel_per_line", "kind": "int", "label": "Pixel/line",
+             "description": "Pixels per line. 0 makes it equal to the number of lines."}
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "Brush & Decay",
+          "n_col": 1,
+          "sections": [
+            {"type": "value", "target": "brush", "attr": "size", "kind": "int", "label": "Brush size",
+             "minimum": 1, "maximum": 99},
+            {"type": "value", "target": "brush", "attr": "width", "kind": "float", "label": "Brush width",
+             "minimum": 0.1, "maximum": 50.0, "decimals": 1},
+            {"type": "choice", "target": "brush", "attr": "mode", "label": "Brush", "style": "radio",
+             "options": ["select", "deselect"]},
+            {"type": "toggle", "target": "brush", "attr": "live_update", "label": "Live update",
+             "description": "Recompute the decay while brushing."},
+            {"type": "choice", "target": "decay", "attr": "image_type", "label": "Image type",
+             "options": ["Intensity", "Mean micro time", "Intensity, Mean micro time"]},
+            {"type": "value", "target": "decay", "attr": "n_ph_min", "kind": "int", "label": "Min #Ph",
+             "minimum": 0, "description": "Minimum photons per pixel for the mean micro time."},
+            {"type": "choice", "target": "decay", "attr": "tac_coarsening", "label": "Coarsen",
+             "options": ["1", "2", "4", "8", "16"], "description": "Micro-time (TAC) binning factor."},
+            {"type": "choice", "target": "decay", "attr": "frame_mode", "label": "Frames",
+             "options": ["sum", "mean", "frame"]},
+            {"type": "value", "target": "decay", "attr": "frame_idx", "kind": "int", "label": "Frame",
+             "minimum": 0}
+          ]
+        },
+        {
+          "type": "custom",
+          "key": "image",
+          "target": "current_image",
+          "title": "Image",
+          "description": "Brush over pixels to build a selection; the decay updates live.",
+          "options": {
+            "colormap": true,
+            "default_colormap": "magma",
+            "colormap_attr": "colormap",
+            "selection_attr": "selection_mask",
+            "brush_kernel_source": "brush_kernel",
+            "on_draw": "recompute_decay",
+            "live_attr": "live_update"
+          }
+        },
+        {
+          "type": "custom",
+          "key": "clsm_roi_list",
+          "title": "ROIs"
+        },
+        {
+          "type": "plot",
+          "title": "Decay",
+          "source": "decay_series",
+          "x_label": "time (ns)",
+          "y_label": "counts",
+          "log_y": true
+        },
+        {
+          "type": "plot",
+          "title": "FRC",
+          "source": "frc_series",
+          "x_label": "spatial frequency",
+          "y_label": "correlation"
+        }
+      ]
+    }
+  ]
+}

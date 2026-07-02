@@ -1,0 +1,16 @@
+{
+  "id": "img_pixel_micro_time",
+  "version": "1.0.0",
+  "display_name": "Imaging:Mean Micro-Time",
+  "description": "Per-pixel mean micro-time (arrival time) maps from TTTR imaging data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Imaging"],
+  "icon": "⏱",
+  "state_namespace": "img_pixel_micro_time",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_pixel_micro_time.gui.tool:ImgPixelMicroTimeTool",
+    "cli": "img-pixel-micro-time=chisurf.plugins.microscopy.img_pixel_micro_time.cli:cli"
+  },
+  "menu_hidden": true
+}

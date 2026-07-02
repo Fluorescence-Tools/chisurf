@@ -1,53 +1,54 @@
 """
-Confocal Laser Scanning Microscopy (CLSM) Image Analysis
+Confocal Laser Scanning Microscopy (CLSM) Image Analysis.
 
-This plugin provides a graphical interface for analyzing and processing CLSM image data 
-from Time-Tagged Time-Resolved (TTTR) measurements.
+Create representations of CLSM-TTTR data, select pixels interactively, and
+export fluorescence-decay histograms for analysis in ChiSurf.
 
-Features:
-- Loading and visualization of CLSM-TTTR data files
-- Creation of various image representations (intensity, mean microtime)
-- Interactive pixel selection with adjustable brush tools
-- Region of interest (ROI) creation and management
-- Generation of fluorescence decay histograms from selected pixels
-- Fourier Ring Correlation (FRC) analysis for image resolution estimation
-- Export of decay histograms for further analysis in ChiSurf
-- Support for multiple frames and channels
+Architecture (mirrors the other ``microscopy`` plugins):
 
-The CLSM plugin is particularly useful for fluorescence lifetime imaging microscopy (FLIM) 
-data analysis, allowing researchers to extract time-resolved fluorescence information from 
-specific regions within microscopy images. The pixel selection tools enable precise 
-isolation of structures of interest, while the integrated decay histogram generation 
-provides immediate feedback on the fluorescence decay characteristics of the selected area.
+- ``core/``    — Qt-free algorithms (FRC, image representations, decay
+  extraction, setup presets). Safe to import headlessly.
+- ``api/``     — dataclasses, RPC contract, and orchestration functions.
+- ``backend/`` — ``register_services`` wiring ``clsm.*`` RPC methods.
+- ``client.py``— transport-agnostic :class:`ClsmClient` (local or ZMQ).
+- ``cli/``     — ``csc clsm …`` Click commands.
+- ``gui/``     — AutoForm-driven settings panels plus the interactive
+  image/brush/decay/FRC canvas (registered as custom AutoForm sections).
 
-The plugin supports various TTTR file formats and microscope setups, with configurable 
-parameters for frame markers, line markers, and pixel settings to accommodate different 
-CLSM acquisition systems.
+Importing this package is intentionally light: nothing here pulls in Qt or
+``tttrlib`` so the CLI and headless services stay fast. The GUI is loaded only
+when the plugin is launched (``__name__ == "plugin"``) or via the manifest
+``gui`` entrypoint.
 """
 
-import clsmview.gui
+from __future__ import annotations
 
+#: Plugin-menu label (``Category:Name``).
 name = "Imaging:CLSM-Draw"
+
+#: Hidden from the top-level plugin menu (launched via Imaging Tools).
 menu_hidden = True
 
-import sys
-
-import chisurf as cs
-from quest.lib.tools.dye_diffusion import TransientDecayGenerator
-
-from qtpy.QtWidgets import *
-
-log = cs.logging.info
+#: ``csc`` CLI registration (AST-scanned; see ``chisurf/core/cli.py``).
+cli_entrypoint = "clsm=chisurf.plugins.microscopy.clsm.cli:cli"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import sys
+
+    from qtpy.QtWidgets import QApplication
+
+    from chisurf.plugins.microscopy.clsm.gui.tool import CLSMPixelSelect
+
     app = QApplication(sys.argv)
-    clsm = clsmview.gui.CLSMPixelSelect()
-    clsm.show()
+    win = CLSMPixelSelect()
+    win.show()
     sys.exit(app.exec())
 
 if __name__ == "plugin":
     from chisurf.gui.misc_helpers import persist_plugin_state
-    CLSMDrawWidget = persist_plugin_state("clsm_draw")(clsmview.gui.CLSMPixelSelect)
+    from chisurf.plugins.microscopy.clsm.gui.tool import CLSMPixelSelect
+
+    CLSMDrawWidget = persist_plugin_state("clsm_draw")(CLSMPixelSelect)
     clsm = CLSMDrawWidget()
     clsm.show()

@@ -1,0 +1,30 @@
+{
+  "_comment": "Intensity imaging tool. AutoForm over IntensityViewModel: a Controls dock (file; actions in the toolbar) and per-pixel map docks. The detector-window selector now lives in each map (channel combo); the Frames dock plays the raw per-frame intensity stack. Intensity is computed for every detector window from step-0 Setup and creates the standard imaging HDF5 (with source back-reference).",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Intensity",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "value", "attr": "filename", "label": "TTTR file", "kind": "file",
+             "description": "PTU/HT3 imaging file (or drop one onto the window); CLSM markers auto-detected."},
+            {"type": "info", "source": "results_html", "height": 90}
+          ]
+        },
+        {"type": "custom", "key": "image", "target": "intensity_map", "title": "Intensity",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "count_rate_map", "title": "Count rate (kHz)",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "frame_stack", "title": "Frames (movie)",
+         "options": {"colormap": true, "colormap_attr": "colormap", "movie": true, "match_2d": true,
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}}
+      ]
+    }
+  ]
+}

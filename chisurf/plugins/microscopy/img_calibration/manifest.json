@@ -1,0 +1,15 @@
+{
+  "id": "img_calibration",
+  "version": "1.0.0",
+  "display_name": "Imaging:IRF & BG",
+  "description": "Per-detector IRF file and background (kHz) calibration; transferred to phasor and pixel-wise MLE. Optional (skippable) pipeline step.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Imaging"],
+  "icon": "🎛",
+  "state_namespace": "img_calibration",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_calibration.gui.tool:ImgCalibrationTool"
+  },
+  "menu_hidden": true
+}

@@ -1351,10 +1351,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             progress_dialog.set_frame_progress(0, n_frames)
             progress_dialog.set_line_progress(0, n_lines)
             QApplication.processEvents()
-            line_durations = np.zeros((n_frames, n_lines))
-            for i in range(n_frames):
-                for j in range(n_lines):
-                    line_durations[i, j] = self.clsm_p.get_line_duration(i, j)
             hist_p_template = np.zeros(stop - start, dtype=np.int64)
             hist_s_template = np.zeros(stop - start, dtype=np.int64)
             batch_results = []
@@ -1364,8 +1360,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 for j in range(n_lines):
                     progress_dialog.set_line_progress(j + 1, n_lines)
                     QApplication.processEvents()
-                    line_duration = line_durations[i, j]
-                    pixel_duration = line_duration / n_pixel
                     line_data = []
                     for k in range(n_pixel):
                         idx_p = self.clsm_p[i][j][k].tttr_indices
@@ -1380,7 +1374,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                             'n_s': n_s,
                             'total_photons': total_photons,
                             'pixel_idx': k,
-                            'pixel_duration': pixel_duration
                         })
                     for pixel_data in line_data:
                         k = pixel_data['pixel_idx']
@@ -1389,16 +1382,13 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                         total_photons = pixel_data['total_photons']
                         idx_p = pixel_data['idx_p']
                         idx_s = pixel_data['idx_s']
-                        pixel_duration = pixel_data['pixel_duration']
                         if total_photons < minimum_n_photons:
-                            det_name = self._current_detector_name()
-                            color = (det_name or 'detector').lower()
-                            rate_key = f"{det_name} Count Rate (KHz)"
+                            # Below the fit threshold: emit only MLE fit columns
+                            # (NaN). Per-pixel intensity/count columns come from the
+                            # Intensity tool, not the MLE, so this stays fit-only.
                             result_dict = {
                                 'Y pixel': j,
                                 'X pixel': k,
-                                rate_key: total_photons / (pixel_duration * 1000.0),
-                                f'Number of Photons': total_photons,
                                 'Pixel Number': j * n_pixel + k,
                                 f'Number of Photons (fit window)': 0,
                                 f'tau': np.nan,
@@ -1410,9 +1400,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                                 f'rS': np.nan,
                                 f'rE': np.nan,
                                 f'2I*': np.nan,
-                                f'N{color[0]}-p-all': n_p,
-                                f'N{color[0]}-s-all': n_s,
-                                f'N{color[0]}-all': total_photons
                             }
                             if n_frames > 1:
                                 result_dict['Z pixel'] = i
@@ -1435,14 +1422,12 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                         r = fit23(hist, x0, fixed)
                         tau_array[i, j, k] = r['x'][0]
                         rho_array[i, j, k] = r['x'][3]
-                        det_name = self._current_detector_name()
-                        color = (det_name or 'detector').lower()
-                        rate_key = f"{det_name} Count Rate (KHz)"
+                        # MLE-only output: fit parameters + coordinates. Per-pixel
+                        # intensity/count-rate columns are produced by the Intensity
+                        # tool and merged into the shared imaging HDF5.
                         result_dict = {
                             'Y pixel': j,
                             'X pixel': k,
-                            rate_key: total_photons / (pixel_duration * 1000.0),
-                            f'Number of Photons': total_photons,
                             'Pixel Number': j * n_pixel + k,
                             f'Number of Photons (fit window)': fit_window_photons,
                             f'tau': r['x'][0],
@@ -1454,9 +1439,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                             f'rS': np.nan,
                             f'rE': np.nan,
                             f'2I*': r.get('twoIstar', -1),
-                            'Ng-p-all': n_p,
-                            'Ng-s-all': n_s,
-                            'Ng-all': total_photons
                         }
                         if n_frames > 1:
                             result_dict['Z pixel'] = i

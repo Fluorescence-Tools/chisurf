@@ -1,0 +1,59 @@
+{
+  "_comment": "IRF & BG calibration step. AutoForm over CalibrationViewModel: pick a detector, set its IRF file, convolution range (start/stop) and background (kHz) against a live decay/IRF plot (custom `decay_conv` section, draggable range). Apply transfers the per-detector calibration to Phasor + pixel-wise MLE. Optional/skippable (after N&B, before Phasor).",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "IRF & BG",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Calibration",
+          "n_col": 1,
+          "collapsed": false,
+          "sections": [
+            {"type": "info", "source": "info_html", "height": 60},
+            {"type": "choice", "attr": "display_detector", "label": "Detector",
+             "options_source": "window_names", "call": "refresh_display",
+             "description": "Detector to calibrate (settings are per detector)."},
+            {"type": "custom", "key": "path_list", "target": "sel_irf_files", "title": "IRF files (this detector)",
+             "options": {"add_folders": false, "dialog_filter": "TTTR (*.ptu *.ht3 *.spc *.pt3);;All files (*)"},
+             "description": "IRF TTTR file(s) for this detector (summed); carried to Phasor + pixel-wise MLE. Drag-drop to add."},
+            {"type": "value", "attr": "sel_conv_start", "kind": "int", "label": "Conv start",
+             "minimum": 0, "maximum": 1000000, "call": "refresh_display",
+             "description": "Convolution/fit window start (micro-time channel). Drag the blue region."},
+            {"type": "value", "attr": "sel_conv_stop", "kind": "int", "label": "Conv stop",
+             "minimum": 0, "maximum": 1000000, "call": "refresh_display",
+             "description": "Convolution/fit window stop (micro-time channel). Drag the blue region."},
+            {"type": "value", "attr": "sel_irf_start", "kind": "int", "label": "IRF start",
+             "minimum": 0, "maximum": 1000000, "call": "refresh_display",
+             "description": "IRF window start (separate from the conv window). Drag the green region."},
+            {"type": "value", "attr": "sel_irf_stop", "kind": "int", "label": "IRF stop",
+             "minimum": 0, "maximum": 1000000, "call": "refresh_display",
+             "description": "IRF window stop (separate from the conv window). Drag the green region."},
+            {"type": "value", "attr": "sel_bg_vv", "kind": "float", "label": "Background VV (∥)",
+             "decimals": 3, "minimum": 0.0, "maximum": 1000000.0, "call": "refresh_display",
+             "description": "Parallel-channel background subtracted from the VV IRF (0 = auto baseline)."},
+            {"type": "value", "attr": "sel_bg_vh", "kind": "float", "label": "Background VH (⊥)",
+             "decimals": 3, "minimum": 0.0, "maximum": 1000000.0, "call": "refresh_display",
+             "description": "Perpendicular-channel background subtracted from the VH IRF (0 = auto baseline)."},
+            {"type": "value", "attr": "sel_shift_vv", "kind": "float", "label": "Shift VV (∥, ch)",
+             "decimals": 2, "minimum": -100000.0, "maximum": 100000.0, "step": 1.0, "call": "refresh_display",
+             "description": "Circular (wrap-around) shift of the VV IRF, in micro-time channels."},
+            {"type": "value", "attr": "sel_shift_vh", "kind": "float", "label": "Shift VH (⊥, ch)",
+             "decimals": 2, "minimum": -100000.0, "maximum": 100000.0, "step": 1.0, "call": "refresh_display",
+             "description": "Circular (wrap-around) shift of the VH IRF, in micro-time channels."},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "Apply →", "action": "apply",
+                 "description": "Transfer IRF / convolution-range / background to Phasor and MLE."}
+              ]
+            }
+          ]
+        },
+        {"type": "custom", "key": "decay_conv", "target": "decay_data", "title": "Decay & IRF",
+         "description": "Data + IRF decay (semilog) with a draggable convolution range and background line."}
+      ]
+    }
+  ]
+}

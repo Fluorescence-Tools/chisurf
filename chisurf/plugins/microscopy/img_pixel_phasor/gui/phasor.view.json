@@ -1,0 +1,50 @@
+{
+  "_comment": "Phasor-FLIM imaging tool. AutoForm over PhasorImgViewModel: a Controls dock (file, frequency, min photons; actions in the toolbar), g/s/intensity map docks and a 2-D phasor density histogram. The detector-window selector lives in each map (channel combo); the Frames dock plays the raw per-frame intensity stack. The IRF reference is carried per-detector from the IRF & BG step. Phasor is computed for every detector window from step-0 Setup.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Phasor-FLIM",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "value", "attr": "filename", "label": "TTTR file", "kind": "file",
+             "description": "PTU/HT3 imaging file; CLSM markers auto-detected."},
+            {"type": "value", "attr": "n_ph_min", "label": "Min photons", "kind": "int",
+             "minimum": 1, "maximum": 10000,
+             "description": "Minimum photons per pixel for a valid phasor."},
+            {"type": "value", "attr": "frequency", "label": "Frequency (MHz, -1=auto)", "kind": "float",
+             "decimals": 3, "minimum": -1.0, "maximum": 1000.0, "step": 1.0,
+             "description": "Modulation frequency; -1 auto-derives from the TTTR header."},
+            {"type": "info", "source": "results_html", "height": 90}
+          ]
+        },
+        {"type": "custom", "key": "image", "target": "intensity_map", "title": "Intensity",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "g_map", "title": "Phasor g",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "s_map", "title": "Phasor s",
+         "options": {"colormap": true, "colormap_attr": "colormap",
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "g_frames", "title": "Phasor g movie",
+         "options": {"colormap": true, "colormap_attr": "colormap", "movie": true, "match_2d": true,
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "s_frames", "title": "Phasor s movie",
+         "options": {"colormap": true, "colormap_attr": "colormap", "movie": true, "match_2d": true,
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "image", "target": "frame_stack", "title": "Frames (movie)",
+         "options": {"colormap": true, "colormap_attr": "colormap", "movie": true, "match_2d": true,
+                     "channel_source": "window_names", "channel_attr": "display_window", "channel_call": "refresh_display"}},
+        {"type": "custom", "key": "phasor", "target": "phasor_histogram_map", "title": "Phasor plot",
+         "description": "2-D density of the per-pixel phasor cloud (g horizontal, s vertical) with the universal semicircle."},
+        {"type": "custom", "key": "phasor", "target": "phasor_histogram_map", "title": "Phasor plot movie",
+         "options": {"movie": true, "frames": "phasor_histogram_frames", "movie_fps": 8},
+         "description": "Per-frame phasor density animated over acquisition frames (play/loop/stop + frame slider)."}
+      ]
+    }
+  ]
+}

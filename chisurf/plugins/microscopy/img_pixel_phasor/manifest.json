@@ -1,0 +1,130 @@
+{
+  "id": "img_pixel_phasor",
+  "version": "1.0.0",
+  "display_name": "Imaging:Phasor-FLIM",
+  "description": "Per-pixel phasor (g, s) maps and phasor plot from TTTR imaging data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Imaging", "Phasor-FLIM"],
+  "icon": "◐",
+  "state_namespace": "img_pixel_phasor",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_pixel_phasor.gui.tool:ImgPixelPhasorTool",
+    "cli": "img-pixel-phasor=chisurf.plugins.microscopy.img_pixel_phasor.cli:cli",
+    "services": "chisurf.plugins.microscopy.img_pixel_phasor.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "phasor.describe",
+      "summary": "Return phasor toolkit capabilities and defaults (frequency, harmonic, overlay sets, filters)."
+    },
+    {
+      "name": "phasor.apparent_lifetime",
+      "summary": "Apparent phase (tau_phi) and modulation (tau_m) lifetimes from g, s maps.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "g": {"type": "array"},
+          "s": {"type": "array"},
+          "frequency_mhz": {"type": "number"}
+        },
+        "required": ["g", "s"]
+      },
+      "result_schema": {
+        "type": "object",
+        "properties": {"tau_phi": {"type": "array"}, "tau_m": {"type": "array"}}
+      }
+    },
+    {
+      "name": "phasor.filter",
+      "summary": "NaN-safe median or gaussian filtering of g, s phasor maps.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "g": {"type": "array"},
+          "s": {"type": "array"},
+          "kind": {"type": "string", "enum": ["median", "gaussian"]},
+          "size": {"type": "integer"},
+          "repeat": {"type": "integer"},
+          "sigma": {"type": "number"}
+        },
+        "required": ["g", "s"]
+      }
+    },
+    {
+      "name": "phasor.component_fraction",
+      "summary": "Fraction of component 1 by projection onto the two-component line.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "g": {"type": "array"},
+          "s": {"type": "array"},
+          "c1": {"type": "array"},
+          "c2": {"type": "array"}
+        },
+        "required": ["g", "s", "c1", "c2"]
+      }
+    },
+    {
+      "name": "phasor.unmix",
+      "summary": "Non-negative, sum-to-one fractions for N >= 2 component phasors.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "g": {"type": "array"},
+          "s": {"type": "array"},
+          "components": {"type": "array"}
+        },
+        "required": ["g", "s", "components"]
+      }
+    },
+    {
+      "name": "phasor.cursor_mask",
+      "summary": "Boolean mask of pixels within a circular or elliptic phasor cursor.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "g": {"type": "array"},
+          "s": {"type": "array"},
+          "center": {"type": "array"},
+          "kind": {"type": "string", "enum": ["circular", "elliptic"]},
+          "radius": {"type": "number"},
+          "radii": {"type": "array"},
+          "angle": {"type": "number"}
+        },
+        "required": ["g", "s", "center"]
+      }
+    },
+    {
+      "name": "phasor.pseudo_color",
+      "summary": "Colorize a stack of boolean masks into an RGB label image.",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "masks": {"type": "array"},
+          "colors": {"type": "array"},
+          "intensity": {"type": "array"}
+        },
+        "required": ["masks"]
+      }
+    },
+    {
+      "name": "phasor.overlays",
+      "summary": "Reference-geometry polylines (semicircle, lifetime grid/ticks, FRET, component line).",
+      "params_schema": {
+        "type": "object",
+        "properties": {
+          "frequency_mhz": {"type": "number"},
+          "harmonic": {"type": "integer"},
+          "sets": {"type": "array", "items": {"type": "string"}},
+          "taus": {"type": "array", "items": {"type": "number"}},
+          "c1": {"type": "array"},
+          "c2": {"type": "array"},
+          "tau_d0": {"type": "number"},
+          "e_range": {"type": "array"}
+        }
+      }
+    }
+  ],
+  "menu_hidden": true
+}

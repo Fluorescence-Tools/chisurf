@@ -1,0 +1,16 @@
+{
+  "id": "img_pixel_nb",
+  "version": "1.0.0",
+  "display_name": "Imaging:Number & Brightness",
+  "description": "Per-pixel Number (N) and Brightness (B) maps from TTTR imaging data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Imaging"],
+  "icon": "✨",
+  "state_namespace": "img_pixel_nb",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.microscopy.img_pixel_nb.gui.tool:ImgPixelNBTool",
+    "cli": "img-pixel-nb=chisurf.plugins.microscopy.img_pixel_nb.cli:cli"
+  },
+  "menu_hidden": true
+}
