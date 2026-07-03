@@ -195,6 +195,7 @@ class AutoForm(QtWidgets.QWidget):
             grid.setHorizontalSpacing(6)
             grid.setVerticalSpacing(2)
             per_row = max(1, fields_per_row or FIELDS_PER_ROW)
+            any_expanding = False
             for i, field in enumerate(pending):
                 r, c = divmod(i, per_row)
                 col = c * 2
@@ -205,12 +206,27 @@ class AutoForm(QtWidgets.QWidget):
                     label.setToolTip(tip)
                 # Fields stretch horizontally to share the available width; the
                 # field columns carry the stretch, the label columns stay fixed.
-                field.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+                # A field marked ``_autoform_expanding`` (e.g. a text preview) also
+                # grows vertically and its grid row carries the stretch.
+                expanding = bool(getattr(field, "_autoform_expanding", False))
+                vpolicy = QtWidgets.QSizePolicy.Expanding if expanding else QtWidgets.QSizePolicy.Fixed
+                field.setSizePolicy(QtWidgets.QSizePolicy.Expanding, vpolicy)
                 _make_field_shrinkable(field)
                 grid.addWidget(label, r, col)
                 grid.addWidget(field, r, col + 1)
                 grid.setColumnStretch(col + 1, 1)
+                if expanding:
+                    grid.setRowStretch(r, 1)
+                    label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
+                    any_expanding = True
             pending.clear()
+            # Propagate expansion so the enclosing panel hands this form the spare
+            # vertical space instead of appending a trailing stretch below it.
+            if any_expanding:
+                container._autoform_expanding = True
+                container.setSizePolicy(
+                    QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
+                )
             emit(container)
 
         for section in section_list:
@@ -432,6 +448,7 @@ class AutoForm(QtWidgets.QWidget):
         area.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         if getattr(section, "height", 0):
             area.setMinimumHeight(int(section.height))
+        built: list[tuple[QtWidgets.QWidget, str]] = []
         for i, child in enumerate(section.sections):
             name = (
                 getattr(child, "title", None) or getattr(child, "label", None) or f"Panel {i + 1}"
@@ -470,10 +487,39 @@ class AutoForm(QtWidgets.QWidget):
                 widget = None
             if widget is None:
                 continue
-            try:
-                area.add_panel(widget, str(name))
-            except Exception:
-                pass
+            built.append((widget, str(name)))
+
+        split = (getattr(section, "split", "") or "").lower()
+        if split in ("horizontal", "vertical") and len(built) > 1:
+            # Author-requested initial split: place the panels side-by-side (or
+            # stacked) instead of tabbing them. The user can still rearrange.
+            zone = "right" if split == "horizontal" else "bottom"
+            first_widget, first_name = built[0]
+            area.addTab(first_widget, first_name)
+            target_tw = area.find_main_tab_widget()
+            for widget, name in built[1:]:
+                new_tw = area._create_tab_widget()
+                new_tw.addTab(widget, name)
+                area._all_widgets.append(widget)
+                area._tab_names[widget] = name
+                try:
+                    area.setTabCloseMode(widget, "hide")
+                except Exception:
+                    pass
+                area.split_tab_widget(target_tw, new_tw, zone)
+                target_tw = new_tw
+            root = getattr(area, "_root_widget", None)
+            if isinstance(root, QtWidgets.QSplitter):
+                try:
+                    root.setSizes([400, 640])
+                except Exception:
+                    pass
+        else:
+            for widget, name in built:
+                try:
+                    area.add_panel(widget, str(name))
+                except Exception:
+                    pass
         # Remember the user's dock arrangement across sessions when the view asks
         # for it (all panels are added by now, so restore-on-show can find them).
         if getattr(section, "persist", ""):

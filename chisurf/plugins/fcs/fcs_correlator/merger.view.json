@@ -16,44 +16,10 @@
     },
     {
       "type": "custom",
-      "key": "merger_table",
+      "key": "merger_workspace",
       "target": "",
-      "options": {}
-    },
-    {
-      "type": "panel",
-      "title": "Correlation Plots",
-      "collapsed": false,
-      "sections": [
-        {
-          "type": "plot",
-          "source": "curves_series",
-          "title": "Individual FCS Curves",
-          "x_label": "Correlation time (ms)",
-          "y_label": "G",
-          "log_x": true,
-          "height": 200,
-          "legend": true,
-          "description": "Individual FCS correlation chunks. Dashed = excluded from merge."
-        },
-        {
-          "type": "plot",
-          "source": "mean_series",
-          "title": "Merged FCS Curve",
-          "x_label": "Correlation time (ms)",
-          "y_label": "G",
-          "log_x": true,
-          "height": 200,
-          "legend": false,
-          "description": "Weighted average of the checked correlation curves."
-        }
-      ]
-    },
-    {
-      "type": "custom",
-      "key": "merger_controls",
-      "target": "",
-      "options": {}
+      "options": {},
+      "description": "Correlation list (left) and FCS plots (right) in draggable, resizable docks. Select a row to highlight its curve."
     }
   ]
 }

@@ -303,6 +303,13 @@ class ImagingToolsTool(NavigationPanelTool):
             self.nav_list.currentRowChanged.connect(self._autorun_on_nav)
         except Exception:
             logger.debug("could not connect nav auto-run", exc_info=True)
+        # Open on the Browser by default (the base shell starts on the Setup
+        # panel, which also loads its context); the user typically begins by
+        # picking an image, not editing the detector setup.
+        for i, panel in enumerate(self.panels):
+            if panel.get("role") == "browser":
+                self.nav_list.setCurrentRow(i)
+                break
 
     def _autorun_on_nav(self, row: int) -> None:
         """Auto-run the newly selected step if it has a source but no result."""

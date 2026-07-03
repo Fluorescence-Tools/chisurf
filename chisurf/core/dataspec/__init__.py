@@ -281,6 +281,8 @@ class ToggleSection(Section):
 
     label: str = "Enabled"
     attr: typing.Optional[str] = None
+    #: Optional model *method* invoked with the new value on change (tool view-models).
+    call: str = ""
     set_action: str = ""
     action_fixed: typing.Mapping[str, typing.Any] = dataclasses.field(default_factory=dict)
     value_key: str = "value"
@@ -324,6 +326,9 @@ class ValueSection(Section):
     placeholder: str = ""
     #: Render the field as read-only (display/output field).
     read_only: bool = False
+    #: Let the field grow to fill spare vertical space (``text`` kind only, e.g.
+    #: a JSON/log preview that should fill its panel instead of staying compact).
+    expand: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -402,6 +407,10 @@ class DockAreaSection(Section):
     sections: typing.Tuple[Section, ...] = ()
     #: Optional minimum height (pixels) for the dock area (0 = unconstrained).
     height: int = 0
+    #: Initial arrangement of the panels. ``""`` (default) stacks them as tabs;
+    #: ``"horizontal"`` places them left-to-right, ``"vertical"`` top-to-bottom.
+    #: The user can still drag panels into any tab/split afterwards.
+    split: str = ""
     #: When set, the dock arrangement (splits/tabs/sizes) is remembered across
     #: sessions under this plugin-unique settings key (typically the plugin's
     #: ``state_namespace``).

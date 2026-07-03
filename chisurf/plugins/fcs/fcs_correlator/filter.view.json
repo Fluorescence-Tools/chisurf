@@ -1,0 +1,305 @@
+{
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Channel selection",
+      "collapsed": false,
+      "n_col": 2,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "channel_numbers",
+          "label": "Channels",
+          "kind": "str",
+          "placeholder": "all",
+          "description": "Detector routing channels to keep (comma/space separated; empty = all)."
+        },
+        {
+          "type": "value",
+          "attr": "microtime_range",
+          "label": "µt range",
+          "kind": "str",
+          "placeholder": "0-4095",
+          "description": "Micro-time range(s) to keep, e.g. 0-2048;2048-4095."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Macro time interval",
+      "collapsed": false,
+      "n_col": 2,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "min_dmt",
+          "label": "min dMT (ms)",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Lower inter-photon-time threshold."
+        },
+        {
+          "type": "toggle",
+          "attr": "use_min",
+          "label": "use min",
+          "description": "Apply the lower dMT threshold."
+        },
+        {
+          "type": "value",
+          "attr": "max_dmt",
+          "label": "max dMT (ms)",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Upper inter-photon-time threshold; also the burst/count-rate time window."
+        },
+        {
+          "type": "toggle",
+          "attr": "use_max",
+          "label": "use max",
+          "description": "Apply the upper dMT threshold."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Filter",
+      "collapsed": false,
+      "n_col": 2,
+      "sections": [
+        {
+          "type": "choice",
+          "attr": "filter_mode",
+          "label": "Mode",
+          "style": "combo",
+          "options": ["burst", "count_rate", "bocpd", "kalman", "cusum"],
+          "description": "burst / count-rate thresholding, or change-point burst detection (BOCPD / Kalman / CUSUM)."
+        },
+        {
+          "type": "toggle",
+          "attr": "filter_enabled",
+          "label": "enable",
+          "description": "Apply the burst/count-rate filter (channel/µt/dMT selections always apply)."
+        },
+        {
+          "type": "value",
+          "attr": "min_ph",
+          "label": "Min photons",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Minimum photons per burst (burst) / max photons in window (count-rate)."
+        },
+        {
+          "type": "value",
+          "attr": "cr_tw",
+          "label": "Photon window",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Number of photons over which the local count rate is computed (burst mode)."
+        },
+        {
+          "type": "toggle",
+          "attr": "invert",
+          "label": "invert",
+          "description": "Invert the selection (keep the rejected photons)."
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Change-point parameters (BOCPD / Kalman / CUSUM)",
+      "collapsed": true,
+      "n_col": 2,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "trace_bin_width",
+          "label": "Trace bin (ms)",
+          "kind": "float",
+          "minimum": 0.001,
+          "maximum": 10000.0,
+          "description": "Bin width for the binned-intensity trace used by BOCPD/Kalman."
+        },
+        {
+          "type": "toggle",
+          "attr": "use_gap_fill",
+          "label": "Fill gaps",
+          "description": "Merge selected segments separated by up to 'Max gap' photons."
+        },
+        {
+          "type": "value",
+          "attr": "max_gap",
+          "label": "Max gap",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 100000,
+          "description": "Maximum gap (photons) bridged when filling gaps."
+        },
+        {
+          "type": "value",
+          "attr": "bocpd_prior_count",
+          "label": "BOCPD prior count",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Prior photon count for the BOCPD Gamma prior."
+        },
+        {
+          "type": "value",
+          "attr": "bocpd_prior_duration",
+          "label": "BOCPD prior dur",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Time window assumed for the BOCPD prior count."
+        },
+        {
+          "type": "value",
+          "attr": "bocpd_changepoint_prob",
+          "label": "BOCPD cp prob",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Probability of a burst start in any bin (BOCPD)."
+        },
+        {
+          "type": "value",
+          "attr": "kalman_q",
+          "label": "Kalman Q",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Process-noise parameter (Kalman)."
+        },
+        {
+          "type": "value",
+          "attr": "kalman_r_scale",
+          "label": "Kalman R scale",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Measurement-noise scaling (Kalman)."
+        },
+        {
+          "type": "value",
+          "attr": "kalman_z_thresh",
+          "label": "Kalman z-thresh",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Burst-detection threshold (Kalman)."
+        },
+        {
+          "type": "value",
+          "attr": "kalman_min_len",
+          "label": "Kalman min len",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Minimum burst length in bins (Kalman)."
+        },
+        {
+          "type": "value",
+          "attr": "kalman_merge_gap",
+          "label": "Kalman merge gap",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 100000,
+          "description": "Maximum gap between bursts to merge (Kalman)."
+        },
+        {
+          "type": "value",
+          "attr": "cusum_bg_rate",
+          "label": "CUSUM bg rate",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 1000000.0,
+          "description": "Background rate (CUSUM)."
+        },
+        {
+          "type": "value",
+          "attr": "cusum_sb_ratio",
+          "label": "CUSUM s/b ratio",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Signal-to-background ratio (CUSUM)."
+        },
+        {
+          "type": "value",
+          "attr": "cusum_alpha",
+          "label": "CUSUM alpha",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "False-alarm probability (CUSUM)."
+        },
+        {
+          "type": "value",
+          "attr": "cusum_beta",
+          "label": "CUSUM beta",
+          "kind": "float",
+          "minimum": 0.0,
+          "maximum": 100000.0,
+          "description": "Missed-detection parameter (CUSUM)."
+        }
+      ]
+    },
+    {
+      "type": "custom",
+      "key": "filter_info",
+      "target": "",
+      "options": {}
+    },
+    {
+      "type": "panel",
+      "title": "Plot settings",
+      "collapsed": true,
+      "n_col": 2,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "mcs_bin_width",
+          "label": "MCS bin (ms)",
+          "kind": "float",
+          "minimum": 0.001,
+          "maximum": 10000.0,
+          "description": "Bin width of the count-rate trace."
+        },
+        {
+          "type": "value",
+          "attr": "range_lo",
+          "label": "Range lo",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 1000000000,
+          "description": "First photon index shown in the dT plot."
+        },
+        {
+          "type": "value",
+          "attr": "range_hi",
+          "label": "Range hi",
+          "kind": "int",
+          "minimum": 0,
+          "maximum": 1000000000,
+          "description": "Last photon index shown in the dT plot (0 = all)."
+        }
+      ]
+    },
+    {
+      "type": "custom",
+      "key": "filter_dt_plot",
+      "target": "",
+      "options": {}
+    },
+    {
+      "type": "custom",
+      "key": "filter_cr_plot",
+      "target": "",
+      "options": {}
+    }
+  ]
+}

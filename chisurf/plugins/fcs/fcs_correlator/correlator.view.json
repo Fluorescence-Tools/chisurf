@@ -1,120 +1,138 @@
 {
   "sections": [
     {
-      "type": "custom",
-      "key": "fcs_presets",
-      "target": "",
-      "options": {}
-    },
-    {
-      "type": "panel",
-      "title": "Correlation Channels",
-      "collapsed": false,
+      "type": "dock_area",
+      "split": "horizontal",
+      "persist": "fcs_correlator_dock",
       "sections": [
         {
-          "type": "custom",
-          "key": "channel_combos",
-          "target": "",
-          "options": {}
+          "type": "panel",
+          "title": "Controls",
+          "sections": [
+            {
+              "type": "custom",
+              "key": "fcs_presets",
+              "target": "",
+              "options": {}
+            },
+            {
+              "type": "panel",
+              "title": "Correlation Channels",
+              "collapsed": false,
+              "sections": [
+                {
+                  "type": "custom",
+                  "key": "channel_combos",
+                  "target": "",
+                  "options": {}
+                },
+                {
+                  "type": "value",
+                  "attr": "channel_a",
+                  "label": "Det. channels A",
+                  "kind": "str",
+                  "placeholder": "e.g. 0, 1",
+                  "description": "Comma or space-separated detector routing channels for channel A."
+                },
+                {
+                  "type": "value",
+                  "attr": "channel_b",
+                  "label": "Det. channels B",
+                  "kind": "str",
+                  "placeholder": "e.g. 2, 3",
+                  "description": "Comma or space-separated detector routing channels for channel B."
+                },
+                {
+                  "type": "value",
+                  "attr": "microtime_range_a",
+                  "label": "µt range A",
+                  "kind": "str",
+                  "placeholder": "e.g. 0-100;200-300",
+                  "description": "Semicolon-separated microtime ranges for channel A: start-end;start-end."
+                },
+                {
+                  "type": "value",
+                  "attr": "microtime_range_b",
+                  "label": "µt range B",
+                  "kind": "str",
+                  "placeholder": "e.g. 50-150;250-350",
+                  "description": "Semicolon-separated microtime ranges for channel B: start-end;start-end."
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "title": "Correlation Settings",
+              "collapsed": false,
+              "sections": [
+                {
+                  "type": "value",
+                  "attr": "n_bins",
+                  "label": "Bins (B)",
+                  "kind": "int",
+                  "minimum": 1,
+                  "maximum": 65535,
+                  "description": "Number of linear correlation bins per cascade."
+                },
+                {
+                  "type": "value",
+                  "attr": "n_casc",
+                  "label": "Cascades",
+                  "kind": "int",
+                  "minimum": 1,
+                  "maximum": 64,
+                  "description": "Number of multi-tau cascades."
+                },
+                {
+                  "type": "value",
+                  "attr": "n_splits",
+                  "label": "Splits",
+                  "kind": "int",
+                  "minimum": 1,
+                  "maximum": 128,
+                  "description": "Number of chunks to split data into for block averaging."
+                },
+                {
+                  "type": "toggle",
+                  "attr": "make_fine",
+                  "label": "Fine correlation",
+                  "description": "Use the micro-time-resolved correlation grid."
+                },
+                {
+                  "type": "choice",
+                  "attr": "microtime_binning",
+                  "label": "µt binning",
+                  "style": "combo",
+                  "options": [1, 2, 4, 8, 16],
+                  "description": "Micro-time binning factor for fine correlation."
+                }
+              ]
+            },
+            {
+              "type": "custom",
+              "key": "correlate_controls",
+              "target": "",
+              "options": {}
+            }
+          ]
         },
         {
-          "type": "value",
-          "attr": "channel_a",
-          "label": "Det. channels A",
-          "kind": "str",
-          "placeholder": "e.g. 0, 1",
-          "description": "Comma or space-separated detector routing channels for channel A."
-        },
-        {
-          "type": "value",
-          "attr": "channel_b",
-          "label": "Det. channels B",
-          "kind": "str",
-          "placeholder": "e.g. 2, 3",
-          "description": "Comma or space-separated detector routing channels for channel B."
-        },
-        {
-          "type": "value",
-          "attr": "microtime_range_a",
-          "label": "\u00b5t range A",
-          "kind": "str",
-          "placeholder": "e.g. 0-100;200-300",
-          "description": "Semicolon-separated microtime ranges for channel A: start-end;start-end."
-        },
-        {
-          "type": "value",
-          "attr": "microtime_range_b",
-          "label": "\u00b5t range B",
-          "kind": "str",
-          "placeholder": "e.g. 50-150;250-350",
-          "description": "Semicolon-separated microtime ranges for channel B: start-end;start-end."
+          "type": "panel",
+          "title": "FCS Correlation",
+          "sections": [
+            {
+              "type": "plot",
+              "source": "correlation_series",
+              "title": "FCS Correlation",
+              "x_label": "Correlation time (ms)",
+              "y_label": "G",
+              "log_x": true,
+              "legend": true,
+              "description": "Computed FCS correlation curves, one per chunk."
+            }
+          ]
         }
       ]
-    },
-    {
-      "type": "panel",
-      "title": "Correlation Settings",
-      "collapsed": false,
-      "sections": [
-        {
-          "type": "value",
-          "attr": "n_bins",
-          "label": "Bins (B)",
-          "kind": "int",
-          "minimum": 1,
-          "maximum": 65535,
-          "description": "Number of linear correlation bins per cascade."
-        },
-        {
-          "type": "value",
-          "attr": "n_casc",
-          "label": "Cascades",
-          "kind": "int",
-          "minimum": 1,
-          "maximum": 64,
-          "description": "Number of multi-tau cascades."
-        },
-        {
-          "type": "value",
-          "attr": "n_splits",
-          "label": "Splits",
-          "kind": "int",
-          "minimum": 1,
-          "maximum": 128,
-          "description": "Number of chunks to split data into for block averaging."
-        },
-        {
-          "type": "toggle",
-          "attr": "make_fine",
-          "label": "Fine correlation",
-          "description": "Use the micro-time-resolved correlation grid."
-        },
-        {
-          "type": "choice",
-          "attr": "microtime_binning",
-          "label": "\u00b5t binning",
-          "style": "combo",
-          "options": [1, 2, 4, 8, 16],
-          "description": "Micro-time binning factor for fine correlation."
-        }
-      ]
-    },
-    {
-      "type": "custom",
-      "key": "correlate_controls",
-      "target": "",
-      "options": {}
-    },
-    {
-      "type": "plot",
-      "source": "correlation_series",
-      "title": "FCS Correlation",
-      "x_label": "Correlation time (ms)",
-      "y_label": "G",
-      "log_x": true,
-      "height": 260,
-      "legend": true,
-      "description": "Computed FCS correlation curves, one per chunk."
     }
   ]
 }

@@ -1091,8 +1091,30 @@ class DetectorWizardPage(QWizardPage):
             "excitation_period": self.excitation_period
         }
 
+        # Precompute the channels map (windows × detectors cross-product) so
+        # downstream consumers (e.g. the image browser) get per-window/detector
+        # combos directly. Built inline from ``wins``/``dets`` — calling
+        # ``self.channels()`` here would recurse through ``get_settings``.
+        channels_map = {}
+        for wname, wrange in wins.items():
+            for dname, dinfo in dets.items():
+                channels_map[f"{wname}_{dname}"] = [
+                    {
+                        "window_range": wrange,
+                        "detector_chs": dinfo.get("chs", []),
+                        "micro_time_range": mtr,
+                    }
+                    for mtr in dinfo.get("micro_time_ranges", [])
+                ]
+
         # Return the result
-        result = {"windows": wins, "detectors": dets, "tttr_reading": tttr_reading}
+        result = {
+            "windows": wins,
+            "detectors": dets,
+            "tttr_reading": tttr_reading,
+            "channels": channels_map,
+            "setup_name": self.current_setup_name or "",
+        }
 
         # Include optical config from the easy mode dialog (if set)
         if self._optical_config is not None:
@@ -1118,19 +1140,8 @@ class DetectorWizardPage(QWizardPage):
         return result
 
     def channels(self):
-        chs = {}
-        settings = self.get_settings()
-        for wname, wrange in settings["windows"].items():
-            for dname, dinfo in settings["detectors"].items():
-                cname = f"{wname}_{dname}"
-                chs[cname] = []
-                for mtr in dinfo["micro_time_ranges"]:
-                    chs[cname].append({
-                        "window_range": wrange,
-                        "detector_chs": dinfo["chs"],
-                        "micro_time_range": mtr
-                    })
-        return chs
+        """Return the windows × detectors channels map (precomputed in get_settings)."""
+        return self.get_settings().get("channels", {})
 
     def _on_save(self):
         data = self.get_settings()

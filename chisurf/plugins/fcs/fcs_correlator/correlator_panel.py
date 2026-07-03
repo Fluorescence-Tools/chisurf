@@ -111,8 +111,16 @@ class CorrelatorSettingsModel:
         }
 
     def correlation_series(self):
+        import pyqtgraph as pg
+
+        n = len(self._correlations)
         return [
-            {"x": c["x"], "y": c["y"], "name": f"chunk {i}"}
+            {
+                "x": c["x"],
+                "y": c["y"],
+                "name": f"chunk {i}",
+                "color": pg.intColor(i, hues=max(n, 6)),
+            }
             for i, c in enumerate(self._correlations)
         ]
 
@@ -209,6 +217,13 @@ class CorrelatorSettingsModel:
         dur = (t_end - t_start) * dT
 
         correlator = tttrlib.Correlator(**settings)
+        # Symmetric (Schätzel) normalization — normalizes each lag by the count
+        # rate in the overlapping sub-intervals instead of the global mean count
+        # rate, removing the long-lag upturn artifact near the chunk duration.
+        try:
+            correlator.method = "laurence"
+        except Exception:
+            pass
         correlator.set_macrotimes(t, t)
         correlator.set_weights(w1, w2)
         if self.make_fine:
@@ -223,9 +238,18 @@ class CorrelatorSettingsModel:
         else:
             dt = dT
         x = correlator.x_axis * dt
+        y = np.asarray(correlator.correlation, dtype=float)
+        # Multi-tau produces lag times set by the cascade count, which can run
+        # past the chunk's actual measured duration. Correlation values at lags
+        # beyond the duration are meaningless (ever fewer photon pairs). Keep the
+        # lag grid intact (so chunks stay averageable) but flatten those points to
+        # the uncorrelated baseline G=1 (zero correlation amplitude). ``dur`` and
+        # ``x`` are both in milliseconds.
+        if dur > 0.0:
+            y[x > dur] = 1.0
         return {
             "x": x.tolist(),
-            "y": correlator.correlation.tolist(),
+            "y": y.tolist(),
             "correlation_settings": settings,
             "chunk": idx,
             "duration": dur / 1000.0,
@@ -248,9 +272,27 @@ class CorrelatorSettingsModel:
         pairs = block.get("pairs", []) if isinstance(block, dict) else []
         if not isinstance(pairs, list):
             pairs = []
+        if not pairs and detectors:
+            # No FCS preset block for this setup: derive sensible defaults from
+            # the detectors — an ACF per detector plus a CCF for each pair.
+            pairs = self._default_pairs_from_detectors(detectors)
         self._fcs_presets = pairs
         self._fcs_preset_detectors = detectors or {}
         self._fcs_preset_corr = block.get("correlator", {}) if isinstance(block, dict) else {}
+
+    @staticmethod
+    def _default_pairs_from_detectors(detectors: dict) -> typing.List[dict]:
+        names = [n for n in detectors if isinstance(n, str) and n.strip()]
+        pairs: typing.List[dict] = []
+        for n in names:
+            pairs.append({"name": f"{n} ACF", "channel_a": n, "channel_b": n, "kind": "ACF"})
+        for i in range(len(names)):
+            for j in range(i + 1, len(names)):
+                a, b = names[i], names[j]
+                pairs.append(
+                    {"name": f"{a}×{b} CCF", "channel_a": a, "channel_b": b, "kind": "CCF"}
+                )
+        return pairs
 
     def apply_preset(self, index: int) -> bool:
         if index <= 0 or not self._fcs_presets:

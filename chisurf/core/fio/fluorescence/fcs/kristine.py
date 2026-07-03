@@ -99,7 +99,7 @@ def read_kristine(
     # First try to use experimental errors in the 4th column (index 3)
     try:
         w = 1. / data[:, 3][i]
-    except (IndexError, np.AxisError):
+    except (IndexError, ValueError):
         # In case everything fails
         # Use no errors at all but uniform weighting
         w = 1. / cs.core.fluorescence.fcs.noise(x, y, dur, cr, weight_type='suren')
@@ -107,7 +107,7 @@ def read_kristine(
     # Try to load mask from the 5th column (index 4)
     try:
         mask = data[:, 4][i]
-    except (IndexError, np.AxisError):
+    except (IndexError, ValueError):
         mask = np.ones_like(x)
 
     measurement_id, _ = os.path.splitext(

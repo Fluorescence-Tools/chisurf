@@ -22,6 +22,7 @@ class MergerSettingsModel:
     def __init__(self):
         self.folder_path = ""
         self._correlations: typing.List[dict] = []
+        self._selected_index: int = -1
         self._form: typing.Any = None
 
     def view_spec(self):
@@ -32,20 +33,24 @@ class MergerSettingsModel:
     def curves_series(self):
         result = []
         for i, cor in enumerate(self._correlations):
-            selected = cor.get("use_curve", True)
+            included = cor.get("use_curve", True)
+            highlighted = i == self._selected_index
             try:
                 color = cs.core.settings.colors[i % len(cs.core.settings.colors)][
                     "hex"
                 ]
             except Exception:
                 color = "y"
+            # The row selected in the table is drawn white and thick so it
+            # stands out from the other curves; excluded curves are dashed.
             result.append(
                 {
                     "x": cor["x"],
                     "y": cor["y"],
                     "name": f"chunk {i}",
-                    "color": color,
-                    "style": "solid" if selected else "dash",
+                    "color": "w" if highlighted else color,
+                    "width": 3 if highlighted else 1,
+                    "style": "solid" if included else "dash",
                 }
             )
         return result
@@ -242,6 +247,8 @@ class _MergerTable(QtWidgets.QWidget):
             self._model._toggle_curve(row)
 
     def _on_selection_changed(self) -> None:
+        rows = self.table.selectionModel().selectedRows()
+        self._model._selected_index = rows[0].row() if rows else -1
         if self._model._form is not None:
             try:
                 self._model._form.refresh_plots()
@@ -297,6 +304,8 @@ class _MergerTable(QtWidgets.QWidget):
 
 @register_section("merger_controls")
 class _MergerControls(QtWidgets.QWidget):
+    AUTOFORM_REFRESH = True
+
     def __init__(self, model, target: str = "", **options):
         super().__init__()
         self._model = model
@@ -338,3 +347,124 @@ class _MergerControls(QtWidgets.QWidget):
             )
         else:
             self.info.setText(f"{n} curve(s)")
+
+
+class _CorrPlot(QtWidgets.QWidget):
+    """Minimal log-x FCS plot that redraws a model source on refresh."""
+
+    AUTOFORM_REFRESH = True
+
+    _STYLES = {
+        "solid": QtCore.Qt.SolidLine,
+        "dash": QtCore.Qt.DashLine,
+        "dot": QtCore.Qt.DotLine,
+    }
+
+    def __init__(self, model, source: str, title: str, *, legend: bool = True):
+        super().__init__()
+        import pyqtgraph as pg
+
+        self._model = model
+        self._source = source
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.plot = pg.PlotWidget()
+        self.plot.setLabel("bottom", "Correlation time (ms)")
+        self.plot.setLabel("left", "G")
+        self.plot.setTitle(title)
+        try:
+            self.plot.setLogMode(True, False)
+        except Exception:
+            pass
+        if legend:
+            try:
+                self.plot.addLegend()
+            except Exception:
+                pass
+        try:
+            self.plot.getPlotItem().getViewBox().setMenuEnabled(False)
+        except Exception:
+            pass
+        layout.addWidget(self.plot)
+        self.refresh()
+
+    def refresh(self) -> None:
+        import pyqtgraph as pg
+
+        source = getattr(self._model, self._source, None)
+        if not callable(source):
+            return
+        try:
+            series = source() or []
+        except Exception:
+            return
+        self.plot.clear()
+        for s in series:
+            pen = pg.mkPen(
+                s.get("color", "y"),
+                width=int(s.get("width", 1)),
+                style=self._STYLES.get(s.get("style", "solid"), QtCore.Qt.SolidLine),
+            )
+            self.plot.plot(s.get("x", []), s.get("y", []), pen=pen, name=s.get("name", ""))
+
+
+@register_section("merger_workspace")
+class _MergerWorkspace(QtWidgets.QWidget):
+    """Dockable merger workspace: correlation list (left) + FCS plots (right).
+
+    Uses the shared :class:`DockArea` so the panes can be dragged, resized,
+    tabbed or re-split by the user; the arrangement is persisted.
+    """
+
+    def __init__(self, model, target: str = "", **options):
+        super().__init__()
+        self._model = model
+        from chisurf.gui.widgets.dock_area.dock_area import DockArea
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Left: correlation list + save/add controls.
+        left = QtWidgets.QWidget()
+        left_layout = QtWidgets.QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        self.table = _MergerTable(model)
+        self.controls = _MergerControls(model)
+        left_layout.addWidget(self.table, 1)
+        left_layout.addWidget(self.controls)
+
+        # Right: individual chunk curves (top) + merged curve (bottom).
+        self.curves_plot = _CorrPlot(model, "curves_series", "Individual FCS Curves")
+        self.mean_plot = _CorrPlot(model, "mean_series", "Merged FCS Curve", legend=False)
+
+        dock = DockArea(self)
+        dock.addTab(left, "Correlations")
+        tw_left = dock.find_main_tab_widget()
+        tw_ind = self._split(dock, self.curves_plot, "Individual", tw_left, "right")
+        self._split(dock, self.mean_plot, "Merged", tw_ind, "bottom")
+
+        root = getattr(dock, "_root_widget", None)
+        if isinstance(root, QtWidgets.QSplitter):
+            try:
+                root.setSizes([320, 700])
+            except Exception:
+                pass
+        try:
+            dock.enable_persistence("fcs_merger_dock")
+        except Exception:
+            pass
+        layout.addWidget(dock)
+        self._dock = dock
+
+    @staticmethod
+    def _split(dock, widget, name, target_tw, zone):
+        new_tw = dock._create_tab_widget()
+        new_tw.addTab(widget, name)
+        dock._all_widgets.append(widget)
+        dock._tab_names[widget] = name
+        try:
+            dock.setTabCloseMode(widget, "hide")
+        except Exception:
+            pass
+        dock.split_tab_widget(target_tw, new_tw, zone)
+        return new_tw
