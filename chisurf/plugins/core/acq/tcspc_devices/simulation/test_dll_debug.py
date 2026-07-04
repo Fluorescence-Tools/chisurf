@@ -1,191 +1,124 @@
-#!/usr/bin/env python3
+"""Replacement tests for the acquisition photon simulator.
+
+The historical file name is kept so existing targeted commands still work, but
+the active simulator is now tttrlib-backed rather than Burbulator/DLL-backed.
 """
-Simple test script for debugging Burbulator DLL issues.
-Run this script directly to test DLL loading and function calls.
-"""
 
-import os
-import sys
-import ctypes as ct
-import traceback
+from __future__ import annotations
 
-# Add the Chisurf path to import simulation modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+import queue
+import threading
 
-# Try to import tttrlib for validation
-try:
-    import tttrlib
-    TTTRLIB_AVAILABLE = True
-except ImportError:
-    TTTRLIB_AVAILABLE = False
-    print("[WARNING] tttrlib not available for validation")
+import numpy as np
+import pytest
 
-try:
-    import numpy as np
-except ImportError:
-    np = None
-    print("[WARNING] numpy not available")
 
-try:
-    # High-level wrapper used by the SM acquisition simulation device
-    from chisurf.plugins.core.acq.tcspc_devices.simulation.burbulator_dll_wrapper import (
-        BurbulatorDLL,
-        BurbulatorError,
+def _requires_tttrlib_simulator():
+    """Import tttrlib and skip when the simulator API is unavailable.
+
+    Returns
+    -------
+    module
+        Imported ``tttrlib`` module.
+    """
+    tttrlib = pytest.importorskip("tttrlib")
+    if not hasattr(tttrlib, "SimEngine"):
+        pytest.skip("tttrlib photon simulator is unavailable")
+    return tttrlib
+
+
+def _small_params(output_path: str = "") -> dict:
+    """Return fast deterministic simulation parameters.
+
+    Parameters
+    ----------
+    output_path : str, optional
+        SPC output folder.
+
+    Returns
+    -------
+    dict
+        Parameter dictionary accepted by the tttrlib simulator backend.
+    """
+    return {
+        "N_species": 1,
+        "M": [1.0],
+        "D": [1.0],
+        "N_channels": 2,
+        "q": [5.0, 5.0],
+        "q_bg": [0.0, 0.0],
+        "k_rad": [0.0],
+        "k_nrad": [0.0],
+        "box_xy": 2.0,
+        "box_z": 4.0,
+        "focus_param": [0.3, 2.0],
+        "dt": 0.01,
+        "N_ph_max": 16,
+        "N_ph_per_file": 8,
+        "spc_output_path": output_path,
+        "rmt1seed": 12345,
+        "rmt2seed": 54321,
+    }
+
+
+def test_tttrlib_core_generates_spc_words():
+    """Core generator should produce uint32 SPC records from tttrlib."""
+    _requires_tttrlib_simulator()
+    from chisurf.plugins.core.acq.tcspc_devices.simulation.core.algorithms import (
+        generate_spc132_uint32,
     )
-    WRAPPER_AVAILABLE = True
-except Exception:
-    BurbulatorDLL = None  # type: ignore
-    BurbulatorError = RuntimeError  # type: ignore
-    WRAPPER_AVAILABLE = False
-    print("[WARNING] BurbulatorDLL wrapper not available for testing")
 
-def test_wrapper_basic():
-    """Basic test of the high-level BurbulatorDLL wrapper."""
-    print("\n=== Testing BurbulatorDLL Wrapper: basic simulate_ov3 ===")
+    words = generate_spc132_uint32(_small_params())
 
-    if not WRAPPER_AVAILABLE:
-        print("[SKIP] BurbulatorDLL wrapper not available")
-        return True
-
-    try:
-        burb = BurbulatorDLL()
-        print(f"[OK] BurbulatorDLL loaded library from {burb.path}")
-
-        sim = burb.simulate_ov3(
-            Nspecies=1,
-            M=[10.0],
-            D=[1.0],
-            Nchannels=2,
-            q=[0.1, 0.1],
-            q_bg=[0.001, 0.001],
-            k_rad=[0.0],
-            k_nrad=[0.0],
-            box_xy=2.0,
-            box_z=4.0,
-            focus_type=0,
-            focus_param=[0.3, 2.0],
-            dt=0.01,
-            N_ph_max=1000,
-        )
-        N_ph = sim.get("N_ph", 0)
-        print(f"[OK] simulate_ov3 returned {N_ph} photons")
-        if N_ph <= 0:
-            print("[WARNING] simulate_ov3 returned no photons")
-        return True
-    except BurbulatorError as e:
-        print(f"[FAIL] BurbulatorDLL wrapper test failed: {e}")
-        traceback.print_exc()
-        return False
+    assert isinstance(words, np.ndarray)
+    assert words.dtype == np.uint32
+    assert len(words) > 0
 
 
-def test_wrapper_spc_file():
-    """Test wrapper: simulate_ov3 + convert_to_spc132 + write_spc132_file + tttrlib validation."""
-    print("\n=== Testing BurbulatorDLL Wrapper: SPC file generation and validation ===")
+def test_tttrlib_stream_writes_readable_spc_file(tmp_path):
+    """Streaming backend should write SPC files readable by tttrlib."""
+    tttrlib = _requires_tttrlib_simulator()
+    from chisurf.plugins.core.acq.tcspc_devices.simulation.core.streaming import (
+        TttrlibSimulator,
+    )
 
-    if not WRAPPER_AVAILABLE:
-        print("[SKIP] BurbulatorDLL wrapper not available")
-        return True
+    simulator = TttrlibSimulator()
+    data_queue = queue.Queue()
+    stop_event = threading.Event()
 
-    try:
-        burb = BurbulatorDLL()
-        print(f"[OK] BurbulatorDLL loaded library from {burb.path}")
+    assert simulator.simulate_photons_streaming(
+        _small_params(str(tmp_path)),
+        data_queue,
+        stop_event,
+    )
+    simulator.generation_thread.join(timeout=30)
 
-        # Moderate-sized test to keep runtime reasonable
-        Nspecies = 1
-        Nchannels = 2
-        N_ph_max = 50000
+    assert not simulator.generation_thread.is_alive()
+    assert data_queue.get_nowait() is not None
 
-        sim = burb.simulate_ov3(
-            Nspecies=Nspecies,
-            M=[50.0],
-            D=[3.0],
-            Nchannels=Nchannels,
-            q=[50.0, 50.0],
-            q_bg=[0.001, 0.001],
-            k_rad=[1.0],
-            k_nrad=[0.0],
-            box_xy=2.0,
-            box_z=4.0,
-            focus_type=0,
-            focus_param=[0.3, 2.0],
-            dt=0.01,
-            N_ph_max=N_ph_max,
-        )
-        N_ph = sim.get("N_ph", 0)
-        print(f"[OK] simulate_ov3 returned {N_ph} photons")
-        if N_ph <= 0:
-            print("[FAIL] simulate_ov3 returned no photons, skipping SPC test")
-            return False
+    files = sorted(tmp_path.glob("m*.spc"))
+    assert files
+    assert tttrlib.TTTR(str(files[0]), "SPC-130").get_n_valid_events() > 0
 
-        # Convert to raw SPC-130 records (no header)
-        ch_conversion = [8, 0, 9, 1, 10, 2]
-        N_tac_channels = 4096
-        tac_dt = 0.004069
-        laser_period = 13.596
 
-        spc_bytes, MT_ov, spc_i = burb.convert_to_spc132(
-            pulsed_exc=0,
-            Nchannels=Nchannels,
-            data_T=sim["data_T"],
-            data_t=sim["data_t"],
-            data_N=sim["data_N"],
-            data_species=sim["data_species"],
-            data_molecule=sim["data_molecule"],
-            tw=0.01,
-            ch_conversion=ch_conversion,
-            N_tac_channels=N_tac_channels,
-            tac_dt=tac_dt,
-            laser_period=laser_period,
-            N_photons=N_ph,
-        )
-        print(f"[OK] convert_to_spc132 returned {spc_i} bytes, MT_ov={MT_ov}")
-        if not spc_bytes:
-            print("[FAIL] convert_to_spc132 produced no data")
-            return False
+def test_simulation_device_reads_fifo(tmp_path, qapp):
+    """SimulationDevice should start tttrlib generation and expose FIFO chunks."""
+    _requires_tttrlib_simulator()
+    from chisurf.plugins.core.acq.tcspc_devices.simulation.wrapper import SimulationDevice
 
-        # Write a single SPC-132 file with header and validate with tttrlib
-        spc_filename = "wrapper_test.spc"
-        burb.write_spc132_file(spc_filename, spc_bytes, macro_time_clock=100)
-        print(f"[OK] Wrote SPC-132 file {spc_filename}")
+    device = SimulationDevice()
+    device.simulation_params.update(_small_params(str(tmp_path)))
 
-        if not TTTRLIB_AVAILABLE or np is None:
-            print("[SKIP] tttrlib or numpy not available, skipping validation of wrapper SPC file")
-            return True
+    assert device.start_measurement()
+    device.generation_thread.join(timeout=30)
 
-        try:
-            tttr_data = tttrlib.TTTR(spc_filename, 'SPC-130')
-            macro_times = tttr_data.macro_times
-            n_photons = len(macro_times)
-            if n_photons == 0:
-                print(f"[FAIL] Wrapper SPC file {spc_filename} contains no photons")
-                return False
-            print(f"[OK] Wrapper SPC file {spc_filename}: {n_photons} photons, macro_times range {macro_times.min()} - {macro_times.max()}")
-        except Exception as e:
-            print(f"[FAIL] Could not validate wrapper SPC file with tttrlib: {e}")
-            traceback.print_exc()
-            return False
+    chunks = []
+    while device.measurement_running:
+        chunk = device.read_fifo(1024)
+        if len(chunk):
+            chunks.append(chunk)
 
-        return True
-    except BurbulatorError as e:
-        print(f"[FAIL] Wrapper SPC pipeline failed: {e}")
-        traceback.print_exc()
-        return False
+    device.close()
 
-def main():
-    """Main test function."""
-    print("Burbulator DLL Debug Test Script")
-    print("=" * 40)
-
-    if not test_wrapper_basic():
-        print("Wrapper basic test failed")
-        return
-
-    if not test_wrapper_spc_file():
-        print("Wrapper SPC file test failed")
-        return
-
-    print("\n" + "=" * 40)
-    print("Test script completed successfully")
-
-if __name__ == "__main__":
-    main()
+    assert chunks
+    assert all(chunk.dtype == np.uint32 for chunk in chunks)

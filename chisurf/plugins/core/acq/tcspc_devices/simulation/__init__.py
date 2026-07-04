@@ -1,15 +1,17 @@
 """
 Simulation TCSPC Device Module
 
-This module provides a simulation wrapper for TCSPC hardware using the Burbulator
-single molecule diffusion simulator.
+This module provides a simulated TCSPC acquisition device using tttrlib's photon
+simulator.
 """
 
-from .wrapper import SimulationDevice, BurbulatorSimulator
+from .wrapper import BurbulatorSimulator, SimulationDevice
+from .core.streaming import TttrlibSimulator
 from .setup_dialog import EnhancedSimulationSetupDialog as SimulationSetupDialog
 
 __all__ = [
     'SimulationDevice',
+    'TttrlibSimulator',
     'BurbulatorSimulator',
     'SimulationSetupDialog'
 ]

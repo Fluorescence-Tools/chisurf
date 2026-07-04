@@ -134,6 +134,24 @@ DEFAULT_PARAMS: Dict[str, Any] = {
 
     # Additional simulation parameters
     "tw": 0.01,
+
+    # Throughput / performance knobs (native tttrlib Sim* engine; opt-in, exact by default).
+    # See the acq plugin manifest.json rpc_methods params_schema for full per-knob docs.
+    "max_windows": 0,               # fixed-duration stop (windows); 0 = unlimited
+    "analytic_excitation": False,   # analytic Gaussian focus (no voxel grid)
+    "excitation_extent": [],        # [xy, z] grid half-extent (µm); [] = use the box
+    "psf_type": "gaussian3d",       # PSF model: gaussian3d|analytic_gaussian3d|gaussian_lorentzian|radial
+    "psf_zR": 1.0,                  # Rayleigh range (µm) for the gaussian_lorentzian PSF
+    "psf_file": "",                 # numeric radial PSF file (.npy/.npz/.mat) for psf_type="radial"
+    "psf_r_step": 0.05,             # numeric-PSF r spacing (µm) when not in the file
+    "psf_z_step": 0.05,             # numeric-PSF z spacing (µm) when not in the file
+    "per_molecule_skip": False,     # coasting: skip molecules far from the focus
+    "fast_grid_bbox": False,        # two-step field lookup (bbox reject before trilinear)
+    "independent_molecules": False, # per-molecule parallel timelines (needs max_windows > 0)
+    "active_margin": 0.0,           # shrink box to focus+margin (µm); 0 = off
+    "coast_safety": 3.0,            # coast step std <= dist-to-boundary / coast_safety
+    "min_coast_windows": 8,         # minimum sleep length (windows)
+    "focus_threshold": 0.001,       # fraction of peak defining the effective-focus box
 }
 
 
@@ -754,90 +772,54 @@ def run_cmd(
     if N_ph_per_file <= 0:
         raise click.ClickException("batch-size / N_ph_per_file must be positive")
 
+    # Native tttrlib Sim* engine (replaces the legacy Burbulator DLL). Every knob in the
+    # config JSON — including the throughput knobs (coasting, independent-molecule mode,
+    # active-margin, analytic focus) — flows through build_engine. SPC files are split by
+    # N_ph_per_file by the shared streaming backend (the same one the GUI/RPC use).
+    import glob
+    import queue as _queue
+    import threading as _threading
+
+    from .core.algorithms import tttrlib_available
+    from .core.streaming import TttrlibSimulator
+
+    if not tttrlib_available():
+        raise click.ClickException(
+            "tttrlib with the Sim* photon simulator is required "
+            "(install/upgrade tttrlib)."
+        )
+
+    params = dict(config)
+    params.update(dll_params)      # normalized N_species/N_channels/q/D/M/box/focus/dt/N_ph_max
+    params.update(conv_params)     # pulsed_exc/ch_conversion/N_tac_channels/tac_dt/laser_period/tw
+    params["N_ph_per_file"] = N_ph_per_file
+    params["spc_output_path"] = spc_output_path
+    params.setdefault("stream_words_per_batch", 65536)
+
+    click.echo(
+        f"Running tttrlib Sim* engine: N_species={params['N_species']}, "
+        f"N_channels={params['N_channels']}, N_ph_max={params['N_ph_max']}"
+    )
+
+    data_queue: "_queue.Queue" = _queue.Queue()
+    stop_event = _threading.Event()
+    simulator = TttrlibSimulator()
+    if not simulator.simulate_photons_streaming(params, data_queue, stop_event):
+        raise click.ClickException("failed to start the tttrlib simulation")
+
+    thread = getattr(simulator, "generation_thread", None)
+    if thread is not None:
+        thread.join()
+    # drain the streaming queue so the writer thread is not blocked on a full queue
     try:
-        dll = BurbulatorDLL()
-    except (FileNotFoundError, BurbulatorError) as e:
-        raise click.ClickException(str(e))
+        while data_queue.get_nowait() is not None:
+            pass
+    except _queue.Empty:
+        pass
 
+    n_files = len(glob.glob(os.path.join(spc_output_path, "m*.spc")))
     click.echo(
-        f"Running Burbulator simulation: N_species={dll_params['N_species']}, "
-        f"N_channels={dll_params['N_channels']}, N_ph_max={dll_params['N_ph_max']}"
-    )
-
-    sim = dll.simulate_ov3(
-        Nspecies=dll_params["N_species"],
-        M=dll_params["M"],
-        D=dll_params["D"],
-        Nchannels=dll_params["N_channels"],
-        q=dll_params["q"],
-        q_bg=dll_params["q_bg"],
-        k_rad=dll_params["k_rad"],
-        k_nrad=dll_params["k_nrad"],
-        box_xy=dll_params["box_xy"],
-        box_z=dll_params["box_z"],
-        focus_type=dll_params["focus_type"],
-        focus_param=dll_params["focus_param"],
-        dt=dll_params["dt"],
-        N_ph_max=dll_params["N_ph_max"],
-        rmt1seed=int(config.get("rmt1seed", 12345)),
-        rmt2seed=int(config.get("rmt2seed", 67890)),
-    )
-
-    N_ph = int(sim.get("N_ph", 0))
-    click.echo(f"DLL returned {N_ph} photons")
-
-    if N_ph <= 0:
-        click.echo("No photons generated; nothing to write.")
-        return
-
-    data_T = sim["data_T"]
-    data_t = sim["data_t"]
-    data_N = sim["data_N"]
-    data_species = sim["data_species"]
-    data_molecule = sim["data_molecule"]
-
-    filenumber = 0
-    photon_start = 0
-
-    while photon_start < N_ph:
-        photon_end = min(photon_start + N_ph_per_file, N_ph)
-        batch_photons = photon_end - photon_start
-
-        batch_data_T = data_T[photon_start:photon_end]
-        batch_data_t = data_t[photon_start:photon_end]
-        batch_data_N = data_N[photon_start:photon_end]
-        batch_data_species = data_species[photon_start:photon_end]
-        batch_data_molecule = data_molecule[photon_start:photon_end]
-
-        spc_bytes, MT_ov, spc_i = dll.convert_to_spc132(
-            pulsed_exc=conv_params["pulsed_exc"],
-            Nchannels=conv_params["N_channels"],
-            data_T=batch_data_T,
-            data_t=batch_data_t,
-            data_N=batch_data_N,
-            data_species=batch_data_species,
-            data_molecule=batch_data_molecule,
-            tw=conv_params["tw"],
-            ch_conversion=conv_params["ch_conversion"],
-            N_tac_channels=conv_params["N_tac_channels"],
-            tac_dt=conv_params["tac_dt"],
-            laser_period=conv_params["laser_period"],
-            N_photons=batch_photons,
-        )
-
-        filename = os.path.join(spc_output_path, f"m{filenumber:03d}.spc")
-        dll.write_spc132_file(filename, spc_bytes)
-
-        click.echo(
-            f"Wrote {len(spc_bytes)} bytes (MT_ov={MT_ov}, photons={batch_photons}) "
-            f"to {filename}"
-        )
-
-        filenumber += 1
-        photon_start = photon_end
-
-    click.echo(
-        f"Simulation completed, wrote {filenumber} SPC file(s) to {spc_output_path}"
+        f"Simulation completed, wrote {n_files} SPC file(s) to {spc_output_path}"
     )
 
 
