@@ -14,7 +14,7 @@ import chisurf.core.curve
 from chisurf.core.fitting.parameter import FittingParameterGroup
 
 
-class Model(FittingParameterGroup):
+class Model(FittingParameterGroup, metaclass=abc.ABCMeta):
     """Abstract base class for all ChiSurf models.
 
     A model wraps the relationship between a set of fitting parameters and
@@ -137,7 +137,6 @@ class Model(FittingParameterGroup):
         """
         pass
 
-    @abc.abstractmethod
     def update(self, **kwargs) -> None:
         """High-level update hook called by the fitting machinery.
 

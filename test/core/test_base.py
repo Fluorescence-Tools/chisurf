@@ -26,6 +26,43 @@ def get_data_values(
 
 class Tests(unittest.TestCase):
 
+    def test_model_abc_enforces_update_model(self):
+        from chisurf.core.models.model import Model
+        # Model now has metaclass=ABCMeta; a subclass that doesn't
+        # override update_model() should raise at instantiation time.
+        with self.assertRaises(TypeError):
+            class BadModel(Model):
+                pass
+            BadModel()  # noqa: this line should never be reached
+
+    def test_model_abc_allows_concrete_subclass(self):
+        from chisurf.core.models.model import Model
+        import unittest.mock
+        import numpy as np
+        fit = unittest.mock.MagicMock()
+        fit.data = np.array([1.0, 2.0])
+        # A subclass that implements update_model() must work.
+        class GoodModel(Model):
+            def update_model(self, **kwargs):
+                self.y = np.array([1.0, 2.0])
+        instance = GoodModel(fit=fit)
+        self.assertTrue(hasattr(instance, 'update'))
+        # update() is concrete (not abstract) so calling it should work
+        instance.update()
+
+    def test_model_update_not_abstract(self):
+        from chisurf.core.models.model import Model
+        import unittest.mock
+        import numpy as np
+        fit = unittest.mock.MagicMock()
+        fit.data = np.array([1.0, 2.0])
+        class ModelWithOnlyUpdateModel(Model):
+            def update_model(self, **kwargs):
+                self.y = np.array([1.0, 2.0])
+        instance = ModelWithOnlyUpdateModel(fit=fit)
+        # update() has a default implementation; calling it should not raise
+        instance.update()
+
     def test_base_init(self):
         b1 = chisurf.core.base.Base()
         self.assertEqual(b1.name, 'Base')
