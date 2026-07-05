@@ -1,7 +1,10 @@
-"""Tests for the MFDB schema migration waterfall (DATA-02)."""
+"""Tests for MFDB schema migration (DATA-02), DDL consolidation (DATA-03),
+and plugin identity (INC-06)."""
 
 from __future__ import annotations
 
+import json
+import pathlib
 import sqlite3
 import tempfile
 import os
@@ -68,6 +71,20 @@ def test_persistent_db_reopened_is_idempotent():
         conn2.close()
     finally:
         os.unlink(db_path)
+
+
+def test_ndxplorer_has_manifest():
+    """INC-06 guard: ndXplorer must have a valid manifest.json."""
+    from chisurf.core.plugin.manifest import validate_manifest
+    mf = pathlib.Path(__file__).resolve().parents[2] / "chisurf" / "plugins" / "ndxplorer" / "manifest.json"
+    assert mf.is_file(), f"ndxplorer manifest not found at {mf}"
+    data = json.loads(mf.read_text())
+    errors = validate_manifest(data)
+    assert not errors, f"ndxplorer manifest invalid: {errors}"
+    assert data["id"] == "ndxplorer"
+    assert "entrypoints" in data
+    assert "gui" in data["entrypoints"]
+    assert "cli" in data["entrypoints"]
 
 
 def test_canonical_and_permissive_ddl_differ_only_by_check():
