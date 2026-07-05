@@ -339,6 +339,26 @@ class TestPluginRegistryState:
         reg = PluginRegistry()
         assert reg.get_manifest("nonexistent") is None
 
+    def test_builtin_manifests_all_valid(self):
+        """DATA-01 guard: every built-in manifest.json must pass validate_manifest."""
+        import json
+        import pathlib
+        from chisurf.core.plugin.manifest import validate_manifest
+        import chisurf.plugins
+
+        plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
+        bad: list[str] = []
+        for mf in sorted(plugins_root.rglob("manifest.json")):
+            try:
+                data = json.loads(mf.read_text())
+            except json.JSONDecodeError:
+                bad.append(f"{mf}: unparseable JSON")
+                continue
+            errors = validate_manifest(data)
+            if errors:
+                bad.append(f"{mf}: {errors}")
+        assert not bad, "\n".join(bad)
+
 
 class TestLegacyMetadata:
     """_read_legacy_metadata() fallback."""

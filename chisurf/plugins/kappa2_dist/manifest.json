@@ -27,10 +27,10 @@
     "services": "chisurf.plugins.kappa2_dist.backend.services:register_services"
   },
   "rpc_methods": [
-    "kappa2_dist.compute"
+    {"name": "kappa2_dist.compute"}
   ],
   "events": [],
   "dependencies": {},
-  "menu_hidden": false,
+  "menu_hidden": true,
   "deprecated": false
 }

@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from chisurf.core.plugin.manifest import (
     PluginManifest,
     load_manifest,
+    validate_manifest,
 )
 
 _log = logging.getLogger(__name__)
@@ -90,6 +91,21 @@ class PluginRegistry:
                     manifests.append(manifest)
                     self._manifests[manifest.id] = manifest
                 else:
+                    if manifest_path.exists():
+                        try:
+                            import json
+                            data = json.loads(manifest_path.read_text())
+                            errors = validate_manifest(data)
+                            if errors:
+                                _log.warning(
+                                    "Manifest %s has validation errors: %s",
+                                    manifest_path, errors,
+                                )
+                        except Exception:
+                            _log.warning(
+                                "Manifest %s is unparseable; falling back to legacy",
+                                manifest_path,
+                            )
                     # Legacy fallback: parse __init__.py AST
                     legacy = _read_legacy_metadata(plugin_dir)
                     if legacy is not None:

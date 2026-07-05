@@ -27,12 +27,12 @@
     "services": "chisurf.plugins.modelling.fret.backend.services:register_services"
   },
   "rpc_methods": [
-    "fret.info_backends",
-    "fret.dock",
-    "fret.refine",
-    "fret.score",
-    "fret.screen",
-    "fret.estimate_errors"
+    {"name": "fret.info_backends"},
+    {"name": "fret.dock"},
+    {"name": "fret.refine"},
+    {"name": "fret.score"},
+    {"name": "fret.screen"},
+    {"name": "fret.estimate_errors"}
   ],
   "events": [],
   "dependencies": {},
