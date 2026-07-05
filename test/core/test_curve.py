@@ -178,6 +178,11 @@ class Tests(unittest.TestCase):
             c1.unique_identifier
         )
 
+    def test_ncurve_accepts_none(self):
+        n = chisurf.core.curve.NCurve(d=None)
+        self.assertEqual(n.d.dtype, np.float64)
+        self.assertEqual(len(n.d), 0)
+
     def test_normalize(self):
         import scipy.stats
 

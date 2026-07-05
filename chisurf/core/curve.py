@@ -40,7 +40,7 @@ class NCurve(chisurf.core.base.Base):
         """
         if d is None:
             self.d = np.array(list(), dtype=np.float64)
-        if copy_array:
+        elif copy_array:
             self.d = np.atleast_1d(np.copy(d))
         else:
             self.d = d
