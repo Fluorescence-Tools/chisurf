@@ -225,7 +225,11 @@ class Main(
 
     @property
     def current_model_name(self) -> str:
-        return self.current_model_class.name
+        mc = self.current_model_class
+        if mc is not None:
+            return mc.name
+        items = [self.comboBox_Model.itemText(i) for i in range(self.comboBox_Model.count())]
+        return items[0] if items else ""
 
     @property
     def current_fit(self) -> cs.core.fitting.fit.FitGroup:
@@ -375,9 +379,10 @@ class Main(
 
     def onCurrentDatasetChanged(self):
         self._current_dataset = self.dataset_selector.selected_dataset
+        self.comboBox_Model.blockSignals(True)
         self.comboBox_Model.clear()
         ds = self.current_dataset
-        if cs.imported_datasets:
+        if cs.imported_datasets and ds is not None:
             # Get all model names from the experiment
             all_model_names = ds.experiment.get_model_names()
 
@@ -389,6 +394,10 @@ class Main(
 
             # Add only enabled models to the combobox
             self.comboBox_Model.addItems(model_names)
+            if model_names:
+                self.comboBox_Model.setCurrentIndex(0)
+        self.comboBox_Model.blockSignals(False)
+        self.onCurrentModelChanged()
 
     def onCurrentModelChanged(self):
         model_idx = self.comboBox_Model.currentIndex()
