@@ -36,7 +36,7 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | [SV-01](#sv-01) | S1 | SV | Server | `chisurf.gui` imported inside the Qt-free server | ~~VERIFIED~~ ✅ FIXED |
 | [SV-02](#sv-02) | S2 | SV | Server | DTO dataclasses in `dto.py` are unused; handlers hand-roll dicts | ~~VERIFIED~~ ✅ FIXED |
 | [SV-03](#sv-03) | S2 | SV | Core/Server | Legacy `chisurf.*` globals are still de-facto shared state | VERIFIED |
-| [SV-04](#sv-04) | S2 | SV | Server | `service_error` codes ride in JSON-RPC `result`, not the `error` member | REPORTED |
+| [SV-04](#sv-04) | S2 | SV | Server | `service_error` codes ride in JSON-RPC `result`, not the `error` member | ~~REPORTED~~ ✅ FIXED |
 | [SV-05](#sv-05) | S2 | SV | Server | Event topics published ≠ topics advertised in schemas | ~~REPORTED~~ ✅ FIXED |
 | [BUG-01](#bug-01) | S1 | BUG | Core | `NCurve(d=None)` dead branch → `np.copy(None)` | ~~VERIFIED~~ ✅ FIXED |
 | [BUG-02](#bug-02) | S1 | BUG | Server | `fit_select` defined twice in `fits.py` (second shadows first) | ~~VERIFIED~~ ✅ FIXED |
@@ -55,7 +55,7 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | [INC-07](#inc-07) | S3 | INC | Plugins | `categories` drifts from directory group & `display_name`; demo games mixed in | REPORTED |
 | [INC-08](#inc-08) | S3 | INC | Server | Generic `JobManager` bypassed by the only real long-running jobs | REPORTED |
 
-21 findings (8 FIXED): 2 VERIFIED, 11 REPORTED. 0×S1, 8×S2, 4×S3.
+21 findings (9 FIXED): 2 VERIFIED, 10 REPORTED. 0×S1, 7×S2, 4×S3.
 
 ---
 
@@ -94,6 +94,7 @@ The single largest source of non-uniformity across the codebase (see [core steer
 
 - Detail: `service_error()` results (`error_code`, `jsonrpc_code`, `exception_type`) are returned inside the JSON-RPC `result` object with `{"ok": false}`, not in the JSON-RPC `error` member. Consequently `RemoteError` only raises on transport-level failures, and every caller must still check `result["ok"]`.
 - Fix: decide one contract — either promote `service_error` to the JSON-RPC `error` member (so `RemoteError` fires), or document `{"ok": bool}` as the canonical application-level result and stop implying transport errors cover it. See the spec rules for the two options.
+- ✅ **FIXED** (2026-07-05): Implemented Option A. `ZmqServer._handle_one()` now converts handler results with `ok: False` to JSON-RPC error responses (code/message/data). `ChisurfClient.call()` raises `RemoteError` for both application errors (via JSON-RPC error field) and transport errors (timeout/connection). All 14 error-path tests updated to expect `RemoteError`.
 
 ### SV-05
 **S2 · Event contract is inconsistent.** [rpc rules](rpc.md#rules).

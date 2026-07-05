@@ -56,18 +56,20 @@ Focused test command:
 PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test
 ```
 
-Current full-suite status in the arm64 Qt environment is not green: 80 passed,
+Current full-suite status in the arm64 Qt environment is not green: 84 passed,
 3 failed, 6 errors. The failures/errors are in structured sample handler tests
 that import `chisurf.core.mfdb.orm` and require `sqlalchemy`.
 
 GUI coverage status:
 
 - Headless interaction tested: workflow views for studies, protocols, lifecycle,
-  calibrations, reagent lots, pipelines, and the connection dialog.
+  calibrations, reagent lots, pipelines, the connection dialog, and core
+  EntityDock paths for Samples, Experiments, Users, Objects, Projects, and
+  Branches.
 - Partially tested: spectra/optical components.
 - Construction-only and behavior-untested: aggregate panels, sample metadata,
-  provenance graph, import/export, measurements, and all generic `EntityDock`
-  entity panels unless a narrower test says otherwise.
+  provenance graph, import/export, measurements, and remaining generic
+  `EntityDock` panels unless a narrower test says otherwise.
 
 Construction-only entries are not done. Manual testing has shown failures in GUI
 elements, so `docs/GUI_TEST_COVERAGE.md` is the source of truth for what must be
