@@ -480,41 +480,6 @@ def fit_save(
         return service_error(str(e), error_code=OPERATION_FAILED, exception=e)
 
 
-def fit_select(
-    state: SessionState,
-    fit_index: Optional[int] = None,
-    fit_uid: Optional[str] = None,
-) -> ServiceResult:
-    """Set the current fit by index or UID.
-
-    Updates ``state.current_fit_uid`` so subsequent RPC calls that
-    reference the active fit will target this fit.
-
-    Parameters
-    ----------
-    state : SessionState
-        Server-side session state.
-    fit_index : int, optional
-        Positional index.
-    fit_uid : str, optional
-        Unique identifier.
-
-    """
-    fit, idx = _resolve_fit(state, fit_index, fit_uid)
-    if fit is None:
-        return service_error("fit not found", error_code=NOT_FOUND)
-    uid = str(getattr(fit, "unique_identifier", "") or "")
-    state.current_fit_uid = uid
-    return {
-        "ok": True,
-        "fit": {
-            "index": idx,
-            "uid": uid,
-            "name": str(getattr(fit, "name", "") or ""),
-        },
-    }
-
-
 def _downsample(
     values: Optional[List[float]],
     max_points: int,
