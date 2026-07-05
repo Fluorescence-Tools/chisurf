@@ -17,6 +17,24 @@ def _dispatcher() -> ServiceDispatcher:
     return dispatcher
 
 
+def test_no_gui_import_in_server():
+    """SV-01 guard: chisurf.server must not import chisurf.gui (which brings Qt)."""
+    import ast
+    import chisurf.server.services.detector_setups as svc
+    import inspect
+    source = inspect.getsource(svc)
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                name = alias.name if isinstance(node, ast.Import) else node.module or ""
+                if "chisurf.gui" in name:
+                    raise AssertionError(
+                        f"chisurf.server.services.detector_setups must not import "
+                        f"chisurf.gui (found: import {name})"
+                    )
+
+
 def test_methods_registered():
     d = _dispatcher()
     for method in (

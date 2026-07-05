@@ -1,13 +1,12 @@
 """Central RPC service for detector / channel setup definitions.
 
 This is the transport-agnostic, Qt-free access layer over the canonical
-detector-setup store (``detector_setups.json`` / MFDB, managed by
-``chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups``).
+detector-setup store (``detector_setups.json`` / MFDB).
 
 It serves two purposes:
 
 * **Persistent named setups** — ``list_setups`` / ``get_setup`` / ``save_setup``
-  expose the on-disk / MFDB store so any plugin (or the planned
+  expose the on-disk store so any plugin (or the planned
   ``SetupSelectorWidget``) can read and write named detector setups over RPC
   instead of embedding the full :class:`DetectorWizardPage`.
 * **Session-active definition** — ``get_current`` / ``set_current`` hold the
@@ -16,9 +15,8 @@ It serves two purposes:
   Imaging Tools window) can broadcast the current setup to their sub-tools
   without forcing the user to save a named setup first.
 
-The underlying ``tttr_detector_setups`` module is import-time Qt-free; only its
-missing-file warning dialog imports Qt lazily, so importing this service in the
-headless server is safe.
+Load/save delegates to ``chisurf.core.data_io.detector_setups`` (Qt-free).
+The legacy ``chisurf.gui`` module is never imported here.
 """
 
 from __future__ import annotations
@@ -47,9 +45,7 @@ def _store(state: SessionState) -> dict[str, Any]:
 
 def _load_all(file_path: str | None = None) -> dict[str, Any]:
     """Load ``{"setups": {...}, "last_used": str}`` from the canonical store."""
-    from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
-        load_detector_setups,
-    )
+    from chisurf.core.data_io.detector_setups import load_detector_setups
 
     data = load_detector_setups(file_path=file_path) or {}
     setups = data.get("setups") or {}
@@ -125,9 +121,7 @@ def save_setup(
     if not isinstance(settings, dict):
         return service_error("settings must be an object.", error_code=INVALID_INPUT)
     try:
-        from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
-            save_detector_setups,
-        )
+        from chisurf.core.data_io.detector_setups import save_detector_setups
 
         payload = {"setups": {name: dict(settings)}, "last_used": name}
         save_detector_setups(payload, file_path=file_path, is_public=is_public)
