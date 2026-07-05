@@ -2066,9 +2066,13 @@ def get_app():
             client = MFDBClient(host=server_host, cmd_port=server_port, pub_port=server_port + 1)
             users = client.list_users()
             user_data = next((u for u in users if u["user_id"] == default_user), None)
+            is_admin_user = bool(user_data.get("is_admin")) if user_data else False
 
             trigger_login = True
-            if autologin and user_data is not None:
+            # Admin accounts are never silently auto-logged-in: the LoginDialog is
+            # always shown so a password is re-entered each session. Autologin
+            # (stored token / passwordless) applies to non-admin users only.
+            if autologin and user_data is not None and not is_admin_user:
                 token = load_session_token(server_host, server_port, default_user)
                 if token:
                     try:

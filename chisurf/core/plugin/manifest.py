@@ -8,10 +8,17 @@ from typing import Any
 
 @dataclass
 class RPCMethodSpec:
-    """Describes a single RPC method exposed by a plugin."""
+    """Describes a single RPC method exposed by a plugin.
+
+    ``summary`` is the one-line label; ``description`` is the longer help text
+    UIs surface inline (AutoForm maps it to the form's tooltip). Per-parameter
+    help uses standard JSON-Schema ``description`` keys inside
+    ``params_schema["properties"]`` — those become the per-field tooltips.
+    """
 
     name: str
     summary: str = ""
+    description: str = ""
     params_schema: dict[str, Any] | None = None
     result_schema: dict[str, Any] | None = None
     long_running: bool = False
@@ -115,6 +122,7 @@ class PluginManifest:
             RPCMethodSpec(
                 name=m["name"],
                 summary=m.get("summary", ""),
+                description=m.get("description", ""),
                 params_schema=m.get("params_schema"),
                 result_schema=m.get("result_schema"),
                 long_running=m.get("long_running", False),
@@ -173,6 +181,7 @@ class PluginManifest:
                 {
                     "name": m.name,
                     "summary": m.summary,
+                    "description": m.description,
                     "params_schema": m.params_schema,
                     "result_schema": m.result_schema,
                     "long_running": m.long_running,
@@ -276,6 +285,7 @@ _MANIFEST_SCHEMA = {
                 "properties": {
                     "name": {"type": "string", "minLength": 1},
                     "summary": {"type": "string"},
+                    "description": {"type": "string"},
                     "params_schema": {"type": "object"},
                     "result_schema": {"type": "object"},
                     "long_running": {"type": "boolean"},
@@ -368,6 +378,9 @@ def validate_manifest(data: dict[str, Any]) -> list[str]:
             continue
         if "name" not in method or not isinstance(method["name"], str) or not method["name"]:
             errors.append("each rpc_methods entry must have a non-empty 'name'")
+        for text_field in ("summary", "description"):
+            if text_field in method and not isinstance(method[text_field], str):
+                errors.append(f"rpc_methods field {text_field!r} must be a string")
 
     errors.extend(_validate_statefulness(data))
     return errors

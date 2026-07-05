@@ -1461,7 +1461,7 @@ def bootstrap_default_user(conn: sqlite3.Connection) -> None:
                     (main_uuid,)
                 )
         conn.execute(
-            "UPDATE flr_sample_users SET is_admin = 1, password_hash = COALESCE(password_hash, ?) WHERE user_id = 'user_default'",
+            "UPDATE flr_sample_users SET is_admin = 1, allow_passwordless_login = 0, password_hash = COALESCE(password_hash, ?) WHERE user_id = 'user_default'",
             (_hash_admin_password(),)
         )
 

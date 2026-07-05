@@ -43,6 +43,10 @@ class _HeaderTableSection(QtWidgets.QWidget):
         self._model = model
         self._syncing = False
         self.setAcceptDrops(True)
+        # Fill spare vertical space so the tag table grows with its panel; the
+        # AutoForm reads ``_autoform_expanding`` to hand this section the stretch.
+        self._autoform_expanding = True
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)

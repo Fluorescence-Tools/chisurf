@@ -10,15 +10,16 @@ import numpy as np
 
 import chisurf as cs
 from chisurf import logging
-from chisurf.gui import QtWidgets, QtGui, QtCore
+from chisurf.gui import QtCore, QtGui, QtWidgets
 from chisurf.gui.gui_tweaks import apply_platform_window_tweaks
-from chisurf.gui.widgets.general import LogListWidget
 from chisurf.gui.widgets import system_info_watermark as _system_info_watermark
+from chisurf.gui.widgets.general import LogListWidget
 
 
 class TruncatingStatusBar(QtWidgets.QStatusBar):
     """QStatusBar that truncates overly long messages by keeping the start and end
-    and inserting ellipsis in the middle."""
+    and inserting ellipsis in the middle.
+    """
 
     def __init__(self, *args, max_message_length: int = 160, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,10 +52,12 @@ def warmup_imports():
     """Preload heavy modules to improve first-use responsiveness."""
     try:
         import pyqtgraph as _pg  # noqa: F401
-        from matplotlib import colors as _mcolors  # noqa: F401
         import scipy.linalg as _sl  # noqa: F401
         import scipy.stats as _sstats  # noqa: F401
+        from matplotlib import colors as _mcolors  # noqa: F401
+
         import chisurf.gui.widgets.fitting as _fitwidgets  # noqa: F401
+
         _ = getattr(_fitwidgets, "FittingControllerWidget", None)
         _ = importlib.import_module("chisurf.core.models.global_model.globalfit")
     except Exception as e:
@@ -171,7 +174,9 @@ def update_log_filter(window):
     filter_log_content(window)
 
 
-def run_macro(filename=None, executor: str = "console", globals=None, locals=None, main_window=None):
+def run_macro(
+    filename=None, executor: str = "console", globals=None, locals=None, main_window=None
+):
     """Run a macro file via console or exec."""
     if filename is None and main_window is not None:
         filename = cs.gui.widgets.get_filename("Python macros", file_type="Python file (*.py)")
@@ -196,8 +201,8 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
         }
     globals.update({"__file__": filename})
 
-    import sys
     import importlib
+    import sys
 
     macro_dir = str(pathlib.Path(filename).parent)
     original_sys_path = sys.path.copy()
@@ -242,14 +247,20 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
                                             if isinstance(target, ast.Name) and target.id == "name":
                                                 if isinstance(node.value, ast.Str):
                                                     plugin_name = node.value.s
-                                                    cs.logging.info(f"User plugin name: {plugin_name}")
-                                                elif isinstance(node.value, ast.Constant) and isinstance(
-                                                    node.value.value, str
-                                                ):
+                                                    cs.logging.info(
+                                                        f"User plugin name: {plugin_name}"
+                                                    )
+                                                elif isinstance(
+                                                    node.value, ast.Constant
+                                                ) and isinstance(node.value.value, str):
                                                     plugin_name = node.value.value
-                                                    cs.logging.info(f"User plugin name: {plugin_name}")
+                                                    cs.logging.info(
+                                                        f"User plugin name: {plugin_name}"
+                                                    )
                             except Exception as e:
-                                cs.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
+                                cs.logging.warning(
+                                    f"Error extracting name from {user_plugin_path}: {e}"
+                                )
                     else:
                         globals.update({"__package__": f"chisurf.plugins.{package_name}"})
                         plugin_module_prefix = f"chisurf.plugins.{package_name}"
@@ -259,7 +270,9 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
                                     cs.logging.info(f"Reloading module: {module_name}")
                                     importlib.reload(sys.modules[module_name])
                                 except Exception as e:
-                                    cs.logging.warning(f"Failed to reload module {module_name}: {e}")
+                                    cs.logging.warning(
+                                        f"Failed to reload module {module_name}: {e}"
+                                    )
 
         # Resolve missing user plugin file
         if not pathlib.Path(filename).exists():
@@ -312,21 +325,15 @@ def run_plugin_from_dir(main_window, plugin_dir_to_use):
         if wizard_path.exists():
             adr = "https://github.com/fluorescence-tools/cs"  # Default value
             context.setdefault("adr", adr)
-            p = partial(
-                main_window.onRunMacro, str(wizard_path),
-                executor='exec',
-                globals=context
-            )
+            p = partial(main_window.onRunMacro, str(wizard_path), executor="exec", globals=context)
             p()
         elif init_path.exists():
             # If no wizard.py, run the plugin's __init__.py using onRunMacro
-            main_window.onRunMacro(
-                str(init_path),
-                executor='exec',
-                globals=context
-            )
+            main_window.onRunMacro(str(init_path), executor="exec", globals=context)
         else:
-            cs.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
+            cs.logging.warning(
+                f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}"
+            )
     except Exception as e:
         cs.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")
 
@@ -346,20 +353,66 @@ def get_plugin_settings_path(plugin_name: str) -> pathlib.Path:
     """
     try:
         from chisurf.core.settings import get_path
-        settings_dir = get_path('settings')
+
+        settings_dir = get_path("settings")
     except Exception:
-        settings_dir = pathlib.Path.home() / '.chisurf'
+        settings_dir = pathlib.Path.home() / ".chisurf"
     settings_dir.mkdir(parents=True, exist_ok=True)
     return settings_dir / f"plugin_{plugin_name}_settings.ini"
 
 
+def _save_dock_layouts(window, settings) -> None:
+    """Persist the arrangement of every embedded ``DockArea`` in *window*.
+
+    Tools built with AutoForm (or directly) host their panels in a custom
+    :class:`~chisurf.gui.widgets.dock_area.DockArea`, whose split/tab arrangement
+    a plain ``QMainWindow.saveState`` cannot capture. We serialise each dock area
+    (keyed by its discovery order, which is stable for a given window) so the
+    layout is remembered across sessions — for *all* plugins, not just one.
+    """
+    try:
+        import json
+
+        from chisurf.gui.widgets.dock_area import DockArea
+    except Exception:
+        return
+    # Skip docks that already remember themselves (AutoForm ``persist`` key),
+    # so the two mechanisms never fight over the same arrangement.
+    docks = [d for d in window.findChildren(DockArea) if not getattr(d, "_persist_key", None)]
+    settings.setValue("dock_count", len(docks))
+    for i, dock in enumerate(docks):
+        try:
+            settings.setValue(f"dock_layout_{i}", json.dumps(dock.get_layout_state()))
+        except Exception:
+            pass
+
+
+def _restore_dock_layouts(window, settings) -> None:
+    """Restore the arrangement of every embedded ``DockArea`` in *window*."""
+    try:
+        import json
+
+        from chisurf.gui.widgets.dock_area import DockArea
+    except Exception:
+        return
+    docks = [d for d in window.findChildren(DockArea) if not getattr(d, "_persist_key", None)]
+    for i, dock in enumerate(docks):
+        raw = settings.value(f"dock_layout_{i}")
+        if not raw:
+            continue
+        try:
+            dock.set_layout_state(json.loads(raw))
+        except Exception:
+            pass
+
+
 def save_plugin_window_state(window, plugin_name: str) -> None:
-    """Save the window geometry and state (dock layout) of a plugin.
+    """Save the window geometry, state and dock arrangement of a plugin.
 
     Parameters
     ----------
-    window : QMainWindow
-        The main window widget of the plugin.
+    window : QWidget
+        The top-level widget of the plugin.
     plugin_name : str
         The name of the plugin.
     """
@@ -369,6 +422,7 @@ def save_plugin_window_state(window, plugin_name: str) -> None:
         settings.setValue("geometry", window.saveGeometry())
         if hasattr(window, "saveState"):
             settings.setValue("state", window.saveState())
+        _save_dock_layouts(window, settings)
     except Exception as e:
         try:
             logging.warning(f"Failed to save window state for plugin {plugin_name}: {e}")
@@ -377,12 +431,12 @@ def save_plugin_window_state(window, plugin_name: str) -> None:
 
 
 def restore_plugin_window_state(window, plugin_name: str) -> None:
-    """Restore the window geometry and state (dock layout) of a plugin.
+    """Restore the window geometry, state and dock arrangement of a plugin.
 
     Parameters
     ----------
-    window : QMainWindow
-        The main window widget of the plugin.
+    window : QWidget
+        The top-level widget of the plugin.
     plugin_name : str
         The name of the plugin.
     """
@@ -397,6 +451,7 @@ def restore_plugin_window_state(window, plugin_name: str) -> None:
                 state = settings.value("state")
                 if state is not None:
                     window.restoreState(state)
+            _restore_dock_layouts(window, settings)
     except Exception as e:
         try:
             logging.warning(f"Failed to restore window state for plugin {plugin_name}: {e}")
@@ -421,10 +476,11 @@ def persist_plugin_state(plugin_name: str):
     class MyPluginWidget(QMainWindow):
         ...
     """
+
     def decorator(cls):
         orig_init = cls.__init__
-        orig_close = getattr(cls, 'closeEvent', None)
-        orig_show = getattr(cls, 'showEvent', None)
+        orig_close = getattr(cls, "closeEvent", None)
+        orig_show = getattr(cls, "showEvent", None)
 
         def _new_init(self, *args, **kwargs):
             self._persist_plugin_name = plugin_name
@@ -460,4 +516,3 @@ def persist_plugin_state(plugin_name: str):
         return cls
 
     return decorator
-

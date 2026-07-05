@@ -120,6 +120,14 @@ def login_handler(
 
         display_name, is_admin, password_hash, allow_passwordless_login = row
 
+        # Admin accounts must always supply a password: no passwordless login and
+        # no empty-password "set password" shortcut. Bootstrap guarantees the
+        # built-in admin has a hash, and save_user_handler forbids empty admin
+        # passwords, so an admin can never be locked out by this rule.
+        if is_admin == 1 and not password:
+            record_auth_attempt(conn, user_id, False, reason="admin_requires_password")
+            raise AuthError("Invalid credentials")
+
         if allow_passwordless_login == 1 and not password:
             pass
         elif password_hash:

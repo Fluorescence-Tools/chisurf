@@ -72,6 +72,16 @@ def default_calculators() -> list[CalculatorEntry]:
             widget="chisurf.plugins.fcs.fcs_calculator.wizard:ConfocalCalcWidget",
             icon="🌀",
         ),
+        CalculatorEntry(
+            id="phasor",
+            label="Phasor plot",
+            description=(
+                "Interactive phasor plot — universal semicircle with a reference-"
+                "lifetime grid/ticks, a FRET trajectory and a two-component mixing line."
+            ),
+            widget="chisurf.plugins.calculator.phasor_calculator.gui.tool:PhasorCalculatorTool",
+            icon="◐",
+        ),
     ]
 
 

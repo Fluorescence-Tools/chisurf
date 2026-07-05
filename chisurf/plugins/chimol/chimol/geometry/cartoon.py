@@ -25,6 +25,11 @@ import math
 
 import numpy as np
 
+try:  # sibling module in the geometry package
+    from .ambient import _estimate_ambient_occlusion
+except Exception:  # pragma: no cover - standalone/file-path loading (see tests)
+    _estimate_ambient_occlusion = None  # type: ignore[assignment]
+
 
 # ---------------------------------------------------------------------------
 # Sampler  (unchanged from Chimol original)
@@ -98,6 +103,48 @@ def _sample_path(
     pos_arr = np.asarray(out_pos, dtype=float)
     col_out_arr = np.asarray(out_col, dtype=float) if out_col is not None else None
     return pos_arr, col_out_arr
+
+
+def _smooth_backbone_points(
+    pts: np.ndarray, cycles: int = 2, window: int = 1
+) -> np.ndarray:
+    """PyMOL ``RepCartoonSmoothLoops``-style Laplacian smoothing of control points.
+
+    Each interior point is replaced by the unweighted mean over a symmetric
+    window of ``2*window+1`` points; the first/last ``window`` points are
+    preserved so chain termini and chain breaks do not contract inward. The
+    caller applies this per already-chain-split segment, so it never bridges
+    chains. Uses an O(n) cumulative-sum moving average.
+
+    Parameters
+    ----------
+    pts : np.ndarray
+        Control-point coordinates, shape ``(N, 3)``.
+    cycles : int, optional
+        Number of smoothing passes (PyMOL default 2).
+    window : int, optional
+        Half-window ``f``; ``window=1`` is a 3-point average.
+
+    Returns
+    -------
+    np.ndarray
+        Smoothed coordinates, shape ``(N, 3)``. Returns the input unchanged
+        when there are too few points or ``cycles < 1``.
+    """
+    arr = np.asarray(pts, dtype=float)
+    n = arr.shape[0]
+    f = max(int(window), 1)
+    if n < (2 * f + 1) or int(cycles) < 1:
+        return arr
+    width = 2 * f + 1
+    out = arr.copy()
+    for _ in range(int(cycles)):
+        csum = np.cumsum(np.vstack([np.zeros((1, 3)), out]), axis=0)
+        avg = (csum[width:] - csum[:-width]) / width  # rows f .. n-f-1
+        tmp = out.copy()
+        tmp[f:n - f] = avg
+        out = tmp
+    return out
 
 
 def _propagate_ups(
@@ -1064,6 +1111,98 @@ def _generate_cylinder(
     return res
 
 
+def _uv_sphere(
+    center: np.ndarray,
+    radius: float,
+    color: np.ndarray,
+    lat: int = 3,
+    lon: int = 6,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Small UV sphere used to round the joints of a ring rim."""
+    verts = []
+    norms = []
+    ncols = lon + 1
+    for i in range(lat + 1):
+        theta = math.pi * i / lat
+        st, ct = math.sin(theta), math.cos(theta)
+        for j in range(lon + 1):
+            phi = 2.0 * math.pi * j / lon
+            nrm = np.array([st * math.cos(phi), ct, st * math.sin(phi)], dtype=float)
+            verts.append(center + radius * nrm)
+            norms.append(nrm)
+    faces = []
+    for i in range(lat):
+        for j in range(lon):
+            a = i * ncols + j
+            b = a + ncols
+            faces.append([a, b, a + 1])
+            faces.append([a + 1, b, b + 1])
+    v = np.asarray(verts, dtype=float)
+    n = np.asarray(norms, dtype=float)
+    f = np.asarray(faces, dtype=np.int32)
+    c = np.tile(color, (len(v), 1))
+    return v, n, f, c
+
+
+def _generate_filled_ring_mesh(
+    coords: np.ndarray,
+    thickness: float,
+    color: np.ndarray,
+    rim_radius: float,
+    rim_segments: int = 8,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """PyMOL ``cartoon_ring_mode`` 3-style base ring.
+
+    A flat filled polygon (both faces) plus a rounded tube tracing the ring
+    perimeter with a small sphere at each vertex, so the base reads as a solid
+    tile with a beveled edge rather than a thin flat sheet.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Ring vertex coordinates ordered around the perimeter, shape ``(N, 3)``.
+    thickness : float
+        Thickness of the flat filled interior.
+    color : np.ndarray
+        RGBA colour, shape ``(4,)``.
+    rim_radius : float
+        Radius of the rounded perimeter tube.
+    rim_segments : int
+        Circular segments for the perimeter cylinders.
+    """
+    parts: list[tuple] = []
+    fill = _generate_prism_mesh(coords, thickness, color)
+    if fill is not None:
+        parts.append(fill)
+
+    n = len(coords)
+    for i in range(n):
+        p1 = coords[i]
+        p2 = coords[(i + 1) % n]
+        cyl = _generate_cylinder(p1, p2, rim_radius, color, segments=rim_segments)
+        if cyl is not None:
+            parts.append(cyl)
+        parts.append(_uv_sphere(np.asarray(p1, dtype=float), rim_radius, color))
+
+    if not parts:
+        return None
+
+    all_v, all_n, all_f, all_c = [], [], [], []
+    off = 0
+    for v, nrm, f, c in parts:
+        all_v.append(v)
+        all_n.append(nrm)
+        all_f.append(np.asarray(f) + off)
+        all_c.append(c)
+        off += len(v)
+    return (
+        np.concatenate(all_v, axis=0),
+        np.concatenate(all_n, axis=0),
+        np.concatenate(all_f, axis=0),
+        np.concatenate(all_c, axis=0),
+    )
+
+
 def _generate_nucleic_cartoon_arrays(
     atoms: np.ndarray,
     coords_all: np.ndarray,
@@ -1113,11 +1252,43 @@ def _generate_nucleic_cartoon_arrays(
 
     cfg = config or {}
     coordinate_scale = float(cfg.get("coordinate_scale", 1.0))
-    ladder_radius = float(cfg.get("ladder_radius", 0.25)) * coordinate_scale
-    ring_thickness = float(cfg.get("ring_thickness", 0.125)) * coordinate_scale
-    backbone_radius = float(cfg.get("backbone_radius", 0.1)) * coordinate_scale
+    ladder_radius = float(cfg.get("ladder_radius", 0.12)) * coordinate_scale
+    ring_thickness = float(cfg.get("ring_thickness", 0.09)) * coordinate_scale
+    # BUGFIX: do NOT pre-scale the backbone radius here. It is forwarded as
+    # ``base_radius`` to ``_generate_cartoon_tube_arrays``, whose tube branch
+    # applies ``coordinate_scale`` once. Pre-scaling caused a double scale
+    # (``base * scale**2``), bloating the DNA/RNA backbone tube.
+    backbone_radius = float(cfg.get("backbone_radius", 0.4))
     backbone_quality = int(cfg.get("backbone_quality", 18))
-    
+    smooth_cycles = int(cfg.get("backbone_smooth_cycles", 2))
+    smooth_window = int(cfg.get("backbone_smooth_window", 1))
+    tension = float(cfg.get("spline_tension", 0.3))
+    trace_atoms = list(
+        cfg.get(
+            "nucleic_trace_atoms",
+            # C4' first (NGL: smoother than the zig-zagging P); star-notation
+            # variants (C4*) included because PDBs mix ' and * sugar naming.
+            ["C4'", "C4*", "C3'", "C3*", "C5'", "C5*", "O5'", "O5*",
+             "P", "O3'", "O3*", "C1'", "C1*"],
+        )
+    )
+    ao_radius = float(cfg.get("nucleic_ao_radius", 6.0)) * coordinate_scale
+    ao_max = int(cfg.get("nucleic_ao_max_neighbors", 16))
+    ao_strength = float(cfg.get("nucleic_ao_strength", 0.4))
+    # Base-ring style: "pymol" = filled ring + rounded perimeter rim
+    # (cartoon_ring_mode 3 look); "filled" = plain flat plate.
+    ring_style = str(cfg.get("ring_style", "pymol")).lower()
+    ring_rim_radius = float(cfg.get("ring_rim_radius", 0.08)) * coordinate_scale
+    rim_quality = int(cfg.get("ring_rim_quality", 8))
+
+    def _ring_mesh(ring_coords):
+        if ring_style == "pymol":
+            return _generate_filled_ring_mesh(
+                ring_coords, ring_thickness, res_color,
+                rim_radius=ring_rim_radius, rim_segments=rim_quality,
+            )
+        return _generate_prism_mesh(ring_coords, ring_thickness, res_color)
+
 
 
     fields = set(atoms.dtype.fields or {})
@@ -1163,10 +1334,49 @@ def _generate_nucleic_cartoon_arrays(
     pur_ring6_names = ["N1", "C2", "N3", "C4", "C5", "C6"]
     pur_ring5_names = ["C4", "C5", "N7", "C8", "N9"]
     
-    # Collect backbone coordinates (P or C4') for backbone trace
+    # Collect backbone coordinates (C4' or P) for backbone trace
     backbone_coords = []
     backbone_colors = []
     backbone_chains = []
+
+    # --- AO pre-pass: one representative point per residue (base-ring centroid,
+    #     else C1', else atom mean) so stacked/paired bases self-shade, matching
+    #     the protein cartoon path. View-independent, no shader change. ---
+    base_ring_all = ["N1", "C2", "N3", "C4", "C5", "C6", "N7", "C8", "N9"]
+    rep_pts: list[np.ndarray] = []
+    rep_idx: list[int] = []
+    for i, rid in enumerate(res_ids):
+        chain_id = str(chain_ids[i]).strip() if chain_ids is not None else ""
+        mask = (atom_res_ids == rid) & (atom_chains == chain_id)
+        if not np.any(mask):
+            continue
+        names_i = atom_names_u[mask]
+        coords_i = coords_all[mask]
+        lut = {nm: c for nm, c in zip(names_i, coords_i)}
+        ring = [lut[n] for n in base_ring_all if n in lut]
+        if ring:
+            rep = np.mean(ring, axis=0)
+        elif "C1'" in lut:
+            rep = lut["C1'"]
+        else:
+            rep = coords_i.mean(axis=0)
+        rep_pts.append(rep)
+        rep_idx.append(i)
+
+    shade_by_i: dict[int, float] = {}
+    if len(rep_pts) >= 2 and ao_strength > 0.0 and _estimate_ambient_occlusion is not None:
+        try:
+            occ = _estimate_ambient_occlusion(
+                np.asarray(rep_pts, dtype=float),
+                radius=ao_radius,
+                max_neighbors=ao_max,
+            )
+        except Exception:
+            occ = None
+        if occ is not None and len(occ) == len(rep_idx):
+            occ = np.asarray(occ, dtype=float)
+            for k, i in enumerate(rep_idx):
+                shade_by_i[i] = (1.0 - ao_strength) + ao_strength * (1.0 - occ[k])
 
     for i, rid in enumerate(res_ids):
         chain_id = str(chain_ids[i]).strip() if chain_ids is not None else ""
@@ -1182,23 +1392,28 @@ def _generate_nucleic_cartoon_arrays(
         for name, coord in zip(res_atom_names, res_coords):
             atom_to_coord[name] = coord
 
-        # Select backbone atom: PyMOL uses P (phosphate) as primary trace atom.
-        # Sugar atoms are fallbacks for residues missing P.
-        atom_priority = ["P", "O5'", "C5'", "C4'", "C3'", "O3'", "C1'", "C1*"]
-        
+        # Select backbone trace atom. NGL traces the sugar C4'/C3' (smoother
+        # than the zig-zagging P atom); P is kept as a fallback. Order is
+        # configurable via ``nucleic_trace_atoms``.
         backbone_atom_name = None
-        for cand in atom_priority:
+        for cand in trace_atoms:
             if cand in atom_to_coord:
                 backbone_atom_name = cand
                 break
-        
+
         if backbone_atom_name is None:
             continue
-        
+
         # Get backbone atom coordinate
         backbone_coord = atom_to_coord[backbone_atom_name]
         res_color = colors[i] if colors is not None else np.array([1.0, 1.0, 1.0, 1.0])
-        
+        # Apply per-residue ambient-occlusion shade to backbone tube, ladder
+        # and base rings (all inherit ``res_color``).
+        shade = shade_by_i.get(i, 1.0)
+        if shade != 1.0:
+            res_color = np.asarray(res_color, dtype=float).copy()
+            res_color[:3] = np.clip(res_color[:3] * shade, 0.0, 1.0)
+
         # Collect backbone coordinates (P primary, sugar fallback)
         backbone_coords.append(backbone_coord.copy())
         backbone_colors.append(res_color.copy())
@@ -1233,24 +1448,30 @@ def _generate_nucleic_cartoon_arrays(
 
         base_anchor_coord = atom_to_coord[base_anchor_name]
 
-        ladder_mesh = _generate_cylinder(c1_coord, base_anchor_coord, ladder_radius, res_color)
-        if ladder_mesh is not None:
-            add_mesh(*ladder_mesh)
+        # Rung: backbone trace point -> C1' (sugar) -> base anchor. C1' sits far
+        # off the tube centerline, so a rung that starts at C1' alone looks
+        # detached; starting at the backbone trace atom keeps the base visually
+        # attached to the tube, and routing through C1' follows the real sugar.
+        for seg_a, seg_b in (
+            (backbone_coord, c1_coord),
+            (c1_coord, base_anchor_coord),
+        ):
+            cyl = _generate_cylinder(seg_a, seg_b, ladder_radius, res_color)
+            if cyl is not None:
+                add_mesh(*cyl)
+        add_mesh(*_uv_sphere(np.asarray(c1_coord, dtype=float), ladder_radius, res_color))
 
         if is_purine:
             if all(n in atom_to_coord for n in pur_ring6_names):
                 coords6 = np.array([atom_to_coord[n] for n in pur_ring6_names])
-                r6_mesh = _generate_prism_mesh(coords6, ring_thickness, res_color)
-                add_mesh(*r6_mesh)
+                add_mesh(*_ring_mesh(coords6))
             if all(n in atom_to_coord for n in pur_ring5_names):
                 coords5 = np.array([atom_to_coord[n] for n in pur_ring5_names])
-                r5_mesh = _generate_prism_mesh(coords5, ring_thickness, res_color)
-                add_mesh(*r5_mesh)
+                add_mesh(*_ring_mesh(coords5))
         elif is_pyrimidine:
             if all(n in atom_to_coord for n in pyr_ring_names):
                 coords6 = np.array([atom_to_coord[n] for n in pyr_ring_names])
-                r6_mesh = _generate_prism_mesh(coords6, ring_thickness, res_color)
-                add_mesh(*r6_mesh)
+                add_mesh(*_ring_mesh(coords6))
 
     # Generate backbone tube (PyMOL mode 4 style — P trace with 5'/3' sugar fallback)
     # Split at chain boundaries so the tube doesn't connect across chains
@@ -1273,7 +1494,14 @@ def _generate_nucleic_cartoon_arrays(
             seg_coords = bb_coords[s:e]
             seg_colors = bb_colors_arr[s:e] if bb_colors_arr is not None else None
 
-            bb_smooth, bb_colors_smooth = _sample_path(seg_coords, seg_colors, subdivisions=subdivisions)
+            # Pre-smooth control points (PyMOL-style) before splining so the
+            # trace doesn't kink between residues, then apply spline tension.
+            seg_coords = _smooth_backbone_points(
+                seg_coords, cycles=smooth_cycles, window=smooth_window
+            )
+            bb_smooth, bb_colors_smooth = _sample_path(
+                seg_coords, seg_colors, subdivisions=subdivisions, tension=tension
+            )
 
             backbone_arrays = _generate_cartoon_tube_arrays(
                 bb_smooth,

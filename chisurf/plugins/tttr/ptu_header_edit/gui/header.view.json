@@ -26,6 +26,7 @@
               "label": "",
               "kind": "text",
               "read_only": true,
+              "expand": true,
               "description": "Live JSON view of the full PTU header with the edited tags."
             }
           ]

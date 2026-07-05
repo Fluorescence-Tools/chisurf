@@ -481,6 +481,72 @@ def sweep_targets_for_models(
     return _targets_for_models(models, names, relevant_only)
 
 
+#: Which result arrays map to the plotted x / y for a FRET-line overlay.
+_FRET_LINE_AXES: dict[str, tuple[str, str, str]] = {
+    # key: (x_array, y_array, human axes label)
+    "static": ("tau_f", "e_fret", "E vs fluorescence-averaged lifetime"),
+    "e_vs_tau_x": ("tau_x", "e_fret", "E vs species-averaged lifetime"),
+    "tau_x_vs_tau_f": ("tau_f", "tau_x", "species- vs fluorescence-averaged lifetime"),
+}
+
+
+def fret_line_overlays(
+    components: list[dict],
+    sweep: dict,
+    param_min: float,
+    param_max: float,
+    n_points: int = 100,
+    fractions: list[float] | None = None,
+    tau_d0: float | None = None,
+    log_scale: bool = False,
+    line: str = "static",
+    name: str = "FRET line",
+    style: dict | None = None,
+) -> dict:
+    """Compute a FRET line and return it as a shared overlay LineSet.
+
+    Wraps :func:`compute_fret_line` and reshapes its result into the same
+    ``{"overlays": [{"name", "kind", "x", "y", "style", "axes"}]}`` contract that
+    ``phasor.overlays`` returns, so ndXplorer (and any other client) can draw FRET
+    lines and phasor lines through one uniform interface.
+
+    Parameters
+    ----------
+    components, sweep, param_min, param_max, n_points, fractions, tau_d0, log_scale
+        Passed straight through to :func:`compute_fret_line` (see there).
+    line : str
+        Which projection to emit: ``"static"`` (E vs τ_f, the default),
+        ``"e_vs_tau_x"`` (E vs τ_x) or ``"tau_x_vs_tau_f"`` (τ_x vs τ_f).
+    name : str
+        Label for the returned line.
+    style : dict, optional
+        pyqtgraph-style hints (``color``, ``width``, ``dash``); defaults to a solid line.
+    """
+    res = compute_fret_line(
+        components, sweep, param_min, param_max, n_points, fractions, tau_d0, log_scale
+    )
+    if not res.get("ok"):
+        return res
+    if line not in _FRET_LINE_AXES:
+        return {"ok": False, "error": f"unknown line projection {line!r}; choose {sorted(_FRET_LINE_AXES)}"}
+    x_key, y_key, axes_label = _FRET_LINE_AXES[line]
+    result = res["result"]
+    overlay = {
+        "name": name,
+        "kind": "curve",
+        "x": result[x_key],
+        "y": result[y_key],
+        "style": style or {"color": "#50c0ff", "width": 2},
+        "axes": {"x": x_key, "y": y_key, "label": axes_label},
+    }
+    return {"ok": True, "result": {"overlays": [overlay], "line": line}}
+
+
+def list_fret_line_projections() -> list[str]:
+    """Return the available FRET-line overlay projections for :func:`fret_line_overlays`."""
+    return list(_FRET_LINE_AXES.keys())
+
+
 def compute_fret_line_for_models(
     models,
     sweep: dict,

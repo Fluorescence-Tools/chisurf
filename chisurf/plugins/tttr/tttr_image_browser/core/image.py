@@ -270,6 +270,37 @@ def get_magma_lut(n: int = 256) -> np.ndarray | None:
         return None
 
 
+def channels_map_from_setup(setup_settings) -> dict[str, list[dict]]:
+    """Resolve a ``{name: [entries]}`` channels map from a setup-settings dict.
+
+    Uses the precomputed ``channels`` cross-product when present; otherwise rebuilds
+    it from ``windows`` × ``detectors`` (the DetectorWizard format), so setups saved
+    before ``channels`` was included still yield per-window/detector tiles instead of
+    a single default image.
+    """
+    if not isinstance(setup_settings, dict):
+        return {}
+    channels_map = setup_settings.get("channels") or {}
+    if channels_map:
+        return channels_map
+    windows = setup_settings.get("windows") or {}
+    detectors = setup_settings.get("detectors") or {}
+    built: dict[str, list[dict]] = {}
+    for wname, wrange in windows.items():
+        for dname, dinfo in detectors.items():
+            if not isinstance(dinfo, dict):
+                continue
+            built[f"{wname}_{dname}"] = [
+                {
+                    "window_range": wrange,
+                    "detector_chs": dinfo.get("chs", []),
+                    "micro_time_range": mtr,
+                }
+                for mtr in dinfo.get("micro_time_ranges", [])
+            ]
+    return built
+
+
 def group_channels_by_detector(channels_map: dict[str, list[dict]]) -> dict[str, list[dict]]:
     """Collapse window_detector combos into detector-only combos."""
     grouped: dict[str, list[dict]] = {}
@@ -428,14 +459,10 @@ def load_image(
         reading = setup_settings.get("tttr_reading", {})
         reading_routine = reading.get("file_type") or None
 
-    # Group channels map
+    # Resolve channels map (precomputed cross-product, or rebuilt from windows ×
+    # detectors), falling back to a single default image when none is available.
     try:
-        if isinstance(setup_settings, dict) and "detectors" in setup_settings:
-            # Reconstruct from DetectorWizard format if available
-            channels_map = setup_settings.get("channels", {})
-        else:
-            channels_map = {}
-        # Fallback to default if no channels map
+        channels_map = channels_map_from_setup(setup_settings)
         if not channels_map:
             channels_map = {"Image": [{"window_range": (None, None), "detector_chs": [], "micro_time_range": (None, None)}]}
         channels_map = group_channels_by_detector(channels_map)
@@ -479,11 +506,8 @@ def save_tiff_stacks(
         reading_routine = reading.get("file_type") or None
 
     try:
-        # Resolve channels map
-        if isinstance(setup_settings, dict) and "channels" in setup_settings:
-            channels_map = setup_settings.get("channels", {})
-        else:
-            channels_map = {}
+        # Resolve channels map (precomputed, or rebuilt from windows × detectors).
+        channels_map = channels_map_from_setup(setup_settings)
         if not channels_map:
             channels_map = {"Image": [{"window_range": (None, None), "detector_chs": [], "micro_time_range": (None, None)}]}
         channels_map = group_channels_by_detector(channels_map)

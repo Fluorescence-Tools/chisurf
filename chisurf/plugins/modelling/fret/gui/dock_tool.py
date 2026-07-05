@@ -82,6 +82,11 @@ class _DockingModel:
         self.save_distributions = False
         self.av_backend = "auto"
         self.save_trajectory = False
+        # FPS-style docked state (transform vectors) from the last run / loaded
+        # project; when ``continue_from_poses`` is set a dock resumes from these.
+        self.poses = []
+        self.pose_score = None
+        self.continue_from_poses = False
         # results
         self.status = ""
         self.score = 0.0
@@ -134,6 +139,9 @@ class _DockingModel:
             if int(self.n_repeats) > 1:
                 req["n_trials"] = int(self.n_repeats)
                 return "errors", req
+            # Continue a single dock from the saved docked state (FPS-style).
+            if self.continue_from_poses and self.poses:
+                req["initial_poses"] = list(self.poses)
             return op, req
         if op == "refine":
             return op, {
@@ -458,7 +466,15 @@ class FretDockingTool(QtWidgets.QWidget):
         m.fixed_body = int(p.get("fixed_body", m.fixed_body))
         m.sigma_da = float(p.get("sigma_da", m.sigma_da))
         m.simulated_annealing = bool(p.get("simulated_annealing", m.simulated_annealing))
-        m.status = f"loaded {pathlib.Path(f).name}"
+        # FPS-style docked state: load it and auto-arm "Resume" so the next Run
+        # continues from the docked poses rather than restarting.
+        m.poses = list(proj.poses or [])
+        m.pose_score = (proj.pose_meta or {}).get("score")
+        m.continue_from_poses = bool(m.poses)
+        if m.poses:
+            m.status = f"loaded {pathlib.Path(f).name} ({len(m.poses)} docked bodies)"
+        else:
+            m.status = f"loaded {pathlib.Path(f).name}"
         self._form.sync_fields()
 
     def _save_project(self) -> None:
@@ -478,6 +494,9 @@ class FretDockingTool(QtWidgets.QWidget):
                 method=self._model.method,
                 score_set=self._model.score_set,
                 params=self._model_params(),
+                poses=self._model.poses or None,
+                pose_score=self._model.pose_score,
+                pose_method=self._model.method,
             )
         except Exception:
             QtWidgets.QMessageBox.critical(
@@ -720,6 +739,12 @@ class FretDockingTool(QtWidgets.QWidget):
         elif "score" in data:  # single dock / refine / score
             self._model.score = float(data.get("score") or 0.0)
             self._model.n_distances = int(data.get("n_distances") or 0)
+            # Keep the docked state (FPS-style vectors) so it can be saved into
+            # the project and resumed later.
+            poses = data.get("poses") or []
+            if poses:
+                self._model.poses = poses
+                self._model.pose_score = self._model.score
             self._fill_table(
                 [(0, self._model.score, self._model.n_distances,
                   (data.get("best_pdbs") or [None])[0])],

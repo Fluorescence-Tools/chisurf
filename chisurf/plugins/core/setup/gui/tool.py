@@ -8,6 +8,13 @@ from chisurf.gui.widgets.navigation import NavigationPanelTool
 
 SETTINGS_PANELS = [
     {
+        "name": "Getting Started",
+        "icon": "🚀",
+        "description": "First-run onboarding assistant (settings, detectors, FCS channels).",
+        "class_path": "chisurf.plugins.core.boarding.wizard",
+        "class_name": "BoardingAssistantWidget",
+    },
+    {
         "name": "ChiSurf Settings",
         "icon": "📄",
         "class_path": "chisurf.plugins.core.setup.gui.tool",

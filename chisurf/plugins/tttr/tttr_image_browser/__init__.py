@@ -200,8 +200,13 @@ class TTTRImageBrowser(QWidget):
         right_layout = QVBoxLayout(right)
         self.pg_canvas = pg.GraphicsLayoutWidget(right)
         self.viewbox = self.pg_canvas.addViewBox(lockAspect=True)
-        self.viewbox.invertY(False)
+        # The mosaic and the tile labels are built row-major (numpy ``[row, col]``),
+        # so render the image row-major too and put row 0 at the top. With the
+        # pyqtgraph default (col-major) the image is transposed and the per-tile
+        # labels (e.g. prompt / delayed) land on the wrong tiles.
+        self.viewbox.invertY(True)
         self.image_item = pg.ImageItem()
+        self.image_item.setOpts(axisOrder="row-major")
         self.viewbox.addItem(self.image_item)
 
         # ColorMap Magma setup
@@ -530,6 +535,19 @@ class TTTRImageBrowser(QWidget):
             except Exception:
                 pass
 
+            if res is None:
+                # Fallback to local computation. Use the same core entry point the
+                # backend uses (it builds the channels map from setup_settings) so the
+                # mosaic and its tile labels match the RPC path — passing the file-type
+                # filter here instead of the channels map produced a broken mosaic.
+                from chisurf.plugins.tttr.tttr_image_browser.core.image import load_image
+                res = load_image(
+                    str(path),
+                    setup_settings=self.setup_settings,
+                    max_side=512,
+                    cache_folder=str(self.current_folder) if self.current_folder else None,
+                )
+
             if res is not None:
                 mosaic = np.array(res["mosaic"], dtype=np.uint8)
                 labels = res["labels"]
@@ -537,15 +555,8 @@ class TTTRImageBrowser(QWidget):
                 rows = res["rows"]
                 self._mosaic_cache[path] = (mosaic, labels, cols, rows)
             else:
-                # Fallback to local computation
-                from chisurf.plugins.tttr.tttr_image_browser.core.image import render_mosaic_array
-                rendered = render_mosaic_array(path, self._allowed_exts_for_setup(), None)
-                if rendered is not None:
-                    mosaic, labels, cols, rows, _, _ = rendered
-                    self._mosaic_cache[path] = (mosaic, labels, cols, rows)
-                else:
-                    self._clear_preview_and_annotation()
-                    return
+                self._clear_preview_and_annotation()
+                return
 
         mosaic, labels, cols, rows = self._mosaic_cache[path]
         self.image_item.setImage(mosaic, autoLevels=True)

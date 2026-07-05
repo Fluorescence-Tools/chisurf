@@ -420,11 +420,15 @@ def test_autologin_conditions() -> None:
     user_admin_pw = {"user_id": "default", "has_password": True, "is_admin": True, "allow_passwordless_login": False}
     user_admin_passwdless = {"user_id": "default", "has_password": True, "is_admin": True, "allow_passwordless_login": True}
 
-    # Helper simulating the logic:
+    # Helper simulating the logic in chisurf.gui._run_startup_auth: admin
+    # accounts are never silently auto-logged-in, so they always trigger the
+    # LoginDialog regardless of autologin / stored tokens.
     def should_trigger_login(autologin, user_data, autologin_succeeded=False):
         if not autologin:
             return True
         if user_data is None:
+            return True
+        if user_data.get("is_admin"):
             return True
         return not autologin_succeeded
 
@@ -437,13 +441,14 @@ def test_autologin_conditions() -> None:
     assert should_trigger_login(autologin=False, user_data=user_admin_passwdless) is True
 
     # 2. autologin is ON:
-    # - the login screen is skipped only after backend autologin succeeds.
+    # - non-admin: the login screen is skipped only after backend autologin succeeds.
     assert should_trigger_login(autologin=True, user_data=user_no_pw, autologin_succeeded=True) is False
     assert should_trigger_login(autologin=True, user_data=user_pw, autologin_succeeded=False) is True
-    assert should_trigger_login(autologin=True, user_data=user_admin_no_pw, autologin_succeeded=True) is False
-    assert should_trigger_login(autologin=True, user_data=user_admin_pw, autologin_succeeded=False) is True
     assert should_trigger_login(autologin=True, user_data=user_passwdless, autologin_succeeded=True) is False
-    assert should_trigger_login(autologin=True, user_data=user_admin_passwdless, autologin_succeeded=True) is False
+    # - admin: always triggers login, even when a stored token/passwordless would succeed.
+    assert should_trigger_login(autologin=True, user_data=user_admin_no_pw, autologin_succeeded=True) is True
+    assert should_trigger_login(autologin=True, user_data=user_admin_pw, autologin_succeeded=False) is True
+    assert should_trigger_login(autologin=True, user_data=user_admin_passwdless, autologin_succeeded=True) is True
     assert should_trigger_login(autologin=True, user_data=None) is True
 
 
@@ -536,6 +541,46 @@ def test_admin_password_strength_enforcement(tmp_path: Path) -> None:
             password="StrongPassword!123",
             requester_id="admin_user"
         )
+
+
+def test_save_user_handler_admin_forces_no_passwordless(tmp_path: Path) -> None:
+    """Admin accounts can never be flagged for passwordless login: saving an
+    admin with allow_passwordless_login=1 must persist 0."""
+    db_path = tmp_path / "admin_passwordless_test.db"
+
+    from unittest.mock import patch
+
+    from chisurf.plugins.core.mfdb_admin.backend.services import (
+        list_users_handler,
+        save_user_handler,
+    )
+
+    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+        "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
+    ):
+        list_users_handler()
+        auth = _default_auth(db_path)
+
+        # Admin created with the passwordless flag set -> flag is forced off.
+        res = save_user_handler({
+            "user_id": "admin2",
+            "display_name": "Admin Two",
+            "password": "Password123",
+            "is_admin": 1,
+            "allow_passwordless_login": 1,
+        }, auth=auth)
+        admin2 = next(u for u in res["users"] if u["user_id"] == "admin2")
+        assert not admin2.get("allow_passwordless_login")
+
+        # A non-admin keeps the passwordless flag.
+        res = save_user_handler({
+            "user_id": "kiosk",
+            "display_name": "Kiosk",
+            "is_admin": 0,
+            "allow_passwordless_login": 1,
+        }, auth=auth)
+        kiosk = next(u for u in res["users"] if u["user_id"] == "kiosk")
+        assert kiosk.get("allow_passwordless_login")
 
 
 def test_change_password_permissions(tmp_path: Path) -> None:
@@ -704,8 +749,9 @@ def test_allow_passwordless_login_can_be_disabled(tmp_path: Path) -> None:
         assert login_handler("toggle_autologin_user", "some_password")["authenticated"] is True
 
 
-def test_allow_passwordless_login_admin_can_login_without_password(tmp_path: Path) -> None:
-    """Admin with allow_passwordless_login=1 can log in without password."""
+def test_allow_passwordless_login_admin_denied_without_password(tmp_path: Path) -> None:
+    """Admins can never log in without a password, even with the passwordless
+    flag; the flag itself is also forced off when an admin is saved."""
     db_path = tmp_path / "admin_passwdless_test.db"
 
     from unittest.mock import patch
@@ -722,23 +768,26 @@ def test_allow_passwordless_login_admin_can_login_without_password(tmp_path: Pat
         list_users_handler()
         auth = _default_auth(db_path)
 
-        # Create an admin user with allow_passwordless_login=1 and a password
-        save_user_handler({
+        # Create an admin user; the requested allow_passwordless_login=1 is
+        # forced off by save_user_handler.
+        res = save_user_handler({
             "user_id": "admin_passwdless",
             "display_name": "Admin Passwordless",
             "password": "StrongPassword123!",
             "is_admin": 1,
             "allow_passwordless_login": 1,
         }, auth=auth)
+        saved = next(u for u in res["users"] if u["user_id"] == "admin_passwdless")
+        assert not saved.get("allow_passwordless_login")
 
-        # Admins follow the same allow_passwordless_login rule as other users.
+        # Login without a password is denied for admins.
         res = login_handler("admin_passwdless")
-        assert res["authenticated"] is True
-        assert res["user"]["is_admin"] is True
+        assert res["authenticated"] is False
 
         # Admin with correct password should succeed
         res = login_handler("admin_passwdless", "StrongPassword123!")
         assert res["authenticated"] is True
+        assert res["user"]["is_admin"] is True
 
 
 def test_guest_user_cannot_be_deleted(tmp_path: Path) -> None:

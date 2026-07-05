@@ -15,4 +15,3 @@ if __name__ == "plugin":
     from .wizard import show_onboarding
 
     show_onboarding()
-

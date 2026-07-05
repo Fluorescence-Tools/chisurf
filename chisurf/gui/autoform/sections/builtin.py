@@ -591,6 +591,98 @@ class ButtonRowWidget(QtWidgets.QWidget):
             fn()
 
 
+class TableWidget(QtWidgets.QTableWidget):
+    """Read-only record table for a :class:`TableSection`."""
+
+    AUTOFORM_REFRESH = True
+
+    def __init__(self, model, section, parent=None):
+        super().__init__(0, len(section.columns), parent)
+        self._model = model
+        self._section = section
+        self._columns = tuple(dict(c) for c in section.columns)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.setAlternatingRowColors(True)
+        self.verticalHeader().setVisible(False)
+        self.setHorizontalHeaderLabels(
+            [str(c.get("label") or c.get("key") or "") for c in self._columns]
+        )
+        self.horizontalHeader().setStretchLastSection(True)
+        for i, column in enumerate(self._columns):
+            if column.get("description"):
+                item = self.horizontalHeaderItem(i)
+                if item is not None:
+                    item.setToolTip(_wrap_tooltip(str(column.get("description"))))
+            if column.get("width"):
+                self.setColumnWidth(i, int(column["width"]))
+        if getattr(section, "height", 0):
+            self.setMinimumHeight(int(section.height))
+        self.itemSelectionChanged.connect(self._on_selection_changed)
+        self.itemDoubleClicked.connect(lambda _item: self._activate_current_row())
+        self.refresh()
+
+    def _rows(self) -> list:
+        source = getattr(self._section, "source", "")
+        if not source:
+            return []
+        value = getattr(self._model, source, None)
+        try:
+            value = value() if callable(value) else value
+        except Exception as exc:
+            logging.warning(f"TableWidget: source {source!r} failed: {exc}")
+            return []
+        return list(value or [])
+
+    @staticmethod
+    def _row_value(row, key: str):
+        if isinstance(row, dict):
+            return row.get(key, "")
+        return getattr(row, key, "")
+
+    def _row_dict(self, row_index: int) -> dict:
+        item = self.item(row_index, 0)
+        data = item.data(QtCore.Qt.UserRole) if item is not None else None
+        if isinstance(data, dict):
+            return dict(data)
+        return {}
+
+    def refresh(self):
+        """Re-read rows from the model source."""
+        rows = self._rows()
+        self.setRowCount(len(rows))
+        for r, row in enumerate(rows):
+            row_dict = dict(row) if isinstance(row, dict) else {
+                str(c.get("key")): self._row_value(row, str(c.get("key")))
+                for c in self._columns
+            }
+            for c, column in enumerate(self._columns):
+                key = str(column.get("key") or "")
+                value = self._row_value(row, key)
+                text = "" if value is None else str(value)
+                item = QtWidgets.QTableWidgetItem(text)
+                if c == 0:
+                    item.setData(QtCore.Qt.UserRole, row_dict)
+                self.setItem(r, c, item)
+        self.resizeRowsToContents()
+
+    def _on_selection_changed(self) -> None:
+        attr = getattr(self._section, "selected_attr", "")
+        if not attr:
+            return
+        row = self.currentRow()
+        setattr(self._model, attr, self._row_dict(row) if row >= 0 else {})
+
+    def _activate_current_row(self) -> None:
+        call = getattr(self._section, "activated_call", "")
+        if not call:
+            return
+        fn = getattr(self._model, call, None)
+        if callable(fn):
+            fn(self._row_dict(self.currentRow()))
+
+
 class InfoWidget(QtWidgets.QTextBrowser):
     """Read-only rich-text (HTML/Markdown) block for an :class:`InfoSection`.
 

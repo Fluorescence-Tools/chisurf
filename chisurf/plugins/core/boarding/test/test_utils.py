@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pathlib
 
-import pytest
-
 from chisurf.plugins.core.boarding import utils
 
 
@@ -63,14 +61,14 @@ class TestSettingsPaths:
         """Test that settings_paths contains expected keys."""
         result = utils.settings_paths()
         expected_keys = [
-            'user_settings_dir',
-            'settings_chisurf_yaml',
-            'settings_colors_yaml',
-            'anisotropy_corrections_json',
-            'detector_setups_json',
-            'styles_dir',
-            'plugins_dir',
-            'logs_dir',
+            "user_settings_dir",
+            "settings_chisurf_yaml",
+            "settings_colors_yaml",
+            "anisotropy_corrections_json",
+            "detector_setups_json",
+            "styles_dir",
+            "plugins_dir",
+            "logs_dir",
         ]
         for key in expected_keys:
             assert key in result

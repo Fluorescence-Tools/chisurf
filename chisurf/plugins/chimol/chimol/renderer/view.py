@@ -2644,6 +2644,9 @@ class MolView(QtWidgets.QWidget):
                     indices=nuc_faces,
                     normals=nuc_norms,
                     colors=nuc_cols,
+                    # Flat base-ring plates need two-sided lighting so they are
+                    # not dark from the anti-light face.
+                    meta={"two_sided": True},
                 )
                 scene_objects.append(
                     SceneObject(id="cartoon_nucleic", geometry=nuc_geom, render_mode="opaque")

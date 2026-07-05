@@ -81,6 +81,10 @@ requirements:
     - typing-extensions >=4.14
     - pytools >=2024.0
     - pyyaml
+    # msgpack-python provides `import msgpack` (the plain `msgpack` conda pkg is
+    # the C lib); both back the MFDB payload codec / JSON-RPC service.
+    - msgpack-python >=1.1.2
+    - msgpack-numpy
     - markdown
     - click
     - click-didyoumean

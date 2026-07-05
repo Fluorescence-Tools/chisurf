@@ -42,6 +42,10 @@ class DockRequest:
     av_backend: str = "auto"
     #: Save the docking-trajectory frames (minimize) for the preview movie.
     save_trajectory: bool = False
+    #: FPS-style docked state to continue from (one ``{"body_id","t","q"}`` per
+    #: rigid body). When set, the initial random shuffle is skipped and sampling
+    #: resumes from these poses. ``None`` = start fresh.
+    initial_poses: Optional[List[Dict]] = None
 
 
 @dataclass

@@ -495,7 +495,9 @@ def test_login_handler_creates_session(db, normal_user, patch_db):
     assert result["user"]["user_id"] == normal_user
 
 
-def test_login_handler_allows_passwordless_admin_flag(db, patch_db):
+def test_login_handler_admin_passwordless_flag_denied(db, patch_db):
+    """Admin accounts can never log in without a password, even when the
+    allow_passwordless_login flag is set."""
     from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
     from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
 
@@ -507,11 +509,41 @@ def test_login_handler_allows_passwordless_admin_flag(db, patch_db):
         allow_passwordless_login=1,
     )
 
-    result = login_handler(user_id="passwordless_admin")
+    # No password -> denied despite the passwordless flag.
+    with pytest.raises(AuthError):
+        login_handler(user_id="passwordless_admin")
+
+    # Correct password -> allowed.
+    result = login_handler(user_id="passwordless_admin", password="correct_password")
     assert result["ok"] is True
-    assert "token" in result
     assert result["user"]["user_id"] == "passwordless_admin"
     assert result["user"]["is_admin"] is True
+
+
+def test_login_handler_admin_empty_password_denied(db, patch_db):
+    """An admin with a password hash cannot log in with an empty password."""
+    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+    from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
+
+    db.add_user(
+        "some_admin",
+        display_name="Some Admin",
+        is_admin=1,
+        password_hash=hash_password("Password123"),
+    )
+    with pytest.raises(AuthError):
+        login_handler(user_id="some_admin", password="")
+
+
+def test_login_handler_non_admin_passwordless_allowed(db, patch_db):
+    """Non-admin users with the passwordless flag (e.g. guest) can still log in
+    without a password."""
+    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+
+    db.add_user("kiosk", display_name="Kiosk", is_admin=0, allow_passwordless_login=1)
+    result = login_handler(user_id="kiosk")
+    assert result["ok"] is True
+    assert result["user"]["user_id"] == "kiosk"
 
 
 def test_login_handler_wrong_password_fails(db, normal_user, patch_db):

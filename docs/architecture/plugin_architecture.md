@@ -185,6 +185,7 @@ Every plugin MUST have a `manifest.json` in its root package directory. This rep
     {
       "name": "burst_selection.jobs.analyze_files",
       "summary": "Run burst selection analysis over TTTR files.",
+      "description": "Detects bursts in the given TTTR files with the configured burst-search settings and writes a .bur result per file. Longer help text: UIs surface it inline — AutoForm.from_rpc_method() maps it (and each parameter's JSON-Schema 'description') to Qt tooltips.",
       "params_schema": {"$ref": "schemas/burst_selection.json#/definitions/AnalyzeFilesParams"},
       "result_schema": {"$ref": "schemas/burst_selection.json#/definitions/AnalyzeFilesResult"},
       "long_running": true,

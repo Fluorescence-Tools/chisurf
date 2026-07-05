@@ -23,6 +23,11 @@
     {"name": "project_browser.export_csp"},
     {"name": "project_browser.import_preview"},
     {"name": "project_browser.import_csp"},
-    {"name": "project_browser.delete_version"}
+    {"name": "project_browser.delete_version"},
+    {"name": "project_browser.create_branch"},
+    {"name": "project_browser.list_branches"},
+    {"name": "project_browser.version_graph"},
+    {"name": "project_browser.artifacts"},
+    {"name": "project_browser.parameters"}
   ]
 }

@@ -23,11 +23,12 @@
     {
       "name": "pch.load_tttr",
       "summary": "Load a TTTR file and return its metadata (routing channels, photon count, resolutions).",
+      "description": "Opens a TTTR file with tttrlib and reports its metadata: available routing channels, total photon count, macro-time resolution and micro-time range. Call this first to discover which channels to select for pch.compute.",
       "params_schema": {
         "type": "object",
         "properties": {
-          "filename": {"type": "string"},
-          "channels": {"type": "array", "items": {"type": "integer"}}
+          "filename": {"type": "string", "description": "Path of the TTTR file to open (PTU, HT3, SPC, ...)."},
+          "channels": {"type": "array", "items": {"type": "integer"}, "description": "Routing channels to restrict the metadata scan to; all channels when omitted."}
         },
         "required": ["filename"]
       },
@@ -46,14 +47,15 @@
     {
       "name": "pch.compute",
       "summary": "Compute a PCH histogram from a loaded TTTR file.",
+      "description": "Bins the photon stream into counting intervals of bin_time_us and histograms the counts per bin into the photon counting histogram P(k). An optional micro-time window gates the photons before binning.",
       "params_schema": {
         "type": "object",
         "properties": {
-          "filename": {"type": "string"},
-          "channels": {"type": "array", "items": {"type": "integer"}},
-          "bin_time_us": {"type": "number"},
-          "micro_time_min": {"type": "integer"},
-          "micro_time_max": {"type": "integer"}
+          "filename": {"type": "string", "description": "Path of the TTTR file to analyse."},
+          "channels": {"type": "array", "items": {"type": "integer"}, "description": "Routing channels to include; all channels when omitted."},
+          "bin_time_us": {"type": "number", "description": "Counting bin width in microseconds."},
+          "micro_time_min": {"type": "integer", "description": "Lower micro-time gate (channel index); no lower gate when omitted."},
+          "micro_time_max": {"type": "integer", "description": "Upper micro-time gate (channel index); no upper gate when omitted."}
         },
         "required": ["filename"]
       },
@@ -73,16 +75,17 @@
     {
       "name": "pch.fit",
       "summary": "Fit a multi-species PCH model to experimental data.",
+      "description": "Fits an n-component PCH model to an experimental P(k), yielding per-species molecular brightness (epsilon), mean occupancy (N) and amplitude fractions plus chi-square statistics. Restrict the fitted k range with fit_low/fit_high.",
       "params_schema": {
         "type": "object",
         "properties": {
-          "k_vals": {"type": "array"},
-          "p_exp": {"type": "array"},
-          "n_components": {"type": "integer"},
-          "initial_epsilons": {"type": "array", "items": {"type": "number"}},
-          "initial_Ns": {"type": "array", "items": {"type": "number"}},
-          "fit_low": {"type": "integer"},
-          "fit_high": {"type": "integer"}
+          "k_vals": {"type": "array", "description": "Photon-count axis k of the experimental histogram."},
+          "p_exp": {"type": "array", "description": "Experimental PCH probabilities P(k), same length as k_vals."},
+          "n_components": {"type": "integer", "description": "Number of molecular species in the model."},
+          "initial_epsilons": {"type": "array", "items": {"type": "number"}, "description": "Starting molecular brightness per species (counts per bin per molecule)."},
+          "initial_Ns": {"type": "array", "items": {"type": "number"}, "description": "Starting mean number of molecules per species."},
+          "fit_low": {"type": "integer", "description": "Lowest k included in the fit."},
+          "fit_high": {"type": "integer", "description": "Highest k included in the fit."}
         },
         "required": ["k_vals", "p_exp"]
       },

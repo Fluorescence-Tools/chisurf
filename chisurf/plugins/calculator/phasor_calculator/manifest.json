@@ -1,0 +1,23 @@
+{
+  "id": "phasor_calculator",
+  "version": "1.0.0",
+  "display_name": "Main:Tools:Phasor-Calculator",
+  "description": "Interactive phasor plot: universal semicircle with reference-lifetime grid/ticks, a FRET trajectory and a two-component mixing line. Declarative AutoForm view.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Phasor-FLIM"],
+  "icon": "◐",
+  "state_namespace": "phasor_calculator",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.calculator.phasor_calculator.gui.tool:PhasorCalculatorTool"
+  },
+  "rpc_methods": [],
+  "dependencies": {},
+  "menu_hidden": true
+}

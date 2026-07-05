@@ -2,7 +2,7 @@
   "id": "calculators",
   "version": "1.0.0",
   "display_name": "Main:Tools:Calculators",
-  "description": "Hub that groups ChiSurf's FRET-line, FRET/homoFRET and FCS calculators and embeds the selected one in a two-panel view.",
+  "description": "Hub that groups ChiSurf's FRET-line, FRET/homoFRET, FCS and phasor-plot calculators and embeds the selected one in a two-panel view.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["Tools"],
   "state_namespace": "calculators",

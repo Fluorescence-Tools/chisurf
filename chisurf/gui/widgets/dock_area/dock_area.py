@@ -17,6 +17,7 @@ def _shorten_path(name: str) -> tuple[str, str]:
     ``…/parent/filename`` while the tooltip retains the full path.
     """
     import os
+
     if not os.path.isabs(name) or len(name) <= _MAX_TAB_TEXT_LEN:
         return name, name
     parent = os.path.basename(os.path.dirname(name))
@@ -144,7 +145,9 @@ class DockTabWidget(QtWidgets.QTabWidget):
 
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         """Show dock-area context actions when right-clicking the tab pane."""
-        if self.dock_area is not None and self.dock_area.is_inside_client_content(event.globalPos()):
+        if self.dock_area is not None and self.dock_area.is_inside_client_content(
+            event.globalPos()
+        ):
             event.accept()
             return
 
@@ -253,6 +256,13 @@ class DockArea(QtWidgets.QWidget):
         self._tab_bar_visible = True
         self._stacked_tabs = stacked_tabs
 
+        # Optional self-persistence of the dock arrangement (set via
+        # ``enable_persistence``): remembers splits/tabs/sizes across sessions
+        # regardless of how (or how lazily) the hosting tool is shown.
+        self._persist_key: str | None = None
+        self._persist_restored = False
+        self._restoring = False
+
         # Setup main layout
         self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -267,7 +277,7 @@ class DockArea(QtWidgets.QWidget):
         # Monitor focus changes to track the active plot/tab widget
         QtWidgets.QApplication.instance().focusChanged.connect(self._on_focus_changed)
         self.destroyed.connect(self._cleanup)
-        
+
         # Enable drop on DockArea itself for splitting
         self.setAcceptDrops(True)
 
@@ -276,6 +286,65 @@ class DockArea(QtWidgets.QWidget):
             QtWidgets.QApplication.instance().focusChanged.disconnect(self._on_focus_changed)
         except Exception:
             pass
+
+    # ── self-persistence ───────────────────────────────────────────────
+    def enable_persistence(self, settings_key: str) -> None:
+        """Remember this dock area's arrangement across sessions under *settings_key*.
+
+        The layout is restored the first time the dock area is shown (so it works
+        even when the hosting tool is created lazily, e.g. embedded in an
+        aggregator) and re-saved whenever the user rearranges it. ``settings_key``
+        is a plugin-unique string (typically the plugin's ``state_namespace``).
+        """
+        if not settings_key:
+            return
+        self._persist_key = str(settings_key)
+        try:
+            self.layoutChanged.connect(self._save_persisted_layout)
+        except Exception:
+            pass
+
+    def _persist_settings(self):
+        from qtpy import QtCore as _QtCore
+
+        from chisurf.gui.misc_helpers import get_plugin_settings_path
+
+        path = get_plugin_settings_path(self._persist_key)
+        return _QtCore.QSettings(str(path), _QtCore.QSettings.IniFormat)
+
+    def _save_persisted_layout(self) -> None:
+        if not self._persist_key or self._restoring:
+            return
+        try:
+            import json
+
+            self._persist_settings().setValue("dock_layout", json.dumps(self.get_layout_state()))
+        except Exception:
+            pass
+
+    def _restore_persisted_layout(self) -> None:
+        if not self._persist_key:
+            return
+        try:
+            import json
+
+            raw = self._persist_settings().value("dock_layout")
+            if not raw:
+                return
+            self._restoring = True
+            try:
+                self.set_layout_state(json.loads(raw))
+            finally:
+                self._restoring = False
+        except Exception:
+            pass
+
+    def showEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        """Restore the persisted arrangement on first show."""
+        if self._persist_key and not self._persist_restored:
+            self._persist_restored = True
+            self._restore_persisted_layout()
+        super().showEvent(event)
 
     def _create_tab_widget(self):
         """Create a new tab widget matching the configured tab style."""
@@ -306,8 +375,9 @@ class DockArea(QtWidgets.QWidget):
                 break
             p = p.parentWidget()
 
-
-    def setCornerWidget(self, widget: QtWidgets.QWidget, corner: QtCore.Qt.Corner = QtCore.Qt.TopRightCorner) -> None:
+    def setCornerWidget(
+        self, widget: QtWidgets.QWidget, corner: QtCore.Qt.Corner = QtCore.Qt.TopRightCorner
+    ) -> None:
         """Set the widget in the given corner of the tab bar.
 
         Parameters
@@ -371,7 +441,6 @@ class DockArea(QtWidgets.QWidget):
         for tw in self._find_tab_widgets():
             tw.setNewTabButtonVisible(visible)
 
-
     def set_root_widget(self, widget: QtWidgets.QWidget) -> None:
         """Set the root widget of the dock area.
 
@@ -394,6 +463,7 @@ class DockArea(QtWidgets.QWidget):
     def _find_dock_target(self, pos: QtCore.QPoint):
         """Find the closest dock tab widget at the given position."""
         from chisurf.gui.widgets.dock_area.dock_stacked_tab_widget import DockStackedTabWidget
+
         # Check if position is over a DockTabWidget or DockStackedTabWidget
         target = self.childAt(pos)
         while target is not None:
@@ -480,11 +550,7 @@ class DockArea(QtWidgets.QWidget):
             for index in range(widget.count()):
                 yield from self._iter_nested_widgets(widget.widget(index))
 
-    def _find_widget_by_key(
-        self,
-        key: str,
-        key_func=None
-    ) -> QtWidgets.QWidget:
+    def _find_widget_by_key(self, key: str, key_func=None) -> QtWidgets.QWidget:
         """Find a page widget by its stable key.
 
         Parameters
@@ -537,6 +603,7 @@ class DockArea(QtWidgets.QWidget):
         list of int or None
             Child indexes from the root to the widget.
         """
+
         def _walk(node, path):
             if node is widget:
                 return list(path)
@@ -550,9 +617,7 @@ class DockArea(QtWidgets.QWidget):
         return _walk(self._root_widget, [])
 
     def _widget_from_path(
-        self,
-        root: QtWidgets.QWidget,
-        path: list[int] | None
+        self, root: QtWidgets.QWidget, path: list[int] | None
     ) -> QtWidgets.QWidget:
         """Return the widget at a dock-tree path.
 
@@ -579,11 +644,7 @@ class DockArea(QtWidgets.QWidget):
             node = node.widget(idx)
         return node
 
-    def _serialize_widget(
-        self,
-        widget: QtWidgets.QWidget,
-        key_func=None
-    ) -> dict | None:
+    def _serialize_widget(self, widget: QtWidgets.QWidget, key_func=None) -> dict | None:
         """Serialize a dock-tree node.
 
         Parameters
@@ -677,11 +738,7 @@ class DockArea(QtWidgets.QWidget):
             )
         return False
 
-    def _build_widget_from_state(
-        self,
-        state: dict,
-        key_func=None
-    ) -> QtWidgets.QWidget | None:
+    def _build_widget_from_state(self, state: dict, key_func=None) -> QtWidgets.QWidget | None:
         """Build a dock-tree node from serialized state.
 
         Parameters
@@ -721,7 +778,9 @@ class DockArea(QtWidgets.QWidget):
                     continue
                 display = tab_state.get("tab_text") or self._tab_names.get(widget, key) or ""
                 tab_widget.addTab(widget, display)
-                self._set_tab_tooltip(tab_widget, tab_widget.count() - 1, self._tab_names.get(widget, display))
+                self._set_tab_tooltip(
+                    tab_widget, tab_widget.count() - 1, self._tab_names.get(widget, display)
+                )
             if tab_widget.count() == 0:
                 tab_widget.deleteLater()
                 return None
@@ -751,10 +810,7 @@ class DockArea(QtWidgets.QWidget):
         return None
 
     @staticmethod
-    def _has_parent_in(
-        widget: QtWidgets.QWidget | None,
-        parents: set[QtWidgets.QWidget]
-    ) -> bool:
+    def _has_parent_in(widget: QtWidgets.QWidget | None, parents: set[QtWidgets.QWidget]) -> bool:
         """Return whether ``widget`` is one of ``parents`` or below one."""
         node = widget
         while node is not None:
@@ -764,9 +820,7 @@ class DockArea(QtWidgets.QWidget):
         return False
 
     def _detach_page_widget(
-        self,
-        widget: QtWidgets.QWidget | None,
-        mark_hidden: bool = False
+        self, widget: QtWidgets.QWidget | None, mark_hidden: bool = False
     ) -> None:
         """Detach a registered page widget without destroying it."""
         if widget is None:
@@ -811,12 +865,7 @@ class DockArea(QtWidgets.QWidget):
                 continue
             splitter.deleteLater()
 
-    def set_layout_state(
-        self,
-        state: dict,
-        key_func=None,
-        emit_change: bool = True
-    ) -> bool:
+    def set_layout_state(self, state: dict, key_func=None, emit_change: bool = True) -> bool:
         """Restore a dock layout from a state returned by get_layout_state.
 
         Parameters
@@ -964,7 +1013,7 @@ class DockArea(QtWidgets.QWidget):
         """
         self._close_tab_callback = callback
 
-    def _on_tab_close_requested(self, tw: 'DockTabWidget', local_idx: int) -> None:
+    def _on_tab_close_requested(self, tw: "DockTabWidget", local_idx: int) -> None:
         """Translate a local DockTabWidget tab-close to an absolute index and forward."""
         w = tw.widget(local_idx)
         if w not in self._all_widgets:
@@ -1219,7 +1268,6 @@ class DockArea(QtWidgets.QWidget):
                     return tw
         return None
 
-
     def setCurrentIndex(self, index: int) -> None:
         """Activate the tab at the given absolute index.
 
@@ -1390,10 +1438,10 @@ class DockArea(QtWidgets.QWidget):
                 return
         except Exception:
             return
-        
+
         if widget is None:
             return
-            
+
         title = source_tw.tabText(source_idx)
         full_name = self._tab_names.get(widget, title)
         display, tooltip = _shorten_path(full_name)
@@ -1485,9 +1533,7 @@ class DockArea(QtWidgets.QWidget):
         elif parent == self:
             self.set_root_widget(new_widget)
 
-    def cleanup_empty_tab_widget(
-        self, tw: DockTabWidget | DockStackedTabWidget
-    ) -> None:
+    def cleanup_empty_tab_widget(self, tw: DockTabWidget | DockStackedTabWidget) -> None:
         """Remove empty tab widgets and simplify splitters.
 
         Parameters
@@ -1517,9 +1563,7 @@ class DockArea(QtWidgets.QWidget):
                 parent.setParent(None)
                 parent.deleteLater()
 
-    def restore_tab(
-        self, tw: DockTabWidget | DockStackedTabWidget, index: int
-    ) -> None:
+    def restore_tab(self, tw: DockTabWidget | DockStackedTabWidget, index: int) -> None:
         """Move a specific tab back to the main/primary tab group.
 
         Parameters
@@ -1546,9 +1590,7 @@ class DockArea(QtWidgets.QWidget):
         self.set_active_tab_widget(main_tw)
         self.layoutChanged.emit()
 
-    def restore_all_tabs(
-        self, tw: DockTabWidget | DockStackedTabWidget
-    ) -> None:
+    def restore_all_tabs(self, tw: DockTabWidget | DockStackedTabWidget) -> None:
         """Move all tabs in a widget back to the main/primary tab group.
 
         Parameters
@@ -1640,9 +1682,7 @@ class DockArea(QtWidgets.QWidget):
 
             # --- Save / Rename / Reload section ---
             action_save = menu.addAction("Save")
-            action_save.triggered.connect(
-                lambda: self.tabActionRequested.emit("save", abs_index)
-            )
+            action_save.triggered.connect(lambda: self.tabActionRequested.emit("save", abs_index))
 
             action_save_as = menu.addAction("Save As...")
             action_save_as.triggered.connect(

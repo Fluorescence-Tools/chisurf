@@ -56,9 +56,6 @@ from chisurf.plugins.core.mfdb_admin.backend.password_services import (
     evaluate_password,
     hash_password,
 )
-from chisurf.plugins.core.mfdb_admin.backend.setup_services import (
-    register_setup_services,
-)
 
 VERSIONED_MFDB_METHODS = {
     "samples.register": "register_sample",
@@ -103,32 +100,12 @@ VERSIONED_MFDB_METHODS = {
     "users.jump_to_operation": "jump_user_to_operation",
 }
 
-PRD02B_ADMIN_METHODS = {
-    "samples.full_description": "get_sample_full_description_handler",
-    "samples.validate_export": "validate_sample_export_handler",
-    "samples.create_structured": "create_structured_sample_handler",
-    "entities.list": "list_entities_handler",
-    "entities.save": "save_entity_handler",
-    "entities.delete": "delete_entity_handler",
-    "probes.save": "save_probe_handler",
-    "probes.optical_properties.save": "save_probe_optical_properties_handler",
-    "probes.positions.list": "list_probe_positions_handler",
-    "fret_pairs.list": "list_fret_pairs_handler",
-    "fret_pairs.save": "save_fret_pair_handler",
-    "fret_pairs.delete": "delete_fret_pair_handler",
-    "pdbx.suggest_keys": "suggest_pdbx_keys_handler",
-    "pdbx.validate_value": "validate_pdbx_value_handler",
-    "mock_data.populate": "populate_mock_data_handler",
-}
-
-
 def register_services(dispatcher_or_context: Any) -> None:
     """Register mfdb RPC handlers."""
     dispatcher = getattr(dispatcher_or_context, "dispatcher", dispatcher_or_context)
     register_auth_services(dispatcher)
     register_measurement_services(dispatcher)
     register_ndxplorer_services(dispatcher)
-    register_setup_services(dispatcher)
     # Fluorophore curation (fluorophores.*), migrated from the fluorophore_db plugin.
     from chisurf.plugins.core.mfdb_admin.backend.fluorophore_services import (
         register_services as register_fluorophore_services,
@@ -151,23 +128,6 @@ def register_services(dispatcher_or_context: Any) -> None:
         dispatcher.register(
             f"mfdb.v1.{name}",
             _make_v1_handler(handler),
-        )
-
-    # Legacy sample_database.* aliases for backward compat
-    for name in (
-        "status", "samples.list", "samples.get", "samples.save", "samples.delete",
-        "samples.search", "samples.key_values.save",
-        *PRD02B_ADMIN_METHODS,
-        "users.list", "users.save", "users.delete",
-        "devices.list", "devices.save", "devices.delete",
-        "experiment_types.list", "experiment_types.save", "experiment_types.delete",
-        "experiments.list", "experiments.get", "experiments.save", "experiments.delete",
-        "experiments.key_values.save", "experiments.data.save", "experiments.data.delete",
-        "import_file", "export_sample", "export_table", "backup", "reset_from_source",
-    ):
-        dispatcher.register(
-            f"sample_database.{name}",
-            lambda params, _n=name: _delegate_mfdb(params, _n),
         )
 
     # Main mfdb.* services
@@ -367,15 +327,6 @@ def datasets_open_handler(
             require_authenticated(principal_from_rpc_auth(db.conn, auth))
         local_path = db.open_dataset(artifact_id)
         return {"local_path": local_path}
-
-
-def _delegate_mfdb(params: dict[str, Any], name: str) -> dict[str, Any]:
-    """Route sample_database.* calls to the corresponding mfdb.* handler."""
-    handler_name = name.replace(".", "_") + "_handler"
-    handler = globals().get(handler_name)
-    if handler is None:
-        raise ValueError(f"No handler for mfdb.{name}")
-    return handler(**params)
 
 
 def _validate_mfdb_methods_in_manifest(manifest_path: str | Path | None = None) -> list[str]:
@@ -1010,6 +961,11 @@ def save_user_handler(user: dict[str, Any], auth: dict[str, Any] | None = None) 
                     final_is_admin = is_admin_val
             else:
                 final_is_admin = is_admin_val
+
+        # Admin accounts can never use passwordless login (defense-in-depth: the
+        # login path also refuses empty-password admin logins).
+        if final_is_admin == 1:
+            allow_passwordless_login = 0
 
         if password is not None:
             if password == "":

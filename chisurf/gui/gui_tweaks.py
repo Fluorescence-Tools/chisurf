@@ -2,6 +2,61 @@ from __future__ import annotations
 import chisurf as cs
 
 import os
+import sys
+
+
+def _sanitize_qt_plugin_path() -> None:
+    """Pin Qt's plugin search path to the running interpreter's own Qt build.
+
+    A common breakage: a launcher (e.g. PyCharm, or a shell that stack-activated
+    a *base* conda env underneath the project env) inherits a ``QT_PLUGIN_PATH``
+    that points at a *different* Qt installation than the one PyQt5 actually
+    links against. When ``QApplication`` is created, Qt loads the platform
+    plugin (``libqcocoa``) from that foreign path; if its version differs from
+    the loaded ``libQt5Core`` the process aborts at the C level with::
+
+        Cannot mix incompatible Qt library (5.15.8) with this library (5.15.15)
+
+    This is a hard ``qFatal``/``SIGABRT`` that cannot be caught in Python, so we
+    correct the environment *before* any ``QApplication`` is constructed.
+
+    ``QLibraryInfo.PluginsPath`` is compiled into the exact ``libQt5Core`` that
+    is loaded, so it always names the matching plugin directory regardless of a
+    poisoned ``QT_PLUGIN_PATH``. We fall back to ``<sys.prefix>/plugins`` (the
+    conda layout) if QtCore cannot be imported yet.
+    """
+    plugin_dir = None
+    try:
+        from qtpy.QtCore import QLibraryInfo
+
+        # PyQt5/PySide2 expose ``location``; Qt6 bindings use ``path``.
+        if hasattr(QLibraryInfo, "location"):
+            plugin_dir = QLibraryInfo.location(QLibraryInfo.PluginsPath)
+        elif hasattr(QLibraryInfo, "path"):
+            plugin_dir = QLibraryInfo.path(QLibraryInfo.LibraryPath.PluginsPath)
+    except Exception:
+        plugin_dir = None
+
+    if not plugin_dir or not os.path.isdir(plugin_dir):
+        fallback = os.path.join(sys.prefix, "plugins")
+        plugin_dir = fallback if os.path.isdir(fallback) else None
+
+    if not plugin_dir:
+        return
+
+    # Only override when the inherited value disagrees with the real build, so
+    # correctly-configured environments are left untouched.
+    if os.environ.get("QT_PLUGIN_PATH") != plugin_dir:
+        os.environ["QT_PLUGIN_PATH"] = plugin_dir
+    platforms_dir = os.path.join(plugin_dir, "platforms")
+    if os.path.isdir(platforms_dir):
+        os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = platforms_dir
+
+
+# Run as a side effect of import. ``chisurf.gui`` imports this module before it
+# imports ``qtpy`` and long before ``QApplication`` is created, so the corrected
+# paths are in place when Qt first reads them.
+_sanitize_qt_plugin_path()
 
 
 def apply_platform_window_tweaks(window) -> None:

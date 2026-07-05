@@ -22,6 +22,7 @@
 #docs
 #mypy caches
 #plugins
+junk
 *.cpython-*.dll
 *.cpython-*.so
 *.egg-info

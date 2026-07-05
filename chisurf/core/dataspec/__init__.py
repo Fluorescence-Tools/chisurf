@@ -357,6 +357,30 @@ class ButtonRowSection(Section):
 
 
 @dataclasses.dataclass(frozen=True)
+class TableSection(Section):
+    """A read-only record table driven by a model-provided row source.
+
+    This is the generic table primitive for admin/list panels. The view spec
+    declares columns as ``{"key": ..., "label": ...}`` mappings; the renderer
+    asks ``source`` on the bound model for rows (a list of mappings or objects).
+    ``activated_call`` optionally names a model method that receives the row dict
+    when the user double-clicks a row.
+    """
+
+    #: Model attribute or zero-argument method returning row mappings/objects.
+    source: str = ""
+    #: Ordered column declarations. Each mapping supports ``key``, ``label``,
+    #: optional ``width`` and optional ``description``.
+    columns: typing.Tuple[typing.Mapping[str, typing.Any], ...] = ()
+    #: Optional model method called with the row dict on double-click.
+    activated_call: str = ""
+    #: Optional model attribute updated with the selected row dict.
+    selected_attr: str = ""
+    #: Minimum table height in pixels.
+    height: int = 0
+
+
+@dataclasses.dataclass(frozen=True)
 class CustomSection(Section):
     """A bespoke, hand-written widget referenced by string ``key``.
 
@@ -553,6 +577,7 @@ _SECTION_TYPES = {
     "toggle": ToggleSection,
     "toggle_row": ToggleRowSection,
     "button_row": ButtonRowSection,
+    "table": TableSection,
     "value": ValueSection,
     "custom": CustomSection,
     "plot": PlotSection,
@@ -584,7 +609,10 @@ def _section_from_dict(d: typing.Mapping[str, typing.Any]) -> Section:
     if "labels" in kwargs and kwargs["labels"] is not None:
         kwargs["labels"] = tuple(kwargs["labels"])
     if "columns" in kwargs and kwargs["columns"] is not None:
-        kwargs["columns"] = tuple(kwargs["columns"])
+        if cls is TableSection:
+            kwargs["columns"] = tuple(dict(c) for c in kwargs["columns"])
+        else:
+            kwargs["columns"] = tuple(kwargs["columns"])
     # panels nest child sections — parse them recursively
     if "sections" in kwargs and kwargs["sections"] is not None:
         kwargs["sections"] = tuple(_section_from_dict(s) for s in kwargs["sections"])
@@ -829,7 +857,10 @@ class FittingParameterSection(Section):
     suffix: str = ""
 
 
+from .rpc import RpcMethodView  # noqa: E402  (needs the section types above)
+
 __all__ = [
+    "RpcMethodView",
     "Section",
     "ParameterGroupTableSection",
     "ParameterGroupSection",
@@ -839,6 +870,7 @@ __all__ = [
     "ChoiceSection",
     "ToggleSection",
     "ValueSection",
+    "TableSection",
     "CustomSection",
     "InfoSection",
     "WizardSection",

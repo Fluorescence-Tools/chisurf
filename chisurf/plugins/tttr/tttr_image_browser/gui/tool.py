@@ -49,6 +49,30 @@ class TTTRImageBrowserTool(QMainWindow):
         self._dock_area.addTab(self._workspace, "📈 Images")
         self.setCentralWidget(self._dock_area)
         self._setup_toolbar()
+        # When embedded in Image Tools, selecting an image proactively warms the
+        # imaging pipeline (background prefill) so later steps are ready.
+        try:
+            self._workspace.table.itemSelectionChanged.connect(self._on_image_selected)
+        except Exception:
+            pass
+
+    def _on_image_selected(self) -> None:
+        """Tell the imaging pipeline which image is selected (triggers prefill)."""
+        coordinator = getattr(self, "_coordinator", None)
+        if coordinator is None:
+            return
+        source = getattr(self._workspace, "_current_file", None)
+        if source is None:
+            try:
+                paths = self._workspace._selected_paths()
+                source = paths[0] if paths else None
+            except Exception:
+                source = None
+        if source:
+            try:
+                coordinator.set_pipeline(source=str(source))
+            except Exception:
+                pass
 
     def __getattr__(self, name: str):
         """Delegate workspace attributes for legacy tests and callers.
@@ -64,6 +88,29 @@ class TTTRImageBrowserTool(QMainWindow):
             The workspace attribute.
         """
         return getattr(self._workspace, name)
+
+    def _on_next_step(self) -> None:
+        """Send the current/selected image to the imaging pipeline (Intensity step)."""
+        coordinator = getattr(self, "_coordinator", None)
+        if coordinator is None:
+            return
+        source = None
+        try:
+            source = getattr(self._workspace, "_current_file", None)
+            if source is None:
+                paths = self._workspace._selected_paths()
+                source = paths[0] if paths else None
+        except Exception:
+            source = None
+        if source:
+            coordinator.set_pipeline(source=str(source))
+        coordinator.goto_role("pixel_intensity")
+        # Auto-compute + auto-create the intensity HDF5 (the browser already
+        # showed the image, so no separate manual Run is needed).
+        try:
+            coordinator.autorun_role("pixel_intensity")
+        except Exception:
+            pass
 
     def show(self):
         """Show the window."""
@@ -94,6 +141,14 @@ class TTTRImageBrowserTool(QMainWindow):
             action.setToolTip(tooltip)
             action.triggered.connect(slot)
             toolbar.addAction(action)
+
+        # Hand the browsed image off to the imaging pipeline (when embedded in
+        # the Image Tools shell). Steps remain freely navigable on the left.
+        toolbar.addSeparator()
+        next_action = QAction("Next ▶ Intensity", self)
+        next_action.setToolTip("Send the current image to the imaging pipeline (Intensity step).")
+        next_action.triggered.connect(self._on_next_step)
+        toolbar.addAction(next_action)
 
         chk_subfolders = QCheckBox("Subfolders", self)
         chk_subfolders.setChecked(self._workspace.chk_subfolders.isChecked())

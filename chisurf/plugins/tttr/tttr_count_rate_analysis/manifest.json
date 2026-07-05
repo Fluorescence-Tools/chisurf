@@ -1,7 +1,7 @@
 {
   "id": "tttr_count_rate_analysis",
   "version": "2.0.0",
-  "display_name": "TTTR:Analysis:Count Rate Analysis",
+  "display_name": "Tools:TTTR:Count Rate Analysis",
   "description": "Count rates per detector channel across many TTTR files, with mean/std and a per-file plot.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["TTTR", "Analysis"],

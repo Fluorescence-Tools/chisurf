@@ -1,0 +1,13 @@
+{
+  "id": "structure_tools",
+  "version": "1.0.0",
+  "display_name": "Structure:Structure Tools",
+  "description": "Unified structure toolbox: FPS JSON Editor, FRET Docking & Screening, Kappa2 Distribution, QuEst, HydroPro and Trajectory Tools.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure"],
+  "icon": "🧬",
+  "statefulness": {"enabled": true, "window": {"enabled": true, "settings_key": null}},
+  "entrypoints": {
+    "gui": "chisurf.plugins.modelling.structure_tools.gui.tool:StructureToolsTool"
+  }
+}

@@ -2570,7 +2570,7 @@ class MFDBWidget(NavigationPanelTool):
         if not cid or self._loading:
             return
         try:
-            sample = self.client._call("sample_database.samples.get", {"sample_id": cid})
+            sample = self.client._call("mfdb.samples.get", {"sample_id": cid})
             cond = (sample.get("sample") or {}).get("condition")
             if cond:
                 self.condition_detail_widget.set_data(cond)
@@ -4673,14 +4673,6 @@ class MFDBWidget(NavigationPanelTool):
             str(get_plugin_settings_path("mfdb_admin")),
             QtCore.QSettings.IniFormat,
         )
-        if not settings.value("dock_layout"):
-            legacy = QtCore.QSettings(
-                str(get_plugin_settings_path("sample_database")),
-                QtCore.QSettings.IniFormat,
-            )
-            legacy_state = legacy.value("dock_layout")
-            if legacy_state:
-                settings.setValue("dock_layout", legacy_state)
         return settings
 
     def _save_dock_layout(self) -> None:

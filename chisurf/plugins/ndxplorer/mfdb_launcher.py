@@ -49,7 +49,16 @@ def open_path_in_ndxplorer(path: str) -> Any:
     except Exception as exc:  # pragma: no cover - depends on optional module
         logger.error("ndXplorer is not available: %s", exc)
         return None
-    ndx = ndxplorer.NDXplorer()
+    # PRD-56: hand ndXplorer an in-process ChiSurf client so its phasor / FRET-line
+    # features work with no server process. Best-effort — None degrades gracefully.
+    chisurf_rpc = None
+    try:
+        from chisurf.plugins.ndxplorer.rpc_bridge import make_inprocess_chisurf_client
+
+        chisurf_rpc = make_inprocess_chisurf_client()
+    except Exception:  # pragma: no cover - optional
+        logger.warning("Could not build in-process ChiSurf RPC client", exc_info=True)
+    ndx = ndxplorer.NDXplorer(chisurf_rpc=chisurf_rpc)
     ndx.show()
     ndx.raise_()
     ndx.activateWindow()

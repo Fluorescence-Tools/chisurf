@@ -98,6 +98,21 @@ class AutoForm(QtWidgets.QWidget):
 
         return cls(ParameterGroupView(group, **kwargs), parent=parent)
 
+    @classmethod
+    def from_rpc_method(cls, method, parent=None, **kwargs):
+        """Render a parameter form for a plugin RPC method declaration.
+
+        Thin convenience over :class:`chisurf.core.dataspec.RpcMethodView`:
+        *method* is an ``RPCMethodSpec`` (or a raw ``rpc_methods`` manifest
+        entry) and ``kwargs`` (``values``/``on_change``/``title``) are forwarded
+        to the view. The method's ``description`` (falling back to ``summary``)
+        and the JSON-Schema ``description`` of each parameter surface as Qt
+        tooltips; read the entered values back via ``form.model.params()``.
+        """
+        from chisurf.core.dataspec import RpcMethodView
+
+        return cls(RpcMethodView(method, **kwargs), parent=parent)
+
     def __init__(self, model, parent=None):
         super().__init__(parent)
         self.model = model
@@ -280,6 +295,10 @@ class AutoForm(QtWidgets.QWidget):
             from .sections.builtin import ButtonRowWidget
 
             return ButtonRowWidget(self.model, section)
+        if isinstance(section, vs.TableSection):
+            from .sections.builtin import TableWidget
+
+            return TableWidget(self.model, section)
         if isinstance(section, vs.ValueSection):
             from .sections.builtin import ValueWidget
 

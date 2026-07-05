@@ -46,7 +46,7 @@ pipeline on every platform; only the final wrap differs:
 2. `make_runtime()` — `micromamba create` a self-contained env *from that
    package*, then pip-install the extras the recipe does not bundle:
    `labellib`, `latexify-py`, `imp-tricks` (from `modules/imp-tricks` if present,
-   else cloned from GitLab), the local `modules/*` (chinet/clsmview/ndxplorer/
+   else cloned from GitLab), the local `modules/*` (chinet/ndxplorer/
    quest), and `tttrlib` (conda on mac/linux, pip on Windows).
 3. `strip_bloat()` — slim the env: drop unused Qt5 modules, remove build tools,
    dependency test suites, headers, `pip`/`wheel`, `__pycache__`; trim ChiSurf's

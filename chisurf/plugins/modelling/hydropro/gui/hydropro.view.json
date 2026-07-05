@@ -1,0 +1,95 @@
+{
+  "_comment": "AutoForm view scheme for HYDROPRO / HYDRO++. Short labels; detail in tooltips (description). Compute runs in gui/tool.py via core.run_hydro.",
+  "sections": [
+    {
+      "type": "panel",
+      "title": "Executable & input",
+      "description": "HYDRO executable and the structures to process.",
+      "sections": [
+        {"type": "value", "attr": "exe_path", "label": "Executable", "kind": "str",
+         "placeholder": "hydropro10.exe / hydro++10.exe",
+         "description": "Path to the HYDROPRO or HYDRO++ executable. The flavour is auto-detected from the filename."},
+        {"type": "value", "attr": "struct_files", "label": "Structures", "kind": "str",
+         "placeholder": "use 'Select files…'",
+         "description": "Comma-separated structural files (PDB or bead coordinate files). Set with the 'Select files…' button."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Primary model",
+      "description": "Bead/shell model definition (HYDROPRO manual §3.a).",
+      "sections": [
+        {"type": "choice", "attr": "indmode", "label": "INDMODE", "style": "combo",
+         "options": ["1", "2", "4"],
+         "description": "1 = atomic/shell; 2 = residue/shell; 4 = residue/bead."},
+        {"type": "value", "attr": "aer", "label": "AER", "kind": "float",
+         "decimals": 2, "minimum": 0.0, "maximum": 50.0, "step": 0.1, "suffix": " Å",
+         "description": "Hydrodynamic radius of primary elements. Typical: 2.9 (mode 1), 4.8 (2), 6.1 (4)."},
+        {"type": "value", "attr": "nsig", "label": "NSIG", "kind": "int",
+         "minimum": -1, "maximum": 50,
+         "description": "Number of minibead radii (>2, typically 5–8). Use -1 for automatic SIGMIN/SIGMAX."},
+        {"type": "value", "attr": "sigmin", "label": "SIGMIN", "kind": "float",
+         "decimals": 2, "minimum": 0.0, "maximum": 50.0, "step": 0.1, "suffix": " Å",
+         "description": "Minimum minibead radius (shell modes 1/2 when NSIG ≠ -1)."},
+        {"type": "value", "attr": "sigmax", "label": "SIGMAX", "kind": "float",
+         "decimals": 2, "minimum": 0.0, "maximum": 50.0, "step": 0.1, "suffix": " Å",
+         "description": "Maximum minibead radius (shell modes 1/2 when NSIG ≠ -1)."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Solvent & macromolecule",
+      "description": "Solution properties (HYDROPRO manual §3.b).",
+      "sections": [
+        {"type": "value", "attr": "t", "label": "T", "kind": "float",
+         "decimals": 1, "minimum": -20.0, "maximum": 200.0, "step": 1.0, "suffix": " °C",
+         "description": "Temperature in centigrade."},
+        {"type": "value", "attr": "eta", "label": "ETA", "kind": "float",
+         "decimals": 4, "minimum": 0.0, "maximum": 10.0, "step": 0.001, "suffix": " P",
+         "description": "Solvent viscosity in poises (water at 20 °C ≈ 0.01 P)."},
+        {"type": "value", "attr": "rm", "label": "RM", "kind": "float",
+         "decimals": 1, "minimum": 0.0, "maximum": 1000000000.0, "step": 1000.0, "suffix": " Da",
+         "description": "Molecular weight in daltons."},
+        {"type": "value", "attr": "vbar", "label": "VBAR", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 5.0, "step": 0.01, "suffix": " cm³/g",
+         "description": "Partial specific volume (proteins ≈ 0.73–0.75 cm³/g)."},
+        {"type": "value", "attr": "rho", "label": "RHO", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 5.0, "step": 0.01, "suffix": " g/cm³",
+         "description": "Solution (≈ solvent) density in g/cm³."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Optional calculations",
+      "description": "Scattering, distance distribution and covolume (HYDROPRO manual §3.c).",
+      "sections": [
+        {"type": "value", "attr": "nq", "label": "NQ", "kind": "int",
+         "minimum": -1, "maximum": 1000,
+         "description": "Scattering q values: 0 omit, -1 automatic, >0 specify QMAX."},
+        {"type": "value", "attr": "qmax", "label": "QMAX", "kind": "float",
+         "decimals": 1, "minimum": 0.0, "maximum": 1000000000.0, "suffix": " cm⁻¹",
+         "description": "Upper limit of scattering variable q (only when NQ > 0)."},
+        {"type": "value", "attr": "ns", "label": "NS", "kind": "int",
+         "minimum": -1, "maximum": 1000,
+         "description": "Intervals for the distance distribution p(r): 0 omit, -1 automatic, >0 specify RMAX."},
+        {"type": "value", "attr": "rmax", "label": "RMAX", "kind": "float",
+         "decimals": 3, "minimum": 0.0, "maximum": 1000000000.0, "suffix": " cm",
+         "description": "Maximum distance for p(r) (only when NS > 0)."},
+        {"type": "value", "attr": "ntrials", "label": "NTRIALS", "kind": "int",
+         "minimum": 0, "maximum": 100000000,
+         "description": "Monte-Carlo trials for the covolume calculation (0 to omit; very time-consuming)."},
+        {"type": "toggle", "attr": "idif", "label": "Full diffusion tensor",
+         "description": "IDIF=1: output the full 6×6 diffusion tensor and diffusion centre."}
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Results",
+      "description": "Populated after a run completes.",
+      "sections": [
+        {"type": "value", "attr": "status", "label": "Status", "kind": "str", "read_only": true,
+         "description": "Outcome of the last run."}
+      ]
+    }
+  ]
+}

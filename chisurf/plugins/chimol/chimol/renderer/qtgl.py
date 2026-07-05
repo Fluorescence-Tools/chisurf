@@ -61,6 +61,7 @@ class _DrawData:
     glyph: Optional[str] = None
     radii: Optional[np.ndarray] = None
     material: Any = None
+    two_sided: bool = False
 
 @dataclass
 class _LabelData:
@@ -94,6 +95,7 @@ class _GpuDrawCall:
     glyph: Optional[str] = None
     radii_vbo: Optional[QtGui.QOpenGLBuffer] = None
     material: Any = None
+    two_sided: bool = False
 
 class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
     """Qt-native OpenGL renderer with lightweight VBO caching.
@@ -132,6 +134,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._fog_density_uniform = -1
         self._fog_color_uniform = -1
         self._glyph_mode_uniform = -1
+        self._two_sided_uniform = -1
         self._point_size_uniform = -1
         self._radius_attr = -1
         self._background = (0.0, 0.0, 0.0, 1.0)
@@ -514,6 +517,16 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             for call in call_set:
                 glyph_mode = 1 if (call.glyph == "sphere" and call.primitive == GL_POINTS) else 0
                 self._program.setUniformValue(self._glyph_mode_uniform, glyph_mode)
+                self._program.setUniformValue(
+                    self._two_sided_uniform, 1 if call.two_sided else 0
+                )
+                # Two-sided meshes (flat nucleic base plates) must not be
+                # back-face culled, or the far cap of each thin plate vanishes
+                # and the base looks torn/see-through edge-on.
+                if call.two_sided:
+                    gl.glDisable(GL_CULL_FACE)
+                else:
+                    gl.glEnable(GL_CULL_FACE)
                 self._program.setUniformValue(self._point_size_uniform, float(call.size))
 
                 mat = call.material
@@ -586,7 +599,9 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 if self._radius_attr != -1:
                     self._program.disableAttributeArray(self._radius_attr)
 
-        # Restore global material uniforms so we don't accidentally leak state into next frame
+        # Restore global GL state so we don't leak into the next frame
+        gl.glEnable(GL_CULL_FACE)
+        self._program.setUniformValue(self._two_sided_uniform, 0)
         self._program.setUniformValue(self._spec_strength_uniform, float(self._specular_strength))
         self._program.setUniformValue(self._shininess_uniform, float(self._shininess))
         self._program.setUniformValue(self._rim_strength_uniform, float(self._rim_strength))
@@ -646,6 +661,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         uniform float fogDensity;
         uniform vec3 fogColor;
         uniform int glyphMode;
+        uniform int twoSided;
         void main() {
             vec3 n = normalize(v_normal);
             if (glyphMode == 1) {
@@ -658,6 +674,11 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 n = normalize(vec3(coord, z));
             }
             vec3 l = normalize(lightDir);
+            // Two-sided lighting for flat plates (e.g. nucleic base rings):
+            // flip the normal toward the light so back faces are not dark.
+            if (twoSided == 1 && dot(n, l) < 0.0) {
+                n = -n;
+            }
             vec3 viewDir = normalize(-v_viewPos);
             float lambert = max(dot(n, l), 0.0);
             float lighting = ambientStrength + (1.0 - ambientStrength) * lambert;
@@ -738,6 +759,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._fog_density_uniform = program.uniformLocation("fogDensity")
         self._fog_color_uniform = program.uniformLocation("fogColor")
         self._glyph_mode_uniform = program.uniformLocation("glyphMode")
+        self._two_sided_uniform = program.uniformLocation("twoSided")
         self._point_size_uniform = program.uniformLocation("pointSize")
         self._radius_attr = program.attributeLocation("radius")
 
@@ -925,8 +947,10 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         width = float(geom.meta.get("width", 2.0)) if geom.meta else 2.0
         depth_test = obj.render_mode != "overlay"
         glyph = None
+        two_sided = False
         if geom.meta:
             glyph = geom.meta.get("glyph")
+            two_sided = bool(geom.meta.get("two_sided", False))
 
         return _DrawData(
             primitive=primitive,
@@ -939,6 +963,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             glyph=glyph,
             radii=np.asarray(geom.radii, dtype=np.float32) if geom.radii is not None else None,
             material=obj.material,
+            two_sided=two_sided,
         )
 
     def _primitive_for_geometry(self, geom: Geometry) -> Optional[int]:
@@ -1022,6 +1047,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 depth=centroid_z,
                 glyph=draw.glyph,
                 material=draw.material,
+                two_sided=draw.two_sided,
             )
             self._gpu_calls.append(gpu_call)
 

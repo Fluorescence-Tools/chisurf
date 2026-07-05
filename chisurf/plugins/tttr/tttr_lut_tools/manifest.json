@@ -1,7 +1,7 @@
 {
   "id": "tttr_lut_tools",
   "version": "1.0.0",
-  "display_name": "TTTR:LUT Tools",
+  "display_name": "Tools:TTTR:LUT Tools",
   "description": "Compute TTTR microtime LUTs and create channel LUT settings in one dockable workspace.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["TTTR", "Microtime", "LUT"],

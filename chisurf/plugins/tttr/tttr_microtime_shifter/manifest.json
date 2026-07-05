@@ -1,7 +1,7 @@
 {
   "id": "microtime_shifter",
   "version": "2.0.0",
-  "display_name": "TTTR:Editor:Microtime Shifter",
+  "display_name": "Tools:TTTR:Microtime Shifter",
   "description": "Apply global and per-channel micro-time shifts to TTTR files.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["TTTR", "Editor"],

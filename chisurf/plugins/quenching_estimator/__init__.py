@@ -27,6 +27,7 @@ as well as for analyzing and visualizing the results.
 """
 
 name = "Structure:Computation:QuEst"
+menu_hidden = True  # integrated into Structure Tools; hidden from ribbon
 
 import sys
 

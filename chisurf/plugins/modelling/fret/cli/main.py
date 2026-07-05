@@ -275,11 +275,20 @@ def imp_distributions(pdb, fps_json, output_csv, av_backend):
 @click.option("--n-best", default=None, type=int, help="Override number of best models kept.")
 @click.option("--method", default=None, type=click.Choice(["minimize", "mc"]),
               help="Override the docking method (minimize / mc).")
-def imp_dock_project(project_path, output_dir, n_frames, mc_steps, n_best, method):
-    """Run FRET docking from a saved project file."""
+@click.option("--continue/--fresh", "continue_poses", default=True,
+              help="Continue from the project's saved docked poses (default) or "
+                   "ignore them and start a fresh run.")
+def imp_dock_project(project_path, output_dir, n_frames, mc_steps, n_best, method,
+                     continue_poses):
+    """Run FRET docking from a saved project file.
+
+    If the project stores docked poses (FPS-style transform vectors) the run
+    resumes from them; pass ``--fresh`` to start over.
+    """
     from ..api import operations as ops
     overrides = {"output_dir": output_dir, "n_frames": n_frames,
-                 "mc_steps": mc_steps, "n_best": n_best, "method": method}
+                 "mc_steps": mc_steps, "n_best": n_best, "method": method,
+                 "continue_from_poses": continue_poses}
     res = ops.dock_project(project_path, overrides)
     click.echo(json.dumps(res, indent=2))
 

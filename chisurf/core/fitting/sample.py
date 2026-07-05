@@ -4,7 +4,6 @@
 from __future__ import annotations
 from typing import Dict
 
-import emcee
 import numpy as np
 
 import chisurf as cs
@@ -108,6 +107,11 @@ def sample_emcee(
     :param std: the standard deviation of the parameters used to randomize the initial set of the walkers
     :return: a list containing the chi2 and the parameter values
     """
+    # Imported lazily so that a missing ``emcee`` only disables ensemble
+    # sampling rather than breaking the whole fitting stack (and, transitively,
+    # every model widget that imports it).
+    import emcee
+
     if substeps is None:
         try:
             substeps = int(cs.core.settings.cs_settings['optimization']['sampling'].get('substeps', 100))

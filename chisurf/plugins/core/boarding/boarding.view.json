@@ -1,0 +1,150 @@
+{
+  "_comment": "Directed onboarding wizard for first-run ChiSurf configuration. Rendered by AutoForm from BoardingViewModel — no hardcoded Qt. Steps embed the FCS/detector editors via the general 'embed' custom section so they are attached in-place instead of floating.",
+  "sections": [
+    {
+      "type": "wizard",
+      "nav_width": 210,
+      "linear": false,
+      "persist": "boarding",
+      "steps": [
+        {
+          "title": "Welcome",
+          "icon": "👋",
+          "subtitle": "A quick guided setup for a new ChiSurf installation.",
+          "sections": [
+            {
+              "type": "info",
+              "source": "welcome_html",
+              "height": 220
+            },
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "📂 Open settings folder", "action": "open_settings_dir",
+                 "description": "Open the user settings folder (~/.chisurf) in your file manager."}
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Settings",
+          "icon": "⚙️",
+          "subtitle": "Review your user settings files; open the editor when needed.",
+          "complete_when": {"attr": "settings_ok", "equals": "True"},
+          "sections": [
+            {"type": "info", "source": "status_html"},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "🔄 Refresh", "action": "refresh",
+                 "description": "Re-check the settings files."},
+                {"label": "✏️ Open settings editor", "action": "open_settings_editor",
+                 "description": "Open the ChiSurf settings editor to adjust paths and options."}
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fix / Initialize",
+          "icon": "🛠️",
+          "subtitle": "Create missing settings files or restore packaged defaults.",
+          "sections": [
+            {"type": "info", "source": "repair_intro_html", "height": 120},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "➕ Create missing files", "action": "create_missing",
+                 "description": "Only writes settings files that do not exist yet."},
+                {"label": "♻️ Restore defaults (overwrite)", "action": "overwrite_defaults",
+                 "description": "Replace current user settings files with packaged defaults."}
+              ]
+            },
+            {"type": "info", "source": "repair_status_html", "height": 60}
+          ]
+        },
+        {
+          "title": "Experiments",
+          "icon": "🧪",
+          "subtitle": "Update experiment/model configuration so new models appear.",
+          "sections": [
+            {"type": "info", "source": "experiments_intro_html", "height": 120},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "🔁 Update experiments", "action": "update_experiments",
+                 "description": "Re-sync experiment_configs.yaml from the packaged default so new fitting models (e.g. the AutoForm PDA models) show up. Requires a restart."}
+              ]
+            },
+            {"type": "info", "source": "repair_status_html", "height": 60}
+          ]
+        },
+        {
+          "title": "Dependencies",
+          "icon": "📦",
+          "subtitle": "Check optional Python packages used by specific features.",
+          "sections": [
+            {"type": "info", "source": "deps_html"},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "🔄 Refresh", "action": "refresh",
+                 "description": "Re-check the optional dependencies."}
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Detector setup",
+          "icon": "🔬",
+          "subtitle": "Configure PIE / channel windows for TTTR workflows.",
+          "complete_when": {"attr": "has_detector_setups", "equals": "True"},
+          "sections": [
+            {"type": "info", "source": "detector_intro_html", "height": 90},
+            {
+              "type": "custom",
+              "key": "embed",
+              "options": {
+                "widget": "chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_channel_definition:DetectorWizardPage",
+                "kwargs": {"show_save": true, "show_edit_json": true}
+              }
+            }
+          ]
+        },
+        {
+          "title": "FCS channels",
+          "icon": "📡",
+          "subtitle": "Define which channels/pairs to correlate for FCS workflows.",
+          "complete_when": {"attr": "has_fcs_setups", "equals": "True"},
+          "sections": [
+            {"type": "info", "source": "fcs_intro_html", "height": 90},
+            {
+              "type": "custom",
+              "key": "embed",
+              "options": {
+                "widget": "chisurf.plugins.fcs.fcs_channel_preset.gui.tool:FCSChannelWidget"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Finish",
+          "icon": "🎉",
+          "subtitle": "You are ready to start working.",
+          "optional": true,
+          "sections": [
+            {"type": "info", "source": "finish_html", "height": 220},
+            {
+              "type": "button_row",
+              "buttons": [
+                {"label": "❓ Open Help", "action": "open_help",
+                 "description": "Browse experiment-specific guides and built-in documentation."},
+                {"label": "🧩 Open Plugin Manager", "action": "open_plugin_manager",
+                 "description": "Manage installed plugins."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

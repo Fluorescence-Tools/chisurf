@@ -102,6 +102,11 @@ def login_handler(user_id: str, password: str = "") -> dict[str, Any]:
         display_name, is_admin, password_hash, allow_passwordless = row
         is_admin_bool = is_admin == 1
 
+        # Admin accounts must always supply a password: no passwordless login and
+        # no empty-password shortcut, regardless of the allow_passwordless flag.
+        if is_admin_bool and not password:
+            return {"authenticated": False, "error": "Incorrect password"}
+
         if allow_passwordless == 1:
             return {
                 "authenticated": True,

@@ -1,7 +1,7 @@
 {
   "id": "tttr_toolbox",
   "version": "1.0.0",
-  "display_name": "TTTR:TTTR Tools",
+  "display_name": "Tools:TTTR Tools",
   "description": "Unified TTTR toolbox: ALEX Creator, Micro-time Shifter, PTU Header Editor and Split/Convert.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["TTTR"],

@@ -265,6 +265,7 @@ class UserEditorWidget(QWidget):
         form_layout.addRow("Website:", self.edit_website)
 
         self.edit_is_admin = QCheckBox("Is Administrator")
+        self.edit_is_admin.toggled.connect(self._apply_admin_autologin_rule)
         form_layout.addRow("", self.edit_is_admin)
 
         self.edit_allow_autologin = QCheckBox("Allow autologin")
@@ -439,9 +440,11 @@ class UserEditorWidget(QWidget):
         has_any_admin = any(u.get("is_admin") == 1 for u in self.users)
         
         self.edit_is_admin.setEnabled(not has_any_admin or is_current_admin)
-        can_edit_autologin = is_current_admin or self.selected_user_id == active_id or not has_any_admin
-        self.edit_allow_autologin.setEnabled(can_edit_autologin)
-        
+        self._autologin_permitted = (
+            is_current_admin or self.selected_user_id == active_id or not has_any_admin
+        )
+        self._apply_admin_autologin_rule()
+
         can_change_pw = is_current_admin or (self.selected_user_id == active_id)
         self.btn_change_password.setEnabled(can_change_pw)
 
@@ -449,6 +452,26 @@ class UserEditorWidget(QWidget):
         self.edit_details.setPlainText(user["details"] or "")
 
         self.btn_set_active.setEnabled(True)
+
+    def _apply_admin_autologin_rule(self, *_):
+        """Keep the autologin checkbox consistent with the admin flag.
+
+        Admin accounts can never use passwordless login (enforced server-side),
+        so when "Is Administrator" is checked the autologin checkbox is forced
+        off and disabled. Otherwise it follows the per-user permission flag.
+        """
+        is_admin = self.edit_is_admin.isChecked()
+        if is_admin:
+            self.edit_allow_autologin.setChecked(False)
+            self.edit_allow_autologin.setEnabled(False)
+            self.edit_allow_autologin.setToolTip(
+                "Admin accounts cannot use passwordless login."
+            )
+        else:
+            self.edit_allow_autologin.setEnabled(getattr(self, "_autologin_permitted", True))
+            self.edit_allow_autologin.setToolTip(
+                "Allow this user to obtain a login session without entering a password."
+            )
 
     def on_new_user_clicked(self):
         """Prepare inputs for creating a new user with a generated UUID."""
@@ -471,7 +494,8 @@ class UserEditorWidget(QWidget):
         
         self.edit_is_admin.setEnabled(not has_any_admin or is_current_admin)
         self.edit_allow_autologin.setChecked(False)
-        self.edit_allow_autologin.setEnabled(not has_any_admin or is_current_admin)
+        self._autologin_permitted = not has_any_admin or is_current_admin
+        self._apply_admin_autologin_rule()
         self.btn_change_password.setEnabled(True)
         self.temp_password = None
         

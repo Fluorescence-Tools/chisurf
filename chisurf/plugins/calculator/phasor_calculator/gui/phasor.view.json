@@ -1,0 +1,71 @@
+{
+  "_comment": "Interactive phasor calculator. AutoForm over _PhasorCalcModel: a Controls panel (frequency, harmonic, reference lifetimes, FRET + two-component overlays) beside a phasor plot that draws the universal semicircle plus the selected reference geometry.",
+  "sections": [
+    {
+      "type": "dock_area",
+      "title": "Phasor calculator",
+      "sections": [
+        {
+          "type": "panel",
+          "title": "Controls",
+          "collapsed": false,
+          "sections": [
+            {"type": "value", "attr": "frequency", "label": "Frequency", "kind": "float",
+             "decimals": 3, "minimum": 0.001, "maximum": 10000.0, "step": 1.0, "suffix": " MHz",
+             "description": "Modulation frequency used to map lifetimes onto the phasor plot."},
+            {"type": "value", "attr": "harmonic", "label": "Harmonic", "kind": "int",
+             "minimum": 1, "maximum": 16,
+             "description": "Harmonic number; the effective frequency is frequency x harmonic."},
+            {"type": "value", "attr": "taus", "label": "Lifetimes (ns)", "kind": "str",
+             "description": "Comma-separated reference lifetimes (ns) drawn as the iso-lifetime grid and semicircle ticks."},
+            {"type": "toggle", "attr": "show_grid", "label": "Iso-lifetime grid",
+             "description": "Draw iso-phase and iso-modulation lines for the reference lifetimes."},
+            {"type": "toggle", "attr": "show_ticks", "label": "Lifetime ticks",
+             "description": "Mark the reference lifetimes on the universal semicircle."},
+            {"type": "toggle", "attr": "show_polar_grid", "label": "Polar grid",
+             "description": "Draw a polar coordinate grid (concentric circles + angular spokes) for reading phase and modulation."},
+            {"type": "toggle", "attr": "show_fret", "label": "FRET trajectory",
+             "description": "Draw the quenched-donor FRET trajectory for the donor-only lifetime below."},
+            {"type": "value", "attr": "tau_d0", "label": "Donor tau0", "kind": "float",
+             "decimals": 3, "minimum": 0.001, "maximum": 1000.0, "suffix": " ns",
+             "description": "Donor-only lifetime for the FRET trajectory (tau_DA = tau_D0 * (1 - E))."},
+            {"type": "toggle", "attr": "show_component", "label": "Two-component line",
+             "description": "Draw a mixing line between the two component phasors below."},
+            {"type": "value", "attr": "g1", "label": "g1", "kind": "float", "decimals": 4,
+             "minimum": -0.1, "maximum": 1.1, "step": 0.01, "description": "Component 1 g."},
+            {"type": "value", "attr": "s1", "label": "s1", "kind": "float", "decimals": 4,
+             "minimum": -0.1, "maximum": 0.7, "step": 0.01, "description": "Component 1 s."},
+            {"type": "value", "attr": "g2", "label": "g2", "kind": "float", "decimals": 4,
+             "minimum": -0.1, "maximum": 1.1, "step": 0.01, "description": "Component 2 g."},
+            {"type": "value", "attr": "s2", "label": "s2", "kind": "float", "decimals": 4,
+             "minimum": -0.1, "maximum": 0.7, "step": 0.01, "description": "Component 2 s."},
+            {"type": "toggle", "attr": "show_mixing", "label": "Mixing region",
+             "description": "Draw the two-component mixing geometry and the fraction-weighted mixture point (uses g1/s1, g2/s2 as the components)."},
+            {"type": "value", "attr": "frac1", "label": "Fraction c1", "kind": "float",
+             "decimals": 3, "minimum": 0.0, "maximum": 1.0, "step": 0.05,
+             "description": "Fractional intensity of component 1 (component 2 gets the remainder); sets the mixture point."},
+            {"type": "toggle", "attr": "show_cursor", "label": "Cursor",
+             "description": "Draw a circular gating-cursor outline at the position below."},
+            {"type": "value", "attr": "cursor_g", "label": "Cursor g", "kind": "float",
+             "decimals": 4, "minimum": -0.1, "maximum": 1.1, "step": 0.01,
+             "description": "Cursor centre g."},
+            {"type": "value", "attr": "cursor_s", "label": "Cursor s", "kind": "float",
+             "decimals": 4, "minimum": -0.1, "maximum": 0.7, "step": 0.01,
+             "description": "Cursor centre s."},
+            {"type": "value", "attr": "cursor_radius", "label": "Cursor radius", "kind": "float",
+             "decimals": 4, "minimum": 0.001, "maximum": 0.5, "step": 0.01,
+             "description": "Radius of the circular gating cursor."},
+            {"type": "panel", "title": "Results", "collapsible": true, "collapsed": true,
+             "description": "Computed apparent lifetimes and mixing fractions for the reference geometry.",
+             "sections": [
+               {"type": "info", "source": "results_html", "height": 130}
+             ]}
+          ]
+        },
+        {"type": "custom", "key": "phasor", "title": "Phasor plot",
+         "options": {"overlays": "phasor_overlays"},
+         "description": "Universal semicircle with the selected reference-lifetime grid/ticks, FRET trajectory and two-component mixing line."}
+      ]
+    }
+  ]
+}

@@ -15,9 +15,11 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-PROJECT_VERSION = 1
+from . import pose_codec
+
+PROJECT_VERSION = 2
 
 #: Keys under ``params`` understood by the docking operation.
 _PARAM_KEYS = (
@@ -63,6 +65,11 @@ class DockingProject:
         Named chi2 score set (empty = all distances).
     params : dict
         Sampling controls passed through to the docking operation.
+    poses : list of dict
+        FPS-style docked state — one ``{"body_id", "t", "q"}`` per rigid body.
+        Empty when the project has never been docked / was saved as inputs only.
+    pose_meta : dict
+        Provenance for the poses (``score`` / ``method`` / ``frame``).
     name, description : str
         Free-text metadata.
     path : str
@@ -76,6 +83,8 @@ class DockingProject:
     method: str = "minimize"
     score_set: str = ""
     params: Dict = field(default_factory=dict)
+    poses: List[Dict] = field(default_factory=list)
+    pose_meta: Dict = field(default_factory=dict)
     name: str = ""
     description: str = ""
     path: str = ""
@@ -95,6 +104,8 @@ class DockingProject:
                 continue
             if k in self.params:
                 req[k] = self.params[k]
+        if self.poses:
+            req["initial_poses"] = list(self.poses)
         return req
 
 
@@ -120,6 +131,15 @@ def load_docking_project(path: str) -> DockingProject:
         raw_pdbs = [p.strip() for p in raw_pdbs.split(",") if p.strip()]
 
     params = dict(data.get("params") or {})
+
+    poses: List[Dict] = []
+    pose_meta: Dict = {}
+    blob = data.get("poses")
+    if blob:
+        decoded = pose_codec.decode_poses(blob)
+        poses = list(decoded.get("bodies") or [])
+        pose_meta = {k: decoded.get(k) for k in ("score", "method", "frame")}
+
     return DockingProject(
         pdb_paths=[_resolve(base, p) for p in raw_pdbs],
         fps_json=_resolve(base, data.get("fps_json", "")),
@@ -128,6 +148,8 @@ def load_docking_project(path: str) -> DockingProject:
         method=data.get("method", "minimize"),
         score_set=data.get("score_set", params.get("score_set", "")),
         params=params,
+        poses=poses,
+        pose_meta=pose_meta,
         name=data.get("name", ""),
         description=data.get("description", ""),
         path=path,
@@ -144,10 +166,24 @@ def save_docking_project(
     method: str = "minimize",
     score_set: str = "",
     params: Dict | None = None,
+    poses: Optional[List[Dict]] = None,
+    pose_score: Optional[float] = None,
+    pose_method: str = "",
     name: str = "",
     description: str = "",
 ) -> str:
     """Write a docking project file, storing paths relative to it when possible.
+
+    Parameters
+    ----------
+    poses : list of dict, optional
+        FPS-style docked state (``{"body_id", "t", "q"}`` per rigid body). When
+        given, it is packed into a single compact ``poses`` blob (msgpack+hex,
+        json+hex fallback) so the project can be reloaded and *continued*.
+    pose_score : float, optional
+        Total score of the docked state, stored alongside the poses.
+    pose_method : str
+        Docking method that produced the poses.
 
     Returns
     -------
@@ -169,6 +205,9 @@ def save_docking_project(
         "score_set": score_set,
         "params": dict(params or {}),
     }
+    if poses:
+        payload["poses"] = pose_codec.encode_poses(
+            list(poses), score=pose_score, method=pose_method or method)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2)
     return path

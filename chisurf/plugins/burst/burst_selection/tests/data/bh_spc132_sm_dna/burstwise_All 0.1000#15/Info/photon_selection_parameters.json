@@ -1,0 +1,83 @@
+{
+    "photon_filter": {
+        "channels": [],
+        "microtime_ranges": [
+            [
+                0,
+                2048
+            ]
+        ],
+        "filter_active": true,
+        "used_filter": "burst",
+        "count_rate_filter": {
+            "n_ph_max": 60,
+            "time_window": 0.015,
+            "invert": false
+        },
+        "delta_macro_time_filter": {
+            "dT_min": 0.001,
+            "dT_max": 0.1,
+            "dT_min_active": false,
+            "dT_max_active": true
+        },
+        "invert_filter": false,
+        "max_gap": 0,
+        "use_gap_fill": false
+    },
+    "burst_detection": {
+        "min_photons": 15,
+        "photon_window": 2,
+        "time_window": 0.015
+    },
+    "gmm": {
+        "covariance_type": "full",
+        "random_state": 42,
+        "max_iter": 300,
+        "n_init": 10,
+        "tol": 0.001,
+        "max_components": 10,
+        "reg_covar": 1e-06,
+        "auto_components": false
+    },
+    "output_formats": [
+        "bur"
+    ],
+    "zip_output": false,
+    "remove_folder": false,
+    "dT_min": 0.001,
+    "dT_max": 0.1,
+    "use_dT_min": false,
+    "use_dT_max": true,
+    "photon_threshold": 15,
+    "count_rate_window_ms": 1.0,
+    "invert_filter": false,
+    "filter_mode": "burst",
+    "filter_active": true,
+    "use_gap_fill": false,
+    "max_gap": 3,
+    "trace_bin_width": 1.0,
+    "number_of_burst_bins": 51,
+    "channels": [],
+    "decay_coarse": 1,
+    "ph_window": 2,
+    "microtime_ranges": [
+        [
+            0,
+            2048
+        ]
+    ],
+    "timestamp": "2026-06-20 07:23:03",
+    "selected_setup": "Test",
+    "files": [
+        "m000.spc",
+        "m001.spc",
+        "m002.spc",
+        "m003.spc",
+        "m004.spc",
+        "m005.spc",
+        "m006.spc",
+        "m007.spc",
+        "m008.spc",
+        "m009.spc"
+    ]
+}

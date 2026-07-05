@@ -14,7 +14,7 @@ linuxdeploy/build.sh, build-setup.bat and its helpers).
 The conda recipe (`pip install .`) produces a package containing only chisurf
 + the burbulator lib, so the installer assembles a full runtime env on top of
 it: chisurf (conda) + runtime libs + tttrlib + labellib + latexify-py +
-imp-tricks + the local ``modules/*`` (chinet/clsmview/ndxplorer/quest). It then
+imp-tricks + the local ``modules/*`` (chinet/ndxplorer/quest). It then
 slims the env aggressively (strip unused Qt, debug symbols, build tools, test
 suites) before wrapping it.
 
@@ -74,7 +74,7 @@ BUILD_TOOLS_TO_REMOVE = ("cmake", "ninja", "swig", "cython", "pythran", "vs2022_
 # ChiSurf + bundled modules whose installed payload carries test data, tutorial
 # example datasets, and source/provenance artifacts never read at runtime. The
 # repo keeps all of these; only the shipped runtime drops them.
-PAYLOAD_PKGS = ("chisurf", "ndxplorer", "quest", "clsmview")
+PAYLOAD_PKGS = ("chisurf", "ndxplorer", "quest")
 # Whole subtrees (by dir name) that are test- or tutorial-only.
 PRUNE_DIR_NAMES = ("test", "tests", "examples")
 # In chisurf/core/structure/potential/database only the binary lookups are

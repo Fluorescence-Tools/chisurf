@@ -65,7 +65,7 @@ class DatabaseConnector:
         dict
             Source/user paths, schema version, and table counts.
         """
-        path = resolve_database_path()
+        path = Path(self._db.db_path) if self._db is not None else resolve_database_path()
         with MFDatabase(path) as db:
             experiment_rows = db.get_experiments()
             return {
@@ -130,7 +130,7 @@ class DatabaseConnector:
         dict
             Repository metadata.
         """
-        path = resolve_database_path()
+        path = Path(self._db.db_path) if self._db is not None else resolve_database_path()
         with MFDatabase(path) as db:
             data: dict[str, Any] = {
                 "database_path": str(path),

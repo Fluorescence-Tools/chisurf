@@ -1,0 +1,29 @@
+{
+  "id": "hydropro",
+  "version": "1.0.0",
+  "display_name": "Structure:Computation:HydroPro",
+  "description": "Graphical front-end to the HYDROPRO / HYDRO++ suite for computing hydrodynamic properties (e.g. translational diffusion coefficient) from atomic or bead-model structures.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure"],
+  "icon": "🌊",
+  "state_namespace": "hydropro",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.modelling.hydropro.gui.tool:HydroProTool",
+    "cli": "hydropro=chisurf.plugins.modelling.hydropro.cli.main:cli",
+    "services": "chisurf.plugins.modelling.hydropro.rpc.services:register_services"
+  },
+  "rpc_methods": [
+    {"name": "hydropro.run", "summary": "Run HYDROPRO/HYDRO++ over structures and return diffusion coefficients."},
+    {"name": "hydropro.parse_res", "summary": "Parse a HYDRO *.res report for the translational diffusion coefficient."}
+  ],
+  "dependencies": {},
+  "menu_hidden": true,
+  "deprecated": false
+}

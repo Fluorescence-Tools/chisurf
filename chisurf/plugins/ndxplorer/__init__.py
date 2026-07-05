@@ -54,7 +54,11 @@ if __name__ == "plugin":
             sys.path.insert(0, p)
     import ndxplorer
     try:
-        ndx = ndxplorer.NDXplorer()
+        # Inject the in-process ChiSurf client so the phasor / FRET-line toolbar
+        # is available; falls back to a plain window if the RPC stack is missing.
+        from chisurf.plugins.ndxplorer.rpc_bridge import make_ndxplorer
+
+        ndx = make_ndxplorer()
     except Exception:
         log("Could not load ndXplorer plugin (missing optional dependencies)")
         raise

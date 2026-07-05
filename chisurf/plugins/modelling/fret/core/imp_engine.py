@@ -407,6 +407,11 @@ class DockingResult:
     best_pdbs: List[str] = field(default_factory=list)
     score_csv: Optional[str] = None
     extra: Dict = field(default_factory=dict)
+    #: Compact FPS-style docked state: one ``{"body_id", "t", "q"}`` per rigid
+    #: body (translation + rotation-quaternion). Reapplying these against the
+    #: same input PDBs reconstructs the docked pose exactly, so they can be
+    #: persisted in the project file and used to *continue* a run.
+    poses: List[Dict] = field(default_factory=list)
 
     def to_dict(self) -> Dict:
         """Return a JSON-serialisable representation."""
@@ -422,6 +427,7 @@ class DockingResult:
             "best_pdbs": list(self.best_pdbs),
             "score_csv": self.score_csv,
             "extra": dict(self.extra),
+            "poses": list(self.poses),
         }
 
 
@@ -584,6 +590,65 @@ def build_assembly(
 
 
 # ---------------------------------------------------------------------------
+# Rigid-body poses (FPS-style compact docked state)
+# ---------------------------------------------------------------------------
+
+
+def capture_poses(asm: "_Assembly") -> List[Dict]:
+    """Read the rigid-body reference frames as compact transform vectors.
+
+    Returns one ``{"body_id": int, "t": [x, y, z], "q": [w, x, y, z]}`` per
+    rigid body (``t`` = translation, ``q`` = rotation quaternion). Reapplying
+    these against the same input PDBs reconstructs the docked pose exactly.
+
+    Parameters
+    ----------
+    asm : _Assembly
+
+    Returns
+    -------
+    list of dict
+    """
+    poses: List[Dict] = []
+    for body_id in sorted(asm.rigid_bodies):
+        rb = asm.rigid_bodies[body_id]
+        tr = rb.get_reference_frame().get_transformation_to()
+        t = tr.get_translation()
+        q = tr.get_rotation().get_quaternion()
+        poses.append({
+            "body_id": int(body_id),
+            "t": [float(t[0]), float(t[1]), float(t[2])],
+            "q": [float(q[0]), float(q[1]), float(q[2]), float(q[3])],
+        })
+    return poses
+
+
+def apply_poses(asm: "_Assembly", poses: Sequence[Dict]) -> None:
+    """Set the rigid-body reference frames from saved transform vectors.
+
+    Poses whose ``body_id`` is not present in ``asm`` are ignored (e.g. a
+    project saved with more bodies than the current input).
+
+    Parameters
+    ----------
+    asm : _Assembly
+    poses : sequence of dict
+        As produced by :func:`capture_poses`.
+    """
+    for p in poses:
+        rb = asm.rigid_bodies.get(int(p["body_id"]))
+        if rb is None:
+            continue
+        q = p["q"]
+        rot = IMP.algebra.Rotation3D(float(q[0]), float(q[1]), float(q[2]), float(q[3]))
+        t = p["t"]
+        trans = IMP.algebra.Vector3D(float(t[0]), float(t[1]), float(t[2]))
+        rf = IMP.algebra.ReferenceFrame3D(IMP.algebra.Transformation3D(rot, trans))
+        rb.set_reference_frame(rf)
+    asm.model.update()
+
+
+# ---------------------------------------------------------------------------
 # Distance reporting
 # ---------------------------------------------------------------------------
 
@@ -714,6 +779,7 @@ def dock(
     fps_json_path: str,
     output_dir: str,
     params: Optional[DockingParameters] = None,
+    initial_poses: Optional[Sequence[Dict]] = None,
 ) -> DockingResult:
     """Run FRET-restrained Monte-Carlo rigid-body docking.
 
@@ -764,8 +830,13 @@ def dock(
             model, rb.get_particle_index(),
             params.max_translation, params.max_rotation))
 
-    # Initial random shuffle of mobile bodies.
-    if params.shuffle_max_translation > 0:
+    # Continue from a saved docked state (FPS-style): reapply the poses and skip
+    # the random shuffle so sampling resumes from where the previous run stopped.
+    if initial_poses:
+        apply_poses(asm, initial_poses)
+
+    # Initial random shuffle of mobile bodies (skipped when continuing).
+    if not initial_poses and params.shuffle_max_translation > 0:
         try:
             IMP.pmi.tools.shuffle_configuration(
                 root, max_translation=params.shuffle_max_translation,
@@ -809,6 +880,7 @@ def dock(
         best_pdbs=best_pdbs,
         score_csv=score_csv,
         extra={"n_frames": params.n_frames, "n_movers": len(movers)},
+        poses=capture_poses(asm),
     )
 
 
@@ -818,6 +890,7 @@ def dock_minimize(
     output_dir: str,
     params: Optional[DockingParameters] = None,
     stop_check=None,
+    initial_poses: Optional[Sequence[Dict]] = None,
 ) -> DockingResult:
     """Dock by FRET-restrained energy *minimisation* (IMP conjugate gradients).
 
@@ -861,6 +934,11 @@ def dock_minimize(
     )
     model, root = asm.model, asm.root
 
+    # Continue from a saved docked state (FPS-style): reapply the poses before
+    # the AV proxies are built so proxies are placed in the resumed body frames.
+    if initial_poses:
+        apply_poses(asm, initial_poses)
+
     # Freeze the reference body; optimise the others.
     mobile = []
     for body_id, rb in asm.rigid_bodies.items():
@@ -873,7 +951,7 @@ def dock_minimize(
         rb.set_coordinates_are_optimized(True)
         mobile.append(rb)
 
-    if params.shuffle_max_translation > 0:
+    if not initial_poses and params.shuffle_max_translation > 0:
         try:
             IMP.pmi.tools.shuffle_configuration(
                 root, max_translation=params.shuffle_max_translation)
@@ -1048,6 +1126,7 @@ def dock_minimize(
         best_pdbs=[out_pdb],
         score_csv=score_csv,
         extra=extra,
+        poses=capture_poses(asm),
     )
 
 

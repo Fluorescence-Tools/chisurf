@@ -69,9 +69,12 @@ def dock(req: Union[DockRequest, dict], stop_check=None) -> Dict:
         # random starts belong to repeated docking (estimate_errors).
         params.shuffle_max_translation = 0.0
         res = imp_engine.dock_minimize(
-            r.pdb_paths, r.fps_json, r.output_dir, params, stop_check=stop_check)
+            r.pdb_paths, r.fps_json, r.output_dir, params, stop_check=stop_check,
+            initial_poses=r.initial_poses)
     else:
-        res = imp_engine.dock(r.pdb_paths, r.fps_json, r.output_dir, params)
+        res = imp_engine.dock(
+            r.pdb_paths, r.fps_json, r.output_dir, params,
+            initial_poses=r.initial_poses)
     return OperationResult(status="ok", operation="dock", data=res.to_dict()).to_dict()
 
 
@@ -85,6 +88,8 @@ def dock_project(project_path: str, overrides: Optional[dict] = None) -> Dict:
     overrides : dict, optional
         Request keys (e.g. ``output_dir``, ``n_frames``) that take precedence
         over the project's stored values — handy for a quick CLI smoke run.
+        Pass ``{"continue_from_poses": False}`` to ignore any saved poses and
+        start a fresh run.
 
     Returns
     -------
@@ -94,6 +99,10 @@ def dock_project(project_path: str, overrides: Optional[dict] = None) -> Dict:
     proj = load_docking_project(project_path)
     req = proj.to_dock_request()
     if overrides:
+        overrides = dict(overrides)
+        # A project with saved poses auto-continues; opt out with the flag.
+        if overrides.pop("continue_from_poses", True) is False:
+            req.pop("initial_poses", None)
         req.update({k: v for k, v in overrides.items() if v is not None})
     return dock(req)
 

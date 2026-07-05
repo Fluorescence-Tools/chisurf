@@ -2434,7 +2434,12 @@ class TraceBrowser(QWidget):
             # Open in NDXplorer
             try:
                 ds = ndx_reader.read_burst_analysis(str(analysis_dir))
-                ndx = NDXplorer(data_source=ds)
+                try:
+                    from chisurf.plugins.ndxplorer.rpc_bridge import make_ndxplorer
+
+                    ndx = make_ndxplorer(data_source=ds)
+                except Exception:
+                    ndx = NDXplorer(data_source=ds)
                 try:
                     ndx.working_path = str(analysis_dir)
                 except Exception:
