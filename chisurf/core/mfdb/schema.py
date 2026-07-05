@@ -2,8 +2,10 @@ import json as _json
 import logging
 import re
 import sqlite3
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,15 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 SCHEMA_VERSION = 40
+
+# Ordered migration waterfall: target_version → migration function.
+# Each function receives an open sqlite3.Connection and transforms the
+# DB from the previous version to its target.  Migrations are applied
+# sequentially on open; a DB at version < SCHEMA_VERSION gets all pending
+# steps in order.  To add a new migration: bump SCHEMA_VERSION, append an
+# entry here, and document the change in the OKF.
+MIGRATIONS: OrderedDict[int, Callable[[sqlite3.Connection], None]] = OrderedDict()
+
 
 
 @dataclass
@@ -1726,92 +1737,107 @@ def _ensure_mfdb_edge_vocabulary_triggers(conn: sqlite3.Connection) -> dict[str,
 FRESH_DB_SCHEMA_SQL = FRESH_DB_TABLES_SQL + FRESH_DB_INDICES_SQL + MFDB_EDGE_VOCABULARY_TRIGGER_SQL
 
 
-def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
-    """Execution of versioned migration logic, including canonical schema v18.
+# ── Migration functions ────────────────────────────────────────────
 
-    Returns
-    -------
-    MigrationReport or None
-        A report if migration was performed, or ``None`` if the schema was
-        already at the current version.
+
+def _migrate_v1_fresh_db(conn: sqlite3.Connection) -> None:
+    """Create all schema objects for a fresh (empty) database."""
+    for sql in FRESH_DB_SCHEMA_SQL:
+        conn.execute(sql)
+    _bootstrap(conn)
+
+
+def _migrate_v40_reconcile(conn: sqlite3.Connection) -> None:
+    """Reconcile an existing DB to the v40 canonical schema.
+
+    CREATE IF NOT EXISTS is idempotent — missing tables are added,
+    existing ones are untouched.  Column-level reconciliation then
+    fills in any columns added since the DB was created.  Indices
+    and triggers are created last; a missing column on a stale DB
+    is tolerated (OperationalError → pass).
     """
-    report: MigrationReport | None = None
-    # Run the legacy migration logic from the original schema
-    with conn:
-        cursor = conn.cursor()
+    for sql in FRESH_DB_TABLES_SQL:
+        conn.execute(sql)
+    _ensure_canonical_columns(conn)
+    from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
+    from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+    reconcile_schema(conn, MmcifDictionary.load_bundled())
+    _ensure_mfdb_setup_columns(conn)
+    _ensure_lifecycle_columns(conn)
+    for sql in FRESH_DB_INDICES_SQL + MFDB_EDGE_VOCABULARY_TRIGGER_SQL:
         try:
-            existing = {
-                r[0]
-                for r in cursor.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                ).fetchall()
-            }
+            conn.execute(sql)
+        except sqlite3.OperationalError:
+            pass
+    _bootstrap(conn)
 
-            if not existing:
-                for sql in FRESH_DB_SCHEMA_SQL:
-                    cursor.execute(sql)
-                set_schema_version(conn, SCHEMA_VERSION)
-                bootstrap_vocabulary(conn)
-                bootstrap_default_user(conn)
-                bootstrap_auth_groups(conn)
-                from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
-                from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
-                reconcile_schema(conn, MmcifDictionary.load_bundled())
-                from chisurf.core.mfdb.operation_parameters import (
-                    bootstrap_operation_parameter_defs,
-                )
-                bootstrap_operation_parameter_defs(conn)
-                from chisurf.core.mfdb.lifecycle import bootstrap_lifecycle_defs
-                bootstrap_lifecycle_defs(conn)
-                _drop_legacy_tables(conn)
-                return
 
-            # Existing database. Per PRD-19 (option B: MFDB is unreleased and
-            # pre-PRD-19 data is disposable) there is no versioned migration
-            # waterfall. Build any missing canonical tables (CREATE IF NOT
-            # EXISTS is idempotent) and reconcile the live schema to the
-            # dictionary; the post-processing below seeds vocabulary and drops
-            # legacy/duplicate tables. An incompatible pre-PRD-19 database can
-            # simply be deleted and recreated.
-            # Create any missing tables first (CREATE IF NOT EXISTS is a no-op for
-            # tables that already exist; it does NOT add columns to them).
-            for sql in FRESH_DB_TABLES_SQL:
-                cursor.execute(sql)
-            set_schema_version(conn, SCHEMA_VERSION)
-            # Then ensure every canonical column (incl. flr_*) exists on existing
-            # tables, and reconcile mfdb_* extension tables, BEFORE creating indices
-            # (an index on a not-yet-added column would fail on an older DB).
-            _ensure_canonical_columns(conn)
-            from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
-            from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
-            reconcile_schema(conn, MmcifDictionary.load_bundled())
-            _ensure_mfdb_setup_columns(conn)
-            _ensure_lifecycle_columns(conn)
-            # Indices + triggers last; tolerate an odd missing column on a stale DB.
-            for sql in FRESH_DB_INDICES_SQL + MFDB_EDGE_VOCABULARY_TRIGGER_SQL:
-                try:
-                    cursor.execute(sql)
-                except sqlite3.OperationalError:
-                    pass
-
-        finally:
-            cursor.close()
+def _bootstrap(conn: sqlite3.Connection) -> None:
+    """Run all bootstraps (vocabulary, defaults, auth, operation params, lifecycle)."""
     bootstrap_vocabulary(conn)
-    from chisurf.core.mfdb.operation_parameters import bootstrap_operation_parameter_defs
-    bootstrap_operation_parameter_defs(conn)
-    from chisurf.core.mfdb.lifecycle import bootstrap_lifecycle_defs
-    bootstrap_lifecycle_defs(conn)
-    # Ensure auth columns exist on flr_sample_users (for DBs that skipped v22 migration)
-    for col, col_type in [("is_admin", "INTEGER DEFAULT 0"), ("password_hash", "TEXT"), ("allow_passwordless_login", "INTEGER DEFAULT 0")]:
-        with conn:
-            _ensure_column(conn, "flr_sample_users", col, col_type)
     bootstrap_default_user(conn)
     try:
         bootstrap_auth_groups(conn)
     except sqlite3.OperationalError:
         pass
-    # Phase 3: drop duplicate/legacy tables
+    from chisurf.core.mfdb.operation_parameters import bootstrap_operation_parameter_defs
+    bootstrap_operation_parameter_defs(conn)
+    from chisurf.core.mfdb.lifecycle import bootstrap_lifecycle_defs
+    bootstrap_lifecycle_defs(conn)
+    # Auth columns on flr_sample_users (for DBs that skipped v22 migration)
+    for col, col_type in [("is_admin", "INTEGER DEFAULT 0"), ("password_hash", "TEXT"), ("allow_passwordless_login", "INTEGER DEFAULT 0")]:
+        _ensure_column(conn, "flr_sample_users", col, col_type)
     _drop_legacy_tables(conn)
+
+
+# Register the migration waterfall.
+# v1: fresh-DB schema setup.
+# v40: reconcile existing DBs to current canonical structure.
+# Future additions: append to this dict, bump SCHEMA_VERSION.
+MIGRATIONS[1] = _migrate_v1_fresh_db
+MIGRATIONS[40] = _migrate_v40_reconcile
+
+
+def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
+    """Apply any pending schema migrations to bring *conn* up to date.
+
+    Reads the current schema version from the database, then applies
+    every registered migration whose target version lies between the
+    current version and ``SCHEMA_VERSION`` (exclusive lower bound,
+    inclusive upper bound).
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Open connection to the database.
+
+    Returns
+    -------
+    MigrationReport or None
+        A report if migration was performed, or ``None`` if already current.
+    """
+    current = get_schema_version(conn)
+    if current >= SCHEMA_VERSION:
+        if current > SCHEMA_VERSION:
+            logger.warning(
+                "DB schema v%d > code v%d — downgrade not supported",
+                current, SCHEMA_VERSION,
+            )
+        return None
+
+    if current == 0:
+        # Bootstrap the schema version table first so migrations can
+        # use set_schema_version().
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS _schema_version (version INTEGER)"
+        )
+
+    report = MigrationReport(from_version=current, to_version=SCHEMA_VERSION)
+    for version, fn in MIGRATIONS.items():
+        if current < version <= SCHEMA_VERSION:
+            with conn:
+                fn(conn)
+                set_schema_version(conn, version)
     return report
 
 
