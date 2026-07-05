@@ -792,161 +792,246 @@ CREATE_TABLES_SQL = [
     )""",
 ]
 
-# Canonical tables with CHECK constraints for production use.
-# Used in the fresh-DB path only; the migration path uses
-# CREATE_TABLES_SQL (without CHECK constraints) to avoid rejecting
-# legacy data during backfill.
-_CANONICAL_CHECK_SQL = [
-    """CREATE TABLE IF NOT EXISTS mfdb_object (
-        object_uuid TEXT PRIMARY KEY,
-        content_md5 TEXT NOT NULL UNIQUE,
-        original_filename TEXT,
-        size_bytes INTEGER,
-        mime_type TEXT,
-        storage_path TEXT NOT NULL,
-        refcount INTEGER DEFAULT 1,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        created_by_user_uuid TEXT REFERENCES flr_sample_users(user_uuid)
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_artifact (
-        artifact_id TEXT PRIMARY KEY,
-        artifact_kind TEXT NOT NULL,
-        data_format TEXT,
-        experiment_id TEXT REFERENCES flr_experiment(experiment_id) ON DELETE SET NULL,
-        storage_mode TEXT NOT NULL
-            CHECK (storage_mode IN ('local_file','local_directory','url','managed_archive',
-                   'embedded_json','embedded_blob','local','remote','embedded','folder')),
-        file_path TEXT,
-        url TEXT,
-        folder_path TEXT,
-        mime_type TEXT,
-        size_bytes INTEGER,
-        checksum TEXT,
-        checksum_algorithm TEXT DEFAULT 'sha256',
-        row_count INTEGER,
-        validation_status TEXT DEFAULT 'unvalidated'
-            CHECK (validation_status IN ('unvalidated','valid','invalid','warning')),
-        validation_message TEXT,
-        metadata_json TEXT,
-        data_json TEXT,
-        data_blob BLOB,
-        object_uuid TEXT REFERENCES mfdb_object(object_uuid),
-        created_by_user_id TEXT REFERENCES flr_sample_users(user_id),
-        is_public INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_operation (
-        operation_id TEXT PRIMARY KEY,
-        operation_type TEXT NOT NULL,
-        experiment_id TEXT REFERENCES flr_experiment(experiment_id) ON DELETE CASCADE,
-        setup_id TEXT REFERENCES mfdb_setup(setup_id) ON DELETE SET NULL,
-        settings_json TEXT,
-        settings_hash TEXT,
-        operator_user_id TEXT,
-        software_package TEXT,
-        software_module TEXT,
-        software_version TEXT,
-        runtime_environment_json TEXT,
-        started_at TEXT,
-        ended_at TEXT,
-        status TEXT DEFAULT 'pending'
-            CHECK (status IN ('pending','running','succeeded','failed','cancelled','success','converged')),
-        error_message TEXT,
-        traceback_summary TEXT,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_operation_artifact (
-        operation_id TEXT NOT NULL REFERENCES mfdb_operation(operation_id) ON DELETE CASCADE,
-        artifact_id TEXT NOT NULL REFERENCES mfdb_artifact(artifact_id) ON DELETE CASCADE,
-        direction TEXT NOT NULL
-            CHECK (direction IN ('input','output')),
-        role TEXT NOT NULL DEFAULT 'generic',
-        ordinal INTEGER DEFAULT 0,
-        checksum_snapshot TEXT,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT,
-        PRIMARY KEY (operation_id, artifact_id, direction, role)
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_edge (
-        edge_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        source_node_type TEXT NOT NULL,
-        source_node_id TEXT NOT NULL,
-        target_node_type TEXT NOT NULL,
-        target_node_id TEXT NOT NULL,
-        relationship_type TEXT NOT NULL
-            CHECK (relationship_type NOT IN ('input_to','produced')),
-        operation_id TEXT REFERENCES mfdb_operation(operation_id) ON DELETE SET NULL,
-        settings_hash TEXT,
-        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-        software_version TEXT,
-        checksum_snapshot_json TEXT,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
-    """CREATE TABLE IF NOT EXISTS mfdb_parameter (
-        parameter_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        parameter_uuid TEXT UNIQUE NOT NULL,
-        operation_id TEXT REFERENCES mfdb_operation(operation_id) ON DELETE CASCADE,
-        name TEXT NOT NULL,
-        value REAL,
-        standard_error REAL,
-        confidence_interval_low REAL,
-        confidence_interval_high REAL,
-        initial_value REAL,
-        lower_bound REAL,
-        upper_bound REAL,
-        bounds_on INTEGER DEFAULT 0,
-        units TEXT,
-        parameter_type TEXT NOT NULL DEFAULT 'free',
-        role TEXT,
-        expression TEXT,
-        prior_json TEXT,
-        mapping_json TEXT,
-        metadata_json TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TEXT
-    )""",
+# ---------------------------------------------------------------------------
+# Single-source canonical table definitions -- both permissive and
+# CHECK-constrained DDL are generated from this data, eliminating the
+# hand-sync requirement (DATA-03).  Every canonical mfdb_* table is
+# defined once; the two DDL forms differ only in CHECK constraints.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class _Column:
+    """A single column in a canonical table definition."""
+    name: str
+    type_: str
+    nullable: bool = True
+    default: str | None = None
+    pk: bool = False
+    unique: bool = False
+    ref: str | None = None
+    check: str | None = None
+
+
+@dataclass
+class _TableDef:
+    """Structured definition for a canonical table."""
+    columns: list[_Column]
+    table_constraints: list[str] = field(default_factory=list)
+
+
+_CANONICAL_TABLE_DEFS: dict[str, _TableDef] = {
+    "mfdb_object": _TableDef([
+        _Column("object_uuid", "TEXT", pk=True),
+        _Column("content_md5", "TEXT", nullable=False, unique=True),
+        _Column("original_filename", "TEXT"),
+        _Column("size_bytes", "INTEGER"),
+        _Column("mime_type", "TEXT"),
+        _Column("storage_path", "TEXT", nullable=False),
+        _Column("refcount", "INTEGER", default="1"),
+        _Column("metadata_json", "TEXT"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("created_by_user_uuid", "TEXT", ref="flr_sample_users(user_uuid)"),
+    ]),
+    "mfdb_artifact": _TableDef([
+        _Column("artifact_id", "TEXT", pk=True),
+        _Column("artifact_kind", "TEXT", nullable=False),
+        _Column("data_format", "TEXT"),
+        _Column("experiment_id", "TEXT", ref="flr_experiment(experiment_id) ON DELETE SET NULL"),
+        _Column("storage_mode", "TEXT", nullable=False,
+                check="storage_mode IN ('local_file','local_directory','url','managed_archive',"
+                      "'embedded_json','embedded_blob','local','remote','embedded','folder')"),
+        _Column("file_path", "TEXT"),
+        _Column("url", "TEXT"),
+        _Column("folder_path", "TEXT"),
+        _Column("mime_type", "TEXT"),
+        _Column("size_bytes", "INTEGER"),
+        _Column("checksum", "TEXT"),
+        _Column("checksum_algorithm", "TEXT", default="'sha256'"),
+        _Column("row_count", "INTEGER"),
+        _Column("validation_status", "TEXT", default="'unvalidated'",
+                check="validation_status IN ('unvalidated','valid','invalid','warning')"),
+        _Column("validation_message", "TEXT"),
+        _Column("metadata_json", "TEXT"),
+        _Column("data_json", "TEXT"),
+        _Column("data_blob", "BLOB"),
+        _Column("object_uuid", "TEXT", ref="mfdb_object(object_uuid)"),
+        _Column("created_by_user_id", "TEXT", ref="flr_sample_users(user_id)"),
+        _Column("is_public", "INTEGER", default="0"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("updated_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("deleted_at", "TEXT"),
+    ]),
+    "mfdb_operation": _TableDef([
+        _Column("operation_id", "TEXT", pk=True),
+        _Column("operation_type", "TEXT", nullable=False),
+        _Column("experiment_id", "TEXT", ref="flr_experiment(experiment_id) ON DELETE CASCADE"),
+        _Column("setup_id", "TEXT", ref="mfdb_setup(setup_id) ON DELETE SET NULL"),
+        _Column("settings_json", "TEXT"),
+        _Column("settings_hash", "TEXT"),
+        _Column("operator_user_id", "TEXT"),
+        _Column("software_package", "TEXT"),
+        _Column("software_module", "TEXT"),
+        _Column("software_version", "TEXT"),
+        _Column("runtime_environment_json", "TEXT"),
+        _Column("started_at", "TEXT"),
+        _Column("ended_at", "TEXT"),
+        _Column("status", "TEXT", default="'pending'",
+                check="status IN ('pending','running','succeeded','failed','cancelled','success','converged')"),
+        _Column("error_message", "TEXT"),
+        _Column("traceback_summary", "TEXT"),
+        _Column("metadata_json", "TEXT"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("updated_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("deleted_at", "TEXT"),
+    ]),
+    "mfdb_operation_artifact": _TableDef([
+        _Column("operation_id", "TEXT", nullable=False, ref="mfdb_operation(operation_id) ON DELETE CASCADE"),
+        _Column("artifact_id", "TEXT", nullable=False, ref="mfdb_artifact(artifact_id) ON DELETE CASCADE"),
+        _Column("direction", "TEXT", nullable=False,
+                check="direction IN ('input','output')"),
+        _Column("role", "TEXT", nullable=False, default="'generic'"),
+        _Column("ordinal", "INTEGER", default="0"),
+        _Column("checksum_snapshot", "TEXT"),
+        _Column("metadata_json", "TEXT"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("updated_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("deleted_at", "TEXT"),
+    ], table_constraints=[
+        "PRIMARY KEY (operation_id, artifact_id, direction, role)",
+    ]),
+    "mfdb_edge": _TableDef([
+        _Column("edge_id", "INTEGER", pk=True),  # AUTOINCREMENT added by generator
+        _Column("source_node_type", "TEXT", nullable=False),
+        _Column("source_node_id", "TEXT", nullable=False),
+        _Column("target_node_type", "TEXT", nullable=False),
+        _Column("target_node_id", "TEXT", nullable=False),
+        _Column("relationship_type", "TEXT", nullable=False,
+                check="relationship_type NOT IN ('input_to','produced')"),
+        _Column("operation_id", "TEXT", ref="mfdb_operation(operation_id) ON DELETE SET NULL"),
+        _Column("settings_hash", "TEXT"),
+        _Column("timestamp", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("software_version", "TEXT"),
+        _Column("checksum_snapshot_json", "TEXT"),
+        _Column("metadata_json", "TEXT"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("updated_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("deleted_at", "TEXT"),
+    ]),
+    "mfdb_parameter": _TableDef([
+        _Column("parameter_id", "INTEGER", pk=True),  # AUTOINCREMENT added by generator
+        _Column("parameter_uuid", "TEXT", nullable=False, unique=True),
+        _Column("operation_id", "TEXT", ref="mfdb_operation(operation_id) ON DELETE CASCADE"),
+        _Column("name", "TEXT", nullable=False),
+        _Column("value", "REAL"),
+        _Column("standard_error", "REAL"),
+        _Column("confidence_interval_low", "REAL"),
+        _Column("confidence_interval_high", "REAL"),
+        _Column("initial_value", "REAL"),
+        _Column("lower_bound", "REAL"),
+        _Column("upper_bound", "REAL"),
+        _Column("bounds_on", "INTEGER", default="0"),
+        _Column("units", "TEXT"),
+        _Column("parameter_type", "TEXT", nullable=False, default="'free'"),
+        _Column("role", "TEXT"),
+        _Column("expression", "TEXT"),
+        _Column("prior_json", "TEXT"),
+        _Column("mapping_json", "TEXT"),
+        _Column("metadata_json", "TEXT"),
+        _Column("created_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("updated_at", "TEXT", default="CURRENT_TIMESTAMP"),
+        _Column("deleted_at", "TEXT"),
+    ]),
+}
+
+
+def _col_sql(col: _Column, *, with_check: bool) -> str:
+    """Render a single column definition as DDL.
+
+    Parameters
+    ----------
+    col : _Column
+        The column definition.
+    with_check : bool
+        If True, include CHECK constraints (canonical form).
+        If False, omit CHECK constraints (permissive form).
+    """
+    parts = [col.name, col.type_]
+    if not col.nullable:
+        parts.append("NOT NULL")
+    if col.default is not None:
+        parts.append(f"DEFAULT {col.default}")
+    if col.pk:
+        parts.append("PRIMARY KEY")
+        if col.type_ == "INTEGER":
+            parts.append("AUTOINCREMENT")
+    if col.unique:
+        parts.append("UNIQUE")
+    if col.ref is not None:
+        parts.append(f"REFERENCES {col.ref}")
+    if with_check and col.check is not None:
+        parts.append(f"CHECK ({col.check})")
+    return " ".join(parts)
+
+
+def _table_ddl(table_name: str, *, with_check: bool) -> str:
+    """Generate a ``CREATE TABLE IF NOT EXISTS`` statement for *table_name*.
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the canonical table (must be in ``_CANONICAL_TABLE_DEFS``).
+    with_check : bool
+        If True, include CHECK constraints (canonical/fresh-DB form).
+        If False, omit CHECK constraints (permissive/migration form).
+    """
+    tdef = _CANONICAL_TABLE_DEFS[table_name]
+    parts = [f"CREATE TABLE IF NOT EXISTS {table_name} ("]
+    col_lines = ["    " + _col_sql(c, with_check=with_check) for c in tdef.columns]
+    all_lines = col_lines + ["    " + tc for tc in tdef.table_constraints]
+    parts.append(",\n".join(all_lines))
+    parts.append(")")
+    return "\n".join(parts)
+
+
+def _build_canonical_ddl(table_name: str) -> str:
+    """Generate CHECK-constrained DDL for a canonical table (fresh-DB form)."""
+    return _table_ddl(table_name, with_check=True)
+
+
+def _build_permissive_ddl(table_name: str) -> str:
+    """Generate permissive DDL for a canonical table (migration form)."""
+    return _table_ddl(table_name, with_check=False)
+
+
+# Replace the canonical-table entries in CREATE_TABLES_SQL with
+# generated permissive DDL from the single source.
+_CANONICAL_TABLE_NAMES = list(_CANONICAL_TABLE_DEFS.keys())
+for i, sql in enumerate(CREATE_TABLES_SQL):
+    if isinstance(sql, str):
+        for tn in _CANONICAL_TABLE_NAMES:
+            if sql.startswith(f"CREATE TABLE IF NOT EXISTS {tn} "):
+                CREATE_TABLES_SQL[i] = _build_permissive_ddl(tn)
+                break
+
+# Fresh-DB tables — permissive form for most tables, CHECK-constrained
+# for canonical mfdb_* tables (so production DBs have validation).
+_CANONICAL_CHECK_DDL: dict[str, str] = {
+    tn: _build_canonical_ddl(tn) for tn in _CANONICAL_TABLE_NAMES
+}
+
+def _match_canonical(sql: str) -> str | None:
+    """Return the canonical CHECK DDL for *sql* if it's a canonical table, else None."""
+    if not isinstance(sql, str):
+        return None
+    for tn in _CANONICAL_TABLE_NAMES:
+        if sql.startswith(f"CREATE TABLE IF NOT EXISTS {tn} "):
+            return _CANONICAL_CHECK_DDL[tn]
+    return None
+
+FRESH_DB_TABLES_SQL = [
+    _match_canonical(sql) or sql
+    for sql in CREATE_TABLES_SQL
 ]
-
-# ---------------------------------------------------------------------------
-# Extension tables managed by reconcile_schema
-# ---------------------------------------------------------------------------
-
-
-# Fresh-DB tables — same as CREATE_TABLES_SQL but with CHECK-constrained
-# canonical table definitions for the mfdb_* canonical tables.
-_CANONICAL_TABLE_MAP: dict[str, str] = {}
-
-# Build CHECK-constrained entries — match on mfdb_* prefix
-for csql in _CANONICAL_CHECK_SQL:
-    for mfdb_name in [
-        "mfdb_artifact", "mfdb_operation",
-        "mfdb_operation_artifact", "mfdb_edge", "mfdb_parameter",
-    ]:
-        prefix = f"CREATE TABLE IF NOT EXISTS {mfdb_name} "
-        if prefix in csql:
-            _CANONICAL_TABLE_MAP[mfdb_name] = csql
-            break
-
-FRESH_DB_TABLES_SQL = []
-for sql in CREATE_TABLES_SQL:
-    for mfdb_name, replacement in _CANONICAL_TABLE_MAP.items():
-        prefix = f"CREATE TABLE IF NOT EXISTS {mfdb_name} "
-        if prefix in sql:
-            sql = replacement
-            break
-    FRESH_DB_TABLES_SQL.append(sql)
 
 CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_probes_type ON probes (type_id)",
@@ -1666,7 +1751,7 @@ def _ensure_mfdb_edge_constraint(conn: sqlite3.Connection) -> dict[str, int | li
     legacy_table = "__mfdb_edge_legacy"
     conn.execute(f"DROP TABLE IF EXISTS {legacy_table}")
     conn.execute("ALTER TABLE mfdb_edge RENAME TO __mfdb_edge_legacy")
-    conn.execute(_CANONICAL_TABLE_MAP["mfdb_edge"])
+    conn.execute(_CANONICAL_CHECK_DDL["mfdb_edge"])
     inserted = _copy_non_operation_edges(conn, legacy_table, "mfdb_edge")
     conn.execute("DROP TABLE __mfdb_edge_legacy")
     for sql in CREATE_INDICES_SQL:
