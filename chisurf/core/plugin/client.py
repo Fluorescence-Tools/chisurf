@@ -29,13 +29,12 @@ class PluginClient(Protocol):
         Returns
         -------
         dict
-            The response dict (``{"ok": True, "result": ..., "state_patch": ...}``
-            or ``{"ok": False, "error": ...}``).
+            The response dict (``{"ok": True, ..., ...}``).
 
         Raises
         ------
         RemoteError
-            On transport/protocol failures.
+            On transport/protocol failures or application-level errors.
 
         """
         ...

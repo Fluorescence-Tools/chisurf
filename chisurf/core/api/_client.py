@@ -147,6 +147,14 @@ class ChisurfClient:
 
     def call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         raw = self._client.call(method, params)
+        # Transport-level errors (timeout, send/recv failure) come back
+        # as {"ok": False, "error": "..."} from ZmqClient.call().
+        if isinstance(raw, dict) and raw.get("ok") is False:
+            raise RemoteError(
+                message=raw.get("error", "Transport error"),
+                error_code="TRANSPORT_ERROR",
+                details=raw,
+            )
         if "error" not in raw:
             return raw.get("result", {})
 

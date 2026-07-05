@@ -179,11 +179,28 @@ class ZmqServer:
                 result = self._handler(method, params)
             finally:
                 _SERVER_DISPATCH_CONTEXT.active = previous
-            self._rep_socket.send_json({
-                "jsonrpc": "2.0",
-                "result": result,
-                "id": req_id,
-            }, default=_json_default)
+            # Promote application-level errors (ok: False) to the
+            # JSON-RPC error member so callers can distinguish success
+            # from failure by the contract, not by sniffing fields.
+            if isinstance(result, dict) and result.get("ok") is False:
+                self._rep_socket.send_json({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": result.get("jsonrpc_code", -32603),
+                        "message": result.get("error", "Service error"),
+                        "data": {
+                            "error_code": result.get("error_code"),
+                            "exception_type": result.get("exception_type"),
+                        },
+                    },
+                    "id": req_id,
+                }, default=_json_default)
+            else:
+                self._rep_socket.send_json({
+                    "jsonrpc": "2.0",
+                    "result": result,
+                    "id": req_id,
+                }, default=_json_default)
         except Exception as e:
             self._rep_socket.send_json({
                 "jsonrpc": "2.0",

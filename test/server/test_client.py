@@ -62,11 +62,11 @@ def test_client_list_fits(zmq_server):
 def test_client_unknown_method(zmq_server):
     cmd_port, pub_port, dispatcher, server = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client._call("nonexistent_method")
-    assert not result.get("ok")
-    assert "not found" in result.get("error", "")
-    assert result.get("error_code") == "METHOD_NOT_FOUND"
-    assert result.get("jsonrpc_code") == -32601
+    with pytest.raises(RemoteError) as exc:
+        client._call("nonexistent_method")
+    assert "not found" in str(exc.value)
+    assert exc.value.error_code == "METHOD_NOT_FOUND"
+    assert exc.value.jsonrpc_code == -32601
     client.close()
 
 
@@ -185,12 +185,11 @@ def test_client_legacy_methods_still_work(zmq_server):
 # ── New namespaced mutation methods ───────────────────────────────
 
 def test_client_dataset_rename_no_dataset(zmq_server):
-    """dataset__rename returns error when dataset does not exist."""
+    """dataset__rename raises RemoteError when dataset does not exist."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.dataset__rename("NewName", dataset_index=0)
-    assert not result.get("ok")
-    assert "error" in result
+    with pytest.raises(RemoteError):
+        client.dataset__rename("NewName", dataset_index=0)
     client.close()
 
 
@@ -213,74 +212,74 @@ def test_client_dataset_rename_with_dataset(zmq_server):
 
 
 def test_client_dataset_group_empty(zmq_server):
-    """dataset__group returns error for non-existent indices."""
+    """dataset__group raises RemoteError for non-existent indices."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.dataset__group([0, 1])
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.dataset__group([0, 1])
     client.close()
 
 
 def test_client_dataset_ungroup_empty(zmq_server):
-    """dataset__ungroup returns error for non-existent indices."""
+    """dataset__ungroup raises RemoteError for non-existent indices."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.dataset__ungroup([0])
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.dataset__ungroup([0])
     client.close()
 
 
 def test_client_dataset_group_returns_error_on_nonexistent(zmq_server):
-    """dataset__group with non-existent indices returns error."""
+    """dataset__group with non-existent indices raises RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    grp = client.dataset__group([0, 1], group_name="TestGroup")
-    assert not grp.get("ok")
+    with pytest.raises(RemoteError):
+        client.dataset__group([0, 1], group_name="TestGroup")
     client.close()
 
 
 def test_client_dataset_ungroup_returns_error_on_nonexistent(zmq_server):
-    """dataset__ungroup with non-existent indices returns error."""
+    """dataset__ungroup with non-existent indices raises RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    ug = client.dataset__ungroup([0])
-    assert not ug.get("ok")
+    with pytest.raises(RemoteError):
+        client.dataset__ungroup([0])
     client.close()
 
 
 def test_client_fit_set_dataset_no_fit(zmq_server):
-    """fit__set_dataset returns error when fit not found."""
+    """fit__set_dataset raises RemoteError when fit not found."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.fit__set_dataset(fit_index=0, dataset_index=0)
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.fit__set_dataset(fit_index=0, dataset_index=0)
     client.close()
 
 
 def test_client_fit_set_result_idx_no_fit(zmq_server):
-    """fit__set_result_idx returns error when fit not found."""
+    """fit__set_result_idx raises RemoteError when fit not found."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.fit__set_result_idx(fit_index=0, result_idx=1)
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.fit__set_result_idx(fit_index=0, result_idx=1)
     client.close()
 
 
 def test_client_parameter_link_no_fit(zmq_server):
-    """parameter__link returns error when fit not found."""
+    """parameter__link raises RemoteError when fit not found."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.parameter__link("tau1", "tau2", fit_index=0)
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.parameter__link("tau1", "tau2", fit_index=0)
     client.close()
 
 
 def test_client_parameter_unlink_no_fit(zmq_server):
-    """parameter__unlink returns error when parameter not found."""
+    """parameter__unlink raises RemoteError when parameter not found."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.parameter__unlink("tau1", fit_index=0)
-    assert not result.get("ok")
+    with pytest.raises(RemoteError):
+        client.parameter__unlink("tau1", fit_index=0)
     client.close()
 
 
@@ -300,44 +299,44 @@ def test_client_graph_build_fits_empty(zmq_server):
 # ── Structured error tests ─────────────────────────────────────────
 
 def test_service_error_has_error_code(zmq_server):
-    """Service-level 'fit not found' error includes error_code."""
+    """Service-level 'fit not found' error raised as RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.call("fit.get", {"fit_index": 0})
-    assert not result.get("ok")
-    assert result.get("error_code") == "NOT_FOUND"
-    assert result.get("jsonrpc_code") == -32601
+    with pytest.raises(RemoteError) as exc:
+        client.call("fit.get", {"fit_index": 0})
+    assert exc.value.error_code == "NOT_FOUND"
+    assert exc.value.jsonrpc_code == -32601
     client.close()
 
 
 def test_service_error_has_error_code_params(zmq_server):
-    """Service-level 'parameter not found' error includes error_code."""
+    """Service-level 'parameter not found' error raised as RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.call("parameter.get", {"parameter_name": "nonexistent", "fit_index": 0})
-    assert not result.get("ok")
-    assert result.get("error_code") == "NOT_FOUND"
-    assert result.get("jsonrpc_code") == -32601
+    with pytest.raises(RemoteError) as exc:
+        client.call("parameter.get", {"parameter_name": "nonexistent", "fit_index": 0})
+    assert exc.value.error_code == "NOT_FOUND"
+    assert exc.value.jsonrpc_code == -32601
     client.close()
 
 
 def test_service_error_invalid_input_has_code(zmq_server):
-    """Service-level validation errors include error_code."""
+    """Service-level validation errors raised as RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.call("dataset.remove", {})
-    assert not result.get("ok")
-    assert result.get("error_code") == "INVALID_INPUT"
+    with pytest.raises(RemoteError) as exc:
+        client.call("dataset.remove", {})
+    assert exc.value.error_code == "INVALID_INPUT"
     client.close()
 
 
 def test_service_error_invalid_state_has_code(zmq_server):
-    """Service-level state errors include error_code."""
+    """Service-level state errors raised as RemoteError."""
     cmd_port, pub_port, _, _ = zmq_server
     client = ChisurfClient(cmd_port=cmd_port, pub_port=pub_port)
-    result = client.call("fit.create", {"dataset_index": 0})
-    assert not result.get("ok")
-    assert result.get("error_code") == "INVALID_STATE"
+    with pytest.raises(RemoteError) as exc:
+        client.call("fit.create", {"dataset_index": 0})
+    assert exc.value.error_code == "INVALID_STATE"
     client.close()
 
 
