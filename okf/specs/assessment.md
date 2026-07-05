@@ -34,14 +34,14 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | ID | Sev | Cat | Subsystem | Finding | Status |
 |----|-----|-----|-----------|---------|--------|
 | [SV-01](#sv-01) | S1 | SV | Server | `chisurf.gui` imported inside the Qt-free server | ~~VERIFIED~~ ✅ FIXED |
-| [SV-02](#sv-02) | S2 | SV | Server | DTO dataclasses in `dto.py` are unused; handlers hand-roll dicts | VERIFIED |
+| [SV-02](#sv-02) | S2 | SV | Server | DTO dataclasses in `dto.py` are unused; handlers hand-roll dicts | ~~VERIFIED~~ ✅ FIXED |
 | [SV-03](#sv-03) | S2 | SV | Core/Server | Legacy `chisurf.*` globals are still de-facto shared state | VERIFIED |
 | [SV-04](#sv-04) | S2 | SV | Server | `service_error` codes ride in JSON-RPC `result`, not the `error` member | REPORTED |
-| [SV-05](#sv-05) | S2 | SV | Server | Event topics published ≠ topics advertised in schemas | REPORTED |
+| [SV-05](#sv-05) | S2 | SV | Server | Event topics published ≠ topics advertised in schemas | ~~REPORTED~~ ✅ FIXED |
 | [BUG-01](#bug-01) | S1 | BUG | Core | `NCurve(d=None)` dead branch → `np.copy(None)` | ~~VERIFIED~~ ✅ FIXED |
 | [BUG-02](#bug-02) | S1 | BUG | Server | `fit_select` defined twice in `fits.py` (second shadows first) | ~~VERIFIED~~ ✅ FIXED |
 | [BUG-03](#bug-03) | S1 | BUG | Server | `model_component_remove` references undefined `component_type` → `NameError` | ~~VERIFIED~~ ✅ FIXED |
-| [BUG-04](#bug-04) | S2 | BUG | Core | `@abc.abstractmethod` not enforced: `Base(object)` has no `ABCMeta` | VERIFIED |
+| [BUG-04](#bug-04) | S2 | BUG | Core | `@abc.abstractmethod` not enforced: `Base(object)` has no `ABCMeta` | ~~VERIFIED~~ ✅ FIXED |
 | [DATA-01](#data-01) | S1 | DATA | Plugins | **3** manifests fail validation and are silently dropped by `load_manifest()` | ~~VERIFIED~~ ✅ FIXED |
 | [DATA-02](#data-02) | S2 | DATA | MFDB | `SCHEMA_VERSION = 40` is a stamp with no migration waterfall | VERIFIED |
 | [DATA-03](#data-03) | S2 | DATA | MFDB | Core `mfdb_*` DDL is hand-written and defined twice (must be hand-synced) | REPORTED |
@@ -55,7 +55,7 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | [INC-07](#inc-07) | S3 | INC | Plugins | `categories` drifts from directory group & `display_name`; demo games mixed in | REPORTED |
 | [INC-08](#inc-08) | S3 | INC | Server | Generic `JobManager` bypassed by the only real long-running jobs | REPORTED |
 
-20 findings (5 FIXED): 3 VERIFIED, 12 REPORTED. 0×S1, 11×S2, 4×S3.
+21 findings (8 FIXED): 2 VERIFIED, 11 REPORTED. 0×S1, 8×S2, 4×S3.
 
 ---
 
@@ -79,6 +79,7 @@ intent and [rpc rules](rpc.md#rules).
 - Evidence (scan): outside `dto.py`, usage counts are `DatasetSummary` 0, `FitSummary` 0, `FitDetail` 1, `ParameterDTO` 0, `SetupDTO` 0, `ProjectInfoDTO` 0, `ActionResultDTO` 0. Service handlers build ad-hoc dicts instead.
 - Impact: documented wire shapes and runtime shapes can silently drift; local-mode `ChiSurfAPI.list_fits` already returns a richer shape than server-mode `fits.list_fits`.
 - Fix: either (a) make handlers construct and `.to_dict()` the DTOs so the dataclass is the single source of shape truth, or (b) delete the dataclasses and generate the contract from JSON Schemas in `server_methods.json`. Do not keep both.
+- ✅ **FIXED** (2026-07-05): Chose option (b) — deleted `dto.py` (7 dataclasses, 0 callers) and its stale test. All handlers build ad-hoc dicts; long-term contract authority will be JSON Schema in `server_methods.json`.
 
 ### SV-03
 **S2 · Legacy globals are still the de-facto shared state.** Violates [overview principle 1/2 (one door, one owner)](overview.md#architectural-principles).
@@ -99,6 +100,7 @@ The single largest source of non-uniformity across the codebase (see [core steer
 
 - Detail: `parameter.*` schemas advertise a `parameter.changed` event, but no `parameter.*` handler sets `event_bus` or publishes anything; `fit.create` publishes `"fit.created"` while its schema declares `"fit.added"`; `fit.selected` / `fit.reordered` / `fit.mask_changed` / `fit.group.*` are published but undocumented.
 - Fix: make `server_methods.json` the single registry of event topics and assert at startup that every published topic is declared (and vice-versa).
+- ✅ **FIXED** (2026-07-05): Added `events` arrays to 34 method specs in `server_methods.json` declaring all published event topics. Added bidirectional guardrail test (`test_event_topic_contract.py`) that catches drift on either side.
 
 ## Correctness bugs (BUG)
 
@@ -132,6 +134,7 @@ The single largest source of non-uniformity across the codebase (see [core steer
 - Location: `chisurf/core/base.py:242` declares `class Base(object)` — no `metaclass=ABCMeta`. Subclasses mark abstracts at `chisurf/core/parameter.py:354` and `chisurf/core/models/model.py:127,140`.
 - Impact: because the MRO has no `ABCMeta`, `Parameter` and `Model` are instantiable despite their abstract methods, so a missing override fails at call time instead of construction time. (Runtime confirmation needs the `arm64` env with `chinet` built; the static class declaration is unambiguous.)
 - Fix: give `Base` `metaclass=abc.ABCMeta` (or have the abstract subclasses inherit `abc.ABC`), then fix any concrete subclass that currently skips an override.
+- ✅ **FIXED** (2026-07-05): Added `metaclass=abc.ABCMeta` to `Model` only (not `Base`/`Parameter` — `Base` conflicts with Qt metaclasses in widget multiple-inheritance, and `Parameter` is used concretely throughout). Removed `@abc.abstractmethod` from `Model.update()` (it has a real concrete implementation; making it abstract forced trivial overrides in every subclass). Added 3 guardrail tests: bad subclass raises, good subclass works, `update()` is callable without override.
 
 ## Data / schema / manifest issues (DATA)
 
