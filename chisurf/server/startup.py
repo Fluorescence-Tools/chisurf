@@ -178,11 +178,16 @@ def get_shared_event_bus() -> Any:
 def session_state_from_live_chisurf() -> Any:
     """Create a ``SessionState`` that references the live GUI session objects.
 
+    Wraps ``chisurf.fits`` / ``chisurf.imported_datasets`` directly
+    (shared list objects — mutations are visible to both).  The
+    ``ChiSurfAPI`` also aliases these same lists via its own
+    ``_state``, so there is a single logical owner.
+
     Returns
     -------
     SessionState or None
-        A state sharing ``chisurf.imported_datasets`` and ``chisurf.fits``
-        list objects, or ``None`` if ``chisurf`` is not importable (headless).
+        A state sharing the session list objects, or ``None`` if
+        ``chisurf`` is not importable (headless).
 
     """
     try:

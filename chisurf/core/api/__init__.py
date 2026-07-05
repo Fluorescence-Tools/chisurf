@@ -34,12 +34,20 @@ def _extract_curve_data(dataset: Any) -> Optional[Dict[str, List[float]]]:
         return None
 
 
+def _global_datasets() -> list[Any]:
+    return getattr(cs, "imported_datasets", None) or []
+
+
+def _global_fits() -> list[Any]:
+    return getattr(cs, "fits", None) or []
+
+
 def _local_datasets() -> list[Any]:
-    return list(getattr(cs, "imported_datasets", []) or [])
+    return list(_global_datasets())
 
 
 def _local_fits() -> list[Any]:
-    return list(getattr(cs, "fits", []) or [])
+    return list(_global_fits())
 
 
 def _resolve_indexed(items: list[Any], index: Optional[int] = None, uid: Optional[str] = None) -> tuple[Any, int]:
@@ -87,29 +95,38 @@ class ChiSurfAPI:
     Routes to local in-process objects in ``local`` mode, server RPC in
     ``server`` mode, and a mix in ``hybrid`` mode.
 
+    The API owns a :class:`SessionState <chisurf.server.session.SessionState>`
+    that aliases the ``cs.fits`` / ``cs.imported_datasets`` globals (same
+    list objects).  All mutations go through the state; the globals are a
+    backward-compatible read-shim.
+
     Parameters
     ----------
     client : object, optional
         A ``ChisurfClient`` instance for server-mode routing.
     mode : str
         ``"local"``, ``"hybrid"``, or ``"server"``.
-
-    Notes
-    -----
-    **local** mode uses current in-process
-    ``cs.fits`` / ``cs.imported_datasets``. **hybrid** mode
-    preserves local reads while preferring server commands for migrated
-    paths. **server** mode is pure client/server through a
-    ``ChisurfClient``.
+    state : SessionState, optional
+        Pre-existing state to adopt.  When *None* (default) a new state is
+        built that aliases the current ``cs.fits`` / ``cs.imported_datasets``
+        globals.
     """
 
     def __init__(
         self,
         client: Any = None,
         mode: str = "hybrid",
+        state: SessionState | None = None,
     ):
         self.client = client
         self.mode = mode
+        if state is not None:
+            self._state = state
+        else:
+            self._state = SessionState(
+                datasets=_global_datasets(),
+                fits=_global_fits(),
+            )
 
     # ── datasets ─────────────────────────────────────────────────
 
@@ -117,7 +134,7 @@ class ChiSurfAPI:
         if self.mode == "server" and self.client is not None:
             return self.client.dataset__list()
         result: List[Dict[str, Any]] = []
-        for idx, d in enumerate(getattr(cs, "imported_datasets", []) or []):
+        for idx, d in enumerate(self._state.datasets):
             result.append({
                 "index": idx,
                 "uid": str(getattr(d, "unique_identifier", "") or ""),
@@ -223,7 +240,7 @@ class ChiSurfAPI:
         from chisurf.macros import core_data
         indices = list(dataset_indices or [])
         if dataset_uids:
-            for i, d in enumerate(getattr(cs, "imported_datasets", []) or []):
+            for i, d in enumerate(self._state.datasets):
                 if str(getattr(d, "unique_identifier", "")) in dataset_uids:
                     indices.append(i)
         if indices:
@@ -233,9 +250,7 @@ class ChiSurfAPI:
     def clear_datasets(self) -> Dict[str, Any]:
         if self.mode == "server" and self.client is not None:
             return self.client.dataset__clear()
-        ds_list = getattr(cs, "imported_datasets", None)
-        if ds_list is not None:
-            ds_list.clear()
+        self._state.datasets.clear()
         return {"ok": True}
 
     def group_datasets(
@@ -274,7 +289,7 @@ class ChiSurfAPI:
         if self.mode == "server" and self.client is not None:
             return self.client.fit__list()
         result: List[Dict[str, Any]] = []
-        fits = list(getattr(cs, "fits", []) or [])
+        fits = list(self._state.fits)
         for idx, f in enumerate(fits):
             chi2 = None
             try:
@@ -417,7 +432,7 @@ class ChiSurfAPI:
     ) -> Dict[str, Any]:
         if self.mode == "server" and self.client is not None:
             return self.client.fit__remove(fit_indices=fit_indices, fit_uids=fit_uids)
-        fits = list(getattr(cs, "fits", []) or [])
+        fits = list(self._state.fits)
         to_remove: set = set()
         if fit_uids:
             for i, f in enumerate(fits):
@@ -428,13 +443,13 @@ class ChiSurfAPI:
         if not to_remove:
             return {"ok": False, "error": "no fits specified"}
         kept = [f for i, f in enumerate(fits) if i not in to_remove]
-        cs.fits[:] = kept
+        self._state.fits[:] = kept
         return {"ok": True, "removed_count": len(to_remove)}
 
     def clear_fits(self) -> Dict[str, Any]:
         if self.mode == "server" and self.client is not None:
             return self.client.fit__clear()
-        cs.fits.clear()
+        self._state.fits.clear()
         return {"ok": True}
 
     def fit_create(self, dataset_index: int = 0, model_name: Optional[str] = None, fit_name: Optional[str] = None) -> Dict[str, Any]:
@@ -575,8 +590,8 @@ class ChiSurfAPI:
         return {
             "ok": True,
             "project_path": None,
-            "fit_count": len(getattr(cs, "fits", []) or []),
-            "dataset_count": len(getattr(cs, "imported_datasets", []) or []),
+            "fit_count": len(self._state.fits),
+            "dataset_count": len(self._state.datasets),
         }
 
     def save_project(self, target_path: str, project_name: Optional[str] = None) -> Dict[str, Any]:
@@ -603,8 +618,8 @@ class ChiSurfAPI:
             "ok": True,
             "datasets": self.list_datasets(),
             "fits": self.list_fits(),
-            "dataset_count": len(getattr(cs, "imported_datasets", []) or []),
-            "fit_count": len(getattr(cs, "fits", []) or []),
+            "dataset_count": len(self._state.datasets),
+            "fit_count": len(self._state.fits),
         }
 
     def session_snapshot(self) -> Dict[str, Any]:
@@ -613,8 +628,8 @@ class ChiSurfAPI:
         return {
             "ok": True,
             "snapshot": {
-                "dataset_count": len(getattr(cs, "imported_datasets", []) or []),
-                "fit_count": len(getattr(cs, "fits", []) or []),
+                "dataset_count": len(self._state.datasets),
+                "fit_count": len(self._state.fits),
             },
         }
 
@@ -623,8 +638,8 @@ class ChiSurfAPI:
             return self.client.session__restore(project_path=project_path)
         if project_path:
             return {"ok": False, "error": "session restore requires server mode for project loading"}
-        getattr(cs, "fits", []).clear()
-        getattr(cs, "imported_datasets", []).clear()
+        self._state.fits.clear()
+        self._state.datasets.clear()
         return {"ok": True, "message": "session cleared locally"}
 
     @property
@@ -657,12 +672,17 @@ class ChiSurfAPI:
 
         Only activates in ``server`` mode (or when *force* is true).
         After this call all access to those globals is routed through the
-        ZMQ client.
+        ZMQ client.  The API's internal state is updated to share the
+        new list objects.
         """
         if not force and self.mode != "server":
             return
         from chisurf.core.api._proxies import install_proxies
         install_proxies(self.client)
+        self._state = SessionState(
+            datasets=getattr(cs, "imported_datasets", []),
+            fits=getattr(cs, "fits", []),
+        )
 
     # ---- graph ----
     def build_fit_graph(
@@ -679,7 +699,7 @@ class ChiSurfAPI:
                 include_fixed=include_fixed,
                 connect_fits=connect_fits,
             )
-        fits = list(getattr(cs, "fits", []) or [])
+        fits = list(self._state.fits)
         selected = []
         if fit_uids:
             uid_set = set(fit_uids)
