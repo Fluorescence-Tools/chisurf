@@ -135,7 +135,7 @@ def model_component_remove(
         if not removed:
             # Try sub-component pop — the action handler removes the last component
             for candidate in ("lifetimes", "species", "rotations",
-                              "distances", "gaussians", component_type):
+                              "distances", "gaussians"):
                 target = getattr(model, candidate, None)
                 if target is None:
                     continue
