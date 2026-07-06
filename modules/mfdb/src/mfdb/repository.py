@@ -34,6 +34,7 @@ from mfdb.models import (
     VALIDATION_STATUS_VALUES,
     validate_vocabulary,
 )
+from mfdb.queries.parameters import ParameterMixin
 from mfdb.transactions import transaction as _transaction
 
 logger = logging.getLogger(__name__)
@@ -94,7 +95,7 @@ def _exists(conn: sqlite3.Connection, table: str, column: str, value: Any) -> bo
 _migrated_db_paths: set[str] = set()
 
 
-class MFDatabase(MFDBClientBase):
+class MFDatabase(ParameterMixin, MFDBClientBase):
 
     _VALID_ENUMS = {
         # ``category`` is the canonical optical-component class used by the
@@ -2545,59 +2546,6 @@ class MFDatabase(MFDBClientBase):
 
 
     # -- mfdb parameters --
-
-    def add_parameter(self, param_id, name, value, param_type="string", unit=None, description=None, operation_id=None, artifact_id=None, details=None):
-        if not param_id:
-            raise ValueError("param_id is required")
-        metadata = details or {}
-        if isinstance(metadata, dict):
-            metadata = metadata.copy()
-            if unit is not None:
-                metadata["unit"] = unit
-            if description is not None:
-                metadata["description"] = description
-        return self.record_parameter(
-            parameter_uuid=param_id,
-            operation_id=operation_id,
-            name=name,
-            value=value,
-            units=unit,
-            parameter_type=param_type,
-            metadata=metadata,
-        )
-
-    def get_parameters(self, operation_id=None, artifact_id=None):
-        if artifact_id is not None:
-            operation_ids = [
-                row["operation_id"]
-                for row in self.conn.execute(
-                    "SELECT DISTINCT operation_id FROM mfdb_operation_artifact WHERE artifact_id = ? AND deleted_at IS NULL",
-                    (artifact_id,),
-                ).fetchall()
-            ]
-            if not operation_ids:
-                return []
-            placeholders = ",".join("?" for _ in operation_ids)
-            params: list[Any] = operation_ids
-            query = f"SELECT * FROM mfdb_parameter WHERE operation_id IN ({placeholders}) AND deleted_at IS NULL"
-        elif operation_id is not None:
-            query = "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL"
-            params = [operation_id]
-        else:
-            query = "SELECT * FROM mfdb_parameter WHERE deleted_at IS NULL"
-            params = []
-        query += " ORDER BY parameter_id"
-        return [dict(row) for row in self.conn.execute(query, params).fetchall()]
-
-    def delete_parameter(self, param_id):
-        # PRD-26 Task 2: schema-driven soft-delete (was two hand UPDATEs). param_id may
-        # be either key, so soft-delete by each; the explicit _utc_now() keeps the
-        # stored deleted_at marker format identical. The only delta is the now-idempotent
-        # `AND deleted_at IS NULL` guard (callers ignore the rowcount).
-        with self._transaction():
-            now = _utc_now()
-            self.dao.soft_delete("mfdb_parameter", param_id, pk_column="parameter_uuid", deleted_at=now)
-            self.dao.soft_delete("mfdb_parameter", param_id, pk_column="parameter_id", deleted_at=now)
 
     # -- mfdb setup / setup definitions --
 
