@@ -1,251 +1,68 @@
-"""Public MFDB package exports."""
+"""Compatibility facade for the vendored :mod:`mfdb` package.
 
-from . import auth
-from .base import MFDBClientBase
-from .chinet_adapter import (
-    CHINET_NODE_ARTIFACT,
-    CHINET_SESSION_ARTIFACT,
-    FIT_STATE_SCHEMA,
-    archive_fit_to_mfdb,
-    clear_mfdb_backend,
-    configure_mfdb_backend,
-    load_chinet_session,
-    store_chinet_session,
-)
-from .database_resolver import (
-    SOURCE_DB_NAME,
-    USER_DB_RELATIVE,
-    backup_database,
-    backup_database_before_migration,
-    resolve_database_path,
-    source_database_path,
-    user_database_path,
-)
-from .graph import traverse_canonical_graph
-from .models import (
-    ARTIFACT_KINDS,
-    BUFFER_COMPONENTS,
-    COMMON_PROBE_NAMES,
-    DATA_FORMATS,
-    DEFAULT_FLUOROPHORE_SPECTRA,
-    DIRECTIONS,
-    ENTITY_TYPES,
-    LIFECYCLE_STATUSES,
-    OPERATION_TYPES,
-    PARAMETER_TYPES,
-    SAMPLE_CONDITION_FIELDS,
-    STATUS_VALUES,
-    STORAGE_MODES,
-    VALIDATION_STATUS_VALUES,
-    AnalysisMetadata,
-    Entity,
-    EntityAssembly,
-    EntityDefinition,
-    Experiment,
-    ExperimentData,
-    ExperimentType,
-    ExternalFile,
-    FretPairDefinition,
-    MfdbArtifact,
-    MfdbAuditLog,
-    MfdbEdge,
-    MfdbExperiment,
-    MfdbOperation,
-    MfdbOperationArtifact,
-    MfdbParameter,
-    MfdbSample,
-    MfdbSetup,
-    MfdbVocabulary,
-    OpticalProperty,
-    PhotonStream,
-    PolyProbePosition,
-    Probe,
-    ProbeDefinition,
-    ProbeType,
-    SampleCondition,
-    SampleDefinition,
-    SampleDevice,
-    SampleProbe,
-    SampleUser,
-    SequenceResidue,
-    Spectrum,
-    compute_forster_radius,
-    validate_vocabulary,
-)
-from .payload_codec import (
-    PayloadSchemaError,
-    decode_payload,
-    encode_payload,
-    get_payload_schema,
-)
-from .payload_models import (
-    AnisotropyCurve,
-    BurstSelection,
-    BurstTable,
-    FcsCorrelation,
-    GenericCurve,
-    GenericTable,
-    PdaHistogram,
-    TcspcDecay,
-    TttrPhotonStream,
-    TttrReference,
-)
-from .pdbx_metadata import MmcifDictionary
-from .repository import MFDatabase
-from .result_registry import (
-    read_result,
-    register_calibration,
-    register_fit_result,
-    register_processed_data,
-    register_raw_measurement,
-    register_result,
-    set_global_db,
-)
-from .sample_manager import (
-    create_sample,
-    find_sample_by_name,
-    get_artifacts_for_sample,
-    get_sample,
-    get_sample_for_artifact,
-    get_sample_full_description,
-    get_sample_name,
-    link_artifact_to_sample,
-    list_samples,
-    set_sample_metadata,
-    suggest_pdbx_keys,
-    validate_sample_for_export,
-)
-from .sample_requests import (
-    SampleCreateRequest,
-    SampleLinkRequest,
-    SampleQueryRequest,
-    SampleSearchRequest,
-    SampleUnlinkRequest,
-    SampleUpdateRequest,
-)
-from .transactions import transaction
-from .vocabulary_loader import (
-    get_all_vocabulary_names,
-    get_buffer_components,
-    get_entity_types,
-    get_probe_names,
-    get_sample_condition_fields,
-    reload_vocabulary,
-)
+MFDB now lives under ``modules/mfdb/src/mfdb`` so it can be split from
+ChiSurf cleanly. Existing ``chisurf.core.mfdb`` imports are kept during the
+prerelease cutover, but new code should import ``mfdb`` directly.
+"""
 
-__all__ = [
-    "ARTIFACT_KINDS",
-    "BUFFER_COMPONENTS",
-    "COMMON_PROBE_NAMES",
-    "DATA_FORMATS",
-    "DEFAULT_FLUOROPHORE_SPECTRA",
-    "DIRECTIONS",
-    "ENTITY_TYPES",
-    "EntityDefinition",
-    "FretPairDefinition",
-    "LIFECYCLE_STATUSES",
-    "MmcifDictionary",
-    "OPERATION_TYPES",
-    "PARAMETER_TYPES",
-    "PayloadSchemaError",
-    "AnisotropyCurve",
-    "BurstSelection",
-    "BurstTable",
-    "decode_payload",
-    "encode_payload",
-    "FcsCorrelation",
-    "GenericCurve",
-    "GenericTable",
-    "get_payload_schema",
-    "PdaHistogram",
-    "read_result",
-    "register_calibration",
-    "register_fit_result",
-    "register_processed_data",
-    "register_raw_measurement",
-    "register_result",
-    "set_global_db",
-    "TcspcDecay",
-    "TttrPhotonStream",
-    "TttrReference",
-    "ProbeDefinition",
-    "SAMPLE_CONDITION_FIELDS",
-    "STATUS_VALUES",
-    "STORAGE_MODES",
-    "VALIDATION_STATUS_VALUES",
-    "AnalysisMetadata",
-    "CHINET_NODE_ARTIFACT",
-    "CHINET_SESSION_ARTIFACT",
-    "Entity",
-    "EntityAssembly",
-    "Experiment",
-    "ExperimentData",
-    "ExperimentType",
-    "ExternalFile",
-    "FIT_STATE_SCHEMA",
-    "MFDBClientBase",
-    "MFDatabase",
-    "MfdbArtifact",
-    "MfdbAuditLog",
-    "MfdbEdge",
-    "MfdbExperiment",
-    "MfdbOperation",
-    "MfdbOperationArtifact",
-    "MfdbParameter",
-    "MfdbSample",
-    "MfdbSetup",
-    "MfdbVocabulary",
-    "OpticalProperty",
-    "PhotonStream",
-    "PolyProbePosition",
-    "Probe",
-    "ProbeType",
-    "SampleCondition",
-    "SampleCreateRequest",
-    "SampleDefinition",
-    "SampleDevice",
-    "SampleLinkRequest",
-    "SampleProbe",
-    "SampleQueryRequest",
-    "SampleSearchRequest",
-    "SampleUnlinkRequest",
-    "SampleUpdateRequest",
-    "SampleUser",
-    "SequenceResidue",
-    "SOURCE_DB_NAME",
-    "Spectrum",
-    "USER_DB_RELATIVE",
-    "archive_fit_to_mfdb",
-    "auth",
-    "backup_database",
-    "backup_database_before_migration",
-    "clear_mfdb_backend",
-    "compute_forster_radius",
-    "configure_mfdb_backend",
-    "create_sample",
-    "find_sample_by_name",
-    "get_all_vocabulary_names",
-    "get_artifacts_for_sample",
-    "get_buffer_components",
-    "get_entity_types",
-    "get_probe_names",
-    "get_sample",
-    "get_sample_condition_fields",
-    "get_sample_full_description",
-    "get_sample_for_artifact",
-    "get_sample_name",
-    "link_artifact_to_sample",
-    "list_samples",
-    "load_chinet_session",
-    "reload_vocabulary",
-    "resolve_database_path",
-    "set_sample_metadata",
-    "source_database_path",
-    "store_chinet_session",
-    "suggest_pdbx_keys",
-    "transaction",
-    "traverse_canonical_graph",
-    "user_database_path",
-    "validate_sample_for_export",
-    "validate_vocabulary",
-]
+from __future__ import annotations
+
+import importlib
+import importlib.abc
+import importlib.util
+import sys
+from pathlib import Path
+from typing import Any
+
+_VENDORED_SRC = Path(__file__).resolve().parents[3] / "modules" / "mfdb" / "src"
+if str(_VENDORED_SRC) not in sys.path:
+    sys.path.insert(0, str(_VENDORED_SRC))
+
+_mfdb = importlib.import_module("mfdb")
+__path__ = list(getattr(_mfdb, "__path__", []))
+__all__ = list(getattr(_mfdb, "__all__", []))
+
+
+class _AliasFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Resolve every ``chisurf.core.mfdb.X`` to the real ``mfdb.X`` module.
+
+    Without this, a submodule imported through the facade *before* the real
+    ``mfdb.X`` is loaded would be created as a **duplicate** module object (the
+    ``__path__`` above points at the vendored package, so the default finder would
+    load a second copy). Duplicate modules mean duplicate module-level singletons —
+    e.g. two event buses — so a subscriber reached through the facade and a
+    publisher inside ``mfdb`` would never meet. This finder aliases the facade name
+    to the already-canonical ``mfdb`` module instead, guaranteeing one object.
+    """
+
+    _prefix = __name__ + "."
+
+    def find_spec(self, name, path=None, target=None):
+        if not name.startswith(self._prefix):
+            return None
+        return importlib.util.spec_from_loader(name, self)
+
+    def create_module(self, spec):
+        real_name = "mfdb." + spec.name[len(self._prefix):]
+        module = importlib.import_module(real_name)
+        sys.modules[spec.name] = module
+        return module
+
+    def exec_module(self, module):  # already executed as the real mfdb.* module
+        pass
+
+
+sys.meta_path.insert(0, _AliasFinder())
+
+for _module_name, _module in list(sys.modules.items()):
+    if _module_name == "mfdb" or _module_name.startswith("mfdb."):
+        sys.modules.setdefault(__name__ + _module_name.removeprefix("mfdb"), _module)
+
+for _name in __all__:
+    if hasattr(_mfdb, _name):
+        globals()[_name] = getattr(_mfdb, _name)
+
+
+def __getattr__(name: str) -> Any:
+    """Delegate unresolved attributes to the vendored package."""
+    return getattr(_mfdb, name)
