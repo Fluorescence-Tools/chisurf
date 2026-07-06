@@ -10,6 +10,21 @@ SERVICE_NAME = "ChiSurf MFDB"
 _RUNTIME_SESSION_TOKENS: dict[str, str] = {}
 
 
+def session_token_registry() -> dict[str, str]:
+    """Return the live in-process session-token registry.
+
+    Public accessor for the runtime session-token map so callers do not depend on
+    the private ``_RUNTIME_SESSION_TOKENS`` name. The returned dict is the live
+    object, not a copy — mutations are visible to the store.
+
+    Returns
+    -------
+    dict of str to str
+        Mapping of session account key to session token.
+    """
+    return _RUNTIME_SESSION_TOKENS
+
+
 def credential_account(server_host: str, server_port: int, user_id: str) -> str:
     """Return the credential-store account key for an MFDB session.
 

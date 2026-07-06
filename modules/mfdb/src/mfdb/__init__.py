@@ -97,8 +97,11 @@ from .payload_models import (
     TttrReference,
 )
 from .pdbx_metadata import MmcifDictionary
-from .repository import MFDatabase
+from .auth import hash_token
+from .credentials import session_token_registry
+from .repository import MFDatabase, json_loads, utc_now
 from .result_registry import (
+    get_active_database,
     read_result,
     register_calibration,
     register_fit_result,
@@ -232,6 +235,7 @@ __all__ = [
     "configure_mfdb_backend",
     "create_sample",
     "find_sample_by_name",
+    "get_active_database",
     "get_all_vocabulary_names",
     "get_artifacts_for_sample",
     "get_buffer_components",
@@ -243,12 +247,15 @@ __all__ = [
     "get_sample_full_description",
     "get_sample_for_artifact",
     "get_sample_name",
+    "hash_token",
+    "json_loads",
     "link_artifact_to_sample",
     "list_samples",
     "load_chinet_session",
     "reload_vocabulary",
     "reset_runtime_config",
     "resolve_database_path",
+    "session_token_registry",
     "set_sample_metadata",
     "source_database_path",
     "store_chinet_session",
@@ -256,6 +263,7 @@ __all__ = [
     "transaction",
     "traverse_canonical_graph",
     "user_database_path",
+    "utc_now",
     "validate_sample_for_export",
     "validate_vocabulary",
 ]

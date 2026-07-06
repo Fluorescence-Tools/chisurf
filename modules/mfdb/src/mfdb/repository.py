@@ -38,6 +38,20 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def utc_now() -> str:
+    """Return the current UTC time as an ISO-8601 string.
+
+    Public alias for the store's timestamp helper so callers do not depend on a
+    private name.
+
+    Returns
+    -------
+    str
+        Current UTC time in ISO-8601 format.
+    """
+    return _utc_now()
+
+
 def _default_reference_spectra_path() -> Path:
     """Resolve the default fluorophore reference ``spectra.db`` path.
 
@@ -74,6 +88,25 @@ def _json_loads(value: str | None) -> Any:
     if not value:
         return None
     return json.loads(value)
+
+
+def json_loads(value: str | None) -> Any:
+    """Deserialize a JSON string, returning ``None`` for empty input.
+
+    Public alias for the store's JSON-decode helper so callers do not depend on a
+    private name.
+
+    Parameters
+    ----------
+    value : str or None
+        JSON text to decode, or ``None``/empty.
+
+    Returns
+    -------
+    Any
+        The decoded object, or ``None`` when *value* is falsy.
+    """
+    return _json_loads(value)
 
 
 def _json_hash(value: Any) -> str | None:

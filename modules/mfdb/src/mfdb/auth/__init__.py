@@ -82,6 +82,25 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def hash_token(token: str) -> str:
+    """Return the storage hash for a session token.
+
+    Public alias for the token-hashing helper so callers do not depend on the
+    private ``_hash_token`` name.
+
+    Parameters
+    ----------
+    token : str
+        The raw session token.
+
+    Returns
+    -------
+    str
+        Hex-encoded SHA-256 digest used to look the token up in storage.
+    """
+    return _hash_token(token)
+
+
 def generate_session_token() -> str:
     """Generate a cryptographically secure session token."""
     return secrets.token_urlsafe(48)

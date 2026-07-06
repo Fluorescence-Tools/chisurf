@@ -672,6 +672,21 @@ def _get_global_db() -> MFDBClientBase | None:
         return None
 
 
+def get_active_database() -> MFDBClientBase | None:
+    """Return the process-global MFDB client, resolving one if needed.
+
+    Public API for the active-database resolver so callers do not depend on the
+    private ``_get_global_db`` name. Uses the module-level global first, then the
+    configured user database path.
+
+    Returns
+    -------
+    MFDBClientBase or None
+        Active database, or ``None`` when the environment cannot provide one.
+    """
+    return _get_global_db()
+
+
 def _validate_links(db: MFDBClientBase, sample_id: str, parent_artifact_id: str) -> None:
     """Validate optional provenance links before writing payload objects.
 
