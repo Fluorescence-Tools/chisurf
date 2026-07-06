@@ -46,7 +46,7 @@ class LifecycleMixin:
     def _state_transition_allowed(
         self, entity_type: str, from_state: str | None, to_state: str
     ) -> bool:
-        """Is ``(entity_type, from_state, to_state)`` a declared transition rule?
+        """Return whether ``(entity_type, from_state, to_state)`` is a declared rule.
 
         A NULL ``from_state`` rule declares an allowed initial state.
         """
