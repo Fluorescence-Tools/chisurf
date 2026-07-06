@@ -34,7 +34,7 @@ class BranchMixin:
         if head_operation_id is not None:
             if not _exists(self.conn, "mfdb_operation", "operation_id", head_operation_id):
                 raise ValueError(f"Operation {head_operation_id!r} does not exist")
-        
+
         now = _utc_now()
         with self._transaction():
             existing = self.conn.execute(
@@ -210,7 +210,7 @@ class BranchMixin:
         if head_operation_id is not None:
             if not _exists(self.conn, "mfdb_operation", "operation_id", head_operation_id):
                 raise ValueError(f"Operation {head_operation_id!r} does not exist")
-        
+
         now = _utc_now()
         with self._transaction():
             self.conn.execute(
@@ -227,7 +227,7 @@ class BranchMixin:
     def delete_branch(self, branch_uuid: str) -> None:
         if branch_uuid == "00000000-0000-0000-0000-000000000000":
             raise ValueError("Cannot delete the main branch")
-        
+
         with self._transaction():
             active_count = self.conn.execute(
                 "SELECT COUNT(*) FROM flr_sample_users WHERE active_branch_uuid = ?",
@@ -253,7 +253,7 @@ class BranchMixin:
                 raise ValueError(f"User {user_id!r} does not exist")
             if not _exists(self.conn, "mfdb_branch", "branch_uuid", branch_uuid):
                 raise ValueError(f"Branch {branch_uuid!r} does not exist")
-            
+
             self.conn.execute(
                 "UPDATE flr_sample_users SET active_branch_uuid = ? WHERE user_id = ?",
                 (branch_uuid, user_id)
