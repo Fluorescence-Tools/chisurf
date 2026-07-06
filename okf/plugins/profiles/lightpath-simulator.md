@@ -52,6 +52,27 @@ Focused test command:
 PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/lightpath_simulator/tests
 ```
 
+# Known Gotchas
+
+- **Two preset formats coexist.** The Full Simulator saves optical-path presets
+  as a node/edge **graph dict** (`{"nodes":…, "edges":…}`) under
+  `~/.chisurf/presets/lightpath_optical/`, while Easy Mode's `_populate_form()`
+  expects a **simplified config dict** (`lasers`/`detectors`/
+  `emission_splitters`). Loaders must detect `"nodes" in cfg` and convert via
+  `_graph_to_config()` before populating the Easy Mode form, or detectors/
+  splitters silently collapse to one.
+- **Graph loads need normalization.** Route Full Simulator graph loads through
+  `normalize_lightpath_graph()` — it repairs missing splitter→bandpass→detector
+  edges and remaps legacy output-relative source ports to global port indices;
+  otherwise nodes render disconnected after a preset load.
+- **Detector count.** Compute displayed detectors as
+  `max(len(splitters)+1, len(detectors))`, and infer a splitter when detectors
+  ≥ 2 but none are present, so multi-detector presets are not truncated.
+- **macOS combobox opacity.** Node-embedded `QComboBox` popups render translucent
+  on macOS; give them an opaque palette + `setAutoFillBackground(True)` and clear
+  `WA_TranslucentBackground` on the view (a shared pitfall — see
+  [Known issues & gotchas](/references/known-issues.md)).
+
 # Documentation Work
 
 - Add `chisurf/plugins/core/lightpath_simulator/README.md`.

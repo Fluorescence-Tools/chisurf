@@ -27,8 +27,8 @@ extensible plugin system.
 | `chisurf/plugins/` | Built-in plugin packages, discovered via `manifest.json` |
 | `chisurf/history/` | Operation-history recording and replay |
 | `chisurf/macros/` | Scriptable convenience entry points for GUI, console, plugins |
-| `modules/` | Compiled C++ extensions (chinet, ndxplorer, clsmview, quest) |
-| `overhaul/` | Numbered PRD design notes (`PRD-NN-*.md`) driving current work |
+| `modules/` | Compiled C++ extensions (chinet, ndxplorer, clsmview, quest) and the vendored `mfdb` package |
+| `okf/prds/` | Numbered PRD design notes (`prd-NN.md`) driving current work |
 | `docs/architecture.md` | Maintained source-of-truth for architecture |
 
 # Entry points

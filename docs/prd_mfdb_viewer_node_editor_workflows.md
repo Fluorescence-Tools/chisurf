@@ -1065,7 +1065,7 @@ share.
 - [ ] `MFDBClient` production default uses `ZmqClient`.
 - [ ] `MFDBClient` accepts host/port or a configured JSON-RPC endpoint.
 - [ ] `MFDBClient` accepts an injected fake/in-process client for tests.
-- [ ] `MFDBClient` never imports `chisurf.plugins.core.mfdb_admin.backend`.
+- [ ] `MFDBClient` never imports `mfdb.admin.backend`.
 - [ ] `MFDBClient` never registers services.
 - [ ] `MFDBWidget` uses only `MFDBClient` and pure GUI/core helpers.
 - [ ] `MFDBWidget` has no direct imports from `chisurf.core.fio.mmcif.db`.
@@ -1126,8 +1126,8 @@ Transport boundary tests:
 
 - [ ] Test that `MFDBClient()` production path constructs a ZMQ JSON-RPC client.
 - [ ] Test that `MFDBClient(fake_client)` still works for unit tests.
-- [ ] Test that importing `chisurf.plugins.core.mfdb_admin.gui.tool` does not import
-      MFDB repository modules.
+- [ ] Test that importing `mfdb.admin.gui.tool` does not import MFDB repository
+      modules.
 - [ ] Test that `MFDBWidget.save_condition()` calls a client method, not a
       repository.
 - [ ] Test that `MFDBWidget.fill_probes()` calls a client method, not a

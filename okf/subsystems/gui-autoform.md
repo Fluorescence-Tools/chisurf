@@ -28,6 +28,19 @@ Sections take a `description` field mapped to widget tooltips, and manifest
 When touching GUI code, prefer porting hand-built widgets to AutoForm + a
 JSON view scheme.
 
+# Node editor widget
+
+`chisurf/gui/widgets/node_editor/` is a self-contained, dependency-light node
+editor (PyQt + optional `networkx`) with model/view/editor layering. It has a
+**versioned JSON graph schema** (`{version, nodes:[{id,type,title,inputs,outputs,
+config,pos,collapsed}], edges:[{source,source_port,target,target_port}]}`),
+validate-before-mutate loading (`NodeGraphValidationError`, no partial scene on
+failure), non-GUI file/dict serialization, a **node-type registry** replacing
+hardcoded type lists, and DAG utilities (`is_directed_acyclic`, cycle
+highlighting, optional `enforce_acyclic` edge guard). Round-trip and cycle
+behaviour are covered by tests under its `tests/` directory. It is the substrate
+the visual burst-programming canvas builds on (PRD-29).
+
 # Citations
 
 [1] [ChiSurf architecture doc](/references/architecture-doc.md)

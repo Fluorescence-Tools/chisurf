@@ -22,4 +22,9 @@ The `burst/` group covers the confocal single-molecule FRET (smFRET) burst workf
 
 Each plugin is discovered through its `manifest.json` (`id`, `display_name`, `categories: [Spectroscopy, Single-Molecule]`) by the plugin infrastructure in `chisurf/core/plugin/`; `bid_to_analysis` is a code-only helper without a manifest. Plugins receive datasets, fits and project state through `PluginContext` / `ChiSurfAPI` rather than the legacy process globals, and their GUIs are rendered from AutoForm view schemes. The integrated windows (`burst_analysis`) build on the shared `NavigationPanelTool` shell.
 
+Planned work for `burst_background`: replace the current exponential-tail fit with
+more robust statistical estimators (e.g. M-estimators) while staying single-threaded
+CPU-only and low-latency, backed by broad edge-case unit tests (targeting a ~20%
+accuracy improvement on public datasets).
+
 See also: [plugin system](/architecture/plugin-system.md), [Plugins target](/specs/plugins.md), [GUI & AutoForm](/subsystems/gui-autoform.md). The `.bst`/BUR/SL5 formats interoperate with an established multiparameter-fluorescence suite; a companion photon-data exploration tool can feed and receive burst selections.

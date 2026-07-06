@@ -18,20 +18,20 @@ timestamp: '2026-07-05T00:00:00Z'
 | State namespace | `sample_database` |
 | Local README | Missing |
 
-This is a retired prerelease surface. All active database administration belongs in
-`core/mfdb_admin` and canonical `mfdb.*` / `mfdb.v1.*` services.
+This is a deleted prerelease surface. All active database administration belongs
+in `core/mfdb_admin` and canonical `mfdb.admin`, `mfdb.*`, and `mfdb.v1.*` services.
 
 # Architecture Evidence
 
 | Layer | Evidence |
 | --- | --- |
-| GUI | Wrapper files remain in the directory, but the manifest no longer exposes a GUI entrypoint. |
-| Backend services | Wrapper files remain in the directory, but the manifest no longer exposes a service entrypoint. |
-| API placeholder | `api/` exists. |
-| Tests | No plugin-local tests were found in the current tree. |
+| GUI | Deleted with the root-level plugin. |
+| Backend services | Deleted with the root-level plugin; active handlers live under `mfdb.admin.backend`. |
+| API placeholder | Deleted. |
+| Tests | Legacy compatibility test deleted; active coverage moved to canonical MFDB Admin/FDB tests. |
 
-The manifest is hidden/deprecated, has no entrypoints, and declares no RPC methods.
-Remaining files should be treated as deletion candidates, not as a support surface.
+The plugin directory and manifest are deleted. This profile remains only as a
+retirement/tombstone note.
 
 # Data And Provenance Impact
 
@@ -47,7 +47,6 @@ the canonical `core/mfdb_admin` surface works and that no live code calls
 
 # Documentation Work
 
-- Remove remaining wrapper files when convenient.
-- Keep `sample_database` hidden/deprecated until deletion.
+- Keep `sample_database` out of active plugin manifests and loader paths.
 - Do not add new `sample_database.*` aliases.
 - Move any remaining useful implementation into `core/mfdb_admin`.

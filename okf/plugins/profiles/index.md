@@ -36,6 +36,7 @@ Each profile follows the same shape:
 | [Trace Browser](trace-browser.md) | TTTR folder browsing with ratings, annotations, previews, and CSV export. |
 | [TTTR Time Windows](tttr-time-windows.md) | TTTR-to-BID file generation used by downstream burst workflows. |
 | [Pixel Phasor](pixel-phasor.md) | Phasor-FLIM analysis API/RPC/CLI/GUI used by imaging workflows. |
+| [ChiMOL](chimol.md) | Molecular viewer with a PyMOL-style `cmd` surface and a Qt-free renderer abstraction (ImGui migration target). |
 
 # Use
 

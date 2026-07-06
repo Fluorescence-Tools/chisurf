@@ -42,7 +42,7 @@ substantial.
 | Plugin | Current gap | Why it matters | Recommended docs |
 | --- | --- | --- | --- |
 | `core/mfdb_admin` | README plus contract/status now exist; per-method schemas, workflow docs, and AutoForm migration remain. | Central database/provenance admin surface; many PRDs depend on it. | Extend `docs/CONTRACT.md`, add `docs/WORKFLOWS.md`, migrate ordinary panels to AutoForm JSON specs. |
-| `sample_database` | Retired prerelease surface; hidden/deprecated manifest now declares no entrypoints or RPC methods. | Avoids documenting/supporting a duplicate MFDB namespace. | Delete/quarantine remaining wrapper files after confirming no live callers. |
+| `sample_database` | Retired prerelease surface; tracked plugin files deleted. | Avoids documenting/supporting a duplicate MFDB namespace. | Keep references limited to retirement notes; do not document as an active plugin. |
 | `core/database_connector` | README and temporary-MFDB smoke tests now exist; destructive-path schemas/tests remain. | Backup/reset/import/export touches user data. | Extend service contract and add backup/reset/import/export tests. |
 | `core/project_browser` | README and sample-data-backed service/headless-GUI tests now exist; deeper branch/import tests remain. | Project persistence is high-impact and easy to misuse. | Add workflow examples, MFDB artifact diagrams, and import/branch coverage. |
 | `core/lightpath_simulator` | No README; full api/core/backend/rpc/cli/gui stack. | Good client-server reference and scientific workflow. | `README.md`, `docs/CONTRACT.md`, verification commands. |

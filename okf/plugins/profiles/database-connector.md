@@ -4,7 +4,7 @@ title: Database Connector plugin
 description: OKF profile for core database connector services.
 resource: chisurf/plugins/core/database_connector/
 tags: [plugins, mfdb, database, rpc]
-timestamp: '2026-07-05T00:00:00Z'
+timestamp: '2026-07-06T00:00:00Z'
 ---
 
 # Identity
@@ -27,7 +27,7 @@ repository access, and FLR CIF import/export.
 | Services | `services.py` with `DatabaseConnector`, `register_services`, and handlers for status/open/close/backup/reset/repository/import/export. |
 | GUI | None exposed by manifest. |
 | CLI | None exposed by manifest. |
-| Tests | `test/test_database_connector_services.py` covers temporary-MFDB handler counts, explicit open path status, and in-process RPC registration. |
+| Tests | `test/test_database_connector_services.py` covers temporary-MFDB handler counts, explicit open path status, in-process RPC registration, backup, reset-from-source, minimal CIF import, and FLR CIF text/file export. |
 
 Manifest RPC methods are `database_connector.status`, `open`, `close`, `backup`,
 `reset_from_source`, `repository`, `import_file`, and `export_sample`.
@@ -41,13 +41,14 @@ contract for other plugins.
 # Verification Surface
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
   chisurf/plugins/core/database_connector/test
 ```
 
-Current coverage is focused on non-destructive paths and in-process dispatch. Backup,
-reset, import, and FLR CIF export still need separate temporary-file tests before they
-should be considered fully covered.
+Current coverage includes both non-destructive paths and side-effect paths against
+temporary databases/files: backup, reset-from-source, import, and FLR CIF export.
+Destructive semantics still need to remain explicit in docs and callers should keep
+using temporary databases for automated reset/import/export tests.
 
 # Documentation Work
 

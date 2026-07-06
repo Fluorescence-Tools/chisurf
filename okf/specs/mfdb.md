@@ -2,16 +2,16 @@
 type: Specification
 title: MFDB — Metadata & Provenance Store — Target
 description: The clean-architecture target for metadata and provenance — dictionary-generated schema, provenance DAG, one access layer.
-resource: chisurf/core/mfdb/
+resource: modules/mfdb/src/mfdb/
 tags: [target, mfdb, metadata, provenance, schema]
-timestamp: '2026-07-05T00:00:00Z'
+timestamp: '2026-07-06T00:00:00Z'
 ---
 
 > The clean-architecture target for metadata and provenance. Current shape: [MFDB architecture](/architecture/mfdb.md). Current-state gaps: [assessment](assessment.md).
 
 ## Purpose
 
-MFDB is ChiSurf's memory of *what was done*: which samples and measurements
+MFDB is the vendored package for ChiSurf's memory of *what was done*: which samples and measurements
 exist, how they were analyzed, and where every result came from. It records
 metadata and provenance — not the heavy numeric arrays themselves, which it
 references. It is the system of record behind projects and results; the
@@ -67,7 +67,8 @@ Layers, top to bottom:
 
 State that lives here: metadata and lineage. State that does *not*: the live
 analysis session (that is the service layer, [RPC & API](rpc.md)) and the
-scientific objects themselves (that is [Core](core.md)). MFDB is surfaced to
+scientific objects themselves (that is [Core](core.md)). MFDB is imported as
+`mfdb` and surfaced to
 users through the metadata-admin plugin and through the RPC layer, never by
 direct database access from the UI.
 

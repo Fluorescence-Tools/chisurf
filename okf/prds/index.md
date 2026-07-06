@@ -1,6 +1,6 @@
-# PRDs — Overhaul Design Notes
+# PRDs — Design Notes
 
-Product-requirement / design notes driving current work, integrated from the `overhaul/` folder (which remains the authoritative full-text source — each concept's `resource` points back to its file). Every PRD keeps its **persistent number** as a stable id (`prd-<n>.md`). References to external software are described by role, not named. The authoritative implementation ordering lives in `overhaul/MASTER-ORDER.md`.
+Product-requirement / design notes driving current work. Each PRD is one **self-contained** concept (`prd-<n>.md`) carrying its full design text and keeping its **persistent number** as a stable id; references to external software are described by role, not named. These were formerly the top-level `overhaul/` folder, now retired into this group. The authoritative implementation ordering is [PRD Implementation Order](master-order.md).
 
 Status: ✅ done · 🚧 in-progress · ✏️ draft · 🌱 stub · 📋 planned · ⛔ superseded
 
@@ -91,3 +91,5 @@ Status: ✅ done · 🚧 in-progress · ✏️ draft · 🌱 stub · 📋 planne
 * ✏️ [PRD-55: Phasor Analysis Toolkit (open-library parity)](prd-55.md) — Turn ChiSurf's phasor viewer into a phasor analysis toolkit by natively implementing apparent-lifetime readout, g,s filtering, component fraction/unmixing, and cursor masks, with no new dependencies.
 * 🚧 [PRD-56: Companion-Tool ↔ ChiSurf RPC + Phasor Overlays](prd-56.md) — Make the companion photon-data exploration tool a live phasor front-end over a first-class RPC client, with ChiSurf serving phasor math and shared overlay-line geometry.
 * 📋 [PRD (detector-setup): Centralized Detector Setup Selection](prd-detector-setup.md) — Replace the full detector/PIE-window wizard page embedded across 15+ plugin UIs with a lightweight setup-selector widget that opens the full editor on demand.
+* 🚧 [PRD-57: ChiMOL Command Parity and Renderer Migration](prd-57.md) — Grow the ChiMOL viewer's `cmd` surface toward reference-language parity and migrate its renderer to an immediate-mode GUI backend behind a Qt-free controller/scene contract (Tiers 0–3 landed).
+* ✏️ [PRD-58: FRET Plugin as a Strict FPS + OLGA Superset](prd-58.md) — Make the `fret` plugin a strict superset of the legacy FPS and OLGA tools — embedded fps.json editing with live AV preview, refine/bootstrap/sample/evaluate workflows, and informative pair selection (evaluator subpackage landed).

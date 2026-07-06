@@ -30,3 +30,45 @@ renders its panels declaratively through [GUI & AutoForm](/subsystems/gui-autofo
 `fret_docking` persists FPS-style pose vectors and reloads projects to continue a run.
 Note `modelling/proteinmc` currently has no manifest — a documented gap against the
 one-manifest-identity rule in [Plugins target](/specs/plugins.md).
+
+## FRET docking engine (durable facts)
+
+The `modelling/fret` engine keeps all computation in importable, GUI-free core
+modules (`av.py`, `clash.py`, `distance.py`, `engine.py`, `docking.py`,
+`screening.py`, `results.py`, `io.py`), with thin `cli/` (click) and `gui/`
+(`wizard.py`) layers on top — the design intent is that the plugin is a strict
+**superset of the legacy FPS + OLGA** tools. Load points to keep stable:
+
+- **AV backends are selectable.** `av.py` computes accessible volumes via an
+  external labelling library (primary) with a biophysical-modeling-framework
+  fallback; `select_backend(name)` and an `--av-backend auto|…` flag pick between
+  them, gated by availability flags. The fallback AV path is unavailable on
+  Windows and must skip gracefully.
+- **`fps.json` is the interchange format.** Never rename its keys (`Positions`,
+  `Distances`, `χ²`); multi-body docking carries a `body_id` per position and
+  evaluators serialize under an `Evaluators` key. The GUI `LabelStructure` widget
+  is owned by `fps_json_editor` and imported by `fret/wizard.py`; they share one
+  live Python dict via a `fps_json_payload` getter/setter (no file round-trip).
+- **Evaluators** live in `fret/evaluators/` (positions, distance, fret_efficiency,
+  chi2, residuals, geometry, av_metrics), all deriving from an `Evaluator` ABC
+  with JSON round-trip and DataFrame/CSV export.
+- **Informative pair selection** reuses `chisurf/plugins/traj/fret_pair_selection/
+  olga_greedy.py` (`select_informative_pairs`) and emits OLGA-compatible reports.
+
+The in-tree `TARGETS.md` and the draft "FRET superset" plan (refine/bootstrap,
+sampling fix, OLGA evaluator graph) are captured as [PRD-58](/prds/prd-58.md); the
+evaluator subpackage has already landed. The [ChiMOL viewer](/plugins/profiles/chimol.md)
+roadmap is [PRD-57](/prds/prd-57.md).
+
+## Idea: structure-aware MFDB sample definer
+
+`fps_json_editor` already implements most of what a flrCIF-grade sample definer
+needs — PDB loading, atom-level position picking, accessible-volume simulation,
+and distance restraints. Its sub-widgets (`PositionPanel`, `MolView`, `AVWorker`)
+are reuse candidates for a future `sample_definer` that produces MFDB
+`SampleDefinition`/`ProbeDefinition`/`FretPairDefinition` records (a structure-aware
+replacement for the flat sample picker), auto-filling AV parameters and
+photophysics from the fluorophore database and computing R0 from spectral overlap.
+The cleanest path composes those widgets into a new host rather than modifying
+`fps_json_editor`; this feeds the sample-tracking work in
+[PRD-02](/prds/prd-02.md), [PRD-06](/prds/prd-06.md) and [PRD-08](/prds/prd-08.md).
