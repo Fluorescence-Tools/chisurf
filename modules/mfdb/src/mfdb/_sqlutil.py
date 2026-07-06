@@ -14,8 +14,53 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from datetime import datetime, timezone
 from typing import Any
+
+
+def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
+    """Convert a :class:`sqlite3.Row` to a plain dict, or pass through ``None``.
+
+    Parameters
+    ----------
+    row : sqlite3.Row or None
+        A row fetched with ``row_factory = sqlite3.Row``.
+
+    Returns
+    -------
+    dict or None
+        ``{column: value}`` for the row, or ``None`` when *row* is ``None``.
+    """
+    if row is None:
+        return None
+    return {key: row[key] for key in row.keys()}
+
+
+def row_exists(conn: sqlite3.Connection, table: str, column: str, value: Any) -> bool:
+    """Return whether any row in *table* has *column* equal to *value*.
+
+    The *table* and *column* identifiers are caller/code-controlled (never user
+    input); *value* is always a bound parameter.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Open connection.
+    table : str
+        Table name (trusted identifier).
+    column : str
+        Column name (trusted identifier).
+    value : Any
+        Value to match, bound as a parameter.
+
+    Returns
+    -------
+    bool
+        ``True`` if at least one matching row exists.
+    """
+    row = conn.execute(f"SELECT 1 FROM {table} WHERE {column} = ?", (value,)).fetchone()
+    return row is not None
 
 
 def utc_now() -> str:
@@ -86,6 +131,8 @@ def json_hash(value: Any) -> str | None:
 
 # Backwards-compatible private aliases. Callers historically import the
 # underscore-prefixed names from ``mfdb.repository``, which re-exports these.
+_row_to_dict = row_to_dict
+_exists = row_exists
 _utc_now = utc_now
 _json_dumps = json_dumps
 _json_loads = json_loads
