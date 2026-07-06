@@ -185,3 +185,66 @@ def test_delete_parameter_migrated_to_dao_soft_deletes_by_either_key(db):
     )
     db.delete_parameter(102)
     assert dao.get("mfdb_parameter", 102, pk_column="parameter_id") is None
+
+
+def test_upsert_inserts_then_updates_in_place(db):
+    """upsert inserts a new row, then updates the same primary key in place."""
+    dao = _dao(db)
+    pk = dao.upsert("flr_sample", {"sample_id": "u1", "description": "first"})
+    assert pk == "u1"
+    assert dao.get("flr_sample", "u1")["description"] == "first"
+
+    # Second upsert on the same PK updates rather than raising on conflict.
+    dao.upsert("flr_sample", {"sample_id": "u1", "description": "second"})
+    rows = dao.list("flr_sample", filters={"sample_id": "u1"})
+    assert len(rows) == 1, "upsert must not create a duplicate row"
+    assert rows[0]["description"] == "second"
+
+
+def test_upsert_preserves_unspecified_columns(db):
+    """Unlike INSERT OR REPLACE, upsert leaves columns absent from values intact."""
+    dao = _dao(db)
+    dao.upsert("flr_sample", {"sample_id": "u2", "description": "d", "details": "keepme"})
+    # Update only description; details must survive (INSERT OR REPLACE would null it).
+    dao.upsert("flr_sample", {"sample_id": "u2", "description": "d2"})
+    row = dao.get("flr_sample", "u2")
+    assert row["description"] == "d2"
+    assert row["details"] == "keepme"
+
+
+def test_upsert_touches_updated_at(db):
+    """The update branch refreshes updated_at when the table declares it."""
+    dao = _dao(db)
+    dao.upsert(
+        "flr_sample",
+        {"sample_id": "u3", "description": "d", "updated_at": "2000-01-01T00:00:00+00:00"},
+    )
+    dao.upsert("flr_sample", {"sample_id": "u3", "description": "d2"})
+    row = dao.get("flr_sample", "u3")
+    assert row["updated_at"] != "2000-01-01T00:00:00+00:00"
+
+
+def test_upsert_on_natural_key_preserves_identity_pk(db):
+    """upsert on a UNIQUE natural key keeps the auto-assigned primary key stable.
+
+    This is the FK-preserving identity-row property: repeated writes reuse the
+    same ``type_id`` (INSERT OR REPLACE would delete-and-reinsert, changing it).
+    """
+    dao = _dao(db)
+    dao.upsert("probe_types", {"type_name": "dye", "display_name": "Dye"}, conflict="type_name")
+    first = dao.list("probe_types", filters={"type_name": "dye"})[0]
+    type_id = first["type_id"]
+
+    dao.upsert("probe_types", {"type_name": "dye", "display_name": "Dye v2"}, conflict="type_name")
+    rows = dao.list("probe_types", filters={"type_name": "dye"})
+    assert len(rows) == 1
+    assert rows[0]["type_id"] == type_id, "identity PK must be preserved across upserts"
+    assert rows[0]["display_name"] == "Dye v2"
+
+
+def test_upsert_rejects_unknown_table_and_column(db):
+    dao = _dao(db)
+    with pytest.raises(UnknownTableError):
+        dao.upsert("not_a_table", {"x": 1})
+    with pytest.raises(UnknownColumnError):
+        dao.upsert("flr_sample", {"sample_id": "u4", "bogus_col": 1})

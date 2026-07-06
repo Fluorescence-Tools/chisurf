@@ -182,6 +182,79 @@ class DictionaryDao:
             return values[pk]
         return cur.lastrowid
 
+    def upsert(
+        self,
+        table: str,
+        values: Mapping[str, Any],
+        *,
+        conflict: str | Iterable[str] | None = None,
+        touch: bool = True,
+    ) -> str | int | None:
+        """Insert one row, or update it in place when it already exists.
+
+        Uses SQLite ``INSERT ... ON CONFLICT(<target>) DO UPDATE`` — an
+        identity-preserving upsert. Unlike ``INSERT OR REPLACE`` it does **not**
+        delete-and-reinsert the conflicting row, so its primary key and any rows
+        that foreign-key to it survive, and columns not present in *values* keep
+        their existing content. All identifiers are whitelisted against the schema
+        and all values are bound parameters.
+
+        Parameters
+        ----------
+        table : str
+            Target table; must be part of the declared schema.
+        values : Mapping[str, Any]
+            Column-to-value pairs to insert or update.
+        conflict : str or Iterable[str], optional
+            Conflict-target column(s). Defaults to the table's primary key.
+        touch : bool, default True
+            When the table declares an ``updated_at`` column and *values* does not
+            set it, refresh it to ``CURRENT_TIMESTAMP`` on the update branch.
+
+        Returns
+        -------
+        str or int or None
+            The primary-key value from *values* if present, else the last rowid.
+        """
+        self._require_table(table)
+        if not values:
+            raise DaoError(f"upsert into {table!r} requires at least one value.")
+        self._require_columns(table, values.keys())
+
+        if conflict is None:
+            conflict_cols = [self.primary_key(table)]
+        elif isinstance(conflict, str):
+            conflict_cols = [conflict]
+        else:
+            conflict_cols = list(conflict)
+        self._require_columns(table, conflict_cols)
+
+        cols = list(values.keys())
+        placeholders = ", ".join("?" for _ in cols)
+        col_sql = ", ".join(quote_identifier(c) for c in cols)
+        conflict_sql = ", ".join(quote_identifier(c) for c in conflict_cols)
+
+        update_cols = [c for c in cols if c not in conflict_cols]
+        assignments = [
+            f"{quote_identifier(c)} = excluded.{quote_identifier(c)}" for c in update_cols
+        ]
+        if touch and self._has(table, UPDATED_AT_COLUMN) and UPDATED_AT_COLUMN not in values:
+            assignments.append(f"{quote_identifier(UPDATED_AT_COLUMN)} = CURRENT_TIMESTAMP")
+
+        if assignments:
+            action = f"DO UPDATE SET {', '.join(assignments)}"
+        else:
+            action = "DO NOTHING"
+        sql = (
+            f"INSERT INTO {quote_identifier(table)} ({col_sql}) VALUES ({placeholders}) "
+            f"ON CONFLICT({conflict_sql}) {action}"
+        )
+        cur = self.conn.execute(sql, [values[c] for c in cols])
+        pk = self.primary_key(table)
+        if pk in values:
+            return values[pk]
+        return cur.lastrowid
+
     def get(
         self,
         table: str,
