@@ -218,7 +218,7 @@ class BurstDataSelectionWidget(QtWidgets.QWidget):
     def _client(self) -> Any:
         """Return the MFDB RPC client used for import and selection."""
         if self._mfdb_client is None:
-            from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+            from mfdb.admin.gui.client import MFDBClient
 
             self._mfdb_client = MFDBClient(inprocess=True)
         return self._mfdb_client

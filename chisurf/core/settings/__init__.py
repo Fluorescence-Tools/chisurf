@@ -50,6 +50,18 @@ chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 # if set to true uses settings in source folder.
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
+# MFDB is vendored as a standalone package and must not import ChiSurf settings.
+# Publish the runtime values it needs through environment variables instead.
+os.environ.setdefault("MFDB_SETTINGS_DIR", str(chisurf_settings_path))
+_mfdb_settings = cs_settings.get("mfdb", {}) if isinstance(cs_settings, dict) else {}
+_default_user_id = _mfdb_settings.get("default_user_id") if isinstance(_mfdb_settings, dict) else None
+if _default_user_id:
+    os.environ["MFDB_DEFAULT_USER_ID"] = str(_default_user_id)
+_object_store = _mfdb_settings.get("object_store", {}) if isinstance(_mfdb_settings, dict) else {}
+_object_store_root = _object_store.get("root") if isinstance(_object_store, dict) else None
+if _object_store_root:
+    os.environ["MFDB_OBJECT_STORE_ROOT"] = str(_object_store_root)
+
 anisotropy = dict()
 anisotropy_data = safe_open_file(
     file_path=get_path('chisurf') / "settings" / "anisotropy_corrections.json",

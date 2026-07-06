@@ -4,7 +4,7 @@ from typing import Any
 
 from chisurf import logging
 from chisurf.core.plugin.client import InProcessClient
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+from mfdb.admin.gui.client import MFDBClient
 
 
 class ProjectBrowserClient(MFDBClient):
@@ -23,7 +23,7 @@ class ProjectBrowserClient(MFDBClient):
     def _make_inprocess_client(self) -> InProcessClient:
         from chisurf.server.dispatcher import ServiceDispatcher
         from chisurf.server.session import SessionState
-        from chisurf.plugins.core.mfdb_admin.backend.services import register_services as register_mfdb_services
+        from mfdb.admin.backend.services import register_services as register_mfdb_services
         from chisurf.plugins.core.project_browser.backend.services import register_services as register_project_browser_services
 
         dispatcher = ServiceDispatcher(SessionState())
@@ -33,10 +33,10 @@ class ProjectBrowserClient(MFDBClient):
 
     def _auto_auth(self) -> None:
         """Use the active MFDB login token for in-process project-browser RPC calls."""
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
-        from chisurf.core.mfdb.repository import MFDatabase
-        from chisurf.core.mfdb.credentials import _RUNTIME_SESSION_TOKENS
-        from chisurf.core.mfdb.auth import _hash_token
+        from mfdb.database_resolver import resolve_database_path
+        from mfdb.repository import MFDatabase
+        from mfdb.credentials import _RUNTIME_SESSION_TOKENS
+        from mfdb.auth import _hash_token
         import chisurf.core.settings as cs_settings
 
         try:
@@ -167,3 +167,35 @@ class ProjectBrowserClient(MFDBClient):
         return self._call("project_browser.delete_version", {
             "version_id": version_id,
         })
+
+    def create_branch(
+        self,
+        project_id: str,
+        from_version_id: str,
+        branch_name: str,
+    ) -> dict[str, Any]:
+        return self._call("project_browser.create_branch", {
+            "project_id": project_id,
+            "from_version_id": from_version_id,
+            "branch_name": branch_name,
+        })
+
+    def list_branches(self, project_id: str) -> list[dict[str, Any]]:
+        return self._call("project_browser.list_branches", {
+            "project_id": project_id,
+        }).get("branches", [])
+
+    def version_graph(self, project_id: str) -> dict[str, Any]:
+        return self._call("project_browser.version_graph", {
+            "project_id": project_id,
+        }).get("graph", {})
+
+    def list_artifacts(self, version_id: str) -> list[dict[str, Any]]:
+        return self._call("project_browser.artifacts", {
+            "version_id": version_id,
+        }).get("artifacts", [])
+
+    def list_parameters(self, version_id: str) -> list[dict[str, Any]]:
+        return self._call("project_browser.parameters", {
+            "version_id": version_id,
+        }).get("parameters", [])

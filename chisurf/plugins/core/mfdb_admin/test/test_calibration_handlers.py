@@ -7,8 +7,8 @@ the same type). A non-numeric value comes back as an ``error`` field.
 
 from __future__ import annotations
 
-from chisurf.core.mfdb.staleness import record_calibration_use
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.staleness import record_calibration_use
+from mfdb.admin.backend.services import (
     create_calibration_handler,
     list_calibrations_handler,
     stale_calibrations_handler,
@@ -51,7 +51,7 @@ def test_stale_handler_flags_superseded_use(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         client.create_calibration("gamma", 0.9)

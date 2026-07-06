@@ -7,7 +7,7 @@ An invalid category comes back as an ``error`` field, not an exception.
 
 from __future__ import annotations
 
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.admin.backend.services import (
     create_protocol_handler,
     get_protocol_handler,
     list_protocol_versions_handler,
@@ -53,7 +53,7 @@ def test_get_protocol_exposes_parameter_schema(db):
 
 
 def test_protocol_for_operation_provenance(db):
-    from chisurf.core.mfdb.result_registry import register_operation, set_global_db
+    from mfdb.result_registry import register_operation, set_global_db
 
     with patch_db(db):
         res = create_protocol_handler("shift", "processing", operation_type="microtime_shift")
@@ -76,7 +76,7 @@ def test_protocol_for_operation_provenance(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         out = client.create_protocol("c", "analysis")

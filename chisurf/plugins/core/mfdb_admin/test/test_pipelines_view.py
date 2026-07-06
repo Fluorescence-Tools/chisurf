@@ -18,8 +18,8 @@ from chisurf.core.pipeline import (
     record_pipeline_run,
     save_pipeline,
 )
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-from chisurf.plugins.core.mfdb_admin.gui.pipelines_view import PipelinesView
+from mfdb.admin.gui.client import MFDBClient
+from mfdb.admin.gui.pipelines_view import PipelinesView
 
 from .conftest import patch_db
 

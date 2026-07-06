@@ -11,8 +11,8 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-from chisurf.plugins.core.mfdb_admin.gui.lifecycle_view import LifecycleView
+from mfdb.admin.gui.client import MFDBClient
+from mfdb.admin.gui.lifecycle_view import LifecycleView
 
 from .conftest import patch_db
 

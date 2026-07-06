@@ -1855,7 +1855,7 @@ class LoginDialog(QtWidgets.QDialog):
         
     def load_users_from_server(self):
         """Load users from the currently configured server."""
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
         
         server_host = self.server_combo.currentText() or "127.0.0.1"
         port = self.port_spin.value()
@@ -2047,7 +2047,7 @@ def get_app():
         quits so the already-running ``app.exec()`` unwinds cleanly.
         """
         try:
-            from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+            from mfdb.admin.gui.client import MFDBClient
             from chisurf.core.mfdb.credentials import (
                 delete_session_token,
                 load_session_token,

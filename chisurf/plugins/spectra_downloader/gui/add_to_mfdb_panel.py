@@ -21,7 +21,7 @@ from qtpy import QtGui, QtWidgets
 
 from chisurf.core.dataspec import load_view_spec
 from chisurf.gui.autoform import AutoForm
-from chisurf.plugins.core.mfdb_admin.gui.session import (
+from mfdb.admin.gui.session import (
     active_user_id,
     client_is_admin,
     local_admin_status,
@@ -120,8 +120,8 @@ class AddToMfdbPanel(QtWidgets.QWidget):
 
     def _server_client(self):
         """Authenticated MFDB client for the configured server (session-first)."""
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-        from chisurf.plugins.core.mfdb_admin.gui.session import cache_session, cached_token
+        from mfdb.admin.gui.client import MFDBClient
+        from mfdb.admin.gui.session import cache_session, cached_token
 
         m = self._model
         host, cmd, pub = m.host, int(m.cmd_port), int(m.pub_port)

@@ -81,7 +81,7 @@ def open_burst_selection_from_mfdb(parent: Any = None, scope: str = "all") -> An
     nothing was selected / it could not be opened.
     """
     from chisurf.gui.widgets.mfdb.dataset_browser import MfdbDatasetPickerDialog
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+    from mfdb.admin.gui.client import MFDBClient
 
     client = MFDBClient(inprocess=True)
     sel = MfdbDatasetPickerDialog.pick_dataset(

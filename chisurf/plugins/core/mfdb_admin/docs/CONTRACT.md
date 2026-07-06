@@ -2,7 +2,7 @@
 
 This file documents the MFDB Admin service surface at the family level. The
 authoritative discoverability list is `manifest.json`; implementation lives in
-`backend/services.py` and the service modules it registers.
+`modules/mfdb/src/mfdb/admin/backend/services.py` and the service modules it registers.
 
 ## Conventions
 
@@ -10,8 +10,8 @@ authoritative discoverability list is `manifest.json`; implementation lives in
 | --- | --- |
 | Transport | JSON-RPC through ChiSurf's service dispatcher. |
 | GUI client | `gui/client.py:MFDBClient`. |
-| Service registration | `backend/services.py:register_services`. |
-| Database | Handlers open `MFDatabase(resolve_database_path())` unless delegated to `chisurf.core.mfdb.api`. |
+| Service registration | `modules/mfdb/src/mfdb/admin/backend/services.py:register_services`. |
+| Database | Handlers open `MFDatabase(resolve_database_path())` from the vendored `mfdb` package unless delegated to `mfdb.api`. |
 | Auth | Most methods accept optional `auth: dict`. Versioned `mfdb.v1.*` methods require auth before delegation. |
 | Errors | Some handlers raise exceptions, some return `{"error": ...}` or service-error dictionaries. Do not assume one uniform error shape yet. |
 | Mutations | Methods ending in `save`, `delete`, `create`, `register`, `record`, `transition_status`, `chmod`, `chown`, `chgrp`, `grant`, `revoke`, `backup`, `reset_from_source`, `import_file`, and `put` are mutating or side-effectful. |
@@ -51,12 +51,12 @@ authoritative discoverability list is `manifest.json`; implementation lives in
 Additional `mfdb.lifecycle.*`, `mfdb.protocols.*`, `mfdb.studies.*`,
 `mfdb.reagents.*`, `mfdb.calibrations.*`, `mfdb.pipelines.*`,
 `mfdb.setups.*`, and `mfdb.datasets.*` methods are registered from
-`backend/services.py`; keep `manifest.json` synchronized with these registrations.
+`modules/mfdb/src/mfdb/admin/backend/services.py`; keep `manifest.json` synchronized with these registrations.
 
 ## Versioned MFDB API
 
-`mfdb.v1.*` methods are delegated to `chisurf.core.mfdb.api` through
-`VERSIONED_MFDB_METHODS` in `backend/services.py`.
+`mfdb.v1.*` methods are delegated to `mfdb.api` through
+`VERSIONED_MFDB_METHODS` in `modules/mfdb/src/mfdb/admin/backend/services.py`.
 
 | Prefix | Purpose |
 | --- | --- |
@@ -104,7 +104,7 @@ contract.
 
 ## Fluorophore Curation
 
-`backend/services.py` imports and registers fluorophore services from
+`modules/mfdb/src/mfdb/admin/backend/services.py` imports and registers fluorophore services from
 `backend/fluorophore_services.py`.
 
 Static registration currently includes:
@@ -129,7 +129,7 @@ Add them to `manifest.json` or move them behind a clearly documented plugin boun
 
 `mfdb.objects.*` exposes content-addressed object storage operations through the MFDB
 repository layer. `mfdb.datasets.browse` and `mfdb.datasets.open` are registered in
-`backend/services.py` and use the configured active/default user to scope local GUI
+`modules/mfdb/src/mfdb/admin/backend/services.py` and use the configured active/default user to scope local GUI
 access.
 
 Contract rule: object UUIDs are public identifiers at the service boundary; callers
@@ -140,8 +140,8 @@ should not depend on object-store MD5 paths.
 Keep these checks green when editing service registration or the manifest:
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_admin_handlers.py
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_session_sso.py
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_admin_handlers.py
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_session_sso.py
 ```
 
 When changing method registration, also compare registered static method names with

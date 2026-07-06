@@ -7,7 +7,7 @@ Studies are reachable through the admin backend (and thus MFDBClient): list/get/
 
 from __future__ import annotations
 
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.admin.backend.services import (
     add_study_member_handler,
     create_study_handler,
     get_study_handler,
@@ -56,7 +56,7 @@ def test_bad_member_type_returns_error(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         sid = client.create_study("C")["study_id"]

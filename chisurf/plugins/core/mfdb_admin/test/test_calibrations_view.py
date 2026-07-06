@@ -10,9 +10,9 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from chisurf.core.mfdb.staleness import record_calibration_use
-from chisurf.plugins.core.mfdb_admin.gui.calibrations_view import CalibrationsView
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+from mfdb.staleness import record_calibration_use
+from mfdb.admin.gui.calibrations_view import CalibrationsView
+from mfdb.admin.gui.client import MFDBClient
 
 from .conftest import patch_db
 

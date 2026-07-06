@@ -3,20 +3,20 @@ from __future__ import annotations
 
 import os
 import tempfile
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.models import (
+from mfdb.repository import MFDatabase
+from mfdb.models import (
     DEFAULT_FLUOROPHORE_SPECTRA,
     SampleDefinition,
     EntityDefinition,
     ProbeDefinition,
     FretPairDefinition,
 )
-from chisurf.core.mfdb.sample_manager import create_sample
+from mfdb.sample_manager import create_sample
 
 
 @pytest.fixture
@@ -47,18 +47,31 @@ def patch_db(db):
     mock_principal.user_id = "user_default"
     mock_principal.is_admin = True
 
-    target = "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path"
-    with patch(target) as mock:
+    with ExitStack() as stack:
+        mock = stack.enter_context(
+            patch("mfdb.admin.backend.services.resolve_database_path")
+        )
         mock.return_value = db.db_path
-        with patch(
-            "chisurf.plugins.core.mfdb_admin.backend.services._require_auth",
-            return_value=mock_principal,
+        for target in (
+            "mfdb.admin.backend.measurement_services.resolve_database_path",
+            "mfdb.admin.backend.ndxplorer_services.resolve_database_path",
+            "mfdb.admin.backend.fluorophore_services.resolve_database_path",
         ):
-            with patch(
-                "chisurf.plugins.core.mfdb_admin.backend.services._require_or_acl_access",
+            patched = stack.enter_context(patch(target))
+            patched.return_value = db.db_path
+        stack.enter_context(
+            patch(
+                "mfdb.admin.backend.services._require_auth",
                 return_value=mock_principal,
-            ):
-                yield mock
+            )
+        )
+        stack.enter_context(
+            patch(
+                "mfdb.admin.backend.services._require_or_acl_access",
+                return_value=mock_principal,
+            )
+        )
+        yield mock
 
 
 @pytest.fixture

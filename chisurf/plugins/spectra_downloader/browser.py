@@ -18,9 +18,9 @@ from pathlib import Path
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf.plugins.core.mfdb_admin.gui.optical_components as _optical_components
+import mfdb.admin.gui.optical_components as _optical_components
 from chisurf.gui.widgets.spectrum_view import SpectrumView
-from chisurf.plugins.core.mfdb_admin.gui.optical_components.component_detail_form import (
+from mfdb.admin.gui.optical_components.component_detail_form import (
     ComponentDetailForm,
 )
 

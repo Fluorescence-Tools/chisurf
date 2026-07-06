@@ -25,7 +25,7 @@ else:
 
 # Headless fluorophore curation CLI (`csc fluorophore`), migrated here from the
 # standalone fluorophore_db plugin (PRD-06).
-cli_entrypoint = "fluorophore=chisurf.plugins.core.mfdb_admin.cli:cli"
+cli_entrypoint = "fluorophore=mfdb.admin.cli:cli"
 
 __all__ = ["MFDBWidget", "name", "cli_entrypoint"]
 

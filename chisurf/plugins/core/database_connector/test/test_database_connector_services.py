@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def seeded_db(tmp_path, monkeypatch):
-    from chisurf.core.mfdb.repository import MFDatabase
+    from mfdb.repository import MFDatabase
     from chisurf.plugins.core.database_connector import services
 
     db_path = tmp_path / "mfdb.db"
@@ -42,11 +42,11 @@ def seeded_db(tmp_path, monkeypatch):
     monkeypatch.setattr(services, "source_database_path", lambda: source_path)
     monkeypatch.setattr(services, "user_database_path", lambda: db_path)
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "mfdb.database_resolver.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.object_store_root",
+        "mfdb.database_resolver.object_store_root",
         lambda: object_root,
     )
     services.close_handler()
@@ -92,3 +92,45 @@ def test_repository_is_available_through_inprocess_rpc(seeded_db):
     assert result["database_path"] == str(seeded_db)
     assert result["sample_count"] == 1
     assert "database_connector.repository" in dispatcher.list_methods()
+
+
+def test_backup_import_export_and_reset_use_temporary_mfdb(seeded_db, tmp_path):
+    from mfdb.repository import MFDatabase
+    from chisurf.plugins.core.database_connector.services import (
+        backup_handler,
+        export_sample_handler,
+        import_file_handler,
+        repository_handler,
+        reset_from_source_handler,
+    )
+
+    backup = backup_handler()
+    backup_path = Path(backup["backup_path"])
+    assert backup_path.exists()
+    assert backup_path.parent == seeded_db.parent / "backups"
+
+    imported_cif = tmp_path / "connector_import_sample.cif"
+    imported_cif.write_text("data_connector_import_sample\n#\n", encoding="utf-8")
+    imported = import_file_handler(str(imported_cif))["summary"]
+    assert imported["samples"] == ["connector_import_sample"]
+    with MFDatabase(seeded_db) as db:
+        assert db.get_sample("connector_import_sample") is not None
+    assert repository_handler()["sample_count"] == 2
+
+    export_text = export_sample_handler("sample_1")["text"]
+    assert "data_chisurf_flr_export" in export_text
+
+    output_path = tmp_path / "sample_1.cif"
+    exported = export_sample_handler("sample_1", output_path=str(output_path))
+    assert exported["output_path"] == str(output_path)
+    assert output_path.exists()
+    assert "data_chisurf_flr_export" in output_path.read_text(encoding="utf-8")
+
+    reset = reset_from_source_handler()
+    assert reset["ok"] is True
+    assert reset["backup_path"]
+    assert Path(reset["backup_path"]).exists()
+    with MFDatabase(seeded_db) as db:
+        assert db.get_sample("sample_1") is not None
+        assert db.get_sample("connector_import_sample") is None
+    assert repository_handler()["sample_count"] == 1

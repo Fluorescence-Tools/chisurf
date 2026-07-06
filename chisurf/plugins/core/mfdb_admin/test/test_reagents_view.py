@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-from chisurf.plugins.core.mfdb_admin.gui.reagents_view import ReagentLotsView
+from mfdb.admin.gui.client import MFDBClient
+from mfdb.admin.gui.reagents_view import ReagentLotsView
 
 from .conftest import patch_db
 

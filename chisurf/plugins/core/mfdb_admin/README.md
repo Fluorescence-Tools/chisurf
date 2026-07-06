@@ -37,7 +37,7 @@ currently declared there; see `docs/STATUS.md`.
 
 | Kind | Formats | Notes |
 | --- | --- | --- |
-| Input | MFDB SQLite database | Resolved through `chisurf.core.mfdb.database_resolver.resolve_database_path()`. |
+| Input | MFDB SQLite database | Resolved through `mfdb.database_resolver.resolve_database_path()`. |
 | Input | PDBx/mmCIF or FLR CIF import files | Routed through import/export handlers where supported. |
 | Input | Object-store payloads | Binary and path-based object registration are exposed through `mfdb.objects.*`. |
 | Output | MFDB rows | Samples, experiments, users, setup definitions, provenance records, artifacts, permissions, and workflow metadata. |
@@ -49,7 +49,7 @@ source/user database resolution.
 
 ## UI Surface
 
-The GUI entrypoint is `chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget`.
+The GUI entrypoint is `mfdb.admin.gui.tool:MFDBWidget`; `chisurf.plugins.core.mfdb_admin.gui.*` remains as compatibility wrappers.
 The widget uses `MFDBClient`, which can talk to a ZMQ JSON-RPC endpoint or an
 in-process dispatcher for local desktop use. The UI contains dedicated views and
 docks for:
@@ -61,9 +61,9 @@ docks for:
 - optical components and fluorophore metadata
 - provenance graph inspection
 
-GUI connection fields are represented by `gui/connection_auth.view.json`.
+GUI connection fields are represented by `modules/mfdb/src/mfdb/admin/gui/connection_auth.view.json`.
 Optical-component forms are represented by view JSON files in
-`gui/optical_components/`.
+`modules/mfdb/src/mfdb/admin/gui/optical_components/`.
 
 New and refactored MFDB Admin panels should use JSON view specs and AutoForm
 wherever the interaction is a form, toolbar, table, wizard, info block, or
@@ -75,9 +75,9 @@ one-off Qt form builders for ordinary schema-driven UI.
 
 | Surface | Entry point / method | Purpose |
 | --- | --- | --- |
-| GUI | `chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget` | Desktop administration tool. |
-| Service registration | `chisurf.plugins.core.mfdb_admin.backend.services:register_services` | Registers MFDB admin JSON-RPC handlers. |
-| Python client | `chisurf.plugins.core.mfdb_admin.gui.client:MFDBClient` | GUI-facing wrapper around JSON-RPC calls. |
+| GUI | `mfdb.admin.gui.tool:MFDBWidget` | Desktop administration tool. |
+| Service registration | `mfdb.admin.backend.services:register_services` | Registers MFDB admin JSON-RPC handlers. |
+| Python client | `mfdb.admin.gui.client:MFDBClient` | GUI-facing wrapper around JSON-RPC calls. |
 | CLI | None declared in `manifest.json` | `cli/` exists as a package placeholder. |
 | RPC | `mfdb.*`, `mfdb.v1.*`, `raw_data.*`, `processed_data.*`, `processing.*`, `provenance.*`, `archive.*` | Main service contract; see `docs/CONTRACT.md`. |
 
@@ -85,18 +85,18 @@ one-off Qt form builders for ordinary schema-driven UI.
 
 - `manifest.json`: plugin identity, GUI/service entrypoints, state namespace, and
   declared RPC method names.
-- `backend/services.py`: main registration hub for `mfdb.*`, `mfdb.v1.*`,
+- `modules/mfdb/src/mfdb/admin/backend/services.py`: main registration hub for `mfdb.*`, `mfdb.v1.*`,
   raw/processed data, provenance, object-store, dataset, import/export, backup, and
   archive handlers.
 - `backend/auth_services.py`: login/session, groups, and permissions.
 - `backend/measurement_services.py`: measurement/raw/processed-data handlers.
 - `backend/ndxplorer_services.py`: ndXplorer handoff/query handlers.
 - `backend/fluorophore_services.py`: fluorophore curation handlers.
-- `gui/`: Qt views, clients, docks, generic forms, lifecycle/protocol/study/reagent
+- `modules/mfdb/src/mfdb/admin/gui/`: Qt views, clients, docks, generic forms, lifecycle/protocol/study/reagent
   views, optical-component editors, and provenance graph widgets.
-- `gui/autoform_entity_form.py`: AutoForm-backed entity detail form used by
+- `modules/mfdb/src/mfdb/admin/gui/autoform_entity_form.py`: AutoForm-backed entity detail form used by
   schema-driven entity docks.
-- `gui/*.view.json` and `gui/optical_components/*.view.json`: declarative view
+- `gui/*.view.json` and `modules/mfdb/src/mfdb/admin/gui/optical_components/*.view.json`: declarative view
   specs rendered through AutoForm.
 - `test/`: focused handler, view, auth/session, navigation, and optical-component
   tests.
@@ -117,7 +117,7 @@ MFDB Admin is a full MFDB read/write surface. It can:
 - open datasets and export/import table, sample, project, and archive data
 
 Authentication and ACL enforcement are mixed by method family. Versioned
-`mfdb.v1.*` calls enforce authentication before delegating to `chisurf.core.mfdb.api`.
+`mfdb.v1.*` calls enforce authentication before delegating to `mfdb.api`.
 Some local GUI flows support an anonymous in-process client by resolving the
 configured default user. Destructive operations such as delete, backup reset, and ACL
 changes must be documented and tested explicitly before broad use.
@@ -127,15 +127,15 @@ changes must be documented and tested explicitly before broad use.
 Run the focused plugin tests:
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test
 ```
 
 Useful narrower slices while editing docs or handlers:
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_admin_handlers.py
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_session_sso.py
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_optical_components.py
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_admin_handlers.py
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_session_sso.py
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/plugins/core/mfdb_admin/test/test_optical_components.py
 ```
 
 ## Limitations And Open Work
@@ -154,14 +154,14 @@ PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest chisurf/p
 ## Related Files
 
 - `manifest.json`
-- `backend/services.py`
+- `modules/mfdb/src/mfdb/admin/backend/services.py`
 - `backend/auth_services.py`
 - `backend/measurement_services.py`
 - `backend/ndxplorer_services.py`
 - `backend/fluorophore_services.py`
-- `gui/client.py`
-- `gui/tool.py`
-- `gui/autoform_entity_form.py`
+- `modules/mfdb/src/mfdb/admin/gui/client.py`
+- `modules/mfdb/src/mfdb/admin/gui/tool.py`
+- `modules/mfdb/src/mfdb/admin/gui/autoform_entity_form.py`
 - `test/`
 - `docs/CONTRACT.md`
 - `docs/STATUS.md`

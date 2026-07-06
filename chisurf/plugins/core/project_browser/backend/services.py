@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from chisurf import logging
-from chisurf.core.mfdb.database_resolver import resolve_database_path
-from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.auth import (
+from mfdb.database_resolver import resolve_database_path
+from mfdb.repository import MFDatabase
+from mfdb.auth import (
     PERM_READ,
     PERM_MANAGE,
     filter_readable,
@@ -17,7 +17,7 @@ from chisurf.core.mfdb.auth import (
     require_authenticated,
     require_access,
 )
-from chisurf.core.mfdb.repository import _json_loads, _utc_now
+from mfdb.repository import _json_loads, _utc_now
 from chisurf.core.project.archive import ProjectArchive, PROJECT_JSON, DATA_DIR
 from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
 
@@ -309,7 +309,7 @@ def save_project_handler(
                     version_number = int(max_vn) + 1
 
         # Use the new project_archiver for full artifact decomposition
-        from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+        from mfdb.project_archiver import archive_project_to_mfdb
 
         result = archive_project_to_mfdb(
             db=db,
@@ -326,7 +326,7 @@ def save_project_handler(
 
         with db.transaction():
             if visibility == "public":
-                import chisurf.core.mfdb.auth as authmod
+                import mfdb.auth as authmod
                 authmod.chmod(conn, principal, "mfdb_operation", version_id, 0o704)
             db.add_audit_log(
                 action="archive",
@@ -364,7 +364,7 @@ def _reconstruct_payload(
     meta: dict[str, Any],
 ) -> dict[str, Any]:
     """Reconstruct a project payload from artifacts, or build empty default."""
-    from chisurf.core.mfdb.project_archiver import restore_project_from_artifacts
+    from mfdb.project_archiver import restore_project_from_artifacts
     artifact_payload = restore_project_from_artifacts(db, version_id)
     if artifact_payload:
         return {
@@ -675,7 +675,7 @@ def _find_collisions(conn: Any, export_meta: dict[str, Any]) -> dict[str, list[s
     for obj in deps.get("objects", []):
         ou = obj.get("object_uuid", "")
         if ou:
-            row = conn.execute("SELECT 1 FROM mfdb_object WHERE object_uuid = ? AND deleted_at IS NULL", (ou,)).fetchone()
+            row = conn.execute("SELECT 1 FROM mfdb_object WHERE object_uuid = ?", (ou,)).fetchone()
             if row:
                 collisions["objects"].append(ou)
     for param in deps.get("parameters", []):
@@ -794,34 +794,38 @@ def _populate_mfdb_from_export(
             if op_type == "project":
                 parent_version_id = oid
 
+        object_uuid_map: dict[str, str] = {}
         for obj in deps.get("objects", []):
             ou = obj.get("object_uuid", "")
             data_b64 = obj.get("data_base64", "")
             if ou and data_b64:
                 data = base64.b64decode(data_b64)
                 obj_result = db.put_object(
-                    object_uuid=ou,
                     data=data,
                     filename=obj.get("filename", ""),
                     mime_type=obj.get("mime_type", ""),
-                    created_by_user_id=importing_user_id,
                 )
+                object_uuid_map[ou] = obj_result["object_uuid"]
 
         for art in deps.get("artifacts", []):
             aid = art.get("artifact_id") or art.get("processed_data_id") or art.get("raw_data_id") or ""
             if not aid:
                 continue
             ou = art.get("object_uuid", "")
+            actual_object_uuid = object_uuid_map.get(ou, ou)
             metadata = art.get("metadata") or {}
             if art.get("product_summary"):
                 metadata["product_summary"] = art["product_summary"]
             db.register_artifact(
                 artifact_id=aid,
-                artifact_kind=art.get("artifact_type", art.get("product_type", "derived_product")),
-                storage_mode="object_store" if ou else art.get("storage_mode", "embedded_json"),
+                artifact_kind=art.get(
+                    "artifact_kind",
+                    art.get("artifact_type", art.get("product_type", "derived_product")),
+                ),
+                storage_mode=art.get("storage_mode") or "embedded_json",
                 mime_type=art.get("mime_type", ""),
                 size_bytes=art.get("size_bytes"),
-                object_uuid=ou if ou else None,
+                object_uuid=actual_object_uuid if actual_object_uuid else None,
                 metadata=metadata,
             )
 
@@ -1206,14 +1210,17 @@ def get_version_graph_handler(
                     "relationship": "supersedes",
                 })
 
-        # Also query mfdb_edge for supersedes edges
-        edge_rows = conn.execute(
-            """SELECT source_node_id, target_node_id, metadata_json
-               FROM mfdb_edge
-               WHERE relationship_type = 'supersedes' AND deleted_at IS NULL
-                 AND source_node_id IN ({})""".format(",".join("?" * len(node_ids))),
-            list(node_ids),
-        ).fetchall()
+        # Also query mfdb_edge for supersedes edges. A supersedes edge is stored
+        # as newer_version -> parent_version.
+        edge_rows = []
+        if node_ids:
+            edge_rows = conn.execute(
+                """SELECT source_node_id, target_node_id, metadata_json
+                   FROM mfdb_edge
+                   WHERE relationship_type = 'supersedes' AND deleted_at IS NULL
+                     AND source_node_id IN ({})""".format(",".join("?" * len(node_ids))),
+                list(node_ids),
+            ).fetchall()
         existing_edge_keys = {(e["source"], e["target"]) for e in edges}
         for erow in edge_rows:
             src = erow["source_node_id"] if isinstance(erow, dict) else erow[0]
@@ -1222,11 +1229,13 @@ def get_version_graph_handler(
                 edges.append({"source": src, "target": tgt, "relationship": "supersedes"})
                 existing_edge_keys.add((src, tgt))
 
-        # Identify roots (no parent) and leaves (no children)
-        child_ids = {e["target"] for e in edges}
-        parent_ids = {e["source"] for e in edges}
-        roots = [n for n in nodes if n["version_id"] not in child_ids]
-        leaves = [n for n in nodes if n["version_id"] not in parent_ids]
+        # Identify roots (no parent) and leaves (no children). With the stored
+        # edge direction newer -> parent, nodes appearing as edge sources have a
+        # parent and nodes appearing as edge targets have at least one child.
+        nodes_with_parent = {e["source"] for e in edges}
+        nodes_with_child = {e["target"] for e in edges}
+        roots = [n for n in nodes if n["version_id"] not in nodes_with_parent]
+        leaves = [n for n in nodes if n["version_id"] not in nodes_with_child]
 
         return {
             "ok": True,
@@ -1265,7 +1274,33 @@ def list_project_artifacts_handler(
             return service_error("version_id is required", error_code=INVALID_INPUT)
         require_access(conn, principal, "mfdb_operation", version_id, PERM_READ)
 
-        artifacts = db.get_operation_artifacts(version_id)
+        artifacts_by_id = {}
+        for art_row in db.get_operation_artifacts(version_id):
+            art = dict(art_row)
+            artifact_id = art.get("artifact_id")
+            if artifact_id:
+                artifacts_by_id[artifact_id] = art
+        edge_rows = conn.execute(
+            """SELECT a.*, e.relationship_type
+               FROM mfdb_edge AS e
+               JOIN mfdb_artifact AS a ON a.artifact_id = e.target_node_id
+               WHERE e.source_node_type = 'operation'
+                 AND e.source_node_id = ?
+                 AND e.target_node_type = 'artifact'
+                 AND e.relationship_type = 'project_contains'
+                 AND e.deleted_at IS NULL
+                 AND a.deleted_at IS NULL""",
+            (version_id,),
+        ).fetchall()
+        for row in edge_rows:
+            art = dict(row)
+            artifact_id = art.get("artifact_id")
+            if artifact_id and artifact_id not in artifacts_by_id:
+                art["role"] = art.get("role") or "project_contains"
+                art["direction"] = art.get("direction") or "output"
+                artifacts_by_id[artifact_id] = art
+
+        artifacts = list(artifacts_by_id.values())
         result = []
         for art in artifacts:
             result.append({

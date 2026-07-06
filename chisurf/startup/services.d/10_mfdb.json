@@ -2,7 +2,7 @@
   "services": [
     {
       "id": "mfdb",
-      "entrypoint": "chisurf.plugins.core.mfdb_admin.backend.services:register_services",
+      "entrypoint": "mfdb.admin.backend.services:register_services",
       "surface": "server",
       "phase": "pre_server_listen",
       "thread": "background",

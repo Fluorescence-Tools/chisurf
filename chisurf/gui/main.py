@@ -378,21 +378,22 @@ class Main(
         self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
-        self._current_dataset = self.dataset_selector.selected_dataset
+        try:
+            self._current_dataset = self.dataset_selector.selected_dataset
+        except (IndexError, AttributeError):
+            self._current_dataset = None
         self.comboBox_Model.blockSignals(True)
         self.comboBox_Model.clear()
         ds = self.current_dataset
         if cs.imported_datasets and ds is not None:
-            # Get all model names from the experiment
             all_model_names = ds.experiment.get_model_names()
-
-            # Get the list of disabled models from settings
-            disabled_models = cs.core.settings.cs_settings.get('plugins', {}).get('disabled_models', [])
-
-            # Filter out disabled models
-            model_names = [name for name in all_model_names if name not in disabled_models]
-
-            # Add only enabled models to the combobox
+            disabled_models = cs.core.settings.cs_settings.get(
+                'plugins', {}
+            ).get('disabled_models', [])
+            model_names = [
+                name for name in all_model_names
+                if name not in disabled_models
+            ]
             self.comboBox_Model.addItems(model_names)
             if model_names:
                 self.comboBox_Model.setCurrentIndex(0)
@@ -400,16 +401,16 @@ class Main(
         self.onCurrentModelChanged()
 
     def onCurrentModelChanged(self):
+        self._current_model_class = None
         model_idx = self.comboBox_Model.currentIndex()
-        if model_idx >= 0:  # Make sure a valid model is selected
-            # Get the selected model name from the combobox
+        if model_idx >= 0:
             selected_model_name = self.comboBox_Model.currentText()
-
-            # Find the corresponding model class in the experiment's model classes
-            for model_class in self.current_dataset.experiment.model_classes:
-                if model_class.name == selected_model_name:
-                    self._current_model_class = model_class
-                    break
+            ds = self.current_dataset
+            if ds is not None:
+                for model_class in ds.experiment.model_classes:
+                    if model_class.name == selected_model_name:
+                        self._current_model_class = model_class
+                        break
 
     def onAddFit(self, *args, data_idx: typing.List[int] = None):
         if data_idx is None:
@@ -1022,6 +1023,7 @@ class Main(
         super().update()
         self.fit_selector.update()
         self.dataset_selector.update()
+        self.onCurrentDatasetChanged()
 
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:  # type: ignore[override]

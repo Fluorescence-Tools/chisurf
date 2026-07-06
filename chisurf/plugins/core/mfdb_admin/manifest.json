@@ -21,8 +21,8 @@
     }
   },
   "entrypoints": {
-    "gui": "chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget",
-    "services": "chisurf.plugins.core.mfdb_admin.backend.services:register_services"
+    "gui": "mfdb.admin.gui.tool:MFDBWidget",
+    "services": "mfdb.admin.backend.services:register_services"
   },
   "rpc_methods": [
     {
@@ -56,13 +56,22 @@
       "name": "mfdb.samples.create_structured"
     },
     {
+      "name": "mfdb.sample_conditions.list"
+    },
+    {
       "name": "mfdb.sample_conditions.get"
     },
     {
       "name": "mfdb.sample_conditions.save"
     },
     {
+      "name": "mfdb.sample_conditions.delete"
+    },
+    {
       "name": "mfdb.entities.list"
+    },
+    {
+      "name": "mfdb.entities.get"
     },
     {
       "name": "mfdb.entities.save"
@@ -80,6 +89,9 @@
       "name": "mfdb.probes.save"
     },
     {
+      "name": "mfdb.probes.delete"
+    },
+    {
       "name": "mfdb.probes.optical_properties.get"
     },
     {
@@ -89,7 +101,19 @@
       "name": "mfdb.probes.positions.list"
     },
     {
+      "name": "mfdb.probes.positions.get"
+    },
+    {
+      "name": "mfdb.probes.positions.save"
+    },
+    {
+      "name": "mfdb.probes.positions.delete"
+    },
+    {
       "name": "mfdb.fret_pairs.list"
+    },
+    {
+      "name": "mfdb.fret_pairs.get"
     },
     {
       "name": "mfdb.fret_pairs.save"
@@ -119,6 +143,9 @@
       "name": "mfdb.devices.list"
     },
     {
+      "name": "mfdb.devices.get"
+    },
+    {
       "name": "mfdb.devices.save"
     },
     {
@@ -126,6 +153,9 @@
     },
     {
       "name": "mfdb.experiment_types.list"
+    },
+    {
+      "name": "mfdb.experiment_types.get"
     },
     {
       "name": "mfdb.experiment_types.save"
@@ -153,6 +183,30 @@
     },
     {
       "name": "mfdb.experiments.data.delete"
+    },
+    {
+      "name": "mfdb.setups.list"
+    },
+    {
+      "name": "mfdb.setups.get"
+    },
+    {
+      "name": "mfdb.setups.save"
+    },
+    {
+      "name": "mfdb.setups.delete"
+    },
+    {
+      "name": "mfdb.setups.validate"
+    },
+    {
+      "name": "mfdb.setups.detector_channels.list"
+    },
+    {
+      "name": "mfdb.setups.pie_windows.list"
+    },
+    {
+      "name": "mfdb.setups.fcs_pairs.list"
     },
     {
       "name": "raw_data.register"
@@ -391,20 +445,43 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "path": {"type": "string", "description": "Server-side file path to store."},
-          "data": {"type": "string", "description": "Base64-encoded binary data."},
-          "filename": {"type": "string", "description": "Original filename."},
-          "mime_type": {"type": "string", "description": "MIME type."},
-          "metadata": {"type": "object", "description": "Additional metadata."}
+          "path": {
+            "type": "string",
+            "description": "Server-side file path to store."
+          },
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded binary data."
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename."
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata."
+          }
         }
       },
       "result_schema": {
         "type": "object",
         "properties": {
-          "object_uuid": {"type": "string"},
-          "content_md5": {"type": "string"},
-          "size_bytes": {"type": "integer"},
-          "deduplicated": {"type": "boolean"}
+          "object_uuid": {
+            "type": "string"
+          },
+          "content_md5": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer"
+          },
+          "deduplicated": {
+            "type": "boolean"
+          }
         }
       }
     },
@@ -414,12 +491,27 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "data": {"type": "string", "description": "Base64-encoded binary data."},
-          "filename": {"type": "string", "description": "Original filename."},
-          "mime_type": {"type": "string", "description": "MIME type."},
-          "metadata": {"type": "object", "description": "Additional metadata."}
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded binary data."
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename."
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type."
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata."
+          }
         },
-        "required": ["data", "filename"]
+        "required": [
+          "data",
+          "filename"
+        ]
       }
     },
     {
@@ -428,9 +520,13 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "object_uuid": {"type": "string"}
+          "object_uuid": {
+            "type": "string"
+          }
         },
-        "required": ["object_uuid"]
+        "required": [
+          "object_uuid"
+        ]
       }
     },
     {
@@ -439,9 +535,13 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "object_uuid": {"type": "string"}
+          "object_uuid": {
+            "type": "string"
+          }
         },
-        "required": ["object_uuid"]
+        "required": [
+          "object_uuid"
+        ]
       }
     },
     {
@@ -450,9 +550,13 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "object_uuid": {"type": "string"}
+          "object_uuid": {
+            "type": "string"
+          }
         },
-        "required": ["object_uuid"]
+        "required": [
+          "object_uuid"
+        ]
       }
     },
     {
@@ -461,12 +565,234 @@
       "params_schema": {
         "type": "object",
         "properties": {
-          "filename": {"type": "string", "description": "Substring filter on original filename."},
-          "user_uuid": {"type": "string", "description": "Filter by creator user UUID."},
-          "limit": {"type": "integer", "default": 100},
-          "offset": {"type": "integer", "default": 0}
+          "filename": {
+            "type": "string",
+            "description": "Substring filter on original filename."
+          },
+          "user_uuid": {
+            "type": "string",
+            "description": "Filter by creator user UUID."
+          },
+          "limit": {
+            "type": "integer",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "default": 0
+          }
         }
       }
+    },
+    {
+      "name": "analysis.run.delete"
+    },
+    {
+      "name": "analysis.run.get"
+    },
+    {
+      "name": "analysis.run.list"
+    },
+    {
+      "name": "analysis.run.record"
+    },
+    {
+      "name": "archive.zip.export"
+    },
+    {
+      "name": "audit_log.list"
+    },
+    {
+      "name": "database.backup"
+    },
+    {
+      "name": "fluorophores.ai_triage"
+    },
+    {
+      "name": "fluorophores.approve"
+    },
+    {
+      "name": "fluorophores.find_duplicates"
+    },
+    {
+      "name": "fluorophores.forster_radius.lookup"
+    },
+    {
+      "name": "fluorophores.get"
+    },
+    {
+      "name": "fluorophores.get_spectra_batch"
+    },
+    {
+      "name": "fluorophores.import_reference_set"
+    },
+    {
+      "name": "fluorophores.list"
+    },
+    {
+      "name": "fluorophores.merge"
+    },
+    {
+      "name": "fluorophores.probe_types.list"
+    },
+    {
+      "name": "fluorophores.reject"
+    },
+    {
+      "name": "fluorophores.set_quality"
+    },
+    {
+      "name": "mfdb.analysis.get"
+    },
+    {
+      "name": "mfdb.analysis.full"
+    },
+    {
+      "name": "mfdb.analysis.list"
+    },
+    {
+      "name": "mfdb.artifacts.delete"
+    },
+    {
+      "name": "mfdb.artifacts.validation.set"
+    },
+    {
+      "name": "mfdb.auth.change_password"
+    },
+    {
+      "name": "mfdb.branches.delete"
+    },
+    {
+      "name": "mfdb.branches.get"
+    },
+    {
+      "name": "mfdb.branches.list"
+    },
+    {
+      "name": "mfdb.branches.save"
+    },
+    {
+      "name": "mfdb.calibrations.create"
+    },
+    {
+      "name": "mfdb.calibrations.list"
+    },
+    {
+      "name": "mfdb.calibrations.stale"
+    },
+    {
+      "name": "mfdb.datasets.browse"
+    },
+    {
+      "name": "mfdb.datasets.open"
+    },
+    {
+      "name": "mfdb.lifecycle.definitions"
+    },
+    {
+      "name": "mfdb.lifecycle.history"
+    },
+    {
+      "name": "mfdb.lifecycle.state"
+    },
+    {
+      "name": "mfdb.lifecycle.transition"
+    },
+    {
+      "name": "mfdb.pipelines.get"
+    },
+    {
+      "name": "mfdb.pipelines.list"
+    },
+    {
+      "name": "mfdb.pipelines.runs"
+    },
+    {
+      "name": "mfdb.processed_data.get"
+    },
+    {
+      "name": "mfdb.processed_data.list"
+    },
+    {
+      "name": "mfdb.processing.get"
+    },
+    {
+      "name": "mfdb.processing.list"
+    },
+    {
+      "name": "mfdb.projects.get"
+    },
+    {
+      "name": "mfdb.projects.list"
+    },
+    {
+      "name": "mfdb.protocols.create"
+    },
+    {
+      "name": "mfdb.protocols.for_operation"
+    },
+    {
+      "name": "mfdb.protocols.get"
+    },
+    {
+      "name": "mfdb.protocols.list"
+    },
+    {
+      "name": "mfdb.protocols.versions"
+    },
+    {
+      "name": "mfdb.raw_data.get"
+    },
+    {
+      "name": "mfdb.raw_data.list"
+    },
+    {
+      "name": "mfdb.reagents.create"
+    },
+    {
+      "name": "mfdb.reagents.expired"
+    },
+    {
+      "name": "mfdb.reagents.list"
+    },
+    {
+      "name": "mfdb.reagents.usage.add"
+    },
+    {
+      "name": "mfdb.reagents.usage.list"
+    },
+    {
+      "name": "mfdb.studies.create"
+    },
+    {
+      "name": "mfdb.studies.fields.set"
+    },
+    {
+      "name": "mfdb.studies.get"
+    },
+    {
+      "name": "mfdb.studies.list"
+    },
+    {
+      "name": "mfdb.studies.members.add"
+    },
+    {
+      "name": "ndxplorer.load_burst_product"
+    },
+    {
+      "name": "ndxplorer.record_analysis"
+    },
+    {
+      "name": "processing.run.record"
+    },
+    {
+      "name": "provenance.dependencies.downstream"
+    },
+    {
+      "name": "provenance.dependencies.upstream"
+    },
+    {
+      "name": "provenance.graph.export"
     }
   ]
 }

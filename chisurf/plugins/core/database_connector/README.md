@@ -33,9 +33,10 @@ MFDB services (`mfdb.*` / `mfdb.v1.*`) rather than `sample_database.*`.
 ## Verification
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
   chisurf/plugins/core/database_connector/test
 ```
 
 The plugin-local tests seed a temporary MFDB with sample, user, device, experiment
-type, and experiment rows, then verify direct handlers and in-process RPC dispatch.
+type, and experiment rows, then verify direct handlers, in-process RPC dispatch,
+backup, reset-from-source, minimal CIF import, and FLR CIF text/file export.

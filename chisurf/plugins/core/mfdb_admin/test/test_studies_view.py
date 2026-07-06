@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-from chisurf.plugins.core.mfdb_admin.gui.studies_view import StudiesView
+from mfdb.admin.gui.client import MFDBClient
+from mfdb.admin.gui.studies_view import StudiesView
 
 from .conftest import patch_db
 

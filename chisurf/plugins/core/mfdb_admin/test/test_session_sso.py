@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from chisurf.plugins.core.mfdb_admin.gui import session as S
+from mfdb.admin.gui import session as S
 
 
 @pytest.fixture(autouse=True)

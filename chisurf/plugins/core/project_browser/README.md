@@ -45,14 +45,22 @@ version; selecting a child restores that exact version.
 ## Verification
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
   chisurf/plugins/core/project_browser/test
 ```
 
 The plugin-local tests cover:
 
 - sample-data-backed save/list/restore/export using a temporary MFDB and object store;
+- import preview rejection plus collision-remapped import from an exported `.csp`
+  archive;
+- branch creation, branch-scoped version counts, and version DAG roots/leaves;
+- artifact and fit-parameter browsing for a version with sample data and a local fit;
+- manage-permission enforcement for deleting project versions;
 - in-process RPC registration through `ServiceDispatcher` and `InProcessClient`;
 - headless Qt construction of the project tree with sample project/version data;
 - headless Qt construction using the real in-process ChiSurf services against a
-  temporary MFDB seeded with a CSV-backed sample project.
+  temporary MFDB seeded with a CSV-backed sample project;
+- headless Qt restore of a selected version into a patched ChiSurf context, verifying
+  project payload load and active project metadata updates;
+- headless Qt delete confirmation and collision-remapped `.csp` import actions.

@@ -7,7 +7,7 @@ the MFDBClient) so the GUI view is a thin caller. Illegal transitions come back 
 
 from __future__ import annotations
 
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.admin.backend.services import (
     lifecycle_definitions_handler,
     lifecycle_history_handler,
     lifecycle_state_handler,
@@ -58,7 +58,7 @@ def test_definitions_handler_exposes_lifecycles(db):
 def test_via_inprocess_client(db):
     """End to end through the MFDBClient RPC layer (InProcessClient)."""
     with patch_db(db):
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         assert client.lifecycle_state("artifact", "a1") is None

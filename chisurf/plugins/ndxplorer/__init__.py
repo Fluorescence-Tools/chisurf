@@ -68,7 +68,7 @@ if __name__ == "plugin":
 
     # Add MFDB toolbar button if MFDB is connected
     try:
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
         from chisurf.plugins.ndxplorer.mfdb_launcher import (
             BURST_FORMATS, BURST_KINDS, resolve_dataset_path,
         )

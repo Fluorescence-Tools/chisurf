@@ -68,6 +68,7 @@ Thumbs.db
 /test_*
 _PROG
 __pycache__/
+_dictionary_cache.json
 .env
 act-output*.txt
 broken

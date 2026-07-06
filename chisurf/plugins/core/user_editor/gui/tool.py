@@ -1,3 +1,4 @@
+import os
 import uuid
 import yaml
 
@@ -613,6 +614,7 @@ class UserEditorWidget(QWidget):
         rename_session_token(server_host, server_port, old_user_id, new_user_id)
         if mfdb_settings.get("default_user_id") == old_user_id:
             mfdb_settings["default_user_id"] = new_user_id
+            os.environ["MFDB_DEFAULT_USER_ID"] = new_user_id
             if hasattr(cs_settings, "mfdb"):
                 cs_settings.mfdb["default_user_id"] = new_user_id
             set_mfdb_login_settings(mfdb_settings)
@@ -631,7 +633,7 @@ class UserEditorWidget(QWidget):
             load_session_token,
             store_runtime_session_token,
         )
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        from mfdb.admin.gui.client import MFDBClient
 
         mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
         server_host = mfdb_settings.get("last_server", "127.0.0.1")
@@ -687,6 +689,7 @@ class UserEditorWidget(QWidget):
         if "mfdb" not in cs_settings.cs_settings:
             cs_settings.cs_settings["mfdb"] = {}
         cs_settings.cs_settings["mfdb"]["default_user_id"] = self.selected_user_id
+        os.environ["MFDB_DEFAULT_USER_ID"] = self.selected_user_id
 
         # Update the properties loaded in the package scope
         if hasattr(cs_settings, "mfdb"):

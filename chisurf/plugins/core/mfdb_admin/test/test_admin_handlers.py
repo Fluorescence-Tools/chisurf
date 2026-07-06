@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from chisurf.core.mfdb.models import DEFAULT_FLUOROPHORE_SPECTRA
+from mfdb.models import DEFAULT_FLUOROPHORE_SPECTRA
 
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.admin.backend.services import (
     create_structured_sample_handler,
     delete_entity_handler,
     delete_fret_pair_handler,
+    list_processed_data_handler,
+    list_processing_handler,
     get_sample_full_description_handler,
     list_entities_handler,
     list_fret_pairs_handler,
@@ -37,6 +39,86 @@ def test_full_description_handler(db, sample_with_entities):
     assert "entities" in description
     assert "probes" in description
     assert "fret_pairs" in description
+
+
+def test_generic_processing_and_processed_data_handlers_round_trip(db):
+    """Generic admin browse endpoints expose processing and product IDs."""
+    db.record_operation(
+        operation_id="proc_generic_ok",
+        operation_type="filtering",
+        status="succeeded",
+    )
+    db.record_operation(
+        operation_id="proc_generic_fail",
+        operation_type="filtering",
+        status="failed",
+    )
+    db.register_artifact(
+        artifact_id="prod_generic",
+        artifact_kind="processed_data",
+        storage_mode="embedded_json",
+        data_json='{"curve": [1, 2, 3]}',
+        validation_status="valid",
+        metadata={
+            "processing_id": "proc_generic_ok",
+            "product_type": "processed_data",
+        },
+    )
+
+    with patch_db(db):
+        processing = list_processing_handler(auth=None)["processing"]
+        products = list_processed_data_handler(auth=None)["processed_data"]
+
+        from mfdb.admin.gui.client import MFDBClient
+
+        client = MFDBClient(inprocess=True)
+        succeeded_runs = client.list_processing_runs(status="succeeded")
+        scoped_products = client.list_processed_data(processing_id="proc_generic_ok")
+
+    processing_by_id = {row["processing_id"]: row for row in processing}
+    assert processing_by_id["proc_generic_ok"]["type"] == "filtering"
+    assert processing_by_id["proc_generic_fail"]["status"] == "failed"
+
+    product = next(row for row in products if row["product_id"] == "prod_generic")
+    assert product["processed_data_id"] == "prod_generic"
+    assert product["processing_id"] == "proc_generic_ok"
+
+    assert [row["processing_id"] for row in succeeded_runs] == ["proc_generic_ok"]
+    assert [row["processed_data_id"] for row in scoped_products] == ["prod_generic"]
+
+
+def test_provenance_graph_export_canonicalizes_seed_node_types(db):
+    """Legacy artifact seed types should not duplicate canonical graph nodes."""
+    db.record_operation(
+        operation_id="proc_graph",
+        operation_type="filtering",
+        status="succeeded",
+    )
+    db.register_artifact(
+        artifact_id="raw_graph",
+        artifact_kind="raw_data",
+        storage_mode="local_file",
+        file_path="raw_graph.ptu",
+    )
+    db.register_artifact(
+        artifact_id="prod_graph",
+        artifact_kind="processed_data",
+        storage_mode="embedded_json",
+        data_json='{"curve": [1]}',
+        metadata={"processing_id": "proc_graph"},
+    )
+    db.record_operation_link("proc_graph", "raw_graph", "input")
+    db.record_operation_link("proc_graph", "prod_graph", "output")
+
+    graph = db.export_provenance_graph("processed_data", "prod_graph")
+
+    node_keys = {(node["node_type"], node["node_id"]) for node in graph["nodes"]}
+    assert node_keys == {
+        ("artifact", "raw_graph"),
+        ("operation", "proc_graph"),
+        ("artifact", "prod_graph"),
+    }
+    assert ("processed_data", "prod_graph") not in node_keys
 
 
 def test_validate_export_handler_complete(db, sample_with_entities):

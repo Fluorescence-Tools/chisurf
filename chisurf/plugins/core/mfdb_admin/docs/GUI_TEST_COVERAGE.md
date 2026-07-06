@@ -1,6 +1,6 @@
 # MFDB Admin GUI Test Coverage
 
-Last reviewed: 2026-07-05.
+Last reviewed: 2026-07-06.
 
 This file is the conservative truth table for MFDB Admin GUI confidence. If a
 surface is only constructed in a headless test, it is not marked done for behavior.
@@ -23,9 +23,9 @@ there is a headless interaction test with sample data.
 | MFDB Admin navigation shell | `test_admin_navigation.py` verifies `MFDBWidget` is a `NavigationPanelTool`, exposes nav/stack widgets, and lists expected panels. | Construction tested. |
 | Overview | Built through `test_every_panel_builds`. | Untested for behavior. |
 | All items | Built through `test_every_panel_builds`. | Untested for behavior. |
-| Measurements | Built through `test_every_panel_builds`. | Untested for behavior. |
-| Provenance Graph | Built through `test_every_panel_builds`. | Untested for behavior. |
-| Import / Export | Built through `test_every_panel_builds`. | Untested for behavior. |
+| Measurements | `test_measurements_panel_refreshes_and_filters_seeded_data` refreshes the panel from seeded raw data, processing-run, and processed-product records, then exercises kind/search filters. | Headless interaction tested. |
+| Provenance Graph | `test_provenance_graph_loads_seeded_processing_graph` loads a seeded raw -> processing -> processed provenance graph, verifies edge-table rows, node-editor graph contents, and edge-details selection. | Headless interaction tested. |
+| Import / Export | `test_import_export_panel_validates_previews_and_exports_seeded_sample` validates a seeded sample, previews flrCIF text, confirms export despite validation warnings, writes sample CIF, exports the sample table, and imports a minimal CIF fixture through the file field. | Headless interaction tested. |
 
 ## Generic Entity Panels
 
@@ -36,33 +36,33 @@ extra actions, FK jumps, or validation.
 
 | Entity panel | Current status |
 | --- | --- |
-| Samples | Construction tested; behavior untested. |
-| Sample Conditions | Construction tested; behavior untested. |
-| Entities | Construction tested; behavior untested. |
-| Probes | Construction tested; behavior untested. |
-| Label Positions | Construction tested; behavior untested. |
-| FRET Pairs | Construction tested; behavior untested. |
-| Experiments | Construction tested; behavior untested. |
-| Experiment Types | Construction tested; behavior untested. |
-| Setups | Construction tested; behavior untested. |
-| Detector Channels | Construction tested; behavior untested. |
-| PIE Windows | Construction tested; behavior untested. |
-| FCS Pairs | Construction tested; behavior untested. |
-| Devices | Construction tested; behavior untested. |
-| Raw Data | Construction tested; behavior untested. |
-| Processing Runs | Construction tested; behavior untested. |
-| Processed Products | Construction tested; behavior untested. |
-| Analyses | Construction tested; behavior untested. |
-| Objects | Construction tested; behavior untested. |
-| Projects | Construction tested; behavior untested. |
-| Branches | Construction tested; behavior untested. |
-| Users | Construction tested; behavior untested. |
+| Samples | Headless interaction tested for sample-data-backed refresh, row selection, AutoForm load, and auto-save of `description` in `test_entity_dock_gui_interactions.py`. Delete, FK jumps, and structured-sample workflows remain untested. |
+| Sample Conditions | Headless interaction tested for refresh, row selection, AutoForm load, New-button creation, auto-save of `ph`, checked-row delete, and delete confirmation in `test_entity_dock_gui_interactions.py`. Sample-link workflows remain untested. |
+| Entities | Headless interaction tested for sample-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| Probes | Headless interaction tested for sample-data-backed refresh, row selection, AutoForm load, and auto-save of `description` in `test_entity_dock_gui_interactions.py`. Optical-property editing, create, and delete workflows remain untested. |
+| Label Positions | Headless interaction tested for sample-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| FRET Pairs | Headless interaction tested for sample-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| Experiments | Headless interaction tested for sample-data-backed refresh, row selection, AutoForm load, and auto-save of `status` in `test_entity_dock_gui_interactions.py`. Delete, FK jumps, and experiment data subflows remain untested. |
+| Experiment Types | Headless interaction tested for refresh, row selection, AutoForm load, New-button creation, auto-save of `description`, checked-row delete, and delete confirmation in `test_entity_dock_gui_interactions.py`. Experiment-type linkage workflows remain untested. |
+| Setups | Headless interaction tested for refresh, row selection, AutoForm load, and auto-save of `details` in `test_entity_dock_gui_interactions.py`. Validation and delete workflows remain untested. |
+| Detector Channels | Headless interaction tested for setup-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| PIE Windows | Headless interaction tested for setup-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| FCS Pairs | Headless interaction tested for setup-data-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Create/edit/delete workflows remain untested. |
+| Devices | Headless interaction tested for refresh, row selection, AutoForm load, New-button creation, auto-save of `model`/`name`, checked-row delete, and delete confirmation in `test_entity_dock_gui_interactions.py`. Device linkage workflows remain untested. |
+| Raw Data | Headless interaction tested for raw-artifact-backed refresh, row selection, AutoForm load, Copy ID, Reveal/Open, provenance-seed action, validation-status update, confirmed soft delete, table refresh, and operation-link soft delete through the visible EntityDock in `test_entity_dock_gui_interactions.py`. File-content parsing/preview remains untested. |
+| Processing Runs | Headless interaction tested for operation-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Run detail/provenance workflows remain untested. |
+| Processed Products | Headless interaction tested for processed-artifact-backed refresh, row selection, AutoForm load, Copy ID, Reveal/Open, provenance-seed action, validation-status update, confirmed soft delete, table refresh, and operation-link soft delete through the visible EntityDock in `test_entity_dock_gui_interactions.py`. File-content parsing/preview remains untested. |
+| Analyses | Headless interaction tested for analysis-operation-backed refresh, row selection, AutoForm load, Copy ID, Details drilldown with parameter and output-product tables, and provenance-seed action through the visible EntityDock in `test_entity_dock_gui_interactions.py`. Non-empty input-product and grouped-fit drilldowns remain untested. |
+| Objects | Headless interaction tested for object-store-backed refresh, row selection, AutoForm load, Copy UUID, Reveal, and confirmed delete through the visible Objects EntityDock in `test_entity_dock_gui_interactions.py`. Direct blob-content download/open remains untested. |
+| Projects | Headless interaction tested for project-operation-backed refresh, row selection, and AutoForm load in `test_entity_dock_gui_interactions.py`. Restore/export/version workflows remain covered by Project Browser tests, not this admin panel. |
+| Branches | Headless interaction tested for branch refresh, row selection, AutoForm load, New-button creation, auto-save of `description`, checked-row delete, and delete confirmation in `test_entity_dock_gui_interactions.py`. Branch fork/time-travel workflows remain untested. |
+| Users | Headless interaction tested for refresh, row selection, AutoForm load, New-button creation, auto-save of `display_name`, rename through editable `user_id`, checked-row delete, delete confirmation, and built-in `user_default` delete protection in `test_entity_dock_gui_interactions.py`. Password change and force-delete workflows remain untested in GUI. |
 
 ## Dedicated Panels
 
 | Surface | Current evidence | Status |
 | --- | --- | --- |
-| Sample Metadata | Built through `test_every_panel_builds`. | Untested for behavior. |
+| Sample Metadata | `test_sample_metadata_dock_loads_edits_and_saves_metadata` loads a seeded sample, edits a metadata row through the detail form, saves, and verifies MFDB state. | Headless interaction tested. |
 | Spectra / optical components | `test_fluorophore_panel_and_rpc_integrated` constructs the integrated dock and verifies `fluorophores.list`; `test_optical_components.py` covers spectrum display widgets. | Partially tested; full curation workflows untested. |
 | Studies | `test_studies_view.py` lists studies, selects fields/members, and creates a study. | Headless interaction tested. |
 | Protocols | `test_protocols_view.py` lists latest protocols, selects versions/schema, and creates a protocol. | Headless interaction tested. |
@@ -76,32 +76,34 @@ extra actions, FK jumps, or validation.
 
 Priority order:
 
-1. Add sample-data-backed interaction tests for `Samples`, `Experiments`, `Raw Data`,
-   `Processed Products`, `Objects`, `Projects`, and `Users`.
-2. Add tests for `Import / Export`, `Measurements`, and `Provenance Graph`, because
-   those are workflow surfaces where construction-only coverage is especially weak.
-3. For each generic `EntityDock`, drive row selection and at least one supported
+1. Add tests for create/delete paths on writable EntityDock panels, especially
+   user password/force-delete flows and non-branch entity mutation paths.
+2. Add tests for analysis non-empty input-product/grouped-fit drilldowns and
+   raw/processed file-content parsing or preview paths.
+3. Add deeper import tests for FLR-rich CIF/mmCIF files with entities, probes,
+   positions, and analyses.
+4. For each generic `EntityDock`, drive row selection and at least one supported
    mutation or explicit read-only action.
-4. Keep every new ordinary form/table test on AutoForm/JSON view specs where
+5. Keep every new ordinary form/table test on AutoForm/JSON view specs where
    possible. If AutoForm lacks a needed primitive, add it to the shared AutoForm
    layer before adding MFDB-specific widget code.
 
 ## Current Smoke Command
 
 ```bash
-PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
+PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." python3 -m pytest \
+  test/core/test_mfdb_vendor_package.py \
   test/gui/test_autoform_table_section.py \
   chisurf/plugins/core/mfdb_admin/test/test_admin_navigation.py \
   chisurf/plugins/core/mfdb_admin/test/test_autoform_entity_form.py \
   chisurf/plugins/core/mfdb_admin/test/test_connection_dialog.py \
+  chisurf/plugins/core/mfdb_admin/test/test_entity_dock_gui_interactions.py \
   chisurf/plugins/core/mfdb_admin/test/test_session_sso.py \
   chisurf/plugins/core/database_connector/test \
   chisurf/plugins/core/project_browser/test
 ```
 
-Last focused run on 2026-07-05 in the arm64 Qt environment: 23 passed, 2 warnings.
+Last focused run on 2026-07-06 in the arm64 Qt environment: 58 passed, 2 warnings.
 
-The full `chisurf/plugins/core/mfdb_admin/test` suite is not green in that
-environment: 80 passed, 3 failed, 6 errors. The failures/errors are structured
-sample handler paths requiring `sqlalchemy`, not additional GUI interaction
-evidence.
+The full `chisurf/plugins/core/mfdb_admin/test` suite is green in that
+environment on 2026-07-06: 111 passed, 2 warnings.

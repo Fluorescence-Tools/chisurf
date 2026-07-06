@@ -20,7 +20,7 @@ def test_login_dialog_password_masked_and_advanced_collapsible(qapp):
     from qtpy import QtWidgets
 
     from chisurf.gui.widgets.collapsible_box import CollapsibleBox
-    from chisurf.plugins.core.mfdb_admin.gui.connection_dialog import ConnectionAuthDialog
+    from mfdb.admin.gui.connection_dialog import ConnectionAuthDialog
 
     d = ConnectionAuthDialog(user="admin", host="127.0.0.1", cmd_port=8765, pub_port=8766)
     # password is a masked single-line field
