@@ -233,7 +233,7 @@ def test_fresh_db_has_no_legacy_or_duplicate_tables(tmp_path: Path) -> None:
 
 def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
     """mfdb.setups.list returns detector_channels and pie_windows keys."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         list_setups_handler,
         get_setup_handler,
     )
@@ -245,11 +245,11 @@ def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
 
     patchers = [
         patch(
-            "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+            "mfdb.admin.backend.services.resolve_database_path",
             return_value=db_path,
         ),
         patch(
-            "chisurf.plugins.core.mfdb_admin.backend.setup_services.resolve_database_path",
+            "mfdb.admin.backend.setup_services.resolve_database_path",
             return_value=db_path,
         ),
         # list_setups_handler / get_setup_handler delegate to chisurf.core.mfdb.api,
@@ -264,7 +264,7 @@ def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
         p.start()
     try:
         # Save a setup with detectors and windows
-        from chisurf.plugins.core.mfdb_admin.backend.setup_services import (
+        from mfdb.admin.backend.setup_services import (
             save_setup_handler,
         )
         setup_payload = {
@@ -298,10 +298,10 @@ def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
 
 def test_setup_detail_rpc_includes_child_tables(tmp_path: Path) -> None:
     """mfdb.setups.get returns detector_channels and pie_windows lists."""
-    from chisurf.plugins.core.mfdb_admin.backend.setup_services import (
+    from mfdb.admin.backend.setup_services import (
         save_setup_handler,
     )
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         get_setup_handler,
     )
     from unittest.mock import patch
@@ -312,11 +312,11 @@ def test_setup_detail_rpc_includes_child_tables(tmp_path: Path) -> None:
 
     patchers = [
         patch(
-            "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+            "mfdb.admin.backend.services.resolve_database_path",
             return_value=db_path,
         ),
         patch(
-            "chisurf.plugins.core.mfdb_admin.backend.setup_services.resolve_database_path",
+            "mfdb.admin.backend.setup_services.resolve_database_path",
             return_value=db_path,
         ),
         # list_setups_handler / get_setup_handler delegate to chisurf.core.mfdb.api,

@@ -2,42 +2,37 @@ from __future__ import annotations
 
 import base64
 
-import chisurf.core.settings as settings_module
-from chisurf.core.mfdb import database_resolver
-from chisurf.core.mfdb.object_store import ObjectStore
+from mfdb.config import configure_runtime, reset_runtime_config
+from mfdb import database_resolver
+from mfdb.object_store import ObjectStore
 
 
-def test_object_store_root_defaults_to_settings_objects(tmp_path, monkeypatch):
+def test_object_store_root_defaults_to_settings_objects(tmp_path):
     """Object store root defaults to the settings directory objects folder."""
-    monkeypatch.setattr(database_resolver, "get_path", lambda name: tmp_path)
-    monkeypatch.setattr(settings_module, "cs_settings", {"mfdb": {}})
+    configure_runtime(settings_dir=tmp_path)
+    try:
+        assert database_resolver.object_store_root() == tmp_path / "objects"
+    finally:
+        reset_runtime_config()
 
-    assert database_resolver.object_store_root() == tmp_path / "objects"
 
-
-def test_object_store_root_uses_relative_mfdb_setting(tmp_path, monkeypatch):
+def test_object_store_root_uses_relative_mfdb_setting(tmp_path):
     """Relative MFDB object store settings are resolved below settings."""
-    monkeypatch.setattr(database_resolver, "get_path", lambda name: tmp_path)
-    monkeypatch.setattr(
-        settings_module,
-        "cs_settings",
-        {"mfdb": {"object_store": {"root": "custom_objects"}}},
-    )
-
-    assert database_resolver.object_store_root() == tmp_path / "custom_objects"
+    configure_runtime(settings_dir=tmp_path, object_store_root="custom_objects")
+    try:
+        assert database_resolver.object_store_root() == tmp_path / "custom_objects"
+    finally:
+        reset_runtime_config()
 
 
-def test_object_store_root_uses_absolute_mfdb_setting(tmp_path, monkeypatch):
+def test_object_store_root_uses_absolute_mfdb_setting(tmp_path):
     """Absolute MFDB object store settings are used as-is."""
-    monkeypatch.setattr(database_resolver, "get_path", lambda name: tmp_path)
     custom_root = tmp_path / "external" / "objects"
-    monkeypatch.setattr(
-        settings_module,
-        "cs_settings",
-        {"mfdb": {"object_store": {"root": str(custom_root)}}},
-    )
-
-    assert database_resolver.object_store_root() == custom_root
+    configure_runtime(settings_dir=tmp_path, object_store_root=custom_root)
+    try:
+        assert database_resolver.object_store_root() == custom_root
+    finally:
+        reset_runtime_config()
 
 
 def test_object_store_deduplicates_identical_files(tmp_path):
@@ -59,7 +54,7 @@ def test_object_store_deduplicates_identical_files(tmp_path):
 
 def test_project_archive_handler_roundtrips_csp_object(tmp_path, monkeypatch):
     """MFDB project archival stores and restores the complete CSP object."""
-    from chisurf.plugins.sample_database.backend import measurement_services
+    from mfdb.admin.backend import measurement_services
 
     db_path = tmp_path / "mfdb.sqlite"
     object_root = tmp_path / "objects"

@@ -3,25 +3,21 @@
 from __future__ import annotations
 
 import pathlib
-import sqlite3
 from unittest.mock import patch
 
-from chisurf.core.mfdb import schema
-from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.plugins.sample_database.backend.setup_services import (
+from mfdb.repository import MFDatabase
+from mfdb.admin.backend.services import (
     delete_setup_handler,
     get_setup_handler,
     list_setups_handler,
     save_setup_handler,
-    validate_setup_config,
-    validate_setup_handler,
 )
 
 
 def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) -> None:
     """Verify setup CRUD operations and linkage to experiments in MFDatabase."""
     db_path = tmp_path / "test_setups.db"
-    
+
     with MFDatabase(db_path) as db:
         # 1. Test Add and Get
         db.add_setup_definition(
@@ -32,12 +28,12 @@ def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) ->
             configuration={"laser_wavelengths": [485, 640]},
             detectors={"green": [0, 1], "red": [2, 3]},
         )
-        
+
         row = db.get_setup_definition("setup_mfd_1")
         assert row is not None
         assert row["name"] == "MFD Setup 1"
         assert row["setup_id"] == "setup_mfd_1"
-        
+
         decoded = db._decode_setup_definition_row(row)
         assert decoded["configuration"] == {"laser_wavelengths": [485, 640]}
         assert decoded["detectors"] == {"green": [0, 1], "red": [2, 3]}
@@ -55,7 +51,7 @@ def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) ->
             setup_definition_id="setup_mfd_1",
             status="complete",
         )
-        
+
         exp_row = db.get_experiment("exp_mfd")
         assert exp_row is not None
         assert exp_row["setup_definition_id"] == "setup_mfd_1"
@@ -74,92 +70,35 @@ def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) ->
         assert exp_row["setup_name"] == "MFD Setup 1"
 
 
-def test_setup_configuration_validation() -> None:
-    """Verify validation helper detects valid/invalid configurations."""
-    # Test valid configuration
-    valid_config = {
-        "laser_wavelengths": [485.5, 640],
-        "detector_channels": {"green": [0, 1], "red": [2, 3]},
-        "pie_enabled": True,
-        "pie_window": [0, 100],
-    }
-    res = validate_setup_config(valid_config)
-    assert res["valid"] is True
-    assert len(res["errors"]) == 0
-
-    # Test invalid configurations
-    invalid_lasers = {"laser_wavelengths": "not-a-list"}
-    res = validate_setup_config(invalid_lasers)
-    assert res["valid"] is False
-    assert "laser_wavelengths must be a list of numbers" in res["errors"]
-
-    empty_lasers = {"laser_wavelengths": []}
-    res = validate_setup_config(empty_lasers)
-    assert res["valid"] is False
-    assert "laser_wavelengths list cannot be empty" in res["errors"]
-
-    negative_lasers = {"laser_wavelengths": [485, -10]}
-    res = validate_setup_config(negative_lasers)
-    assert res["valid"] is False
-    assert "laser_wavelengths[1] must be a positive number: -10" in res["errors"]
-
-    invalid_detectors = {"detector_channels": "not-a-dict-or-list"}
-    res = validate_setup_config(invalid_detectors)
-    assert res["valid"] is False
-    assert "detector_channels must be a dictionary or list representing detector mappings" in res["errors"]
-
-    missing_pie_window = {"pie_enabled": True}
-    res = validate_setup_config(missing_pie_window)
-    assert res["valid"] is False
-    assert "pie_window must be defined when pie_enabled is True" in res["errors"]
-
-
 def test_setup_service_handlers(tmp_path: pathlib.Path) -> None:
-    """Verify setup service endpoints handle CRUD and validation requests."""
+    """Verify canonical MFDB Admin setup handlers handle CRUD requests."""
     db_path = tmp_path / "test_setup_services.db"
 
-    patcher = patch(
-        "chisurf.plugins.sample_database.backend.setup_services.resolve_database_path",
-        return_value=db_path,
-    )
-    patcher.start()
-
-    try:
-        # 1. Test save_setup_handler
+    with (
+        patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path),
+        patch("mfdb.admin.backend.services._require_auth", return_value=None),
+    ):
         setup_payload = {
             "setup_id": "setup_1",
             "name": "Validation Setup",
-            "configuration": {"laser_wavelengths": [488]},
+            "laser_wavelengths": "[488]",
         }
         res = save_setup_handler(setup=setup_payload)
-        assert res["ok"] is True
         saved = res["setup"]
         assert saved["setup_id"] == "setup_1"
         assert saved["name"] == "Validation Setup"
-        assert saved["validation"]["valid"] is True
+        assert saved["laser_wavelengths"] == [488]
 
-        # 2. Test get_setup_handler
         res = get_setup_handler(setup_id="setup_1")
-        assert res["ok"] is True
         assert res["setup"]["name"] == "Validation Setup"
 
-        # 3. Test list_setups_handler
         res = list_setups_handler()
-        assert res["ok"] is True
         assert len(res["setups"]) == 1
         assert res["setups"][0]["setup_id"] == "setup_1"
 
-        # 4. Test validate_setup_handler
-        res = validate_setup_handler(configuration={"laser_wavelengths": [488]})
-        assert res["valid"] is True
-
-        # 5. Test delete_setup_handler
         res = delete_setup_handler(setup_id="setup_1")
         assert res["ok"] is True
         assert res["setup_id"] == "setup_1"
 
         res = list_setups_handler()
         assert len(res["setups"]) == 0
-
-    finally:
-        patcher.stop()

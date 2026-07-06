@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-import chisurf.core.settings as cs_settings
 from chisurf.core.mfdb.auth import create_session
 from chisurf.core.mfdb.repository import MFDatabase
+from mfdb.config import configure_runtime, reset_runtime_config
 
 
 def _admin_session(db_path: Path) -> dict[str, Any]:
@@ -40,9 +40,7 @@ def _default_auth(db_path: Path) -> dict[str, Any]:
 def test_mfdb_default_user_creation_and_fallbacks(tmp_path: Path) -> None:
     db_path = tmp_path / "user_test.db"
 
-    # Save original settings
-    original_mfdb = cs_settings.cs_settings.get("mfdb", {}).copy()
-    cs_settings.cs_settings["mfdb"] = {"default_user_id": "user_default"}
+    configure_runtime(default_user_id="user_default")
     try:
         # 1. Opening MFDatabase should automatically bootstrap 'user_default' in flr_sample_users
         with MFDatabase(db_path) as db:
@@ -64,7 +62,7 @@ def test_mfdb_default_user_creation_and_fallbacks(tmp_path: Path) -> None:
             assert op["operator_user_id"] == "user_default"
 
             # 4. If default_user_id is changed in settings, it should use the new value.
-            cs_settings.cs_settings["mfdb"] = {"default_user_id": "test_user_id"}
+            configure_runtime(default_user_id="test_user_id")
             db.add_sample("sample_test_2")
             sample2 = db.get_sample("sample_test_2")
             assert sample2["measured_by_user_id"] == "test_user_id"
@@ -77,7 +75,7 @@ def test_mfdb_default_user_creation_and_fallbacks(tmp_path: Path) -> None:
             op2 = db.get_operation("op_test_2")
             assert op2["operator_user_id"] == "test_user_id"
     finally:
-        cs_settings.cs_settings["mfdb"] = original_mfdb
+        reset_runtime_config()
 
 
 def test_delete_user_handler_safety(tmp_path: Path) -> None:
@@ -85,13 +83,13 @@ def test_delete_user_handler_safety(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         delete_user_handler,
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
         # 1. Initialize DB by listing users (calls FluorescenceDatabase which migrates the DB)
         res = list_users_handler()
         user_ids = {u["user_id"] for u in res["users"]}
@@ -132,13 +130,13 @@ def test_mfdb_user_attributes_and_validation(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
         # Initialize DB and get auth
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
         auth = _default_auth(db_path)
 
@@ -185,13 +183,13 @@ def test_mfdb_user_passwords_and_login(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import login_handler
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB
@@ -236,13 +234,13 @@ def test_mfdb_save_user_permissions(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
         # Initialize DB — user_default is now admin
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
 
         # Get an admin session as user_default
@@ -292,12 +290,12 @@ def test_mfdb_save_user_renames_username_and_references(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
         list_users_handler()
         admin_auth = _default_auth(db_path)
 
@@ -369,14 +367,14 @@ def test_mfdb_delete_user_admin_override(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         delete_user_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
         # 1. Initialize DB — user_default is already admin
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
         admin_auth = _default_auth(db_path)
 
@@ -457,13 +455,13 @@ def test_admin_password_strength_enforcement(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import change_password_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import change_password_handler
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB
@@ -550,12 +548,12 @@ def test_save_user_handler_admin_forces_no_passwordless(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
@@ -588,16 +586,16 @@ def test_change_password_permissions(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import change_password_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import change_password_handler
+    from mfdb.admin.backend.services import (
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB — user_default is already admin with password "admin"
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
         admin_auth = _default_auth(db_path)
 
@@ -663,7 +661,7 @@ def test_guest_login_passwordless(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
+    from mfdb.admin.backend.password_services import login_handler
 
     # Initialize DB so guest user exists
     with MFDatabase(db_path) as db:
@@ -682,13 +680,13 @@ def test_allow_passwordless_login_flag(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import login_handler
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
@@ -719,13 +717,13 @@ def test_allow_passwordless_login_can_be_disabled(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import login_handler
+    from mfdb.admin.backend.services import (
         list_users_handler,
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
@@ -756,15 +754,15 @@ def test_allow_passwordless_login_admin_denied_without_password(tmp_path: Path) 
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.password_services import login_handler
+    from mfdb.admin.backend.services import (
         save_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path), patch(
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
         "chisurf.core.mfdb.database_resolver.resolve_database_path", return_value=db_path
     ):
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
         auth = _default_auth(db_path)
 
@@ -796,12 +794,12 @@ def test_guest_user_cannot_be_deleted(tmp_path: Path) -> None:
 
     from unittest.mock import patch
 
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         delete_user_handler,
     )
 
-    with patch("chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path", return_value=db_path):
-        from chisurf.plugins.core.mfdb_admin.backend.services import list_users_handler
+    with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path):
+        from mfdb.admin.backend.services import list_users_handler
         list_users_handler()
         auth = _default_auth(db_path)
 

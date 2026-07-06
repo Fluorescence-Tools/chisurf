@@ -14,7 +14,7 @@ from chisurf.plugins.ndxplorer.mfdb_launcher import BURST_KINDS, resolve_dataset
 
 
 def test_resolve_dataset_path_via_real_client(tmp_path):
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+    from mfdb.admin.gui.client import MFDBClient
 
     f = tmp_path / "m.ptu"
     f.write_bytes(b"\x00\x01\x02\x03")
@@ -39,7 +39,7 @@ def test_resolve_external_reference_directory_via_metadata(tmp_path):
     return that path (the .bur folder co-located with the TTTR files, preserving
     the photon-index linkage), not fail."""
     from chisurf.core.mfdb.result_registry import register_raw_measurement, register_result
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+    from mfdb.admin.gui.client import MFDBClient
 
     burst_dir = tmp_path / "burstwise"
     burst_dir.mkdir()

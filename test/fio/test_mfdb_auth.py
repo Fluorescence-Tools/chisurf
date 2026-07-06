@@ -49,7 +49,7 @@ def db(tmp_path: Path):
 @pytest.fixture
 def patch_db(monkeypatch, db):
     """Monkeypatch auth_services to use the test database."""
-    from chisurf.plugins.core.mfdb_admin.backend import auth_services
+    from mfdb.admin.backend import auth_services
     from contextlib import contextmanager
 
     @contextmanager
@@ -488,7 +488,7 @@ def test_revoke_acl_soft_deletes(db, normal_user):
 
 
 def test_login_handler_creates_session(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+    from mfdb.admin.backend.auth_services import login_handler
     result = login_handler(user_id=normal_user)
     assert result["ok"] is True
     assert "token" in result
@@ -498,8 +498,8 @@ def test_login_handler_creates_session(db, normal_user, patch_db):
 def test_login_handler_admin_passwordless_flag_denied(db, patch_db):
     """Admin accounts can never log in without a password, even when the
     allow_passwordless_login flag is set."""
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
+    from mfdb.admin.backend.auth_services import login_handler
+    from mfdb.admin.backend.password_services import hash_password
 
     db.add_user(
         "passwordless_admin",
@@ -522,8 +522,8 @@ def test_login_handler_admin_passwordless_flag_denied(db, patch_db):
 
 def test_login_handler_admin_empty_password_denied(db, patch_db):
     """An admin with a password hash cannot log in with an empty password."""
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
+    from mfdb.admin.backend.auth_services import login_handler
+    from mfdb.admin.backend.password_services import hash_password
 
     db.add_user(
         "some_admin",
@@ -538,7 +538,7 @@ def test_login_handler_admin_empty_password_denied(db, patch_db):
 def test_login_handler_non_admin_passwordless_allowed(db, patch_db):
     """Non-admin users with the passwordless flag (e.g. guest) can still log in
     without a password."""
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+    from mfdb.admin.backend.auth_services import login_handler
 
     db.add_user("kiosk", display_name="Kiosk", is_admin=0, allow_passwordless_login=1)
     result = login_handler(user_id="kiosk")
@@ -547,8 +547,8 @@ def test_login_handler_non_admin_passwordless_allowed(db, patch_db):
 
 
 def test_login_handler_wrong_password_fails(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.password_services import hash_password
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler
+    from mfdb.admin.backend.password_services import hash_password
+    from mfdb.admin.backend.auth_services import login_handler
     db.conn.execute(
         "UPDATE flr_sample_users SET password_hash = ? WHERE user_id = ?",
         (hash_password("correct_password"), normal_user),
@@ -559,7 +559,7 @@ def test_login_handler_wrong_password_fails(db, normal_user, patch_db):
 
 
 def test_me_handler_returns_user(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import me_handler
+    from mfdb.admin.backend.auth_services import me_handler
     session = create_session(db.conn, normal_user)
     result = me_handler(auth={"token": session["token"]})
     assert result["ok"] is True
@@ -567,13 +567,13 @@ def test_me_handler_returns_user(db, normal_user, patch_db):
 
 
 def test_me_handler_rejects_anonymous(db, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import me_handler
+    from mfdb.admin.backend.auth_services import me_handler
     with pytest.raises(AuthError):
         me_handler(auth=None)
 
 
 def test_groups_list(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import groups_list_handler
+    from mfdb.admin.backend.auth_services import groups_list_handler
     session = create_session(db.conn, normal_user)
     result = groups_list_handler(auth={"token": session["token"]})
     assert result["ok"] is True
@@ -584,7 +584,7 @@ def test_groups_list(db, normal_user, patch_db):
 
 
 def test_groups_create_admin_only(db, admin_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import groups_create_handler
+    from mfdb.admin.backend.auth_services import groups_create_handler
     session = create_session(db.conn, admin_user)
     result = groups_create_handler(
         auth={"token": session["token"]},
@@ -594,7 +594,7 @@ def test_groups_create_admin_only(db, admin_user, patch_db):
 
 
 def test_groups_create_non_admin_fails(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import groups_create_handler
+    from mfdb.admin.backend.auth_services import groups_create_handler
     session = create_session(db.conn, normal_user)
     with pytest.raises(PermissionDenied):
         groups_create_handler(
@@ -604,7 +604,7 @@ def test_groups_create_non_admin_fails(db, normal_user, patch_db):
 
 
 def test_members_list(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import members_list_handler
+    from mfdb.admin.backend.auth_services import members_list_handler
     session = create_session(db.conn, normal_user)
     result = members_list_handler(auth={"token": session["token"]}, group_id="users")
     assert result["ok"] is True
@@ -612,7 +612,7 @@ def test_members_list(db, normal_user, patch_db):
 
 
 def test_members_add(db, admin_user, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import members_add_handler
+    from mfdb.admin.backend.auth_services import members_add_handler
     session = create_session(db.conn, admin_user)
     result = members_add_handler(
         auth={"token": session["token"]},
@@ -628,7 +628,7 @@ def test_members_add(db, admin_user, normal_user, patch_db):
 
 
 def test_members_remove(db, admin_user, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import members_add_handler, members_remove_handler
+    from mfdb.admin.backend.auth_services import members_add_handler, members_remove_handler
     session = create_session(db.conn, admin_user)
 
     members_add_handler(
@@ -651,7 +651,7 @@ def test_members_remove(db, admin_user, normal_user, patch_db):
 
 
 def test_permissions_get(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import permissions_get_handler
+    from mfdb.admin.backend.auth_services import permissions_get_handler
     create_default_acl_for_object(db.conn, "sample", "sample_1", normal_user)
     session = create_session(db.conn, normal_user)
     result = permissions_get_handler(
@@ -665,7 +665,7 @@ def test_permissions_get(db, normal_user, patch_db):
 
 
 def test_logout_revokes_token(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import login_handler, logout_handler
+    from mfdb.admin.backend.auth_services import login_handler, logout_handler
     login_result = login_handler(user_id=normal_user)
     token = login_result["token"]
     logout_result = logout_handler(auth={"token": token})
@@ -675,7 +675,7 @@ def test_logout_revokes_token(db, normal_user, patch_db):
 
 
 def test_sessions_list(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import sessions_list_handler
+    from mfdb.admin.backend.auth_services import sessions_list_handler
     create_session(db.conn, normal_user)
     session = create_session(db.conn, normal_user)
     result = sessions_list_handler(auth={"token": session["token"]})
@@ -684,7 +684,7 @@ def test_sessions_list(db, normal_user, patch_db):
 
 
 def test_sessions_revoke(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import sessions_revoke_handler
+    from mfdb.admin.backend.auth_services import sessions_revoke_handler
     session = create_session(db.conn, normal_user)
     srow = db.conn.execute(
         "SELECT session_id FROM mfdb_session WHERE user_id = ? AND revoked_at IS NULL",
@@ -705,7 +705,7 @@ def test_sessions_revoke(db, normal_user, patch_db):
 
 
 def test_permissions_chmod_via_rpc(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import permissions_chmod_handler
+    from mfdb.admin.backend.auth_services import permissions_chmod_handler
     create_default_acl_for_object(db.conn, "sample", "sample_1", normal_user)
     session = create_session(db.conn, normal_user)
     result = permissions_chmod_handler(
@@ -722,7 +722,7 @@ def test_permissions_chmod_via_rpc(db, normal_user, patch_db):
 
 
 def test_permissions_grant_via_rpc(db, normal_user, patch_db):
-    from chisurf.plugins.core.mfdb_admin.backend.auth_services import permissions_grant_handler
+    from mfdb.admin.backend.auth_services import permissions_grant_handler
     other_user = _make_user(db, "other_user")
     create_default_acl_for_object(db.conn, "sample", "sample_1", normal_user)
     session = create_session(db.conn, normal_user)

@@ -73,17 +73,19 @@ def test_create_sample_idempotent(db):
     assert first == second
 
 
-def test_create_sample_delegates_to_orm_adapter(db, monkeypatch):
-    """Public sample creation goes through the SQLAlchemy graph adapter."""
+def test_create_sample_uses_sqlite_graph_adapter(db, monkeypatch):
+    """Public sample creation uses the SQLite graph adapter by default."""
+    import mfdb.sample_manager as sample_manager
+
     calls = []
 
-    def fake_create_sample_graph(db_arg, definition_arg, **kwargs):
+    def fake_create_sample_graph_sqlite(db_arg, definition_arg, **kwargs):
         calls.append((db_arg, definition_arg, kwargs))
-        return kwargs["sample_id"]
 
     monkeypatch.setattr(
-        "chisurf.core.mfdb.orm.sample_repository.create_sample_graph",
-        fake_create_sample_graph,
+        sample_manager,
+        "_create_sample_graph_sqlite",
+        fake_create_sample_graph_sqlite,
     )
 
     definition = SampleDefinition(name="Adapter Sample")
@@ -99,36 +101,16 @@ def test_create_sample_delegates_to_orm_adapter(db, monkeypatch):
     assert kwargs["metadata_json"]
 
 
-def test_get_sample_full_description_uses_orm_graph(db, monkeypatch):
-    """Public full-description reads use the SQLAlchemy graph adapter."""
-    calls = []
+def test_get_sample_full_description_works_without_orm(db):
+    """Public full-description reads work without the optional SQLAlchemy ORM."""
+    sample_id = create_sample(db, SampleDefinition(name="SQLite Sample"))
 
-    def fake_get_sample_graph(db_arg, sample_id):
-        calls.append((db_arg, sample_id))
-        return {
-            "sample": {
-                "sample_id": sample_id,
-                "description": "from orm graph",
-                "solvent_phase": "liquid",
-            },
-            "entities": [],
-            "probes": [],
-            "condition": None,
-            "fret_pairs": [],
-            "key_values": [],
-        }
-
-    monkeypatch.setattr(
-        "chisurf.core.mfdb.orm.sample_repository.get_sample_graph",
-        fake_get_sample_graph,
-    )
-
-    description = get_sample_full_description(db, "sample_1")
+    description = get_sample_full_description(db, sample_id)
 
     assert description is not None
-    assert description["description"] == "from orm graph"
-    assert description["sample_id"] == "sample_1"
-    assert calls == [(db, "sample_1")]
+    assert description["description"] == "SQLite Sample"
+    assert description["sample_id"] == sample_id
+    assert "condition" in description
 
 
 def test_create_sample_with_optional_none(db):

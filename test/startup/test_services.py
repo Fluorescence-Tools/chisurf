@@ -85,7 +85,7 @@ def test_app_startup_manager_orders_dependencies_before_order():
 
 def test_mfdb_auth_service_registers_auth_methods():
     """The MFDB auth service exposes auth methods."""
-    from chisurf.plugins.core.mfdb_admin.backend import auth_services
+    from mfdb.admin.backend import auth_services
 
     dispatcher = _FakeDispatcher()
 

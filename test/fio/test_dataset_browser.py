@@ -102,7 +102,7 @@ def temp_db(
 
     # Patch resolve_database_path in the services module to point to our temp db
     monkeypatch.setattr(
-        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        "mfdb.admin.backend.services.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
@@ -131,7 +131,7 @@ def test_browse_mine_returns_only_active_user_datasets(
     user_alice_token: str,
 ) -> None:
     """'Mine' scope returns only artifacts owned by the authenticated user."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -153,7 +153,7 @@ def test_browse_public_includes_public_datasets(
     user_alice_token: str,
 ) -> None:
     """'Public' scope returns only public artifacts regardless of owner."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -175,7 +175,7 @@ def test_browse_all_includes_public_and_own(
     user_alice_token: str,
 ) -> None:
     """'All' scope returns public datasets + those owned by the user."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -197,7 +197,7 @@ def test_browse_kinds_filter(
     user_alice_token: str,
 ) -> None:
     """kinds filter narrows results to matching artifact_kind."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -217,7 +217,7 @@ def test_browse_formats_filter(
     user_alice_token: str,
 ) -> None:
     """formats filter narrows results to matching data_format."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -237,7 +237,7 @@ def test_browse_query_filter(
     user_alice_token: str,
 ) -> None:
     """query filters by artifact_id substring."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -257,7 +257,7 @@ def test_browse_pagination(
     user_alice_token: str,
 ) -> None:
     """Pagination produces non-overlapping, correctly bounded pages."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -309,7 +309,7 @@ def test_user_b_cannot_see_a_private_dataset(
     user_bob_token: str,
 ) -> None:
     """Bob cannot see Alice's private dataset via 'all' scope."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -328,7 +328,7 @@ def test_user_b_can_see_a_public_dataset(
     user_bob_token: str,
 ) -> None:
     """Bob can see Alice's public dataset via 'public' scope."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
 
@@ -352,7 +352,7 @@ def test_open_dataset_returns_local_path_for_object_store(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """datasets.open returns a readable local path for a registered object."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_open_handler,
     )
 
@@ -367,7 +367,7 @@ def test_open_dataset_returns_local_path_for_object_store(
     db = MFDatabase(db_path)
 
     monkeypatch.setattr(
-        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        "mfdb.admin.backend.services.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
@@ -433,7 +433,7 @@ def test_shifter_round_trip(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Register a TTTR raw_measurement, browse lists it, open reads it."""
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
         datasets_open_handler,
     )
@@ -449,7 +449,7 @@ def test_shifter_round_trip(
     db = MFDatabase(db_path)
 
     monkeypatch.setattr(
-        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        "mfdb.admin.backend.services.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
@@ -523,7 +523,7 @@ def test_processed_data_appears_in_browse(
 
     This guards against silent registration failures (Bug C).
     """
-    from chisurf.plugins.core.mfdb_admin.backend.services import (
+    from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
     from chisurf.core.mfdb.result_registry import register_result
@@ -539,7 +539,7 @@ def test_processed_data_appears_in_browse(
     db = MFDatabase(db_path)
 
     monkeypatch.setattr(
-        "chisurf.plugins.core.mfdb_admin.backend.services.resolve_database_path",
+        "mfdb.admin.backend.services.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
@@ -736,7 +736,7 @@ def test_browse_handler_own_scope_uses_default_user_when_anonymous(tmp_path, mon
     registration stamps. Otherwise 'Mine' shows nothing despite registered data."""
     import chisurf.core.settings
     from chisurf.core.mfdb import result_registry as rr
-    from chisurf.plugins.core.mfdb_admin.backend import services as svc
+    from mfdb.admin.backend import services as svc
 
     monkeypatch.setitem(
         chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}
@@ -766,8 +766,8 @@ def test_real_mfdbclient_call_browses_datasets(tmp_path, monkeypatch):
     import chisurf.core.settings
     from chisurf.core.mfdb import result_registry as rr
     import chisurf.core.mfdb.database_resolver as dr
-    from chisurf.plugins.core.mfdb_admin.backend import services as svc
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+    from mfdb.admin.backend import services as svc
+    from mfdb.admin.gui.client import MFDBClient
 
     monkeypatch.setitem(
         chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}
@@ -798,7 +798,7 @@ def test_datasets_open_allows_anonymous_with_default_user(tmp_path, monkeypatch)
     previously failed with 'Authentication required', breaking the load."""
     import chisurf.core.settings
     from chisurf.core.mfdb import result_registry as rr
-    from chisurf.plugins.core.mfdb_admin.backend import services as svc
+    from mfdb.admin.backend import services as svc
 
     monkeypatch.setitem(
         chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}

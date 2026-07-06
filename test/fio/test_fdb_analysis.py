@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from chisurf.core.mfdb import schema
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.plugins.sample_database.backend.measurement_services import (
+from mfdb.admin.backend.measurement_services import (
     archive_project_handler,
     delete_analysis_run_handler,
     get_analysis_run_handler,
@@ -25,7 +25,7 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
 
     # Patch database resolver to use our temporary test database
     patcher = patch(
-        "chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path",
+        "mfdb.admin.backend.measurement_services.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()
@@ -190,7 +190,7 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
     db_path = tmp_path / "test_project.db"
 
     patcher = patch(
-        "chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path",
+        "mfdb.admin.backend.measurement_services.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()
@@ -310,7 +310,7 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
     db_path = tmp_path / "test_actions.db"
 
     patcher = patch(
-        "chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path",
+        "mfdb.admin.backend.measurement_services.resolve_database_path",
         return_value=db_path,
     )
     project_browser_patcher = patch(
@@ -318,7 +318,7 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
         return_value=db_path,
     )
     database_resolver_patcher = patch(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "mfdb.database_resolver.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()
@@ -702,4 +702,3 @@ def test_version_branching(tmp_path: pathlib.Path) -> None:
         assert len(edges) == 2
         assert (edges[0][0], edges[0][1]) == ("ver_branch_a", "ver_root")
         assert (edges[1][0], edges[1][1]) == ("ver_branch_b", "ver_root")
-

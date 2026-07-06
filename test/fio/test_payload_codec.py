@@ -304,24 +304,24 @@ def test_tttr_photon_stream_event_arrays_must_match():
         encode_payload("tttr_photon_stream", payload)
 
 
-def test_generic_curve_datacurve_roundtrip():
-    from chisurf.core.data import DataCurve
+def test_generic_curve_curve_like_roundtrip():
+    class CurveLike:
+        """Minimal object exposing the arrays archived by ``GenericCurve``."""
 
-    curve = DataCurve(
-        x=np.array([1.0, 2.0], dtype=np.float64),
-        y=np.array([3.0, 4.0], dtype=np.float64),
-        ex=np.array([0.1, 0.2], dtype=np.float64),
-        ey=np.array([0.3, 0.4], dtype=np.float64),
-        mask=np.array([True, False], dtype=bool),
-    )
+        x = np.array([1.0, 2.0], dtype=np.float64)
+        y = np.array([3.0, 4.0], dtype=np.float64)
+        ex = np.array([0.1, 0.2], dtype=np.float64)
+        ey = np.array([0.3, 0.4], dtype=np.float64)
+        mask = np.array([True, False], dtype=bool)
 
-    payload = GenericCurve.from_data_curve(curve)
+    curve = CurveLike()
+    payload = GenericCurve.from_curve_like(curve)
     decoded = _roundtrip("generic_curve", payload)
-    restored = decoded.to_data_curve()
+    restored = decoded.to_curve_kwargs()
 
-    np.testing.assert_array_equal(restored.x, curve.x)
-    np.testing.assert_array_equal(restored.y, curve.y)
-    np.testing.assert_array_equal(restored.mask, curve.mask)
+    np.testing.assert_array_equal(restored["x"], curve.x)
+    np.testing.assert_array_equal(restored["y"], curve.y)
+    np.testing.assert_array_equal(restored["mask"], curve.mask)
 
 
 def test_missing_required_field_raises_schema_error():

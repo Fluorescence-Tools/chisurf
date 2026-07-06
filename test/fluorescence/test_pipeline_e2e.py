@@ -87,7 +87,7 @@ def test_pipeline_scrape_merge_import_all(tmp_path):
         d.conn.commit()
 
     # session/permission gate: the active admin may add without a password
-    from chisurf.plugins.core.mfdb_admin.gui.session import local_admin_status
+    from mfdb.admin.gui.session import local_admin_status
     is_admin, _ = local_admin_status(str(mfdb_path), "user_default")
     assert is_admin
 

@@ -24,7 +24,7 @@ from chisurf.core.mfdb import (
     STORAGE_MODES,
     PARAMETER_TYPES,
 )
-from chisurf.plugins.core.mfdb_admin.backend.services import (
+from mfdb.admin.backend.services import (
     _validate_mfdb_methods_in_manifest,
 )
 

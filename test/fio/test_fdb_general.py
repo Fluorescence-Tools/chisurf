@@ -6,7 +6,7 @@ import pathlib
 from unittest.mock import patch
 
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.plugins.sample_database.backend.measurement_services import (
+from mfdb.admin.backend.measurement_services import (
     get_downstream_dependencies_handler,
     get_upstream_dependencies_handler,
     record_general_processing_run_handler,
@@ -19,7 +19,7 @@ def test_dependency_trace_and_general_processing(tmp_path: pathlib.Path) -> None
 
     # Patch database resolver to use our temporary test database
     patcher = patch(
-        "chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path",
+        "mfdb.admin.backend.measurement_services.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()

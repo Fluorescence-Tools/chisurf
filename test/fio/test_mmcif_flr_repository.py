@@ -19,6 +19,23 @@ class TestMFDatabaseProbes:
         assert row["type_name"] == "organic_dye"
         assert row["display_name"] == "Organic dye"
 
+    def test_add_probe_type_upsert_preserves_referenced_id(self):
+        db = MFDatabase(":memory:")
+        try:
+            tid = db.add_probe_type("organic_dye", "Organic dye")
+            db.add_probe("Alexa488", tid, category="organic_dye")
+
+            updated_tid = db.add_probe_type("organic_dye", "Organic dye updated")
+
+            assert updated_tid == tid
+            row = db.conn.execute(
+                "SELECT display_name FROM probe_types WHERE type_id = ?",
+                (tid,),
+            ).fetchone()
+            assert row["display_name"] == "Organic dye updated"
+        finally:
+            db.close()
+
     def test_add_probe(self, db):
         tid = db.add_probe_type("organic_dye", "Organic dye")
         probe_id = db.add_probe("Alexa488", tid, category="organic_dye")
@@ -250,6 +267,8 @@ class TestMFDatabaseSamples:
         assert len(mappings) == 1
         assert mappings[0]["sample_probe_id"] == sample_probe_id
         assert mappings[0]["chromophore_name"] == "Alexa488"
+        assert db.get_sample_probe_mappings()[0]["sample_probe_id"] == sample_probe_id
+        assert db.get_sample_probe_mappings(probe_id=probe_id)[0]["sample_probe_id"] == sample_probe_id
         db.clear_sample_probes("sample_1")
         assert db.get_sample_probe_mappings(sample_id="sample_1") == []
 

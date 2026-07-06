@@ -8,7 +8,7 @@ from unittest.mock import patch
 import numpy as np
 
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.plugins.sample_database.backend.ndxplorer_services import (
+from mfdb.admin.backend.ndxplorer_services import (
     load_burst_product_handler,
     record_analysis_handler,
 )
@@ -69,7 +69,7 @@ def test_ndxplorer_load_and_record(tmp_path: pathlib.Path) -> None:
 
     # Patch database resolver to use our temporary test database
     patcher = patch(
-        "chisurf.plugins.sample_database.backend.ndxplorer_services.resolve_database_path",
+        "mfdb.admin.backend.ndxplorer_services.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()

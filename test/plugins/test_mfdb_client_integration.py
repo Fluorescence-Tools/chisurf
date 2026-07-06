@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from chisurf.core.mfdb.result_registry import register_raw_measurement, set_global_db
+from mfdb.result_registry import register_raw_measurement, set_global_db
 
 
 def _register_one_raw(tmp_path: Path) -> str:
@@ -28,7 +28,7 @@ def _register_one_raw(tmp_path: Path) -> str:
 
 
 def test_real_inprocess_client_browse_and_open(tmp_path):
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+    from mfdb.admin.gui.client import MFDBClient
 
     artifact_id = _register_one_raw(tmp_path)
     client = MFDBClient(inprocess=True)

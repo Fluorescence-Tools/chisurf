@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.plugins.sample_database.backend.measurement_services import (
+from mfdb.admin.backend.measurement_services import (
     database_backup_handler,
     export_provenance_graph_handler,
     export_zip_archive_handler,
@@ -73,7 +73,7 @@ def temp_db_setup(tmp_path):
         
         # 6. Add analysis run
         analysis_id = db.add_analysis_run(
-            analysis_type="decay_fit",
+            analysis_type="tcspc_fitting",
             experiment_id="exp_1",
             model_name="TCSPC model",
             convergence_status="converged",
@@ -96,7 +96,7 @@ def test_export_provenance_graph(temp_db_setup, tmp_path):
     """Test exporting provenance subgraph to JSON and JSONL formats."""
     db_path, raw_id, prod_id, analysis_id = temp_db_setup
 
-    with patch("chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.measurement_services.resolve_database_path", return_value=db_path):
         # Export as standard JSON
         json_path = tmp_path / "graph.json"
         res = export_provenance_graph_handler(
@@ -140,7 +140,7 @@ def test_database_backup(temp_db_setup, tmp_path):
     db_path, _, _, _ = temp_db_setup
     backup_path = tmp_path / "backup_snapshot.db"
 
-    with patch("chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.measurement_services.resolve_database_path", return_value=db_path):
         res = database_backup_handler(str(backup_path))
         assert res.get("ok") is True
         assert backup_path.exists()
@@ -157,7 +157,7 @@ def test_export_zip_archive_without_data(temp_db_setup, tmp_path):
     db_path, _, _, analysis_id = temp_db_setup
     zip_path = tmp_path / "archive_metadata.zip"
 
-    with patch("chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.measurement_services.resolve_database_path", return_value=db_path):
         res = export_zip_archive_handler(
             target_zip_path=str(zip_path),
             seed_node_type="analysis_run",
@@ -200,7 +200,7 @@ def test_export_zip_archive_with_data_and_remapping(temp_db_setup, tmp_path):
         str(original_file_path.parent): str(relocated_dir)
     }
 
-    with patch("chisurf.plugins.sample_database.backend.measurement_services.resolve_database_path", return_value=db_path):
+    with patch("mfdb.admin.backend.measurement_services.resolve_database_path", return_value=db_path):
         res = export_zip_archive_handler(
             target_zip_path=str(zip_path),
             seed_node_type="analysis_run",
