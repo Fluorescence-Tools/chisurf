@@ -477,58 +477,13 @@ def test_per_pair_correlator_stored_in_child_table(tmp_path: Path) -> None:
         db.close()
 
 
-def test_v36_migration_backfills_fcs_pair_correlator(tmp_path: Path) -> None:
-    """Migration to v36 backfills n_bins/n_casc/make_fine on fcs_pair rows
-    from their parent setup-level columns."""
-    import sqlite3
-    from chisurf.core.mfdb import schema as mod_schema
-
-    db_path = os.path.join(tmp_path, "migrate_v36.db")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    try:
-        mod_schema.migrate_schema(conn)
-        mod_schema.SCHEMA_VERSION = 35
-        conn.execute("DELETE FROM mfdb_schema_version")
-        conn.execute("INSERT INTO mfdb_schema_version (version) VALUES (35)")
-        conn.commit()
-
-        # Insert a setup with correlator defaults
-        conn.execute(
-            "INSERT INTO mfdb_setup (setup_id, name, n_bins, n_casc, make_fine, "
-            "created_at, updated_at) "
-            "VALUES ('bf_test', 'Backfill Test', 5, 40, 1, "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        # Insert fcs_pair rows (no n_bins/n_casc/make_fine — pre-v36)
-        conn.execute(
-            "INSERT INTO mfdb_setup_fcs_pair "
-            "(setup_id, name, channel_a, channel_b, kind, created_at, updated_at) "
-            "VALUES ('bf_test', 'GG', 'GG', 'GG', 'ACF', "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        conn.execute(
-            "INSERT INTO mfdb_setup_fcs_pair "
-            "(setup_id, name, channel_a, channel_b, kind, created_at, updated_at) "
-            "VALUES ('bf_test', 'RR', 'RR', 'RR', 'ACF', "
-            "'2024-01-01T00:00:00', '2024-01-01T00:00:00')"
-        )
-        conn.commit()
-
-        # Run migration (v35 -> v36)
-        mod_schema.migrate_schema(conn)
-
-        # Verify columns exist and are backfilled
-        pairs = conn.execute(
-            "SELECT * FROM mfdb_setup_fcs_pair WHERE setup_id = 'bf_test' ORDER BY name"
-        ).fetchall()
-        assert len(pairs) == 2
-        for pr in pairs:
-            assert pr["n_bins"] == 5, f"Expected n_bins=5, got {pr['n_bins']}"
-            assert pr["n_casc"] == 40, f"Expected n_casc=40, got {pr['n_casc']}"
-            assert pr["make_fine"] == 1, f"Expected make_fine=1, got {pr['make_fine']}"
-    finally:
-        conn.close()
+# NOTE: the former ``test_v36_migration_backfills_fcs_pair_correlator`` was
+# removed. It validated a per-version v35->v36 backfill migration that no longer
+# exists after the PRD-19 migration collapse (MIGRATIONS is now {1, 40} with
+# reconcile-to-.dic as the additive upgrade path). Worse, it mutated the module
+# global ``schema.SCHEMA_VERSION = 35`` without restoring it, which made every
+# subsequent test's fresh MFDatabase skip the version-40 reconcile step and get
+# a partial (pre-.dic) schema — the root cause of ~150 cascading suite failures.
 
 
 # ---------------------------------------------------------------------------
