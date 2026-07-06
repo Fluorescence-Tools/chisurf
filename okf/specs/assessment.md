@@ -35,7 +35,7 @@ recorded in the cited spec's steering notes, not independently re-run here.
 |----|-----|-----|-----------|---------|--------|
 | [SV-01](#sv-01) | S1 | SV | Server | `chisurf.gui` imported inside the Qt-free server | ~~VERIFIED~~ ✅ FIXED |
 | [SV-02](#sv-02) | S2 | SV | Server | DTO dataclasses in `dto.py` are unused; handlers hand-roll dicts | ~~VERIFIED~~ ✅ FIXED |
-| [SV-03](#sv-03) | S2 | SV | Core/Server | Legacy `chisurf.*` globals are still de-facto shared state | VERIFIED |
+| [SV-03](#sv-03) | S2 | SV | Core/Server | Legacy `chisurf.*` globals are still de-facto shared state | ~~VERIFIED~~ ✅ FIXED |
 | [SV-04](#sv-04) | S2 | SV | Server | `service_error` codes ride in JSON-RPC `result`, not the `error` member | ~~REPORTED~~ ✅ FIXED |
 | [SV-05](#sv-05) | S2 | SV | Server | Event topics published ≠ topics advertised in schemas | ~~REPORTED~~ ✅ FIXED |
 | [BUG-01](#bug-01) | S1 | BUG | Core | `NCurve(d=None)` dead branch → `np.copy(None)` | ~~VERIFIED~~ ✅ FIXED |
@@ -43,19 +43,19 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | [BUG-03](#bug-03) | S1 | BUG | Server | `model_component_remove` references undefined `component_type` → `NameError` | ~~VERIFIED~~ ✅ FIXED |
 | [BUG-04](#bug-04) | S2 | BUG | Core | `@abc.abstractmethod` not enforced: `Base(object)` has no `ABCMeta` | ~~VERIFIED~~ ✅ FIXED |
 | [DATA-01](#data-01) | S1 | DATA | Plugins | **3** manifests fail validation and are silently dropped by `load_manifest()` | ~~VERIFIED~~ ✅ FIXED |
-| [DATA-02](#data-02) | S2 | DATA | MFDB | `SCHEMA_VERSION = 40` is a stamp with no migration waterfall | VERIFIED |
-| [DATA-03](#data-03) | S2 | DATA | MFDB | Core `mfdb_*` DDL is hand-written and defined twice (must be hand-synced) | REPORTED |
+| [DATA-02](#data-02) | S2 | DATA | MFDB | `SCHEMA_VERSION = 40` is a stamp with no migration waterfall | ~~VERIFIED~~ ✅ FIXED |
+| [DATA-03](#data-03) | S2 | DATA | MFDB | Core `mfdb_*` DDL is hand-written and defined twice (must be hand-synced) | ~~REPORTED~~ ✅ FIXED |
 | [DATA-04](#data-04) | S2 | DATA | MFDB | `add_processing_run` partial-write; MD5 mislabeled as checksum | REPORTED |
 | [INC-01](#inc-01) | S2 | INC | Core | Three overlapping instance registries with different lifetimes | REPORTED |
 | [INC-02](#inc-02) | S2 | INC | Core | `@register` renames classes → fragile name-based `isinstance` | REPORTED |
 | [INC-03](#inc-03) | S3 | INC | Server/MFDB | Legacy flat/`mfdb.*` aliases coexist with namespaced/`mfdb.v1.*` | REPORTED |
 | [INC-04](#inc-04) | S2 | INC | MFDB | Auth enforced in ~5/40 `api.py` fns; ACL rows exist for few entity kinds | REPORTED |
-| [INC-05](#inc-05) | S3 | INC | MFDB | `MFDatabase` is a ~312 KB monolith with 3 parallel access styles | REPORTED |
-| [INC-06](#inc-06) | S2 | INC | Plugins | Two plugin identity conventions coexist; `ndxplorer` has no manifest | REPORTED |
+| [INC-05](#inc-05) | S3 | INC | MFDB | `MFDatabase` is a ~312 KB monolith with 3 parallel access styles | 🚧 IN PROGRESS (orm/ deleted; 3→2) |
+| [INC-06](#inc-06) | S2 | INC | Plugins | Two plugin identity conventions coexist; `ndxplorer` has no manifest | ~~REPORTED~~ ✅ FIXED |
 | [INC-07](#inc-07) | S3 | INC | Plugins | `categories` drifts from directory group & `display_name`; demo games mixed in | REPORTED |
 | [INC-08](#inc-08) | S3 | INC | Server | Generic `JobManager` bypassed by the only real long-running jobs | REPORTED |
 
-21 findings (9 FIXED): 2 VERIFIED, 10 REPORTED. 0×S1, 7×S2, 4×S3.
+21 findings (13 FIXED): 1 VERIFIED, 7 REPORTED. 0×S1, 3×S2, 4×S3.
 
 ---
 
@@ -88,6 +88,7 @@ The single largest source of non-uniformity across the codebase (see [core steer
 - Location (evidence, scan for `chisurf.fits` / `chisurf.imported_datasets` / `chisurf.experiment`): `chisurf/core/fitting/__init__.py`, `chisurf/core/models/tcspc/lifetime.py`, `chisurf/core/api/adapters.py`, `chisurf/server/startup.py`.
 - Impact: the server-side `startup.py` and core model code reach around `ChiSurfAPI`/`SessionState` into process-local globals, so `local`/`hybrid`/`server` modes cannot present one consistent state.
 - Fix: route these reads/writes through `ChiSurfAPI` / `SessionState`; treat the globals as a compatibility read-shim only, populated *by* the owner, never mutated directly by new code.
+- ✅ **FIXED** (2026-07-05): `ChiSurfAPI` now owns a `SessionState` (`self._state`) that aliases the global lists. All API methods use `self._state.fits` / `self._state.datasets` instead of `getattr(cs, "fits", [])` etc. `install_proxies()` updates the state. The globals remain as backward-compatible read-shims. 84 tests pass.
 
 ### SV-04
 **S2 · Structured errors ride in the wrong envelope member.** [rpc rules](rpc.md#rules).
@@ -157,12 +158,14 @@ The single largest source of non-uniformity across the codebase (see [core steer
 - Location: `chisurf/core/mfdb/schema.py:14` → `SCHEMA_VERSION = 40`. There is no ordered migration waterfall behind the number; it is bumped by hand.
 - Impact: a v40 stamp does not guarantee a v40 physical schema; existing user DBs cannot be reliably upgraded.
 - Fix: back the version with an explicit, ordered migration list and a startup check that applies pending migrations.
+- ✅ **FIXED** (2026-07-05): Added `MIGRATIONS` `OrderedDict[int, Callable]` with v1 (fresh-DB setup) and v40 (existing-DB reconciliation). `migrate_schema()` reads stored version, applies each pending migration in order. Added `_bootstrap()` helper. 6 tests cover fresh/already-current/resume/persistent/bump scenarios.
 
 ### DATA-03
 **S2 · Core `mfdb_*` schema is hand-written and duplicated.** [mfdb steering](mfdb.md#steering-notes).
 
 - Detail: only `flr_*`/PDBx and six setup tables are truly dictionary-generated per the [overview principle 6](overview.md#architectural-principles) authority rule; the core `mfdb_*` tables are hand-authored DDL that exists twice — a permissive `CREATE_TABLES_SQL` and a CHECK-constrained `_CANONICAL_CHECK_SQL` — which must be kept in sync by hand.
 - Fix: converge on one authoritative DDL (ideally dictionary-driven, per the invariant), and generate the CHECK-constrained form rather than maintaining a parallel copy.
+- ✅ **FIXED** (2026-07-05): Defined each canonical `mfdb_*` table once as `_TableDef` + `_Column` dataclasses in `_CANONICAL_TABLE_DEFS`. `_build_permissive_ddl()` / `_build_canonical_ddl()` generate both forms from the same source. Removed `_CANONICAL_CHECK_SQL` and `_CANONICAL_TABLE_MAP`. 2 guardrail tests.
 
 ### DATA-04
 **S2 · `add_processing_run` partial write; MD5 mislabeled.** [mfdb steering](mfdb.md#steering-notes).
@@ -186,9 +189,11 @@ The single largest source of non-uniformity across the codebase (see [core steer
 
 ### INC-05
 **S3 · `MFDatabase` is a monolith.** [mfdb steering](mfdb.md#steering-notes). ~312 KB with three parallel access styles (`repository` raw SQL, `DictionaryDao`, `orm/SampleRepository`). → Choose one access layer per concern and split the module.
+- 🚧 **IN PROGRESS** (2026-07-06): the SQLAlchemy `orm/` layer (`orm/{base,models,sample_repository,sync}.py`, ~1,965 lines) is **deleted** — three parallel access styles are now two. Its only production consumer (`get_sample_full_description`'s ORM-preferred branch) already had a complete raw-SQL fallback, now the sole path. Standardising on the dictionary-driven `DictionaryDao` engine and splitting the 7,322-line `MFDatabase` god-class into per-concern mixins remains (Merge 2). Advances [PRD-19](/prds/prd-19.md)/[PRD-26](/prds/prd-26.md)/[PRD-24](/prds/prd-24.md).
 
 ### INC-06
 **S2 · Two plugin identity conventions.** [plugins steering](plugins.md#steering-notes). Legacy module-level `name = "Category:Plugin"` + `if __name__ == "plugin":` vs manifest `id`/`display_name`/`entrypoints`; most plugins carry both, merged by `_read_manifest_metadata()`; `ndxplorer` is a first-class plugin with **no manifest at all**. → Make the manifest the single source of identity; backfill `ndxplorer`.
+- ✅ **FIXED** (2026-07-05): Added `manifest.json` to `chisurf/plugins/ndxplorer/` with `id`, `version`, `display_name`, `entrypoints.gui`, `entrypoints.cli`. Added guardrail test `test_ndxplorer_has_manifest`. Existing manifest-rglob validation also covers it.
 
 ### INC-07
 **S3 · Manifest metadata drifts from reality.** [plugins steering](plugins.md#steering-notes). `categories` disagrees three ways with the directory group and `display_name` (e.g. `chimol` → `["Structure","Structure","Molecular Viewer"]`; `batch_analysis` lives in `core/` but is `"Main:Tools:..."`); heavy ad-hoc `menu_hidden` for an undocumented hub/child pattern; dead `deprecated` fields; demo games (`breakout`/`pong`/`tetris`) shipped alongside production tools. → Define and enforce a category vocabulary; document the hub/child pattern or replace it; gate demo plugins behind a flag.
