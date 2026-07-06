@@ -37,8 +37,7 @@ from chisurf.core.mfdb.schema import (
     _get_dict_ddl,
 )
 from chisurf.core.mfdb.schema_from_dictionary import reconcile_schema
-from chisurf.core.mfdb.sample_manager import create_sample
-from chisurf.core.mfdb.orm.sample_repository import get_sample_graph
+from chisurf.core.mfdb.sample_manager import create_sample, get_sample_full_description
 from chisurf.core.mfdb.models import SampleDefinition, EntityDefinition, ProbeDefinition
 
 
@@ -262,12 +261,12 @@ def test_sample_roundtrip_via_flr_sample() -> None:
         assert row is not None, "Sample not found in flr_sample"
         assert row["description"] == "roundtrip_test"
 
-        # Read back via ORM graph
-        graph = get_sample_graph(db, sample_id)
-        assert graph is not None
-        assert graph["sample"]["sample_id"] == sample_id
-        assert len(graph["entities"]) == 1
-        assert graph["entities"][0]["entity_id"] == "entity_1"
+        # Read back via the raw-SQL full-description reader
+        desc = get_sample_full_description(db, sample_id)
+        assert desc is not None
+        assert desc["sample_id"] == sample_id
+        assert len(desc["entities"]) == 1
+        assert desc["entities"][0]["entity_id"] == "entity_1"
     finally:
         db.close()
         os.remove(path)

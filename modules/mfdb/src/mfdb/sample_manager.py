@@ -1320,19 +1320,6 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
         "key_values": [{"key": "pdbx.sample_type", "value": "protein"}, ...],
     }
     """
-    try:
-        from mfdb.orm.sample_repository import get_sample_graph
-
-        graph = get_sample_graph(db, sample_id)
-        if graph is not None:
-            return _full_description_from_sample_graph(db, sample_id, graph)
-    except Exception as exc:
-        logger.warning(
-            "Falling back to raw SQL sample description for %s: %s",
-            sample_id,
-            exc,
-        )
-
     # Get basic sample info
     sample = get_sample(db, sample_id)
     if sample is None:
@@ -1377,111 +1364,6 @@ def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any
     key_values = db.get_sample_key_values(sample_id)
     result["key_values"] = key_values
 
-    return result
-
-
-def _full_description_from_sample_graph(
-    db: MFDatabase, sample_id: str, graph: dict[str, Any]
-) -> dict[str, Any] | None:
-    """Convert ORM sample graph output to the public full-description shape."""
-    sample_index = get_sample(db, sample_id) or {}
-    sample = graph.get("sample", {})
-    if not sample:
-        return None
-
-    result: dict[str, Any] = {
-        "sample_id": sample_id,
-        "display_name": sample_index.get("display_name") or sample_id,
-        "description": sample.get("description") or "",
-        "sample_type": sample_index.get("sample_type") or "",
-        "metadata": sample_index.get("metadata_json", {}),
-    }
-
-    entities = []
-    for entity in graph.get("entities", []):
-        sequence = "".join(
-            seq.get("mon_id", "") for seq in entity.get("sequences", [])
-        )
-        entity_info = {
-            "entity_id": entity.get("entity_id", ""),
-            "type": entity.get("type", ""),
-            "common_name": entity.get("common_name", ""),
-            "description": entity.get("description", ""),
-        }
-        if sequence:
-            entity_info["sequence"] = sequence
-        # External references + mutation provenance (PRD-39)
-        entity_info["external_refs"] = entity.get("external_refs", [])
-        entity_info["mutations"] = entity.get("mutations", [])
-        entities.append(entity_info)
-    if entities:
-        result["entities"] = entities
-        result["entity"] = entities[0]
-
-    condition = graph.get("condition")
-    if condition:
-        result["condition"] = {
-            "condition_id": condition.get("condition_id"),
-            "ph": condition.get("ph"),
-            "temperature_k": condition.get("temperature"),
-            "ionic_strength": condition.get("ionic_strength"),
-            "salt_concentration_m": condition.get("ionic_strength"),
-            "buffer_composition": condition.get("buffer_composition"),
-            "details": condition.get("details"),
-        }
-
-    probes = []
-    for probe in graph.get("probes", []):
-        probe_info: dict[str, Any] = {
-            "probe_name": probe.get("name", ""),
-            "fluorophore_type": probe.get("fluorophore_type", "unspecified"),
-            "description": probe.get("description"),
-        }
-        position = probe.get("position")
-        if position:
-            probe_info["position"] = {
-                "residue_number": position.get("residue_number"),
-                "chain_id": position.get("asym_id"),
-                "residue_name": position.get("residue_name"),
-                "description": None,
-                "entity_index": None,
-                "seq_id": position.get("residue_number"),
-                "comp_id": position.get("residue_name"),
-                "asym_id": position.get("asym_id"),
-                "atom_id": position.get("atom_id"),
-                "mutation_flag": position.get("mutation_flag"),
-                "modification_flag": position.get("modification_flag"),
-                "auth_name": position.get("auth_name"),
-                "entity_id": position.get("entity_id"),
-            }
-        if probe.get("optical_properties"):
-            probe_info["properties"] = {
-                prop.get("property_name"): {
-                    "value": prop.get("property_value"),
-                    "unit": prop.get("unit"),
-                }
-                for prop in probe.get("optical_properties", [])
-                if prop.get("property_name")
-            }
-        probes.append(probe_info)
-    result["probes"] = probes
-
-    result["fret_pairs"] = [
-        {
-            "forster_radius_id": pair.get("forster_radius_id"),
-            "sample_id": pair.get("sample_id"),
-            "donor_probe": pair.get("donor_probe", ""),
-            "acceptor_probe": pair.get("acceptor_probe", ""),
-            "forster_radius_nm": pair.get("forster_radius"),
-            "kappa_squared": pair.get("kappa_squared"),
-            "refractive_index": pair.get("index_of_refraction"),
-            "overlap_integral": pair.get("overlap_integral"),
-            "details": pair.get("details"),
-        }
-        for pair in graph.get("fret_pairs", [])
-    ]
-
-    result["key_values"] = graph.get("key_values", [])
     return result
 
 
