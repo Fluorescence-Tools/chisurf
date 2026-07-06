@@ -1,0 +1,52 @@
+{
+  "sections": [
+    {
+      "type": "value",
+      "attr": "password",
+      "label": "Password",
+      "kind": "password",
+      "placeholder": "leave blank for passwordless login",
+      "description": "MFDB password for the user below. Blank attempts a passwordless login."
+    },
+    {
+      "type": "panel",
+      "title": "Advanced — user & connection",
+      "collapsible": true,
+      "collapsed": true,
+      "sections": [
+        {
+          "type": "value",
+          "attr": "user",
+          "label": "User",
+          "kind": "str",
+          "description": "MFDB user id to authenticate as."
+        },
+        {
+          "type": "value",
+          "attr": "host",
+          "label": "Host",
+          "kind": "str",
+          "description": "MFDB server host. Change to connect to a different server."
+        },
+        {
+          "type": "value",
+          "attr": "cmd_port",
+          "label": "Command port",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "ZMQ command port."
+        },
+        {
+          "type": "value",
+          "attr": "pub_port",
+          "label": "Publish port",
+          "kind": "int",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "ZMQ publish port."
+        }
+      ]
+    }
+  ]
+}

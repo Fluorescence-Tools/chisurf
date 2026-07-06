@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mfdb"
+version = "0.1.0"
+description = "Metadata and provenance database package used by ChiSurf."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-2.0"
+authors = [
+    {name = "Thomas-Otavio Peulen", email = "thomas@peulen.xyz"}
+]
+dependencies = [
+    "numpy<2.0",
+    "PyYAML",
+]
+
+[project.optional-dependencies]
+admin = []
+orm = [
+    "sqlalchemy>=2.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mfdb*"]
+
+[tool.setuptools.package-data]
+"mfdb" = [
+    "data/*.json",
+    "data/*.dic",
+    "data/*.db",
+    "data/*.sh",
+]
+"mfdb.admin" = [
+    "gui/*.json",
+    "gui/**/*.json",
+]

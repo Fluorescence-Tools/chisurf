@@ -1,0 +1,12 @@
+[
+  "ph",
+  "temperature",
+  "temperature_k",
+  "ionic_strength",
+  "salt_concentration",
+  "salt_concentration_m",
+  "buffer_composition",
+  "buffer_description",
+  "solvent",
+  "details"
+]

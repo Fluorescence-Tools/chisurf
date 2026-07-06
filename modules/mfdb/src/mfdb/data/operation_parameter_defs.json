@@ -1,0 +1,140 @@
+{
+  "_comment": "Typed parameter schema per operation type (PRD-11). Authored single source; seeded into mfdb_operation_parameter_def. The table itself is .dic-declared/generated; consolidating this authoring into the .dic natively is a documented refinement.",
+  "microtime_shift": [
+    {
+      "name": "global_shift",
+      "value_type": "int",
+      "units": "microtime_channels",
+      "default_value": "0",
+      "required": false,
+      "repeatable": false,
+      "description": "Global micro-time shift applied to all routing channels."
+    },
+    {
+      "name": "shift",
+      "value_type": "int",
+      "units": "microtime_channels",
+      "required": false,
+      "repeatable": true,
+      "role_domain": "detector_channel",
+      "description": "Per-channel micro-time shift; one repeatable row per routing channel (role = channel)."
+    }
+  ],
+  "burst_selection": [
+    {
+      "name": "min_photons",
+      "value_type": "int",
+      "default_value": "60",
+      "lower_bound": 1,
+      "required": true,
+      "repeatable": false,
+      "description": "Minimum number of photons for a burst to be selected."
+    },
+    {
+      "name": "time_window",
+      "value_type": "float",
+      "units": "ms",
+      "lower_bound": 0,
+      "required": false,
+      "repeatable": false,
+      "description": "Sliding time window for burst search."
+    },
+    {
+      "name": "photon_window",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "description": "Number of consecutive photons in the search window."
+    },
+    {
+      "name": "count_rate_n_ph_max",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "description": "Maximum photon count rate threshold."
+    },
+    {
+      "name": "filter_active",
+      "value_type": "bool",
+      "required": false,
+      "repeatable": false,
+      "description": "Whether the photon filter is active."
+    },
+    {
+      "name": "count_rate_time_window",
+      "value_type": "float",
+      "units": "ms",
+      "required": false,
+      "repeatable": false,
+      "description": "Time window for the count-rate filter."
+    },
+    {
+      "name": "delta_macro_time_min",
+      "value_type": "float",
+      "required": false,
+      "repeatable": false,
+      "description": "Minimum delta macro time for the inter-photon-time filter."
+    },
+    {
+      "name": "delta_macro_time_max",
+      "value_type": "float",
+      "required": false,
+      "repeatable": false,
+      "description": "Maximum delta macro time for the inter-photon-time filter."
+    },
+    {
+      "name": "gmm_max_components",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "description": "Maximum number of GMM components."
+    },
+    {
+      "name": "channels",
+      "value_type": "int",
+      "lower_bound": 0,
+      "required": false,
+      "repeatable": true,
+      "role_domain": "channel_index",
+      "description": "Detector routing channels forming the photon stream mask (role = ordinal index). Part of the reproducible compute spec: changing the channel set changes which photons are analysed."
+    },
+    {
+      "name": "gmm_covariance_type",
+      "value_type": "text",
+      "required": false,
+      "repeatable": false,
+      "default_value": "full",
+      "description": "GMM covariance type (e.g. 'full', 'spherical'). Affects the clustering result; recorded for reproducible replay."
+    },
+    {
+      "name": "gmm_random_state",
+      "value_type": "int",
+      "lower_bound": 0,
+      "required": false,
+      "repeatable": false,
+      "default_value": "42",
+      "description": "GMM random seed; recorded so a replay reproduces the same clustering."
+    },
+    {
+      "name": "gmm_max_iter",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "default_value": "300",
+      "description": "GMM maximum EM iterations; part of the reproducible compute spec."
+    },
+    {
+      "name": "gmm_n_init",
+      "value_type": "int",
+      "lower_bound": 1,
+      "required": false,
+      "repeatable": false,
+      "default_value": "10",
+      "description": "GMM number of initialisations; part of the reproducible compute spec."
+    }
+  ]
+}
