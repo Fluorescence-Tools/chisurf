@@ -97,9 +97,10 @@ from .payload_models import (
     TttrReference,
 )
 from .pdbx_metadata import MmcifDictionary
+from ._sqlutil import json_loads, utc_now
 from .auth import hash_token
 from .credentials import session_token_registry
-from .repository import MFDatabase, json_loads, utc_now
+from .repository import MFDatabase
 from .result_registry import (
     get_active_database,
     read_result,

@@ -9,13 +9,18 @@ import sqlite3
 import tempfile
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from mfdb import schema
+from mfdb._sqlutil import (
+    _json_dumps,
+    _json_hash,
+    _json_loads,
+    _utc_now,
+)
 from mfdb.base import MFDBClientBase
 from mfdb.database_resolver import resolve_database_path
 from mfdb.graph import map_legacy_node_type
@@ -32,24 +37,6 @@ from mfdb.models import (
 from mfdb.transactions import transaction as _transaction
 
 logger = logging.getLogger(__name__)
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def utc_now() -> str:
-    """Return the current UTC time as an ISO-8601 string.
-
-    Public alias for the store's timestamp helper so callers do not depend on a
-    private name.
-
-    Returns
-    -------
-    str
-        Current UTC time in ISO-8601 format.
-    """
-    return _utc_now()
 
 
 def _default_reference_spectra_path() -> Path:
@@ -76,44 +63,6 @@ def _default_reference_spectra_path() -> Path:
     raise FileNotFoundError(
         "No default fluorophore reference spectra.db found; set MFDB_REFERENCE_SPECTRA_DB"
     )
-
-
-def _json_dumps(value: Any) -> str | None:
-    if value is None:
-        return None
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
-
-
-def _json_loads(value: str | None) -> Any:
-    if not value:
-        return None
-    return json.loads(value)
-
-
-def json_loads(value: str | None) -> Any:
-    """Deserialize a JSON string, returning ``None`` for empty input.
-
-    Public alias for the store's JSON-decode helper so callers do not depend on a
-    private name.
-
-    Parameters
-    ----------
-    value : str or None
-        JSON text to decode, or ``None``/empty.
-
-    Returns
-    -------
-    Any
-        The decoded object, or ``None`` when *value* is falsy.
-    """
-    return _json_loads(value)
-
-
-def _json_hash(value: Any) -> str | None:
-    text = _json_dumps(value)
-    if text is None:
-        return None
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _validate_checksum(checksum: str | None, algorithm: str | None) -> None:
