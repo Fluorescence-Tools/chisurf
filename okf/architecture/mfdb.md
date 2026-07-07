@@ -91,8 +91,13 @@ not a flat module list. Top level holds only the facade/entry surface —
 - `lifecycle/` — state/events/audit: `lifecycle`, `event_log`, `events`, `staleness`.
 - `security/` — identity: `auth`, `credentials`, `session`, `boundary_validation`, `base`.
 - `project/` — `project_archiver`.
+- `adapters/` — bridges to external systems / host apps: `chinet` (ChiSurf fit
+  sessions → MFDB), with electronic-lab-notebook adapters (eLabFTW, …) to follow.
+  Adapters may depend on their target but keep those imports lazy.
 - `queries/` — per-concern `MFDatabase` mixins (god-class breakup, PRD-26).
-- `admin/` — the admin RPC service + GUI (chisurf-coupled application layer).
+- `admin/` — the admin RPC service (`backend/`, `cli/`); chisurf-free and import-
+  clean. The chisurf-coupled admin **GUI** lives in the ChiSurf plugin
+  (`chisurf/plugins/core/mfdb_admin/gui/`), not in the package.
 - `data/` — bundled `.dic` dictionaries and config JSON.
 
 The package has its own **hermetic, standalone test suite** at
