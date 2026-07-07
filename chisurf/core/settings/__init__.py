@@ -51,12 +51,24 @@ chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
 # MFDB is vendored as a standalone package and must not import ChiSurf settings.
-# Publish the runtime values it needs through environment variables instead.
+# Publish path-like runtime values through environment variables, and register a
+# live resolver so runtime changes to the default user id propagate to MFDB
+# without MFDB importing ChiSurf (the resolver reads cs_settings on each call).
 os.environ.setdefault("MFDB_SETTINGS_DIR", str(chisurf_settings_path))
+
+
+def _mfdb_default_user_id() -> str | None:
+    mfdb_cfg = cs_settings.get("mfdb", {}) if isinstance(cs_settings, dict) else {}
+    return mfdb_cfg.get("default_user_id") if isinstance(mfdb_cfg, dict) else None
+
+
+try:
+    from mfdb.config import set_default_user_id_resolver as _set_mfdb_user_resolver
+
+    _set_mfdb_user_resolver(_mfdb_default_user_id)
+except Exception:  # pragma: no cover - MFDB always importable in supported envs
+    pass
 _mfdb_settings = cs_settings.get("mfdb", {}) if isinstance(cs_settings, dict) else {}
-_default_user_id = _mfdb_settings.get("default_user_id") if isinstance(_mfdb_settings, dict) else None
-if _default_user_id:
-    os.environ["MFDB_DEFAULT_USER_ID"] = str(_default_user_id)
 _object_store = _mfdb_settings.get("object_store", {}) if isinstance(_mfdb_settings, dict) else {}
 _object_store_root = _object_store.get("root") if isinstance(_object_store, dict) else None
 if _object_store_root:

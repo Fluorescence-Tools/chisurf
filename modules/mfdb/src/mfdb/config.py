@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -36,6 +37,27 @@ class RuntimeConfig:
 
 
 _CONFIG = RuntimeConfig()
+
+# Optional host-supplied callable resolving the default user id live. A host
+# application (e.g. ChiSurf) whose own settings are the source of truth injects
+# this so runtime changes propagate without MFDB importing the host. MFDB stays
+# standalone: the resolver is host-agnostic and purely optional.
+_DEFAULT_USER_ID_RESOLVER: Callable[[], str | None] | None = None
+
+
+def set_default_user_id_resolver(resolver: Callable[[], str | None] | None) -> None:
+    """Register (or clear) a live resolver for the default user id.
+
+    Parameters
+    ----------
+    resolver : callable returning str or None, or None
+        Called by :func:`configured_default_user_id` when no explicit
+        ``default_user_id`` override is set on the runtime config. Pass ``None``
+        to clear a previously registered resolver.
+
+    """
+    global _DEFAULT_USER_ID_RESOLVER
+    _DEFAULT_USER_ID_RESOLVER = resolver
 
 
 def configure_runtime(**kwargs: object) -> RuntimeConfig:
@@ -123,8 +145,20 @@ def configured_object_store_root() -> Path | None:
 
 
 def configured_default_user_id() -> str:
-    """Return the configured default user id."""
+    """Return the configured default user id.
+
+    Resolution order: an explicit ``default_user_id`` on the runtime config, then
+    a host-registered live resolver (see :func:`set_default_user_id_resolver`),
+    then ``$MFDB_DEFAULT_USER_ID``, then ``"user_default"``.
+    """
     if _CONFIG.default_user_id:
         return _CONFIG.default_user_id
+    if _DEFAULT_USER_ID_RESOLVER is not None:
+        try:
+            resolved = _DEFAULT_USER_ID_RESOLVER()
+        except Exception:
+            resolved = None
+        if resolved:
+            return resolved
     env_value = os.environ.get("MFDB_DEFAULT_USER_ID")
     return env_value or "user_default"
