@@ -232,19 +232,14 @@ class SampleMixin:
             existing = self.get_sample(sample_id)
             uuid = existing["sample_uuid"] if existing else str(_uuid.uuid4())
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample "
-                "(sample_id, sample_uuid, description, details, num_of_probes, solvent_phase, "
-                "sample_condition_id, entity_assembly_id, project_id, measured_by_user_id, "
-                "measured_by_device_id, measured_at, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (sample_id, uuid, description, details, num_of_probes, solvent_phase,
-                 sample_condition_id, entity_assembly_id, project_id, measured_by_user_id,
-                 measured_by_device_id, measured_at,
-                 now, now, None)
-            )
+            self.dao.upsert("flr_sample", {
+                "sample_id": sample_id, "sample_uuid": uuid, "description": description,
+                "details": details, "num_of_probes": num_of_probes, "solvent_phase": solvent_phase,
+                "sample_condition_id": sample_condition_id, "entity_assembly_id": entity_assembly_id,
+                "project_id": project_id, "measured_by_user_id": measured_by_user_id,
+                "measured_by_device_id": measured_by_device_id, "measured_at": measured_at,
+                "deleted_at": None,
+            })
 
     def update_sample(self, sample_id, **kwargs):
         if not kwargs:
@@ -256,15 +251,14 @@ class SampleMixin:
                 raise ValueError(f"Unsupported sample column: {key}")
             cols.append(f"{key} = ?")
             vals.append(value)
-        vals.append(sample_id)
         with self.conn:
-            self.conn.execute(f"UPDATE flr_sample SET {', '.join(cols)}, updated_at = ? WHERE sample_id = ?", vals[:-1] + [_utc_now(), sample_id])
+            self.dao.update("flr_sample", sample_id, {k: v for k, v in kwargs.items()})
 
     def delete_sample(self, sample_id):
         with self.conn:
             now = _utc_now()
-            self.conn.execute("UPDATE flr_sample_probe SET deleted_at = ? WHERE sample_id = ?", (now, sample_id))
-            self.conn.execute("UPDATE flr_sample SET deleted_at = ? WHERE sample_id = ?", (now, sample_id))
+            self.conn.execute("UPDATE flr_sample_probe SET deleted_at = ? WHERE sample_id = ?", (now, sample_id))  # filtered soft-delete (non-PK)
+            self.dao.soft_delete("flr_sample", sample_id)
 
     def set_sample_key_value(self, sample_id: str, key: str, value: str, details: str | None = None):
         with self.conn:
