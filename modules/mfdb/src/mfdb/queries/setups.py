@@ -12,7 +12,7 @@ import json
 
 from typing import Any
 
-from mfdb.schema._sqlutil import _json_dumps, _json_loads, _row_to_dict, _utc_now
+from mfdb.schema._sqlutil import _json_dumps, _json_loads, _utc_now
 
 
 class SetupCalibMixin:
@@ -59,12 +59,7 @@ class SetupCalibMixin:
         list of dict
             Detector channel rows.
         """
-        rows = self.conn.execute(
-            "SELECT * FROM mfdb_setup_detector_channel "
-            "WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
-            (setup_id,)
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return self.dao.list("mfdb_setup_detector_channel", filters={"setup_id": setup_id}, order_by="id")
 
     def list_pie_windows(self, setup_id: str) -> list[dict[str, Any]]:
         """List PIE/micro-time window definitions for a setup.
@@ -79,12 +74,7 @@ class SetupCalibMixin:
         list of dict
             PIE window rows.
         """
-        rows = self.conn.execute(
-            "SELECT * FROM mfdb_setup_pie_window "
-            "WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
-            (setup_id,)
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return self.dao.list("mfdb_setup_pie_window", filters={"setup_id": setup_id}, order_by="id")
 
     def add_setup_calibration(
         self,
@@ -168,12 +158,7 @@ class SetupCalibMixin:
                 ),
             )
 
-            return dict(
-                self.conn.execute(
-                    "SELECT * FROM mfdb_setup_calibration WHERE id = ?",
-                    (snapshot_id,),
-                ).fetchone()
-            )
+            return self.dao.get("mfdb_setup_calibration", snapshot_id, include_deleted=True)
 
     def list_setup_calibration_dates(
         self, setup_id: str
@@ -218,12 +203,13 @@ class SetupCalibMixin:
             Calibration snapshot rows.
         """
         if calibrated_at:
-            rows = self.conn.execute(
-                "SELECT * FROM mfdb_setup_calibration "
-                "WHERE setup_id = ? AND calibrated_at = ? "
-                "ORDER BY channel_name",
-                (setup_id, calibrated_at),
-            ).fetchall()
+            # raw read filter has no deleted_at guard — preserve via include_deleted
+            rows = self.dao.list(
+                "mfdb_setup_calibration",
+                filters={"setup_id": setup_id, "calibrated_at": calibrated_at},
+                include_deleted=True, order_by="channel_name",
+            )
+            return rows
         else:
             rows = self.conn.execute(
                 """SELECT sc.* FROM mfdb_setup_calibration sc
@@ -376,16 +362,15 @@ class SetupCalibMixin:
                     # duplicate-factor snapshots (which would pollute the
                     # calibration-date history).
                     has_cal = g_factor is not None or l1 is not None or l2 is not None
-                    latest = self.conn.execute(
-                        "SELECT g_factor, l1, l2, g_factor_calibration_id "
-                        "FROM mfdb_setup_calibration "
-                        "WHERE setup_id = ? AND channel_name = ? AND deleted_at IS NULL "
-                        "ORDER BY calibrated_at DESC LIMIT 1",
-                        (setup_id, det_name),
-                    ).fetchone()
+                    latest_rows = self.dao.list(
+                        "mfdb_setup_calibration",
+                        filters={"setup_id": setup_id, "channel_name": det_name},
+                        order_by="calibrated_at", descending=True, limit=1,
+                    )
+                    latest = latest_rows[0] if latest_rows else None
                     unchanged = latest is not None and (
-                        latest[0] == g_factor and latest[1] == l1
-                        and latest[2] == l2 and latest[3] == gfc_id
+                        latest["g_factor"] == g_factor and latest["l1"] == l1
+                        and latest["l2"] == l2 and latest["g_factor_calibration_id"] == gfc_id
                     )
                     if has_cal and not unchanged:
                         self.conn.execute(
@@ -470,29 +455,13 @@ class SetupCalibMixin:
         setup_id: str,
         calibrated_at: str | None = None,
     ) -> dict[str, Any] | None:
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_setup WHERE setup_id = ?", (setup_id,)
-        ).fetchone()
-        result = _row_to_dict(row)
+        result = self.dao.get("mfdb_setup", setup_id, include_deleted=True)
         if result is not None:
-            result["detector_channels"] = [
-                dict(r) for r in self.conn.execute(
-                    "SELECT * FROM mfdb_setup_detector_channel WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
-                    (setup_id,)
-                ).fetchall()
-            ]
-            result["pie_windows"] = [
-                dict(r) for r in self.conn.execute(
-                    "SELECT * FROM mfdb_setup_pie_window WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
-                    (setup_id,)
-                ).fetchall()
-            ]
-            result["fcs_pairs"] = [
-                dict(r) for r in self.conn.execute(
-                    "SELECT * FROM mfdb_setup_fcs_pair WHERE setup_id = ? AND deleted_at IS NULL ORDER BY id",
-                    (setup_id,)
-                ).fetchall()
-            ]
+            result["detector_channels"] = self.list_detector_channels(setup_id)
+            result["pie_windows"] = self.list_pie_windows(setup_id)
+            result["fcs_pairs"] = self.dao.list(
+                "mfdb_setup_fcs_pair", filters={"setup_id": setup_id}, order_by="id"
+            )
             result["calibration_dates"] = self.list_setup_calibration_dates(setup_id)
             result["calibration"] = self.get_setup_calibration(setup_id, calibrated_at=calibrated_at)
         return result

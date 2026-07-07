@@ -103,21 +103,18 @@ class AnalysisMixin:
             self.conn.execute(f"UPDATE mfdb_operation SET {', '.join(cols)} WHERE operation_id = ?", vals)
 
     def get_analysis_runs(self, operation_id=None, status=None):
-        query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
-        params = []
+        filters: dict[str, Any] = {}
         if operation_id:
-            query += " AND operation_id = ?"
-            params.append(operation_id)
+            filters["operation_id"] = operation_id
         if status:
-            query += " AND status = ?"
-            params.append(status)
-        query += " ORDER BY created_at DESC"
-        return [dict(row) for row in self.conn.execute(query, params).fetchall()]
+            filters["status"] = status
+        return self.dao.list(
+            "mfdb_operation", filters=filters or None, order_by="created_at", descending=True
+        )
     def update_analysis_record(self, analysis_id: str, **kwargs):
-        existing = self.conn.execute(
-            "SELECT * FROM flr_fret_analysis WHERE analysis_id = ?",
-            (analysis_id,)
-        ).fetchone()
+        existing = self.dao.list(
+            "flr_fret_analysis", filters={"analysis_id": analysis_id}, include_deleted=True, limit=1
+        )
         allowed = {
             "experiment_id", "sample_id", "type", "method",
             "sample_probe_id_1", "sample_probe_id_2", "forster_radius_id",
@@ -162,10 +159,7 @@ class AnalysisMixin:
             )
 
     def get_analysis_metadata(self, analysis_id: str) -> dict[str, str]:
-        rows = self.conn.execute(
-            "SELECT key, value FROM analysis_metadata WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY key",
-            (analysis_id,),
-        ).fetchall()
+        rows = self.dao.list("analysis_metadata", filters={"analysis_id": analysis_id}, order_by="key")
         return {r["key"]: r["value"] for r in rows}
 
     def set_analysis_metadata(self, analysis_id: str, metadata: dict[str, Any]):
@@ -214,11 +208,12 @@ class AnalysisMixin:
                 (analysis_id, data_type, data_name, x_blob, y_blob, x_unit, y_unit, details,
                  now, now, None),
             )
-        row = self.conn.execute(
-            "SELECT id FROM analysis_data WHERE analysis_id = ? AND data_type = ? AND data_name IS ? ORDER BY id DESC LIMIT 1",
-            (analysis_id, data_type, data_name),
-        ).fetchone()
-        return int(row["id"]) if row else 0
+        rows = self.dao.list(
+            "analysis_data",
+            filters={"analysis_id": analysis_id, "data_type": data_type, "data_name": data_name},
+            order_by="id", descending=True, limit=1,
+        )
+        return int(rows[0]["id"]) if rows else 0
 
     def get_analysis_data(self, analysis_id: str) -> list[sqlite3.Row]:
         return self.conn.execute(
@@ -271,10 +266,9 @@ class AnalysisMixin:
         run = self._decode_analysis_run_row(run_row)
 
         # Get parameters
-        param_rows = self.conn.execute(
-            "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
-            (analysis_id,),
-        ).fetchall()
+        param_rows = self.dao.list(
+            "mfdb_parameter", filters={"operation_id": analysis_id}, order_by="parameter_id"
+        )
         run["parameters"] = []
         for row in param_rows:
             d = dict(row)
@@ -387,10 +381,9 @@ class AnalysisMixin:
     def delete_analysis_run(self, analysis_id: str) -> None:
         parameter_ids = [
             row["parameter_uuid"]
-            for row in self.conn.execute(
-                "SELECT parameter_uuid FROM mfdb_parameter WHERE operation_id = ?",
-                (analysis_id,),
-            ).fetchall()
+            for row in self.dao.list(
+                "mfdb_parameter", filters={"operation_id": analysis_id}, include_deleted=True
+            )
         ]
 
         with self.conn:
@@ -464,12 +457,11 @@ class AnalysisMixin:
         return uuid_str
 
     def get_analysis_parameter(self, parameter_uuid: str) -> sqlite3.Row | dict[str, Any] | None:
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?",
-            (parameter_uuid,),
-        ).fetchone()
-        if row:
-            d = dict(row)
+        rows = self.dao.list(
+            "mfdb_parameter", filters={"parameter_uuid": parameter_uuid}, include_deleted=True, limit=1
+        )
+        if rows:
+            d = rows[0]
             d["analysis_id"] = d.pop("operation_id", None)
             return d
         return None
