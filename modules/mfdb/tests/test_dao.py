@@ -248,3 +248,31 @@ def test_upsert_rejects_unknown_table_and_column(db):
         dao.upsert("not_a_table", {"x": 1})
     with pytest.raises(UnknownColumnError):
         dao.upsert("flr_sample", {"sample_id": "u4", "bogus_col": 1})
+
+
+def test_insert_into_keyless_junction_returns_rowid(db):
+    """``insert`` works on a PK-less table (UNIQUE-only junction).
+
+    ``mfdb_group_member`` has no primary key — only ``UNIQUE(group_id, user_id)``.
+    ``insert`` must not require a resolvable primary key: it returns the last
+    rowid, while ``primary_key`` still reports the table as keyless.
+    """
+    dao = _dao(db)
+    with pytest.raises(Exception):
+        dao.primary_key("mfdb_group_member")
+
+    # Satisfy the junction's foreign keys with real parent rows.
+    dao.insert("mfdb_group", {"group_id": "g_keyless", "display_name": "Keyless"})
+    dao.insert("flr_sample_users", {"user_id": "u_keyless", "display_name": "Keyless User"})
+
+    rowid = dao.insert(
+        "mfdb_group_member",
+        {"group_id": "g_keyless", "user_id": "u_keyless", "role": "member"},
+    )
+    assert rowid is not None
+    rows = dao.list(
+        "mfdb_group_member",
+        filters={"group_id": "g_keyless", "user_id": "u_keyless"},
+    )
+    assert len(rows) == 1
+    assert rows[0]["role"] == "member"

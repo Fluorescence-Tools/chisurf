@@ -236,6 +236,8 @@ def handle_run_ai_triage(
         # Record the proposed quality and queue the probe for human review;
         # approval stays an explicit human action via ``fluorophores.approve``.
         db.set_probe_quality(probe_id, result["proposed_quality"])
+        # raw: conditional update (guarded by verification_status != 'approved')
+        # — dao.update only filters on the PK, so it cannot express this predicate.
         db.conn.execute(
             "UPDATE probes SET verification_status = 'needs_review' "
             "WHERE probe_id = ? AND verification_status != 'approved'",
@@ -358,9 +360,6 @@ def handle_merge_probes(
     Enforces that the longest name across the merged group is kept for the primary.
     Auto-merges spectra: keeps primary's spectra, pulls in missing ones, ignores overlaps.
     """
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc).isoformat()
-    
     with _db() as db:
         # Verify primary exists
         primary = db.conn.execute(
@@ -390,9 +389,10 @@ def handle_merge_probes(
                 best_source = r["source"]
                 
         if longest_name != primary["chromophore_name"] or best_category != primary["category"] or best_source != primary["source"]:
-            db.conn.execute(
-                "UPDATE probes SET chromophore_name = ?, category = ?, source = ?, updated_at = ? WHERE probe_id = ?",
-                (longest_name, best_category, best_source, now, primary_id)
+            db.dao.update(
+                "probes",
+                primary_id,
+                {"chromophore_name": longest_name, "category": best_category, "source": best_source},
             )
             
         # 2. Merge data from duplicates
@@ -400,7 +400,8 @@ def handle_merge_probes(
             if dup_id == primary_id:
                 continue
                 
-            # Move optical properties that the primary doesn't already have
+            # raw: cross-row bulk copy (INSERT ... SELECT with OR IGNORE dedup on
+            # the UNIQUE constraint) — beyond the single-row-values DAO surface.
             db.conn.execute(
                 """
                 INSERT OR IGNORE INTO optical_properties (probe_id, property_name, property_value, unit, details, created_at, updated_at)
@@ -409,9 +410,8 @@ def handle_merge_probes(
                 """,
                 (primary_id, dup_id)
             )
-            
-            # Move spectra that the primary doesn't already have
-            # (INSERT OR IGNORE drops duplicates of the same spectrum_type because of the UNIQUE constraint)
+
+            # raw: same cross-row bulk copy for spectra (INSERT ... SELECT).
             db.conn.execute(
                 """
                 INSERT OR IGNORE INTO spectra (probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details, created_at, updated_at)
@@ -420,11 +420,11 @@ def handle_merge_probes(
                 """,
                 (primary_id, dup_id)
             )
-            
+
             # Soft delete the duplicate probe and its properties/spectra
-            db.conn.execute("UPDATE probes SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
-            db.conn.execute("UPDATE optical_properties SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
-            db.conn.execute("UPDATE spectra SET deleted_at = ?, updated_at = ? WHERE probe_id = ?", (now, now, dup_id))
+            db.dao.soft_delete("probes", dup_id)
+            db.dao.soft_delete("optical_properties", dup_id, pk_column="probe_id")
+            db.dao.soft_delete("spectra", dup_id, pk_column="probe_id")
             
         db.conn.commit()
         

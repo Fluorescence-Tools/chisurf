@@ -128,10 +128,16 @@ bypasses schema-whitelisting and audit-column handling, and drifts from the
 `.dic` source of truth (PRD-26/INC-05). Any remaining raw-SQL CRUD in the
 repository is legacy debt being migrated onto the DAO, not a pattern to copy.
 
-Raw SQL is reserved for genuinely **bespoke reads** the single-table DAO cannot
-express — multi-table joins, graph/lineage traversal, aggregates, export — kept
-as organized methods on the relevant concern mixin. When in doubt: a CRUD shape
-is DAO; a join/traversal is a bespoke method.
+Raw SQL is reserved for genuinely **bespoke** statements the single-table DAO
+cannot express — multi-table joins, graph/lineage traversal, aggregates, export,
+`INSERT … SELECT` bulk copies, conditional/multi-column `WHERE` updates,
+composite-key soft-deletes on PK-less junctions, resurrecting updates (reset
+`deleted_at`), and intentional hard deletes — kept as organized methods (or
+`# raw`-flagged blocks) on the relevant concern mixin. When in doubt: a
+single-table CRUD shape is DAO; a join/traversal/bulk/conditional is raw.
+`DictionaryDao.insert` works on keyless tables too (UNIQUE-only junctions like
+`mfdb_group_member`): with no resolvable primary key it returns the last rowid
+rather than raising, so even junctions can be written through the DAO.
 
 # Object store & provenance-aware readers
 

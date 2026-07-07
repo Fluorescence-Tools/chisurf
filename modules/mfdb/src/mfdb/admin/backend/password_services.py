@@ -185,15 +185,10 @@ def change_password_handler(
 
         password_hash = hash_password(password) if password else None
         with db.conn:
-            db.conn.execute(
-                "UPDATE flr_sample_users SET password_hash = ? WHERE user_id = ?",
-                (password_hash, user_id),
-            )
+            db.dao.update("flr_sample_users", user_id, {"password_hash": password_hash})
         try:
-            db.conn.execute(
-                "INSERT INTO mfdb_audit_log (action, target_type, target_id, operator_user_id) "
-                "VALUES (?, ?, ?, ?)",
-                ("password.change", "user", user_id, requester_id or user_id),
+            db.add_audit_log(
+                "password.change", "user", user_id, operator_user_id=requester_id or user_id
             )
         except sqlite3.OperationalError:
             pass

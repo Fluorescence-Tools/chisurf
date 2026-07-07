@@ -11,6 +11,7 @@ from mfdb.security.auth import (
     PERM_WRITE,
     AuthError,
     PermissionDenied,
+    _utc_now_iso,
     authenticate_token,
     can_access,
     chgrp,
@@ -226,10 +227,7 @@ def change_password_handler(
 
         password_hash = hash_password(password) if password else None
         with conn:
-            conn.execute(
-                "UPDATE flr_sample_users SET password_hash = ? WHERE user_id = ?",
-                (password_hash, user_id),
-            )
+            db.dao.update("flr_sample_users", user_id, {"password_hash": password_hash})
         return {"ok": True}
 
 
@@ -337,10 +335,14 @@ def groups_create_handler(
 
         description = group.get("description")
 
-        conn.execute(
-            """INSERT INTO mfdb_group (group_id, display_name, description, created_by_user_id)
-               VALUES (?, ?, ?, ?)""",
-            (group_id, display_name, description, principal.user_id),
+        db.dao.insert(
+            "mfdb_group",
+            {
+                "group_id": group_id,
+                "display_name": display_name,
+                "description": description,
+                "created_by_user_id": principal.user_id,
+            },
         )
         return {"ok": True, "group": {"group_id": group_id, "display_name": display_name}}
 
@@ -370,21 +372,14 @@ def groups_update_handler(
         display_name = group.get("display_name")
         description = group.get("description")
 
-        updates = []
-        params = []
+        updates: dict[str, Any] = {}
         if display_name is not None:
-            updates.append("display_name = ?")
-            params.append(display_name)
+            updates["display_name"] = display_name
         if description is not None:
-            updates.append("description = ?")
-            params.append(description)
+            updates["description"] = description
 
         if updates:
-            params.append(group_id)
-            conn.execute(
-                f"UPDATE mfdb_group SET {', '.join(updates)} WHERE group_id = ?",
-                params,
-            )
+            db.dao.update("mfdb_group", group_id, updates)
 
         return {"ok": True}
 
@@ -404,10 +399,7 @@ def groups_delete_handler(
         if group_id in ("admins", "users", "public"):
             raise ValueError("Built-in groups cannot be deleted")
 
-        conn.execute(
-            "UPDATE mfdb_group SET deleted_at = ? WHERE group_id = ?",
-            (__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(), group_id),
-        )
+        db.dao.soft_delete("mfdb_group", group_id)
         return {"ok": True}
 
 
@@ -453,11 +445,23 @@ def members_add_handler(
             if not row:
                 raise PermissionDenied()
 
-        conn.execute(
-            """INSERT OR IGNORE INTO mfdb_group_member (group_id, user_id, role, created_by_user_id)
-               VALUES (?, ?, ?, ?)""",
-            (group_id, user_id, role, principal.user_id),
-        )
+        # INSERT OR IGNORE semantics on the UNIQUE(group_id, user_id) junction:
+        # a row (even soft-deleted) already occupying the pair is left untouched.
+        if not db.dao.list(
+            "mfdb_group_member",
+            filters={"group_id": group_id, "user_id": user_id},
+            include_deleted=True,
+            limit=1,
+        ):
+            db.dao.insert(
+                "mfdb_group_member",
+                {
+                    "group_id": group_id,
+                    "user_id": user_id,
+                    "role": role,
+                    "created_by_user_id": principal.user_id,
+                },
+            )
         return {"ok": True}
 
 
@@ -480,9 +484,11 @@ def members_remove_handler(
             if not row:
                 raise PermissionDenied()
 
+        # raw: composite-key soft delete — mfdb_group_member has no single PK
+        # (only UNIQUE(group_id, user_id)), which dao.soft_delete cannot target.
         conn.execute(
             "UPDATE mfdb_group_member SET deleted_at = ? WHERE group_id = ? AND user_id = ?",
-            (__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(), group_id, user_id),
+            (_utc_now_iso(), group_id, user_id),
         )
         return {"ok": True}
 

@@ -163,7 +163,8 @@ class DictionaryDao:
         """Insert one row; return its primary-key value (or last rowid).
 
         All identifiers are whitelisted against the schema and all values are
-        bound parameters.
+        bound parameters. Works on keyless tables (e.g. UNIQUE-only junctions):
+        with no resolvable primary key the last rowid is returned.
         """
         self._require_table(table)
         if not values:
@@ -177,7 +178,10 @@ class DictionaryDao:
             f"INSERT INTO {quote_identifier(table)} ({col_sql}) VALUES ({placeholders})"
         )
         cur = self.conn.execute(sql, [values[c] for c in cols])
-        pk = self.primary_key(table)
+        try:
+            pk = self.primary_key(table)
+        except DaoError:
+            return cur.lastrowid
         if pk in values:
             return values[pk]
         return cur.lastrowid
