@@ -1923,6 +1923,11 @@ def migrate_schema(conn: sqlite3.Connection) -> MigrationReport | None:
             with conn:
                 fn(conn)
                 set_schema_version(conn, version)
+    # A fresh database (built from scratch at ``current == 0``) is created at the
+    # current schema, not migrated from an earlier one — report nothing. A report
+    # signals that an existing database was upgraded.
+    if current == 0:
+        return None
     return report
 
 
