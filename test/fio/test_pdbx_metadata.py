@@ -203,7 +203,7 @@ def test_stats_cli_runs():
     import sys
 
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--stats"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--stats"],
         check=False,
         capture_output=True,
         text=True,
@@ -220,7 +220,7 @@ def test_list_categories_cli():
     import sys
 
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--list-categories"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--list-categories"],
         check=False,
         capture_output=True,
         text=True,
@@ -236,7 +236,7 @@ def test_flr_categories_cli():
     import sys
 
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--flr-categories"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--flr-categories"],
         check=False,
         capture_output=True,
         text=True,
@@ -252,7 +252,7 @@ def test_enums_cli():
     import sys
 
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--enums", "_flr_sample_probe_details.fluorophore_type"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--enums", "_flr_sample_probe_details.fluorophore_type"],
         check=False,
         capture_output=True,
         text=True,
@@ -268,7 +268,7 @@ def test_search_cli():
     import sys
 
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--search", "forster radius"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--search", "forster radius"],
         check=False,
         capture_output=True,
         text=True,
@@ -284,7 +284,7 @@ def test_validate_cli():
 
     # Test valid value
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--validate", "_flr_sample_probe_details.fluorophore_type", "donor"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--validate", "_flr_sample_probe_details.fluorophore_type", "donor"],
         check=False,
         capture_output=True,
         text=True,
@@ -294,7 +294,7 @@ def test_validate_cli():
 
     # Test invalid value
     result = subprocess.run(
-        [sys.executable, "-m", "chisurf.core.mfdb.pdbx_metadata", "--validate", "_flr_sample_probe_details.fluorophore_type", "invalid"],
+        [sys.executable, "-m", "mfdb.pdbx_metadata", "--validate", "_flr_sample_probe_details.fluorophore_type", "invalid"],
         check=False,
         capture_output=True,
         text=True,

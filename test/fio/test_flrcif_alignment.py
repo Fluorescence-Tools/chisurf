@@ -23,14 +23,9 @@ REGISTRY_PATH = (
     / "parameter_registry.json"
 )
 
-DIC_PATH = (
-    Path(__file__).resolve().parent.parent.parent
-    / "chisurf"
-    / "core"
-    / "mfdb"
-    / "data"
-    / "mfdb_flr_ext.dic"
-)
+from mfdb.pdbx_metadata import MmcifDictionary as _MmcifDictionary
+
+DIC_PATH = _MmcifDictionary.DATA_DIR / "mfdb_flr_ext.dic"
 
 
 def test_registry_file_exists():
