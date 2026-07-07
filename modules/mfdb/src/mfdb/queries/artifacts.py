@@ -115,19 +115,28 @@ class ArtifactOpsMixin:
             self.conn.execute("UPDATE mfdb_operation SET status = ?, updated_at = ? WHERE operation_id = ?", (status, now, operation_id))
 
     def get_operations(self, operation_type=None, status=None, workflow_id=None):
-        query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
-        params = []
-        if operation_type:
-            query += " AND operation_type = ?"
-            params.append(operation_type)
-        if status:
-            query += " AND status = ?"
-            params.append(status)
         if workflow_id:
+            # raw: workflow_id lives inside metadata_json — needs json_extract
+            query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
+            params = []
+            if operation_type:
+                query += " AND operation_type = ?"
+                params.append(operation_type)
+            if status:
+                query += " AND status = ?"
+                params.append(status)
             query += " AND json_extract(metadata_json, '$.workflow_id') = ?"
             params.append(workflow_id)
-        query += " ORDER BY created_at DESC"
-        return self.conn.execute(query, params).fetchall()
+            query += " ORDER BY created_at DESC"
+            return self.conn.execute(query, params).fetchall()
+        filters: dict[str, Any] = {}
+        if operation_type:
+            filters["operation_type"] = operation_type
+        if status:
+            filters["status"] = status
+        return self.dao.list(
+            "mfdb_operation", filters=filters or None, order_by="created_at", descending=True
+        )
 
     def add_artifact(
         self,
@@ -303,13 +312,8 @@ class ArtifactOpsMixin:
         return {"ok": True, "artifact_id": artifact_id, "deleted_at": now}
 
     def get_artifacts(self, artifact_kind=None):
-        query = "SELECT * FROM mfdb_artifact WHERE 1=1 AND deleted_at IS NULL"
-        params = []
-        if artifact_kind:
-            query += " AND artifact_kind = ?"
-            params.append(artifact_kind)
-        query += " ORDER BY artifact_id"
-        return self.conn.execute(query, params).fetchall()
+        filters = {"artifact_kind": artifact_kind} if artifact_kind else None
+        return self.dao.list("mfdb_artifact", filters=filters, order_by="artifact_id")
 
     def add_operation_artifact(self, operation_id, artifact_id, role="output", direction="output"):
         with self._transaction():
@@ -426,14 +430,10 @@ class ArtifactOpsMixin:
             )
 
     def get_downstream_artifacts(self, artifact_id):
-        return self.conn.execute(
-            "SELECT * FROM mfdb_edge WHERE source_node_id = ? AND deleted_at IS NULL", (artifact_id,)
-        ).fetchall()
+        return self.dao.list("mfdb_edge", filters={"source_node_id": artifact_id})
 
     def get_upstream_artifacts(self, artifact_id):
-        return self.conn.execute(
-            "SELECT * FROM mfdb_edge WHERE target_node_id = ? AND deleted_at IS NULL", (artifact_id,)
-        ).fetchall()
+        return self.dao.list("mfdb_edge", filters={"target_node_id": artifact_id})
 
     def get_downstream_dependencies(
         self, node_type: str, node_id: str
@@ -541,13 +541,13 @@ class ArtifactOpsMixin:
             }
             norm_type = normalize_node_type(n_type)
             if norm_type == "artifact":
-                row = self.conn.execute("SELECT * FROM mfdb_artifact WHERE artifact_id = ?", (n_id,)).fetchone()
+                row = self.dao.get("mfdb_artifact", n_id, include_deleted=True)
                 if row:
-                    node_dict.update(dict(row))
+                    node_dict.update(row)
             elif norm_type == "operation":
-                row = self.conn.execute("SELECT * FROM mfdb_operation WHERE operation_id = ?", (n_id,)).fetchone()
+                row = self.dao.get("mfdb_operation", n_id, include_deleted=True)
                 if row:
-                    node_dict.update(dict(row))
+                    node_dict.update(row)
             nodes.append(node_dict)
 
         return {
@@ -925,11 +925,12 @@ class ArtifactOpsMixin:
                 ),
             )
             if not operation_existed:
-                active_branch_row = self.conn.execute(
-                    "SELECT active_branch_uuid FROM flr_sample_users WHERE user_id = ?",
-                    (operator_user_id,)
-                ).fetchone()
-                active_branch_uuid = active_branch_row[0] if active_branch_row else None
+                active_branch_row = self.dao.get(
+                    "flr_sample_users", operator_user_id, include_deleted=True
+                )
+                active_branch_uuid = (
+                    active_branch_row["active_branch_uuid"] if active_branch_row else None
+                )
                 if not active_branch_uuid:
                     active_branch_uuid = "00000000-0000-0000-0000-000000000000"
                     if _exists(self.conn, "flr_sample_users", "user_id", operator_user_id):
@@ -1244,12 +1245,12 @@ class ArtifactOpsMixin:
                 artifact_existed = _exists(self.conn, "mfdb_artifact", "artifact_id", artifact_id)
                 self.register_artifact(**artifact_kwargs)
                 counts["input_artifact_inserted"] += 0 if artifact_existed else 1
-                link_existed = self.conn.execute(
-                    """SELECT 1 FROM mfdb_operation_artifact
-                       WHERE operation_id = ? AND artifact_id = ? AND direction = 'input'
-                         AND role = ?""",
-                    (operation_id, artifact_id, role or "generic"),
-                ).fetchone() is not None
+                link_existed = bool(self.dao.list(
+                    "mfdb_operation_artifact",
+                    filters={"operation_id": operation_id, "artifact_id": artifact_id,
+                             "direction": "input", "role": role or "generic"},
+                    include_deleted=True, limit=1,
+                ))
                 self.record_operation_link(
                     operation_id=operation_id,
                     artifact_id=artifact_id,
@@ -1269,12 +1270,12 @@ class ArtifactOpsMixin:
                 artifact_existed = _exists(self.conn, "mfdb_artifact", "artifact_id", artifact_id)
                 self.register_artifact(**artifact_kwargs)
                 counts["output_artifact_inserted"] += 0 if artifact_existed else 1
-                link_existed = self.conn.execute(
-                    """SELECT 1 FROM mfdb_operation_artifact
-                       WHERE operation_id = ? AND artifact_id = ? AND direction = 'output'
-                         AND role = ?""",
-                    (operation_id, artifact_id, role or "generic"),
-                ).fetchone() is not None
+                link_existed = bool(self.dao.list(
+                    "mfdb_operation_artifact",
+                    filters={"operation_id": operation_id, "artifact_id": artifact_id,
+                             "direction": "output", "role": role or "generic"},
+                    include_deleted=True, limit=1,
+                ))
                 self.record_operation_link(
                     operation_id=operation_id,
                     artifact_id=artifact_id,
@@ -1451,11 +1452,11 @@ class ArtifactOpsMixin:
         oa_rows = self.conn.execute(oa_query, oa_params).fetchall()
         for r in oa_rows:
             art_kind = "artifact"
-            art_row = self.conn.execute("SELECT artifact_kind FROM mfdb_artifact WHERE artifact_id = ?", (r["artifact_id"],)).fetchone()
+            art_row = self.dao.get("mfdb_artifact", r["artifact_id"], include_deleted=True)
             if art_row:
                 art_kind = art_row["artifact_kind"]
             op_type = "processing_run"
-            op_row = self.conn.execute("SELECT operation_type FROM mfdb_operation WHERE operation_id = ?", (r["operation_id"],)).fetchone()
+            op_row = self.dao.get("mfdb_operation", r["operation_id"], include_deleted=True)
             if op_row:
                 op_type = op_row["operation_type"]
                 if op_type in ("local_fit", "global_fit", "analysis"):
@@ -1528,10 +1529,9 @@ class ArtifactOpsMixin:
                 row["settings"] = row.get("settings_json")
 
         # Fetch inputs: raw_data ids from edges and operation_artifacts
-        op_arts = self.conn.execute(
-            "SELECT artifact_id FROM mfdb_operation_artifact WHERE operation_id = ? AND direction = 'input' AND deleted_at IS NULL",
-            (run_id,)
-        ).fetchall()
+        op_arts = self.dao.list(
+            "mfdb_operation_artifact", filters={"operation_id": run_id, "direction": "input"}
+        )
         raw_ids = [r["artifact_id"] for r in op_arts]
 
         raw_data_list = []

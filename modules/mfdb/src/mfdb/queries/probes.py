@@ -20,7 +20,7 @@ from mfdb.store.database_resolver import _default_reference_spectra_path
 
 class ProbeMixin:
     def get_probe_types(self):
-        return self.conn.execute("SELECT * FROM probe_types ORDER BY type_id").fetchall()
+        return self.dao.list("probe_types", order_by="type_id", include_deleted=True)
 
     def add_probe_type(self, name, description=None, details=None):
         with self.conn:
@@ -35,21 +35,19 @@ class ProbeMixin:
                        deleted_at = NULL""",
                 (name, description or name, now, now, None)
             )
-            row = self.conn.execute(
-                "SELECT type_id FROM probe_types WHERE type_name = ?",
-                (name,),
-            ).fetchone()
-            return int(row["type_id"])
+            rows = self.dao.list("probe_types", filters={"type_name": name}, include_deleted=True, limit=1)
+            return int(rows[0]["type_id"])
 
     def get_probe_categories(self):
         return self.conn.execute("SELECT DISTINCT category FROM probes WHERE category IS NOT NULL AND deleted_at IS NULL ORDER BY category").fetchall()
 
     def get_probe(self, probe_id):
-        return self.conn.execute("SELECT * FROM probes WHERE probe_id = ?", (probe_id,)).fetchone()
+        return self.dao.get("probes", probe_id, include_deleted=True)
 
     def get_probe_by_uuid(self, uuid_str):
         # Fallback to chromophore_name if uuid column doesn't exist
-        return self.conn.execute("SELECT * FROM probes WHERE chromophore_name = ?", (uuid_str,)).fetchone()
+        rows = self.dao.list("probes", filters={"chromophore_name": uuid_str}, include_deleted=True, limit=1)
+        return rows[0] if rows else None
 
     def find_or_add_probe(self, name: str, category: str = "other", description: str | None = None,
                           reactive_probe_flag: str = "no", reactive_probe_name: str | None = None,
@@ -83,16 +81,11 @@ class ProbeMixin:
 
         """
         # Try to find existing probe
-        existing = self.conn.execute(
-            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
-            (name,)
-        ).fetchone()
+        existing = self.dao.list("probes", filters={"chromophore_name": name}, limit=1)
         if existing:
+            existing_id = existing[0]["probe_id"]
             # Update existing probe with new chemical fields if they differ
-            existing_probe = self.conn.execute(
-                "SELECT * FROM probes WHERE probe_id = ?",
-                (existing["probe_id"],)
-            ).fetchone()
+            existing_probe = self.dao.get("probes", existing_id, include_deleted=True)
             if (existing_probe and
                 (existing_probe.get("reactive_probe_flag") != reactive_probe_flag or
                  existing_probe.get("reactive_probe_name") != reactive_probe_name or
@@ -106,9 +99,9 @@ class ProbeMixin:
                            probe_origin = ?, probe_link_type = ?, chromophore_center_atom = ?,
                            category = ?, description = ?, updated_at = ? WHERE probe_id = ?""",
                         (reactive_probe_flag, reactive_probe_name, probe_origin, probe_link_type,
-                         chromophore_center_atom, category, description, now, existing["probe_id"])
+                         chromophore_center_atom, category, description, now, existing_id)
                     )
-            return existing["probe_id"]
+            return existing_id
 
         # Create new probe with all chemical fields
         now = _utc_now()
@@ -124,18 +117,12 @@ class ProbeMixin:
             return cursor.lastrowid
 
     def get_probes(self, category=None, probe_type_id=None, include_inactive=False):
-        query = "SELECT * FROM probes WHERE 1=1 AND deleted_at IS NULL"
-        params = []
+        filters: dict[str, Any] = {}
         if category:
-            query += " AND category = ?"
-            params.append(category)
+            filters["category"] = category
         if probe_type_id:
-            query += " AND type_id = ?"
-            params.append(probe_type_id)
-        if not include_inactive:
-            pass
-        query += " ORDER BY probe_id"
-        return self.conn.execute(query, params).fetchall()
+            filters["type_id"] = probe_type_id
+        return self.dao.list("probes", filters=filters or None, order_by="probe_id")
 
     def find_probes_by_cas(self, cas: str) -> list[dict]:
         """Return probes whose CAS registry number matches ``cas``.
@@ -177,12 +164,12 @@ class ProbeMixin:
             type_id = int(uuid_str) if uuid_str is not None else kwargs.get("type_id")
             category = category or "other"
             description = description or ""
-            row = self.conn.execute(
-                "SELECT probe_id FROM probes WHERE chromophore_name = ? AND type_id = ?",
-                (chromophore_name, type_id)
-            ).fetchone()
-            if row:
-                return row["probe_id"]
+            rows = self.dao.list(
+                "probes", filters={"chromophore_name": chromophore_name, "type_id": type_id},
+                include_deleted=True, limit=1,
+            )
+            if rows:
+                return rows[0]["probe_id"]
             with self.conn:
                 return self.dao.insert(
                     "probes",
@@ -330,13 +317,10 @@ class ProbeMixin:
         list of dict
             Approved probe rows.
         """
-        query = "SELECT * FROM probes WHERE deleted_at IS NULL AND verification_status = 'approved'"
-        params: list = []
+        filters: dict[str, Any] = {"verification_status": "approved"}
         if category:
-            query += " AND category = ?"
-            params.append(category)
-        query += " ORDER BY chromophore_name"
-        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+            filters["category"] = category
+        return self.dao.list("probes", filters=filters, order_by="chromophore_name")
 
     # -- import reference set from spectra.db (PRD-06 Task 7.2) --
 
@@ -591,12 +575,11 @@ class ProbeMixin:
                     # Normalize name: "ATTO-647N" -> "ATTO 647N"
                     chromophore_name = name.replace("-", " ").replace("_", " ")
 
-                    existing = self.conn.execute(
-                        "SELECT probe_id FROM probes WHERE chromophore_name = ? AND deleted_at IS NULL",
-                        (chromophore_name,),
-                    ).fetchone()
+                    existing = self.dao.list(
+                        "probes", filters={"chromophore_name": chromophore_name}, limit=1
+                    )
                     if existing:
-                        probe_id = int(existing["probe_id"])
+                        probe_id = int(existing[0]["probe_id"])
                         # Update the category, source, etc. on import
                         self.conn.execute(
                             "UPDATE probes SET category = ?, source = ?, source_ref = ?, type_id = ?, updated_at = ? WHERE probe_id = ?",
@@ -984,19 +967,20 @@ class ProbeMixin:
             Dict with 'absorption' and 'emission' keys, each with
             'wavelengths' and 'intensity' arrays, or None if not found.
         """
-        probe = self.conn.execute(
-            "SELECT probe_id FROM probes WHERE chromophore_name = ? AND verification_status = 'approved' AND deleted_at IS NULL",
-            (probe_name,),
-        ).fetchone()
-        if not probe:
+        probe_rows = self.dao.list(
+            "probes",
+            filters={"chromophore_name": probe_name, "verification_status": "approved"},
+            limit=1,
+        )
+        if not probe_rows:
             return None
-        probe_id = int(probe["probe_id"])
+        probe_id = int(probe_rows[0]["probe_id"])
         result = {}
         for stype in ("absorption", "emission"):
-            row = self.conn.execute(
-                "SELECT wavelengths, intensity_values FROM spectra WHERE probe_id = ? AND spectrum_type = ? AND deleted_at IS NULL",
-                (probe_id, stype),
-            ).fetchone()
+            spec_rows = self.dao.list(
+                "spectra", filters={"probe_id": probe_id, "spectrum_type": stype}, limit=1
+            )
+            row = spec_rows[0] if spec_rows else None
             if row:
                 result[stype] = {
                     "wavelengths": np.frombuffer(row["wavelengths"], dtype=np.float64),
@@ -1009,19 +993,15 @@ class ProbeMixin:
     # -- spectra --
 
     def get_spectra(self, probe_id=None, spectrum_type=None):
-        query = "SELECT * FROM spectra WHERE 1=1 AND deleted_at IS NULL"
-        params = []
+        filters: dict[str, Any] = {}
         if probe_id is not None:
-            query += " AND probe_id = ?"
-            params.append(probe_id)
+            filters["probe_id"] = probe_id
         if spectrum_type is not None:
-            query += " AND spectrum_type = ?"
-            params.append(spectrum_type)
-        query += " ORDER BY spectrum_id"
-        return self.conn.execute(query, params).fetchall()
+            filters["spectrum_type"] = spectrum_type
+        return self.dao.list("spectra", filters=filters or None, order_by="spectrum_id")
 
     def get_spectrum(self, spectrum_id):
-        return self.conn.execute("SELECT * FROM spectra WHERE spectrum_id = ?", (spectrum_id,)).fetchone()
+        return self.dao.get("spectra", spectrum_id, pk_column="spectrum_id", include_deleted=True)
 
     def add_spectrum(self, *args, **kwargs):
         probe_id = None
@@ -1080,13 +1060,13 @@ class ProbeMixin:
             )
 
     def get_spectrum_record(self, probe_id, spectrum_type):
-        row = self.conn.execute(
-            "SELECT * FROM spectra WHERE probe_id = ? AND spectrum_type = ?",
-            (probe_id, spectrum_type)
-        ).fetchone()
-        if row is None:
+        rows = self.dao.list(
+            "spectra", filters={"probe_id": probe_id, "spectrum_type": spectrum_type},
+            include_deleted=True, limit=1,
+        )
+        if not rows:
             return None
-        res = dict(row)
+        res = rows[0]
         if res.get("wavelengths"):
             res["wavelengths"] = np.frombuffer(res["wavelengths"], dtype=np.float64)
         if res.get("intensity_values"):
