@@ -81,37 +81,28 @@ def get_compute_spec(db: Any, artifact_id: str) -> ComputeSpec | None:
     ``None`` when the artifact has no producing operation (a root/imported artifact
     with nothing to recompute).
     """
-    conn = db.conn
-    op_row = conn.execute(
-        "SELECT operation_id FROM mfdb_operation_artifact "
-        "WHERE artifact_id = ? AND direction = 'output' "
-        "ORDER BY ordinal, operation_id LIMIT 1",
-        (artifact_id,),
-    ).fetchone()
-    if op_row is None:
+    # No raw SQL here — reuse the centralized MFDatabase query layer (which
+    # itself goes through the dictionary-driven DAO) and the schema-whitelisted
+    # DAO for the one reverse lookup that has no dedicated method.
+    output_links = db.dao.list(
+        "mfdb_operation_artifact",
+        filters={"artifact_id": artifact_id, "direction": "output"},
+        order_by="ordinal",
+    )
+    if not output_links:
         return None
-    operation_id = op_row[0]
+    operation_id = output_links[0]["operation_id"]
 
-    type_row = conn.execute(
-        "SELECT operation_type FROM mfdb_operation WHERE operation_id = ?",
-        (operation_id,),
-    ).fetchone()
-    operation_type = (type_row[0] if type_row else "") or ""
+    operation = db.get_operation(operation_id) or {}
+    operation_type = operation.get("operation_type") or ""
 
-    sources = [
-        r[0]
-        for r in conn.execute(
-            "SELECT DISTINCT artifact_id FROM mfdb_operation_artifact "
-            "WHERE operation_id = ? AND direction = 'input'",
-            (operation_id,),
-        ).fetchall()
-    ]
+    sources: list[str] = []
+    for row in db.get_operation_artifacts(operation_id, direction="input"):
+        aid = row["artifact_id"]
+        if aid not in sources:  # DISTINCT, order-preserving
+            sources.append(aid)
 
-    param_rows = conn.execute(
-        "SELECT name, value, role FROM mfdb_parameter "
-        "WHERE operation_id = ? AND deleted_at IS NULL ORDER BY name, role",
-        (operation_id,),
-    ).fetchall()
+    param_rows = db.get_parameters(operation_id=operation_id)
 
     return ComputeSpec(
         operation_type=operation_type,
