@@ -8,7 +8,7 @@ import uuid
 import numpy as np
 import pytest
 
-from chisurf.core.mfdb.project_archiver import (
+from chisurf.core.mfdb.project.project_archiver import (
     archive_project_to_mfdb,
     restore_project_from_artifacts,
 )

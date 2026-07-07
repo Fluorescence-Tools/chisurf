@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from chisurf.core.mfdb.result_registry import (
+from chisurf.core.mfdb.provenance.result_registry import (
     register_raw_measurement,
     register_result,
 )
@@ -17,7 +17,7 @@ from .contract import CONTRACT_VERSION
 from .models import ShiftRequest, ShiftResult
 
 if TYPE_CHECKING:
-    from chisurf.core.mfdb.base import MFDBClientBase
+    from chisurf.core.mfdb.security.base import MFDBClientBase
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def active_mfdb_connection() -> "MFDBClientBase | None":
     result registry directly.
     """
     try:
-        from chisurf.core.mfdb.result_registry import _get_global_db
+        from chisurf.core.mfdb.provenance.result_registry import _get_global_db
 
         return _get_global_db()
     except Exception:
@@ -142,7 +142,7 @@ class MicrotimeShiftMFDBPipeline:
             # Content already registered (dedup): record this user as a
             # co-owner so the dataset appears under their "Mine" scope too.
             try:
-                from chisurf.core.mfdb.result_registry import _resolve_active_user_id
+                from chisurf.core.mfdb.provenance.result_registry import _resolve_active_user_id
                 if self.db is not None:
                     self.db.add_artifact_owner(existing, _resolve_active_user_id())
             except Exception:

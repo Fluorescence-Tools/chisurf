@@ -34,7 +34,7 @@ class _EndpointAuthModel:
     """Editable bag bound to the AutoForm endpoint/auth scheme."""
 
     def __init__(self) -> None:
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 
         self.mode = "local"
         try:
@@ -114,7 +114,7 @@ class AddToMfdbPanel(QtWidgets.QWidget):
 
     @staticmethod
     def _resolved() -> str:
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 
         return str(resolve_database_path())
 

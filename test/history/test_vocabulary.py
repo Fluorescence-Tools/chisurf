@@ -18,7 +18,7 @@ from __future__ import annotations
 import chisurf as cs
 import chisurf.core.actions  # noqa: F401  (triggers @action registration)
 from chisurf.core.actions import canonical, get_action_catalog
-from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
+from chisurf.core.mfdb.schema.pdbx_metadata import MmcifDictionary
 
 
 def test_canonical_collapses_separators():

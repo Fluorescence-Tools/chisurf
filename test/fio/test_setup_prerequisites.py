@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from chisurf.core.mfdb import schema
-from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
+from chisurf.core.mfdb.schema import schema
+from chisurf.core.mfdb.schema.dictionary_schema_map import build_dictionary_schema_map
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
     _resolve_active_user_id,
@@ -237,7 +237,7 @@ def _admin_auth(db_path: str) -> dict:
     A fresh MFDatabase seeds an admin user, so _require_auth no longer treats
     writes as bootstrap and rejects anonymous requests; handlers need a token.
     """
-    from mfdb.auth import create_session
+    from mfdb.security.auth import create_session
 
     with MFDatabase(db_path) as db:
         token = create_session(db.conn, "user_default")["token"]

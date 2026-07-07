@@ -9,7 +9,7 @@ import numpy as np
 from qtpy import QtCore, QtWidgets
 
 from chisurf.core.fluorescence.fret.forster import forster_radius_from_spectra
-from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
 
 _EXT_COEFF_ALIASES = frozenset({

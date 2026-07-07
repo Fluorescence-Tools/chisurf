@@ -16,9 +16,9 @@ import pytest
 
 pytest.importorskip("tttrlib")
 
-from chisurf.core.mfdb.compute_spec import get_compute_spec, recompute
+from chisurf.core.mfdb.provenance.compute_spec import get_compute_spec, recompute
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import (
+from chisurf.core.mfdb.provenance.result_registry import (
     register_raw_measurement,
     register_result,
     set_global_db,

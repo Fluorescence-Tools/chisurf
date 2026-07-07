@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.schema import migrate_schema, get_schema_version, SCHEMA_VERSION
+from chisurf.core.mfdb.schema.schema import migrate_schema, get_schema_version, SCHEMA_VERSION
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
     setup_id_for_name,
 )
@@ -65,7 +65,7 @@ def test_calibration_table_exists(tmp_path: Path) -> None:
 
 def test_calibration_dictionary_maps(tmp_path: Path) -> None:
     """All mfdb_setup_calibration dictionary items map to live columns."""
-    from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
+    from chisurf.core.mfdb.schema.dictionary_schema_map import build_dictionary_schema_map
 
     db_path = os.path.join(tmp_path, "test_dict_cal.db")
     db = MFDatabase(db_path)

@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.settings.file_utils import safe_open_file
 

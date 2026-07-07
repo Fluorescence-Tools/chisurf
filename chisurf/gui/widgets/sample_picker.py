@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets
 
-from chisurf.core.mfdb.external_refs import diff_sequences, fetch_uniprot
+from chisurf.core.mfdb.samples.external_refs import diff_sequences, fetch_uniprot
 from chisurf.core.mfdb.models import (
     EntityDefinition,
     MutationDefinition,
     SampleDefinition,
 )
-from chisurf.core.mfdb.sample_manager import create_sample, list_samples
+from chisurf.core.mfdb.samples.sample_manager import create_sample, list_samples
 
 
 class SamplePicker(QtWidgets.QWidget):

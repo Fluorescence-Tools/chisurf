@@ -601,7 +601,7 @@ class UserEditorWidget(QWidget):
         new_user_id : str
             New username.
         """
-        from chisurf.core.mfdb.credentials import (
+        from chisurf.core.mfdb.security.credentials import (
             rename_runtime_session_token,
             rename_session_token,
         )
@@ -628,7 +628,7 @@ class UserEditorWidget(QWidget):
         MFDBClient
             Client configured with the current user's runtime or stored token.
         """
-        from chisurf.core.mfdb.credentials import (
+        from chisurf.core.mfdb.security.credentials import (
             load_runtime_session_token,
             load_session_token,
             store_runtime_session_token,
@@ -663,7 +663,7 @@ class UserEditorWidget(QWidget):
         user_id : str
             MFDB user whose local autologin state should be cleared.
         """
-        from chisurf.core.mfdb.credentials import delete_runtime_session_token, delete_session_token
+        from chisurf.core.mfdb.security.credentials import delete_runtime_session_token, delete_session_token
         from chisurf.core.settings.settings_utils import set_mfdb_login_settings
 
         mfdb_settings = cs_settings.cs_settings.setdefault("mfdb", {})

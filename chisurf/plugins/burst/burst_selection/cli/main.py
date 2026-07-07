@@ -197,8 +197,8 @@ def _analyze_with_mfdb(
     from dataclasses import asdict
 
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.result_registry import set_global_db
-    from chisurf.core.mfdb.sample_manager import SampleDefinition, create_sample
+    from chisurf.core.mfdb.provenance.result_registry import set_global_db
+    from chisurf.core.mfdb.samples.sample_manager import SampleDefinition, create_sample
 
     from ..backend.services import analyze_files_handler
 

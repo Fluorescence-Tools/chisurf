@@ -144,7 +144,7 @@ def _detector_row_to_data(row: dict) -> dict:
     full = None
     dcs, pws = None, None
     if row.get("setup_id"):
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
         with MFDatabase(resolve_database_path()) as _db_tmp:
             full = _db_tmp.get_setup(row["setup_id"])
         if full:

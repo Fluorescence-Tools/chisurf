@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from chisurf.core.mfdb.result_registry import (
+from chisurf.core.mfdb.provenance.result_registry import (
     LinkValidationError,
     register_raw_measurement,
     register_result,
@@ -21,7 +21,7 @@ from .models import AnalysisRequest, AnalysisResult
 from .serialization import to_jsonable
 
 if TYPE_CHECKING:
-    from chisurf.core.mfdb.base import MFDBClientBase
+    from chisurf.core.mfdb.security.base import MFDBClientBase
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class BurstMFDBPipeline:
         if not setup_id:
             return None
         try:
-            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from chisurf.core.mfdb.store.database_resolver import resolve_database_path
             from chisurf.core.mfdb.repository import MFDatabase
             db_path = resolve_database_path()
             with MFDatabase(db_path) as db:
@@ -725,7 +725,7 @@ def acquire_mfdb_connection() -> "MFDBClientBase | None":
     connection can be established.
     """
     try:
-        from chisurf.core.mfdb.result_registry import _get_global_db
+        from chisurf.core.mfdb.provenance.result_registry import _get_global_db
 
         db = _get_global_db()
     except Exception:
@@ -733,7 +733,7 @@ def acquire_mfdb_connection() -> "MFDBClientBase | None":
     if db is not None:
         return db
     try:
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
         from chisurf.core.mfdb.repository import MFDatabase
 
         return MFDatabase(resolve_database_path())

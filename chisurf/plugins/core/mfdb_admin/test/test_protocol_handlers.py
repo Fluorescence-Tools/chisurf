@@ -53,7 +53,7 @@ def test_get_protocol_exposes_parameter_schema(db):
 
 
 def test_protocol_for_operation_provenance(db):
-    from mfdb.result_registry import register_operation, set_global_db
+    from mfdb.provenance.result_registry import register_operation, set_global_db
 
     with patch_db(db):
         res = create_protocol_handler("shift", "processing", operation_type="microtime_shift")

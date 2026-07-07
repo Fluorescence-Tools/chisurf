@@ -16,7 +16,7 @@ from mfdb.models import (
     ProbeDefinition,
     FretPairDefinition,
 )
-from mfdb.sample_manager import create_sample
+from mfdb.samples.sample_manager import create_sample
 
 
 @pytest.fixture

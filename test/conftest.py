@@ -38,7 +38,7 @@ def _hermetic_settings_dir():
     # does not copy the shipped curated source DB (which carries demo data and an
     # older schema). Tests get a clean DB; isolation is preserved.
     try:
-        from chisurf.core.mfdb.database_resolver import user_database_path
+        from chisurf.core.mfdb.store.database_resolver import user_database_path
         from chisurf.core.mfdb.repository import MFDatabase
 
         user_db = user_database_path()
@@ -54,7 +54,7 @@ def _hermetic_settings_dir():
 def _guard_real_user_db():
     """Fail loudly if a test resolves chisurf state to the real ~/.chisurf."""
     from chisurf.core.settings.path_utils import get_path
-    from chisurf.core.mfdb.database_resolver import (
+    from chisurf.core.mfdb.store.database_resolver import (
         object_store_root,
         user_database_path,
     )

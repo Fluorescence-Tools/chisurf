@@ -169,7 +169,7 @@ def push(staging, mfdb, replace, mark_verified, backup):
     """
     import shutil
 
-    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.store.database_resolver import resolve_database_path
     from chisurf.core.mfdb.repository import MFDatabase
     from chisurf.plugins._dev.fluorophore_db.mfdb_adapter import DEFAULT_DATABASE_PATH
 

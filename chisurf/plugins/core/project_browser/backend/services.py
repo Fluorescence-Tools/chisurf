@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from chisurf import logging
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
-from mfdb.auth import (
+from mfdb.security.auth import (
     PERM_READ,
     PERM_MANAGE,
     filter_readable,
@@ -309,7 +309,7 @@ def save_project_handler(
                     version_number = int(max_vn) + 1
 
         # Use the new project_archiver for full artifact decomposition
-        from mfdb.project_archiver import archive_project_to_mfdb
+        from mfdb.project.project_archiver import archive_project_to_mfdb
 
         result = archive_project_to_mfdb(
             db=db,
@@ -326,7 +326,7 @@ def save_project_handler(
 
         with db.transaction():
             if visibility == "public":
-                import mfdb.auth as authmod
+                import mfdb.security.auth as authmod
                 authmod.chmod(conn, principal, "mfdb_operation", version_id, 0o704)
             db.add_audit_log(
                 action="archive",
@@ -364,7 +364,7 @@ def _reconstruct_payload(
     meta: dict[str, Any],
 ) -> dict[str, Any]:
     """Reconstruct a project payload from artifacts, or build empty default."""
-    from mfdb.project_archiver import restore_project_from_artifacts
+    from mfdb.project.project_archiver import restore_project_from_artifacts
     artifact_payload = restore_project_from_artifacts(db, version_id)
     if artifact_payload:
         return {

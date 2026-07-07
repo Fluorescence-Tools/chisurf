@@ -16,13 +16,13 @@ import os
 
 import pytest
 
-from chisurf.core.mfdb.compute_spec import (
+from chisurf.core.mfdb.provenance.compute_spec import (
     get_replay_executor,
     register_replay_executor,
     unregister_replay_executor,
 )
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import (
+from chisurf.core.mfdb.provenance.result_registry import (
     register_raw_measurement,
     register_result,
     set_global_db,
@@ -257,7 +257,7 @@ def test_record_and_get_pipeline_run_groups_the_chain(db, fake_executors, tmp_pa
 
 def test_run_pipeline_missing_executor_raises(db, tmp_path):
     # no executors registered for this fixture -> fail loud at the first node
-    from chisurf.core.mfdb.compute_spec import NoReplayExecutorError
+    from chisurf.core.mfdb.provenance.compute_spec import NoReplayExecutorError
 
     f = os.path.join(tmp_path, "m2.ptu")
     with open(f, "wb") as fh:

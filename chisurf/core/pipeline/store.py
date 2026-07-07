@@ -28,7 +28,7 @@ def _now() -> str:
 
 
 def _default_user() -> str | None:
-    from chisurf.core.mfdb.session import configured_default_user_id
+    from chisurf.core.mfdb.security.session import configured_default_user_id
 
     return configured_default_user_id()
 

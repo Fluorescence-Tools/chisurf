@@ -127,7 +127,7 @@ def lookup_forster_radius(
     if db is None:
         try:
             from chisurf.core.mfdb.repository import MFDatabase
-            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from chisurf.core.mfdb.store.database_resolver import resolve_database_path
             db = MFDatabase(resolve_database_path(), readonly=True)
         except Exception:
             return None

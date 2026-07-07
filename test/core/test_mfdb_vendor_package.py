@@ -26,21 +26,21 @@ def test_chisurf_core_mfdb_remains_transitional_facade():
 
 def test_chisurf_core_mfdb_submodules_alias_vendored_modules():
     """Legacy submodule imports must not load duplicate class objects."""
-    import chisurf.core.mfdb.base as legacy_base
-    import chisurf.core.mfdb.payload_codec as legacy_payload_codec
-    import chisurf.core.mfdb.payload_models as legacy_payload_models
+    import chisurf.core.mfdb.security.base as legacy_base
+    import chisurf.core.mfdb.store.payload_codec as legacy_payload_codec
+    import chisurf.core.mfdb.store.payload_models as legacy_payload_models
     import chisurf.core.mfdb.repository as legacy_repository
-    import mfdb.base
-    import mfdb.payload_codec
-    import mfdb.payload_models
+    import mfdb.security.base
+    import mfdb.store.payload_codec
+    import mfdb.store.payload_models
     import mfdb.repository
 
-    assert legacy_base is mfdb.base
-    assert legacy_payload_codec is mfdb.payload_codec
-    assert legacy_payload_models is mfdb.payload_models
+    assert legacy_base is mfdb.security.base
+    assert legacy_payload_codec is mfdb.store.payload_codec
+    assert legacy_payload_models is mfdb.store.payload_models
     assert legacy_repository is mfdb.repository
     assert legacy_repository.MFDatabase is mfdb.repository.MFDatabase
-    assert legacy_payload_codec.PayloadSchemaError is mfdb.payload_codec.PayloadSchemaError
+    assert legacy_payload_codec.PayloadSchemaError is mfdb.store.payload_codec.PayloadSchemaError
 
 
 def test_mfdb_extraction_boundary_modules_do_not_import_chisurf():

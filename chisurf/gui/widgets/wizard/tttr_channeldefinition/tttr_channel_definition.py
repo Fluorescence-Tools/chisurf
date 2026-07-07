@@ -1404,7 +1404,7 @@ class DetectorWizardPage(QWizardPage):
         """
         try:
             from chisurf.core.mfdb.repository import MFDatabase
-            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from chisurf.core.mfdb.store.database_resolver import resolve_database_path
             from .tttr_setup_utils import setup_id_for_name
 
             setup_id = setup_id_for_name(setup_name, _resolve_active_user_id())
@@ -1437,7 +1437,7 @@ class DetectorWizardPage(QWizardPage):
 
         try:
             from chisurf.core.mfdb.repository import MFDatabase
-            from chisurf.core.mfdb.database_resolver import resolve_database_path
+            from chisurf.core.mfdb.store.database_resolver import resolve_database_path
             from .tttr_setup_utils import setup_id_for_name
 
             setup_id = setup_id_for_name(self.current_setup_name, _resolve_active_user_id())

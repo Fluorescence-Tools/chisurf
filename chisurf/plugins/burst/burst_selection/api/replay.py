@@ -19,7 +19,7 @@ from __future__ import annotations
 import tempfile
 from typing import Any
 
-from chisurf.core.mfdb.compute_spec import ComputeSpec, register_replay_executor
+from chisurf.core.mfdb.provenance.compute_spec import ComputeSpec, register_replay_executor
 from chisurf.plugins.burst.burst_selection.api.mfdb import BurstMFDBPipeline
 from chisurf.plugins.burst.burst_selection.api.models import AnalysisRequest, MFDBContext
 from chisurf.plugins.burst.burst_selection.api.selection import analyze_request

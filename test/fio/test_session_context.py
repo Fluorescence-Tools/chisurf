@@ -7,7 +7,7 @@ source and that the legacy wrappers delegate to it.
 
 from __future__ import annotations
 
-from chisurf.core.mfdb.session import (
+from chisurf.core.mfdb.security.session import (
     DEFAULT_USER_ID,
     SessionContext,
     configured_default_user_id,
@@ -52,7 +52,7 @@ def test_resolve_session_carries_user_id(monkeypatch):
 def test_result_registry_wrapper_delegates(monkeypatch):
     """The legacy result_registry resolver returns the canonical identity."""
     import chisurf.core.settings as settings
-    from chisurf.core.mfdb.result_registry import _resolve_active_user_id
+    from chisurf.core.mfdb.provenance.result_registry import _resolve_active_user_id
 
     monkeypatch.setitem(settings.cs_settings, "mfdb", {"default_user_id": "carol"})
     assert _resolve_active_user_id() == resolve_active_user_id() == "carol"
@@ -64,7 +64,7 @@ def test_injected_session_stamps_owner(tmp_path):
     import os
 
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.result_registry import register_raw_measurement, set_global_db
+    from chisurf.core.mfdb.provenance.result_registry import register_raw_measurement, set_global_db
 
     db = MFDatabase(os.path.join(tmp_path, "owner.db"))
     try:

@@ -10,7 +10,7 @@ import pandas as pd
 
 from chisurf.core.mfdb.models import SampleDefinition
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.sample_manager import create_sample
+from chisurf.core.mfdb.samples.sample_manager import create_sample
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
     _resolve_active_user_id,

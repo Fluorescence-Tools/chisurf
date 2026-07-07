@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from mfdb.chinet_adapter import (
     _load_parameter_registry,
     _lookup_flrcif_name,
@@ -23,7 +23,7 @@ REGISTRY_PATH = (
     / "parameter_registry.json"
 )
 
-from mfdb.pdbx_metadata import MmcifDictionary as _MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary as _MmcifDictionary
 
 DIC_PATH = _MmcifDictionary.DATA_DIR / "mfdb_flr_ext.dic"
 

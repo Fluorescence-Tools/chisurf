@@ -63,7 +63,7 @@ def mfdb_info() -> dict:
     """
     path = ""
     try:
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 
         path = str(resolve_database_path())
     except Exception:

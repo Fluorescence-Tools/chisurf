@@ -10,7 +10,7 @@ import json
 from chisurf.plugins.jordi_g_factor.gui.client import JordiGFactorClient
 from chisurf.plugins.jordi_g_factor.backend.services import archive_g_factor_handler
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.schema import schema
 
 def test_archive_g_factor_provenance(tmp_path, monkeypatch):
     """Verify archive_g_factor registers the reference decay and parented calibration."""
@@ -26,11 +26,11 @@ def test_archive_g_factor_provenance(tmp_path, monkeypatch):
     
     # Monkeypatch the database resolver
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.object_store_root",
+        "chisurf.core.mfdb.store.database_resolver.object_store_root",
         lambda: object_root,
     )
     
@@ -85,7 +85,7 @@ def test_archive_g_factor_provenance(tmp_path, monkeypatch):
         assert calib_meta["calibration_type"] == "g_factor"
         
         # Check calibration payload
-        from chisurf.core.mfdb.result_registry import read_result
+        from chisurf.core.mfdb.provenance.result_registry import read_result
         payload = read_result(db, calib_id)
         assert payload is not None
         assert np.allclose(payload.data["g_factor"], 1.5)
@@ -129,7 +129,7 @@ def test_archive_g_factor_graceful_failure(tmp_path, monkeypatch):
     """Verify that archive_g_factor fails gracefully without raising when database is missing."""
     # Resolve to a db path in a non-existent subdirectory
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: tmp_path / "nonexistent_dir" / "db.sqlite",
     )
     

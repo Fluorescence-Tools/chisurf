@@ -147,7 +147,7 @@ def check_transformer_conformance(transformer: Transformer, conn: Any = None) ->
             f"{transformer.transformer_id}: transform is not callable"
         )
     if conn is not None:
-        from chisurf.core.mfdb.operation_parameters import get_operation_parameter_defs
+        from chisurf.core.mfdb.provenance.operation_parameters import get_operation_parameter_defs
 
         if not get_operation_parameter_defs(conn, transformer.operation_type):
             raise TransformerConformanceError(

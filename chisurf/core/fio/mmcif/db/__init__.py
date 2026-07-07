@@ -13,7 +13,7 @@ except ModuleNotFoundError:
         """
         return None
 from .repository import FluorescenceDatabase, FluorophoreDatabase
-from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.schema import schema
 try:
     from .importer import import_structure_file
 except ModuleNotFoundError:

@@ -6,7 +6,7 @@ import pathlib
 import sqlite3
 from unittest.mock import patch
 
-from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.schema import schema
 from chisurf.core.mfdb.repository import MFDatabase
 from mfdb.admin.backend.measurement_services import (
     archive_project_handler,
@@ -318,7 +318,7 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
         return_value=db_path,
     )
     database_resolver_patcher = patch(
-        "mfdb.database_resolver.resolve_database_path",
+        "mfdb.store.database_resolver.resolve_database_path",
         return_value=db_path,
     )
     patcher.start()
@@ -405,7 +405,7 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
 
 def test_archive_project_creates_artifacts(tmp_path: pathlib.Path) -> None:
     """Verify archive_project_to_mfdb creates proper artifacts for datasets."""
-    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+    from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 
     db_path = tmp_path / "test_archiver.db"
 
@@ -463,7 +463,7 @@ def test_archive_project_creates_artifacts(tmp_path: pathlib.Path) -> None:
 
 def test_archive_project_creates_source_objects(tmp_path: pathlib.Path) -> None:
     """Verify archive_project_to_mfdb stores source files in object store."""
-    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+    from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 
     db_path = tmp_path / "test_source_objects.db"
 
@@ -520,7 +520,7 @@ def test_archive_project_creates_source_objects(tmp_path: pathlib.Path) -> None:
 
 def test_archive_project_version_lineage(tmp_path: pathlib.Path) -> None:
     """Verify archive_project_to_mfdb creates supersedes edges for version lineage."""
-    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+    from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 
     db_path = tmp_path / "test_lineage.db"
 
@@ -563,7 +563,7 @@ def test_archive_project_version_lineage(tmp_path: pathlib.Path) -> None:
 
 def test_restore_project_from_artifacts(tmp_path: pathlib.Path) -> None:
     """Verify restore_project_from_artifacts reconstructs from individual artifacts."""
-    from chisurf.core.mfdb.project_archiver import (
+    from chisurf.core.mfdb.project.project_archiver import (
         archive_project_to_mfdb,
         restore_project_from_artifacts,
     )
@@ -605,7 +605,7 @@ def test_restore_project_from_artifacts(tmp_path: pathlib.Path) -> None:
 
 def test_archive_project_deduplicates_objects(tmp_path: pathlib.Path) -> None:
     """Verify same source file produces one object with refcount > 1."""
-    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+    from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 
     db_path = tmp_path / "test_dedup.db"
 
@@ -651,7 +651,7 @@ def test_archive_project_deduplicates_objects(tmp_path: pathlib.Path) -> None:
 
 def test_version_branching(tmp_path: pathlib.Path) -> None:
     """Verify branching creates correct supersedes edges forming a DAG."""
-    from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+    from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 
     db_path = tmp_path / "test_branching.db"
 

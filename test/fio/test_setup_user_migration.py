@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
     _load_mfdb_detector_setups,

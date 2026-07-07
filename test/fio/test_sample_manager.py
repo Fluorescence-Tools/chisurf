@@ -9,9 +9,9 @@ import pytest
 from chisurf.core.data import DataCurve
 from chisurf.core.experiments.core.reader import ExperimentReader
 from chisurf.core.mfdb.models import SampleDefinition
-from chisurf.core.mfdb.project_archiver import archive_project_to_mfdb
+from chisurf.core.mfdb.project.project_archiver import archive_project_to_mfdb
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.sample_manager import (
+from chisurf.core.mfdb.samples.sample_manager import (
     create_sample,
     find_sample_by_name,
     get_artifacts_for_sample,
@@ -75,7 +75,7 @@ def test_create_sample_idempotent(db):
 
 def test_create_sample_uses_sqlite_graph_adapter(db, monkeypatch):
     """Public sample creation uses the SQLite graph adapter by default."""
-    import mfdb.sample_manager as sample_manager
+    import mfdb.samples.sample_manager as sample_manager
 
     calls = []
 
@@ -306,7 +306,7 @@ def test_sample_definition_validation_disabled():
 
 def test_sample_create_request_to_definition():
     """SampleCreateRequest can be converted to SampleDefinition."""
-    from chisurf.core.mfdb.sample_requests import SampleCreateRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleCreateRequest
 
     request = SampleCreateRequest(
         name="request_sample",
@@ -327,7 +327,7 @@ def test_sample_create_request_to_definition():
 
 def test_sample_create_request_validates_vocabulary():
     """SampleCreateRequest validates vocabulary by default."""
-    from chisurf.core.mfdb.sample_requests import SampleCreateRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleCreateRequest
 
     with pytest.raises(ValueError, match="Invalid entity_type"):
         SampleCreateRequest(
@@ -339,7 +339,7 @@ def test_sample_create_request_validates_vocabulary():
 
 def test_sample_create_request_requires_name():
     """SampleCreateRequest requires a name."""
-    from chisurf.core.mfdb.sample_requests import SampleCreateRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleCreateRequest
 
     with pytest.raises(ValueError, match="sample name is required"):
         SampleCreateRequest(name="")
@@ -350,7 +350,7 @@ def test_sample_create_request_requires_name():
 
 def test_sample_update_request_requires_sample_id():
     """SampleUpdateRequest requires a sample_id."""
-    from chisurf.core.mfdb.sample_requests import SampleUpdateRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleUpdateRequest
 
     with pytest.raises(ValueError, match="sample_id is required"):
         SampleUpdateRequest(sample_id="")
@@ -358,7 +358,7 @@ def test_sample_update_request_requires_sample_id():
 
 def test_sample_link_request_validates_fields():
     """SampleLinkRequest validates required fields."""
-    from chisurf.core.mfdb.sample_requests import SampleLinkRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleLinkRequest
 
     with pytest.raises(ValueError, match="artifact_id is required"):
         SampleLinkRequest(artifact_id="", sample_id="sample_1")
@@ -369,7 +369,7 @@ def test_sample_link_request_validates_fields():
 
 def test_sample_query_request_validates_limits():
     """SampleQueryRequest validates limit and offset."""
-    from chisurf.core.mfdb.sample_requests import SampleQueryRequest
+    from chisurf.core.mfdb.samples.sample_requests import SampleQueryRequest
 
     with pytest.raises(ValueError, match="limit must be at least 1"):
         SampleQueryRequest(limit=0)
@@ -394,7 +394,7 @@ def test_create_sample_with_fret_pairs_and_positions(db):
         FretPairDefinition,
         ProbeDefinition,
     )
-    from chisurf.core.mfdb.sample_manager import get_sample_full_description
+    from chisurf.core.mfdb.samples.sample_manager import get_sample_full_description
 
     # Create a 3-color FRET sample with explicit entities, probes, and FRET pairs
     definition = SampleDefinition(

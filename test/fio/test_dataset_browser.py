@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from chisurf.core.mfdb.auth import _hash_token
+from chisurf.core.mfdb.security.auth import _hash_token
 from chisurf.core.mfdb.repository import MFDatabase
 
 
@@ -106,7 +106,7 @@ def temp_db(
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
 
@@ -359,7 +359,7 @@ def test_open_dataset_returns_local_path_for_object_store(
     obj_root = tmp_path / "obj_store"
     obj_root.mkdir()
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.object_store_root",
+        "chisurf.core.mfdb.store.database_resolver.object_store_root",
         lambda: obj_root,
     )
 
@@ -371,7 +371,7 @@ def test_open_dataset_returns_local_path_for_object_store(
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
 
@@ -441,7 +441,7 @@ def test_shifter_round_trip(
     obj_root = tmp_path / "obj_store"
     obj_root.mkdir()
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.object_store_root",
+        "chisurf.core.mfdb.store.database_resolver.object_store_root",
         lambda: obj_root,
     )
 
@@ -453,7 +453,7 @@ def test_shifter_round_trip(
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
 
@@ -471,7 +471,7 @@ def test_shifter_round_trip(
 
     # Patch _resolve_active_user_id to return alice for this test
     monkeypatch.setattr(
-        "chisurf.core.mfdb.result_registry._resolve_active_user_id",
+        "chisurf.core.mfdb.provenance.result_registry._resolve_active_user_id",
         lambda: "alice",
     )
 
@@ -480,7 +480,7 @@ def test_shifter_round_trip(
     src_file = tmp_path / "test_input.ptu"
     src_file.write_bytes(content)
 
-    from chisurf.core.mfdb.result_registry import register_raw_measurement
+    from chisurf.core.mfdb.provenance.result_registry import register_raw_measurement
     art_id = register_raw_measurement(
         file_path=str(src_file),
         db=db,
@@ -526,12 +526,12 @@ def test_processed_data_appears_in_browse(
     from mfdb.admin.backend.services import (
         datasets_browse_handler,
     )
-    from chisurf.core.mfdb.result_registry import register_result
+    from chisurf.core.mfdb.provenance.result_registry import register_result
 
     obj_root = tmp_path / "obj_store"
     obj_root.mkdir()
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.object_store_root",
+        "chisurf.core.mfdb.store.database_resolver.object_store_root",
         lambda: obj_root,
     )
 
@@ -543,7 +543,7 @@ def test_processed_data_appears_in_browse(
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
 
@@ -562,7 +562,7 @@ def test_processed_data_appears_in_browse(
 
     # Patch _resolve_active_user_id to return our test user
     monkeypatch.setattr(
-        "chisurf.core.mfdb.result_registry._resolve_active_user_id",
+        "chisurf.core.mfdb.provenance.result_registry._resolve_active_user_id",
         lambda: "regr_user",
     )
 
@@ -599,7 +599,7 @@ def test_register_result_fails_loud_on_real_error(tmp_path: Path) -> None:
     A vocabulary violation (bad operation_type) must propagate, not silently
     return "".
     """
-    from chisurf.core.mfdb.result_registry import register_result
+    from chisurf.core.mfdb.provenance.result_registry import register_result
 
     db_path = tmp_path / "loud_fail.db"
     db = MFDatabase(db_path)
@@ -675,7 +675,7 @@ def test_processed_dataset_with_unseeded_user_registers_and_browses(tmp_path, mo
         fail the created_by_user_id foreign key (ensure_user bootstraps it).
     """
     import chisurf.core.settings
-    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.core.mfdb.provenance import result_registry as rr
 
     # Active user that is NOT pre-seeded in flr_sample_users (config injection).
     monkeypatch.setitem(
@@ -711,7 +711,7 @@ def test_browse_datasets_format_filter_normalizes_dot(tmp_path):
     whether the caller passes 'ptu', '.ptu', or '.PTU'. The shifter's MFDB
     picker passed dotted formats, so it always returned zero datasets and the
     load-from-MFDB roundtrip was broken."""
-    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.core.mfdb.provenance import result_registry as rr
 
     db = MFDatabase(str(tmp_path / "fmt.db"))
     f = tmp_path / "meas.ptu"
@@ -735,7 +735,7 @@ def test_browse_handler_own_scope_uses_default_user_when_anonymous(tmp_path, mon
     must fall back to the configured default_user_id so it matches the owner that
     registration stamps. Otherwise 'Mine' shows nothing despite registered data."""
     import chisurf.core.settings
-    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.core.mfdb.provenance import result_registry as rr
     from mfdb.admin.backend import services as svc
 
     monkeypatch.setitem(
@@ -764,8 +764,8 @@ def test_real_mfdbclient_call_browses_datasets(tmp_path, monkeypatch):
     real client end to end.
     """
     import chisurf.core.settings
-    from chisurf.core.mfdb import result_registry as rr
-    import chisurf.core.mfdb.database_resolver as dr
+    from chisurf.core.mfdb.provenance import result_registry as rr
+    import chisurf.core.mfdb.store.database_resolver as dr
     from mfdb.admin.backend import services as svc
     from mfdb.admin.gui.client import MFDBClient
 
@@ -797,7 +797,7 @@ def test_datasets_open_allows_anonymous_with_default_user(tmp_path, monkeypatch)
     default user is configured (the in-process GUI client is anonymous). It
     previously failed with 'Authentication required', breaking the load."""
     import chisurf.core.settings
-    from chisurf.core.mfdb import result_registry as rr
+    from chisurf.core.mfdb.provenance import result_registry as rr
     from mfdb.admin.backend import services as svc
 
     monkeypatch.setitem(
@@ -890,8 +890,8 @@ def test_name_only_sample_appears_in_flr_sample_and_list(tmp_path):
     that name into flr_sample.description (the flrCIF/pdbx-canonical table), so it
     is not nameless in list_samples / search / browse. Previously the name lived
     only in mfdb_sample.display_name and flr_sample.description was empty."""
-    from chisurf.core.mfdb.sample_manager import create_sample
-    from chisurf.core.mfdb.sample_requests import SampleDefinition
+    from chisurf.core.mfdb.samples.sample_manager import create_sample
+    from chisurf.core.mfdb.samples.sample_requests import SampleDefinition
 
     db = MFDatabase(str(tmp_path / "s.db"))
     sid = create_sample(db, SampleDefinition(name="DNA-Al488-Cy5"))
@@ -974,8 +974,8 @@ def test_multi_owner_browse_and_dict_mapping(tmp_path, monkeypatch):
     """A dataset can be co-owned: each owner sees it under 'own'; non-owners do
     not. The mfdb_artifact_owner items map to live columns (dict-driven)."""
     import chisurf.core.settings
-    from chisurf.core.mfdb import result_registry as rr
-    from chisurf.core.mfdb.dictionary_schema_map import build_dictionary_schema_map
+    from chisurf.core.mfdb.provenance import result_registry as rr
+    from chisurf.core.mfdb.schema.dictionary_schema_map import build_dictionary_schema_map
 
     monkeypatch.setitem(
         chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "alice"}

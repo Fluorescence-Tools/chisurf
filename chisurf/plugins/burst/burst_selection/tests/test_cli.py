@@ -124,7 +124,7 @@ def test_analyze_mfdb_registers_raw_sample_and_group(tmp_path: Path) -> None:
     import shutil
 
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.result_registry import set_global_db
+    from chisurf.core.mfdb.provenance.result_registry import set_global_db
 
     # Copy the fixture so the co-located burst output folder lands in tmp.
     spc = tmp_path / "m000.spc"

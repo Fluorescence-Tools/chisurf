@@ -2,7 +2,7 @@
 
 Topologically evaluates a validated :class:`~chisurf.core.pipeline.model.Pipeline`
 and runs each node. Execution reuses the PRD-21 *replay-executor* seam: a node is a
-:class:`~chisurf.core.mfdb.compute_spec.ComputeSpec` (operation_type + parameters +
+:class:`~chisurf.core.mfdb.provenance.compute_spec.ComputeSpec` (operation_type + parameters +
 source artifact ids), run by the ``operation_type``'s registered executor, which
 materializes inputs, runs the pure PRD-16 ``transform``, and registers each output
 as a recorded operation. So a pipeline run is a chain of recorded operations with
@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from chisurf.core.mfdb.compute_spec import (
+from chisurf.core.mfdb.provenance.compute_spec import (
     ComputeSpec,
     NoReplayExecutorError,
     get_compute_spec,
@@ -75,7 +75,7 @@ def run_pipeline(
     Each node, in topological order, gathers its source artifact ids (external inputs
     for source nodes plus the outputs of upstream nodes), is run by its registered
     replay executor, and its produced artifact id(s) and recorded operation are
-    captured. Raises :class:`~chisurf.core.mfdb.compute_spec.NoReplayExecutorError`
+    captured. Raises :class:`~chisurf.core.mfdb.provenance.compute_spec.NoReplayExecutorError`
     if a node's ``operation_type`` has no registered executor.
     """
     if validate:

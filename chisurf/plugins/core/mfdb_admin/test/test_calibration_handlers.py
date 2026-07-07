@@ -7,7 +7,7 @@ the same type). A non-numeric value comes back as an ``error`` field.
 
 from __future__ import annotations
 
-from mfdb.staleness import record_calibration_use
+from mfdb.lifecycle.staleness import record_calibration_use
 from mfdb.admin.backend.services import (
     create_calibration_handler,
     list_calibrations_handler,

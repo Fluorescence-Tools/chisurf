@@ -92,10 +92,10 @@ def test_mfdb_auth_service_registers_auth_methods():
     auth_services.register_services(dispatcher)
 
     assert {
-        "mfdb.auth.login",
-        "mfdb.auth.logout",
-        "mfdb.auth.me",
-        "mfdb.auth.change_password",
+        "mfdb.security.auth.login",
+        "mfdb.security.auth.logout",
+        "mfdb.security.auth.me",
+        "mfdb.security.auth.change_password",
     }.issubset(dispatcher.handlers)
 
 

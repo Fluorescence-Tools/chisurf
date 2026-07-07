@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mfdb.result_registry import register_raw_measurement, set_global_db
+from mfdb.provenance.result_registry import register_raw_measurement, set_global_db
 
 
 def _register_one_raw(tmp_path: Path) -> str:

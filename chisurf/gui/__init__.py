@@ -1919,7 +1919,7 @@ class LoginDialog(QtWidgets.QDialog):
                                 QtWidgets.QMessageBox.critical(self, "Error", f"Failed to save password:\n{e}")
                 
                 import chisurf.core.settings as cs_settings
-                from chisurf.core.mfdb.credentials import (
+                from chisurf.core.mfdb.security.credentials import (
                     delete_session_token,
                     store_runtime_session_token,
                     store_session_token,
@@ -2048,7 +2048,7 @@ def get_app():
         """
         try:
             from mfdb.admin.gui.client import MFDBClient
-            from chisurf.core.mfdb.credentials import (
+            from chisurf.core.mfdb.security.credentials import (
                 delete_session_token,
                 load_session_token,
                 store_runtime_session_token,

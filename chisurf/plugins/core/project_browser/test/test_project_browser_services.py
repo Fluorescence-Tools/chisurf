@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture
 def project_db(tmp_path, monkeypatch):
-    from mfdb.auth import create_session
+    from mfdb.security.auth import create_session
     from mfdb.repository import MFDatabase
     from chisurf.plugins.core.project_browser.backend import services
 
@@ -23,11 +23,11 @@ def project_db(tmp_path, monkeypatch):
 
     monkeypatch.setattr(services, "resolve_database_path", lambda: db_path)
     monkeypatch.setattr(
-        "mfdb.database_resolver.resolve_database_path",
+        "mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "mfdb.database_resolver.object_store_root",
+        "mfdb.store.database_resolver.object_store_root",
         lambda: object_root,
     )
     return {"path": db_path, "auth": {"token": session["token"]}, "tmp_path": tmp_path}
@@ -318,7 +318,7 @@ def test_import_collision_preview_requires_and_applies_remap(
 
 
 def test_delete_version_requires_manage_permission(project_db, sample_project_payload):
-    from mfdb.auth import create_session
+    from mfdb.security.auth import create_session
     from mfdb.repository import MFDatabase
     from chisurf.plugins.core.project_browser.backend.services import (
         delete_version_handler,

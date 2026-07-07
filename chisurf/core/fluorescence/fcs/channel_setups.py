@@ -95,7 +95,7 @@ def _fcs_row_to_data(row: dict) -> dict:
         data.pop("setup_data", None)
 
     # Fetch full setup with child tables
-    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.store.database_resolver import resolve_database_path
     from chisurf.core.mfdb.repository import MFDatabase
     sid = row.get("setup_id")
     if sid:

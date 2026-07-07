@@ -110,8 +110,8 @@ def archive_g_factor_handler(
     """ZMQ RPC handler to register reference decay and archive G-factor calibration in MFDB."""
     logger.info("ZMQ RPC archive_g_factor_handler: starting (file=%s, user=%s)", file_path, active_user)
     try:
-        from chisurf.core.mfdb.result_registry import register_raw_measurement, register_calibration
-        from chisurf.core.mfdb.database_resolver import resolve_database_path
+        from chisurf.core.mfdb.provenance.result_registry import register_raw_measurement, register_calibration
+        from chisurf.core.mfdb.store.database_resolver import resolve_database_path
         from chisurf.core.mfdb.repository import MFDatabase
         import os
         import numpy as np
@@ -127,7 +127,7 @@ def archive_g_factor_handler(
             try:
                 with MFDatabase(db_path) as db:
                     if auth:
-                        from chisurf.core.mfdb.auth import principal_from_rpc_auth
+                        from chisurf.core.mfdb.security.auth import principal_from_rpc_auth
                         principal = principal_from_rpc_auth(db.conn, auth)
                         if principal and not getattr(principal, "is_anonymous", False):
                             user_id = principal.user_id
@@ -236,7 +236,7 @@ def archive_g_factor_handler(
         # processed_data artifact derived from the reference decay.
         derived_decay_id = ""
         if derived_decays is not None:
-            from chisurf.core.mfdb.result_registry import register_result
+            from chisurf.core.mfdb.provenance.result_registry import register_result
             derived_decay_id = register_result(
                 kind="processed_data",
                 data=derived_decays,

@@ -15,7 +15,7 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.core.fio.mmcif.db.pdbx_metadata import get_pdbx_metadata_keys
-from chisurf.core.mfdb.base import MFDBClientBase
+from chisurf.core.mfdb.security.base import MFDBClientBase
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.gui.widgets.sample_picker import show_sample_picker_dialog

@@ -33,10 +33,10 @@ class ProjectBrowserClient(MFDBClient):
 
     def _auto_auth(self) -> None:
         """Use the active MFDB login token for in-process project-browser RPC calls."""
-        from mfdb.database_resolver import resolve_database_path
+        from mfdb.store.database_resolver import resolve_database_path
         from mfdb.repository import MFDatabase
-        from mfdb.credentials import _RUNTIME_SESSION_TOKENS
-        from mfdb.auth import _hash_token
+        from mfdb.security.credentials import _RUNTIME_SESSION_TOKENS
+        from mfdb.security.auth import _hash_token
         import chisurf.core.settings as cs_settings
 
         try:

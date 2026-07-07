@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 
 from chisurf.core.mfdb.models import SampleDefinition
-from chisurf.core.mfdb.payload_models import BurstTable
+from chisurf.core.mfdb.store.payload_models import BurstTable
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import read_result, register_raw_measurement, set_global_db
-from chisurf.core.mfdb.sample_manager import create_sample, get_artifacts_for_sample
+from chisurf.core.mfdb.provenance.result_registry import read_result, register_raw_measurement, set_global_db
+from chisurf.core.mfdb.samples.sample_manager import create_sample, get_artifacts_for_sample
 from chisurf.plugins.burst.burst_selection.api import selection as selection_module
 from chisurf.plugins.burst.burst_selection.api.mfdb import BurstMFDBPipeline
 from chisurf.gui.widgets.wizard.tttr_channeldefinition.tttr_detector_setups import (
@@ -258,7 +258,7 @@ def test_burst_table_operation_links_selected_setup(db, tmp_path: Path) -> None:
 def test_unavailable_mfdb_reports_warning(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Missing MFDB does not crash registration and returns warnings."""
     input_path = _write_input(tmp_path)
-    monkeypatch.setattr("chisurf.core.mfdb.result_registry._get_global_db", lambda: None)
+    monkeypatch.setattr("chisurf.core.mfdb.provenance.result_registry._get_global_db", lambda: None)
     set_global_db(None)
 
     registration = BurstMFDBPipeline().register_run(_request(input_path), _result(input_path))

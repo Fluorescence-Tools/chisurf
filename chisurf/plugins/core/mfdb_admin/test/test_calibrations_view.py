@@ -10,7 +10,7 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from mfdb.staleness import record_calibration_use
+from mfdb.lifecycle.staleness import record_calibration_use
 from mfdb.admin.gui.calibrations_view import CalibrationsView
 from mfdb.admin.gui.client import MFDBClient
 

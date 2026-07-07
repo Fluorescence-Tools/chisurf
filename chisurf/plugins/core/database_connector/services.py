@@ -6,13 +6,13 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from mfdb.database_resolver import (
+from mfdb.store.database_resolver import (
     backup_database,
     resolve_database_path,
     source_database_path,
     user_database_path,
 )
-from mfdb.importer import import_structure_file
+from mfdb.samples.importer import import_structure_file
 from mfdb.repository import MFDatabase
 
 

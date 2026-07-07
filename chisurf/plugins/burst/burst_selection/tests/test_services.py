@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import set_global_db
+from chisurf.core.mfdb.provenance.result_registry import set_global_db
 from chisurf.plugins.burst.burst_selection.api.contract import (
     METHOD_ANALYZE_FILES,
     METHOD_DESCRIBE_CONTRACT,

@@ -85,7 +85,7 @@ class OperationHistory:
     def _persist_event(self, event: typing.Dict[str, typing.Any]) -> None:
         """Best-effort durable append of ``event`` to the MFDB event log."""
         try:
-            from chisurf.core.mfdb import event_log
+            from chisurf.core.mfdb.lifecycle import event_log
             event_log.append_event(event, history_version=self.HISTORY_VERSION)
         except Exception:
             pass
@@ -132,7 +132,7 @@ class OperationHistory:
         is available, so callers degrade gracefully offline.
         """
         if source == "mfdb":
-            from chisurf.core.mfdb import event_log
+            from chisurf.core.mfdb.lifecycle import event_log
             return event_log.read_events()
         with self._lock:
             return list(self._events)

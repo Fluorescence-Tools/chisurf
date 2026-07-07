@@ -14,7 +14,7 @@ import pytest
 
 tttrlib = pytest.importorskip("tttrlib")
 
-from chisurf.core.mfdb.compute_spec import (
+from chisurf.core.mfdb.provenance.compute_spec import (
     NoReplayExecutorError,
     get_compute_spec,
     recompute,
@@ -22,7 +22,7 @@ from chisurf.core.mfdb.compute_spec import (
     unregister_replay_executor,
 )
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import (
+from chisurf.core.mfdb.provenance.result_registry import (
     register_raw_measurement,
     register_result,
     set_global_db,
@@ -99,7 +99,7 @@ def test_replay_with_override_applies_new_parameter(chain):
 
 
 def test_executor_is_registered_for_operation_type(chain):
-    from chisurf.core.mfdb.compute_spec import get_replay_executor
+    from chisurf.core.mfdb.provenance.compute_spec import get_replay_executor
 
     assert get_replay_executor(OPERATION_TYPE) is not None
 

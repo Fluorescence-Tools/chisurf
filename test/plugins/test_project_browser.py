@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from chisurf.core.mfdb.auth import PERM_READ, PERM_WRITE, PERM_MANAGE
+from chisurf.core.mfdb.security.auth import PERM_READ, PERM_WRITE, PERM_MANAGE
 from chisurf.core.project.archive import ProjectArchive
 from chisurf.plugins.core.project_browser.backend.services import (
     list_projects_handler,
@@ -38,7 +38,7 @@ def admin_auth():
 def temp_db(monkeypatch, tmp_path):
     """Create a temporary MFDB and patch resolve_database_path to use it."""
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.auth import _hash_token
+    from chisurf.core.mfdb.security.auth import _hash_token
 
     db_path = tmp_path / "test_mfdb.db"
     db = MFDatabase(db_path)
@@ -77,7 +77,7 @@ def temp_db(monkeypatch, tmp_path):
         _mock_resolve,
     )
     monkeypatch.setattr(
-        "chisurf.core.mfdb.database_resolver.resolve_database_path",
+        "chisurf.core.mfdb.store.database_resolver.resolve_database_path",
         _mock_resolve,
     )
 

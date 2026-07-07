@@ -28,7 +28,7 @@ def qapp():
 @pytest.fixture
 def seeded_admin_db(db, tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "mfdb.database_resolver.object_store_root",
+        "mfdb.store.database_resolver.object_store_root",
         lambda: tmp_path / "objects",
     )
     db.add_user("user_default", "Default User")

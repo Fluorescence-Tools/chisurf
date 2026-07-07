@@ -42,11 +42,11 @@ def seeded_db(tmp_path, monkeypatch):
     monkeypatch.setattr(services, "source_database_path", lambda: source_path)
     monkeypatch.setattr(services, "user_database_path", lambda: db_path)
     monkeypatch.setattr(
-        "mfdb.database_resolver.resolve_database_path",
+        "mfdb.store.database_resolver.resolve_database_path",
         lambda: db_path,
     )
     monkeypatch.setattr(
-        "mfdb.database_resolver.object_store_root",
+        "mfdb.store.database_resolver.object_store_root",
         lambda: object_root,
     )
     services.close_handler()

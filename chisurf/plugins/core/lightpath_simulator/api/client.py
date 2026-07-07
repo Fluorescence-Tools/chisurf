@@ -25,7 +25,7 @@ class LightPathClient:
     def from_settings(cls, timeout_ms: int = 5000) -> LightPathClient:
         """Create a ZMQ MFDB client using the current ChiSurf settings."""
         import chisurf.core.settings as cs_settings
-        from chisurf.core.mfdb.credentials import (
+        from chisurf.core.mfdb.security.credentials import (
             load_runtime_session_token,
             load_session_token,
             store_runtime_session_token,

@@ -147,7 +147,7 @@ def push_staging_to_mfdb(
     then de-duplicates. Used by the browser's "Push selected / Push all" actions.
     Returns ``{"merged": n, "consolidated": {...}}``.
     """
-    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 
     target = mfdb_path or str(resolve_database_path())
     # Open as FluorophoreDatabase so register_component is available (it is an

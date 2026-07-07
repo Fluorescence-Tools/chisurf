@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from chisurf.core.mfdb.result_registry import register_raw_measurement, set_global_db
+from chisurf.core.mfdb.provenance.result_registry import register_raw_measurement, set_global_db
 from chisurf.plugins.ndxplorer.mfdb_launcher import BURST_KINDS, resolve_dataset_path
 
 
@@ -38,7 +38,7 @@ def test_resolve_external_reference_directory_via_metadata(tmp_path):
     no file_path) with its on-disk path in metadata — resolve_dataset_path must
     return that path (the .bur folder co-located with the TTTR files, preserving
     the photon-index linkage), not fail."""
-    from chisurf.core.mfdb.result_registry import register_raw_measurement, register_result
+    from chisurf.core.mfdb.provenance.result_registry import register_raw_measurement, register_result
     from mfdb.admin.gui.client import MFDBClient
 
     burst_dir = tmp_path / "burstwise"

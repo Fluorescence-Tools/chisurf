@@ -42,9 +42,9 @@ def cli():
 @click.option('--skip-nth-row', type=int, default=1, show_default=True, help="Skip every Nth row (1 to load all).")
 def filter_cmd(from_mfdb, select, query, out, to_mfdb, sample_id, db_path, skip_nth_row):
     """Run parameter-based burst filtering on a burst selection from MFDB."""
-    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.store.database_resolver import resolve_database_path
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.result_registry import register_result
+    from chisurf.core.mfdb.provenance.result_registry import register_result
     
     resolved_db_path = db_path or resolve_database_path()
     logging.info(f"Opening database: {resolved_db_path}")
@@ -151,9 +151,9 @@ def filter_cmd(from_mfdb, select, query, out, to_mfdb, sample_id, db_path, skip_
 @click.option('--skip-nth-row', type=int, default=1, show_default=True, help="Skip every Nth row (1 to load all).")
 def image_cmd(from_mfdb, map_param, select, query, roi, out, out_selection, to_mfdb, sample_id, db_path, skip_nth_row):
     """Run parameter map rendering and ROI selection from MFDB image/TTTR data."""
-    from chisurf.core.mfdb.database_resolver import resolve_database_path
+    from chisurf.core.mfdb.store.database_resolver import resolve_database_path
     from chisurf.core.mfdb.repository import MFDatabase
-    from chisurf.core.mfdb.result_registry import register_result
+    from chisurf.core.mfdb.provenance.result_registry import register_result
     
     resolved_db_path = db_path or resolve_database_path()
     logging.info(f"Opening database: {resolved_db_path}")

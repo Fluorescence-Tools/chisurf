@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.schema import schema
 
 
 def test_fresh_db_gets_full_schema():

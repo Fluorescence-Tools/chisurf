@@ -10,7 +10,7 @@ from typing import Any
 
 import numpy as np
 
-from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.store.database_resolver import resolve_database_path
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.plugins.core.lightpath_simulator.backend.simulator import (
     OpticalPathSimulator,

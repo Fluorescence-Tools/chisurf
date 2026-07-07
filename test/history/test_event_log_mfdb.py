@@ -23,9 +23,9 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 import chisurf.history as history
-from chisurf.core.mfdb import event_log
+from chisurf.core.mfdb.lifecycle import event_log
 from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import set_global_db
+from chisurf.core.mfdb.provenance.result_registry import set_global_db
 
 
 class _DBTestCase(unittest.TestCase):
@@ -120,7 +120,7 @@ class TestRecordDualWrite(_DBTestCase):
 
 class TestProjectArchiveRoundTrip(_DBTestCase):
     def test_archive_then_restore_preserves_history(self):
-        from chisurf.core.mfdb.project_archiver import (
+        from chisurf.core.mfdb.project.project_archiver import (
             archive_project_to_mfdb,
             restore_project_from_artifacts,
         )
@@ -175,7 +175,7 @@ class TestNoDbRegression(_DBTestCase):
         # Force genuinely-no-MFDB: on a dev box _get_global_db falls back to the
         # configured user database, so patch it to None to exercise offline mode
         # (and to avoid writing to the real user DB).
-        with mock.patch("chisurf.core.mfdb.result_registry._get_global_db", return_value=None):
+        with mock.patch("chisurf.core.mfdb.provenance.result_registry._get_global_db", return_value=None):
             hist = history.OperationHistory()
             ev = hist.record("dataset.add", "add", {"loaded_names": ["ds0"]})
             # in-memory history fully functional
