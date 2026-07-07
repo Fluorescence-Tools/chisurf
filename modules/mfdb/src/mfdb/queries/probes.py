@@ -650,22 +650,14 @@ class ProbeMixin:
                     if not pname or not pval:
                         continue
                     with self.conn:
-                        self.conn.execute(
-                            """INSERT OR REPLACE INTO optical_properties
-                               (probe_id, property_name, property_value, unit, details,
-                                created_at, updated_at, deleted_at)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (
-                                probe_id,
-                                pname,
-                                pval,
-                                str(prop["unit"] or ""),
-                                str(prop["details"] or ""),
-                                now,
-                                now,
-                                None,
-                            ),
-                        )
+                        self.dao.upsert("optical_properties", {
+                            "probe_id": probe_id,
+                            "property_name": pname,
+                            "property_value": pval,
+                            "unit": str(prop["unit"] or ""),
+                            "details": str(prop["details"] or ""),
+                            "deleted_at": None,
+                        }, conflict=["probe_id", "property_name"])
                         imported_props += 1
 
                 # Copy spectra (by probe_id — item_id is NULL for many rows)
@@ -680,25 +672,16 @@ class ProbeMixin:
                     if not stype or not wl or not iv:
                         continue
                     with self.conn:
-                        self.conn.execute(
-                            """INSERT OR REPLACE INTO spectra
-                               (probe_id, spectrum_type, wavelengths, intensity_values,
-                                wavelength_unit, intensity_unit, details,
-                                created_at, updated_at, deleted_at)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (
-                                probe_id,
-                                stype,
-                                wl,
-                                iv,
-                                "nm",
-                                "normalized",
-                                f"Imported from spectra_db (source probe_id={src_p['probe_id']})",
-                                now,
-                                now,
-                                None,
-                            ),
-                        )
+                        self.dao.upsert("spectra", {
+                            "probe_id": probe_id,
+                            "spectrum_type": stype,
+                            "wavelengths": wl,
+                            "intensity_values": iv,
+                            "wavelength_unit": "nm",
+                            "intensity_unit": "normalized",
+                            "details": f"Imported from spectra_db (source probe_id={src_p['probe_id']})",
+                            "deleted_at": None,
+                        }, conflict=["probe_id", "spectrum_type"])
                         imported_spectra += 1
 
             # Consolidate duplicate probes and merge their spectra/properties
