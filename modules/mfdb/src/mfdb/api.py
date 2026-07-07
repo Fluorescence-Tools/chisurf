@@ -908,7 +908,7 @@ def save_chinet_session(
     dict
         RPC result containing storage summary.
     """
-    from mfdb.chinet_adapter import store_chinet_session
+    from mfdb.adapters.chinet import store_chinet_session
     from chinet.schema import session_from_schema
 
     with MFDatabase(resolve_database_path()) as db:
@@ -938,7 +938,7 @@ def get_chinet_session(artifact_id: str) -> dict[str, Any]:
     dict
         RPC result containing artifact and session schema.
     """
-    from mfdb.chinet_adapter import load_chinet_session
+    from mfdb.adapters.chinet import load_chinet_session
 
     with MFDatabase(resolve_database_path()) as db:
         session = load_chinet_session(db, artifact_id)

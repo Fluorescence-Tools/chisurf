@@ -128,7 +128,7 @@ def test_payload_flrcif_item_ids_exist_in_bundled_dictionary():
 
 
 def test_payload_flrcif_item_ids_use_existing_parameter_translation():
-    from mfdb.chinet_adapter import _load_parameter_registry, _lookup_flrcif_name
+    from mfdb.adapters.chinet import _load_parameter_registry, _lookup_flrcif_name
 
     if not _load_parameter_registry():
         pytest.skip(

@@ -23,7 +23,7 @@ def _configure_backend_from_request(args, kwargs):
         DB.set_backend(backend)
         return backend
     if _is_mfdb_request(args, kwargs):
-        from chisurf.core.mfdb.chinet_adapter import configure_mfdb_backend
+        from chisurf.core.mfdb.adapters.chinet import configure_mfdb_backend
 
         if args and args[0] == "mfdb":
             db_path = kwargs.pop("db_path", None)

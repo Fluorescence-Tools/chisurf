@@ -8,7 +8,7 @@ import pytest
 from chisurf.core.data import DataCurve
 from chisurf.core.fitting.fit import Fit
 from chisurf.core.fitting.parameter import FittingParameter
-from chisurf.core.mfdb.chinet_adapter import archive_fit_to_mfdb
+from chisurf.core.mfdb.adapters.chinet import archive_fit_to_mfdb
 from chisurf.core.mfdb.repository import MFDatabase
 from chisurf.core.models.model import ModelCurve
 

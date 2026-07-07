@@ -5,7 +5,7 @@ import json
 import chinet as cn
 import pytest
 
-from mfdb.chinet_adapter import (
+from mfdb.adapters.chinet import (
     clear_mfdb_backend,
     load_chinet_session,
     store_chinet_session,

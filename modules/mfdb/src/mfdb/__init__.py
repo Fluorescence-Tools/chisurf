@@ -2,7 +2,7 @@
 
 from .security import auth
 from .security.base import MFDBClientBase
-from .chinet_adapter import (
+from .adapters.chinet import (
     CHINET_NODE_ARTIFACT,
     CHINET_SESSION_ARTIFACT,
     FIT_STATE_SCHEMA,

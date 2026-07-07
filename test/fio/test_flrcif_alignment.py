@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from mfdb.schema.pdbx_metadata import MmcifDictionary
-from mfdb.chinet_adapter import (
+from mfdb.adapters.chinet import (
     _load_parameter_registry,
     _lookup_flrcif_name,
 )

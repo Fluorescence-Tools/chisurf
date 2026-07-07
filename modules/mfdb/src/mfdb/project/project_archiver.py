@@ -4,7 +4,7 @@ This module provides :func:`archive_project_to_mfdb` which stores a ChiSurf
 project with full provenance: source files in the object store, derived datasets
 as artifacts, fit results with chinet sessions, parameters in the parameter table,
 and dependency edges.  It follows the patterns established by
-:mod:`mfdb.chinet_adapter` and
+:mod:`mfdb.adapters.chinet` and
 :class:`chisurf.core.experiments.core.reader.ExperimentReader`.
 """
 
@@ -27,7 +27,7 @@ from mfdb.samples.sample_manager import link_artifact_to_sample
 
 # Re-use constants from chinet_adapter when available
 try:
-    from mfdb.chinet_adapter import (
+    from mfdb.adapters.chinet import (
         FIT_STATE_SCHEMA,
     )
 except ImportError:
@@ -128,7 +128,7 @@ def archive_project_to_mfdb(
        artifact, then stores the derived data (arrays) as a
        ``processed_data`` artifact.
     3. Delegates each fit to
-       :func:`~mfdb.chinet_adapter.archive_fit_to_mfdb`
+       :func:`~mfdb.adapters.chinet.archive_fit_to_mfdb`
        which stores chinet sessions, node artifacts, fit-result artifacts,
        parameters, and dependency edges.
     4. Creates ``project_contains`` edges linking the project operation to
@@ -367,7 +367,7 @@ def archive_project_to_mfdb(
                 fit_state_payload = local_fit.get("fit_state") or {}
 
                 # -- 3a. Build chinet session from serialized payload --
-                from mfdb.chinet_adapter import (
+                from mfdb.adapters.chinet import (
                     CHINET_NODE_ARTIFACT,
                     CHINET_SESSION_ARTIFACT,
                     _artifact_id,
@@ -376,7 +376,7 @@ def archive_project_to_mfdb(
                     _store_fit_state_parameters,
                     _validate_fit_state_payload,
                 )
-                from mfdb.chinet_adapter import (
+                from mfdb.adapters.chinet import (
                     _json_dumps as chinet_json,
                 )
 
