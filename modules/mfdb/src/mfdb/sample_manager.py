@@ -649,6 +649,7 @@ def _insert_entity(db: MFDatabase, sample_id: str, definition: SampleDefinition)
                 entity_type=entity.entity_type or "polymer",
                 details=entity.details or None,
             )
+            _persist_entity_external_refs(db, entity_id, entity)
             entity_ids.append(entity_id)
     # Fall back to legacy flat fields for backward compatibility
     elif definition.entity_name:
@@ -663,6 +664,78 @@ def _insert_entity(db: MFDatabase, sample_id: str, definition: SampleDefinition)
         entity_ids.append(entity_id)
 
     return entity_ids
+
+
+def _persist_entity_external_refs(db: MFDatabase, entity_id: str, entity) -> None:
+    """Record an entity's external DB cross-references and mutations (PRD-39).
+
+    ``uniprot_accession`` / ``pdb_id`` are cross-references to external databases
+    (UniProt, PDB); they are recorded as mmCIF ``struct_ref`` rows so downstream
+    tools can populate and aggregate information from those sources. Engineered
+    mutations (given explicitly, or auto-diffed from ``reference_sequence``) are
+    recorded as ``struct_ref_seq_dif`` rows aligned to the primary reference.
+
+    Nothing is written for an entity with no references and no mutations.
+    """
+    mutations = list(entity.mutations or [])
+    if not mutations and entity.reference_sequence and entity.sequence:
+        from mfdb.external_refs import diff_sequences
+
+        mutations = diff_sequences(entity.sequence, entity.reference_sequence)
+
+    refs: list[tuple[str, str]] = []
+    if entity.uniprot_accession:
+        refs.append(("UNP", entity.uniprot_accession))
+    if entity.pdb_id:
+        refs.append(("PDB", entity.pdb_id))
+
+    if not refs and not mutations:
+        return
+
+    # Writes go through the dictionary-driven DAO (PRD-26), not hand SQL.
+    # ref_id / align_id are TEXT primary keys — assign explicit, stable values.
+    primary_align_id = None
+    seq_len = len(entity.sequence or "")
+    for i, (db_name, accession) in enumerate(refs):
+        ref_id = f"{entity_id}_{db_name.lower()}"
+        db.dao.insert(
+            "struct_ref",
+            {
+                "ref_id": ref_id,
+                "entity_id": entity_id,
+                "db_name": db_name,
+                "pdbx_db_accession": accession,
+                "organism": entity.organism,
+                "pdbx_seq_one_letter_code": entity.reference_sequence,
+            },
+        )
+        # The primary (first) reference carries the sequence alignment.
+        if i == 0 and seq_len:
+            primary_align_id = f"{entity_id}_align"
+            db.dao.insert(
+                "struct_ref_seq",
+                {
+                    "align_id": primary_align_id,
+                    "ref_id": ref_id,
+                    "seq_align_beg": 1,
+                    "seq_align_end": seq_len,
+                    "pdbx_db_accession": accession,
+                },
+            )
+
+    for m in mutations:
+        if primary_align_id is None:
+            break
+        db.dao.insert(
+            "struct_ref_seq_dif",
+            {
+                "align_id": primary_align_id,
+                "seq_num": m.seq_id,
+                "mon_id": m.mut_comp_id,
+                "db_mon_id": m.wt_comp_id,
+                "details": "ENGINEERED MUTATION",
+            },
+        )
 
 
 def _insert_all_probe_positions(
@@ -1448,6 +1521,31 @@ def _get_entity_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
             sequence = "".join(dict(r)["mon_id"] for r in seq_rows)
             entity_info["sequence"] = sequence
 
+        # External DB cross-references (single-table read via the DAO) and
+        # engineered mutations (a struct_ref -> seq -> dif join; bespoke).
+        entity_info["external_refs"] = [
+            {"db_name": r["db_name"], "accession": r["pdbx_db_accession"]}
+            for r in db.dao.list(
+                "struct_ref", filters={"entity_id": entity_id}, order_by="ref_id"
+            )
+        ]
+        entity_info["mutations"] = [
+            {
+                "seq_id": r["seq_num"],
+                "mut_comp_id": r["mon_id"],
+                "wt_comp_id": r["db_mon_id"],
+                "details": r["details"],
+            }
+            for r in db.conn.execute(
+                "SELECT d.seq_num, d.mon_id, d.db_mon_id, d.details "
+                "FROM struct_ref_seq_dif d "
+                "JOIN struct_ref_seq s ON d.align_id = s.align_id "
+                "JOIN struct_ref r ON s.ref_id = r.ref_id "
+                "WHERE r.entity_id = ? AND d.deleted_at IS NULL ORDER BY d.seq_num",
+                (entity_id,),
+            )
+        ]
+
         entities.append(entity_info)
 
     return entities
@@ -1508,6 +1606,7 @@ def _get_probe_info(db: MFDatabase, sample_id: str) -> list[dict[str, Any]]:
                     "residue_name": pos_dict.get("residue_name"),
                     "description": pos_dict.get("description"),
                     # New flrCIF fields (PRD-02)
+                    "entity_id": pos_dict.get("entity_id"),
                     "entity_index": pos_dict.get("entity_index"),
                     "seq_id": pos_dict.get("seq_id"),
                     "comp_id": pos_dict.get("comp_id"),
@@ -1705,7 +1804,11 @@ def validate_sample_for_export(db: MFDatabase, sample_id: str) -> list[str]:
         if position.get("mutation_flag") != "yes":
             continue
         eid = position.get("entity_id")
+        # seq_id is the flrCIF residue number; fall back to the legacy
+        # residue_number column when the new field is not populated.
         seq_id = position.get("seq_id")
+        if seq_id is None:
+            seq_id = position.get("residue_number")
         label = position.get("auth_name") or probe.get("probe_name") or "probe"
         if seq_id is None:
             continue
@@ -1717,7 +1820,7 @@ def validate_sample_for_export(db: MFDatabase, sample_id: str) -> list[str]:
             )
             continue
         recorded = entity_muts[seq_id]
-        probe_comp = position.get("comp_id")
+        probe_comp = position.get("comp_id") or position.get("residue_name")
         if recorded and probe_comp and recorded != probe_comp:
             warnings.append(
                 f"Probe '{label}' residue {probe_comp} disagrees with the "

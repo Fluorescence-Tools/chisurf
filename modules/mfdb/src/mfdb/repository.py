@@ -3221,7 +3221,8 @@ class MFDatabase(
                 return ""
             try:
                 return " ".join(f"{float(v):.8g}" for v in np.frombuffer(blob, dtype=dtype))
-            except ValueError:
+            except (ValueError, TypeError):
+                # TypeError: blob is text (e.g. JSON), not a bytes buffer.
                 pass
             try:
                 values = json.loads(blob)

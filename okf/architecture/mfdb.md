@@ -76,6 +76,22 @@ not duplicate identity rows.
 
 `api.py` is the transport-agnostic function API for the store.
 
+## Data access — one engine, raw SQL is an antipattern
+
+CRUD goes through the dictionary-driven **`DictionaryDao`** (`db.dao`), which
+whitelists every identifier against the reflected schema and binds all values:
+`db.dao.insert / upsert / get / list / update / soft_delete`. New code **must**
+use it. Hand-written / f-string / raw `db.conn.execute("INSERT …")` SQL for
+create-read-update-delete is an **antipattern** — it duplicates the one engine,
+bypasses schema-whitelisting and audit-column handling, and drifts from the
+`.dic` source of truth (PRD-26/INC-05). Any remaining raw-SQL CRUD in the
+repository is legacy debt being migrated onto the DAO, not a pattern to copy.
+
+Raw SQL is reserved for genuinely **bespoke reads** the single-table DAO cannot
+express — multi-table joins, graph/lineage traversal, aggregates, export — kept
+as organized methods on the relevant concern mixin. When in doubt: a CRUD shape
+is DAO; a join/traversal is a bespoke method.
+
 # Object store & provenance-aware readers
 
 MFDB has a content-addressed **object store** (`object_store.py`): blobs are
