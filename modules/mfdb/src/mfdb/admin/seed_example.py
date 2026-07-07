@@ -55,12 +55,11 @@ def _upsert_probe(
     db: MFDatabase, name: str, type_id: int, *, category: str,
     abs_max: float, em_max: float, qy: float, ext_coeff: float | None = None,
 ) -> int:
-    row = db.conn.execute(
-        "SELECT probe_id FROM probes WHERE chromophore_name = ? AND type_id = ?",
-        (name, type_id),
-    ).fetchone()
-    if row:
-        return int(row["probe_id"])
+    rows = db.dao.list(
+        "probes", filters={"chromophore_name": name, "type_id": type_id}, limit=1
+    )
+    if rows:
+        return int(rows[0]["probe_id"])
     probe_id = db.add_probe(name, type_id, category=category)
     db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
     db.add_optical_property(probe_id, "em_max", em_max, unit="nm")
@@ -72,7 +71,7 @@ def _upsert_probe(
 
 
 def _upsert_user(db: MFDatabase, user_id: str, display_name: str, email: str | None = None) -> None:
-    if db.conn.execute("SELECT 1 FROM flr_sample_users WHERE user_id=?", (user_id,)).fetchone():
+    if db.dao.get("flr_sample_users", user_id) is not None:
         return
     db.add_user(user_id, display_name, email=email)
     logger.info("Created user %s (%s)", user_id, display_name)
@@ -82,87 +81,71 @@ def _upsert_device(
     db: MFDatabase, device_id: str, name: str, /,
     device_type: str | None = None, model: str | None = None, serial: str | None = None,
 ) -> None:
-    if db.conn.execute("SELECT 1 FROM flr_sample_devices WHERE device_id=?", (device_id,)).fetchone():
+    if db.dao.get("flr_sample_devices", device_id) is not None:
         return
     db.add_device(device_id, name, device_type=device_type, model=model, serial_number=serial)
     logger.info("Created device %s (%s)", device_id, name)
 
 
 def _upsert_entity(db: MFDatabase, entity_id: str, seq: list[str]) -> None:
-    """Insert directly -- add_entity API is incompatible with the schema."""
-    if db.conn.execute("SELECT 1 FROM entities WHERE entity_id=?", (entity_id,)).fetchone():
+    """Seed an entity + poly-seq via the dao; add_entity API is schema-incompatible."""
+    if db.dao.get("entities", entity_id) is not None:
         return
     with db.conn:
-        db.conn.execute(
-            "INSERT INTO entities (entity_id, type, description, common_name) "
-            "VALUES (?, ?, ?, ?)",
-            (entity_id, "polymer",
-             "Demo DNA smFRET sample labeled with Alexa488/Alexa647", "Demo DNA"),
-        )
+        db.dao.insert("entities", {
+            "entity_id": entity_id,
+            "type": "polymer",
+            "description": "Demo DNA smFRET sample labeled with Alexa488/Alexa647",
+            "common_name": "Demo DNA",
+        })
         for i, mon_id in enumerate(seq, start=1):
-            db.conn.execute(
-                "INSERT INTO entity_poly_seq (entity_id, num, mon_id) VALUES (?, ?, ?)",
-                (entity_id, i, mon_id),
-            )
+            db.dao.insert("entity_poly_seq", {"entity_id": entity_id, "num": i, "mon_id": mon_id})
     logger.info("Created entity %s (%d bp)", entity_id, len(seq))
 
 
 def _upsert_entity_assembly(db: MFDatabase, assembly_id: str, description: str) -> None:
-    if db.conn.execute(
-        "SELECT 1 FROM flr_entity_assembly WHERE assembly_id=?", (assembly_id,)
-    ).fetchone():
+    if db.dao.get("flr_entity_assembly", assembly_id) is not None:
         return
     with db.conn:
-        db.conn.execute(
-            "INSERT INTO flr_entity_assembly (assembly_id, description) VALUES (?, ?)",
-            (assembly_id, description),
-        )
+        db.dao.insert("flr_entity_assembly", {"assembly_id": assembly_id, "description": description})
 
 
 def _upsert_sample_condition(
     db: MFDatabase, condition_id: str, *,
     ph: float, temperature: float, buffer: str,
 ) -> None:
-    if db.conn.execute(
-        "SELECT 1 FROM flr_sample_condition WHERE condition_id=?", (condition_id,)
-    ).fetchone():
+    if db.dao.get("flr_sample_condition", condition_id) is not None:
         return
     with db.conn:
-        db.conn.execute(
-            "INSERT INTO flr_sample_condition "
-            "(condition_id, ph, temperature, buffer_composition, details) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (condition_id, ph, temperature, buffer,
-             f"pH {ph} at {temperature} K"),
-        )
+        db.dao.insert("flr_sample_condition", {
+            "condition_id": condition_id,
+            "ph": ph,
+            "temperature": temperature,
+            "buffer_composition": buffer,
+            "details": f"pH {ph} at {temperature} K",
+        })
 
 
 def _upsert_poly_probe_position(
     db: MFDatabase, probe_id: int, entity_id: str, residue: int, chain: str = "A",
 ) -> int:
-    row = db.conn.execute(
-        "SELECT id FROM flr_poly_probe_position "
-        "WHERE probe_id=? AND entity_id=? AND asym_id=? AND residue_number=?",
-        (probe_id, entity_id, chain, residue),
-    ).fetchone()
-    if row:
-        return int(row["id"])
+    rows = db.dao.list("flr_poly_probe_position", filters={
+        "probe_id": probe_id, "entity_id": entity_id,
+        "asym_id": chain, "residue_number": residue,
+    }, limit=1)
+    if rows:
+        return int(rows[0]["id"])
     with db.conn:
-        cursor = db.conn.execute(
-            "INSERT INTO flr_poly_probe_position "
-            "(probe_id, entity_id, asym_id, residue_number, residue_name) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (probe_id, entity_id, chain, residue, "DA"),
-        )
-        return cursor.lastrowid
+        return db.dao.insert("flr_poly_probe_position", {
+            "probe_id": probe_id, "entity_id": entity_id, "asym_id": chain,
+            "residue_number": residue, "residue_name": "DA",
+        })
 
 
 def _upsert_experiment_type(db: MFDatabase, name: str, category: str, description: str) -> int:
-    row = db.conn.execute(
-        "SELECT type_id FROM flr_experiment_type WHERE name=?", (name,)
-    ).fetchone()
-    if row:
-        return int(row["type_id"])
+    rows = db.dao.list("flr_experiment_type", filters={"name": name}, limit=1)
+    if rows:
+        return int(rows[0]["type_id"])
     return db.add_experiment_type(name, category=category, description=description)
 
 
@@ -173,14 +156,12 @@ def _ensure_probe_types(db: MFDatabase) -> dict[str, int]:
                         ("nucleic_acid", "Nucleic acid fluorophore")]:
         if name not in existing:
             with db.conn:
-                db.conn.execute(
-                    "INSERT OR IGNORE INTO probe_types (type_name, display_name) VALUES (?, ?)",
-                    (name, desc),
+                db.dao.upsert(
+                    "probe_types", {"type_name": name, "display_name": desc},
+                    conflict=["type_name"],
                 )
-            row = db.conn.execute(
-                "SELECT type_id FROM probe_types WHERE type_name=?", (name,)
-            ).fetchone()
-            existing[name] = int(row["type_id"]) if row else len(existing) + 1
+            rows = db.dao.list("probe_types", filters={"type_name": name}, limit=1)
+            existing[name] = int(rows[0]["type_id"]) if rows else len(existing) + 1
     return existing
 
 
@@ -303,9 +284,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                 continue
             summary["used_test_files"].append(str(spc_path))
             raw_id = f"raw_demo_sm_dna_{i:03d}"
-            if db.conn.execute(
-                "SELECT 1 FROM mfdb_artifact WHERE artifact_id=?", (raw_id,)
-            ).fetchone():
+            if db.dao.get("mfdb_artifact", raw_id) is not None:
                 raw_ids.append(raw_id)
                 continue
             db.add_raw_data_reference(
@@ -334,9 +313,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
         unlinked_path = _spc_path(0)
         if unlinked_path.exists():
             unlinked_raw_id = "raw_demo_unlinked_sample_red_flag"
-            if not db.conn.execute(
-                "SELECT 1 FROM mfdb_artifact WHERE artifact_id=?", (unlinked_raw_id,)
-            ).fetchone():
+            if db.dao.get("mfdb_artifact", unlinked_raw_id) is None:
                 db.add_raw_data_reference(
                     raw_data_id=unlinked_raw_id,
                     experiment_id=d["experiment_id"],
@@ -353,9 +330,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
         # --- Processing run (direct SQL to bypass PK mismatch in record_operation_link) ---
-        if not db.conn.execute(
-            "SELECT 1 FROM mfdb_operation WHERE operation_id=?", (d["processing_id"],)
-        ).fetchone():
+        if db.dao.get("mfdb_operation", d["processing_id"]) is None:
             settings = {
                 "photon_filter": {"routing_channels": [0, 1]},
                 "burst_detection": {
@@ -379,8 +354,8 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                     started_at=now,
                     ended_at=now,
                 )
-                # Link input raw data artifacts (use INSERT OR REPLACE to
-                # match the actual PK = (operation_id, artifact_id, direction))
+                # raw: composite-PK junction (operation_id, artifact_id, direction,
+                # role) — DAO upsert can't target it; INSERT OR REPLACE is the home.
                 for raw_id in raw_ids:
                     db.conn.execute(
                         "INSERT OR REPLACE INTO mfdb_operation_artifact "
@@ -399,9 +374,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
 
         # --- Processed data product (direct SQL) ---
         prod_id = f"prod_{d['processing_id']}"
-        if not db.conn.execute(
-            "SELECT 1 FROM mfdb_artifact WHERE artifact_id=?", (prod_id,)
-        ).fetchone():
+        if db.dao.get("mfdb_artifact", prod_id) is None:
             demo_dir = Path.home() / ".chisurf" / "flr" / "demo"
             demo_dir.mkdir(parents=True, exist_ok=True)
             bur_path = demo_dir / f"{d['processing_id']}.bur"
@@ -415,6 +388,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                     validation_status="valid",
                     checksum=f"demo:{bur_path.name}",
                 )
+                # raw: composite-PK junction — see note above.
                 db.conn.execute(
                     "INSERT OR REPLACE INTO mfdb_operation_artifact "
                     "(operation_id, artifact_id, direction, role) "
