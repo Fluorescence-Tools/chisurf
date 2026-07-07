@@ -200,10 +200,7 @@ def _ensure_experiment(db: MFDatabase, experiment_id: str | None) -> None:
     if not experiment_id:
         return
     try:
-        row = db.conn.execute(
-            "SELECT 1 FROM flr_experiment WHERE experiment_id = ?",
-            (experiment_id,),
-        ).fetchone()
+        row = db.dao.get("flr_experiment", experiment_id, include_deleted=True)
     except Exception:
         return
     if row is None:

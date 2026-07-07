@@ -5,6 +5,7 @@ from typing import Any
 from mfdb.security.auth import (
     PERM_READ,
     AuthError,
+    _get_object_acl,
     can_access,
     create_default_acl_for_object,
     principal_from_rpc_auth,
@@ -17,11 +18,7 @@ from mfdb.repository import MFDatabase
 
 def _check_acl_access(conn: Any, principal: Any, object_type: str, object_id: str) -> None:
     """Check ACL if available; fall back to requiring admin."""
-    row = conn.execute(
-        "SELECT 1 FROM mfdb_object_acl WHERE object_type = ? AND object_id = ? AND deleted_at IS NULL",
-        (object_type, object_id),
-    ).fetchone()
-    if row:
+    if _get_object_acl(conn, object_type, object_id):
         require_access(conn, principal, object_type, object_id, PERM_READ)
     elif not principal.is_admin:
         raise AuthError("Authentication required")
@@ -34,11 +31,7 @@ def _check_acl_filter(conn: Any, principal: Any, object_type: str, rows: list, i
     has_acls = False
     for row in rows:
         obj_id = row[id_key] if isinstance(row, dict) else row[id_key]
-        r = conn.execute(
-            "SELECT 1 FROM mfdb_object_acl WHERE object_type = ? AND object_id = ? AND deleted_at IS NULL",
-            (object_type, obj_id),
-        ).fetchone()
-        if r:
+        if _get_object_acl(conn, object_type, obj_id):
             has_acls = True
             break
     if has_acls:

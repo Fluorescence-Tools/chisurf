@@ -5,14 +5,14 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 
 | file | select | insert | update | delete | bespoke | ddl |
 |---|--:|--:|--:|--:|--:|--:|
-| adapters/chinet.py | 1 | 0 | 0 | 0 | 0 | 0 |
+| adapters/chinet.py | 0 | 0 | 0 | 0 | 0 | 0 |
 | admin/backend/auth_services.py | 11 | 0 | 0 | 0 | 2 | 0 |
 | admin/backend/fluorophore_services.py | 10 | 0 | 0 | 0 | 3 | 0 |
 | admin/backend/password_services.py | 4 | 0 | 0 | 0 | 0 | 0 |
 | admin/backend/services.py | 32 | 0 | 0 | 0 | 12 | 4 |
 | admin/cli/__init__.py | 3 | 0 | 0 | 0 | 0 | 0 |
 | admin/seed_example.py | 13 | 8 | 0 | 0 | 0 | 0 |
-| api.py | 2 | 0 | 0 | 0 | 0 | 0 |
+| api.py | 0 | 0 | 0 | 0 | 0 | 0 |
 | lifecycle/event_log.py | 0 | 0 | 0 | 0 | 1 | 0 |
 | lifecycle/lifecycle.py | 0 | 0 | 0 | 0 | 4 | 0 |
 | lifecycle/staleness.py | 2 | 0 | 0 | 0 | 2 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 257 | 77 | 48 | 12 | 68 | 30 |
+| **TOTAL** | 254 | 77 | 48 | 12 | 68 | 30 |
