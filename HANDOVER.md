@@ -146,11 +146,28 @@ UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copi
 3. **Low-value single-table SELECTs in the mixins** → `dao.get`/`list`, only where
    trivial. Leave JOIN/aggregate/graph/DDL raw — those are the legitimate home.
 
-### Workflow that works (learned the hard way)
+### General working rule (applies to ALL work, not just this migration)
+**Every material change: update OKF, keep it traceable, commit.** The durable
+statement of this lives in [`okf/workflows/change-tracking.md`](okf/workflows/change-tracking.md);
+in short, for each landed unit of work:
+1. Update the matching OKF concept **and** any burn-down table
+   (`okf/specs/mfdb-sql-audit.md`) / PRD Definition-of-Done in the same change.
+2. Append a dated bullet to `okf/log.md` — what changed, why, verification result.
+3. Mark done when done (PRD `status:`/glyph, assessment row).
+4. **Commit** per file or small coherent batch, message stating the change +
+   verification (e.g. "suite: 420 passed") + audit delta. **Local only — never push.**
+
+This is what makes the migration traceable: `okf/log.md` = running narrative,
+the audit table = running totals, git history = small self-describing commits.
+
+### Migration workflow that works (learned the hard way)
 - **Do NOT bulk string-replace** across varied blocks — it silently corrupts (broke
-  `experiments.py` this session). Use precise per-block `Edit`s.
+  `experiments.py` in an earlier session). Use precise per-block `Edit`s.
 - Convert a file → run the **full** standalone suite → fix the exact conflict/keyless
   error it reports → commit per file (or small batch). The suite is the net.
+- Before converting an `INSERT OR REPLACE`/`INSERT OR IGNORE`, check the table's
+  `PRAGMA index_list`/UNIQUE constraints; pick the exact `dao.upsert(conflict=[...])`
+  target (or existence-check + `dao.insert` for ignore semantics).
 
 ---
 
@@ -166,6 +183,8 @@ UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copi
 ---
 
 ## 5. Pointers
+- **Process rule:** `okf/workflows/change-tracking.md` (always update OKF + commit,
+  keep it traceable — applies to all work).
 - Architecture concept: `okf/architecture/mfdb.md` (has the "no scattered SQL is an
   antipattern" section + package layout + queries/ mixin list).
 - SQL audit / burn-down: `okf/specs/mfdb-sql-audit.md`.
