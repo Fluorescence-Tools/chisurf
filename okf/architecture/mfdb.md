@@ -94,7 +94,13 @@ not a flat module list. Top level holds only the facade/entry surface —
 - `adapters/` — bridges to external systems / host apps: `chinet` (ChiSurf fit
   sessions → MFDB), with electronic-lab-notebook adapters (eLabFTW, …) to follow.
   Adapters may depend on their target but keep those imports lazy.
-- `queries/` — per-concern `MFDatabase` mixins (god-class breakup, PRD-26).
+- `queries/` — per-concern **`MFDatabase` mixins** (god-class breakup, PRD-26):
+  `artifacts` (artifact/operation/edge/provenance-graph core), `analysis`,
+  `samples`, `setups`, `probes`, `objects`, `parameters`, `protocols`, `studies`,
+  `branches`, `lifecycle`, `experiments`, `users`. `repository.py` is a thin
+  composition of these over `self.conn`/`self.dao`/`self.lineage` — reduced from
+  ~6,400 lines to ~1,850 (init/connection/properties, migration, audit,
+  vocabulary, experiment key-values, pdbx metadata remain as the core).
 - `admin/` — the admin RPC service (`backend/`, `cli/`); chisurf-free and import-
   clean. The chisurf-coupled admin **GUI** lives in the ChiSurf plugin
   (`chisurf/plugins/core/mfdb_admin/gui/`), not in the package.
