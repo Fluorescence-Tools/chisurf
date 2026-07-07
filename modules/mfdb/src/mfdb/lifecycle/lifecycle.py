@@ -90,6 +90,9 @@ def bootstrap_lifecycle_defs(conn: sqlite3.Connection) -> None:
     not a rowid alias (the ``operation_parameter_def`` convention).
     """
     defs = load_lifecycle_defs()
+    # raw: bespoke bulk-reseed on a bare connection (no MFDatabase/dao here) —
+    # INSERT OR IGNORE vocabulary + delete-by-non-PK per entity_type + MAX(rule_id)
+    # reindex + bulk insert. Not scattered CRUD; the DAO cannot express these.
     try:
         with conn:
             for entity_type, ld in defs.items():

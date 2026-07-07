@@ -14,12 +14,12 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | admin/seed_example.py | 13 | 8 | 0 | 0 | 0 | 0 |
 | api.py | 2 | 0 | 0 | 0 | 0 | 0 |
 | lifecycle/event_log.py | 0 | 0 | 0 | 0 | 1 | 0 |
-| lifecycle/lifecycle.py | 0 | 2 | 0 | 1 | 1 | 0 |
+| lifecycle/lifecycle.py | 0 | 0 | 0 | 0 | 4 | 0 |
 | lifecycle/staleness.py | 2 | 0 | 0 | 0 | 2 | 0 |
 | project/project_archiver.py | 2 | 0 | 0 | 0 | 3 | 0 |
 | provenance/graph.py | 5 | 0 | 0 | 0 | 0 | 0 |
 | provenance/lineage.py | 2 | 0 | 0 | 0 | 1 | 0 |
-| provenance/operation_parameters.py | 1 | 1 | 0 | 1 | 1 | 0 |
+| provenance/operation_parameters.py | 1 | 0 | 0 | 0 | 3 | 0 |
 | queries/analysis.py | 10 | 3 | 6 | 0 | 1 | 0 |
 | queries/artifacts.py | 10 | 8 | 11 | 1 | 1 | 0 |
 | queries/branches.py | 3 | 1 | 3 | 0 | 2 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 7 | 5 | 7 | 0 | 3 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 264 | 101 | 75 | 17 | 45 | 30 |
+| **TOTAL** | 264 | 98 | 75 | 15 | 50 | 30 |

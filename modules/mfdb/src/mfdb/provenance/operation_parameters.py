@@ -64,6 +64,9 @@ def bootstrap_operation_parameter_defs(conn: sqlite3.Connection) -> None:
     """
     defs = load_operation_parameter_defs()
     op_types = sorted({d.operation_type for d in defs})
+    # raw: bespoke bulk-reseed on a bare connection (no MFDatabase/dao here) —
+    # delete-by-non-PK per operation_type + MAX(def_id) reindex + bulk insert.
+    # Not scattered CRUD; the aggregate/bulk-delete cannot be expressed via the DAO.
     try:
         with conn:
             for op_type in op_types:
