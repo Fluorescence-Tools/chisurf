@@ -5112,8 +5112,15 @@ class MFDatabase(
         return parameter_uuid
 
     def get_parameter(self, parameter_uuid: str) -> dict[str, Any] | None:
-        # PRD-26 Task 2: parameterised, schema-driven get-by-PK (was a hand SELECT).
-        return self.dao.get("mfdb_parameter", parameter_uuid, include_deleted=True)
+        # PRD-26 Task 2: parameterised, schema-driven get. Look up by the
+        # parameter_uuid column, not the table PK (parameter_id) — callers
+        # identify parameters by their UUID.
+        return self.dao.get(
+            "mfdb_parameter",
+            parameter_uuid,
+            pk_column="parameter_uuid",
+            include_deleted=True,
+        )
 
     def list_parameters(
         self,

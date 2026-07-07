@@ -231,6 +231,20 @@ def test_fresh_db_has_no_legacy_or_duplicate_tables(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _admin_auth(db_path: str) -> dict:
+    """Mint a valid session token for the seeded default admin at *db_path*.
+
+    A fresh MFDatabase seeds an admin user, so _require_auth no longer treats
+    writes as bootstrap and rejects anonymous requests; handlers need a token.
+    """
+    from mfdb.auth import create_session
+
+    with MFDatabase(db_path) as db:
+        token = create_session(db.conn, "user_default")["token"]
+        db.conn.commit()
+    return {"token": token}
+
+
 def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
     """mfdb.setups.list returns detector_channels and pie_windows keys."""
     from mfdb.admin.backend.services import (
@@ -242,6 +256,7 @@ def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
     db_path = os.path.join(tmp_path, "test_rpc.db")
     with MFDatabase(db_path):
         pass
+    auth = _admin_auth(db_path)
 
     patchers = [
         patch(
@@ -279,16 +294,16 @@ def test_list_setups_handler_returns_structured_fields(tmp_path: Path) -> None:
             },
             "detectors": {"green": {"chs": [0]}},
         }
-        res = save_setup_handler(setup=setup_payload)
-        assert res["ok"] is True
+        res = save_setup_handler(setup=setup_payload, auth=auth)
+        assert "setup" in res
 
         # list returns setups (direct API, not wrapped with ok)
-        res = list_setups_handler()
+        res = list_setups_handler(auth=auth)
         assert "setups" in res
         assert any(s["setup_id"] == "rpc_test_setup" for s in res["setups"])
 
         # get returns structured child rows
-        res = get_setup_handler(setup_id="rpc_test_setup")
+        res = get_setup_handler(setup_id="rpc_test_setup", auth=auth)
         setup = res["setup"]
         assert setup["setup_id"] == "rpc_test_setup"
     finally:
@@ -309,6 +324,7 @@ def test_setup_detail_rpc_includes_child_tables(tmp_path: Path) -> None:
     db_path = os.path.join(tmp_path, "test_detail.db")
     with MFDatabase(db_path):
         pass
+    auth = _admin_auth(db_path)
 
     patchers = [
         patch(
@@ -336,10 +352,10 @@ def test_setup_detail_rpc_includes_child_tables(tmp_path: Path) -> None:
             "configuration": {"setup_type": "tttr_detector_setup"},
             "detectors": {"green": {"chs": [0, 8]}, "red": {"chs": [1, 9]}},
         }
-        res = save_setup_handler(setup=setup_payload)
-        assert res["ok"] is True
+        res = save_setup_handler(setup=setup_payload, auth=auth)
+        assert "setup" in res
 
-        res = get_setup_handler(setup_id="detail_test")
+        res = get_setup_handler(setup_id="detail_test", auth=auth)
         setup = res["setup"]
         assert "detector_channels" in setup
         assert "pie_windows" in setup

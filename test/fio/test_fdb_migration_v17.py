@@ -93,21 +93,30 @@ def test_json_rpc_versioned_services(tmp_path: pathlib.Path) -> None:
     db_path = tmp_path / "test_rpc.db"
 
     with patch("chisurf.core.mfdb.api.resolve_database_path", return_value=db_path):
+        # A fresh DB seeds an admin user, so the api.py write handlers require an
+        # authenticated session token; mint one for the seeded default admin.
+        from mfdb.auth import create_session
+        from mfdb.repository import MFDatabase as _MFDatabase
+
+        with _MFDatabase(str(db_path)) as _db:
+            auth = {"token": create_session(_db.conn, "user_default")["token"]}
+            _db.conn.commit()
+
         # 1. Save artifact
-        res = fdb_api.register_artifact("art1", "ptu", "local")
+        res = fdb_api.register_artifact("art1", "ptu", "local", auth=auth)
         assert res["ok"] is True
         assert res["artifact_id"] == "art1"
 
         # 2. Get artifact
-        res_get = fdb_api.get_artifact("art1")
+        res_get = fdb_api.get_artifact("art1", auth=auth)
         assert res_get["artifact"]["artifact_id"] == "art1"
 
         # 3. List artifacts
-        res_list = fdb_api.list_artifacts()
+        res_list = fdb_api.list_artifacts(auth=auth)
         assert len(res_list["artifacts"]) == 1
 
         # 4. Record operation
-        res_op = fdb_api.record_operation("op1", "burst_selection")
+        res_op = fdb_api.record_operation("op1", "burst_selection", auth=auth)
         assert res_op["ok"] is True
         assert res_op["operation_id"] == "op1"
 
