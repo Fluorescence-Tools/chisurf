@@ -89,8 +89,16 @@ is acceptable if the suite stays green; correctness of the store matters.
   the DAO can't target (below).
 
 ### DAO limitations discovered (the suite enforces these — DON'T fight them)
-- **Keyless tables** (`analysis_metadata`, `flr_sample_key_value`) → `dao.upsert`
-  raises `DaoError: No primary key`. Leave raw, OR add a PK to the schema first.
+- **PK-less tables with a UNIQUE** (`analysis_metadata`/`UNIQUE(analysis_id,key)`,
+  `flr_sample_key_value`, `flr_experiment_key_value`, `analysis_data`) → **now
+  convertible**: `dao.upsert` was made keyless-tolerant (its final `primary_key()`
+  return-value lookup is wrapped in `try/except → lastrowid`, mirroring
+  `dao.insert`). Pass the UNIQUE as the explicit `conflict=[...]`. Only a table with
+  **neither** a PK **nor** a targetable UNIQUE is a genuine `upsert` limitation.
+- **Truly constraint-less tables** (`citeulike`, `products`, `standards`,
+  `product_categories`) have no PK *and* no UNIQUE in the reconciled schema →
+  `INSERT OR REPLACE` was silently a plain insert (dup ids possible). Converted to
+  `dao.insert`; a real upsert needs a schema PK first (see §4 follow-up).
 - **Composite-PK junctions** (`mfdb_operation_artifact` = 4-col PK) → **convertible
   after all**: `dao.upsert(conflict=[<all PK cols>])`. When the values are exactly
   the PK columns it's an idempotent `DO NOTHING` (identity-preserving, unlike
@@ -108,22 +116,20 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals now: **175 select · 67 insert · 48 update · 12 delete ·
+Package totals now: **174 select · 53 insert · 48 update · 12 delete ·
 87 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
-scattered CRUD is now fully eliminated** (api.py, adapters/chinet.py,
+scattered CRUD is fully eliminated** (api.py, adapters/chinet.py,
 sample_manager, seed_data, seed_example, all admin services, security/auth
-are SQL-free or intentional-raw-only), and **every `INSERT OR REPLACE`/
-`INSERT OR IGNORE` outside the `bootstrap_*` seeders is gone** (including the
-composite-PK `add_operation_artifact`). The **trivial single-table SELECTs
-in `queries/*.py` have also been swept onto `dao.get`/`list`** (select 241 →
-175; the bespoke rise 68 → 87 is a reclassification of `probes.py`
-JOIN/aggregate/source/merge reads, not new raw SQL). What remains is
-legitimately the centralized home / bespoke: `queries/` JOIN/aggregate/
-`DISTINCT`/`json_extract`/compound-`ORDER BY` SELECTs, genuinely-**keyless** writes
-(`analysis_metadata`, `flr_sample_key_value` — no PK, no targetable UNIQUE),
+are SQL-free or intentional-raw-only), **no `INSERT OR REPLACE` remains anywhere
+in the package**, and the **trivial single-table SELECTs in `queries/*.py` have
+been swept onto `dao.get`/`list`** (select 241 → 174; the bespoke rise 68 → 87
+is a reclassification of `probes.py` JOIN/aggregate/source/merge reads, not new
+raw SQL). What remains is legitimately the centralized home / bespoke:
+`queries/` JOIN/aggregate/`DISTINCT`/`json_extract`/compound-`ORDER BY` SELECTs,
 `bootstrap_*` bulk seeders on a bare conn (incl. `schema.py` group-member
 `INSERT OR IGNORE`), hand-written `INSERT … ON CONFLICT DO UPDATE`
-(dao-equivalent), bespoke import/merge routines, `provenance/lineage.py`+
+(dao-equivalent), the append-only `mfdb_parameter`/`mfdb_audit_log` core inserts,
+bespoke import/merge routines, `provenance/lineage.py`+
 `graph.py` traversal, `project/project_archiver.py` JOIN/count reads, and
 `schema/*` DDL. (Composite-PK junctions are no longer a remaining item —
 they convert via `dao.upsert(conflict=[<all PK cols>])`.)
@@ -191,6 +197,13 @@ the audit table = running totals, git history = small self-describing commits.
 ---
 
 ## 4. Remaining lower-priority cleanup (optional; documented in memory)
+- **Schema constraint gap (found this session).** `citeulike`, `products`,
+  `standards`, `product_categories` have **no PK and no UNIQUE** in the reconciled
+  schema, so `add_citation`/`add_product`/`add_standard`/`add_product_category` are
+  insert-only (duplicate logical ids possible; their `delete_*` uses a `pk_column`
+  that isn't enforced). Real fix = declare the PK in whatever builds these tables
+  (they're not in `schema.py`'s hardcoded DDL — trace the `.dic`/reconcile path),
+  then flip the `dao.insert` calls to `dao.upsert`. Left as a follow-up.
 - Drop `security/base.py` `MFDBClientBase` ABC only if you also retarget ~40 type-hint
   sites to `MFDatabase` (used across `result_registry` + chisurf plugins). Decided
   **skip** this session — low value, single-backend, churny/risky.
