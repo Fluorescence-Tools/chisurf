@@ -484,10 +484,7 @@ def delete_sample_condition_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
-            db.conn.execute(
-                "UPDATE flr_sample_condition SET deleted_at = ? WHERE condition_id = ?",
-                (_utc_now(), condition_id),
-            )
+            db.dao.soft_delete("flr_sample_condition", condition_id, deleted_at=_utc_now())
     return {"ok": True, "condition_id": condition_id}
 
 
@@ -1330,6 +1327,7 @@ def delete_experiment_handler(experiment_id: str, auth: dict[str, Any] | None = 
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
+            # raw: admin hard delete (dao.soft_delete would only set deleted_at).
             db.conn.execute("DELETE FROM flr_experiment WHERE experiment_id = ?", (experiment_id,))
     return {"ok": True, "experiment_id": experiment_id}
 
@@ -1657,19 +1655,15 @@ def save_branch_handler(branch: dict[str, Any], auth: dict[str, Any] | None = No
         existing = db.get_branch(branch_uuid) if branch_uuid else db.get_branch(name)
         if existing:
             with db.conn:
-                db.conn.execute(
-                    """UPDATE mfdb_branch
-                       SET name = ?, description = ?, parent_branch_uuid = ?,
-                           head_operation_id = ?, updated_at = ?
-                       WHERE branch_uuid = ?""",
-                    (
-                        name,
-                        branch.get("description") or None,
-                        branch.get("parent_branch_uuid") or None,
-                        branch.get("head_operation_id") or None,
-                        datetime.now(timezone.utc).isoformat(),
-                        existing["branch_uuid"],
-                    ),
+                db.dao.update(
+                    "mfdb_branch",
+                    existing["branch_uuid"],
+                    {
+                        "name": name,
+                        "description": branch.get("description") or None,
+                        "parent_branch_uuid": branch.get("parent_branch_uuid") or None,
+                        "head_operation_id": branch.get("head_operation_id") or None,
+                    },
                 )
             return {"branch": db.get_branch(existing["branch_uuid"])}
         if not name:
@@ -1890,10 +1884,7 @@ def delete_entity_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
-            db.conn.execute(
-                "UPDATE entities SET deleted_at = ? WHERE entity_id = ?",
-                (_utc_now(), entity_id),
-            )
+            db.dao.soft_delete("entities", entity_id, deleted_at=_utc_now())
     return {"ok": True, "entity_id": entity_id}
 
 
@@ -1913,6 +1904,8 @@ def save_probe_handler(
         _require_auth(auth, db.conn)
         probe_id = _int_or_none(probe.get("probe_id"))
         if probe_id is not None:
+            # raw: resurrecting update (resets deleted_at = NULL) — dao.update
+            # refuses to touch soft-deleted rows, so it cannot re-enable a probe.
             with db.conn:
                 db.conn.execute(
                     """UPDATE probes
@@ -1974,9 +1967,8 @@ def save_probe_optical_properties_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
-            db.conn.execute(
-                "UPDATE optical_properties SET deleted_at = ? WHERE probe_id = ?",
-                (_utc_now(), int(probe_id)),
+            db.dao.soft_delete(
+                "optical_properties", int(probe_id), pk_column="probe_id", deleted_at=_utc_now()
             )
         for prop in properties:
             name = str(prop.get("property_name") or prop.get("property_type") or "").strip()
@@ -2085,6 +2077,8 @@ def save_probe_position_handler(
                 auth_name=position.get("auth_name") or None,
             )
         else:
+            # raw: resurrecting update (resets deleted_at = NULL) — dao.update
+            # refuses to touch soft-deleted rows, so it cannot re-enable a position.
             with db.conn:
                 db.conn.execute(
                     """UPDATE flr_poly_probe_position
@@ -2126,10 +2120,7 @@ def delete_probe_position_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
-            db.conn.execute(
-                "UPDATE flr_poly_probe_position SET deleted_at = ? WHERE id = ?",
-                (_utc_now(), int(id)),
-            )
+            db.dao.soft_delete("flr_poly_probe_position", int(id), deleted_at=_utc_now())
     return {"ok": True, "id": int(id)}
 
 
@@ -2267,6 +2258,8 @@ def save_fret_pair_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
+            # raw: hard delete-then-reinsert — a soft delete would leave the row
+            # occupying the UNIQUE forster_radius_id and block re-add.
             db.conn.execute(
                 "DELETE FROM flr_fret_forster_radius WHERE forster_radius_id = ?",
                 (forster_radius_id,),
@@ -2293,6 +2286,7 @@ def delete_fret_pair_handler(
     with MFDatabase(resolve_database_path()) as db:
         _require_auth(auth, db.conn)
         with db.conn:
+            # raw: admin hard delete by the UNIQUE forster_radius_id (not the PK).
             db.conn.execute(
                 "DELETE FROM flr_fret_forster_radius WHERE forster_radius_id = ?",
                 (forster_radius_id,),
@@ -2690,27 +2684,14 @@ def _save_sample_condition_row(
     condition_id = str(condition.get("condition_id") or "").strip()
     if not condition_id:
         raise ValueError("condition_id is required")
-    db.conn.execute(
-        """
-        INSERT OR REPLACE INTO flr_sample_condition (
-            condition_id,
-            ph,
-            temperature,
-            ionic_strength,
-            buffer_composition,
-            details
-        ) VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (
-            condition_id,
-            _float_or_none(condition.get("ph")),
-            _float_or_none(condition.get("temperature")),
-            _float_or_none(condition.get("ionic_strength")),
-            condition.get("buffer_composition") or None,
-            condition.get("details") or None,
-        ),
+    db.add_sample_condition(
+        condition_id,
+        ph=_float_or_none(condition.get("ph")),
+        temperature=_float_or_none(condition.get("temperature")),
+        ionic_strength=_float_or_none(condition.get("ionic_strength")),
+        buffer_composition=condition.get("buffer_composition") or None,
+        details=condition.get("details") or None,
     )
-    db.conn.commit()
     return db.conn.execute(
         "SELECT * FROM flr_sample_condition WHERE condition_id = ?",
         (condition_id,),
