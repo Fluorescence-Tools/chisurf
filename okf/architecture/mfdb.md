@@ -72,6 +72,36 @@ writes reuse the same row. A dictionary change is not complete until tests prove
 items map to live columns, enums/defaults drive behaviour, and repeated writes do
 not duplicate identity rows.
 
+# Package layout
+
+The package (`modules/mfdb/src/mfdb/`) is organized into concern subpackages,
+not a flat module list. Top level holds only the facade/entry surface —
+`repository.py` (`MFDatabase`), `api.py`, `models.py`, `config.py`,
+`chinet_adapter.py`, and `__init__.py` — over these groups:
+
+- `schema/` — dictionary-driven schema engine: `schema`, `schema_from_dictionary`,
+  `dictionary_schema_map`, `pdbx_metadata`, `dao` (`DictionaryDao`),
+  `vocabulary_loader`, `docs_generator`, `_sqlutil`.
+- `store/` — persistence primitives: `object_store`, `payload_codec`,
+  `payload_models`, `database_resolver`, `transactions`.
+- `provenance/` — DAG + results: `lineage`, `graph`, `result_registry`,
+  `compute_spec`, `operation_parameters`.
+- `samples/` — sample domain: `sample_manager`, `sample_requests`,
+  `external_refs`, `reagents`, `importer`, `seed_data`.
+- `lifecycle/` — state/events/audit: `lifecycle`, `event_log`, `events`, `staleness`.
+- `security/` — identity: `auth`, `credentials`, `session`, `boundary_validation`, `base`.
+- `project/` — `project_archiver`.
+- `queries/` — per-concern `MFDatabase` mixins (god-class breakup, PRD-26).
+- `admin/` — the admin RPC service + GUI (chisurf-coupled application layer).
+- `data/` — bundled `.dic` dictionaries and config JSON.
+
+The package has its own **hermetic, standalone test suite** at
+`modules/mfdb/tests/` (isolated via `MFDB_SETTINGS_DIR`, no chisurf import) —
+run it with `cd modules/mfdb && PYTHONPATH=src pytest`. ChiSurf↔MFDB
+integration tests (admin GUI client, chinet/parameter-registry alignment, etc.)
+stay in the ChiSurf `test/` tree. This boundary is enforced by construction:
+the core package imports cleanly with only `src` on the path (PRD-24).
+
 # API
 
 `api.py` is the transport-agnostic function API for the store.
