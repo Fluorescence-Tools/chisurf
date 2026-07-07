@@ -271,14 +271,15 @@ class MFDatabase(
     ) -> None:
         """Register an extensible vocabulary value."""
         with self._transaction():
-            now = _utc_now()
-            self.conn.execute(
-                """INSERT OR REPLACE INTO mfdb_vocabulary (
-                    field_name, value, display_name, description, is_builtin, is_active,
-                    created_at, updated_at, deleted_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (field_name, value, display_name or value, description, int(is_builtin), int(is_active),
-                 now, now, None)
+            self.dao.upsert(
+                "mfdb_vocabulary",
+                {
+                    "field_name": field_name, "value": value,
+                    "display_name": display_name or value, "description": description,
+                    "is_builtin": int(is_builtin), "is_active": int(is_active),
+                    "deleted_at": None,
+                },
+                conflict=["field_name", "value"],
             )
 
     # -- schema / migration --
@@ -307,17 +308,14 @@ class MFDatabase(
             raise ValueError("file_path is required")
         file_uuid = str(uuid.uuid4())
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO ihm_external_files "
-                "(reference_id, file_path, file_format, content_type, file_size_bytes, md5, uuid, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (None, str(file_path), file_format, content_type, file_size_bytes, md5, file_uuid, details,
-                 now, now, None)
-            )
-            row = self.conn.execute("SELECT id FROM ihm_external_files WHERE uuid = ?", (file_uuid,)).fetchone()
-            return int(row["id"]) if row else 0
+            # Fresh uuid every call -> never conflicts, so this is a plain insert;
+            # dao.insert returns the new autoincrement id (no follow-up SELECT).
+            return int(self.dao.insert("ihm_external_files", {
+                "reference_id": None, "file_path": str(file_path),
+                "file_format": file_format, "content_type": content_type,
+                "file_size_bytes": file_size_bytes, "md5": md5, "uuid": file_uuid,
+                "details": details, "deleted_at": None,
+            }))
 
     def get_external_file(self, file_id):
         return self.conn.execute("SELECT * FROM ihm_external_files WHERE id = ?", (file_id,)).fetchone()
@@ -342,15 +340,15 @@ class MFDatabase(
         if not citeulike_id:
             raise ValueError("citeulike_id is required")
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO citeulike "
-                "(citeulike_id, title, authors, journal, year, volume, number, pages, doi, pmid, pmcid, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (citeulike_id, title, authors, journal, year, volume, number, pages, doi, pmid, pmcid, details,
-                 now, now, None)
-            )
+            # No PK/UNIQUE on citeulike_id in the reconciled schema, so the old
+            # INSERT OR REPLACE degraded to a plain insert; dao.insert makes that
+            # explicit (a true upsert-by-id would need a schema constraint first).
+            self.dao.insert("citeulike", {
+                "citeulike_id": citeulike_id, "title": title, "authors": authors,
+                "journal": journal, "year": year, "volume": volume, "number": number,
+                "pages": pages, "doi": doi, "pmid": pmid, "pmcid": pmcid,
+                "details": details, "deleted_at": None,
+            })
 
     def delete_citation(self, citeulike_id):
         with self.conn:
@@ -406,11 +404,10 @@ class MFDatabase(
 
     def add_product_category(self, name, description=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO product_categories (name, description, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)",
-                (name, description, details, now, now, None)
-            )
+            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
+            self.dao.insert("product_categories", {
+                "name": name, "description": description, "details": details, "deleted_at": None,
+            })
 
     def get_products(self, category_id=None, supplier_id=None):
         query = "SELECT * FROM products WHERE 1=1"
@@ -426,30 +423,25 @@ class MFDatabase(
 
     def add_product(self, product_id, name, catalog_number=None, supplier_id=None, category_id=None, cas_number=None, description=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO products "
-                "(product_id, name, catalog_number, supplier_id, category_id, cas_number, description, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (product_id, name, catalog_number, supplier_id, category_id, cas_number, description, details,
-                 now, now, None)
-            )
+            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
+            self.dao.insert("products", {
+                "product_id": product_id, "name": name, "catalog_number": catalog_number,
+                "supplier_id": supplier_id, "category_id": category_id, "cas_number": cas_number,
+                "description": description, "details": details, "deleted_at": None,
+            })
 
     def get_standards(self):
         return self.conn.execute("SELECT * FROM standards ORDER BY name").fetchall()
 
     def add_standard(self, standard_id, name, probe_id=None, reference_id=None, certification_details=None, valid_until=None, description=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO standards "
-                "(standard_id, name, probe_id, reference_id, certification_details, valid_until, description, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (standard_id, name, probe_id, reference_id, certification_details, valid_until, description, details,
-                 now, now, None)
-            )
+            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
+            self.dao.insert("standards", {
+                "standard_id": standard_id, "name": name, "probe_id": probe_id,
+                "reference_id": reference_id, "certification_details": certification_details,
+                "valid_until": valid_until, "description": description, "details": details,
+                "deleted_at": None,
+            })
 
     # -- flr sample / experiment (read-only wrappers for Core API) --
 
@@ -458,24 +450,25 @@ class MFDatabase(
         if stream_id is None:
             stream_id = f"stream_{external_id}"
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_photon_stream "
-                "(stream_id, analysis_id, external_file_id, detector_id, description, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (stream_id, analysis_id, external_id, detector_id, description, details,
-                 now, now, None)
+            self.dao.upsert(
+                "flr_photon_stream",
+                {
+                    "stream_id": stream_id, "analysis_id": analysis_id,
+                    "external_file_id": external_id, "detector_id": detector_id,
+                    "description": description, "details": details, "deleted_at": None,
+                },
+                conflict=["stream_id"],
             )
         return stream_id
 
     def set_experiment_key_value(self, experiment_id: str, key: str, value: str, details: str | None = None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_experiment_key_value (experiment_id, key, value, details, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (experiment_id, key, value, details, now, now, None)
+            # Upsert on UNIQUE(experiment_id, key) — PK-less table, valid conflict target.
+            self.dao.upsert(
+                "flr_experiment_key_value",
+                {"experiment_id": experiment_id, "key": key, "value": value,
+                 "details": details, "deleted_at": None},
+                conflict=["experiment_id", "key"],
             )
 
     def clear_experiment_key_values(self, experiment_id: str) -> None:
@@ -1071,15 +1064,11 @@ class MFDatabase(
 
     def add_chemical_descriptor(self, probe_id, descriptor_type, value, unit=None, method=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO chem_descriptors "
-                "(probe_id, descriptor_type, value, unit, method, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (probe_id, descriptor_type, value, unit, method, details,
-                 now, now, None)
-            )
+            # Autoincrement id, no UNIQUE -> INSERT OR REPLACE never conflicts (plain insert).
+            self.dao.insert("chem_descriptors", {
+                "probe_id": probe_id, "descriptor_type": descriptor_type, "value": value,
+                "unit": unit, "method": method, "details": details, "deleted_at": None,
+            })
 
     def get_optical_properties(self, probe_id=None):
         if probe_id is not None:
@@ -1110,14 +1099,13 @@ class MFDatabase(
         if extra:
             details_str = (details or "") + " " + _json_dumps(extra)
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO optical_properties "
-                "(probe_id, property_name, property_value, unit, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (probe_id, property_type, value, unit, details_str,
-                 now, now, None)
+            # Identity-preserving upsert on UNIQUE(probe_id, property_name).
+            self.dao.upsert(
+                "optical_properties",
+                {"probe_id": probe_id, "property_name": property_type,
+                 "property_value": value, "unit": unit, "details": details_str,
+                 "deleted_at": None},
+                conflict=["probe_id", "property_name"],
             )
 
     def get_images(self, probe_id=None):
@@ -1128,15 +1116,11 @@ class MFDatabase(
 
     def add_image(self, probe_id, image_path, image_type, description=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO images "
-                "(probe_id, image_path, image_type, description, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (probe_id, image_path, image_type, description, details,
-                 now, now, None)
-            )
+            # Autoincrement id, no UNIQUE -> INSERT OR REPLACE never conflicts (plain insert).
+            self.dao.insert("images", {
+                "probe_id": probe_id, "image_path": image_path, "image_type": image_type,
+                "description": description, "details": details, "deleted_at": None,
+            })
 
     # -- _decode helpers (adapted for mfdb_* metadata columns) --
 

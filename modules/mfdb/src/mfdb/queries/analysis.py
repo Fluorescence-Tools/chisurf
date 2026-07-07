@@ -204,14 +204,18 @@ class AnalysisMixin:
                 where += " AND data_name = ?"
                 params.append(data_name)
             self.conn.execute(f"UPDATE analysis_data SET deleted_at = ? WHERE {where}", [_utc_now()] + params)
-            now = _utc_now()
-            self.conn.execute(
-                """INSERT OR REPLACE INTO analysis_data
-                   (analysis_id, data_type, data_name, x_values, y_values, x_unit, y_unit, details,
-                    created_at, updated_at, deleted_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (analysis_id, data_type, data_name, x_blob, y_blob, x_unit, y_unit, details,
-                 now, now, None),
+            # Upsert on UNIQUE(analysis_id, data_type, data_name): a non-NULL match
+            # resurrects the row just soft-deleted above (identity-preserving); a
+            # NULL data_name (SQLite treats NULLs as distinct, so no conflict) inserts
+            # fresh, with the old NULL row left soft-deleted by the UPDATE above.
+            self.dao.upsert(
+                "analysis_data",
+                {
+                    "analysis_id": analysis_id, "data_type": data_type, "data_name": data_name,
+                    "x_values": x_blob, "y_values": y_blob, "x_unit": x_unit, "y_unit": y_unit,
+                    "details": details, "deleted_at": None,
+                },
+                conflict=["analysis_id", "data_type", "data_name"],
             )
         rows = self.dao.list(
             "analysis_data",
