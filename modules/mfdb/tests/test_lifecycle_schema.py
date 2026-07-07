@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from mfdb.lifecycle import (
+from mfdb.lifecycle.lifecycle import (
     bootstrap_lifecycle_defs,
     get_lifecycle_def,
     load_lifecycle_defs,

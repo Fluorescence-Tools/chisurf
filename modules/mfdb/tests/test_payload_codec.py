@@ -5,7 +5,7 @@ import msgpack
 import numpy as np
 import pytest
 
-from mfdb.payload_codec import (
+from mfdb.store.payload_codec import (
     MIGRATIONS,
     REGISTRY,
     PayloadSchemaError,
@@ -13,7 +13,7 @@ from mfdb.payload_codec import (
     encode_payload,
     get_payload_schema,
 )
-from mfdb.payload_models import (
+from mfdb.store.payload_models import (
     AnisotropyCurve,
     BurstSelection,
     BurstTable,
@@ -116,7 +116,7 @@ def test_payload_schema_exposes_flrcif_item_ids_for_matched_fields():
 
 
 def test_payload_flrcif_item_ids_exist_in_bundled_dictionary():
-    from mfdb.pdbx_metadata import MmcifDictionary
+    from mfdb.schema.pdbx_metadata import MmcifDictionary
 
     dictionary = MmcifDictionary.load_bundled()
     for kind in REGISTRY:

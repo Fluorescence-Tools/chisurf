@@ -11,7 +11,7 @@ is the transitive closure over artifact → operation → artifact hops, which i
 unambiguous and direction-correct (unlike the dual-written `derived_from`
 `mfdb_edge` rows, which this service does not depend on).
 
->>> from mfdb.lineage import Lineage
+>>> from mfdb.provenance.lineage import Lineage
 >>> lin = Lineage.from_db(db)
 >>> lin.ancestors(burst_artifact_id)      # [shifted, raw, …] derivation order
 >>> lin.descendants(raw_artifact_id)       # everything derived from the raw file

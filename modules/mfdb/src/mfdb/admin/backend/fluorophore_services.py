@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 
 from mfdb.repository import MFDatabase
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 
 
 @contextlib.contextmanager

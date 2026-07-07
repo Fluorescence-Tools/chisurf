@@ -131,7 +131,7 @@ class MmcifDictionary:
     to categories, items, enumerations, and descriptions.
     """
 
-    DATA_DIR = Path(__file__).resolve().parent / "data"
+    DATA_DIR = Path(__file__).resolve().parent.parent / "data"
     CACHE_PATH = DATA_DIR / "_dictionary_cache.json"
     CACHE_VERSION = 4
     _cached_dict: Optional["MmcifDictionary"] = None

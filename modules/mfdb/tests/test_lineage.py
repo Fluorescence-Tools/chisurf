@@ -11,9 +11,9 @@ import os
 
 import pytest
 
-from mfdb.lineage import Lineage
+from mfdb.provenance.lineage import Lineage
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import (
+from mfdb.provenance.result_registry import (
     register_raw_measurement,
     register_result,
     set_global_db,

@@ -7,7 +7,7 @@ god-class; behaviour is unchanged.
 
 from __future__ import annotations
 
-from mfdb._sqlutil import _utc_now
+from mfdb.schema._sqlutil import _utc_now
 
 
 class ExperimentMixin:
@@ -46,7 +46,7 @@ class ExperimentMixin:
         if not experiment_id:
             raise ValueError("experiment_id is required")
         if measured_by_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             measured_by_user_id = configured_default_user_id()
         with self._transaction():
             now = _utc_now()

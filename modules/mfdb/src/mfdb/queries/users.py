@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import uuid
 
-from mfdb._sqlutil import _utc_now
+from mfdb.schema._sqlutil import _utc_now
 
 
 class UserDeviceMixin:

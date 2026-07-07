@@ -8,7 +8,7 @@ regenerated, not hand-maintained.
 
 Usage
 -----
->>> from mfdb.docs_generator import generate_schema_reference
+>>> from mfdb.schema.docs_generator import generate_schema_reference
 >>> md = generate_schema_reference()                       # all flr_/mfdb_ tables
 >>> md = generate_schema_reference(tables=db.dao.columns)  # restrict to a live schema
 """
@@ -19,11 +19,11 @@ import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 
 #: Operation parameter schemas authored for PRD-11 (seeded into
 #: ``mfdb_operation_parameter_def``); rendered here as the canonical reference.
-_OP_DEFS_PATH = Path(__file__).parent / "data" / "operation_parameter_defs.json"
+_OP_DEFS_PATH = Path(__file__).parent.parent / "data" / "operation_parameter_defs.json"
 
 #: Namespaces the default (no explicit ``tables``) generation includes.
 _MFDB_TABLE_PREFIXES = ("flr_", "mfdb_")
@@ -173,7 +173,7 @@ def generate_schema_reference(
         "# MFDB schema reference",
         "",
         "_Generated from the flrCIF + `mfdb_flr_ext.dic` dictionary by "
-        "`mfdb.docs_generator` (PRD-26). Do not edit by hand — regenerate._",
+        "`mfdb.schema.docs_generator` (PRD-26). Do not edit by hand — regenerate._",
         "",
         f"Tables: {len(schema)} · "
         f"Operation types: {len(op_defs)}",

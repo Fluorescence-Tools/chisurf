@@ -3,7 +3,7 @@
 Each recorded interactive action becomes one row in ``mfdb_event_log``; the
 in-memory ``OperationHistory`` is a projection of these rows.  Every function is
 best-effort and degrades to a no-op / empty result when no MFDB connection is
-available, mirroring :func:`mfdb.result_registry.register_operation`.
+available, mirroring :func:`mfdb.provenance.result_registry.register_operation`.
 The store is append-only: rows are inserted, never updated in place, and re-inserts
 of the same ``event_id`` are ignored (idempotent restore/replay).
 """
@@ -39,7 +39,7 @@ _COLUMNS: tuple[str, ...] = (
 def _resolve_conn(db: typing.Any) -> typing.Any:
     """Return a live sqlite connection, or ``None`` when MFDB is unavailable."""
     if db is None:
-        from mfdb.result_registry import _get_global_db
+        from mfdb.provenance.result_registry import _get_global_db
 
         db = _get_global_db()
     if db is None:

@@ -26,7 +26,7 @@ def _load_dictionary_vocabulary() -> dict[str, tuple[str, ...]]:
         "lifecycle_status": "_mfdb_branch.lifecycle_status",
     }
     try:
-        from mfdb.pdbx_metadata import MmcifDictionary
+        from mfdb.schema.pdbx_metadata import MmcifDictionary
         dic = MmcifDictionary.load_bundled()
         for key, full_name in _name_map.items():
             raw = dic.get_enumerations(full_name)
@@ -971,7 +971,7 @@ class SampleDefinition:
 
             # Also validate against flrCIF/PDBx dictionary if available
             try:
-                from mfdb.pdbx_metadata import MmcifDictionary
+                from mfdb.schema.pdbx_metadata import MmcifDictionary
                 dic = MmcifDictionary.load_bundled()
                 # Validate against _flr_entity.type or _entity.type
                 for category in ["flr_entity", "entity"]:
@@ -1003,7 +1003,7 @@ class SampleDefinition:
 
                 # Validate against flrCIF dictionary if available
                 try:
-                    from mfdb.pdbx_metadata import MmcifDictionary
+                    from mfdb.schema.pdbx_metadata import MmcifDictionary
                     dic = MmcifDictionary.load_bundled()
                     # Try to validate against flr_poly_probe.chromophore_name
                     err = dic.validate_value(

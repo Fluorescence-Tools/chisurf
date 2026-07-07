@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from mfdb import schema
+from mfdb.schema import schema
 from mfdb.repository import MFDatabase
 
 

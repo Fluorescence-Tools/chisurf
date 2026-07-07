@@ -13,11 +13,11 @@ import tempfile
 
 import pytest
 
-from mfdb.docs_generator import (
+from mfdb.schema.docs_generator import (
     collect_schema,
     generate_schema_reference,
 )
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from mfdb.repository import MFDatabase
 
 

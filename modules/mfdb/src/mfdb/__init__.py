@@ -1,7 +1,7 @@
 """Public MFDB package exports."""
 
-from . import auth
-from .base import MFDBClientBase
+from .security import auth
+from .security.base import MFDBClientBase
 from .chinet_adapter import (
     CHINET_NODE_ARTIFACT,
     CHINET_SESSION_ARTIFACT,
@@ -12,7 +12,7 @@ from .chinet_adapter import (
     load_chinet_session,
     store_chinet_session,
 )
-from .database_resolver import (
+from .store.database_resolver import (
     SOURCE_DB_NAME,
     USER_DB_RELATIVE,
     backup_database,
@@ -27,7 +27,7 @@ from .config import (
     get_runtime_config,
     reset_runtime_config,
 )
-from .graph import traverse_canonical_graph
+from .provenance.graph import traverse_canonical_graph
 from .models import (
     ARTIFACT_KINDS,
     BUFFER_COMPONENTS,
@@ -78,13 +78,13 @@ from .models import (
     compute_forster_radius,
     validate_vocabulary,
 )
-from .payload_codec import (
+from .store.payload_codec import (
     PayloadSchemaError,
     decode_payload,
     encode_payload,
     get_payload_schema,
 )
-from .payload_models import (
+from .store.payload_models import (
     AnisotropyCurve,
     BurstSelection,
     BurstTable,
@@ -96,12 +96,12 @@ from .payload_models import (
     TttrPhotonStream,
     TttrReference,
 )
-from .pdbx_metadata import MmcifDictionary
-from ._sqlutil import json_loads, utc_now
-from .auth import hash_token
-from .credentials import session_token_registry
+from .schema.pdbx_metadata import MmcifDictionary
+from .schema._sqlutil import json_loads, utc_now
+from .security.auth import hash_token
+from .security.credentials import session_token_registry
 from .repository import MFDatabase
-from .result_registry import (
+from .provenance.result_registry import (
     get_active_database,
     read_result,
     register_calibration,
@@ -111,7 +111,7 @@ from .result_registry import (
     register_result,
     set_global_db,
 )
-from .sample_manager import (
+from .samples.sample_manager import (
     create_sample,
     find_sample_by_name,
     get_artifacts_for_sample,
@@ -125,7 +125,7 @@ from .sample_manager import (
     suggest_pdbx_keys,
     validate_sample_for_export,
 )
-from .sample_requests import (
+from .samples.sample_requests import (
     SampleCreateRequest,
     SampleLinkRequest,
     SampleQueryRequest,
@@ -133,8 +133,8 @@ from .sample_requests import (
     SampleUnlinkRequest,
     SampleUpdateRequest,
 )
-from .transactions import transaction
-from .vocabulary_loader import (
+from .store.transactions import transaction
+from .schema.vocabulary_loader import (
     get_all_vocabulary_names,
     get_buffer_components,
     get_entity_types,

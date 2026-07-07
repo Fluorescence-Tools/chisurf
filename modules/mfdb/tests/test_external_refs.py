@@ -10,8 +10,8 @@ import sqlite3
 import pytest
 
 from mfdb.models import EntityDefinition, MutationDefinition
-from mfdb.schema import CREATE_TABLES_SQL
-from mfdb.external_refs import (
+from mfdb.schema.schema import CREATE_TABLES_SQL
+from mfdb.samples.external_refs import (
     diff_sequences, fetch_uniprot, fetch_sifts_uniprot_mapping,
 )
 
@@ -158,7 +158,7 @@ def _t4l_definition():
 
 
 def test_create_sample_persists_struct_ref_tables(db):
-    from mfdb.sample_manager import create_sample
+    from mfdb.samples.sample_manager import create_sample
 
     create_sample(db, _t4l_definition())
 
@@ -183,7 +183,7 @@ def test_create_sample_persists_struct_ref_tables(db):
 
 
 def test_full_description_surfaces_external_refs_and_mutations(db):
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample, get_sample_full_description)
 
     sample_id = create_sample(db, _t4l_definition())
@@ -199,7 +199,7 @@ def test_full_description_surfaces_external_refs_and_mutations(db):
 def test_sample_without_external_refs_has_empty_lists(db):
     from mfdb.models import (
         SampleDefinition, EntityDefinition, ProbeDefinition)
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample, get_sample_full_description)
 
     defn = SampleDefinition(
@@ -221,7 +221,7 @@ def test_sample_without_external_refs_has_empty_lists(db):
 # ── Probe <-> mutation consistency validator (Task 6) ────────────────────────
 
 def test_validate_consistent_probe_mutation_no_warning(db):
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample, validate_sample_for_export)
 
     sample_id = create_sample(db, _t4l_definition())
@@ -232,7 +232,7 @@ def test_validate_consistent_probe_mutation_no_warning(db):
 def test_validate_probe_on_mutation_without_record_warns(db):
     from mfdb.models import (
         SampleDefinition, EntityDefinition, ProbeDefinition)
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample, validate_sample_for_export)
 
     # Probe sits on a mutated residue, but the entity records no mutation.
@@ -290,7 +290,7 @@ def test_auto_diff_wired_in_create_sample(db):
     """Creating a sample with reference_sequence but no mutations auto-populates them."""
     from mfdb.models import (
         SampleDefinition, EntityDefinition, ProbeDefinition)
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample, get_sample_full_description)
 
     # Simple 8-residue test: reference has SER at positions 2 & 5,
@@ -360,7 +360,7 @@ def test_flr_cif_round_trip_preserves_struct_ref(db, tmp_path):
     """Export a sample with external refs to FLR CIF, re-import via pdbx reader, and verify."""
     from mfdb.models import (
         SampleDefinition, EntityDefinition, ProbeDefinition, MutationDefinition)
-    from mfdb.sample_manager import (
+    from mfdb.samples.sample_manager import (
         create_sample)
 
     defn = SampleDefinition(

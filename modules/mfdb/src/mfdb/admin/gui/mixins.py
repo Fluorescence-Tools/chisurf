@@ -12,8 +12,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf.logging
 
-from mfdb.dictionary_schema_map import DictionarySchemaMap
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.dictionary_schema_map import DictionarySchemaMap
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from chisurf.gui.widgets.general import apply_compact_table_style
 
 from .entity_schema import FieldSpec, field_specs_for_category

@@ -1,6 +1,6 @@
 """Self-contained reagent / consumable inventory view (PRD-15 LIMS P4).
 
-A thin Qt widget over the ``mfdb.reagents.*`` RPC handlers (PRD-23: logic in the
+A thin Qt widget over the ``mfdb.samples.reagents.*`` RPC handlers (PRD-23: logic in the
 backend, view only renders): list reagent lots (kind filter + show-expired toggle),
 show the selected lot's fields, and create a lot. Like ``StudiesView`` it is
 **standalone** (constructed with an ``MFDBClient``) so it slots into the mfdb-admin
@@ -13,7 +13,7 @@ from typing import Any
 
 from qtpy import QtWidgets
 
-from mfdb.reagents import REAGENT_KINDS
+from mfdb.samples.reagents import REAGENT_KINDS
 
 _KINDS = tuple(sorted(REAGENT_KINDS))
 #: Lot columns shown in the table; the last is the (stable) lot id.

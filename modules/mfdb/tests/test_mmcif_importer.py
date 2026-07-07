@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from mfdb.importer import import_structure_file
+from mfdb.samples.importer import import_structure_file
 from mfdb.repository import MFDatabase
 
 

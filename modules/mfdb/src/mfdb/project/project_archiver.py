@@ -23,7 +23,7 @@ from mfdb.models import (
     validate_vocabulary,
 )
 from mfdb.repository import MFDatabase, _json_dumps, _json_loads
-from mfdb.sample_manager import link_artifact_to_sample
+from mfdb.samples.sample_manager import link_artifact_to_sample
 
 # Re-use constants from chinet_adapter when available
 try:
@@ -594,7 +594,7 @@ def archive_project_to_mfdb(
     # from cs.history.
     history_events = (project_payload.get("extra") or {}).get("history_events") or []
     if history_events:
-        from mfdb import event_log
+        from mfdb.lifecycle import event_log
         for _ev in history_events:
             event_log.append_event(_ev, project_id=project_id, db=db)
 
@@ -791,7 +791,7 @@ def restore_project_from_artifacts(
     history_events: list[dict[str, Any]] = []
     restore_project_id = project_metadata.get("project_id")
     if restore_project_id:
-        from mfdb import event_log
+        from mfdb.lifecycle import event_log
         history_events = event_log.read_events(project_id=restore_project_id, db=db)
 
     return {

@@ -95,13 +95,13 @@ def test_protocol_with_no_operation_type_has_empty_schema(db):
 
 
 def _set_global(db):
-    from mfdb.result_registry import set_global_db
+    from mfdb.provenance.result_registry import set_global_db
 
     set_global_db(db)
 
 
 def test_register_operation_records_protocol_ref(db, tmp_path):
-    from mfdb.result_registry import register_operation, set_global_db
+    from mfdb.provenance.result_registry import register_operation, set_global_db
 
     pid, version = db.create_protocol(
         "shift v", "processing", operation_type="microtime_shift"
@@ -125,7 +125,7 @@ def test_register_operation_records_protocol_ref(db, tmp_path):
 
 
 def test_register_operation_rejects_unknown_protocol(db):
-    from mfdb.result_registry import register_operation, set_global_db
+    from mfdb.provenance.result_registry import register_operation, set_global_db
 
     try:
         with pytest.raises(ValueError):
@@ -139,7 +139,7 @@ def test_register_operation_rejects_unknown_protocol(db):
 
 
 def test_register_operation_rejects_operation_type_mismatch(db):
-    from mfdb.result_registry import register_operation, set_global_db
+    from mfdb.provenance.result_registry import register_operation, set_global_db
 
     pid, _ = db.create_protocol("burst proc", "processing", operation_type="burst_selection")
     try:
@@ -156,7 +156,7 @@ def test_register_operation_rejects_operation_type_mismatch(db):
 
 def test_reproduce_run_by_protocol_and_version(db):
     """The recorded operation pins exactly which protocol version produced it."""
-    from mfdb.result_registry import register_operation, set_global_db
+    from mfdb.provenance.result_registry import register_operation, set_global_db
 
     pid_v1, v1 = db.create_protocol("pipe", "processing", operation_type="microtime_shift")
     try:

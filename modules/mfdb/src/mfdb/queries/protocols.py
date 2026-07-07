@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from mfdb._sqlutil import _utc_now
+from mfdb.schema._sqlutil import _utc_now
 
 
 class ProtocolMixin:
@@ -46,7 +46,7 @@ class ProtocolMixin:
         if not name:
             raise ValueError("protocol name is required")
         if created_by_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             created_by_user_id = configured_default_user_id()
         now = _utc_now()
         with self._transaction():
@@ -121,7 +121,7 @@ class ProtocolMixin:
         or ``'all'`` (public + own). ``owner_id`` defaults to the active user.
         """
         if owner_id is None and scope in ("own", "all"):
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             owner_id = configured_default_user_id()
         latest = (
             "version = (SELECT MAX(p2.version) FROM mfdb_protocol p2 "
@@ -153,7 +153,7 @@ class ProtocolMixin:
         protocol pins a named procedure to an operation kind without duplicating the
         parameter declarations.
         """
-        from mfdb.operation_parameters import get_operation_parameter_defs
+        from mfdb.provenance.operation_parameters import get_operation_parameter_defs
 
         operation_type = (protocol or {}).get("operation_type") or ""
         if not operation_type:

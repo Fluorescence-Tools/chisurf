@@ -11,23 +11,23 @@ from pathlib import Path
 from typing import Any
 
 import logging
-from mfdb.database_resolver import (
+from mfdb.store.database_resolver import (
     backup_database,
     resolve_database_path,
     source_database_path,
     user_database_path,
 )
-from mfdb.importer import import_structure_file
+from mfdb.samples.importer import import_structure_file
 from mfdb.models import (
     EntityDefinition,
     FretPairDefinition,
     ProbeDefinition,
     SampleDefinition,
 )
-from mfdb import reagents
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.samples import reagents
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from mfdb.repository import MFDatabase
-from mfdb.sample_manager import (
+from mfdb.samples.sample_manager import (
     create_sample,
     get_sample_full_description,
     suggest_pdbx_keys,
@@ -36,7 +36,7 @@ from mfdb.sample_manager import (
 from mfdb.admin.backend.auth_services import (
     register_services as register_auth_services,
 )
-from mfdb.auth import (
+from mfdb.security.auth import (
     AuthError,
     PERM_READ,
     AnonymousPrincipal,
@@ -258,7 +258,7 @@ def _default_user_id() -> str | None:
     Delegates to the PRD-17 canonical resolver so the anonymous in-process client
     scopes reads to the very identity registration stamped writes with.
     """
-    from mfdb.session import configured_default_user_id
+    from mfdb.security.session import configured_default_user_id
 
     return configured_default_user_id()
 
@@ -274,7 +274,7 @@ def _resolve_owner_id(db: "MFDatabase", auth: dict[str, Any] | None) -> str | No
     # The canonical resolver already returns the authenticated principal when
     # present and the configured default otherwise — no separate anonymous-fallback
     # branch needed (PRD-17).
-    from mfdb.session import resolve_active_user_id
+    from mfdb.security.session import resolve_active_user_id
 
     return resolve_active_user_id(auth, conn=db.conn)
 
@@ -705,7 +705,7 @@ def list_calibrations_handler(
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List calibration records (type/method/value/notes), newest first."""
-    from mfdb.staleness import list_calibrations
+    from mfdb.lifecycle.staleness import list_calibrations
 
     with MFDatabase(resolve_database_path()) as db:
         return {"calibrations": list_calibrations(db)}
@@ -715,7 +715,7 @@ def stale_calibrations_handler(
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List uses whose calibration is superseded by a newer one of the same type."""
-    from mfdb.staleness import find_stale_calibration_uses
+    from mfdb.lifecycle.staleness import find_stale_calibration_uses
 
     with MFDatabase(resolve_database_path()) as db:
         stale = find_stale_calibration_uses(db)
@@ -730,7 +730,7 @@ def create_calibration_handler(
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Register a calibration value (defaults to a user-provided / literature value)."""
-    from mfdb.result_registry import register_calibration
+    from mfdb.provenance.result_registry import register_calibration
 
     if not calibration_type:
         return {"error": "calibration_type is required"}
@@ -824,7 +824,7 @@ def lifecycle_transition_handler(
     auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Transition an entity; an illegal jump is returned as ``error`` (not raised)."""
-    from mfdb.lifecycle import StateTransitionError
+    from mfdb.lifecycle.lifecycle import StateTransitionError
 
     with MFDatabase(resolve_database_path()) as db:
         try:
@@ -843,7 +843,7 @@ def lifecycle_transition_handler(
 
 def lifecycle_definitions_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Return the authored lifecycle definitions (states + transitions per entity)."""
-    from mfdb.lifecycle import load_lifecycle_defs
+    from mfdb.lifecycle.lifecycle import load_lifecycle_defs
 
     defs = load_lifecycle_defs()
     return {

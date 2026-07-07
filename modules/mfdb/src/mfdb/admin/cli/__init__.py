@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def _open_db() -> Iterator["object"]:
     """Open the configured MFDB for the duration of a command."""
     from mfdb.repository import MFDatabase
-    from mfdb.database_resolver import resolve_database_path
+    from mfdb.store.database_resolver import resolve_database_path
 
     db = MFDatabase(resolve_database_path())
     db.connect()

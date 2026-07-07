@@ -14,8 +14,8 @@ from typing import Any
 
 import numpy as np
 
-from mfdb import schema
-from mfdb._sqlutil import (
+from mfdb.schema import schema
+from mfdb.schema._sqlutil import (
     _exists,
     _json_dumps,
     _json_hash,
@@ -23,9 +23,9 @@ from mfdb._sqlutil import (
     _row_to_dict,
     _utc_now,
 )
-from mfdb.base import MFDBClientBase
-from mfdb.database_resolver import resolve_database_path
-from mfdb.graph import map_legacy_node_type
+from mfdb.security.base import MFDBClientBase
+from mfdb.store.database_resolver import resolve_database_path
+from mfdb.provenance.graph import map_legacy_node_type
 from mfdb.models import (
     DIRECTIONS,
     OPERATION_TYPES,
@@ -43,7 +43,7 @@ from mfdb.queries.parameters import ParameterMixin
 from mfdb.queries.protocols import ProtocolMixin
 from mfdb.queries.studies import StudyMixin
 from mfdb.queries.users import UserDeviceMixin
-from mfdb.transactions import transaction as _transaction
+from mfdb.store.transactions import transaction as _transaction
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ class MFDatabase(
         """
         dao = getattr(self, "_dao", None)
         if dao is None:
-            from mfdb.dao import DictionaryDao
+            from mfdb.schema.dao import DictionaryDao
 
             dao = DictionaryDao.from_connection(self.conn)
             self._dao = dao
@@ -201,7 +201,7 @@ class MFDatabase(
         """
         lineage = getattr(self, "_lineage", None)
         if lineage is None:
-            from mfdb.lineage import Lineage
+            from mfdb.provenance.lineage import Lineage
 
             lineage = Lineage.from_connection(self.conn)
             self._lineage = lineage
@@ -267,7 +267,7 @@ class MFDatabase(
         """Transaction context manager for the database connection."""
         from contextlib import contextmanager
 
-        from mfdb.transactions import transaction as _transaction
+        from mfdb.store.transactions import transaction as _transaction
         @contextmanager
         def _wrapper():
             with _transaction(self.conn):
@@ -1933,7 +1933,7 @@ class MFDatabase(
     ) -> list[dict[str, Any]]:
         if not node_type or not node_id:
             return []
-        from mfdb.graph import traverse_canonical_graph
+        from mfdb.provenance.graph import traverse_canonical_graph
         edges = traverse_canonical_graph(self.conn, node_type, node_id, direction="downstream")
         results = []
         for edge in edges:
@@ -1960,7 +1960,7 @@ class MFDatabase(
     ) -> list[dict[str, Any]]:
         if not node_type or not node_id:
             return []
-        from mfdb.graph import traverse_canonical_graph
+        from mfdb.provenance.graph import traverse_canonical_graph
         edges = traverse_canonical_graph(self.conn, node_type, node_id, direction="upstream")
         results = []
         for edge in edges:
@@ -2001,7 +2001,7 @@ class MFDatabase(
         dict
             Dict with "nodes" and "edges" keys.
         """
-        from mfdb.graph import normalize_node_type, traverse_canonical_graph
+        from mfdb.provenance.graph import normalize_node_type, traverse_canonical_graph
 
         upstream_edges = traverse_canonical_graph(self.conn, seed_node_type, seed_node_id, direction="upstream")
         downstream_edges = traverse_canonical_graph(self.conn, seed_node_type, seed_node_id, direction="downstream")
@@ -2081,7 +2081,7 @@ class MFDatabase(
         The producing operation captured as a unit (operation_type + parameters +
         source artifact ids), or ``None`` for a root/imported artifact.
         """
-        from mfdb.compute_spec import get_compute_spec
+        from mfdb.provenance.compute_spec import get_compute_spec
 
         return get_compute_spec(self, artifact_id)
 
@@ -2710,7 +2710,7 @@ class MFDatabase(
 
     def add_sample(self, sample_id, uuid=None, description="", details="", num_of_probes=None, solvent_phase=None, sample_condition_id=None, entity_assembly_id=None, project_id=None, measured_by_user_id=None, measured_by_device_id=None, measured_at=None):
         if measured_by_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             measured_by_user_id = configured_default_user_id()
         import uuid as _uuid
         if uuid is None:
@@ -3984,8 +3984,8 @@ class MFDatabase(
     def _get_object_store(self):
         """Return the shared ObjectStore instance, creating it if needed."""
         if not hasattr(self, "_object_store") or self._object_store is None:
-            from mfdb.database_resolver import object_store_root
-            from mfdb.object_store import ObjectStore
+            from mfdb.store.database_resolver import object_store_root
+            from mfdb.store.object_store import ObjectStore
             self._object_store = ObjectStore(object_store_root())
         return self._object_store
 
@@ -4558,7 +4558,7 @@ class MFDatabase(
         protocol_version: int | None = None,
     ) -> str:
         if operator_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             operator_user_id = configured_default_user_id()
         self.validate_extensible_vocab("operation_type", operation_type)
         validate_vocabulary(status, STATUS_VALUES, "status")
@@ -4651,7 +4651,7 @@ class MFDatabase(
                 details={"operation_type": operation_type, "status": status},
             )
             if acl_owner_user_id is not None:
-                from mfdb.auth import create_default_acl_for_object
+                from mfdb.security.auth import create_default_acl_for_object
                 create_default_acl_for_object(
                     self.conn, "mfdb_operation", operation_id,
                     owner_user_id=acl_owner_user_id,
@@ -5431,7 +5431,7 @@ class MFDatabase(
         timestamp: str | None = None,
     ) -> int:
         if operator_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             operator_user_id = configured_default_user_id()
         now = timestamp or _utc_now()
         with self._transaction():
@@ -6037,7 +6037,7 @@ class MFDatabase(
             )
 
     def graph_upstream(self, node_type: str, node_id: str, max_depth: int = 100) -> list[dict[str, Any]]:
-        from mfdb.graph import traverse_canonical_graph
+        from mfdb.provenance.graph import traverse_canonical_graph
         return traverse_canonical_graph(
             self.conn,
             node_type,
@@ -6048,7 +6048,7 @@ class MFDatabase(
         )
 
     def graph_downstream(self, node_type: str, node_id: str, max_depth: int = 100) -> list[dict[str, Any]]:
-        from mfdb.graph import traverse_canonical_graph
+        from mfdb.provenance.graph import traverse_canonical_graph
         return traverse_canonical_graph(
             self.conn,
             node_type,

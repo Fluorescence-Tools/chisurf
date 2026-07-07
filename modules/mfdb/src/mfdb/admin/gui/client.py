@@ -97,13 +97,13 @@ class MFDBClient:
 
     def lifecycle_state(self, entity_type: str, entity_id: str) -> str | None:
         return self._call(
-            "mfdb.lifecycle.state",
+            "mfdb.lifecycle.lifecycle.state",
             {"entity_type": entity_type, "entity_id": entity_id},
         ).get("state")
 
     def lifecycle_history(self, entity_type: str, entity_id: str) -> list[dict[str, Any]]:
         return self._call(
-            "mfdb.lifecycle.history",
+            "mfdb.lifecycle.lifecycle.history",
             {"entity_type": entity_type, "entity_id": entity_id},
         ).get("history", [])
 
@@ -116,7 +116,7 @@ class MFDBClient:
         operator_user_id: str | None = None,
     ) -> dict[str, Any]:
         return self._call(
-            "mfdb.lifecycle.transition",
+            "mfdb.lifecycle.lifecycle.transition",
             {
                 "entity_type": entity_type,
                 "entity_id": entity_id,
@@ -127,7 +127,7 @@ class MFDBClient:
         )
 
     def lifecycle_definitions(self) -> dict[str, Any]:
-        return self._call("mfdb.lifecycle.definitions").get("definitions", {})
+        return self._call("mfdb.lifecycle.lifecycle.definitions").get("definitions", {})
 
     def list_protocols(self, scope: str = "all") -> list[dict[str, Any]]:
         return self._call("mfdb.protocols.list", {"scope": scope}).get("protocols", [])
@@ -201,7 +201,7 @@ class MFDBClient:
         self, kind: str | None = None, include_expired: bool = False
     ) -> list[dict[str, Any]]:
         return self._call(
-            "mfdb.reagents.list",
+            "mfdb.samples.reagents.list",
             {"kind": kind, "include_expired": include_expired},
         ).get("lots", [])
 
@@ -210,17 +210,17 @@ class MFDBClient:
         vendor: str = "", expiry: str | None = None,
     ) -> dict[str, Any]:
         return self._call(
-            "mfdb.reagents.create",
+            "mfdb.samples.reagents.create",
             {"kind": kind, "name": name, "lot_number": lot_number,
              "vendor": vendor, "expiry": expiry},
         )
 
     def expired_reagent_lots(self) -> list[dict[str, Any]]:
-        return self._call("mfdb.reagents.expired").get("lots", [])
+        return self._call("mfdb.samples.reagents.expired").get("lots", [])
 
     def list_reagents_for(self, target_type: str, target_id: str) -> list[dict[str, Any]]:
         return self._call(
-            "mfdb.reagents.usage.list",
+            "mfdb.samples.reagents.usage.list",
             {"target_type": target_type, "target_id": target_id},
         ).get("lots", [])
 
@@ -228,7 +228,7 @@ class MFDBClient:
         self, lot_id: str, target_type: str, target_id: str, role: str = "used"
     ) -> dict[str, Any]:
         return self._call(
-            "mfdb.reagents.usage.add",
+            "mfdb.samples.reagents.usage.add",
             {"lot_id": lot_id, "target_type": target_type,
              "target_id": target_id, "role": role},
         )
@@ -390,7 +390,7 @@ class MFDBClient:
         return self._call("mfdb.users.delete", {"user_id": user_id, "force": force, "requester_id": requester_id}).get("users", [])
 
     def change_password(self, user_id: str, password: str, requester_id: str = None) -> dict[str, Any]:
-        return self._call("mfdb.auth.change_password", {"password": password})
+        return self._call("mfdb.security.auth.change_password", {"password": password})
 
     def list_devices(self) -> list[dict[str, Any]]:
         return self._call("mfdb.devices.list").get("devices", [])
@@ -795,7 +795,7 @@ class MFDBClient:
 
     def login(self, user_id: str, password: str = "", client_metadata: dict | None = None) -> dict[str, Any]:
         """Login and store the session token."""
-        result = self._call_raw("mfdb.auth.login", {
+        result = self._call_raw("mfdb.security.auth.login", {
             "user_id": user_id,
             "password": password,
             "client_metadata": client_metadata,
@@ -806,21 +806,21 @@ class MFDBClient:
 
     def logout(self) -> dict[str, Any]:
         """Logout and clear the session token."""
-        result = self._call_raw("mfdb.auth.logout")
+        result = self._call_raw("mfdb.security.auth.logout")
         self._token = None
         return result
 
     def me(self) -> dict[str, Any]:
         """Return current authenticated user info."""
-        return self._call("mfdb.auth.me")
+        return self._call("mfdb.security.auth.me")
 
     def sessions_list(self, user_id: str | None = None) -> list[dict[str, Any]]:
         """List active sessions."""
-        return self._call("mfdb.auth.sessions.list", {"user_id": user_id}).get("sessions", [])
+        return self._call("mfdb.security.auth.sessions.list", {"user_id": user_id}).get("sessions", [])
 
     def sessions_revoke(self, session_id: str) -> dict[str, Any]:
         """Revoke a session by ID."""
-        return self._call("mfdb.auth.sessions.revoke", {"session_id": session_id})
+        return self._call("mfdb.security.auth.sessions.revoke", {"session_id": session_id})
 
     # ---- Group methods ----
 

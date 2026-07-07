@@ -490,7 +490,7 @@ class SampleSearchRequest:
             
             if self.use_pdbx or self.use_flrcif:
                 try:
-                    from mfdb.pdbx_metadata import MmcifDictionary
+                    from mfdb.schema.pdbx_metadata import MmcifDictionary
                     dic = MmcifDictionary.load_bundled()
                     # Get all category.field keys from the dictionary
                     # Include both with and without leading underscore (e.g., "flr_sample.id" and "_flr_sample.id")

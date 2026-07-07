@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from mfdb._sqlutil import _utc_now
+from mfdb.schema._sqlutil import _utc_now
 
 
 class StudyMixin:
@@ -31,7 +31,7 @@ class StudyMixin:
         if not name:
             raise ValueError("study name is required")
         if created_by_user_id is None:
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             created_by_user_id = configured_default_user_id()
         sid = study_id or str(uuid.uuid4())
         now = _utc_now()
@@ -63,7 +63,7 @@ class StudyMixin:
     ) -> list[dict[str, Any]]:
         """List studies scoped ``mine``/``own`` | ``public`` | ``all`` (own+public)."""
         if owner_id is None and scope in ("mine", "own", "all"):
-            from mfdb.session import configured_default_user_id
+            from mfdb.security.session import configured_default_user_id
             owner_id = configured_default_user_id()
         where = ["deleted_at IS NULL"]
         params: list[Any] = []

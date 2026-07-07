@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from mfdb.base import MFDBClientBase
-from mfdb.operation_parameters import OperationParameterError
+from mfdb.security.base import MFDBClientBase
+from mfdb.provenance.operation_parameters import OperationParameterError
 
 if TYPE_CHECKING:
     import pandas
 
-    from mfdb.session import SessionContext
+    from mfdb.security.session import SessionContext
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def _resolve_active_user_id() -> str:
     Thin wrapper over the canonical resolver (PRD-17) so writes stamp the same
     identity reads scope by.
     """
-    from mfdb.session import configured_default_user_id
+    from mfdb.security.session import configured_default_user_id
 
     return configured_default_user_id()
 
@@ -129,7 +129,7 @@ def register_result(
     try:
         _validate_links(db, sample_id=sample_id, parent_artifact_id=parent_artifact_id)
         if parameters:
-            from mfdb.operation_parameters import validate_operation_parameters
+            from mfdb.provenance.operation_parameters import validate_operation_parameters
 
             conn = getattr(db, "conn", None)
             if conn is not None:
@@ -225,7 +225,7 @@ def register_result(
 
     logger.info("Registered result: kind=%s artifact=%s operation=%s", kind, artifact_id, operation_type or "analysis")
     # Post-commit, best-effort event (PRD-21 Task 3); never breaks registration.
-    from mfdb.events import EVENT_ARTIFACT_REGISTERED, publish
+    from mfdb.lifecycle.events import EVENT_ARTIFACT_REGISTERED, publish
 
     publish(
         EVENT_ARTIFACT_REGISTERED,
@@ -315,7 +315,7 @@ def register_operation(
         return ""
 
     if validate and parameters:
-        from mfdb.operation_parameters import validate_operation_parameters
+        from mfdb.provenance.operation_parameters import validate_operation_parameters
 
         conn = getattr(db, "conn", None)
         if conn is not None:
@@ -383,7 +383,7 @@ def register_operation(
         raise
     logger.info("Registered operation: type=%s op=%s inputs=%d outputs=%d", operation_type, operation_id, len(inputs), len(outputs))
     # Post-commit, best-effort events (PRD-21 Task 3); never break registration.
-    from mfdb.events import (
+    from mfdb.lifecycle.events import (
         EVENT_ARTIFACT_REGISTERED,
         EVENT_OPERATION_SUCCEEDED,
         publish,
@@ -632,7 +632,7 @@ def read_result(db: MFDBClientBase, artifact_id: str) -> Any:
         return None
     blob = db.get_object(object_uuid)
     if artifact.get("data_format") == "msgpack":
-        from mfdb.payload_codec import REGISTRY, PayloadSchemaError, decode_payload
+        from mfdb.store.payload_codec import REGISTRY, PayloadSchemaError, decode_payload
 
         payload = decode_payload(blob)
         artifact_kind = artifact.get("artifact_kind")
@@ -663,7 +663,7 @@ def _get_global_db() -> MFDBClientBase | None:
         return _GLOBAL_DB
 
     try:
-        from mfdb.database_resolver import resolve_database_path
+        from mfdb.store.database_resolver import resolve_database_path
         from mfdb.repository import MFDatabase
 
         return MFDatabase(resolve_database_path())
@@ -756,7 +756,7 @@ def _store_data(
         return ref["object_uuid"], "embedded_blob", data_format or "bin", ref["size_bytes"], ref["content_md5"], None
 
     payload_kind, payload = _coerce_payload(kind, data, pandas_module=pd)
-    from mfdb.payload_codec import encode_payload
+    from mfdb.store.payload_codec import encode_payload
 
     blob, fmt = encode_payload(payload_kind, payload, meta=metadata or {})
     ref = db.put_object(data=blob, filename=f"{payload_kind}.msgpack", mime_type="application/msgpack")
@@ -782,8 +782,8 @@ def _coerce_payload(kind: str, data: Any, pandas_module: Any = None) -> tuple[st
     tuple
         ``(payload_kind, payload_object)`` for ``encode_payload``.
     """
-    from mfdb.payload_codec import REGISTRY
-    from mfdb.payload_models import BurstTable, GenericCurve, GenericTable
+    from mfdb.store.payload_codec import REGISTRY
+    from mfdb.store.payload_models import BurstTable, GenericCurve, GenericTable
 
     if is_dataclass(data) and getattr(data, "KIND", None):
         if kind in REGISTRY and data.KIND != kind:
@@ -831,7 +831,7 @@ def _payload_from_dataframe(kind: str, df: Any) -> Any:
     Any
         Payload object whose ``KIND`` matches ``kind``.
     """
-    from mfdb.payload_models import (
+    from mfdb.store.payload_models import (
         BurstSelection,
         FcsCorrelation,
         Spectrum,

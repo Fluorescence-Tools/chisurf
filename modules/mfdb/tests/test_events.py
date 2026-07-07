@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from mfdb.events import (
+from mfdb.lifecycle.events import (
     EVENT_ARTIFACT_REGISTERED,
     EVENT_OPERATION_SUCCEEDED,
     Event,
@@ -20,7 +20,7 @@ from mfdb.events import (
     get_event_bus,
 )
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import (
+from mfdb.provenance.result_registry import (
     register_operation,
     register_raw_measurement,
     register_result,

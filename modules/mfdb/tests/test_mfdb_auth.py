@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mfdb.auth import (
+from mfdb.security.auth import (
     PERM_MANAGE,
     PERM_READ,
     PERM_WRITE,

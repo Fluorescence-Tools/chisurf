@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from mfdb.repository import MFDatabase
-from mfdb.auth import (
+from mfdb.security.auth import (
     PERM_MANAGE,
     PERM_READ,
     PERM_WRITE,
@@ -28,7 +28,7 @@ from mfdb.auth import (
     revoke_acl,
     revoke_session,
 )
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.admin.backend.password_services import (
     evaluate_password,
     hash_password,
@@ -49,14 +49,14 @@ def register_services(dispatcher_or_context: Any) -> None:
     dispatcher = getattr(dispatcher_or_context, "dispatcher", dispatcher_or_context)
 
     # Auth
-    dispatcher.register("mfdb.auth.login", lambda params: login_handler(**params))
-    dispatcher.register("mfdb.auth.logout", lambda params: logout_handler(**params))
-    dispatcher.register("mfdb.auth.me", lambda params: me_handler(**params))
-    dispatcher.register("mfdb.auth.change_password", lambda params: change_password_handler(**params))
+    dispatcher.register("mfdb.security.auth.login", lambda params: login_handler(**params))
+    dispatcher.register("mfdb.security.auth.logout", lambda params: logout_handler(**params))
+    dispatcher.register("mfdb.security.auth.me", lambda params: me_handler(**params))
+    dispatcher.register("mfdb.security.auth.change_password", lambda params: change_password_handler(**params))
 
     # Sessions
-    dispatcher.register("mfdb.auth.sessions.list", lambda params: sessions_list_handler(**params))
-    dispatcher.register("mfdb.auth.sessions.revoke", lambda params: sessions_revoke_handler(**params))
+    dispatcher.register("mfdb.security.auth.sessions.list", lambda params: sessions_list_handler(**params))
+    dispatcher.register("mfdb.security.auth.sessions.revoke", lambda params: sessions_revoke_handler(**params))
 
     # Groups
     dispatcher.register("mfdb.groups.list", lambda params: groups_list_handler(**params))
@@ -604,7 +604,7 @@ def permissions_revoke_handler(
 
 def revoke_session_by_token(conn, token):
     """Revoke a session by its raw token."""
-    from mfdb.auth import revoke_session_by_token as _revoke
+    from mfdb.security.auth import revoke_session_by_token as _revoke
     _revoke(conn, token)
 
 

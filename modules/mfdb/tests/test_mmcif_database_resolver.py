@@ -6,8 +6,9 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
-from mfdb import database_resolver, schema
-from mfdb.database_resolver import backup_database_before_migration
+from mfdb.store import database_resolver
+from mfdb.schema import schema
+from mfdb.store.database_resolver import backup_database_before_migration
 
 
 def test_backup_before_migration_copies_existing_database():

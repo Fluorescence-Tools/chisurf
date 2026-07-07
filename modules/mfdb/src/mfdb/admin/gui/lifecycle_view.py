@@ -1,6 +1,6 @@
 """Self-contained lifecycle state + history view (PRD-12 Increment 4).
 
-A thin Qt widget over the ``mfdb.lifecycle.*`` RPC handlers (PRD-23: all logic is in
+A thin Qt widget over the ``mfdb.lifecycle.lifecycle.*`` RPC handlers (PRD-23: all logic is in
 the backend; this view only calls the client and renders). It shows an entity's current
 state and transition history and offers the legal next transitions. It is deliberately
 **standalone** — constructed with an ``MFDBClient`` — so it can be slotted into the

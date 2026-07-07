@@ -3,14 +3,14 @@
 Provides the ``mfdb_state_transition`` surface (current state, history, and
 validated transitions) as a mixin. Extracted verbatim from the former repository
 god-class; behaviour is unchanged. The lifecycle *definitions* live in
-``mfdb.lifecycle``; this is the per-entity transition log.
+``mfdb.lifecycle.lifecycle``; this is the per-entity transition log.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from mfdb._sqlutil import _utc_now
+from mfdb.schema._sqlutil import _utc_now
 
 
 class LifecycleMixin:
@@ -70,14 +70,14 @@ class LifecycleMixin:
         """Move an entity to ``to_state``, recording the transition (PRD-12).
 
         Validates against ``mfdb_state_transition_rule`` (raises
-        :class:`~mfdb.lifecycle.StateTransitionError` on an illegal jump,
+        :class:`~mfdb.lifecycle.lifecycle.StateTransitionError` on an illegal jump,
         surfaced not swallowed), is an **idempotent no-op** when already in
         ``to_state`` (returns ``False``), and otherwise records a transition row and
         publishes PRD-21's ``state.changed`` event post-commit (best-effort; a
         subscriber can never break the transition). Returns ``True`` when a transition
         was recorded.
         """
-        from mfdb.lifecycle import StateTransitionError
+        from mfdb.lifecycle.lifecycle import StateTransitionError
 
         current = self.get_state(entity_type, entity_id)
         if current == to_state:
@@ -113,7 +113,7 @@ class LifecycleMixin:
                 details={"from": current, "to": to_state, "reason": reason},
             )
         # Post-commit, best-effort event (PRD-21 Task 3); never breaks the transition.
-        from mfdb.events import EVENT_STATE_CHANGED, publish
+        from mfdb.lifecycle.events import EVENT_STATE_CHANGED, publish
 
         publish(
             EVENT_STATE_CHANGED,

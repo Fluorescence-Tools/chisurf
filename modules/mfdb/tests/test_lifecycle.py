@@ -10,8 +10,8 @@ import os
 
 import pytest
 
-from mfdb.events import EVENT_STATE_CHANGED, get_event_bus
-from mfdb.lifecycle import StateTransitionError
+from mfdb.lifecycle.events import EVENT_STATE_CHANGED, get_event_bus
+from mfdb.lifecycle.lifecycle import StateTransitionError
 from mfdb.repository import MFDatabase
 
 
@@ -124,7 +124,7 @@ def test_audit_log_records_transition(db):
 
 
 def test_register_raw_measurement_starts_artifact_lifecycle(db, tmp_path):
-    from mfdb.result_registry import (
+    from mfdb.provenance.result_registry import (
         register_raw_measurement,
         set_global_db,
     )
@@ -139,7 +139,7 @@ def test_register_raw_measurement_starts_artifact_lifecycle(db, tmp_path):
 
 
 def test_register_result_starts_artifact_lifecycle(db, tmp_path):
-    from mfdb.result_registry import (
+    from mfdb.provenance.result_registry import (
         register_raw_measurement,
         register_result,
         set_global_db,
@@ -163,7 +163,7 @@ def test_register_result_starts_artifact_lifecycle(db, tmp_path):
 
 
 def test_register_with_sample_starts_sample_lifecycle(db, tmp_path):
-    from mfdb.result_registry import (
+    from mfdb.provenance.result_registry import (
         register_raw_measurement,
         set_global_db,
     )

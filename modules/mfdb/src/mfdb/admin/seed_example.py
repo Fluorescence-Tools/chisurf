@@ -17,9 +17,9 @@ import uuid as _uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
-from mfdb.sample_manager import link_artifact_to_sample
+from mfdb.samples.sample_manager import link_artifact_to_sample
 
 logger = logging.getLogger(__name__)
 

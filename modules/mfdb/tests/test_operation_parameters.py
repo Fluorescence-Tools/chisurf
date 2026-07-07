@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from mfdb.operation_parameters import (
+from mfdb.provenance.operation_parameters import (
     OperationParameterError,
     get_operation_parameter_defs,
     load_operation_parameter_defs,

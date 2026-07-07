@@ -15,12 +15,12 @@ import pytest
 
 from mfdb import models
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import (
+from mfdb.provenance.result_registry import (
     register_calibration,
     register_raw_measurement,
     set_global_db,
 )
-from mfdb.staleness import (
+from mfdb.lifecycle.staleness import (
     find_stale_calibration_uses,
     record_calibration_use,
 )

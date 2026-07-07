@@ -12,12 +12,12 @@ import os
 
 import pytest
 
-from mfdb.boundary_validation import (
+from mfdb.security.boundary_validation import (
     BoundaryValidationError,
     DictionaryValidator,
     check_value_type,
 )
-from mfdb.operation_parameters import (
+from mfdb.provenance.operation_parameters import (
     OperationParameterError,
     validate_operation_parameters,
 )

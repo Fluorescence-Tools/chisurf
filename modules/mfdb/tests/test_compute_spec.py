@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-from mfdb.compute_spec import (
+from mfdb.provenance.compute_spec import (
     ComputeSpec,
     NoReplayExecutorError,
     get_compute_spec,
@@ -30,7 +30,7 @@ def _restore_executor(operation_type, prior):
     else:
         register_replay_executor(operation_type, prior)
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import (
+from mfdb.provenance.result_registry import (
     register_operation,
     register_raw_measurement,
     register_result,

@@ -22,7 +22,7 @@ from mfdb.models import (
     SampleDefinition,
     compute_forster_radius,
 )
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from mfdb.repository import MFDatabase
 
 logger = logging.getLogger(__name__)
@@ -679,7 +679,7 @@ def _persist_entity_external_refs(db: MFDatabase, entity_id: str, entity) -> Non
     """
     mutations = list(entity.mutations or [])
     if not mutations and entity.reference_sequence and entity.sequence:
-        from mfdb.external_refs import diff_sequences
+        from mfdb.samples.external_refs import diff_sequences
 
         mutations = diff_sequences(entity.sequence, entity.reference_sequence)
 
@@ -1843,5 +1843,5 @@ def suggest_pdbx_keys(prefix: str = "") -> list[tuple[str, str]]:
     list of tuple
         (key, description) pairs.
     """
-    from mfdb.pdbx_metadata import suggest_pdbx_keys as _suggest_pdbx_keys
+    from mfdb.schema.pdbx_metadata import suggest_pdbx_keys as _suggest_pdbx_keys
     return _suggest_pdbx_keys(prefix)

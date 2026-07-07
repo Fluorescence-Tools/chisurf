@@ -9,11 +9,11 @@ from typing import Optional
 import numpy as np
 
 from mfdb.repository import MFDatabase, _utc_now
-from mfdb.database_resolver import source_database_path
+from mfdb.store.database_resolver import source_database_path
 
 T4_LYSOZYME_SEQUENCE = "MSTLQEK"
 
-_DATA_DIR = Path(__file__).resolve().parent / "data"
+_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # Common FRET pairs for R0 precomputation
 # (donor_name, acceptor_name) — names must match imported/chromophore_name

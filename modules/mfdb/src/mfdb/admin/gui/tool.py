@@ -42,8 +42,8 @@ from .lifecycle_view import LifecycleView
 from .calibrations_view import CalibrationsView
 from .reagents_view import ReagentLotsView
 from .pipelines_view import PipelinesView
-from mfdb.pdbx_metadata import MmcifDictionary
-from mfdb.dictionary_schema_map import DictionarySchemaMap, build_dictionary_schema_map
+from mfdb.schema.pdbx_metadata import MmcifDictionary
+from mfdb.schema.dictionary_schema_map import DictionarySchemaMap, build_dictionary_schema_map
 
 
 class _MFDBBackgroundTask(QtCore.QObject):
@@ -1447,7 +1447,7 @@ class MFDBWidget(NavigationPanelTool):
         if not storage_path:
             return
         try:
-            from mfdb.database_resolver import object_store_root
+            from mfdb.store.database_resolver import object_store_root
 
             path = object_store_root() / storage_path
             QtGui.QDesktopServices.openUrl(_qurl_for_location(str(path)))
@@ -6076,7 +6076,7 @@ class MFDBWidget(NavigationPanelTool):
         if not storage_path:
             return
         try:
-            from mfdb.database_resolver import object_store_root
+            from mfdb.store.database_resolver import object_store_root
             path = object_store_root() / storage_path
             QtGui.QDesktopServices.openUrl(_qurl_for_location(str(path)))
         except Exception as exc:

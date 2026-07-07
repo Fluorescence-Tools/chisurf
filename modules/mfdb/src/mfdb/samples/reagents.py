@@ -55,7 +55,7 @@ def add_reagent_lot(
     if not name:
         raise ValueError("reagent lot name is required")
     if created_by_user_id is None:
-        from mfdb.session import configured_default_user_id
+        from mfdb.security.session import configured_default_user_id
 
         created_by_user_id = configured_default_user_id()
     lid = lot_id or str(uuid.uuid4())

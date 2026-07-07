@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 
 from mfdb.config import configure_runtime, reset_runtime_config
-from mfdb import database_resolver
-from mfdb.object_store import ObjectStore
+from mfdb.store import database_resolver
+from mfdb.store.object_store import ObjectStore
 
 
 def test_object_store_root_defaults_to_settings_objects(tmp_path):

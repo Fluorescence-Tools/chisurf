@@ -28,16 +28,16 @@ from mfdb.models import (
     LIFECYCLE_STATUSES,
     DATA_FORMATS,
 )
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 from mfdb.repository import MFDatabase
-from mfdb.schema import (
+from mfdb.schema.schema import (
     FRESH_DB_SCHEMA_SQL,
     CREATE_TABLES_SQL,
     _drop_legacy_tables,
     _get_dict_ddl,
 )
-from mfdb.schema_from_dictionary import reconcile_schema
-from mfdb.sample_manager import create_sample, get_sample_full_description
+from mfdb.schema.schema_from_dictionary import reconcile_schema
+from mfdb.samples.sample_manager import create_sample, get_sample_full_description
 from mfdb.models import SampleDefinition, EntityDefinition, ProbeDefinition
 
 

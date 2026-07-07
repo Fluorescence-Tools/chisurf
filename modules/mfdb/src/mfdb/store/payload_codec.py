@@ -7,7 +7,7 @@ from typing import Any
 import msgpack
 import numpy as np
 
-from mfdb.payload_models import (
+from mfdb.store.payload_models import (
     PAYLOAD_MODELS,
     BurstTable,
     GenericCurve,

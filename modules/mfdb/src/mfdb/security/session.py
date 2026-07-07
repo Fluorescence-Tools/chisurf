@@ -47,7 +47,7 @@ def resolve_active_user_id(auth: dict[str, Any] | None = None, *, conn: Any = No
     """
     if auth is not None and conn is not None:
         try:
-            from mfdb.auth import AnonymousPrincipal, principal_from_rpc_auth
+            from mfdb.security.auth import AnonymousPrincipal, principal_from_rpc_auth
 
             principal = principal_from_rpc_auth(conn, auth)
             if not isinstance(principal, AnonymousPrincipal):

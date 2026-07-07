@@ -10,9 +10,9 @@ import os
 
 import pytest
 
-from mfdb.operation_parameters import OperationParameterError
+from mfdb.provenance.operation_parameters import OperationParameterError
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import (
+from mfdb.provenance.result_registry import (
     register_operation,
     register_raw_measurement,
     set_global_db,
@@ -86,7 +86,7 @@ def test_register_operation_role_indexed_parameters(tmp_path):
 def test_register_result_validates_declared_operation_type(tmp_path):
     """register_result rejects a parameter outside the operation type's .dic
     schema (validation is wired at the boundary; nothing is persisted)."""
-    from mfdb.result_registry import register_result
+    from mfdb.provenance.result_registry import register_result
 
     db = _db(tmp_path)
     try:

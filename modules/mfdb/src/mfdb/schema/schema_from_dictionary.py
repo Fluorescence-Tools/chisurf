@@ -7,7 +7,7 @@ default is derived from the ``_mfdb_schema`` bridge attributes.
 
 Usage::
 
-    from mfdb.schema_from_dictionary import (
+    from mfdb.schema.schema_from_dictionary import (
         generate_create_table_for_category,
         generate_alter_add_columns_for_category,
         reconcile_schema,
@@ -22,7 +22,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from mfdb.pdbx_metadata import DictItem, MmcifDictionary
+from mfdb.schema.pdbx_metadata import DictItem, MmcifDictionary
 
 # ---------------------------------------------------------------------------
 # SQL type map — counterpart of TYPE_CODE_WIDGET_MAP in entity_schema.py

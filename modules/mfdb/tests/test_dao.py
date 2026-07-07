@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from mfdb.dao import (
+from mfdb.schema.dao import (
     DictionaryDao,
     UnknownColumnError,
     UnknownTableError,

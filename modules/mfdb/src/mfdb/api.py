@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from mfdb.auth import (
+from mfdb.security.auth import (
     PERM_READ,
     AuthError,
     can_access,
@@ -11,7 +11,7 @@ from mfdb.auth import (
     require_authenticated,
     require_access,
 )
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
 
 
@@ -42,7 +42,7 @@ def _check_acl_filter(conn: Any, principal: Any, object_type: str, rows: list, i
             has_acls = True
             break
     if has_acls:
-        from mfdb.auth import filter_readable
+        from mfdb.security.auth import filter_readable
         return filter_readable(conn, principal, object_type, rows, id_key=id_key)
     if not principal.is_admin:
         raise AuthError("Authentication required")
@@ -641,7 +641,7 @@ def graph_upstream(
         RPC result containing a list of canonical edge dictionaries.
     """
     with MFDatabase(resolve_database_path()) as db:
-        from mfdb.graph import traverse_canonical_graph as traverse
+        from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
             node_type,
@@ -675,7 +675,7 @@ def graph_downstream(
         RPC result containing a list of canonical edge dictionaries.
     """
     with MFDatabase(resolve_database_path()) as db:
-        from mfdb.graph import traverse_canonical_graph as traverse
+        from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
             node_type,
@@ -735,7 +735,7 @@ def traverse_canonical_graph(
         RPC result containing a list of edges under key 'edges'.
     """
     with MFDatabase(resolve_database_path()) as db:
-        from mfdb.graph import traverse_canonical_graph as traverse
+        from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
             start_node_type,

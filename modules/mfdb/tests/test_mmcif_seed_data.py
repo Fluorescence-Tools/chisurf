@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from mfdb.repository import MFDatabase
-from mfdb.seed_data import seed_curated_database
+from mfdb.samples.seed_data import seed_curated_database
 
 
 def test_seed_curated_database_contains_samples():

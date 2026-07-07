@@ -19,7 +19,7 @@ from typing import Any, Mapping
 
 logger = logging.getLogger(__name__)
 
-_DEFS_PATH = Path(__file__).parent / "data" / "operation_parameter_defs.json"
+_DEFS_PATH = Path(__file__).parent.parent / "data" / "operation_parameter_defs.json"
 
 
 @dataclass(frozen=True)
@@ -132,7 +132,7 @@ def _check_param_value(name: str, value: Any, d: OperationParameterDef) -> str |
     ``value``/``error``/``fixed``/``bounds``/``units`` — the inner ``value`` is the
     one checked.
     """
-    from mfdb.boundary_validation import check_value_type
+    from mfdb.security.boundary_validation import check_value_type
 
     if isinstance(value, (list, tuple)):
         for i, element in enumerate(value):

@@ -14,7 +14,7 @@ operation-parameter validation so both boundaries agree on what ``int``/``float`
 
 Usage
 -----
->>> from mfdb.boundary_validation import DictionaryValidator
+>>> from mfdb.security.boundary_validation import DictionaryValidator
 >>> v = DictionaryValidator.load_bundled()
 >>> v.validate("flr_sample", {"sample_name": "A", "sample_id": 1})
 """
@@ -25,7 +25,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 
 logger = logging.getLogger(__name__)
 

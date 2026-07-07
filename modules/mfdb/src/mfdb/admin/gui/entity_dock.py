@@ -16,8 +16,8 @@ import chisurf.logging
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from mfdb.dictionary_schema_map import DictionarySchemaMap
-from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.schema.dictionary_schema_map import DictionarySchemaMap
+from mfdb.schema.pdbx_metadata import MmcifDictionary
 
 from .entity_registry import EntitySpec, build_registry_dict
 from .mixins import (

@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from mfdb.dictionary_schema_map import DictionarySchemaMap
-from mfdb.pdbx_metadata import DictItem, MmcifDictionary
+from mfdb.schema.dictionary_schema_map import DictionarySchemaMap
+from mfdb.schema.pdbx_metadata import DictItem, MmcifDictionary
 
 
 @dataclass(frozen=True)

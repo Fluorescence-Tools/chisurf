@@ -68,10 +68,10 @@ def _get_dict_ddl(category_name: str) -> str:
     """Lazy-cached DDL for a dictionary category.  Used by ``migrate_schema``."""
     cache = _get_dict_ddl.__dict__.setdefault("_cache", {})
     if category_name not in cache:
-        from mfdb.schema_from_dictionary import (
+        from mfdb.schema.schema_from_dictionary import (
             generate_create_table_for_category,
         )
-        from mfdb.pdbx_metadata import MmcifDictionary
+        from mfdb.schema.pdbx_metadata import MmcifDictionary
         cache[category_name] = generate_create_table_for_category(
             MmcifDictionary.load_bundled(), category_name
         )
@@ -1634,7 +1634,7 @@ def bootstrap_vocabulary(conn: sqlite3.Connection) -> None:
     All enumeration values are read from the bundled mmCIF/flrCIF dictionary,
     including MFDB extension categories defined in ``mfdb_flr_ext.dic``.
     """
-    from mfdb.pdbx_metadata import MmcifDictionary
+    from mfdb.schema.pdbx_metadata import MmcifDictionary
 
     dic = MmcifDictionary.load_bundled()
 
@@ -1844,8 +1844,8 @@ def _migrate_v40_reconcile(conn: sqlite3.Connection) -> None:
     for sql in FRESH_DB_TABLES_SQL:
         conn.execute(sql)
     _ensure_canonical_columns(conn)
-    from mfdb.schema_from_dictionary import reconcile_schema
-    from mfdb.pdbx_metadata import MmcifDictionary
+    from mfdb.schema.schema_from_dictionary import reconcile_schema
+    from mfdb.schema.pdbx_metadata import MmcifDictionary
     reconcile_schema(conn, MmcifDictionary.load_bundled())
     _ensure_mfdb_setup_columns(conn)
     _ensure_lifecycle_columns(conn)
@@ -1865,9 +1865,9 @@ def _bootstrap(conn: sqlite3.Connection) -> None:
         bootstrap_auth_groups(conn)
     except sqlite3.OperationalError:
         pass
-    from mfdb.operation_parameters import bootstrap_operation_parameter_defs
+    from mfdb.provenance.operation_parameters import bootstrap_operation_parameter_defs
     bootstrap_operation_parameter_defs(conn)
-    from mfdb.lifecycle import bootstrap_lifecycle_defs
+    from mfdb.lifecycle.lifecycle import bootstrap_lifecycle_defs
     bootstrap_lifecycle_defs(conn)
     # Auth columns on flr_sample_users (for DBs that skipped v22 migration)
     for col, col_type in [("is_admin", "INTEGER DEFAULT 0"), ("password_hash", "TEXT"), ("allow_passwordless_login", "INTEGER DEFAULT 0")]:

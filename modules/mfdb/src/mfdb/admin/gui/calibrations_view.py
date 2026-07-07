@@ -14,7 +14,7 @@ from typing import Any
 
 from qtpy import QtWidgets
 
-from mfdb.staleness import CALIBRATION_TYPES
+from mfdb.lifecycle.staleness import CALIBRATION_TYPES
 
 _CAL_COLUMNS = ("Type", "Method", "Value", "Notes", "Artifact ID")
 _CAL_KEYS = ("calibration_type", "method", "value", "notes", "artifact_id")

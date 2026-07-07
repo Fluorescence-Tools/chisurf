@@ -27,7 +27,7 @@ def source_database_path() -> Path:
     configured = configured_source_database_path()
     if configured is not None:
         return configured
-    data_dir = Path(__file__).resolve().parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data"
     packaged_source = data_dir / SOURCE_DB_NAME
     if packaged_source.exists():
         return packaged_source
@@ -47,7 +47,7 @@ def object_store_root() -> Path:
 
     The object store is shared across all users on the same machine.
     By default it is located at ``{settings_dir}/objects/``. Configure
-    ``mfdb.object_store.root`` in ``settings_chisurf.yaml`` to override
+    ``mfdb.store.object_store.root`` in ``settings_chisurf.yaml`` to override
     it. Relative configured paths are resolved relative to the settings
     directory.
     """
@@ -127,7 +127,7 @@ def _copy_database(source_path: Path, user_path: Path) -> None:
 
 
 def _create_empty_database(path: Path) -> None:
-    from mfdb import schema
+    from mfdb.schema import schema
 
     conn = sqlite3.connect(str(path))
     try:

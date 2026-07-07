@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Tuple
 
 # Path to the data directory
-_DATA_DIR = Path(__file__).resolve().parent / "data"
+_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # Cache for loaded vocabulary data
 _vocabulary_cache: dict[str, Tuple[str, ...]] = {}

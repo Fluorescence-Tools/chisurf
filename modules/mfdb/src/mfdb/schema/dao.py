@@ -27,7 +27,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any, Iterable, Mapping
 
-from mfdb.dictionary_schema_map import (
+from mfdb.schema.dictionary_schema_map import (
     DictionarySchemaMap,
     introspect_sqlite_schema,
     quote_identifier,

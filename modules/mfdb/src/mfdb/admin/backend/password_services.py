@@ -90,7 +90,7 @@ def login_handler(user_id: str, password: str = "") -> dict[str, Any]:
     - Users with ``allow_passwordless_login = 1`` log in without password.
     """
     from mfdb.repository import MFDatabase
-    from mfdb.database_resolver import resolve_database_path
+    from mfdb.store.database_resolver import resolve_database_path
 
     with MFDatabase(resolve_database_path()) as db:
         row = db.conn.execute(
@@ -149,7 +149,7 @@ def change_password_handler(
     import sqlite3
 
     from mfdb.repository import MFDatabase
-    from mfdb.database_resolver import resolve_database_path
+    from mfdb.store.database_resolver import resolve_database_path
 
     with MFDatabase(resolve_database_path()) as db:
         has_admin_res = db.conn.execute(

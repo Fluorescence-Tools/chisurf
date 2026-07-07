@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-from mfdb.reagents import (
+from mfdb.samples.reagents import (
     add_reagent_lot,
     expired_lots,
     link_reagent,
@@ -19,7 +19,7 @@ from mfdb.reagents import (
     list_reagents_for,
 )
 from mfdb.repository import MFDatabase
-from mfdb.result_registry import set_global_db
+from mfdb.provenance.result_registry import set_global_db
 
 
 @pytest.fixture

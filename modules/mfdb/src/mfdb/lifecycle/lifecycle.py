@@ -27,7 +27,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-_DEFS_PATH = Path(__file__).parent / "data" / "state_lifecycle_defs.json"
+_DEFS_PATH = Path(__file__).parent.parent / "data" / "state_lifecycle_defs.json"
 
 
 class StateTransitionError(ValueError):

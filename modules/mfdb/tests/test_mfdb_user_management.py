@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from mfdb.auth import create_session
+from mfdb.security.auth import create_session
 from mfdb.repository import MFDatabase
 from mfdb.config import configure_runtime, reset_runtime_config
 
@@ -190,7 +190,7 @@ def test_mfdb_user_passwords_and_login(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB
         list_users_handler()
@@ -462,7 +462,7 @@ def test_admin_password_strength_enforcement(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB
         list_users_handler()
@@ -554,7 +554,7 @@ def test_save_user_handler_admin_forces_no_passwordless(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
         auth = _default_auth(db_path)
@@ -592,7 +592,7 @@ def test_change_password_permissions(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         # Initialize DB — user_default is already admin with password "admin"
         from mfdb.admin.backend.services import list_users_handler
@@ -667,7 +667,7 @@ def test_guest_login_passwordless(tmp_path: Path) -> None:
     with MFDatabase(db_path) as db:
         pass
 
-    with patch("mfdb.database_resolver.resolve_database_path", return_value=db_path):
+    with patch("mfdb.store.database_resolver.resolve_database_path", return_value=db_path):
         res = login_handler("guest")
         assert res["authenticated"] is True
         assert res["user"]["user_id"] == "guest"
@@ -687,7 +687,7 @@ def test_allow_passwordless_login_flag(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
         auth = _default_auth(db_path)
@@ -724,7 +724,7 @@ def test_allow_passwordless_login_can_be_disabled(tmp_path: Path) -> None:
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         list_users_handler()
         auth = _default_auth(db_path)
@@ -760,7 +760,7 @@ def test_allow_passwordless_login_admin_denied_without_password(tmp_path: Path) 
     )
 
     with patch("mfdb.admin.backend.services.resolve_database_path", return_value=db_path), patch(
-        "mfdb.database_resolver.resolve_database_path", return_value=db_path
+        "mfdb.store.database_resolver.resolve_database_path", return_value=db_path
     ):
         from mfdb.admin.backend.services import list_users_handler
         list_users_handler()

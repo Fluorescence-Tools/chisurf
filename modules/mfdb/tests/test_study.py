@@ -81,7 +81,7 @@ def test_configurable_fields_upsert(db):
 def test_browse_datasets_filters_by_study(db, tmp_path):
     """browse_datasets gains a study facet: direct-member artifacts and artifacts
     whose linked sample is a member."""
-    from mfdb.result_registry import (
+    from mfdb.provenance.result_registry import (
         register_raw_measurement,
         register_result,
         set_global_db,
@@ -112,7 +112,7 @@ def test_browse_datasets_filters_by_study(db, tmp_path):
     db.add_study_member(study, "artifact", b_direct)  # pulls in B
     db.add_study_member(other, "artifact", c_out)
 
-    from mfdb.session import configured_default_user_id
+    from mfdb.security.session import configured_default_user_id
 
     owner = configured_default_user_id()
     ids = {

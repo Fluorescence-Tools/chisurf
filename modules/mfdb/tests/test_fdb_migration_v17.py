@@ -5,10 +5,10 @@ import json
 import pytest
 import pathlib
 from unittest.mock import patch
-from mfdb.schema import migrate_schema, set_schema_version, get_schema_version, SCHEMA_VERSION
+from mfdb.schema.schema import migrate_schema, set_schema_version, get_schema_version, SCHEMA_VERSION
 from mfdb.repository import MFDatabase
 from mfdb import api as fdb_api
-from mfdb.graph import traverse_canonical_graph
+from mfdb.provenance.graph import traverse_canonical_graph
 
 
 def test_idempotent_updates(tmp_path: pathlib.Path) -> None:
@@ -95,7 +95,7 @@ def test_json_rpc_versioned_services(tmp_path: pathlib.Path) -> None:
     with patch("mfdb.api.resolve_database_path", return_value=db_path):
         # A fresh DB seeds an admin user, so the api.py write handlers require an
         # authenticated session token; mint one for the seeded default admin.
-        from mfdb.auth import create_session
+        from mfdb.security.auth import create_session
         from mfdb.repository import MFDatabase as _MFDatabase
 
         with _MFDatabase(str(db_path)) as _db:

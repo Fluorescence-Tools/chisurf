@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 
 from mfdb.repository import MFDatabase
-from mfdb import schema
+from mfdb.schema import schema
 from mfdb import (
     ARTIFACT_KINDS,
     OPERATION_TYPES,
@@ -456,7 +456,7 @@ def test_fresh_database_has_no_migration_report(tmp_path: pathlib.Path) -> None:
 
 def test_migration_report_dataclass_works() -> None:
     """Verify the MigrationReport dataclass and its summary property."""
-    from mfdb.schema import MigrationReport
+    from mfdb.schema.schema import MigrationReport
     report = MigrationReport(
         from_version=16,
         to_version=17,

@@ -10,9 +10,9 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
-from mfdb.sample_manager import (
+from mfdb.samples.sample_manager import (
     get_sample_for_artifact,
     get_sample_full_description,
     get_sample_name,

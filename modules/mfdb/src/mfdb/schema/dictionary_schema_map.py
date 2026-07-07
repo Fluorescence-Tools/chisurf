@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from mfdb.pdbx_metadata import DictItem, MmcifDictionary
+from mfdb.schema.pdbx_metadata import DictItem, MmcifDictionary
 
 
 @dataclass(frozen=True)

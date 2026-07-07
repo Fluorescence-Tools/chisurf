@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from mfdb._sqlutil import _exists, _row_to_dict, _utc_now
+from mfdb.schema._sqlutil import _exists, _row_to_dict, _utc_now
 
 
 class BranchMixin:

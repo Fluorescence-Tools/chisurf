@@ -5,7 +5,7 @@ import types
 
 def test_keyring_session_token_round_trip(monkeypatch) -> None:
     """Session tokens round-trip through the optional keyring backend."""
-    from mfdb import credentials
+    from mfdb.security import credentials
 
     stored = {}
 
@@ -33,7 +33,7 @@ def test_keyring_session_token_round_trip(monkeypatch) -> None:
 
 def test_runtime_session_token_round_trip() -> None:
     """Runtime session tokens are available without persistent storage."""
-    from mfdb import credentials
+    from mfdb.security import credentials
 
     credentials.delete_runtime_session_token("127.0.0.1", 8765, "admin")
 
@@ -45,7 +45,7 @@ def test_runtime_session_token_round_trip() -> None:
 
 def test_session_token_rename_moves_runtime_and_keyring_tokens(monkeypatch) -> None:
     """Renaming a user moves runtime and persisted session token keys."""
-    from mfdb import credentials
+    from mfdb.security import credentials
 
     stored = {}
 
@@ -78,7 +78,7 @@ def test_session_token_rename_moves_runtime_and_keyring_tokens(monkeypatch) -> N
 
 def test_missing_credential_store_does_not_persist_plaintext(monkeypatch) -> None:
     """No plaintext fallback is used when no credential store is available."""
-    from mfdb import credentials
+    from mfdb.security import credentials
 
     monkeypatch.setattr(credentials, "_get_keyring", lambda: None)
     monkeypatch.setattr(credentials, "_macos_security_available", lambda: False)

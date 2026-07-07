@@ -8,7 +8,7 @@ import sys
 import uuid
 from typing import Any
 
-from mfdb.database_resolver import resolve_database_path
+from mfdb.store.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
 from mfdb.admin.backend._service_errors import (
     INVALID_INPUT,

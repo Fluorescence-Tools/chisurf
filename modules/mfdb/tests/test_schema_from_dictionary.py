@@ -12,9 +12,9 @@ import os
 import sqlite3
 import tempfile
 
-from mfdb.dictionary_schema_map import introspect_sqlite_schema
-from mfdb.pdbx_metadata import MmcifDictionary
-from mfdb.schema_from_dictionary import (
+from mfdb.schema.dictionary_schema_map import introspect_sqlite_schema
+from mfdb.schema.pdbx_metadata import MmcifDictionary
+from mfdb.schema.schema_from_dictionary import (
     TYPE_CODE_SQL_MAP,
     generate_create_table_for_category,
     generate_index_for_table,

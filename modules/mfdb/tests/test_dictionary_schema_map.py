@@ -7,8 +7,8 @@ import inspect
 import pytest
 
 from mfdb.repository import MFDatabase
-from mfdb import dictionary_schema_map as mapping_module
-from mfdb.dictionary_schema_map import (
+from mfdb.schema import dictionary_schema_map as mapping_module
+from mfdb.schema.dictionary_schema_map import (
     DictionarySchemaMap,
     MappedColumn,
     build_dictionary_schema_map,

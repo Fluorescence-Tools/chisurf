@@ -33,7 +33,7 @@ def _hermetic_settings_dir():
     """
     os.environ["MFDB_SETTINGS_DIR"] = str(_HERMETIC_SETTINGS_DIR)
     try:
-        from mfdb.database_resolver import user_database_path
+        from mfdb.store.database_resolver import user_database_path
         from mfdb.repository import MFDatabase
 
         user_db = user_database_path()
@@ -48,7 +48,7 @@ def _hermetic_settings_dir():
 @pytest.fixture(autouse=True)
 def _guard_real_user_db():
     """Fail loudly if a test resolves MFDB state to the real ~/.chisurf."""
-    from mfdb.database_resolver import object_store_root, user_database_path
+    from mfdb.store.database_resolver import object_store_root, user_database_path
 
     real = _REAL_SETTINGS_DIR.resolve()
     assert real not in user_database_path().resolve().parents, (
@@ -69,7 +69,7 @@ def _reset_global_db():
     that sets it must not leak that connection into later tests.
     """
     try:
-        from mfdb.result_registry import set_global_db
+        from mfdb.provenance.result_registry import set_global_db
     except Exception:
         set_global_db = None
     if set_global_db is not None:
