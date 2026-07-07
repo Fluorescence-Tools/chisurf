@@ -32,7 +32,7 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | queries/samples.py | 7 | 7 | 4 | 2 | 3 | 0 |
 | queries/setups.py | 10 | 6 | 4 | 0 | 2 | 0 |
 | queries/studies.py | 6 | 3 | 1 | 0 | 4 | 0 |
-| queries/users.py | 4 | 2 | 2 | 0 | 0 | 0 |
+| queries/users.py | 0 | 2 | 2 | 0 | 0 | 0 |
 | repository.py | 29 | 13 | 0 | 1 | 1 | 4 |
 | samples/importer.py | 0 | 3 | 0 | 0 | 0 | 0 |
 | samples/reagents.py | 2 | 2 | 0 | 0 | 1 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 241 | 68 | 48 | 12 | 68 | 30 |
+| **TOTAL** | 237 | 68 | 48 | 12 | 68 | 30 |

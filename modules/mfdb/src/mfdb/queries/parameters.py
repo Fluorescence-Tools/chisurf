@@ -37,6 +37,8 @@ class ParameterMixin:
 
     def get_parameters(self, operation_id=None, artifact_id=None):
         if artifact_id is not None:
+            # raw: DISTINCT fan-out over the operation-artifact junction + IN(...)
+            # over the resulting id set — not expressible via the equality DAO.
             operation_ids = [
                 row["operation_id"]
                 for row in self.conn.execute(
@@ -48,15 +50,10 @@ class ParameterMixin:
                 return []
             placeholders = ",".join("?" for _ in operation_ids)
             params: list[Any] = operation_ids
-            query = f"SELECT * FROM mfdb_parameter WHERE operation_id IN ({placeholders}) AND deleted_at IS NULL"
-        elif operation_id is not None:
-            query = "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL"
-            params = [operation_id]
-        else:
-            query = "SELECT * FROM mfdb_parameter WHERE deleted_at IS NULL"
-            params = []
-        query += " ORDER BY parameter_id"
-        return [dict(row) for row in self.conn.execute(query, params).fetchall()]
+            query = f"SELECT * FROM mfdb_parameter WHERE operation_id IN ({placeholders}) AND deleted_at IS NULL ORDER BY parameter_id"
+            return [dict(row) for row in self.conn.execute(query, params).fetchall()]
+        filters = {"operation_id": operation_id} if operation_id is not None else None
+        return self.dao.list("mfdb_parameter", filters=filters, order_by="parameter_id")
 
     def delete_parameter(self, param_id):
         # PRD-26 Task 2: schema-driven soft-delete (was two hand UPDATEs). param_id may

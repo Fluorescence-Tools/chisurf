@@ -14,7 +14,7 @@ class UserDeviceMixin:
     """People, devices, and artifact ownership."""
 
     def get_users(self):
-        return self.conn.execute("SELECT * FROM flr_sample_users WHERE deleted_at IS NULL ORDER BY user_id").fetchall()
+        return self.dao.list("flr_sample_users", order_by="user_id")
 
     def ensure_user(self, user_id: str, display_name: str | None = None) -> None:
         """Create a minimal ``flr_sample_users`` row if the user is absent.
@@ -63,19 +63,17 @@ class UserDeviceMixin:
 
     def list_artifact_owners(self, artifact_id: str) -> list[str]:
         """Return the user IDs that own an artifact."""
-        rows = self.conn.execute(
-            "SELECT user_id FROM mfdb_artifact_owner "
-            "WHERE artifact_id = ? AND deleted_at IS NULL ORDER BY created_at",
-            (artifact_id,),
-        ).fetchall()
-        return [r[0] for r in rows]
+        rows = self.dao.list(
+            "mfdb_artifact_owner", filters={"artifact_id": artifact_id}, order_by="created_at"
+        )
+        return [r["user_id"] for r in rows]
 
     def add_user(self, user_id, display_name, email=None, affiliation=None, department=None, role=None, address=None, website=None, phone=None, details=None, user_uuid=None, is_admin=0, password_hash=None, allow_passwordless_login=None):
         if not user_uuid:
             # Check if user already has a uuid
-            row = self.conn.execute("SELECT user_uuid FROM flr_sample_users WHERE user_id = ?", (user_id,)).fetchone()
-            if row and row[0]:
-                user_uuid = row[0]
+            row = self.dao.get("flr_sample_users", user_id, include_deleted=True)
+            if row and row["user_uuid"]:
+                user_uuid = row["user_uuid"]
             else:
                 user_uuid = str(uuid.uuid4())
 
@@ -93,7 +91,7 @@ class UserDeviceMixin:
             self.dao.soft_delete("flr_sample_users", user_id)
 
     def get_devices(self):
-        return self.conn.execute("SELECT * FROM flr_sample_devices WHERE deleted_at IS NULL ORDER BY device_id").fetchall()
+        return self.dao.list("flr_sample_devices", order_by="device_id")
 
     def add_device(self, device_id, name, device_type=None, model=None, serial_number=None, location=None, owner=None, details=None):
         with self.conn:
