@@ -1,8 +1,8 @@
 # MFDB simplification — HANDOVER
 
-**Branch:** `development` · **HEAD:** `15df76f6` · **Working tree:** clean (only the
-`modules/ndxplorer` submodule shows dirty — leave it). 29 commits landed this
-session, all **local** (never push — see below).
+**Branch:** `development` · **HEAD:** `eede55d6` · **Working tree:** clean (only the
+`modules/ndxplorer` submodule shows dirty — leave it). Latest session added 6
+SQL→dao commits on top of the earlier 29; all **local** (never push — see below).
 
 This file is the start-fresh brief. The durable resume note also lives in agent
 memory (`mfdb-simplification-resume.md`, indexed in `MEMORY.md`) and the full
@@ -103,28 +103,41 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals at last count: **264 select · 109 insert · 76 update · 17 delete ·
-44 bespoke · 30 ddl.** Current raw `.execute(` remaining: **~241 in `queries/`**
-(mostly SELECTs, which are the centralized home) and **~395 in non-query modules**
-(the true scattered target).
+Package totals now: **257 select · 87 insert · 50 update · 12 delete ·
+67 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
+scattered writes are essentially done** — what remains is mostly reads and the
+`queries/` mixins (the centralized home).
 
-**Already converted (committed, verified):** `compute_spec` (fully — reuses
-`get_operation`/`get_operation_artifacts`/`get_parameters`), `add_entity`,
-`ObjectStoreMixin` clean CRUD, `SampleMixin` (add_sample/update_sample/
-delete_sample/condition/assembly), `UserDeviceMixin`, `ExperimentMixin.add_experiment`,
-probe optical/spectra reference-import writes.
+**Already converted (committed, verified):** `compute_spec`, `add_entity`,
+`ObjectStoreMixin` CRUD, `SampleMixin` (add_sample/update_sample/delete_sample/
+condition/assembly), `UserDeviceMixin`, `ExperimentMixin.add_experiment`, probe
+optical/spectra reference-import writes; **this session:** all writes in
+`samples/sample_manager.py`, `samples/seed_data.py`, `admin/backend/services.py`,
+`admin/backend/{password,auth,fluorophore}_services.py`, and the whole
+`security/auth.py` boundary (via a schema-cached `_dao(conn)` helper). The
+`bootstrap_*` seeders (`provenance/operation_parameters.py`, `lifecycle/lifecycle.py`)
+are **intentional-raw** (bulk-reseed on a bare conn: aggregate reindex + delete-by-
+non-PK). **DAO enhancement:** `DictionaryDao.insert` is now keyless-tolerant
+(returns lastrowid on UNIQUE-only junctions like `mfdb_group_member` /
+`mfdb_object_acl`) — this unblocks junction-table inserts; covered by
+`test_insert_into_keyless_junction_returns_rowid`.
+
+**Intentional-raw patterns now flagged `# raw` (leave them):** composite-key
+updates/soft-deletes on PK-less UNIQUE junctions (`mfdb_group_member`,
+`mfdb_object_acl`), resurrecting updates (reset `deleted_at = NULL` — `dao.update`
+refuses soft-deleted rows), hard deletes (soft-delete would block re-add on a
+UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copies,
+`COUNT`/JOIN reads, and column-projection reads that must exclude a column
+(e.g. `list_sessions` hiding `token_hash`).
 
 ### Recommended next order
-1. **Finish the convertible `INSERT OR REPLACE` writes** in `queries/` (~10 left);
-   flag the keyless/composite ones as intentional-raw with a comment.
-2. **Purge SQL from non-query modules** (the real "scattered" problem), routing each
-   through existing `MFDatabase` methods (add a method if missing):
-   `samples/sample_manager.py` (~31), `samples/seed_data.py`, `security/auth.py`,
-   `admin/backend/services.py` (~49) + `fluorophore_services`/`auth_services`/
-   `password_services`, `admin/seed_example.py`, `provenance/lineage.py`,
-   `provenance/graph.py`, `api.py`, `lifecycle/*`, `project/project_archiver.py`.
-3. **Reads in mixins** (SELECT→`dao.get`/`list`) — lowest value; do last, only where
-   trivially single-table.
+1. **Finish the convertible `INSERT OR REPLACE` writes** in `queries/` (~10 left,
+   e.g. `add_spectrum`, `add_sample_probe`, `add_probe`); check each table's UNIQUE
+   constraints and use `dao.upsert(conflict=[...])`; flag keyless/composite ones.
+2. **Reads** — `provenance/lineage.py`/`graph.py`, `project/project_archiver.py`,
+   `api.py`, and single-table SELECTs in the mixins → `dao.get`/`list`. Lowest
+   value; only where trivially single-table (leave JOIN/aggregate/graph reads).
+3. `admin/seed_example.py` (13 select · 8 insert) if it carries a `db`/dao handle.
 
 ### Workflow that works (learned the hard way)
 - **Do NOT bulk string-replace** across varied blocks — it silently corrupts (broke
