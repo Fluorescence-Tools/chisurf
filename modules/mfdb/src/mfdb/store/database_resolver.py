@@ -143,3 +143,25 @@ def _read_schema_version(conn: sqlite3.Connection) -> int | None:
     except sqlite3.OperationalError:
         return None
     return int(row[0]) if row is not None else None
+
+
+def _default_reference_spectra_path() -> Path:
+    """Resolve the default fluorophore reference ``spectra.db`` path.
+
+    Returns
+    -------
+    pathlib.Path
+        Existing reference database path.
+    """
+    env_path = os.environ.get("MFDB_REFERENCE_SPECTRA_DB")
+    candidates: list[Path] = []
+    if env_path:
+        candidates.append(Path(env_path).expanduser())
+    package_root = Path(__file__).resolve().parent.parent
+    candidates.append(package_root / "data" / "spectra.db")
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(
+        "No default fluorophore reference spectra.db found; set MFDB_REFERENCE_SPECTRA_DB"
+    )
