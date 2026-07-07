@@ -5,12 +5,12 @@ import json
 import chinet as cn
 import pytest
 
-from chisurf.core.mfdb.chinet_adapter import (
+from mfdb.chinet_adapter import (
     clear_mfdb_backend,
     load_chinet_session,
     store_chinet_session,
 )
-from chisurf.core.mfdb.repository import MFDatabase
+from mfdb.repository import MFDatabase
 
 
 def _json(value: str | None):

@@ -23,6 +23,10 @@ orm = [
     "sqlalchemy>=2.0",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 include-package-data = true

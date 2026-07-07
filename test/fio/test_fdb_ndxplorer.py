@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from chisurf.core.mfdb.repository import MFDatabase
+from mfdb.repository import MFDatabase
 from mfdb.admin.backend.ndxplorer_services import (
     load_burst_product_handler,
     record_analysis_handler,

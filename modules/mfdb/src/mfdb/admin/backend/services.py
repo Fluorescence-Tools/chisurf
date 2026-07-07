@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from chisurf import logging
+import logging
 from mfdb.database_resolver import (
     backup_database,
     resolve_database_path,

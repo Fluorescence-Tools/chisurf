@@ -7,12 +7,12 @@ import tempfile
 import numpy as np
 import pytest
 
-from chisurf.core.mfdb.base import MFDBClientBase
-from chisurf.core.mfdb.models import SampleDefinition
-from chisurf.core.mfdb.payload_codec import PayloadSchemaError, encode_payload
-from chisurf.core.mfdb.payload_models import BurstSelection, FcsCorrelation
-from chisurf.core.mfdb.repository import MFDatabase
-from chisurf.core.mfdb.result_registry import (
+from mfdb.base import MFDBClientBase
+from mfdb.models import SampleDefinition
+from mfdb.payload_codec import PayloadSchemaError, encode_payload
+from mfdb.payload_models import BurstSelection, FcsCorrelation
+from mfdb.repository import MFDatabase
+from mfdb.result_registry import (
     LinkValidationError,
     read_result,
     register_calibration,
@@ -22,7 +22,7 @@ from chisurf.core.mfdb.result_registry import (
     register_result,
     set_global_db,
 )
-from chisurf.core.mfdb.sample_manager import create_sample, get_artifacts_for_sample
+from mfdb.sample_manager import create_sample, get_artifacts_for_sample
 
 
 @pytest.fixture
@@ -432,7 +432,7 @@ def test_metadata_only_artifact(db):
 
 def test_no_db_returns_empty(monkeypatch):
     """No available database returns an empty artifact ID and does not raise."""
-    import chisurf.core.mfdb.result_registry as result_registry
+    import mfdb.result_registry as result_registry
 
     set_global_db(None)
     monkeypatch.setattr(result_registry, "_get_global_db", lambda: None)

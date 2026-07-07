@@ -1,7 +1,7 @@
 import pathlib
 from unittest.mock import patch
 
-from chisurf.core.mfdb.repository import MFDatabase
+from mfdb.repository import MFDatabase
 from mfdb.admin.backend.measurement_services import (
     archive_project_handler,
     database_backup_handler,

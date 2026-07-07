@@ -18,7 +18,7 @@ from mfdb.sample_manager import (
     get_sample_name,
     validate_sample_for_export,
 )
-from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
+from mfdb.admin.backend._service_errors import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
 
 
 def register_measurement_services(dispatcher: Any) -> None:

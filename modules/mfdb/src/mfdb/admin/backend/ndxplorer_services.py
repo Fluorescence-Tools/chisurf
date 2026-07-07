@@ -10,7 +10,7 @@ from typing import Any
 
 from mfdb.database_resolver import resolve_database_path
 from mfdb.repository import MFDatabase
-from chisurf.server.services import (
+from mfdb.admin.backend._service_errors import (
     INVALID_INPUT,
     NOT_FOUND,
     OPERATION_FAILED,

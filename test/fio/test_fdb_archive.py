@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from chisurf.core.mfdb.repository import MFDatabase
+from mfdb.repository import MFDatabase
 from mfdb.admin.backend.measurement_services import (
     database_backup_handler,
     export_provenance_graph_handler,

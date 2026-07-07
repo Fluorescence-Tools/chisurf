@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from chisurf.core.mfdb.pdbx_metadata import MmcifDictionary
-from chisurf.core.mfdb.chinet_adapter import (
+from mfdb.pdbx_metadata import MmcifDictionary
+from mfdb.chinet_adapter import (
     _load_parameter_registry,
     _lookup_flrcif_name,
 )
