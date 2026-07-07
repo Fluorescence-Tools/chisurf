@@ -52,11 +52,7 @@ class StudyMixin:
 
     def get_study(self, study_id: str) -> dict[str, Any] | None:
         """Return a study row by id, or ``None``."""
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_study WHERE study_id = ? AND deleted_at IS NULL",
-            (study_id,),
-        ).fetchone()
-        return dict(row) if row else None
+        return self.dao.get("mfdb_study", study_id, pk_column="study_id")
 
     def list_studies(
         self, scope: str = "all", owner_id: str | None = None
@@ -91,12 +87,9 @@ class StudyMixin:
             )
         now = _utc_now()
         with self._transaction():
-            exists = self.conn.execute(
-                "SELECT 1 FROM mfdb_study_member WHERE study_id = ? AND member_type = ? "
-                "AND member_id = ? AND deleted_at IS NULL",
-                (study_id, member_type, member_id),
-            ).fetchone()
-            if exists:
+            if self.dao.list("mfdb_study_member", filters={
+                "study_id": study_id, "member_type": member_type, "member_id": member_id,
+            }, limit=1):
                 return
             next_id = (
                 self.conn.execute(
@@ -143,16 +136,14 @@ class StudyMixin:
         """Set a configurable per-study metadata field (upsert on (study_id, key))."""
         now = _utc_now()
         with self._transaction():
-            existing = self.conn.execute(
-                "SELECT kv_id FROM mfdb_study_key_value WHERE study_id = ? AND key = ? "
-                "AND deleted_at IS NULL",
-                (study_id, key),
-            ).fetchone()
+            existing = self.dao.list(
+                "mfdb_study_key_value", filters={"study_id": study_id, "key": key}, limit=1
+            )
             if existing:
                 self.conn.execute(
                     "UPDATE mfdb_study_key_value SET value = ?, updated_at = ? "
                     "WHERE kv_id = ?",
-                    (value, now, existing[0]),
+                    (value, now, existing[0]["kv_id"]),
                 )
                 return
             next_id = (
@@ -170,12 +161,10 @@ class StudyMixin:
 
     def get_study_fields(self, study_id: str) -> dict[str, str]:
         """Return a study's configurable fields as a ``{key: value}`` mapping."""
-        rows = self.conn.execute(
-            "SELECT key, value FROM mfdb_study_key_value WHERE study_id = ? "
-            "AND deleted_at IS NULL ORDER BY key",
-            (study_id,),
-        ).fetchall()
-        return {r[0]: r[1] for r in rows}
+        rows = self.dao.list(
+            "mfdb_study_key_value", filters={"study_id": study_id}, order_by="key"
+        )
+        return {r["key"]: r["value"] for r in rows}
 
     def backfill_studies_from_project_ids(self) -> dict[str, int]:
         """Create one study per distinct ``flr_sample.project_id`` and join its samples.

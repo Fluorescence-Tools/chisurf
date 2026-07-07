@@ -18,7 +18,7 @@ from mfdb.schema._sqlutil import _json_dumps, _utc_now
 
 class SampleMixin:
     def get_entities(self):
-        return self.conn.execute("SELECT * FROM entities WHERE deleted_at IS NULL ORDER BY entity_id").fetchall()
+        return self.dao.list("entities", order_by="entity_id")
 
     def add_entity(self, entity_id, name, sequence=None, entity_type=None, organism=None, entity_source=None, details=None):
         with self.conn:
@@ -41,7 +41,8 @@ class SampleMixin:
                 self.set_sequence(entity_id, sequence)
 
     def get_entity_by_name(self, name):
-        return self.conn.execute("SELECT * FROM entities WHERE common_name = ?", (name,)).fetchone()
+        rows = self.dao.list("entities", filters={"common_name": name}, include_deleted=True, limit=1)
+        return rows[0] if rows else None
 
     def set_sequence(self, entity_id, sequence):
         """Set the sequence for an entity.
@@ -140,12 +141,7 @@ class SampleMixin:
         """
         if not sample_id:
             return False
-        row = self.conn.execute(
-            """SELECT 1 FROM flr_sample
-               WHERE sample_id = ? AND deleted_at IS NULL""",
-            (sample_id,),
-        ).fetchone()
-        return row is not None
+        return self.dao.get("flr_sample", sample_id) is not None
 
     def link_artifact_to_sample(self, artifact_id: str, sample_id: str) -> None:
         """Create an idempotent measured-sample edge from artifact to sample.
@@ -165,17 +161,11 @@ class SampleMixin:
         """
         if not artifact_id or not sample_id:
             return
-        existing = self.conn.execute(
-            """SELECT edge_id FROM mfdb_edge
-               WHERE source_node_type = 'artifact'
-                 AND source_node_id = ?
-                 AND target_node_type = 'sample'
-                 AND target_node_id = ?
-                 AND relationship_type = 'measured_sample'
-                 AND deleted_at IS NULL""",
-            (artifact_id, sample_id),
-        ).fetchone()
-        if existing:
+        if self.dao.list("mfdb_edge", filters={
+            "source_node_type": "artifact", "source_node_id": artifact_id,
+            "target_node_type": "sample", "target_node_id": sample_id,
+            "relationship_type": "measured_sample",
+        }, limit=1):
             return
         self.add_edge(
             source_node_type="artifact",
@@ -195,10 +185,7 @@ class SampleMixin:
         sample_id : str or None
             Sample ID to link to the file, or None to remove the link.
         """
-        row = self.conn.execute(
-            "SELECT metadata_json FROM mfdb_object WHERE object_uuid = ?",
-            (object_uuid,),
-        ).fetchone()
+        row = self.dao.get("mfdb_object", object_uuid, include_deleted=True)
         if not row:
             return
         try:
@@ -481,13 +468,10 @@ class SampleMixin:
             The sample_id associated with the file, or None if no sample was
             linked yet.
         """
-        row = self.conn.execute(
-            "SELECT metadata_json FROM mfdb_object WHERE content_md5 = ?",
-            (content_md5,),
-        ).fetchone()
-        if not row:
+        rows = self.dao.list("mfdb_object", filters={"content_md5": content_md5}, include_deleted=True, limit=1)
+        if not rows:
             return None
         try:
-            return json.loads(row["metadata_json"] or "{}").get("sample_id")
+            return json.loads(rows[0]["metadata_json"] or "{}").get("sample_id")
         except Exception:
             return None

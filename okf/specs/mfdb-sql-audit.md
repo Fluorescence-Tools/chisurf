@@ -29,9 +29,9 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | queries/parameters.py | 0 | 0 | 0 | 0 | 1 | 0 |
 | queries/probes.py | 20 | 3 | 7 | 4 | 3 | 9 |
 | queries/protocols.py | 0 | 1 | 0 | 0 | 2 | 0 |
-| queries/samples.py | 7 | 7 | 4 | 2 | 3 | 0 |
+| queries/samples.py | 1 | 7 | 4 | 2 | 3 | 0 |
 | queries/setups.py | 10 | 6 | 4 | 0 | 2 | 0 |
-| queries/studies.py | 6 | 3 | 1 | 0 | 4 | 0 |
+| queries/studies.py | 3 | 3 | 1 | 0 | 5 | 0 |
 | queries/users.py | 0 | 2 | 2 | 0 | 0 | 0 |
 | repository.py | 29 | 13 | 0 | 1 | 1 | 4 |
 | samples/importer.py | 0 | 3 | 0 | 0 | 0 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 228 | 67 | 48 | 12 | 71 | 30 |
+| **TOTAL** | 219 | 67 | 48 | 12 | 72 | 30 |
