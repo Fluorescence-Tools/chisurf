@@ -784,7 +784,7 @@ def _insert_all_probe_positions(
             position_ids.append(0)  # No position
             continue
 
-        # Check if position already exists for this probe and entity
+        # raw: existence probe is a bespoke 4-column match, not a PK/single-key get.
         existing = db.conn.execute(
             """SELECT id FROM flr_poly_probe_position
                WHERE probe_id = ? AND entity_id = ? AND residue_number = ?
@@ -796,31 +796,21 @@ def _insert_all_probe_positions(
             position_ids.append(existing["id"])
             continue
 
-        # Insert new position with all flrCIF fields
-        now = _utc_now(db)
-        cursor = db.conn.execute(
-            """INSERT INTO flr_poly_probe_position
-               (probe_id, entity_id, residue_number, asym_id, residue_name,
-                atom_id, mutation_flag, modification_flag, auth_name,
-                description, created_at, updated_at, deleted_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
+        # Insert new position with all flrCIF fields via the repository method.
+        position_ids.append(
+            db.add_poly_probe_position(
                 probe_id,
                 entity_id,
                 probe.seq_id,
-                probe.asym_id or "A",
-                probe.comp_id or None,
-                probe.atom_id or None,
-                probe.mutation_flag or "no",
-                probe.modification_flag or "no",
-                probe.auth_name or None,
-                probe.position_label or None,  # legacy description field
-                now,
-                now,
-                None,
-            ),
+                asym_id=probe.asym_id or "A",
+                residue_name=probe.comp_id or None,
+                description=probe.position_label or None,  # legacy description field
+                atom_id=probe.atom_id or None,
+                mutation_flag=probe.mutation_flag or "no",
+                modification_flag=probe.modification_flag or "no",
+                auth_name=probe.auth_name or None,
+            )
         )
-        position_ids.append(cursor.lastrowid)
 
     return position_ids
 
@@ -1015,8 +1005,6 @@ def _insert_optical_properties(
     if probe is None or probe_id == 0:
         return
 
-    now = _utc_now(db)
-
     # Map of property names to (value, unit)
     properties = [
         ("absorption_wavelength", probe.absorption_wavelength_nm, "nm"),
@@ -1029,21 +1017,24 @@ def _insert_optical_properties(
         if value is None:
             continue
 
-        # Check if property already exists
-        existing = db.conn.execute(
-            """SELECT 1 FROM optical_properties
-               WHERE probe_id = ? AND property_name = ? AND deleted_at IS NULL""",
-            (probe_id, prop_name),
-        ).fetchone()
-
-        if existing:
+        # Deliberately skip (do not overwrite) an already-recorded property, so
+        # probe reuse across samples keeps the first sample's values.
+        if db.dao.list(
+            "optical_properties",
+            filters={"probe_id": probe_id, "property_name": prop_name},
+            limit=1,
+        ):
             continue
 
-        db.conn.execute(
-            """INSERT INTO optical_properties
-               (probe_id, property_name, property_value, unit, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (probe_id, prop_name, str(value), unit, now, now),
+        db.dao.insert(
+            "optical_properties",
+            {
+                "probe_id": probe_id,
+                "property_name": prop_name,
+                "property_value": str(value),
+                "unit": unit,
+                "deleted_at": None,
+            },
         )
 
 
@@ -1062,42 +1053,34 @@ def _insert_spectra(db: MFDatabase, probe_id: int, probe: ProbeDefinition | None
     if probe is None or probe_id == 0:
         return
 
-    now = _utc_now(db)
-
-    if probe.absorption_spectrum:
-        wls, ints = probe.absorption_spectrum
-        # Check if spectrum already exists
-        existing = db.conn.execute(
-            """SELECT 1 FROM spectra
-               WHERE probe_id = ? AND spectrum_type = 'absorption' AND deleted_at IS NULL""",
-            (probe_id,),
-        ).fetchone()
-
-        if not existing:
-            db.conn.execute(
-                """INSERT INTO spectra
-                   (probe_id, spectrum_type, wavelengths, intensity_values,
-                    wavelength_unit, intensity_unit, created_at, updated_at)
-                   VALUES (?, 'absorption', ?, ?, 'nm', 'normalized', ?, ?)""",
-                (probe_id, json.dumps(wls), json.dumps(ints), now, now),
-            )
-
-    if probe.emission_spectrum:
-        wls, ints = probe.emission_spectrum
-        existing = db.conn.execute(
-            """SELECT 1 FROM spectra
-               WHERE probe_id = ? AND spectrum_type = 'emission' AND deleted_at IS NULL""",
-            (probe_id,),
-        ).fetchone()
-
-        if not existing:
-            db.conn.execute(
-                """INSERT INTO spectra
-                   (probe_id, spectrum_type, wavelengths, intensity_values,
-                    wavelength_unit, intensity_unit, created_at, updated_at)
-                   VALUES (?, 'emission', ?, ?, 'nm', 'normalized', ?, ?)""",
-                (probe_id, json.dumps(wls), json.dumps(ints), now, now),
-            )
+    # This sample path stores spectra as JSON text (read back with json.loads in
+    # _get_probe_info), distinct from the numpy-blob path in add_spectrum; keep
+    # the JSON serialization and skip (do not overwrite) an existing spectrum.
+    for spectrum_type, spectrum in (
+        ("absorption", probe.absorption_spectrum),
+        ("emission", probe.emission_spectrum),
+    ):
+        if not spectrum:
+            continue
+        wls, ints = spectrum
+        if db.dao.list(
+            "spectra",
+            filters={"probe_id": probe_id, "spectrum_type": spectrum_type},
+            limit=1,
+        ):
+            continue
+        db.dao.insert(
+            "spectra",
+            {
+                "probe_id": probe_id,
+                "spectrum_type": spectrum_type,
+                "wavelengths": json.dumps(wls),
+                "intensity_values": json.dumps(ints),
+                "wavelength_unit": "nm",
+                "intensity_unit": "normalized",
+                "deleted_at": None,
+            },
+        )
 
 
 def _insert_condition(db: MFDatabase, sample_id: str, definition: SampleDefinition) -> str | None:
@@ -1130,22 +1113,13 @@ def _insert_condition(db: MFDatabase, sample_id: str, definition: SampleDefiniti
         return None
 
     condition_id = f"{sample_id}_condition"
-    now = _utc_now(db)
-    db.conn.execute(
-        """INSERT OR REPLACE INTO flr_sample_condition
-           (condition_id, ph, temperature, ionic_strength, buffer_composition,
-            details, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            condition_id,
-            definition.ph,
-            definition.temperature_k,
-            definition.salt_concentration_m,
-            definition.buffer_description or None,
-            definition.description or None,
-            now,
-            now,
-        ),
+    db.add_sample_condition(
+        condition_id,
+        ph=definition.ph,
+        temperature=definition.temperature_k,
+        ionic_strength=definition.salt_concentration_m,
+        buffer_composition=definition.buffer_description or None,
+        details=definition.description or None,
     )
     return condition_id
 
@@ -1230,23 +1204,6 @@ def _json_loads(value: Any) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
-def _utc_now(db: MFDatabase) -> str:
-    """Return the current UTC timestamp using SQLite's clock.
-
-    Parameters
-    ----------
-    db : MFDatabase
-        Active MFDB connection.
-
-    Returns
-    -------
-    str
-        Current UTC timestamp.
-
-    """
-    return db.conn.execute("SELECT CURRENT_TIMESTAMP").fetchone()[0]
-
-
 def _insert_sample_key_values(db: MFDatabase, sample_id: str, definition: SampleDefinition) -> None:
     """Insert PDBx/flrCIF key-value metadata for a sample.
 
@@ -1259,8 +1216,6 @@ def _insert_sample_key_values(db: MFDatabase, sample_id: str, definition: Sample
     definition : SampleDefinition
         Sample definition.
     """
-    now = _utc_now(db)
-
     # Auto-populate standard key-values
     key_values = []
 
@@ -1281,14 +1236,10 @@ def _insert_sample_key_values(db: MFDatabase, sample_id: str, definition: Sample
     # chisurf.sample_origin
     key_values.append(("chisurf.sample_origin", "user_created", None))
 
-    # Insert all key-values
+    # Insert all key-values via the centralized repository method (raw upsert on
+    # the keyless flr_sample_key_value table lives in the SampleMixin).
     for key, value, details in key_values:
-        db.conn.execute(
-            """INSERT OR REPLACE INTO flr_sample_key_value
-               (sample_id, key, value, details, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (sample_id, key, value, details, now, now),
-        )
+        db.set_sample_key_value(sample_id, key, value, details)
 
 
 def set_sample_metadata(db: MFDatabase, sample_id: str, key: str, value: str, details: str | None = None) -> None:
@@ -1307,8 +1258,6 @@ def set_sample_metadata(db: MFDatabase, sample_id: str, key: str, value: str, de
     details : str, optional
         Additional details.
     """
-    now = _utc_now(db)
-
     # Validate against dictionary if available
     try:
         dic = MmcifDictionary.load_bundled()
@@ -1321,12 +1270,7 @@ def set_sample_metadata(db: MFDatabase, sample_id: str, key: str, value: str, de
     except Exception:
         pass  # Dictionary not available, skip validation
 
-    db.conn.execute(
-        """INSERT OR REPLACE INTO flr_sample_key_value
-           (sample_id, key, value, details, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (sample_id, key, value, details, now, now),
-    )
+    db.set_sample_key_value(sample_id, key, value, details)
 
 
 def get_sample_full_description(db: MFDatabase, sample_id: str) -> dict[str, Any] | None:
