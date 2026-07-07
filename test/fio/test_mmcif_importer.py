@@ -54,7 +54,11 @@ def test_import_flr_cif_extension_categories():
             assert summary["samples"]
             sample_id = summary["samples"][0]
             assert db.get_sample(sample_id) is not None
-            assert db.get_optical_properties(1)["abs_max"] == "495"
-            assert db.get_spectrum(1, "absorption") is not None
+            props = {
+                p["property_name"]: p["property_value"]
+                for p in db.get_optical_properties(1)
+            }
+            assert props["abs_max"] == "495"
+            assert db.get_spectrum_record(1, "absorption") is not None
         finally:
             db.close()

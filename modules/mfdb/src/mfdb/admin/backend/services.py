@@ -373,7 +373,7 @@ def _validate_mfdb_methods_in_manifest(manifest_path: str | Path | None = None) 
 
     Examples
     --------
-    >>> _validate_mfdb_methods_in_manifest()
+    >>> _validate_mfdb_methods_in_manifest(manifest_path)  # doctest: +SKIP
     []
     """
     if manifest_path is None:

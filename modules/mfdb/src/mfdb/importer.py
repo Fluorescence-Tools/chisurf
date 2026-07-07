@@ -239,7 +239,7 @@ def _import_probe_properties(db: MFDatabase, rows: List[Dict[str, Any]], summary
         probe_id = _int_or_none(row.get("probe_id"))
         if probe_id is None:
             continue
-        if db.get_probe_by_id(probe_id) is None:
+        if db.get_probe(probe_id) is None:
             type_id = db.add_probe_type("imported", "Imported probe")
             db.add_probe(f"probe_{probe_id}", type_id, category="other")
         db.add_optical_property(
@@ -255,7 +255,7 @@ def _import_probe_spectra(db: MFDatabase, rows: List[Dict[str, Any]], summary: D
         probe_id = _int_or_none(row.get("probe_id"))
         if probe_id is None:
             continue
-        if db.get_probe_by_id(probe_id) is None:
+        if db.get_probe(probe_id) is None:
             type_id = db.add_probe_type("imported", "Imported probe")
             db.add_probe(f"probe_{probe_id}", type_id, category="other")
         wavelengths = _parse_number_list(row.get("wavelengths"))
