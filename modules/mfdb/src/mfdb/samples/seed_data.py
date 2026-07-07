@@ -8,7 +8,7 @@ from typing import Optional
 
 import numpy as np
 
-from mfdb.repository import MFDatabase, _utc_now
+from mfdb.repository import MFDatabase
 from mfdb.store.database_resolver import source_database_path
 
 T4_LYSOZYME_SEQUENCE = "MSTLQEK"
@@ -353,9 +353,10 @@ def _seed_probes(db: MFDatabase) -> None:
         else:
             probe_id = db.add_probe(name, types[type_name], category=category, is_curated=1)
             with db.conn:
-                db.conn.execute(
-                    "UPDATE probes SET verification_status = 'approved', quality = 'high' WHERE probe_id = ?",
-                    (probe_id,),
+                db.dao.update(
+                    "probes",
+                    probe_id,
+                    {"verification_status": "approved", "quality": "high"},
                 )
             db.add_optical_property(probe_id, "abs_max", abs_max, unit="nm")
             db.add_optical_property(probe_id, "em_max", em_max, unit="nm")
@@ -468,26 +469,24 @@ def _seed_forster_radii(db: MFDatabase) -> None:
             pass
 
         with db.conn:
-            db.conn.execute(
-                """INSERT OR REPLACE INTO flr_fret_forster_radius
-                   (forster_radius_id, sample_id, donor_probe_id, acceptor_probe_id,
-                    forster_radius, kappa_squared, index_of_refraction, overlap_integral,
-                    details, created_at, updated_at, deleted_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    fr_id,
-                    sample_id,
-                    int(donor_row["probe_id"]),
-                    int(acceptor_row["probe_id"]),
-                    float(R0),
-                    2.0 / 3.0,
-                    1.33,
-                    float(J),
-                    f"Precomputed from seed data (PRD-06 Task 4); donor QY={donor_qy}",
-                    _utc_now(),
-                    _utc_now(),
-                    None,
-                ),
+            # Identity-preserving upsert keyed on the deterministic forster_radius_id
+            # (its own UNIQUE constraint); re-seeding refreshes the row in place
+            # instead of the delete+reinsert an INSERT OR REPLACE would do.
+            db.dao.upsert(
+                "flr_fret_forster_radius",
+                {
+                    "forster_radius_id": fr_id,
+                    "sample_id": sample_id,
+                    "donor_probe_id": int(donor_row["probe_id"]),
+                    "acceptor_probe_id": int(acceptor_row["probe_id"]),
+                    "forster_radius": float(R0),
+                    "kappa_squared": 2.0 / 3.0,
+                    "index_of_refraction": 1.33,
+                    "overlap_integral": float(J),
+                    "details": f"Precomputed from seed data (PRD-06 Task 4); donor QY={donor_qy}",
+                    "deleted_at": None,
+                },
+                conflict=["forster_radius_id"],
             )
 
 
