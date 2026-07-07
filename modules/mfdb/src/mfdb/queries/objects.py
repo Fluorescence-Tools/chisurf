@@ -67,12 +67,10 @@ class ObjectStoreMixin:
         else:
             raise ValueError("Must specify either path or data")
 
-        now = _utc_now()
         with self._transaction():
-            existing = self.conn.execute(
-                "SELECT object_uuid, refcount FROM mfdb_object WHERE content_md5 = ?",
-                (ref.md5,),
-            ).fetchone()
+            existing = self.dao.get(
+                "mfdb_object", ref.md5, pk_column="content_md5", include_deleted=True
+            )
             if existing:
                 self.conn.execute(
                     "UPDATE mfdb_object SET refcount = refcount + 1 WHERE content_md5 = ?",
@@ -85,24 +83,19 @@ class ObjectStoreMixin:
                 object_uuid = ref.uuid
                 refcount = 1
                 deduplicated = False
-                self.conn.execute(
-                    """INSERT INTO mfdb_object (
-                        object_uuid, content_md5, original_filename, size_bytes,
-                        mime_type, storage_path, refcount, metadata_json,
-                        created_at, created_by_user_uuid
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        object_uuid,
-                        ref.md5,
-                        ref.original_filename,
-                        ref.size,
-                        mime_type,
-                        ref.storage_path,
-                        refcount,
-                        _json_dumps(metadata),
-                        now,
-                        created_by_user_uuid,
-                    ),
+                self.dao.insert(
+                    "mfdb_object",
+                    {
+                        "object_uuid": object_uuid,
+                        "content_md5": ref.md5,
+                        "original_filename": ref.original_filename,
+                        "size_bytes": ref.size,
+                        "mime_type": mime_type,
+                        "storage_path": ref.storage_path,
+                        "refcount": refcount,
+                        "metadata_json": _json_dumps(metadata),
+                        "created_by_user_uuid": created_by_user_uuid,
+                    },
                 )
             self.add_audit_log(
                 action="create" if not deduplicated else "reference",
@@ -133,10 +126,7 @@ class ObjectStoreMixin:
         bytes
             The stored content.
         """
-        row = self.conn.execute(
-            "SELECT content_md5 FROM mfdb_object WHERE object_uuid = ?",
-            (object_uuid,),
-        ).fetchone()
+        row = self.dao.get("mfdb_object", object_uuid, include_deleted=True)
         if row is None:
             raise KeyError(f"Object not found: {object_uuid}")
         store = self._get_object_store()
@@ -171,10 +161,7 @@ class ObjectStoreMixin:
         Path
             Path to the stored blob.
         """
-        row = self.conn.execute(
-            "SELECT content_md5 FROM mfdb_object WHERE object_uuid = ?",
-            (object_uuid,),
-        ).fetchone()
+        row = self.dao.get("mfdb_object", object_uuid, include_deleted=True)
         if row is None:
             raise KeyError(f"Object not found: {object_uuid}")
         store = self._get_object_store()
@@ -230,10 +217,7 @@ class ObjectStoreMixin:
         dict
             Result with keys: ``deleted`` (bool), ``refcount`` (int).
         """
-        row = self.conn.execute(
-            "SELECT content_md5, refcount FROM mfdb_object WHERE object_uuid = ?",
-            (object_uuid,),
-        ).fetchone()
+        row = self.dao.get("mfdb_object", object_uuid, include_deleted=True)
         if row is None:
             raise KeyError(f"Object not found: {object_uuid}")
 
