@@ -108,17 +108,22 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals now: **241 select · 69 insert · 48 update · 12 delete ·
-70 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
+Package totals now: **241 select · 68 insert · 48 update · 12 delete ·
+68 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
 scattered CRUD is now fully eliminated** (api.py, adapters/chinet.py,
 sample_manager, seed_data, seed_example, all admin services, security/auth
-are SQL-free or intentional-raw-only); the `queries/` `INSERT OR REPLACE`/
+are SQL-free or intentional-raw-only), and **every `INSERT OR REPLACE`/
+`INSERT OR IGNORE` outside the `bootstrap_*` seeders is gone** (including the
+composite-PK `add_operation_artifact`); the `queries/` `INSERT OR REPLACE`/
 `INSERT OR IGNORE` are all converted too. What remains is legitimately the
-centralized home / bespoke: `queries/` SELECTs, keyless/composite writes
-(`analysis_metadata`, `mfdb_operation_artifact`, `flr_sample_key_value`),
-hand-written `INSERT … ON CONFLICT DO UPDATE` (dao-equivalent), bespoke
-import/merge routines, `provenance/lineage.py`+`graph.py` traversal,
-`project/project_archiver.py` JOIN/count reads, and `schema/*` DDL.
+centralized home / bespoke: `queries/` SELECTs, genuinely-**keyless** writes
+(`analysis_metadata`, `flr_sample_key_value` — no PK, no targetable UNIQUE),
+`bootstrap_*` bulk seeders on a bare conn (incl. `schema.py` group-member
+`INSERT OR IGNORE`), hand-written `INSERT … ON CONFLICT DO UPDATE`
+(dao-equivalent), bespoke import/merge routines, `provenance/lineage.py`+
+`graph.py` traversal, `project/project_archiver.py` JOIN/count reads, and
+`schema/*` DDL. (Composite-PK junctions are no longer a remaining item —
+they convert via `dao.upsert(conflict=[<all PK cols>])`.)
 
 **Already converted (committed, verified):** `compute_spec`, `add_entity`,
 `ObjectStoreMixin` CRUD, `SampleMixin` (add_sample/update_sample/delete_sample/
