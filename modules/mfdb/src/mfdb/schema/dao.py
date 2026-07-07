@@ -254,7 +254,13 @@ class DictionaryDao:
             f"ON CONFLICT({conflict_sql}) {action}"
         )
         cur = self.conn.execute(sql, [values[c] for c in cols])
-        pk = self.primary_key(table)
+        try:
+            pk = self.primary_key(table)
+        except DaoError:
+            # Keyless table (no PRIMARY KEY, no <table>_id/id/uuid): an explicit
+            # ``conflict`` target — e.g. a UNIQUE(sample_id, key) junction — is a
+            # valid upsert even though there is no resolvable primary key.
+            return cur.lastrowid
         if pk in values:
             return values[pk]
         return cur.lastrowid

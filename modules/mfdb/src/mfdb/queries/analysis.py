@@ -152,10 +152,12 @@ class AnalysisMixin:
 
     def add_analysis_metadata(self, analysis_id: str, key: str, value: Any, details: str | None = None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO analysis_metadata (analysis_id, key, value, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (analysis_id, key, str(value), details, now, now, None),
+            # Upsert on UNIQUE(analysis_id, key) — PK-less table, valid conflict target.
+            self.dao.upsert(
+                "analysis_metadata",
+                {"analysis_id": analysis_id, "key": key, "value": str(value),
+                 "details": details, "deleted_at": None},
+                conflict=["analysis_id", "key"],
             )
 
     def get_analysis_metadata(self, analysis_id: str) -> dict[str, str]:
@@ -172,10 +174,13 @@ class AnalysisMixin:
                     (now, analysis_id, key),
                 )
             for key, value in metadata.items():
-                now = _utc_now()
-                self.conn.execute(
-                    "INSERT OR REPLACE INTO analysis_metadata (analysis_id, key, value, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (analysis_id, key, str(value), None, now, now, None),
+                # Upsert on UNIQUE(analysis_id, key); resurrects (deleted_at->NULL)
+                # any key just soft-deleted above by the set-difference loop.
+                self.dao.upsert(
+                    "analysis_metadata",
+                    {"analysis_id": analysis_id, "key": key, "value": str(value),
+                     "details": None, "deleted_at": None},
+                    conflict=["analysis_id", "key"],
                 )
 
     def delete_analysis_metadata(self, analysis_id: str, key: str):

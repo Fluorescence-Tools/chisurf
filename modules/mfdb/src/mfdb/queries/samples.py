@@ -249,13 +249,14 @@ class SampleMixin:
 
     def set_sample_key_value(self, sample_id: str, key: str, value: str, details: str | None = None):
         with self.conn:
-            now = _utc_now()
-            # raw upsert: flr_sample_key_value is a keyless table (no PK), which
-            # the DAO's upsert cannot target.
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample_key_value (sample_id, key, value, details, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (sample_id, key, value, details, now, now, None),
+            # Identity-preserving upsert on the UNIQUE(sample_id, key) target —
+            # the table is PK-less but the UNIQUE is a valid conflict target, and
+            # re-add clears deleted_at in place (vs INSERT OR REPLACE's delete+reinsert).
+            self.dao.upsert(
+                "flr_sample_key_value",
+                {"sample_id": sample_id, "key": key, "value": value,
+                 "details": details, "deleted_at": None},
+                conflict=["sample_id", "key"],
             )
 
     def clear_sample_key_values(self, sample_id: str) -> None:

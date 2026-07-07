@@ -276,3 +276,30 @@ def test_insert_into_keyless_junction_returns_rowid(db):
     )
     assert len(rows) == 1
     assert rows[0]["role"] == "member"
+
+
+def test_upsert_into_keyless_table_on_unique(db):
+    """``upsert`` works on a PK-less table via an explicit UNIQUE ``conflict``.
+
+    ``analysis_metadata`` has no primary key — only ``UNIQUE(analysis_id, key)``.
+    ``upsert`` must not require a resolvable primary key when a ``conflict``
+    target is supplied: the second call updates the existing row in place
+    rather than raising ``DaoError`` or inserting a duplicate.
+    """
+    dao = _dao(db)
+    with pytest.raises(Exception):
+        dao.primary_key("analysis_metadata")
+
+    dao.upsert(
+        "analysis_metadata",
+        {"analysis_id": "a1", "key": "model", "value": "gaussian"},
+        conflict=["analysis_id", "key"],
+    )
+    dao.upsert(
+        "analysis_metadata",
+        {"analysis_id": "a1", "key": "model", "value": "lorentzian"},
+        conflict=["analysis_id", "key"],
+    )
+    rows = dao.list("analysis_metadata", filters={"analysis_id": "a1", "key": "model"})
+    assert len(rows) == 1
+    assert rows[0]["value"] == "lorentzian"

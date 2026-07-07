@@ -20,7 +20,7 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | provenance/graph.py | 5 | 0 | 0 | 0 | 0 | 0 |
 | provenance/lineage.py | 2 | 0 | 0 | 0 | 1 | 0 |
 | provenance/operation_parameters.py | 1 | 0 | 0 | 0 | 3 | 0 |
-| queries/analysis.py | 3 | 3 | 6 | 0 | 3 | 0 |
+| queries/analysis.py | 3 | 1 | 6 | 0 | 3 | 0 |
 | queries/artifacts.py | 2 | 5 | 9 | 1 | 5 | 0 |
 | queries/branches.py | 0 | 1 | 3 | 0 | 3 | 0 |
 | queries/experiments.py | 2 | 2 | 5 | 0 | 2 | 0 |
@@ -29,7 +29,7 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | queries/parameters.py | 0 | 0 | 0 | 0 | 1 | 0 |
 | queries/probes.py | 0 | 3 | 7 | 4 | 12 | 9 |
 | queries/protocols.py | 0 | 1 | 0 | 0 | 2 | 0 |
-| queries/samples.py | 1 | 7 | 4 | 2 | 3 | 0 |
+| queries/samples.py | 1 | 6 | 4 | 2 | 3 | 0 |
 | queries/setups.py | 1 | 6 | 4 | 0 | 2 | 0 |
 | queries/studies.py | 3 | 3 | 1 | 0 | 5 | 0 |
 | queries/users.py | 0 | 2 | 2 | 0 | 0 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 175 | 67 | 48 | 12 | 87 | 30 |
+| **TOTAL** | 175 | 64 | 48 | 12 | 87 | 30 |
