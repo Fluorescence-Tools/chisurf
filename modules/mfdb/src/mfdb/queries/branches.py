@@ -37,11 +37,7 @@ class BranchMixin:
 
         now = _utc_now()
         with self._transaction():
-            existing = self.conn.execute(
-                "SELECT branch_uuid FROM mfdb_branch WHERE name = ? AND deleted_at IS NULL",
-                (name,)
-            ).fetchone()
-            if existing:
+            if self.dao.list("mfdb_branch", filters={"name": name}, limit=1):
                 raise ValueError(f"Branch name {name!r} already exists")
 
             self.conn.execute(
@@ -201,10 +197,7 @@ class BranchMixin:
         return _row_to_dict(row)
 
     def list_branches(self) -> list[dict[str, Any]]:
-        rows = self.conn.execute(
-            "SELECT * FROM mfdb_branch WHERE deleted_at IS NULL ORDER BY name"
-        ).fetchall()
-        return [_row_to_dict(r) for r in rows]
+        return self.dao.list("mfdb_branch", order_by="name")
 
     def update_branch_head(self, branch_uuid: str, head_operation_id: str | None) -> None:
         if head_operation_id is not None:

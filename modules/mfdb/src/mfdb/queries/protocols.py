@@ -82,35 +82,23 @@ class ProtocolMixin:
     ) -> dict[str, Any] | None:
         """Return a protocol by ``name`` and ``version`` (default the latest)."""
         if version == "latest":
-            row = self.conn.execute(
-                "SELECT * FROM mfdb_protocol WHERE name = ? AND deleted_at IS NULL "
-                "ORDER BY version DESC LIMIT 1",
-                (name,),
-            ).fetchone()
+            rows = self.dao.list(
+                "mfdb_protocol", filters={"name": name},
+                order_by="version", descending=True, limit=1,
+            )
         else:
-            row = self.conn.execute(
-                "SELECT * FROM mfdb_protocol WHERE name = ? AND version = ? "
-                "AND deleted_at IS NULL",
-                (name, int(version)),
-            ).fetchone()
-        return dict(row) if row else None
+            rows = self.dao.list(
+                "mfdb_protocol", filters={"name": name, "version": int(version)}, limit=1
+            )
+        return rows[0] if rows else None
 
     def get_protocol_by_id(self, protocol_id: str) -> dict[str, Any] | None:
         """Return a specific protocol version row by its ``protocol_id``."""
-        row = self.conn.execute(
-            "SELECT * FROM mfdb_protocol WHERE protocol_id = ? AND deleted_at IS NULL",
-            (protocol_id,),
-        ).fetchone()
-        return dict(row) if row else None
+        return self.dao.get("mfdb_protocol", protocol_id, pk_column="protocol_id")
 
     def list_protocol_versions(self, name: str) -> list[dict[str, Any]]:
         """Return all versions of a protocol ``name``, oldest first."""
-        rows = self.conn.execute(
-            "SELECT * FROM mfdb_protocol WHERE name = ? AND deleted_at IS NULL "
-            "ORDER BY version",
-            (name,),
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return self.dao.list("mfdb_protocol", filters={"name": name}, order_by="version")
 
     def list_protocols(
         self, scope: str = "all", owner_id: str | None = None

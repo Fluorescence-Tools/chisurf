@@ -16,9 +16,9 @@ class ExperimentMixin:
     def add_experiment_type(self, name, category=None, description=None, details=None):
         if not name:
             raise ValueError("experiment type name is required")
-        row = self.conn.execute("SELECT type_id FROM flr_experiment_type WHERE name = ?", (name,)).fetchone()
-        if row:
-            type_id = row["type_id"]
+        rows = self.dao.list("flr_experiment_type", filters={"name": name}, include_deleted=True, limit=1)
+        if rows:
+            type_id = rows[0]["type_id"]
             with self.conn:
                 self.conn.execute(
                     "UPDATE flr_experiment_type SET category = ?, description = ?, details = ?, updated_at = ? WHERE type_id = ?",
@@ -104,17 +104,14 @@ class ExperimentMixin:
             raise ValueError("storage_mode is required")
         with self.conn:
             now = _utc_now()
-            self.conn.execute(
-                "INSERT INTO flr_experiment_data "
-                "(experiment_id, data_type, storage_mode, file_path, url, folder_path, "
-                "mime_type, size_bytes, checksum, data_json, data_blob, reading_options_json, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (experiment_id, data_type, storage_mode, file_path, url, folder_path,
-                 mime_type, size_bytes, checksum, data_json, data_blob, reading_options_json, details,
-                 now, now, None)
-            )
-            return int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+            return int(self.dao.insert("flr_experiment_data", {
+                "experiment_id": experiment_id, "data_type": data_type,
+                "storage_mode": storage_mode, "file_path": file_path, "url": url,
+                "folder_path": folder_path, "mime_type": mime_type, "size_bytes": size_bytes,
+                "checksum": checksum, "data_json": data_json, "data_blob": data_blob,
+                "reading_options_json": reading_options_json, "details": details,
+                "created_at": now, "updated_at": now, "deleted_at": None,
+            }))
 
     def get_experiment_data(self, experiment_id):
         return self.conn.execute(
