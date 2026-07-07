@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 from typing import Any
@@ -137,3 +138,18 @@ _utc_now = utc_now
 _json_dumps = json_dumps
 _json_loads = json_loads
 _json_hash = json_hash
+
+
+def _validate_checksum(checksum: str | None, algorithm: str | None) -> None:
+    """Validate checksum length and hexadecimal encoding for supported algorithms."""
+    if checksum is None or algorithm is None:
+        return
+    checksum_text = str(checksum)
+    algorithm_text = str(algorithm).lower()
+    if not re.fullmatch(r"[0-9a-fA-F]+", checksum_text):
+        return
+    expected_lengths = {"md5": 32, "sha256": 64}
+    expected = expected_lengths.get(algorithm_text)
+    if expected is not None and len(checksum_text) != expected:
+        raise ValueError(f"{algorithm} checksum must be {expected} hexadecimal characters")
+    int(checksum_text, 16)
