@@ -82,6 +82,36 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+_DAO_SCHEMA_CACHE: dict[tuple[str, ...], Any] = {}
+
+
+def _dao(conn: sqlite3.Connection):
+    """Return a dictionary DAO over ``conn`` for schema-checked single-table CRUD.
+
+    These security helpers take a bare connection (a transport-agnostic boundary
+    that must not depend on ``MFDatabase``), so they build the DAO on demand.
+    Bespoke reads (ACL-precedence joins, throttle aggregates) stay hand-written.
+
+    The introspected schema is cached process-wide keyed by the table-name set
+    (all MFDB databases share the dictionary-generated schema), so the per-call
+    cost is one cheap ``sqlite_master`` read even when ``can_access`` loops over
+    many rows — no repeated full ``PRAGMA`` introspection.
+    """
+    from mfdb.schema.dao import DictionaryDao
+
+    names = tuple(
+        row[0]
+        for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        )
+    )
+    schema = _DAO_SCHEMA_CACHE.get(names)
+    if schema is None:
+        schema = DictionaryDao.from_connection(conn)._schema
+        _DAO_SCHEMA_CACHE[names] = schema
+    return DictionaryDao(conn, schema)
+
+
 def hash_token(token: str) -> str:
     """Return the storage hash for a session token.
 
@@ -139,9 +169,8 @@ def authenticate_token(conn: sqlite3.Connection, token: str) -> Principal:
     if expires_at and expires_at < now:
         return AnonymousPrincipal()
 
-    conn.execute(
-        "UPDATE mfdb_session SET last_used_at = ? WHERE token_hash = ?",
-        (now, token_hash),
+    _dao(conn).update(
+        "mfdb_session", token_hash, {"last_used_at": now}, pk_column="token_hash"
     )
     conn.commit()
 
@@ -201,13 +230,10 @@ def _user_group_ids(
     user_id: str,
 ) -> list[str]:
     """Return all group IDs the user belongs to (via mfdb_group_member)."""
-    rows = conn.execute(
-        """SELECT gm.group_id
-           FROM mfdb_group_member gm
-           WHERE gm.user_id = ? AND gm.deleted_at IS NULL""",
-        (user_id,),
-    ).fetchall()
-    return [r[0] for r in rows]
+    return [
+        row["group_id"]
+        for row in _dao(conn).list("mfdb_group_member", filters={"user_id": user_id})
+    ]
 
 
 def _check_acls(
@@ -226,12 +252,9 @@ def _check_acls(
 
     Returns ``True`` if allowed, ``False`` if denied, ``None`` if no match.
     """
-    rows = conn.execute(
-        """SELECT subject_type, subject_id, effect, permissions
-           FROM mfdb_acl_entry
-           WHERE object_type = ? AND object_id = ? AND deleted_at IS NULL""",
-        (object_type, object_id),
-    ).fetchall()
+    rows = _dao(conn).list(
+        "mfdb_acl_entry", filters={"object_type": object_type, "object_id": object_id}
+    )
 
     user_deny = False
     user_allow = False
@@ -285,20 +308,20 @@ def _get_object_acl(
             break
         seen.add(key)
 
-        row = conn.execute(
-            """SELECT owner_user_id, owner_group_id, mode, inherits_from_type, inherits_from_id
-               FROM mfdb_object_acl
-               WHERE object_type = ? AND object_id = ? AND deleted_at IS NULL""",
-            (current_type, current_id),
-        ).fetchone()
+        rows = _dao(conn).list(
+            "mfdb_object_acl",
+            filters={"object_type": current_type, "object_id": current_id},
+            limit=1,
+        )
 
-        if row:
+        if rows:
+            row = rows[0]
             return {
-                "owner_user_id": row[0],
-                "owner_group_id": row[1],
-                "mode": row[2],
-                "inherits_from_type": row[3],
-                "inherits_from_id": row[4],
+                "owner_user_id": row["owner_user_id"],
+                "owner_group_id": row["owner_group_id"],
+                "mode": row["mode"],
+                "inherits_from_type": row["inherits_from_type"],
+                "inherits_from_id": row["inherits_from_id"],
             }
 
         # Follow inheritance
@@ -404,12 +427,25 @@ def create_default_acl_for_object(
 
     Call this in the same transaction as the object write.
     """
-    conn.execute(
-        """INSERT OR IGNORE INTO mfdb_object_acl
-           (object_type, object_id, owner_user_id, owner_group_id, mode)
-           VALUES (?, ?, ?, ?, ?)""",
-        (object_type, object_id, owner_user_id, owner_group_id, mode),
-    )
+    dao = _dao(conn)
+    # INSERT OR IGNORE on UNIQUE(object_type, object_id): an ACL already covering
+    # the object (even soft-deleted) is left untouched.
+    if not dao.list(
+        "mfdb_object_acl",
+        filters={"object_type": object_type, "object_id": object_id},
+        include_deleted=True,
+        limit=1,
+    ):
+        dao.insert(
+            "mfdb_object_acl",
+            {
+                "object_type": object_type,
+                "object_id": object_id,
+                "owner_user_id": owner_user_id,
+                "owner_group_id": owner_group_id,
+                "mode": mode,
+            },
+        )
 
 
 def inherit_acl_from_parent(
@@ -427,21 +463,26 @@ def inherit_acl_from_parent(
     """
     parent_acl = _get_object_acl(conn, parent_type, parent_id)
     if parent_acl:
-        conn.execute(
-            """INSERT OR IGNORE INTO mfdb_object_acl
-               (object_type, object_id, owner_user_id, owner_group_id, mode,
-                inherits_from_type, inherits_from_id)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                object_type,
-                object_id,
-                owner_user_id or parent_acl["owner_user_id"],
-                parent_acl["owner_group_id"],
-                parent_acl["mode"],
-                parent_type,
-                parent_id,
-            ),
-        )
+        dao = _dao(conn)
+        # INSERT OR IGNORE on UNIQUE(object_type, object_id).
+        if not dao.list(
+            "mfdb_object_acl",
+            filters={"object_type": object_type, "object_id": object_id},
+            include_deleted=True,
+            limit=1,
+        ):
+            dao.insert(
+                "mfdb_object_acl",
+                {
+                    "object_type": object_type,
+                    "object_id": object_id,
+                    "owner_user_id": owner_user_id or parent_acl["owner_user_id"],
+                    "owner_group_id": parent_acl["owner_group_id"],
+                    "mode": parent_acl["mode"],
+                    "inherits_from_type": parent_type,
+                    "inherits_from_id": parent_id,
+                },
+            )
     else:
         create_default_acl_for_object(
             conn,
@@ -467,11 +508,17 @@ def grant_acl(
     """
     require_access(conn, principal, object_type, object_id, PERM_MANAGE)
     user_id = principal.user_id or "system"
-    conn.execute(
-        """INSERT INTO mfdb_acl_entry
-           (object_type, object_id, subject_type, subject_id, effect, permissions, created_by_user_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (object_type, object_id, subject_type, subject_id, effect, permissions, user_id),
+    _dao(conn).insert(
+        "mfdb_acl_entry",
+        {
+            "object_type": object_type,
+            "object_id": object_id,
+            "subject_type": subject_type,
+            "subject_id": subject_id,
+            "effect": effect,
+            "permissions": permissions,
+            "created_by_user_id": user_id,
+        },
     )
 
 
@@ -484,16 +531,11 @@ def revoke_acl(
 
     Requires manage (``x``) permission on the referenced object.
     """
-    row = conn.execute(
-        "SELECT object_type, object_id FROM mfdb_acl_entry WHERE entry_id = ?",
-        (entry_id,),
-    ).fetchone()
+    dao = _dao(conn)
+    row = dao.get("mfdb_acl_entry", entry_id, include_deleted=True)
     if row:
-        require_access(conn, principal, row[0], row[1], PERM_MANAGE)
-        conn.execute(
-            "UPDATE mfdb_acl_entry SET deleted_at = ? WHERE entry_id = ?",
-            (_utc_now_iso(), entry_id),
-        )
+        require_access(conn, principal, row["object_type"], row["object_id"], PERM_MANAGE)
+        dao.soft_delete("mfdb_acl_entry", entry_id, deleted_at=_utc_now_iso())
 
 
 def chmod(
@@ -505,6 +547,8 @@ def chmod(
 ) -> None:
     """Change the mode bits on an object. Requires manage (``x``)."""
     require_access(conn, principal, object_type, object_id, PERM_MANAGE)
+    # raw: composite-key update — mfdb_object_acl is keyed by UNIQUE(object_type,
+    # object_id) with no single PK, which dao.update cannot target.
     conn.execute(
         "UPDATE mfdb_object_acl SET mode = ?, updated_at = ? WHERE object_type = ? AND object_id = ?",
         (mode, _utc_now_iso(), object_type, object_id),
@@ -520,6 +564,7 @@ def chown(
 ) -> None:
     """Change object owner. Requires manage (``x``)."""
     require_access(conn, principal, object_type, object_id, PERM_MANAGE)
+    # raw: composite-key update on UNIQUE(object_type, object_id) — see chmod.
     conn.execute(
         "UPDATE mfdb_object_acl SET owner_user_id = ?, updated_at = ? WHERE object_type = ? AND object_id = ?",
         (owner_user_id, _utc_now_iso(), object_type, object_id),
@@ -535,6 +580,7 @@ def chgrp(
 ) -> None:
     """Change object owning group. Requires manage (``x``)."""
     require_access(conn, principal, object_type, object_id, PERM_MANAGE)
+    # raw: composite-key update on UNIQUE(object_type, object_id) — see chmod.
     conn.execute(
         "UPDATE mfdb_object_acl SET owner_group_id = ?, updated_at = ? WHERE object_type = ? AND object_id = ?",
         (owner_group_id, _utc_now_iso(), object_type, object_id),
@@ -582,54 +628,42 @@ def create_session(
         + datetime.timedelta(hours=SESSION_DURATION_HOURS)
     ).isoformat()
 
-    conn.execute(
-        """INSERT INTO mfdb_session
-           (session_id, user_id, token_hash, expires_at, client_host, client_name, client_metadata_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (
-            session_id,
-            user_id,
-            token_hash,
-            expires_at,
-            client_host,
-            client_name,
-            _json_dumps(client_metadata) if client_metadata else None,
-        ),
+    dao = _dao(conn)
+    dao.insert(
+        "mfdb_session",
+        {
+            "session_id": session_id,
+            "user_id": user_id,
+            "token_hash": token_hash,
+            "expires_at": expires_at,
+            "client_host": client_host,
+            "client_name": client_name,
+            "client_metadata_json": _json_dumps(client_metadata) if client_metadata else None,
+        },
     )
 
-    user_row = conn.execute(
-        "SELECT user_id, display_name, is_admin FROM flr_sample_users WHERE user_id = ?",
-        (user_id,),
-    ).fetchone()
-
-    uid = user_row["user_id"] if isinstance(user_row, dict) else user_row[0]
-    dname = user_row["display_name"] if isinstance(user_row, dict) else user_row[1]
-    iadmin = user_row["is_admin"] if isinstance(user_row, dict) else user_row[2]
+    user_row = dao.get("flr_sample_users", user_id, include_deleted=True) or {}
     return {
         "token": token,
         "expires_at": expires_at,
         "user": {
-            "user_id": uid,
-            "display_name": dname,
-            "is_admin": bool(iadmin),
+            "user_id": user_row.get("user_id"),
+            "display_name": user_row.get("display_name"),
+            "is_admin": bool(user_row.get("is_admin")),
         },
     }
 
 
 def revoke_session(conn: sqlite3.Connection, session_id: str) -> None:
     """Revoke a session by ID."""
-    conn.execute(
-        "UPDATE mfdb_session SET revoked_at = ? WHERE session_id = ?",
-        (_utc_now_iso(), session_id),
-    )
+    _dao(conn).update("mfdb_session", session_id, {"revoked_at": _utc_now_iso()})
 
 
 def revoke_session_by_token(conn: sqlite3.Connection, token: str) -> None:
     """Revoke a session by its raw token."""
     token_hash = _hash_token(token)
-    conn.execute(
-        "UPDATE mfdb_session SET revoked_at = ? WHERE token_hash = ?",
-        (_utc_now_iso(), token_hash),
+    _dao(conn).update(
+        "mfdb_session", token_hash, {"revoked_at": _utc_now_iso()}, pk_column="token_hash"
     )
 
 
@@ -638,6 +672,8 @@ def list_sessions(
     user_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """List non-revoked sessions, optionally filtered by user."""
+    # raw: deliberate column projection that excludes token_hash — the DAO's
+    # list() has no projection and would leak the session token hash.
     if user_id:
         rows = conn.execute(
             """SELECT session_id, user_id, created_at, expires_at, last_used_at,
@@ -665,9 +701,14 @@ def record_auth_attempt(
     client_host: str | None = None,
 ) -> None:
     """Record an authentication attempt."""
-    conn.execute(
-        "INSERT INTO mfdb_auth_attempt (user_id, client_host, success, reason) VALUES (?, ?, ?, ?)",
-        (user_id, client_host, 1 if success else 0, reason),
+    _dao(conn).insert(
+        "mfdb_auth_attempt",
+        {
+            "user_id": user_id,
+            "client_host": client_host,
+            "success": 1 if success else 0,
+            "reason": reason,
+        },
     )
 
 

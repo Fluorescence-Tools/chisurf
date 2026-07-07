@@ -41,7 +41,7 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | schema/dictionary_schema_map.py | 1 | 0 | 0 | 0 | 0 | 0 |
 | schema/schema.py | 16 | 14 | 5 | 3 | 3 | 12 |
 | schema/schema_from_dictionary.py | 1 | 0 | 0 | 0 | 0 | 0 |
-| security/auth.py | 7 | 5 | 7 | 0 | 3 | 0 |
+| security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 264 | 92 | 57 | 12 | 62 | 30 |
+| **TOTAL** | 257 | 87 | 50 | 12 | 67 | 30 |
