@@ -49,17 +49,13 @@ class ExperimentMixin:
             from mfdb.security.session import configured_default_user_id
             measured_by_user_id = configured_default_user_id()
         with self._transaction():
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_experiment "
-                "(experiment_id, type_id, sample_id, project_id, measured_by_user_id, "
-                "measured_by_device_id, started_at, ended_at, status, details, setup_definition_id, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (experiment_id, type_id, sample_id, project_id, measured_by_user_id,
-                 measured_by_device_id, started_at, ended_at, status, details, setup_definition_id,
-                 now, now, None)
-            )
+            self.dao.upsert("flr_experiment", {
+                "experiment_id": experiment_id, "type_id": type_id, "sample_id": sample_id,
+                "project_id": project_id, "measured_by_user_id": measured_by_user_id,
+                "measured_by_device_id": measured_by_device_id, "started_at": started_at,
+                "ended_at": ended_at, "status": status, "details": details,
+                "setup_definition_id": setup_definition_id, "deleted_at": None,
+            })
 
     def get_experiment(self, experiment_id):
         return self.conn.execute(

@@ -69,35 +69,29 @@ class UserDeviceMixin:
                 user_uuid = str(uuid.uuid4())
 
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample_users "
-                "(user_id, user_uuid, display_name, email, affiliation, department, role, address, website, phone, is_admin, allow_passwordless_login, password_hash, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user_id, user_uuid, display_name, email, affiliation, department, role, address, website, phone, is_admin, allow_passwordless_login, password_hash, details,
-                 now, now, None)
-            )
+            self.dao.upsert("flr_sample_users", {
+                "user_id": user_id, "user_uuid": user_uuid, "display_name": display_name,
+                "email": email, "affiliation": affiliation, "department": department, "role": role,
+                "address": address, "website": website, "phone": phone, "is_admin": is_admin,
+                "allow_passwordless_login": allow_passwordless_login, "password_hash": password_hash,
+                "details": details, "deleted_at": None,
+            })
 
     def delete_user(self, user_id):
         with self.conn:
-            self.conn.execute("UPDATE flr_sample_users SET deleted_at = ? WHERE user_id = ?", (_utc_now(), user_id))
+            self.dao.soft_delete("flr_sample_users", user_id)
 
     def get_devices(self):
         return self.conn.execute("SELECT * FROM flr_sample_devices WHERE deleted_at IS NULL ORDER BY device_id").fetchall()
 
     def add_device(self, device_id, name, device_type=None, model=None, serial_number=None, location=None, owner=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample_devices "
-                "(device_id, name, device_type, model, serial_number, location, owner, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (device_id, name, device_type, model, serial_number, location, owner, details,
-                 now, now, None)
-            )
+            self.dao.upsert("flr_sample_devices", {
+                "device_id": device_id, "name": name, "device_type": device_type, "model": model,
+                "serial_number": serial_number, "location": location, "owner": owner,
+                "details": details, "deleted_at": None,
+            })
 
     def delete_device(self, device_id):
         with self.conn:
-            self.conn.execute("UPDATE flr_sample_devices SET deleted_at = ? WHERE device_id = ?", (_utc_now(), device_id))
+            self.dao.soft_delete("flr_sample_devices", device_id)
