@@ -428,13 +428,21 @@ class SampleMixin:
 
     def add_sample_probe(self, sample_id, probe_id, fluorophore_type="unspecified", description=None, poly_probe_position_id=None):
         with self.conn:
-            now = _utc_now()
-            cursor = self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample_probe (sample_id, probe_id, fluorophore_type, description, poly_probe_position_id, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (sample_id, probe_id, fluorophore_type, description, poly_probe_position_id, now, now, None)
+            # Identity-preserving upsert on UNIQUE(sample_id, probe_id,
+            # poly_probe_position_id) — re-mapping the same probe refreshes the
+            # row (and clears deleted_at) instead of delete+reinsert.
+            return self.dao.upsert(
+                "flr_sample_probe",
+                {
+                    "sample_id": sample_id,
+                    "probe_id": probe_id,
+                    "fluorophore_type": fluorophore_type,
+                    "description": description,
+                    "poly_probe_position_id": poly_probe_position_id,
+                    "deleted_at": None,
+                },
+                conflict=["sample_id", "probe_id", "poly_probe_position_id"],
             )
-            return cursor.lastrowid
 
     def get_sample_probe_mappings(self, sample_id=None, probe_id=None):
         filters = ["sp.deleted_at IS NULL", "p.deleted_at IS NULL"]

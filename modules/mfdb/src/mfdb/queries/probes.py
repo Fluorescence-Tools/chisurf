@@ -1065,14 +1065,21 @@ class ProbeMixin:
             intensity_values = np.asarray(intensity_values, dtype=np.float64)
 
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO spectra "
-                "(probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details,
-                 now, now, None)
+            # Identity-preserving upsert on UNIQUE(probe_id, spectrum_type) — keeps
+            # the spectrum's id/FKs where INSERT OR REPLACE would delete+reinsert.
+            self.dao.upsert(
+                "spectra",
+                {
+                    "probe_id": probe_id,
+                    "spectrum_type": spectrum_type,
+                    "wavelengths": wavelengths,
+                    "intensity_values": intensity_values,
+                    "wavelength_unit": wavelength_unit,
+                    "intensity_unit": intensity_unit,
+                    "details": details,
+                    "deleted_at": None,
+                },
+                conflict=["probe_id", "spectrum_type"],
             )
 
     def get_spectrum_record(self, probe_id, spectrum_type):
