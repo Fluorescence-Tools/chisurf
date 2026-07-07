@@ -42,7 +42,3 @@ include = ["mfdb*"]
     "data/*.db",
     "data/*.sh",
 ]
-"mfdb.admin" = [
-    "gui/*.json",
-    "gui/**/*.json",
-]

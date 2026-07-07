@@ -71,7 +71,7 @@ def test_runs_listed_with_operation_count(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         pid = save_pipeline(db, _demo_pipeline())
         client = MFDBClient(inprocess=True)

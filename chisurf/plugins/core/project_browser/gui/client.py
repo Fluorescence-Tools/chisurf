@@ -4,7 +4,7 @@ from typing import Any
 
 from chisurf import logging
 from chisurf.core.plugin.client import InProcessClient
-from mfdb.admin.gui.client import MFDBClient
+from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
 
 class ProjectBrowserClient(MFDBClient):

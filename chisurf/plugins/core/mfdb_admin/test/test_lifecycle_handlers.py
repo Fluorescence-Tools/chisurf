@@ -58,7 +58,7 @@ def test_definitions_handler_exposes_lifecycles(db):
 def test_via_inprocess_client(db):
     """End to end through the MFDBClient RPC layer (InProcessClient)."""
     with patch_db(db):
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         assert client.lifecycle_state("artifact", "a1") is None

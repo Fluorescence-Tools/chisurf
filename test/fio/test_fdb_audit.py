@@ -7,7 +7,7 @@ from mfdb.admin.backend.measurement_services import (
     database_backup_handler,
     restore_project_handler,
 )
-from mfdb.admin.gui.client import MFDBClient
+from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
 
 def test_automatic_repository_audit_logging(tmp_path: pathlib.Path) -> None:

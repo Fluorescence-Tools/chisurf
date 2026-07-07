@@ -56,7 +56,7 @@ def test_bad_member_type_returns_error(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         sid = client.create_study("C")["study_id"]

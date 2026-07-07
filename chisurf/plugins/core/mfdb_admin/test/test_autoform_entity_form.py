@@ -18,7 +18,7 @@ def qapp():
 
 
 def _specs():
-    from mfdb.admin.gui.entity_schema import FieldSpec
+    from chisurf.plugins.core.mfdb_admin.gui.entity_schema import FieldSpec
 
     return [
         FieldSpec(name="sample_id", label="Sample ID", widget="str", readonly=True),
@@ -38,7 +38,7 @@ def test_all_field_kinds_build(qapp):
     from chisurf.gui.autoform.sections.builtin import (
         ChoiceWidget, ToggleWidget, ValueWidget,
     )
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     fk = {"condition_id": lambda: [("c1", "c1 — A"), ("c2", "c2 — B")]}
     f = EntityForm(_specs(), dropdown_providers=fk)
@@ -50,7 +50,7 @@ def test_all_field_kinds_build(qapp):
 
 
 def test_set_get_roundtrip(qapp):
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     fk = {"condition_id": lambda: [("c1", "c1 — A"), ("c2", "c2 — B")]}
     f = EntityForm(_specs(), dropdown_providers=fk)
@@ -71,7 +71,7 @@ def test_set_get_roundtrip(qapp):
 
 
 def test_commit_signal_not_fired_during_load(qapp):
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     f = EntityForm(_specs())
     fired = []
@@ -84,8 +84,8 @@ def test_commit_signal_not_fired_during_load(qapp):
 
 
 def test_json_fields_roundtrip(qapp):
-    from mfdb.admin.gui.entity_schema import FieldSpec
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.entity_schema import FieldSpec
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     specs = [
         FieldSpec(name="laser_wavelengths", widget="text"),
@@ -99,7 +99,7 @@ def test_json_fields_roundtrip(qapp):
 
 
 def test_empty_optional_strings_become_none(qapp):
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     f = EntityForm(_specs())
     f.set_data({})  # nothing set

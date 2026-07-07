@@ -28,7 +28,7 @@ def _register_one_raw(tmp_path: Path) -> str:
 
 
 def test_real_inprocess_client_browse_and_open(tmp_path):
-    from mfdb.admin.gui.client import MFDBClient
+    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
     artifact_id = _register_one_raw(tmp_path)
     client = MFDBClient(inprocess=True)

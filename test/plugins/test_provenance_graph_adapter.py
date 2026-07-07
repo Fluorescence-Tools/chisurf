@@ -1,6 +1,6 @@
 from chisurf.gui.widgets.node_editor.graph import GraphDef
 from chisurf.gui.widgets.node_editor.validation import validate_graph_dict
-from mfdb.admin.gui.provenance_graph import (
+from chisurf.plugins.core.mfdb_admin.gui.provenance_graph import (
     layout_nodes,
     mfdb_graph_to_node_editor_graph,
     node_key,

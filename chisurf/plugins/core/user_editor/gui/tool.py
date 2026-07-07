@@ -633,7 +633,7 @@ class UserEditorWidget(QWidget):
             load_session_token,
             store_runtime_session_token,
         )
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
         server_host = mfdb_settings.get("last_server", "127.0.0.1")

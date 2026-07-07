@@ -51,7 +51,7 @@ def test_stale_handler_flags_superseded_use(db):
 
 def test_via_inprocess_client(db):
     with patch_db(db):
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         client.create_calibration("gamma", 0.9)

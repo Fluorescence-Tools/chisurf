@@ -290,7 +290,7 @@ class MicrotimeShifterTool(ChisurfDockTool):
                 from chisurf.gui.widgets.mfdb.dataset_browser import (
                     MfdbDatasetPickerDialog,
                 )
-                from mfdb.admin.gui.client import MFDBClient
+                from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
                 client = MFDBClient(inprocess=True)
                 sel = MfdbDatasetPickerDialog.pick_dataset(

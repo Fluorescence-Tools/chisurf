@@ -767,7 +767,7 @@ def test_real_mfdbclient_call_browses_datasets(tmp_path, monkeypatch):
     from chisurf.core.mfdb.provenance import result_registry as rr
     import chisurf.core.mfdb.store.database_resolver as dr
     from mfdb.admin.backend import services as svc
-    from mfdb.admin.gui.client import MFDBClient
+    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
     monkeypatch.setitem(
         chisurf.core.settings.cs_settings, "mfdb", {"default_user_id": "tpeulen"}

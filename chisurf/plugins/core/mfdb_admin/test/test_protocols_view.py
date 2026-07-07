@@ -11,8 +11,8 @@ import pytest
 
 pytest.importorskip("qtpy")
 
-from mfdb.admin.gui.client import MFDBClient
-from mfdb.admin.gui.protocols_view import ProtocolsView
+from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+from chisurf.plugins.core.mfdb_admin.gui.protocols_view import ProtocolsView
 
 from .conftest import patch_db
 

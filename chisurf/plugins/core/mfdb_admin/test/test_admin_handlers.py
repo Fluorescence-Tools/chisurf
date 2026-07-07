@@ -69,7 +69,7 @@ def test_generic_processing_and_processed_data_handlers_round_trip(db):
         processing = list_processing_handler(auth=None)["processing"]
         products = list_processed_data_handler(auth=None)["processed_data"]
 
-        from mfdb.admin.gui.client import MFDBClient
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
         client = MFDBClient(inprocess=True)
         succeeded_runs = client.list_processing_runs(status="succeeded")

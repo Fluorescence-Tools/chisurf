@@ -12,7 +12,7 @@ from pathlib import Path
 
 from qtpy import QtGui, QtWidgets
 
-from mfdb.admin.gui.optical_components.component_detail_form import (
+from chisurf.plugins.core.mfdb_admin.gui.optical_components.component_detail_form import (
     ComponentDetailForm,
 )
 

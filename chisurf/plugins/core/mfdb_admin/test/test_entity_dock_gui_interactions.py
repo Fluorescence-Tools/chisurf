@@ -10,7 +10,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("qtpy")
 
-from mfdb.admin.gui.client import MFDBClient
+from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
 from .conftest import patch_db
 
@@ -222,7 +222,7 @@ def seeded_admin_db(db, tmp_path, monkeypatch):
 
 @contextmanager
 def _widget_for_db(db):
-    from mfdb.admin.gui.tool import MFDBWidget
+    from chisurf.plugins.core.mfdb_admin.gui.tool import MFDBWidget
 
     with patch_db(db):
         client = MFDBClient(inprocess=True)

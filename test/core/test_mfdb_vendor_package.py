@@ -94,12 +94,12 @@ def test_mfdb_admin_lives_inside_mfdb_package():
     manifest = json.loads(
         (ROOT / "chisurf" / "plugins" / "core" / "mfdb_admin" / "manifest.json").read_text()
     )
-    assert manifest["entrypoints"]["gui"] == "mfdb.admin.gui.tool:MFDBWidget"
+    assert manifest["entrypoints"]["gui"] == "chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget"
     assert manifest["entrypoints"]["services"] == (
         "mfdb.admin.backend.services:register_services"
     )
 
-    gui_tool = importlib.import_module("mfdb.admin.gui.tool")
+    gui_tool = importlib.import_module("chisurf.plugins.core.mfdb_admin.gui.tool")
     legacy_gui_tool = importlib.import_module(
         "chisurf.plugins.core.mfdb_admin.gui.tool"
     )
@@ -116,7 +116,7 @@ def test_mfdb_admin_lives_inside_mfdb_package():
     legacy_source = (
         ROOT / "chisurf" / "plugins" / "core" / "mfdb_admin" / "backend" / "services.py"
     ).read_text()
-    assert "from mfdb.admin.gui.tool import *" in legacy_gui_source
+    assert "from chisurf.plugins.core.mfdb_admin.gui.tool import *" in legacy_gui_source
     assert "from mfdb.admin.backend.services import *" in legacy_source
 
 

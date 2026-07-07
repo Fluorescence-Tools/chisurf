@@ -15,7 +15,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("qtpy")
 
 from chisurf.gui.widgets.navigation import NavigationPanelTool
-from mfdb.admin.gui.client import MFDBClient
+from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
 
 from .conftest import patch_db
 
@@ -35,7 +35,7 @@ _WIDGETS: list = []
 
 
 def _make_widget(db):
-    from mfdb.admin.gui.tool import MFDBWidget
+    from chisurf.plugins.core.mfdb_admin.gui.tool import MFDBWidget
 
     with patch_db(db):
         client = MFDBClient(inprocess=True)
@@ -73,7 +73,7 @@ def test_panels_flattened_with_separators_and_views(db, qapp):
 
 
 def test_fluorophore_panel_and_rpc_integrated(db, qapp):
-    from mfdb.admin.gui.optical_components import OpticalComponentDock
+    from chisurf.plugins.core.mfdb_admin.gui.optical_components import OpticalComponentDock
 
     w = _make_widget(db)
     row = w._row_by_name["Spectra"]
@@ -97,7 +97,7 @@ def test_every_panel_builds(db, qapp):
 
 
 def test_entity_dock_uses_autoform(db, qapp):
-    from mfdb.admin.gui.autoform_entity_form import EntityForm
+    from chisurf.plugins.core.mfdb_admin.gui.autoform_entity_form import EntityForm
 
     w = _make_widget(db)
     w.nav_list.setCurrentRow(w._row_by_entity["sample"])

@@ -1,3 +1,5 @@
-"""Compatibility wrapper for :mod:`mfdb.admin.gui.optical_components`."""
+"""Optical component manager view, generalized from the fluorophore_view."""
 
-from mfdb.admin.gui.optical_components import *  # noqa: F403
+from .component_dock import OpticalComponentDock
+
+__all__ = ["OpticalComponentDock"]

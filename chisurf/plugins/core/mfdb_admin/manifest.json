@@ -21,7 +21,7 @@
     }
   },
   "entrypoints": {
-    "gui": "mfdb.admin.gui.tool:MFDBWidget",
+    "gui": "chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget",
     "services": "mfdb.admin.backend.services:register_services"
   },
   "rpc_methods": [

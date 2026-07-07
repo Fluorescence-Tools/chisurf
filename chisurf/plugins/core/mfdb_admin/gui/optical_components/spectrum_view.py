@@ -1,3 +1,7 @@
-"""Compatibility wrapper for :mod:`mfdb.admin.gui.optical_components.spectrum_view`."""
+"""Re-export the reusable :class:`SpectrumView` from the shared widgets package.
 
-from mfdb.admin.gui.optical_components.spectrum_view import *  # noqa: F403
+This module is kept for backward compatibility.  New code should import
+directly from :mod:`chisurf.gui.widgets.spectrum_view`.
+"""
+
+from chisurf.gui.widgets.spectrum_view import SpectrumView  # noqa: F401
