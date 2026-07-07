@@ -108,15 +108,18 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals now: **241 select · 68 insert · 48 update · 12 delete ·
-68 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
+Package totals now: **175 select · 67 insert · 48 update · 12 delete ·
+87 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
 scattered CRUD is now fully eliminated** (api.py, adapters/chinet.py,
 sample_manager, seed_data, seed_example, all admin services, security/auth
 are SQL-free or intentional-raw-only), and **every `INSERT OR REPLACE`/
 `INSERT OR IGNORE` outside the `bootstrap_*` seeders is gone** (including the
-composite-PK `add_operation_artifact`); the `queries/` `INSERT OR REPLACE`/
-`INSERT OR IGNORE` are all converted too. What remains is legitimately the
-centralized home / bespoke: `queries/` SELECTs, genuinely-**keyless** writes
+composite-PK `add_operation_artifact`). The **trivial single-table SELECTs
+in `queries/*.py` have also been swept onto `dao.get`/`list`** (select 241 →
+175; the bespoke rise 68 → 87 is a reclassification of `probes.py`
+JOIN/aggregate/source/merge reads, not new raw SQL). What remains is
+legitimately the centralized home / bespoke: `queries/` JOIN/aggregate/
+`DISTINCT`/`json_extract`/compound-`ORDER BY` SELECTs, genuinely-**keyless** writes
 (`analysis_metadata`, `flr_sample_key_value` — no PK, no targetable UNIQUE),
 `bootstrap_*` bulk seeders on a bare conn (incl. `schema.py` group-member
 `INSERT OR IGNORE`), hand-written `INSERT … ON CONFLICT DO UPDATE`
@@ -157,10 +160,10 @@ UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copi
    `dao.upsert(conflict=[<all PK cols>])`; sweep other `# raw` composite writes
    (e.g. remaining `mfdb_operation_artifact` / `mfdb_group_member` INSERTs) for the
    same conversion.
-3. **Low-value single-table SELECTs in the mixins** → `dao.get`/`list`, only where
-   trivial. Leave JOIN/aggregate/graph/DDL raw — those are the legitimate home.
-   The bulk of the remaining 241 selects live here (`queries/*.py`) and are the
-   centralized home; convert only the trivially-keyed ones.
+3. ~~**Low-value single-table SELECTs in the mixins**~~ → **DONE**: swept all 13
+   `queries/*.py` files; trivial select-by-PK / equality reads now go through
+   `dao.get`/`list`. What's left in `queries/` is the legitimate bespoke home
+   (JOIN/aggregate/`DISTINCT`/`json_extract`/compound-`ORDER BY`/source-db/merge).
 
 ### General working rule (applies to ALL work, not just this migration)
 **Every material change: update OKF, keep it traceable, commit.** The durable
