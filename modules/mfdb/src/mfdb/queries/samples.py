@@ -263,10 +263,12 @@ class SampleMixin:
     def set_sample_key_value(self, sample_id: str, key: str, value: str, details: str | None = None):
         with self.conn:
             now = _utc_now()
+            # raw upsert: flr_sample_key_value is a keyless table (no PK), which
+            # the DAO's upsert cannot target.
             self.conn.execute(
                 "INSERT OR REPLACE INTO flr_sample_key_value (sample_id, key, value, details, created_at, updated_at, deleted_at) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (sample_id, key, value, details, now, now, None)
+                (sample_id, key, value, details, now, now, None),
             )
 
     def clear_sample_key_values(self, sample_id: str) -> None:
@@ -296,15 +298,11 @@ class SampleMixin:
 
         """
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_sample_condition "
-                "(condition_id, ph, temperature, ionic_strength, buffer_composition, details, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (condition_id, ph, temperature, ionic_strength, buffer_composition, details,
-                 now, now, None)
-            )
+            self.dao.upsert("flr_sample_condition", {
+                "condition_id": condition_id, "ph": ph, "temperature": temperature,
+                "ionic_strength": ionic_strength, "buffer_composition": buffer_composition,
+                "details": details, "deleted_at": None,
+            })
 
     def add_entity_assembly(self, assembly_id, description=None, details=None):
         """Add an entity assembly record.
@@ -320,13 +318,10 @@ class SampleMixin:
 
         """
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO flr_entity_assembly "
-                "(assembly_id, description, details, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (assembly_id, description, details, now, now, None)
-            )
+            self.dao.upsert("flr_entity_assembly", {
+                "assembly_id": assembly_id, "description": description,
+                "details": details, "deleted_at": None,
+            })
 
     def add_poly_probe_position(self, probe_id, entity_id, residue_number, asym_id="A",
                                   residue_name=None, description=None,
