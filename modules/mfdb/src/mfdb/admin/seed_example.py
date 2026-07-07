@@ -329,7 +329,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
 
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
-        # --- Processing run (direct SQL to bypass PK mismatch in record_operation_link) ---
+        # --- Processing run ---
         if db.dao.get("mfdb_operation", d["processing_id"]) is None:
             settings = {
                 "photon_filter": {"routing_channels": [0, 1]},
@@ -354,14 +354,15 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                     started_at=now,
                     ended_at=now,
                 )
-                # raw: composite-PK junction (operation_id, artifact_id, direction,
-                # role) — DAO upsert can't target it; INSERT OR REPLACE is the home.
+                # Composite-PK junction: values are exactly the 4 PK columns, so
+                # the upsert is an idempotent DO-NOTHING (identity-preserving,
+                # unlike INSERT OR REPLACE which delete-reinserts).
                 for raw_id in raw_ids:
-                    db.conn.execute(
-                        "INSERT OR REPLACE INTO mfdb_operation_artifact "
-                        "(operation_id, artifact_id, direction, role) "
-                        "VALUES (?, ?, ?, ?)",
-                        (oid, raw_id, "input", "raw_data"),
+                    db.dao.upsert(
+                        "mfdb_operation_artifact",
+                        {"operation_id": oid, "artifact_id": raw_id,
+                         "direction": "input", "role": "raw_data"},
+                        conflict=["operation_id", "artifact_id", "direction", "role"],
                     )
                 db.add_audit_log(
                     action="create",
@@ -372,7 +373,7 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                 )
             logger.info("Created processing run %s", oid)
 
-        # --- Processed data product (direct SQL) ---
+        # --- Processed data product ---
         prod_id = f"prod_{d['processing_id']}"
         if db.dao.get("mfdb_artifact", prod_id) is None:
             demo_dir = Path.home() / ".chisurf" / "flr" / "demo"
@@ -388,12 +389,12 @@ def seed_example(db_path: str | Path | None = None) -> dict[str, object]:
                     validation_status="valid",
                     checksum=f"demo:{bur_path.name}",
                 )
-                # raw: composite-PK junction — see note above.
-                db.conn.execute(
-                    "INSERT OR REPLACE INTO mfdb_operation_artifact "
-                    "(operation_id, artifact_id, direction, role) "
-                    "VALUES (?, ?, ?, ?)",
-                    (d["processing_id"], prod_id, "output", "bur"),
+                # Composite-PK junction — idempotent DO-NOTHING upsert (see above).
+                db.dao.upsert(
+                    "mfdb_operation_artifact",
+                    {"operation_id": d["processing_id"], "artifact_id": prod_id,
+                     "direction": "output", "role": "bur"},
+                    conflict=["operation_id", "artifact_id", "direction", "role"],
                 )
                 db.add_audit_log(
                     action="create",

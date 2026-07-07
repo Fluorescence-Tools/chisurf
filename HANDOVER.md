@@ -91,7 +91,12 @@ is acceptable if the suite stays green; correctness of the store matters.
 ### DAO limitations discovered (the suite enforces these — DON'T fight them)
 - **Keyless tables** (`analysis_metadata`, `flr_sample_key_value`) → `dao.upsert`
   raises `DaoError: No primary key`. Leave raw, OR add a PK to the schema first.
-- **Composite-PK junctions** (`mfdb_operation_artifact` = 4-col PK) → same. Leave raw.
+- **Composite-PK junctions** (`mfdb_operation_artifact` = 4-col PK) → **convertible
+  after all**: `dao.upsert(conflict=[<all PK cols>])`. When the values are exactly
+  the PK columns it's an idempotent `DO NOTHING` (identity-preserving, unlike
+  `INSERT OR REPLACE`). `primary_key()` returns the first PK col and does not raise,
+  so composite PKs never hit the "No primary key" path. Only *keyless* tables with
+  no targetable UNIQUE are a genuine `upsert` limitation.
 - **UNIQUE-constraint upserts** need the EXACT `conflict=[...]` target or you get
   `sqlite3.IntegrityError`. Examples already fixed: `optical_properties`
   (`conflict=["probe_id","property_name"]`), `spectra`
@@ -138,11 +143,15 @@ UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copi
 (e.g. `list_sessions` hiding `token_hash`).
 
 ### Recommended next order (the scattered-SQL core is DONE; these are cleanup)
-1. ~~`admin/seed_example.py`~~ — **DONE** (routed through the DAO; only the two
-   composite-PK `mfdb_operation_artifact` writes stay `# raw`).
-2. **Keyless/composite writes** currently raw (`analysis_metadata`,
-   `mfdb_operation_artifact` 4-col PK, `flr_sample_key_value`): either leave as the
-   documented DAO limitation, or add a PK/support to the DAO if you want them gone.
+1. ~~`admin/seed_example.py`~~ — **DONE**, now **zero raw SQL** (including the two
+   composite-PK `mfdb_operation_artifact` writes, via `dao.upsert(conflict=[4 PK cols])`).
+2. **Keyless writes** currently raw (`analysis_metadata`, `flr_sample_key_value`):
+   truly keyless (no PK, no targetable UNIQUE) → leave as the documented `upsert`
+   limitation, or add a PK/UNIQUE to the schema if you want them gone. **Note:**
+   composite-PK junctions are *no longer* in this bucket — they convert via
+   `dao.upsert(conflict=[<all PK cols>])`; sweep other `# raw` composite writes
+   (e.g. remaining `mfdb_operation_artifact` / `mfdb_group_member` INSERTs) for the
+   same conversion.
 3. **Low-value single-table SELECTs in the mixins** → `dao.get`/`list`, only where
    trivial. Leave JOIN/aggregate/graph/DDL raw — those are the legitimate home.
    The bulk of the remaining 241 selects live here (`queries/*.py`) and are the
