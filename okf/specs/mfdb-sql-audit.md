@@ -21,7 +21,7 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | provenance/lineage.py | 2 | 0 | 0 | 0 | 1 | 0 |
 | provenance/operation_parameters.py | 1 | 0 | 0 | 0 | 3 | 0 |
 | queries/analysis.py | 10 | 3 | 6 | 0 | 1 | 0 |
-| queries/artifacts.py | 10 | 6 | 9 | 1 | 1 | 0 |
+| queries/artifacts.py | 10 | 5 | 9 | 1 | 1 | 0 |
 | queries/branches.py | 3 | 1 | 3 | 0 | 2 | 0 |
 | queries/experiments.py | 4 | 3 | 5 | 0 | 1 | 0 |
 | queries/lifecycle.py | 3 | 1 | 0 | 0 | 1 | 0 |
@@ -44,4 +44,4 @@ query method. `bespoke` (joins/aggregates/recursive/DISTINCT) and `ddl` may stay
 | security/auth.py | 0 | 0 | 0 | 0 | 8 | 0 |
 | store/database_resolver.py | 1 | 0 | 0 | 0 | 0 | 1 |
 | store/transactions.py | 0 | 0 | 0 | 0 | 0 | 0 |
-| **TOTAL** | 241 | 69 | 48 | 12 | 68 | 30 |
+| **TOTAL** | 241 | 68 | 48 | 12 | 68 | 30 |

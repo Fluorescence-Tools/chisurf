@@ -314,11 +314,21 @@ class ArtifactOpsMixin:
     def add_operation_artifact(self, operation_id, artifact_id, role="output", direction="output"):
         with self._transaction():
             now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO mfdb_operation_artifact "
-                "(operation_id, artifact_id, role, direction, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (operation_id, artifact_id, role, direction, now, now, None)
+            # Composite-PK junction: upsert on the full 4-column PK. Identity-
+            # preserving (unlike INSERT OR REPLACE's delete-and-reinsert) while
+            # still resurrecting a soft-deleted link (deleted_at -> NULL) on re-add.
+            self.dao.upsert(
+                "mfdb_operation_artifact",
+                {
+                    "operation_id": operation_id,
+                    "artifact_id": artifact_id,
+                    "role": role,
+                    "direction": direction,
+                    "created_at": now,
+                    "updated_at": now,
+                    "deleted_at": None,
+                },
+                conflict=["operation_id", "artifact_id", "direction", "role"],
             )
 
     def get_operation_artifacts(self, operation_id, direction=None):
