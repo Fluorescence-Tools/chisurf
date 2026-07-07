@@ -103,10 +103,10 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals now: **254 select · 77 insert · 48 update · 12 delete ·
-68 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
-scattered SQL — writes AND reads — is now essentially eliminated** (api.py,
-adapters/chinet.py, sample_manager, seed_data, all admin services, security/auth
+Package totals now: **241 select · 69 insert · 48 update · 12 delete ·
+70 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
+scattered CRUD is now fully eliminated** (api.py, adapters/chinet.py,
+sample_manager, seed_data, seed_example, all admin services, security/auth
 are SQL-free or intentional-raw-only); the `queries/` `INSERT OR REPLACE`/
 `INSERT OR IGNORE` are all converted too. What remains is legitimately the
 centralized home / bespoke: `queries/` SELECTs, keyless/composite writes
@@ -138,13 +138,15 @@ UNIQUE), conditional/multi-column `WHERE` updates, `INSERT … SELECT` bulk copi
 (e.g. `list_sessions` hiding `token_hash`).
 
 ### Recommended next order (the scattered-SQL core is DONE; these are cleanup)
-1. `admin/seed_example.py` (13 select · 8 insert) — if it carries a `db`/dao handle,
-   route its writes; it's a seeding script so several may be bulk/bespoke.
+1. ~~`admin/seed_example.py`~~ — **DONE** (routed through the DAO; only the two
+   composite-PK `mfdb_operation_artifact` writes stay `# raw`).
 2. **Keyless/composite writes** currently raw (`analysis_metadata`,
    `mfdb_operation_artifact` 4-col PK, `flr_sample_key_value`): either leave as the
    documented DAO limitation, or add a PK/support to the DAO if you want them gone.
 3. **Low-value single-table SELECTs in the mixins** → `dao.get`/`list`, only where
    trivial. Leave JOIN/aggregate/graph/DDL raw — those are the legitimate home.
+   The bulk of the remaining 241 selects live here (`queries/*.py`) and are the
+   centralized home; convert only the trivially-keyed ones.
 
 ### General working rule (applies to ALL work, not just this migration)
 **Every material change: update OKF, keep it traceable, commit.** The durable
