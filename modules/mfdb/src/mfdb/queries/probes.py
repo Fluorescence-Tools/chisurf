@@ -184,15 +184,20 @@ class ProbeMixin:
             if row:
                 return row["probe_id"]
             with self.conn:
-                now = _utc_now()
-                cursor = self.conn.execute(
-                    "INSERT INTO probes (chromophore_name, type_id, category, description, reactive_probe_flag, probe_origin, probe_link_type, fluorophore_type, "
-                    "created_at, updated_at, deleted_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (chromophore_name, type_id, category, description, reactive_probe_flag or "no", probe_origin or "extrinsic", probe_link_type or "covalent", fluorophore_type or "unspecified",
-                     now, now, None,)
+                return self.dao.insert(
+                    "probes",
+                    {
+                        "chromophore_name": chromophore_name,
+                        "type_id": type_id,
+                        "category": category,
+                        "description": description,
+                        "reactive_probe_flag": reactive_probe_flag or "no",
+                        "probe_origin": probe_origin or "extrinsic",
+                        "probe_link_type": probe_link_type or "covalent",
+                        "fluorophore_type": fluorophore_type or "unspecified",
+                        "deleted_at": None,
+                    },
                 )
-                return cursor.lastrowid
         else:
             c_name = name or probe_id
             if isinstance(c_name, int):
@@ -203,43 +208,30 @@ class ProbeMixin:
             elif not isinstance(t_id, int):
                 t_id = None
 
-            cols = ["chromophore_name"]
-            vals = [c_name]
+            values: dict = {"chromophore_name": c_name}
             if isinstance(probe_id, int):
-                cols.append("probe_id")
-                vals.append(probe_id)
+                values["probe_id"] = probe_id
             if t_id is not None:
-                cols.append("type_id")
-                vals.append(t_id)
+                values["type_id"] = t_id
             if category is not None:
-                cols.append("category")
-                vals.append(category)
+                values["category"] = category
             if description is not None:
-                cols.append("description")
-                vals.append(description)
+                values["description"] = description
             if probe_origin is not None:
-                cols.append("probe_origin")
-                vals.append(probe_origin)
+                values["probe_origin"] = probe_origin
             if probe_link_type is not None:
-                cols.append("probe_link_type")
-                vals.append(probe_link_type)
+                values["probe_link_type"] = probe_link_type
             if fluorophore_type is not None:
-                cols.append("fluorophore_type")
-                vals.append(fluorophore_type)
+                values["fluorophore_type"] = fluorophore_type
             if reactive_probe_flag is not None:
-                cols.append("reactive_probe_flag")
-                vals.append(reactive_probe_flag)
+                values["reactive_probe_flag"] = reactive_probe_flag
+            values["deleted_at"] = None
 
-            now = _utc_now()
-            cols += ["created_at", "updated_at", "deleted_at"]
-            vals += [now, now, None]
-            placeholders = ", ".join(["?"] * len(cols))
             with self.conn:
-                cursor = self.conn.execute(
-                    f"INSERT OR REPLACE INTO probes ({', '.join(cols)}) VALUES ({placeholders})",
-                    tuple(vals)
-                )
-                return cursor.lastrowid or probe_id
+                # Identity-preserving upsert keyed on the probe_id primary key: a
+                # supplied existing id updates in place, otherwise a new probe is
+                # inserted (INSERT OR REPLACE would delete+reinsert on conflict).
+                return self.dao.upsert("probes", values) or probe_id
 
     def update_probe(self, probe_id, **kwargs):
         allowed = {"name", "category", "probe_type_id", "probe_origin", "probe_link_type", "fluorophore_type", "reactive_probe_flag", "is_active", "description", "details"}
@@ -511,14 +503,17 @@ class ProbeMixin:
                 }
                 canonical = mfdb_type_name_map.get(short_name, short_name)
                 if canonical not in mfdb_types:
-                    # Create the type if it doesn't exist
-                    self.conn.execute(
-                        "INSERT OR IGNORE INTO probe_types (type_name, display_name) VALUES (?, ?)",
-                        (canonical, canonical.replace("_", " ").title()),
+                    # Reuse the type on UNIQUE(type_name), else create it.
+                    existing = self.dao.list(
+                        "probe_types", filters={"type_name": canonical}, include_deleted=True, limit=1
                     )
-                    mfdb_types[canonical] = self.conn.execute(
-                        "SELECT type_id FROM probe_types WHERE type_name = ?", (canonical,)
-                    ).fetchone()["type_id"]
+                    if existing:
+                        mfdb_types[canonical] = existing[0]["type_id"]
+                    else:
+                        mfdb_types[canonical] = self.dao.insert(
+                            "probe_types",
+                            {"type_name": canonical, "display_name": canonical.replace("_", " ").title()},
+                        )
                 return mfdb_types[canonical]
 
             # Fetch ALL source probes — fluorophores AND optical components
@@ -901,6 +896,8 @@ class ProbeMixin:
                         ),
                     )
                     if (sec["chromophore_name"] or "") != (primary["chromophore_name"] or ""):
+                        # raw: part of the bespoke probe-merge — dynamic key column
+                        # (prop_key resolves to probe_id/item_id) with IGNORE-on-dup.
                         self.conn.execute(
                             f"INSERT OR IGNORE INTO optical_properties "
                             f"({prop_key}, property_name, property_value, created_at, updated_at) "

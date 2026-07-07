@@ -399,17 +399,20 @@ class ArtifactOpsMixin:
                 metadata["checksum_snapshot"] = kwargs.pop("checksum_snapshot")
             if kwargs.get("software_version"):
                 metadata["software_version"] = kwargs.pop("software_version")
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO mfdb_edge "
-                "(source_node_type, source_node_id, target_node_type, "
-                "target_node_id, relationship_type, operation_id, metadata_json, "
-                "created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (src_type or "artifact", src_id, tgt_type or "artifact", tgt_id,
-                 rel_type or "derived_from", op_id,
-                 _json_dumps(metadata) if metadata else None,
-                 now, now, None)
+            # mfdb_edge's only unique key is its autoincrement edge_id (never
+            # supplied here), so this is always a fresh insert.
+            self.dao.insert(
+                "mfdb_edge",
+                {
+                    "source_node_type": src_type or "artifact",
+                    "source_node_id": src_id,
+                    "target_node_type": tgt_type or "artifact",
+                    "target_node_id": tgt_id,
+                    "relationship_type": rel_type or "derived_from",
+                    "operation_id": op_id,
+                    "metadata_json": _json_dumps(metadata) if metadata else None,
+                    "deleted_at": None,
+                },
             )
 
     def get_downstream_artifacts(self, artifact_id):
@@ -920,18 +923,22 @@ class ArtifactOpsMixin:
                 if not active_branch_uuid:
                     active_branch_uuid = "00000000-0000-0000-0000-000000000000"
                     if _exists(self.conn, "flr_sample_users", "user_id", operator_user_id):
-                        self.conn.execute(
-                            "UPDATE flr_sample_users SET active_branch_uuid = ? WHERE user_id = ?",
-                            (active_branch_uuid, operator_user_id)
+                        self.dao.update(
+                            "flr_sample_users",
+                            operator_user_id,
+                            {"active_branch_uuid": active_branch_uuid},
                         )
                 if not _exists(self.conn, "mfdb_branch", "branch_uuid", active_branch_uuid):
-                    self.conn.execute(
-                        "INSERT OR IGNORE INTO mfdb_branch (branch_uuid, name, description) VALUES (?, 'main', 'Default main branch')",
-                        (active_branch_uuid,)
+                    self.dao.insert(
+                        "mfdb_branch",
+                        {
+                            "branch_uuid": active_branch_uuid,
+                            "name": "main",
+                            "description": "Default main branch",
+                        },
                     )
-                self.conn.execute(
-                    "UPDATE mfdb_branch SET head_operation_id = ?, updated_at = ? WHERE branch_uuid = ?",
-                    (operation_id, now, active_branch_uuid)
+                self.dao.update(
+                    "mfdb_branch", active_branch_uuid, {"head_operation_id": operation_id}
                 )
             self.add_audit_log(
                 action=f"Operation recorded: {operation_id}",

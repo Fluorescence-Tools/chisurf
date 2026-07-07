@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import uuid
 
-from mfdb.schema._sqlutil import _utc_now
-
 
 class UserDeviceMixin:
     """People, devices, and artifact ownership."""
@@ -29,11 +27,17 @@ class UserDeviceMixin:
         if not user_id:
             return
         import uuid as _uuid
-        self.conn.execute(
-            "INSERT OR IGNORE INTO flr_sample_users (user_id, user_uuid, display_name) "
-            "VALUES (?, ?, ?)",
-            (user_id, str(_uuid.uuid4()), display_name or user_id),
-        )
+        # INSERT OR IGNORE: create a minimal row only when the user is absent
+        # (an existing row — even soft-deleted — is left untouched).
+        if not self.dao.get("flr_sample_users", user_id, include_deleted=True):
+            self.dao.insert(
+                "flr_sample_users",
+                {
+                    "user_id": user_id,
+                    "user_uuid": str(_uuid.uuid4()),
+                    "display_name": display_name or user_id,
+                },
+            )
 
     def add_artifact_owner(self, artifact_id: str, user_id: str, role: str = "owner") -> None:
         """Add a co-owner to an artifact (idempotent).
@@ -44,11 +48,18 @@ class UserDeviceMixin:
         if not artifact_id or not user_id:
             return
         self.ensure_user(user_id)
-        self.conn.execute(
-            "INSERT OR IGNORE INTO mfdb_artifact_owner (artifact_id, user_id, role) "
-            "VALUES (?, ?, ?)",
-            (artifact_id, user_id, role),
-        )
+        # INSERT OR IGNORE on UNIQUE(artifact_id, user_id): an existing ownership
+        # row (even soft-deleted) already occupying the pair is left untouched.
+        if not self.dao.list(
+            "mfdb_artifact_owner",
+            filters={"artifact_id": artifact_id, "user_id": user_id},
+            include_deleted=True,
+            limit=1,
+        ):
+            self.dao.insert(
+                "mfdb_artifact_owner",
+                {"artifact_id": artifact_id, "user_id": user_id, "role": role},
+            )
 
     def list_artifact_owners(self, artifact_id: str) -> list[str]:
         """Return the user IDs that own an artifact."""
