@@ -22,14 +22,19 @@ class SampleMixin:
 
     def add_entity(self, entity_id, name, sequence=None, entity_type=None, organism=None, entity_source=None, details=None):
         with self.conn:
-            now = _utc_now()
-            self.conn.execute(
-                "INSERT OR REPLACE INTO entities "
-                "(entity_id, type, description, formula_weight, src_method, "
-                "number_of_molecules, common_name, created_at, updated_at, deleted_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (entity_id, entity_type or "polymer", details or name, None, None, 1, name,
-                 now, now, None)
+            # Dictionary-driven upsert (PRD-26) — no hand-written INSERT OR REPLACE.
+            self.dao.upsert(
+                "entities",
+                {
+                    "entity_id": entity_id,
+                    "type": entity_type or "polymer",
+                    "description": details or name,
+                    "formula_weight": None,
+                    "src_method": None,
+                    "number_of_molecules": 1,
+                    "common_name": name,
+                    "deleted_at": None,
+                },
             )
             # Note: sequence is stored in entity_poly_seq table, not in entities
             if sequence is not None:
