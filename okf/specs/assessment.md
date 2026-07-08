@@ -49,7 +49,7 @@ recorded in the cited spec's steering notes, not independently re-run here.
 | [INC-01](#inc-01) | S2 | INC | Core | Three overlapping instance registries with different lifetimes | REPORTED |
 | [INC-02](#inc-02) | S2 | INC | Core | `@register` renames classes → fragile name-based `isinstance` | REPORTED |
 | [INC-03](#inc-03) | S3 | INC | Server/MFDB | Legacy flat/`mfdb.*` aliases coexist with namespaced/`mfdb.v1.*` | REPORTED |
-| [INC-04](#inc-04) | S2 | INC | MFDB | Auth enforced in ~5/40 `api.py` fns; ACL rows exist for few entity kinds | REPORTED |
+| [INC-04](#inc-04) | S2 | INC | MFDB | Auth enforced in ~5/40 `api.py` fns; ACL rows exist for few entity kinds | 🚧 ADDRESSED — `api.py` boundary now threads/enforces `auth` |
 | [INC-05](#inc-05) | S3 | INC | MFDB | `MFDatabase` is a ~312 KB monolith with 3 parallel access styles | 🚧 IN PROGRESS (orm/ deleted; 3→2) |
 | [INC-06](#inc-06) | S2 | INC | Plugins | Two plugin identity conventions coexist; `ndxplorer` has no manifest | ~~REPORTED~~ ✅ FIXED |
 | [INC-07](#inc-07) | S3 | INC | Plugins | `categories` drifts from directory group & `display_name`; demo games mixed in | REPORTED |
@@ -186,6 +186,7 @@ The single largest source of non-uniformity across the codebase (see [core steer
 
 ### INC-04
 **S2 · MFDB auth is incomplete and decentralized.** [mfdb steering](mfdb.md#steering-notes), contradicts `docs/prd_mfdb_auth_rights.md`. Only ~5 of ~40 `api.py` functions check auth; ACL rows are created for essentially only `artifact` (conditionally `mfdb_operation`), so `can_access` has nothing to evaluate for samples/experiments/setups/parameters/branches; real enforcement is scattered in plugin services. → Centralize enforcement at the `api.py` boundary and create ACL rows for every guarded entity kind.
+- 🚧 **ADDRESSED** (2026-07-08): threaded `auth` through **all ~40 `mfdb.v1.*` `api.py` functions** — previously most lacked an `auth` parameter, so the versioned RPC layer (`h(**params, auth=auth)`) would have `TypeError`'d; the authentication boundary (`_require_auth`) now composes with per-function principal resolution. Shared helpers (`_acting_user_id`, `_acl_read_or_pass`, `_acl_filter_or_pass`, `_new_object_acl`, `_effective_target_user`) give **progressive enforcement**: writes stamp the authenticated owner + a default ACL (samples/experiments, atop the existing artifact/operation ACLs), reads enforce ACLs **where they exist** and stay open otherwise (no legacy lockout), and user-scoped branch ops (`set/get_user_active_branch`, `jump_user_to_operation`) are now **self-or-admin** (fixed an IDOR). In-process/unauthenticated calls fall back to the configured default user, preserving GUI/macros. New `tests/test_api_auth.py` (5). Remaining for full closure: extend owner ACLs to setups/parameters/branches and add v1-dispatcher round-trip tests. Advances the [mfdb steering](mfdb.md#steering-notes) auth item and PRD-59.
 
 ### INC-05
 **S3 · `MFDatabase` is a monolith.** [mfdb steering](mfdb.md#steering-notes). ~312 KB with three parallel access styles (`repository` raw SQL, `DictionaryDao`, `orm/SampleRepository`). → Choose one access layer per concern and split the module.

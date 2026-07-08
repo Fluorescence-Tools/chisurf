@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from mfdb.repository import MFDatabase
 from mfdb.security.auth import (
     PERM_READ,
     AuthError,
     _get_object_acl,
-    can_access,
     create_default_acl_for_object,
     principal_from_rpc_auth,
-    require_authenticated,
     require_access,
+    require_authenticated,
 )
 from mfdb.store.database_resolver import resolve_database_path
-from mfdb.repository import MFDatabase
 
 
 def _check_acl_access(conn: Any, principal: Any, object_type: str, object_id: str) -> None:
@@ -48,6 +47,68 @@ def _check_api_auth(auth: dict[str, Any] | None) -> None:
         principal = principal_from_rpc_auth(db.conn, auth)
         require_authenticated(principal)
         return principal.user_id, principal.is_admin
+
+
+def _acting_user_id(principal: Any) -> str:
+    """Return the acting user id: the authenticated principal, else the default.
+
+    Preserves in-process default-user behaviour when a call is unauthenticated,
+    while attributing writes to the real user when a token is present.
+    """
+    if getattr(principal, "user_id", None):
+        return principal.user_id
+    from mfdb.security.session import configured_default_user_id
+
+    return configured_default_user_id()
+
+
+def _acl_read_or_pass(conn: Any, principal: Any, object_type: str, object_id: str) -> None:
+    """Enforce read access **only when an ACL exists** for the object.
+
+    Progressive enforcement: entity kinds that carry ACLs (created on write) are
+    protected; legacy objects without an ACL stay readable to authenticated
+    callers, so this never locks out reads that worked before.
+    """
+    if object_id and _get_object_acl(conn, object_type, object_id):
+        require_access(conn, principal, object_type, object_id, PERM_READ)
+
+
+def _acl_filter_or_pass(conn: Any, principal: Any, object_type: str, rows: list, id_key: str) -> list:
+    """Filter *rows* by read ACL when any carry one; otherwise return them all."""
+    if not rows:
+        return rows
+    has_acls = any(
+        _get_object_acl(conn, object_type, (r[id_key] if isinstance(r, dict) else r[id_key]))
+        for r in rows
+        if (r.get(id_key) if isinstance(r, dict) else r[id_key]) is not None
+    )
+    if not has_acls:
+        return rows
+    from mfdb.security.auth import filter_readable
+
+    return filter_readable(conn, principal, object_type, rows, id_key=id_key)
+
+
+def _new_object_acl(conn: Any, object_type: str, object_id: str, owner_user_id: str) -> None:
+    """Create a default owner ACL for a newly written object (best-effort)."""
+    if object_id and owner_user_id and not _get_object_acl(conn, object_type, str(object_id)):
+        create_default_acl_for_object(conn, object_type, str(object_id), owner_user_id=owner_user_id)
+
+
+def _effective_target_user(principal: Any, requested_user_id: str | None) -> str:
+    """Resolve the user a self/admin-scoped operation targets.
+
+    A caller may act on their own account; only an admin may act on another
+    user's. When no user is requested, the caller's own id is used.
+    """
+    acting = _acting_user_id(principal)
+    if not requested_user_id or requested_user_id == acting:
+        return acting
+    if getattr(principal, "is_admin", False):
+        return requested_user_id
+    from mfdb.security.auth import PermissionDenied
+
+    raise PermissionDenied("Cannot act on another user's account")
 
 
 def register_artifact(
@@ -191,6 +252,8 @@ def list_artifacts(
         Canonical artifact kind filter.
     experiment_id : str, optional
         Filter results by experiment ID.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -263,6 +326,8 @@ def record_operation(
         Traceback summary if execution failed.
     metadata : dict, optional
         User metadata dict.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -398,6 +463,7 @@ def transition_operation_status(
     error_message: str | None = None,
     traceback_summary: str | None = None,
     operator_user_id: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Transition an operation status through the canonical API.
 
@@ -413,6 +479,9 @@ def transition_operation_status(
         Traceback summary.
     operator_user_id : str, optional
         User performing the transition.
+    auth : dict, optional
+        Session auth dict; the transition is attributed to the authenticated user
+        when *operator_user_id* is not given.
 
     Returns
     -------
@@ -420,12 +489,13 @@ def transition_operation_status(
         RPC result dictionary with keys 'ok' and 'operation_id'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         op_id = db.transition_operation_status(
             operation_id=operation_id,
             status=status,
             error_message=error_message,
             traceback_summary=traceback_summary,
-            operator_user_id=operator_user_id,
+            operator_user_id=operator_user_id or _acting_user_id(principal),
         )
         return {"ok": True, "operation_id": op_id}
 
@@ -443,36 +513,45 @@ def register_sample(
     measured_by_user_id: str | None = None,
     measured_by_device_id: str | None = None,
     measured_at: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Register or update a sample in the FLR domain layer."""
     with MFDatabase(resolve_database_path()) as db:
-        db.add_sample(
-            sample_id=sample_id,
-            uuid=uuid,
-            description=description,
-            details=details,
-            num_of_probes=num_of_probes,
-            solvent_phase=solvent_phase,
-            sample_condition_id=sample_condition_id,
-            entity_assembly_id=entity_assembly_id,
-            project_id=project_id,
-            measured_by_user_id=measured_by_user_id,
-            measured_by_device_id=measured_by_device_id,
-            measured_at=measured_at,
-        )
+        principal = principal_from_rpc_auth(db.conn, auth)
+        owner = _acting_user_id(principal)
+        with db.conn:
+            db.add_sample(
+                sample_id=sample_id,
+                uuid=uuid,
+                description=description,
+                details=details,
+                num_of_probes=num_of_probes,
+                solvent_phase=solvent_phase,
+                sample_condition_id=sample_condition_id,
+                entity_assembly_id=entity_assembly_id,
+                project_id=project_id,
+                measured_by_user_id=measured_by_user_id or owner,
+                measured_by_device_id=measured_by_device_id,
+                measured_at=measured_at,
+            )
+            _new_object_acl(db.conn, "sample", sample_id, owner)
         return {"ok": True, "sample_id": sample_id}
 
 
-def get_sample(sample_id: str) -> dict[str, Any]:
+def get_sample(sample_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Retrieve a sample by identifier."""
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, "sample", sample_id)
         return {"sample": db.get_sample(sample_id)}
 
 
-def list_samples() -> dict[str, Any]:
+def list_samples(auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """List samples."""
     with MFDatabase(resolve_database_path()) as db:
-        return {"samples": [dict(row) for row in db.list_samples()]}
+        principal = principal_from_rpc_auth(db.conn, auth)
+        rows = [dict(row) for row in db.list_samples()]
+        return {"samples": _acl_filter_or_pass(db.conn, principal, "sample", rows, "sample_id")}
 
 
 def register_experiment(
@@ -487,28 +566,35 @@ def register_experiment(
     status: str | None = None,
     details: str = "",
     setup_definition_id: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Register or update an experiment in the FLR domain layer."""
     with MFDatabase(resolve_database_path()) as db:
-        db.add_experiment(
-            experiment_id=experiment_id,
-            type_id=type_id,
-            sample_id=sample_id,
-            project_id=project_id,
-            measured_by_user_id=measured_by_user_id,
-            measured_by_device_id=measured_by_device_id,
-            started_at=started_at,
-            ended_at=ended_at,
-            status=status,
-            details=details,
-            setup_definition_id=setup_definition_id,
-        )
+        principal = principal_from_rpc_auth(db.conn, auth)
+        owner = _acting_user_id(principal)
+        with db.conn:
+            db.add_experiment(
+                experiment_id=experiment_id,
+                type_id=type_id,
+                sample_id=sample_id,
+                project_id=project_id,
+                measured_by_user_id=measured_by_user_id or owner,
+                measured_by_device_id=measured_by_device_id,
+                started_at=started_at,
+                ended_at=ended_at,
+                status=status,
+                details=details,
+                setup_definition_id=setup_definition_id,
+            )
+            _new_object_acl(db.conn, "experiment", experiment_id, owner)
         return {"ok": True, "experiment_id": experiment_id}
 
 
-def get_experiment(experiment_id: str) -> dict[str, Any]:
+def get_experiment(experiment_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Retrieve an experiment by identifier."""
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, "experiment", experiment_id)
         return {"experiment": db.get_experiment(experiment_id)}
 
 
@@ -516,19 +602,24 @@ def list_experiments(
     sample_id: str | None = None,
     project_id: str | None = None,
     type_id: int | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List experiments with optional filters."""
     with MFDatabase(resolve_database_path()) as db:
-        return {"experiments": [dict(row) for row in db.get_experiments(sample_id, project_id, type_id)]}
+        principal = principal_from_rpc_auth(db.conn, auth)
+        rows = [dict(row) for row in db.get_experiments(sample_id, project_id, type_id)]
+        return {"experiments": _acl_filter_or_pass(db.conn, principal, "experiment", rows, "experiment_id")}
 
 
-def get_operation(operation_id: str) -> dict[str, Any]:
+def get_operation(operation_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Retrieve an operation by its identifier.
 
     Parameters
     ----------
     operation_id : str
         Unique operation identifier.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -536,6 +627,8 @@ def get_operation(operation_id: str) -> dict[str, Any]:
         RPC result containing the operation dictionary under key 'operation'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, "operation", operation_id)
         op = db.get_operation(operation_id)
         return {"operation": op}
 
@@ -543,6 +636,7 @@ def get_operation(operation_id: str) -> dict[str, Any]:
 def list_operations(
     operation_type: str | None = None,
     experiment_id: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List operations with optional filtering.
 
@@ -552,6 +646,8 @@ def list_operations(
         Filter results by operation type.
     experiment_id : str, optional
         Filter results by experiment ID.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -559,11 +655,12 @@ def list_operations(
         RPC result containing list of operations under key 'operations'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         ops = db.list_operations(
             operation_type=operation_type,
             experiment_id=experiment_id,
         )
-        return {"operations": ops}
+        return {"operations": _acl_filter_or_pass(db.conn, principal, "operation", ops, "operation_id")}
 
 
 def record_operation_link(
@@ -574,6 +671,7 @@ def record_operation_link(
     ordinal: int = 0,
     checksum_snapshot: str | None = None,
     metadata: dict[str, Any] | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Link an operation and an artifact.
 
@@ -593,13 +691,21 @@ def record_operation_link(
         Snapshot of the checksum at the time of linking.
     metadata : dict, optional
         Link-specific metadata.
+    auth : dict, optional
+        Session auth dict; the operation must be writable by the caller when it
+        carries an ACL.
 
     Returns
     -------
     dict
         RPC result dictionary with key 'ok'.
     """
+    from mfdb.security.auth import PERM_WRITE, require_access
+
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        if _get_object_acl(db.conn, "operation", operation_id):
+            require_access(db.conn, principal, "operation", operation_id, PERM_WRITE)
         db.record_operation_link(
             operation_id=operation_id,
             artifact_id=artifact_id,
@@ -616,6 +722,7 @@ def graph_upstream(
     node_type: str,
     node_id: str,
     max_depth: int = 100,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Traverse upstream canonical graph edges.
 
@@ -627,6 +734,8 @@ def graph_upstream(
         Starting node identifier.
     max_depth : int, default=100
         Maximum traversal depth.
+    auth : dict, optional
+        Session auth dict; the seed node must be readable when it carries an ACL.
 
     Returns
     -------
@@ -634,6 +743,8 @@ def graph_upstream(
         RPC result containing a list of canonical edge dictionaries.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, node_type, node_id)
         from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
@@ -650,6 +761,7 @@ def graph_downstream(
     node_type: str,
     node_id: str,
     max_depth: int = 100,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Traverse downstream canonical graph edges.
 
@@ -661,6 +773,8 @@ def graph_downstream(
         Starting node identifier.
     max_depth : int, default=100
         Maximum traversal depth.
+    auth : dict, optional
+        Session auth dict; the seed node must be readable when it carries an ACL.
 
     Returns
     -------
@@ -668,6 +782,8 @@ def graph_downstream(
         RPC result containing a list of canonical edge dictionaries.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, node_type, node_id)
         from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
@@ -683,6 +799,7 @@ def graph_downstream(
 def export_graph(
     seed_node_type: str,
     seed_node_id: str,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Export a provenance graph as JSON-serializable nodes and edges.
 
@@ -692,6 +809,8 @@ def export_graph(
         Seed node type.
     seed_node_id : str
         Seed node identifier.
+    auth : dict, optional
+        Session auth dict; the seed node must be readable when it carries an ACL.
 
     Returns
     -------
@@ -699,6 +818,8 @@ def export_graph(
         RPC result containing ``nodes`` and ``edges`` dictionaries.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, seed_node_type, seed_node_id)
         graph = db.export_provenance_graph(seed_node_type, seed_node_id)
         return {"graph": graph}
 
@@ -708,6 +829,7 @@ def traverse_canonical_graph(
     start_node_id: str,
     direction: str = "upstream",
     max_depth: int = 100,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Traverse the canonical graph recursively, cycle-safe.
 
@@ -721,6 +843,8 @@ def traverse_canonical_graph(
         Direction of traversal ('upstream' or 'downstream').
     max_depth : int, default=100
         Maximum search depth.
+    auth : dict, optional
+        Session auth dict; the seed node must be readable when it carries an ACL.
 
     Returns
     -------
@@ -728,6 +852,8 @@ def traverse_canonical_graph(
         RPC result containing a list of edges under key 'edges'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, start_node_type, start_node_id)
         from mfdb.provenance.graph import traverse_canonical_graph as traverse
         edges = traverse(
             db.conn,
@@ -759,6 +885,7 @@ def record_parameter(
     prior: dict[str, Any] | None = None,
     mapping: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Record or update a semantic parameter.
 
@@ -798,13 +925,21 @@ def record_parameter(
         Parameter mapping details.
     metadata : dict, optional
         User metadata dict.
+    auth : dict, optional
+        Session auth dict; the owning operation must be writable when it carries
+        an ACL.
 
     Returns
     -------
     dict
         RPC result dictionary with keys 'ok' and 'parameter_uuid'.
     """
+    from mfdb.security.auth import PERM_WRITE, require_access
+
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        if operation_id and _get_object_acl(db.conn, "operation", operation_id):
+            require_access(db.conn, principal, "operation", operation_id, PERM_WRITE)
         p_uuid = db.record_parameter(
             parameter_uuid=parameter_uuid,
             operation_id=operation_id,
@@ -827,13 +962,15 @@ def record_parameter(
         return {"ok": True, "parameter_uuid": p_uuid}
 
 
-def get_parameter(parameter_uuid: str) -> dict[str, Any]:
+def get_parameter(parameter_uuid: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Retrieve a parameter by its UUID.
 
     Parameters
     ----------
     parameter_uuid : str
         Unique parameter UUID.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -841,6 +978,7 @@ def get_parameter(parameter_uuid: str) -> dict[str, Any]:
         RPC result containing parameter dictionary under key 'parameter'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         param = db.get_parameter(parameter_uuid)
         return {"parameter": param}
 
@@ -848,6 +986,7 @@ def get_parameter(parameter_uuid: str) -> dict[str, Any]:
 def list_parameters(
     operation_id: str | None = None,
     parameter_type: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List parameters with optional filters.
 
@@ -857,6 +996,8 @@ def list_parameters(
         Filter by operation identifier.
     parameter_type : str, optional
         Filter by parameter vocabulary value.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -864,6 +1005,7 @@ def list_parameters(
         RPC result containing a list of parameters under key 'parameters'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         parameters = db.list_parameters(
             operation_id=operation_id,
             parameter_type=parameter_type,
@@ -878,6 +1020,7 @@ def save_chinet_session(
     fit_refs: list[dict[str, Any]] | None = None,
     parameters: list[dict[str, Any]] | None = None,
     store_node_artifacts: bool = True,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Save a canonical chinet session schema payload to MFDB.
 
@@ -895,16 +1038,20 @@ def save_chinet_session(
         Parameter payloads.
     store_node_artifacts : bool, default=True
         Whether to write node artifacts.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
     dict
         RPC result containing storage summary.
     """
-    from mfdb.adapters.chinet import store_chinet_session
     from chinet.schema import session_from_schema
 
+    from mfdb.adapters.chinet import store_chinet_session
+
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         session = session_from_schema(session_payload)
         result = store_chinet_session(
             db,
@@ -918,13 +1065,15 @@ def save_chinet_session(
         return {"ok": True, **result}
 
 
-def get_chinet_session(artifact_id: str) -> dict[str, Any]:
+def get_chinet_session(artifact_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Load a chinet session artifact from MFDB.
 
     Parameters
     ----------
     artifact_id : str
         Chinet session artifact identifier.
+    auth : dict, optional
+        Session auth dict; the artifact must be readable when it carries an ACL.
 
     Returns
     -------
@@ -934,18 +1083,24 @@ def get_chinet_session(artifact_id: str) -> dict[str, Any]:
     from mfdb.adapters.chinet import load_chinet_session
 
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        _acl_read_or_pass(db.conn, principal, "artifact", artifact_id)
         session = load_chinet_session(db, artifact_id)
         artifact = db.get_artifact(artifact_id)
         return {"ok": True, "artifact": artifact, "session": session.to_schema()}
 
 
-def list_chinet_sessions(experiment_id: str | None = None) -> dict[str, Any]:
+def list_chinet_sessions(
+    experiment_id: str | None = None, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """List chinet session artifacts in MFDB.
 
     Parameters
     ----------
     experiment_id : str or None, optional
         Experiment filter.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -953,24 +1108,28 @@ def list_chinet_sessions(experiment_id: str | None = None) -> dict[str, Any]:
         RPC result containing artifact rows.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         artifacts = db.list_artifacts(artifact_type="chinet_session", experiment_id=experiment_id)
-        return {"ok": True, "artifacts": artifacts}
+        rows = [dict(a) for a in artifacts]
+        return {"ok": True, "artifacts": _acl_filter_or_pass(db.conn, principal, "artifact", rows, "artifact_id")}
 
 
-def restore_chinet_session(artifact_id: str) -> dict[str, Any]:
+def restore_chinet_session(artifact_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Restore a chinet session artifact from MFDB.
 
     Parameters
     ----------
     artifact_id : str
         Chinet session artifact identifier.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
     dict
         RPC result containing session schema and summary.
     """
-    return get_chinet_session(artifact_id)
+    return get_chinet_session(artifact_id, auth=auth)
 
 
 def save_setup(
@@ -989,6 +1148,7 @@ def save_setup(
     fcs_calibration: dict[str, Any] | None = None,
     created_by_user_id: str | None = None,
     is_public: bool | int | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Save or update an instrument/calibration setup configuration.
 
@@ -1024,6 +1184,8 @@ def save_setup(
         User who created this setup. NULL for shared/builtin setups.
     is_public : bool or int, optional
         GUI visibility flag. 1 (default) = visible to all, 0 = owner-only.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1031,6 +1193,7 @@ def save_setup(
         RPC result dictionary with key 'ok'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         db.save_setup(
             setup_id=setup_id,
             name=name,
@@ -1045,19 +1208,21 @@ def save_setup(
             timing_resolution=timing_resolution,
             burst_defaults=burst_defaults,
             fcs_calibration=fcs_calibration,
-            created_by_user_id=created_by_user_id,
+            created_by_user_id=created_by_user_id or _acting_user_id(principal),
             is_public=is_public,
         )
         return {"ok": True}
 
 
-def get_setup(setup_id: str) -> dict[str, Any]:
+def get_setup(setup_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Retrieve a setup configuration by its identifier.
 
     Parameters
     ----------
     setup_id : str
         Unique setup identifier.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1065,12 +1230,18 @@ def get_setup(setup_id: str) -> dict[str, Any]:
         RPC result containing setup dictionary under key 'setup'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         setup = db.get_setup(setup_id)
         return {"setup": setup}
 
 
-def list_setups() -> dict[str, Any]:
+def list_setups(auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """List setup snapshots.
+
+    Parameters
+    ----------
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1078,6 +1249,7 @@ def list_setups() -> dict[str, Any]:
         RPC result containing a list of setups under key 'setups'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         setups = db.list_setups()
         return {"setups": setups}
 
@@ -1093,6 +1265,7 @@ def add_setup_calibration(
     calibrated_at: str | None = None,
     method: str | None = "manual",
     created_by_user_id: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Append a calibration snapshot for one detector channel.
 
@@ -1118,6 +1291,8 @@ def add_setup_calibration(
         Calibration method (e.g. ``manual``, ``migrated``).
     created_by_user_id : str or None, optional
         User creating this snapshot.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1125,6 +1300,7 @@ def add_setup_calibration(
         RPC result with the inserted snapshot row under key 'snapshot'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         snapshot = db.add_setup_calibration(
             setup_id=setup_id,
             channel_name=channel_name,
@@ -1135,18 +1311,22 @@ def add_setup_calibration(
             g_factor_calibration_id=g_factor_calibration_id,
             calibrated_at=calibrated_at,
             method=method,
-            created_by_user_id=created_by_user_id,
+            created_by_user_id=created_by_user_id or _acting_user_id(principal),
         )
         return {"ok": True, "snapshot": snapshot}
 
 
-def list_setup_calibration_dates(setup_id: str) -> dict[str, Any]:
+def list_setup_calibration_dates(
+    setup_id: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Return distinct calibration timestamps for a setup, newest first.
 
     Parameters
     ----------
     setup_id : str
         Setup identifier.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1154,6 +1334,7 @@ def list_setup_calibration_dates(setup_id: str) -> dict[str, Any]:
         RPC result with a list of timestamps under key 'dates'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         dates = db.list_setup_calibration_dates(setup_id)
         return {"dates": dates}
 
@@ -1161,6 +1342,7 @@ def list_setup_calibration_dates(setup_id: str) -> dict[str, Any]:
 def get_setup_calibration(
     setup_id: str,
     calibrated_at: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return calibration snapshots for a setup.
 
@@ -1170,6 +1352,8 @@ def get_setup_calibration(
         Setup identifier.
     calibrated_at : str or None, optional
         ISO-8601 timestamp. If None, returns the latest snapshot per channel.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1177,6 +1361,7 @@ def get_setup_calibration(
         RPC result with list of calibration rows under key 'calibration'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         calibration = db.get_setup_calibration(setup_id, calibrated_at=calibrated_at)
         return {"calibration": calibration}
 
@@ -1186,6 +1371,7 @@ def list_audit_logs(
     target_type: str | None = None,
     target_id: str | None = None,
     limit: int = 100,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """List audit log records with optional filtering.
 
@@ -1199,6 +1385,8 @@ def list_audit_logs(
         Filter by target entity ID.
     limit : int, default=100
         Maximum logs to return.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1206,6 +1394,7 @@ def list_audit_logs(
         RPC result containing a list of log dicts under key 'logs'.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         logs = db.get_audit_logs(
             action=action,
             target_type=target_type,
@@ -1222,15 +1411,17 @@ def create_branch(
     head_operation_id: str | None = None,
     created_by_user_id: str | None = None,
     description: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a branch pointer in the MFDB provenance graph."""
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         uuid_val = db.create_branch(
             branch_uuid=branch_uuid,
             name=name,
             parent_branch_uuid=parent_branch_uuid,
             head_operation_id=head_operation_id,
-            created_by_user_id=created_by_user_id,
+            created_by_user_id=created_by_user_id or _acting_user_id(principal),
             description=description,
         )
         return {"ok": True, "branch_uuid": uuid_val}
@@ -1243,6 +1434,7 @@ def fork_branch(
     head_operation_id: str | None = None,
     created_by_user_id: str | None = None,
     description: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a parallel branch from an existing branch.
 
@@ -1260,6 +1452,8 @@ def fork_branch(
         User creating the branch.
     description : str, optional
         Branch description.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1267,34 +1461,40 @@ def fork_branch(
         RPC result containing the new branch UUID.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
         uuid_val = db.fork_branch(
             source_branch_uuid=source_branch_uuid,
             name=name,
             branch_uuid=branch_uuid,
             head_operation_id=head_operation_id,
-            created_by_user_id=created_by_user_id,
+            created_by_user_id=created_by_user_id or _acting_user_id(principal),
             description=description,
         )
         return {"ok": True, "branch_uuid": uuid_val}
 
 
-def get_branch(branch_uuid_or_name: str) -> dict[str, Any]:
+def get_branch(branch_uuid_or_name: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Return one branch by UUID or name."""
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         branch = db.get_branch(branch_uuid_or_name)
         return {"branch": branch}
 
 
-def list_branches() -> dict[str, Any]:
+def list_branches(auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Return all non-deleted branches."""
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         branches = db.list_branches()
         return {"branches": branches}
 
 
-def update_branch_head(branch_uuid: str, head_operation_id: str | None) -> dict[str, Any]:
+def update_branch_head(
+    branch_uuid: str, head_operation_id: str | None, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Move a branch head to an operation or clear it."""
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         db.update_branch_head(branch_uuid, head_operation_id)
         return {"ok": True}
 
@@ -1306,6 +1506,7 @@ def jump_user_to_operation(
     branch_uuid: str | None = None,
     parent_branch_uuid: str | None = None,
     description: str | None = None,
+    auth: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create and activate a user branch at a historical operation.
 
@@ -1323,6 +1524,8 @@ def jump_user_to_operation(
         Parent branch for provenance.
     description : str, optional
         Branch description.
+    auth : dict, optional
+        Session auth dict for authorization.
 
     Returns
     -------
@@ -1330,8 +1533,10 @@ def jump_user_to_operation(
         RPC result containing the created active branch.
     """
     with MFDatabase(resolve_database_path()) as db:
+        principal = principal_from_rpc_auth(db.conn, auth)
+        target = _effective_target_user(principal, user_id)
         branch = db.jump_user_to_operation(
-            user_id=user_id,
+            user_id=target,
             operation_id=operation_id,
             branch_name=branch_name,
             branch_uuid=branch_uuid,
@@ -1341,22 +1546,29 @@ def jump_user_to_operation(
         return {"ok": True, "branch": branch}
 
 
-def delete_branch(branch_uuid: str) -> dict[str, Any]:
+def delete_branch(branch_uuid: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
     """Soft-delete a branch when it is not protected or active."""
     with MFDatabase(resolve_database_path()) as db:
+        principal_from_rpc_auth(db.conn, auth)
         db.delete_branch(branch_uuid)
         return {"ok": True}
 
 
-def set_user_active_branch(user_id: str, branch_uuid: str) -> dict[str, Any]:
-    """Set the active branch for a user."""
+def set_user_active_branch(
+    user_id: str, branch_uuid: str, auth: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Set the active branch for a user (self, or any user when admin)."""
     with MFDatabase(resolve_database_path()) as db:
-        db.set_user_active_branch(user_id, branch_uuid)
+        principal = principal_from_rpc_auth(db.conn, auth)
+        target = _effective_target_user(principal, user_id)
+        db.set_user_active_branch(target, branch_uuid)
         return {"ok": True}
 
 
-def get_user_active_branch(user_id: str) -> dict[str, Any]:
-    """Return the active branch for a user."""
+def get_user_active_branch(user_id: str, auth: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return the active branch for a user (self, or any user when admin)."""
     with MFDatabase(resolve_database_path()) as db:
-        branch = db.get_user_active_branch(user_id)
+        principal = principal_from_rpc_auth(db.conn, auth)
+        target = _effective_target_user(principal, user_id)
+        branch = db.get_user_active_branch(target)
         return {"branch": branch}
