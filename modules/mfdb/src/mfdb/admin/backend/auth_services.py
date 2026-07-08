@@ -2,22 +2,20 @@
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any
 
+from mfdb.admin.backend.password_services import evaluate_password, hash_password
 from mfdb.repository import MFDatabase
 from mfdb.security.auth import (
-    PERM_MANAGE,
     PERM_READ,
-    PERM_WRITE,
     AuthError,
     PermissionDenied,
+    Principal,
     _utc_now_iso,
-    authenticate_token,
-    can_access,
     chgrp,
     chmod,
     chown,
-    create_default_acl_for_object,
     grant_acl,
     list_sessions,
     principal_from_rpc_auth,
@@ -27,10 +25,6 @@ from mfdb.security.auth import (
     revoke_session,
 )
 from mfdb.store.database_resolver import resolve_database_path
-from mfdb.admin.backend.password_services import (
-    evaluate_password,
-    hash_password,
-)
 
 
 def _get_db():
@@ -182,10 +176,15 @@ def change_password_handler(
         user_id = principal.user_id
 
         row = conn.execute(
-            "SELECT is_admin FROM flr_sample_users WHERE user_id = ?",
+            "SELECT is_admin, auth_provider FROM flr_sample_users WHERE user_id = ?",
             (user_id,),
         ).fetchone()
         is_target_admin = row and row[0] == 1
+
+        # External-provider users have no local password to change — their
+        # credential lives in the directory / IdP.
+        if row and (row[1] or "local") != "local":
+            raise AuthError("Password is managed by your external identity provider")
 
         if is_target_admin:
             if not password:
@@ -586,7 +585,7 @@ def revoke_session_by_token(conn, token):
 
 
 def extract_principal_and_conn(auth):
-    """Helper to get principal and connection from an auth dict."""
+    """Return the principal, connection, and db for an auth dict."""
     db = _get_db()
     conn = _get_conn(db)
     principal = principal_from_rpc_auth(conn, auth)

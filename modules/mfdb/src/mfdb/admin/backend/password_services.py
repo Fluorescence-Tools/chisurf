@@ -7,7 +7,6 @@ import secrets
 from typing import Any
 
 
-
 def hash_password(password: str) -> str:
     """Hash *password* with a random salt using PBKDF2-SHA256."""
     salt = secrets.token_hex(16)
@@ -175,10 +174,14 @@ def change_password_handler(
                 raise ValueError("Unauthorized: Non-admin users can only change their own password")
 
         target_row = db.conn.execute(
-            "SELECT is_admin FROM flr_sample_users WHERE user_id = ?",
+            "SELECT is_admin, auth_provider FROM flr_sample_users WHERE user_id = ?",
             (user_id,),
         ).fetchone()
         is_target_admin = target_row and target_row[0] == 1
+
+        # External-provider users have no local password to change.
+        if target_row and (target_row[1] or "local") != "local":
+            raise ValueError("Password is managed by an external identity provider")
 
         if is_target_admin:
             if not password:

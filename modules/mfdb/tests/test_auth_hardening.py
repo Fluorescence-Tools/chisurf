@@ -295,3 +295,23 @@ def test_email_match_does_not_hijack_local_password_account(tmp_path: Path) -> N
         assert (row["auth_provider"] or "local") == "local"
         assert row["external_id"] is None
         assert row["password_hash"] is not None
+
+
+def test_change_password_rejected_for_external_user(tmp_path: Path, monkeypatch) -> None:
+    """A directory-homed user has no local password to change."""
+    db_path = tmp_path / "cp.db"
+    MFDatabase(db_path).close()
+    monkeypatch.setattr(
+        "mfdb.store.database_resolver.resolve_database_path", lambda *a, **k: db_path
+    )
+    db = MFDatabase(db_path)
+    login_mod.resolve_or_provision_user(
+        db.conn, AuthIdentity(provider="ldap", external_id="ext", email="e@x")
+    )
+    db.conn.commit()
+    db.close()
+
+    from mfdb.admin.backend.password_services import change_password_handler
+
+    with pytest.raises(ValueError, match="external identity provider"):
+        change_password_handler("ext", "newpw", requester_id="ext")
