@@ -15,6 +15,7 @@ on the path.
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
@@ -120,3 +121,167 @@ class LocalAuthProvider:
             display_name=display_name,
             is_admin=is_admin,
         )
+
+
+def _require_ldap3():
+    """Import and return the optional ``ldap3`` dependency, or raise clearly."""
+    try:
+        import ldap3
+    except ModuleNotFoundError as exc:  # pragma: no cover - exercised via monkeypatch
+        if exc.name and exc.name.split(".")[0] != "ldap3":
+            raise
+        raise ImportError(
+            "Optional dependency 'ldap3' is required for LDAP authentication. "
+            "Install it (e.g. `pip install ldap3` or the mfdb '[ldap]' extra)."
+        ) from exc
+    return ldap3
+
+
+def _entry_value(entry: Any, attr: str) -> str | None:
+    """Return a single string value of *attr* on an ldap3 entry, or ``None``."""
+    try:
+        value = entry[attr].value
+    except Exception:
+        return None
+    if isinstance(value, (list, tuple)):
+        return str(value[0]) if value else None
+    return str(value) if value is not None else None
+
+
+def _entry_values(entry: Any, attr: str) -> list[str]:
+    """Return all string values of *attr* on an ldap3 entry (empty if absent)."""
+    try:
+        values = entry[attr].values
+    except Exception:
+        return []
+    return [str(v) for v in values]
+
+
+class LdapAuthProvider:
+    """Authenticate against an LDAP / Active Directory directory (PRD-49).
+
+    Search+bind: bind as the configured service account, search for the login
+    under ``base_dn`` with ``user_filter``, then re-bind as the located user DN
+    with the supplied password to verify it. Directory group memberships
+    (``memberOf``) are mapped to MFDB group ids via ``group_map`` and to admin
+    status via ``admin_groups``.
+
+    The ``ldap3`` dependency is optional and imported lazily. A
+    ``connection_factory(user, password) -> Connection`` may be injected for
+    offline testing (e.g. an ``ldap3`` ``MOCK_SYNC`` connection); when omitted a
+    real connection is built from *config*.
+
+    Config keys: ``host``, ``port``, ``use_ssl`` (default True), ``base_dn``,
+    ``bind_dn``, ``bind_password``, ``user_filter`` (default ``"(uid={login})"``),
+    ``uid_attr``/``mail_attr``/``name_attr``/``memberof_attr``, ``group_map``
+    (ldap group → mfdb group id), ``admin_groups`` (ldap groups granting admin).
+    """
+
+    name = "ldap"
+
+    def __init__(
+        self,
+        config: dict[str, Any],
+        *,
+        connection_factory: Callable[[str | None, str], Any] | None = None,
+    ):
+        self._cfg = dict(config or {})
+        self._factory = connection_factory
+
+    def _connect(self, user: str | None, password: str) -> Any:
+        if self._factory is not None:
+            return self._factory(user, password)
+        ldap3 = _require_ldap3()
+        cfg = self._cfg
+        server = ldap3.Server(
+            cfg.get("host"),
+            port=cfg.get("port"),
+            use_ssl=bool(cfg.get("use_ssl", True)),
+            get_info=ldap3.NONE,
+        )
+        conn = ldap3.Connection(server, user=user, password=password)
+        if cfg.get("start_tls"):
+            conn.open()
+            conn.start_tls()
+        return conn
+
+    def _map_groups(self, memberships: list[str]) -> tuple[tuple[str, ...], bool]:
+        group_map = self._cfg.get("group_map") or {}
+        admin_groups = set(self._cfg.get("admin_groups") or ())
+        mfdb_groups: list[str] = []
+        is_admin = False
+        for member in memberships:
+            mapped = group_map.get(member)
+            if mapped and mapped not in mfdb_groups:
+                mfdb_groups.append(mapped)
+            if member in admin_groups:
+                is_admin = True
+        return tuple(mfdb_groups), is_admin
+
+    def authenticate(self, *, user_id: str, password: str = "") -> AuthIdentity | None:
+        """Search+bind *user_id* against the directory; return an identity or ``None``.
+
+        Returns ``None`` for an unknown user or a wrong password. Raises
+        :class:`~mfdb.security.auth.AuthError` only on misconfiguration (a failed
+        service bind).
+        """
+        from mfdb.security.auth import AuthError
+
+        if not password:
+            # LDAP login requires a password (no anonymous/unauthenticated bind).
+            return None
+
+        cfg = self._cfg
+        uid_attr = cfg.get("uid_attr", "uid")
+        mail_attr = cfg.get("mail_attr", "mail")
+        name_attr = cfg.get("name_attr", "cn")
+        memberof_attr = cfg.get("memberof_attr", "memberOf")
+
+        # 1. Service-account bind + search for the login.
+        svc = self._connect(cfg.get("bind_dn"), cfg.get("bind_password") or "")
+        if not svc.bind():
+            raise AuthError("LDAP service bind failed (check bind_dn / bind_password)")
+        login_filter = cfg.get("user_filter", "(uid={login})").format(
+            login=_escape_filter(user_id)
+        )
+        svc.search(
+            cfg["base_dn"],
+            login_filter,
+            attributes=[uid_attr, mail_attr, name_attr, memberof_attr],
+        )
+        if not svc.entries:
+            return None
+        entry = svc.entries[0]
+        user_dn = entry.entry_dn
+
+        # 2. Re-bind as the located user to verify the password.
+        usr = self._connect(user_dn, password)
+        if not usr.bind():
+            return None
+
+        # 3. Extract attributes + map groups.
+        uid = _entry_value(entry, uid_attr) or user_id
+        memberships = _entry_values(entry, memberof_attr)
+        groups, is_admin = self._map_groups(memberships)
+        return AuthIdentity(
+            provider="ldap",
+            external_id=uid,
+            email=_entry_value(entry, mail_attr),
+            display_name=_entry_value(entry, name_attr),
+            is_admin=is_admin,
+            groups=groups,
+            raw={"dn": user_dn, "memberOf": memberships},
+        )
+
+
+def _escape_filter(value: str) -> str:
+    """Escape LDAP filter special characters in a user-supplied login value."""
+    try:
+        from ldap3.utils.conv import escape_filter_chars
+
+        return escape_filter_chars(value)
+    except Exception:
+        # Minimal fallback if ldap3's helper is unavailable.
+        for ch, rep in (("\\", "\\5c"), ("*", "\\2a"), ("(", "\\28"), (")", "\\29"), ("\0", "\\00")):
+            value = value.replace(ch, rep)
+        return value

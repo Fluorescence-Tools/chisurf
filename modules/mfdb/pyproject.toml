@@ -22,6 +22,9 @@ admin = []
 orm = [
     "sqlalchemy>=2.0",
 ]
+ldap = [
+    "ldap3>=2.9",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

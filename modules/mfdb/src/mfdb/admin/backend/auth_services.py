@@ -40,10 +40,12 @@ def _get_db():
 def _auth_config() -> dict[str, Any] | None:
     """Return the active auth configuration (provider selection + LDAP block).
 
-    Phase-1 stub — always ``None`` (the ``local`` provider). Phase 2 wires this to
-    the host-injected config resolver in :mod:`mfdb.config`.
+    Delegates to :func:`mfdb.config.configured_auth_config` (host resolver →
+    ``MFDB_AUTH_PROVIDER`` env → ``None`` for the default ``local`` provider).
     """
-    return None
+    from mfdb.config import configured_auth_config
+
+    return configured_auth_config()
 
 
 def _get_conn(db):

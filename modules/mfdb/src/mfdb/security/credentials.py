@@ -393,3 +393,43 @@ def _delete_macos_keychain(account: str) -> bool:
         stderr=subprocess.DEVNULL,
     )
     return result.returncode in (0, 44)
+
+
+# ---- LDAP service-account bind password (kept out of settings JSON) ----
+
+LDAP_SERVICE_NAME = "ChiSurf MFDB LDAP"
+
+
+def ldap_bind_account(host: str, bind_dn: str) -> str:
+    """Return the credential-store account key for an LDAP service-account bind."""
+    return f"{host}:{bind_dn}"
+
+
+def store_ldap_bind_password(host: str, bind_dn: str, password: str) -> bool:
+    """Store an LDAP service-account bind password in the OS credential store.
+
+    Uses the ``keyring`` backend when available; returns ``False`` if no keyring
+    is present (callers then source the secret from ``MFDB_LDAP_BIND_PASSWORD`` or
+    host-injected config, never from settings JSON).
+    """
+    if not password:
+        return False
+    keyring = _get_keyring()
+    if keyring is None:
+        return False
+    try:
+        keyring.set_password(LDAP_SERVICE_NAME, ldap_bind_account(host, bind_dn), password)
+        return True
+    except Exception:
+        return False
+
+
+def load_ldap_bind_password(host: str, bind_dn: str) -> str | None:
+    """Load the LDAP service-account bind password from the OS credential store."""
+    keyring = _get_keyring()
+    if keyring is None:
+        return None
+    try:
+        return keyring.get_password(LDAP_SERVICE_NAME, ldap_bind_account(host, bind_dn))
+    except Exception:
+        return None
