@@ -251,13 +251,13 @@ class MFDatabase(
         """Validate that value is active in mfdb_vocabulary for field_name."""
         if value is None:
             return
-        row = self.conn.execute(
-            "SELECT is_active FROM mfdb_vocabulary WHERE field_name = ? AND value = ?",
-            (field_name, value)
-        ).fetchone()
-        if row is None:
+        rows = self.dao.list(
+            "mfdb_vocabulary", filters={"field_name": field_name, "value": value},
+            include_deleted=True, limit=1,
+        )
+        if not rows:
             raise ValueError(f"Unknown extensible vocabulary value {value!r} for field {field_name!r}")
-        if not row["is_active"]:
+        if not rows[0]["is_active"]:
             raise ValueError(f"Inactive extensible vocabulary value {value!r} for field {field_name!r}")
 
     def register_vocabulary_value(
@@ -318,7 +318,7 @@ class MFDatabase(
             }))
 
     def get_external_file(self, file_id):
-        return self.conn.execute("SELECT * FROM ihm_external_files WHERE id = ?", (file_id,)).fetchone()
+        return self.dao.get("ihm_external_files", file_id, include_deleted=True)
 
     def resolve_external_path(self, file_path: str) -> str:
         raw = str(file_path)
@@ -417,11 +417,7 @@ class MFDatabase(
         if row is None:
             return None
         res = dict(row)
-        data_rows = self.conn.execute(
-            "SELECT * FROM flr_experiment_data WHERE experiment_id = ? AND deleted_at IS NULL",
-            (experiment_id,)
-        ).fetchall()
-        res["data"] = [dict(r) for r in data_rows]
+        res["data"] = self.dao.list("flr_experiment_data", filters={"experiment_id": experiment_id})
         res["key_values"] = self.get_experiment_key_values(experiment_id)
         return res
 
@@ -445,37 +441,17 @@ class MFDatabase(
         is_stream = isinstance(path, io.TextIOBase)
 
         if analysis_id is None:
-            row = self.conn.execute(
-                "SELECT analysis_id FROM flr_fret_analysis WHERE deleted_at IS NULL ORDER BY analysis_id LIMIT 1"
-            ).fetchone()
-            analysis_id = row["analysis_id"] if row else "analysis_1"
+            rows = self.dao.list("flr_fret_analysis", order_by="analysis_id", limit=1)
+            analysis_id = rows[0]["analysis_id"] if rows else "analysis_1"
 
-        analysis = dict(
-            self.conn.execute(
-                "SELECT * FROM flr_fret_analysis WHERE analysis_id = ?", (analysis_id,)
-            ).fetchone()
-            or {}
+        _analysis_rows = self.dao.list(
+            "flr_fret_analysis", filters={"analysis_id": analysis_id}, include_deleted=True, limit=1
         )
+        analysis = _analysis_rows[0] if _analysis_rows else {}
         sample_id = analysis.get("sample_id") or analysis_id
 
-        def _row_dict(row):
-            return dict(row) if row is not None else {}
-
-        _row_dict(
-            self.conn.execute(
-                "SELECT * FROM flr_sample WHERE sample_id = ?", (sample_id,)
-            ).fetchone()
-        )
-        probes = [
-            dict(row)
-            for row in self.conn.execute("SELECT * FROM probes WHERE deleted_at IS NULL ORDER BY probe_id").fetchall()
-        ]
-        positions = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM flr_poly_probe_position WHERE deleted_at IS NULL ORDER BY id"
-            ).fetchall()
-        ]
+        probes = self.dao.list("probes", order_by="probe_id")
+        positions = self.dao.list("flr_poly_probe_position", order_by="id")
         sample_probes = [dict(row) for row in self.get_sample_probe_mappings(sample_id=sample_id)]
         if not sample_probes:
             first_probe = probes[0] if probes else None
@@ -492,47 +468,20 @@ class MFDatabase(
                         "description": "ChiSurf legacy sample probe mapping",
                     }
                 ]
-        distances = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM flr_fret_distance_restraint WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY id",
-                (analysis_id,),
-            ).fetchall()
-        ]
-        forster = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM flr_fret_forster_radius WHERE sample_id = ? AND deleted_at IS NULL ORDER BY id",
-                (sample_id,)
-            ).fetchall()
-        ]
+        distances = self.dao.list(
+            "flr_fret_distance_restraint", filters={"analysis_id": analysis_id}, order_by="id"
+        )
+        forster = self.dao.list(
+            "flr_fret_forster_radius", filters={"sample_id": sample_id}, order_by="id"
+        )
         metadata = self.get_analysis_metadata(analysis_id)
         streams = [dict(row) for row in self.get_photon_streams(analysis_id)]
-        external_files = [
-            dict(row)
-            for row in self.conn.execute("SELECT * FROM ihm_external_files ORDER BY id").fetchall()
-        ]
-        properties = [
-            dict(row)
-            for row in self.conn.execute("SELECT * FROM optical_properties WHERE deleted_at IS NULL ORDER BY id").fetchall()
-        ]
-        spectra = [
-            dict(row)
-            for row in self.conn.execute("SELECT * FROM spectra WHERE deleted_at IS NULL ORDER BY id").fetchall()
-        ]
+        external_files = self.dao.list("ihm_external_files", order_by="id", include_deleted=True)
+        properties = self.dao.list("optical_properties", order_by="id")
+        spectra = self.dao.list("spectra", order_by="id")
         analysis_data = [dict(row) for row in self.get_analysis_data(analysis_id)]
-        struct_refs = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM struct_ref WHERE deleted_at IS NULL ORDER BY ref_id"
-            ).fetchall()
-        ]
-        struct_ref_seqs = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM struct_ref_seq WHERE deleted_at IS NULL ORDER BY align_id"
-            ).fetchall()
-        ]
+        struct_refs = self.dao.list("struct_ref", order_by="ref_id")
+        struct_ref_seqs = self.dao.list("struct_ref_seq", order_by="align_id")
         struct_ref_seq_difs = [
             dict(row)
             for row in self.conn.execute(
@@ -964,12 +913,10 @@ class MFDatabase(
         return buffer.getvalue()
 
     def get_raw_data_references(self, experiment_id=None, data_type=None):
-        query = "SELECT * FROM mfdb_artifact WHERE artifact_kind = 'raw_data' AND deleted_at IS NULL"
-        params = []
+        filters: dict[str, Any] = {"artifact_kind": "raw_data"}
         if experiment_id is not None:
-            query += " AND experiment_id = ?"
-            params.append(experiment_id)
-        rows = self.conn.execute(query, params).fetchall()
+            filters["experiment_id"] = experiment_id
+        rows = self.dao.list("mfdb_artifact", filters=filters)
         res = []
         for r in rows:
             d = dict(r)
@@ -982,21 +929,7 @@ class MFDatabase(
 
 
 
-    # -- chem_descriptors / optical_properties / images --
-
-    def get_chemical_descriptors(self, probe_id=None):
-        return self.conn.execute(
-            "SELECT * FROM chem_descriptors WHERE probe_id = ? ORDER BY descriptor_type, descriptor_id",
-            (probe_id,)
-        ).fetchall()
-
-    def add_chemical_descriptor(self, probe_id, descriptor_type, value, unit=None, method=None, details=None):
-        with self.conn:
-            # Autoincrement id, no UNIQUE -> INSERT OR REPLACE never conflicts (plain insert).
-            self.dao.insert("chem_descriptors", {
-                "probe_id": probe_id, "descriptor_type": descriptor_type, "value": value,
-                "unit": unit, "method": method, "details": details, "deleted_at": None,
-            })
+    # -- optical_properties --
 
     def get_optical_properties(self, probe_id=None):
         if probe_id is not None:
@@ -1035,20 +968,6 @@ class MFDatabase(
                  "deleted_at": None},
                 conflict=["probe_id", "property_name"],
             )
-
-    def get_images(self, probe_id=None):
-        return self.conn.execute(
-            "SELECT * FROM images WHERE probe_id = ? AND deleted_at IS NULL ORDER BY image_id",
-            (probe_id,)
-        ).fetchall()
-
-    def add_image(self, probe_id, image_path, image_type, description=None, details=None):
-        with self.conn:
-            # Autoincrement id, no UNIQUE -> INSERT OR REPLACE never conflicts (plain insert).
-            self.dao.insert("images", {
-                "probe_id": probe_id, "image_path": image_path, "image_type": image_type,
-                "description": description, "details": details, "deleted_at": None,
-            })
 
     # -- _decode helpers (adapted for mfdb_* metadata columns) --
 
@@ -1292,10 +1211,7 @@ class MFDatabase(
         object_uuid = art.get("object_uuid")
         if object_uuid:
             store = self._get_object_store()
-            row = self.conn.execute(
-                "SELECT content_md5, original_filename FROM mfdb_object WHERE object_uuid = ?",
-                (object_uuid,),
-            ).fetchone()
+            row = self.dao.get("mfdb_object", object_uuid, include_deleted=True)
             if row is None:
                 raise KeyError(f"Object not found for artifact: {artifact_id}")
             blob_path = store.get_path(row["content_md5"])
@@ -1473,16 +1389,12 @@ class MFDatabase(
         list of dict
             Parameter dictionaries.
         """
-        query = "SELECT * FROM mfdb_parameter WHERE 1=1 AND deleted_at IS NULL"
-        params: list[Any] = []
+        filters: dict[str, Any] = {}
         if operation_id is not None:
-            query += " AND operation_id = ?"
-            params.append(operation_id)
+            filters["operation_id"] = operation_id
         if parameter_type is not None:
-            query += " AND parameter_type = ?"
-            params.append(parameter_type)
-        query += " ORDER BY parameter_id"
-        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+            filters["parameter_type"] = parameter_type
+        return self.dao.list("mfdb_parameter", filters=filters or None, order_by="parameter_id")
 
     def add_audit_log(
         self,
@@ -1498,13 +1410,11 @@ class MFDatabase(
             operator_user_id = configured_default_user_id()
         now = timestamp or _utc_now()
         with self._transaction():
-            self.conn.execute(
-                """INSERT INTO mfdb_audit_log
-                   (action, target_type, target_id, operator_user_id, details_json, timestamp, created_at, updated_at, deleted_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (action, target_type, target_id, operator_user_id, _json_dumps(details), now, now, now, None),
-            )
-            return int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+            return int(self.dao.insert("mfdb_audit_log", {
+                "action": action, "target_type": target_type, "target_id": target_id,
+                "operator_user_id": operator_user_id, "details_json": _json_dumps(details),
+                "timestamp": now, "created_at": now, "updated_at": now, "deleted_at": None,
+            }))
 
     def get_audit_logs(
         self,
@@ -1615,10 +1525,10 @@ class MFDatabase(
         self, processing_id: str | None = None, **kwargs
     ) -> list[dict[str, Any]]:
         if processing_id:
-            links = self.conn.execute(
-                "SELECT artifact_id FROM mfdb_operation_artifact WHERE operation_id = ? AND direction = 'output' AND deleted_at IS NULL",
-                (processing_id,),
-            ).fetchall()
+            links = self.dao.list(
+                "mfdb_operation_artifact",
+                filters={"operation_id": processing_id, "direction": "output"},
+            )
             return [self.get_artifact(r["artifact_id"]) for r in links if self.get_artifact(r["artifact_id"])]
         return self.list_artifacts(**kwargs)
 
@@ -1639,11 +1549,11 @@ class MFDatabase(
         product = self._decode_processed_data_row(product)
 
         # Find the operation linked to this artifact
-        op_row = self.conn.execute(
-            "SELECT operation_id FROM mfdb_operation_artifact WHERE artifact_id = ? AND direction = 'output' AND deleted_at IS NULL",
-            (processed_data_id,)
-        ).fetchone()
-        processing_id = op_row["operation_id"] if op_row else None
+        op_rows = self.dao.list(
+            "mfdb_operation_artifact",
+            filters={"artifact_id": processed_data_id, "direction": "output"}, limit=1,
+        )
+        processing_id = op_rows[0]["operation_id"] if op_rows else None
 
         if not processing_id:
             raise ValueError(f"No producing operation found for processed_data_id {processed_data_id!r}")
