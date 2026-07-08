@@ -62,8 +62,11 @@ throttle check → `resolve_provider` (default from config; `local` always const
 `authenticate` → `resolve_or_provision_user` → `sync_groups` → `create_session`; commits only on
 success (prior behaviour preserved). `resolve_or_provision_user` matches by
 `(auth_provider, external_id)` → `email` (linking the row) → JIT-creates a `flr_sample_users` row for
-external providers (configurable); `local` returns its row unchanged. The RPC handler
-`mfdb.security.auth.login` (`admin/backend/auth_services.login_handler`) delegates here.
+external providers (configurable); `local` returns its row unchanged. Email-matching only adopts a
+**placeholder** local account (local-homed, no password) — a real local-credential or other-provider
+account is never silently converted, so a directory email collision cannot hijack (e.g.) a local
+admin. The RPC handler `mfdb.security.auth.login` (`admin/backend/auth_services.login_handler`)
+delegates here.
 
 **Directory-authoritative reconciliation** (`sync_identity`): on each external-provider login the
 user's `is_admin` / `email` / `display_name` are refreshed from the identity, and the provider's

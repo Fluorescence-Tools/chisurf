@@ -86,13 +86,20 @@ def resolve_or_provision_user(
     if identity.email:
         rows = dao.list("flr_sample_users", filters={"email": identity.email}, limit=1)
         if rows:
-            user_id = rows[0]["user_id"]
-            dao.update(
-                "flr_sample_users",
-                user_id,
-                {"auth_provider": identity.provider, "external_id": identity.external_id},
-            )
-            return user_id
+            existing = rows[0]
+            existing_provider = existing.get("auth_provider") or "local"
+            # Only adopt a *placeholder* local account (local-homed, no password)
+            # by email. Never silently convert a real local-credentialled account
+            # or a user already homed on another provider — otherwise a directory
+            # email collision could hijack (e.g.) a local admin. On a non-adoptable
+            # collision we fall through to JIT, minting a distinct account instead.
+            if existing_provider == "local" and not existing.get("password_hash"):
+                dao.update(
+                    "flr_sample_users",
+                    existing["user_id"],
+                    {"auth_provider": identity.provider, "external_id": identity.external_id},
+                )
+                return existing["user_id"]
 
     if not jit:
         return None

@@ -272,3 +272,26 @@ def test_external_user_cannot_use_local_fallback(tmp_path: Path, monkeypatch) ->
         db.conn.commit()
         with pytest.raises(AuthError):
             login_mod.login(db.conn, user_id="ldapu", password="anything")
+
+
+def test_email_match_does_not_hijack_local_password_account(tmp_path: Path) -> None:
+    """A directory email colliding with a real local account must not relink it."""
+    from mfdb.admin.backend.password_services import hash_password
+
+    with _db(tmp_path) as db:
+        db.conn.execute(
+            "INSERT INTO flr_sample_users (user_id, display_name, email, is_admin, password_hash) "
+            "VALUES ('boss','Boss','boss@lab.org',1,?)",
+            (hash_password("s3cret-admin"),),
+        )
+        db.conn.commit()
+        uid = login_mod.resolve_or_provision_user(
+            db.conn, AuthIdentity(provider="ldap", external_id="ldapboss", email="boss@lab.org")
+        )
+        assert uid == "ldapboss"  # a distinct new account, not the local admin
+        row = db.conn.execute(
+            "SELECT auth_provider, external_id, password_hash FROM flr_sample_users WHERE user_id='boss'"
+        ).fetchone()
+        assert (row["auth_provider"] or "local") == "local"
+        assert row["external_id"] is None
+        assert row["password_hash"] is not None
