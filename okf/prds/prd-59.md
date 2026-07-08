@@ -42,7 +42,11 @@ orchestrator that owns identity resolution and session minting.
   adding a backend (OIDC, external-IdP, …) is a class plus one registration call — the orchestrator
   dispatches by name and never changes. Built-in `local`/`ldap` register themselves at import.
 - `LocalAuthProvider` — verifies `flr_sample_users.password_hash` (PBKDF2-HMAC-SHA256, 100k) with the
-  exact pre-existing admin / passwordless / no-hash rules.
+  exact pre-existing admin / passwordless / no-hash rules, but **only for users homed on the local
+  provider** (`auth_provider = 'local'`). This closes a critical hole: external (LDAP) users are
+  provisioned without a local hash, and the no-hash branch would otherwise accept an *empty* password
+  — logging anyone in as them without the directory. The legacy in-process `password_services.
+  login_handler` carries the same guard.
 - `LdapAuthProvider` — **search+bind**: service-account bind → search `user_filter` under `base_dn`
   → re-bind as the located user DN to verify the password → map `memberOf` to MFDB groups
   (`group_map`) and admin status (`admin_groups`). The `ldap3` dependency is optional and lazy
@@ -89,6 +93,10 @@ rule), independent of ChiSurf's `csc` plugin mounting.
 
 # Decisions
 - Provider selection: one configured default + **Local always available**; per-login override.
+  Enforced by a **local fallback** in `login()`: when a non-local default provider returns ``None``,
+  the local provider is tried, so a locally-homed account (bootstrap admin) is never locked out by a
+  directory being the default. Safe because the local provider rejects external-homed users — the
+  fallback can only admit genuine local accounts.
 - LDAP first login: **JIT auto-provision** (configurable), directory authoritative.
 - Hashing: keep PBKDF2-SHA256/100k (no new hash dependency); fix the fixed-salt bootstrap admin.
 - Library: `ldap3` (pure-Python, no C deps), optional + lazy.

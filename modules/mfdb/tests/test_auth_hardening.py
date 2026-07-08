@@ -13,6 +13,7 @@ from mfdb.security.auth import MAX_FAILED_ATTEMPTS, AuthError, authenticate_toke
 from mfdb.security.auth_providers import (
     AuthIdentity,
     LdapAuthProvider,
+    LocalAuthProvider,
     ProviderContext,
     available_providers,
     build_provider,
@@ -223,3 +224,51 @@ def test_ldap_directory_unavailable_raises() -> None:
 def test_ldap_managed_groups_from_config() -> None:
     prov = LdapAuthProvider({"base_dn": "dc=lab", "group_map": {"cn=a": "g_a", "cn=b": "g_b"}})
     assert set(prov._managed_groups()) == {"g_a", "g_b"}
+
+
+# ---- external-user isolation + local-always-available fallback ----
+
+def test_local_provider_rejects_external_user(tmp_path: Path) -> None:
+    """An LDAP-homed user (no local hash) must not authenticate via the local provider."""
+    with _db(tmp_path) as db:
+        login_mod.resolve_or_provision_user(
+            db.conn, AuthIdentity(provider="ldap", external_id="ext", email="e@x")
+        )
+        prov = LocalAuthProvider(db.conn)
+        assert prov.authenticate(user_id="ext", password="") is None
+        assert prov.authenticate(user_id="ext", password="anything") is None
+
+
+def test_local_admin_can_login_when_ldap_is_default(tmp_path: Path, monkeypatch) -> None:
+    """A locally-homed account authenticates via the local fallback when LDAP is default."""
+
+    class _LdapStub:
+        name = "ldap"
+
+        def authenticate(self, *, user_id, password=""):
+            return None  # not present in the directory
+
+    monkeypatch.setattr(login_mod, "resolve_provider", lambda name, *, conn, config=None: _LdapStub())
+    with _db(tmp_path) as db:
+        result = login_mod.login(db.conn, user_id="user_default", password="admin")
+        assert result["ok"]
+        assert authenticate_token(db.conn, result["token"]).user_id == "user_default"
+
+
+def test_external_user_cannot_use_local_fallback(tmp_path: Path, monkeypatch) -> None:
+    """The local fallback must not admit an external user the directory rejected."""
+
+    class _LdapStub:
+        name = "ldap"
+
+        def authenticate(self, *, user_id, password=""):
+            return None
+
+    monkeypatch.setattr(login_mod, "resolve_provider", lambda name, *, conn, config=None: _LdapStub())
+    with _db(tmp_path) as db:
+        login_mod.resolve_or_provision_user(
+            db.conn, AuthIdentity(provider="ldap", external_id="ldapu", email="l@x")
+        )
+        db.conn.commit()
+        with pytest.raises(AuthError):
+            login_mod.login(db.conn, user_id="ldapu", password="anything")

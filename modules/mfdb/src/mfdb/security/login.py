@@ -228,6 +228,15 @@ def login(
 
     prov = resolve_provider(provider, conn=conn, config=config)
     identity = prov.authenticate(user_id=user_id, password=password)
+    if identity is None and prov.name != "local":
+        # "Local always available": a locally-homed user (e.g. the bootstrap
+        # admin) can authenticate locally even when a directory is the configured
+        # default provider. This never weakens security — LocalAuthProvider
+        # rejects users homed on an external provider — it only prevents locking
+        # out local accounts. An explicit provider still runs first.
+        identity = build_provider("local", ProviderContext(conn=conn, config=config)).authenticate(
+            user_id=user_id, password=password
+        )
     if identity is None:
         _record_failure(conn, user_id, "invalid_credentials")
         raise AuthError("Invalid credentials")

@@ -94,13 +94,19 @@ def login_handler(user_id: str, password: str = "") -> dict[str, Any]:
 
     with MFDatabase(resolve_database_path()) as db:
         row = db.conn.execute(
-            "SELECT display_name, is_admin, password_hash, allow_passwordless_login FROM flr_sample_users WHERE user_id = ?",
+            "SELECT display_name, is_admin, password_hash, allow_passwordless_login, auth_provider FROM flr_sample_users WHERE user_id = ?",
             (user_id,),
         ).fetchone()
         if not row:
             return {"authenticated": False, "error": "User not found"}
-        display_name, is_admin, password_hash, allow_passwordless = row
+        display_name, is_admin, password_hash, allow_passwordless, auth_provider = row
         is_admin_bool = is_admin == 1
+
+        # External-provider users authenticate via their directory, never locally
+        # (they have no local hash, which would otherwise allow an empty-password
+        # login through the no-hash branch below).
+        if (auth_provider or "local") != "local":
+            return {"authenticated": False, "error": "User authenticates via an external provider"}
 
         # Admin accounts must always supply a password: no passwordless login and
         # no empty-password shortcut, regardless of the allow_passwordless flag.

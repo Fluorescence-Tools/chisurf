@@ -150,11 +150,17 @@ class LocalAuthProvider:
         from mfdb.admin.backend.password_services import verify_password
 
         row = self._conn.execute(
-            "SELECT display_name, email, is_admin, password_hash, allow_passwordless_login "
-            "FROM flr_sample_users WHERE user_id = ? AND deleted_at IS NULL",
+            "SELECT display_name, email, is_admin, password_hash, allow_passwordless_login, "
+            "auth_provider FROM flr_sample_users WHERE user_id = ? AND deleted_at IS NULL",
             (user_id,),
         ).fetchone()
         if not row:
+            return None
+        # A user homed on an external provider must authenticate there — never
+        # locally. Critical: external (e.g. LDAP) users are provisioned without a
+        # password hash, and the no-hash branch below would otherwise accept an
+        # empty password, letting anyone log in as them without the directory.
+        if (row["auth_provider"] or "local") != "local":
             return None
         display_name = row["display_name"]
         email = row["email"]
