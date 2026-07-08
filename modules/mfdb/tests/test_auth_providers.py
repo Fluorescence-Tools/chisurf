@@ -1,4 +1,4 @@
-"""Tests for the pluggable auth-provider framework + Local provider (PRD-49)."""
+"""Tests for the pluggable auth-provider framework + Local provider (PRD-59)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Pluggable authentication providers for MFDB (PRD-49).
+"""Pluggable authentication providers for MFDB (PRD-59).
 
 An :class:`AuthProvider` turns a credential (user id + password) into a validated
 :class:`AuthIdentity` — the provider-native identity — or ``None`` for bad
@@ -158,7 +158,7 @@ def _entry_values(entry: Any, attr: str) -> list[str]:
 
 
 class LdapAuthProvider:
-    """Authenticate against an LDAP / Active Directory directory (PRD-49).
+    """Authenticate against an LDAP / Active Directory directory (PRD-59).
 
     Search+bind: bind as the configured service account, search for the login
     under ``base_dn`` with ``user_filter``, then re-bind as the located user DN

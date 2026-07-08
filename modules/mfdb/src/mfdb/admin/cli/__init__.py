@@ -218,5 +218,98 @@ def ai_triage_cli(status: str, provider: str | None, as_json: bool) -> None:
     )
 
 
+# ---- authentication (`csc fluorophore auth …` / `mfdb-admin auth …`) ----
+
+
+@cli.group("auth")
+def auth() -> None:
+    """Authenticate against MFDB (local / LDAP), headless."""
+
+
+@auth.command("login")
+@click.option("--user", "user_id", required=True, help="User / directory login id.")
+@click.option("--password", default="", help="Password (omit for passwordless users).")
+@click.option("--provider", default=None, help="Auth provider: local | ldap (default: configured).")
+@click.option("--json", "as_json", is_flag=True, help="Output the result as JSON.")
+def auth_login(user_id: str, password: str, provider: str | None, as_json: bool) -> None:
+    """Authenticate and mint a session token."""
+    from mfdb.config import configured_auth_config
+    from mfdb.security.auth import AuthError
+    from mfdb.security.login import login
+
+    with _open_db() as db:
+        try:
+            result = login(
+                db.conn,
+                provider=provider,
+                user_id=user_id,
+                password=password,
+                config=configured_auth_config(),
+            )
+        except AuthError as exc:
+            if as_json:
+                click.echo(json.dumps({"ok": False, "error": str(exc)}))
+            else:
+                click.echo(f"Login failed: {exc}")
+            raise click.Abort() from exc
+    if as_json:
+        click.echo(json.dumps(result, indent=2, default=str))
+        return
+    user = result.get("user", {})
+    click.echo(f"Authenticated as {user.get('user_id')} (admin={user.get('is_admin')})")
+    click.echo(f"token: {result['token']}")
+    click.echo(f"expires_at: {result['expires_at']}")
+
+
+@auth.command("whoami")
+@click.option("--token", required=True, help="Session token to resolve.")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON.")
+def auth_whoami(token: str, as_json: bool) -> None:
+    """Resolve a session token to its principal."""
+    from mfdb.security.auth import authenticate_token
+
+    with _open_db() as db:
+        principal = authenticate_token(db.conn, token)
+    info = {
+        "authenticated": principal.is_authenticated,
+        "user_id": principal.user_id,
+        "is_admin": principal.is_admin,
+    }
+    if as_json:
+        click.echo(json.dumps(info))
+        return
+    if not principal.is_authenticated:
+        click.echo("anonymous (invalid/expired token)")
+        return
+    click.echo(f"{principal.user_id} (admin={principal.is_admin})")
+
+
+@auth.command("status")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON.")
+def auth_status(as_json: bool) -> None:
+    """Show the configured auth provider and directory settings."""
+    from mfdb.config import configured_auth_config
+
+    cfg = configured_auth_config() or {}
+    provider = cfg.get("auth_provider", "local")
+    ldap = cfg.get("ldap") or {}
+    status = {
+        "provider": provider,
+        "local_always_available": True,
+        "ldap_host": ldap.get("host"),
+        "ldap_base_dn": ldap.get("base_dn"),
+        "ldap_bind_dn": ldap.get("bind_dn"),
+    }
+    if as_json:
+        click.echo(json.dumps(status, indent=2))
+        return
+    click.echo(f"Active provider : {provider}")
+    click.echo("Local fallback  : always available")
+    if provider == "ldap" or ldap:
+        click.echo(f"LDAP host       : {ldap.get('host')}")
+        click.echo(f"LDAP base DN    : {ldap.get('base_dn')}")
+        click.echo(f"LDAP bind DN    : {ldap.get('bind_dn')}")
+
+
 if __name__ == "__main__":
     cli()

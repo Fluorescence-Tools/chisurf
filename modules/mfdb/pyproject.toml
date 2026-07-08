@@ -17,6 +17,9 @@ dependencies = [
     "PyYAML",
 ]
 
+[project.scripts]
+mfdb-admin = "mfdb.admin.cli:cli"
+
 [project.optional-dependencies]
 admin = []
 orm = [

@@ -89,7 +89,14 @@ not a flat module list. Top level holds only the facade/entry surface —
 - `samples/` — sample domain: `sample_manager`, `sample_requests`,
   `external_refs`, `reagents`, `importer`, `seed_data`.
 - `lifecycle/` — state/events/audit: `lifecycle`, `event_log`, `events`, `staleness`.
-- `security/` — identity: `auth`, `credentials`, `session`, `boundary_validation`, `base`.
+- `security/` — identity & access: `auth` (Principal, token→principal, ACL/permissions,
+  sessions), `credentials`, `session`, `boundary_validation`, `base`, plus the
+  **pluggable authentication** layer (PRD-59): `auth_providers` (`AuthProvider` protocol +
+  `LocalAuthProvider` / `LdapAuthProvider`) and `login` (the `login()` orchestrator that
+  authenticates → resolves/JIT-provisions the MFDB user via `flr_sample_users.auth_provider`/
+  `external_id` → maps directory groups → mints the session). The `mfdb.security.auth.login`
+  RPC and `mfdb-admin auth` CLI both route through `login()`; `ldap3` is an optional/lazy
+  `[ldap]` dependency, so `security/` still imports with only `src` on the path.
 - `project/` — `project_archiver`.
 - `adapters/` — bridges to external systems / host apps: `chinet` (ChiSurf fit
   sessions → MFDB), with electronic-lab-notebook adapters (eLabFTW, …) to follow.

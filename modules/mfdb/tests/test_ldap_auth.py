@@ -1,4 +1,4 @@
-"""LDAP auth provider tests, driven fully offline via ldap3 MOCK_SYNC (PRD-49)."""
+"""LDAP auth provider tests, driven fully offline via ldap3 MOCK_SYNC (PRD-59)."""
 
 from __future__ import annotations
 

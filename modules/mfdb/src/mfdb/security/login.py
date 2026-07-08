@@ -1,4 +1,4 @@
-"""Authentication orchestration: provider → MFDB user → session (PRD-49).
+"""Authentication orchestration: provider → MFDB user → session (PRD-59).
 
 ``login()`` is the single entry point behind the ``mfdb.security.auth.login`` RPC.
 It selects an :class:`~mfdb.security.auth_providers.AuthProvider`, authenticates,
