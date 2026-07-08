@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import time
 
 import numpy as np
 import pandas as pd
@@ -227,3 +228,80 @@ def test_viterbi_path_matches_reference():
 
     agreement = float(np.mean(ref_norm == mine_norm))
     assert agreement > 0.999, f"Viterbi agreement only {agreement:.4f}"
+
+
+# ---------------------------------------------------------------------------
+# A/B-5 — wall-clock benchmark: numba port vs. reference H2MM_C
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("n_states", [2, 3], ids=["2-state", "3-state"])
+def test_benchmark_vs_reference(n_states, capsys):
+    """Time one EM run against ``H2MM_C`` on identical data (perf A/B guard).
+
+    Companion to the correctness tests above: the numba engine must stay
+    competitive with the reference C implementation.  Timing is reported as
+    ``ms / EM-iteration`` so the comparison is independent of how many
+    iterations each engine happens to run, and the numba JIT is warmed up
+    first so compilation is never timed.  Marked ``slow`` (excluded from
+    default runs); run explicitly with ``-m slow -s`` to see the numbers.
+    """
+    gt = _three_state_gt() if n_states == 3 else _two_state_gt()
+    data, ref_idx, ref_times = _simulate_via_tttrlib(
+        gt, n_bursts=1500, burst_len=100, seed=100 + n_states
+    )
+
+    if n_states == 2:
+        prior = np.array([0.5, 0.5])
+        trans = np.array([[0.95, 0.05], [0.05, 0.95]])
+        obs = np.array([[0.7, 0.3], [0.3, 0.7]])
+    else:
+        prior = np.full(3, 1 / 3)
+        trans = np.array([[0.94, 0.03, 0.03], [0.03, 0.94, 0.03], [0.03, 0.03, 0.94]])
+        obs = np.array([[0.75, 0.25], [0.5, 0.5], [0.25, 0.75]])
+
+    max_iter = 100
+
+    # Warm up the numba JIT so compilation time is not charged to the port.
+    H.optimize(H.H2mmModel(prior.copy(), trans.copy(), obs.copy()), data, max_iter=2, tol=0.0)
+
+    t0 = time.perf_counter()
+    mine = H.optimize(
+        H.H2mmModel(prior.copy(), trans.copy(), obs.copy()),
+        data, max_iter=max_iter, tol=1e-12,
+    )
+    t_mine = time.perf_counter() - t0
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        t0 = time.perf_counter()
+        ref = h2mm_c.EM_H2MM_C(
+            h2mm_c.h2mm_model(prior.copy(), trans.copy(), obs.copy()),
+            ref_idx, ref_times, max_iter=max_iter,
+        )
+        t_ref = time.perf_counter() - t0
+
+    mine_ms_it = 1e3 * t_mine / max(mine.n_iter, 1)
+    ref_ms_it = 1e3 * t_ref / max(int(ref.niter), 1)
+    ratio = mine_ms_it / ref_ms_it
+
+    with capsys.disabled():
+        print(
+            f"\n[H2MM bench {n_states}-state] N={data.n_photons} "
+            f"bursts={data.n_bursts} uniq_dt={int(data.unique_dt.shape[0])}\n"
+            f"  numba : {mine_ms_it:7.2f} ms/iter ({mine.n_iter} it)\n"
+            f"  H2MM_C: {ref_ms_it:7.2f} ms/iter ({int(ref.niter)} it)\n"
+            f"  ratio numba/cpp = {ratio:.2f}x"
+        )
+
+    # A ≡ B: a fast but wrong engine would make the timing meaningless.  Loose
+    # tolerance — full-precision equivalence is covered by the tests above; this
+    # is only a "not garbage" sanity check at a truncated iteration count.
+    assert mine.loglik == pytest.approx(ref.loglik, rel=1e-4, abs=1.0)
+
+    # Performance guard: stay under ~1.5x the reference wall-time per iteration.
+    # Measured ~0.3-0.6x on dense bursts; the wide margin keeps this robust to
+    # CI machine variance while still catching an O(N·n⁴)-style regression.
+    assert ratio < 1.5, (
+        f"numba H2MM {ratio:.2f}x the H2MM_C time/iter — performance regression"
+    )
