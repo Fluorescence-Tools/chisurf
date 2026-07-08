@@ -41,6 +41,7 @@ so both are obtained by binary exponentiation of the base pair
 from __future__ import annotations
 
 import math
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -69,6 +70,27 @@ except Exception:  # pragma: no cover - exercised only without numba
     def get_num_threads():  # type: ignore
         """Return a single thread (fallback without numba)."""
         return 1
+
+
+def _sync_numba_threads() -> None:
+    """Pin ``NUMBA_NUM_THREADS`` back to numba's already-launched pool size.
+
+    ChiSurf's startup (``chisurf.core.settings.env_bootstrap``) may rewrite the
+    ``NUMBA_NUM_THREADS`` environment variable *after* numba's threadpool has
+    launched.  numba re-reads that variable on every fresh (cold) compile and
+    raises if it no longer matches the launched pool — so the first new kernel
+    specialisation compiled after such a rewrite (e.g. the ``float32`` E-step)
+    would crash.  Rewriting the env back to the launched count keeps late cold
+    compiles valid without touching the pool.
+    """
+    if not _HAVE_NUMBA:
+        return
+    try:
+        from numba import config as _nb_config
+
+        os.environ["NUMBA_NUM_THREADS"] = str(_nb_config.NUMBA_NUM_THREADS)
+    except Exception:  # pragma: no cover - defensive only
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -353,12 +375,114 @@ def _pair_pow(A, R1, power):
 
 @njit(parallel=True, cache=True, fastmath=True)
 def _build_caches(A, unique_dt, pow_cache, rho_cache):
-    """Fill ``pow_cache[s]=A^Δt`` and ``rho_cache[s]=ρ(Δt)`` for each slot ``s``."""
+    """Fill ``pow_cache[s]=A^Δt`` and ``rho_cache[s]=ρ(Δt)`` for each slot ``s``.
+
+    Robust ``O(log Δt)`` binary-exponentiation build (the associative pair-power
+    of the paper); used for every model and as the fallback whenever the
+    spectral build (:func:`_build_caches_eig`) declines.
+    """
     R1 = _rho_base(A)
     for s in prange(unique_dt.shape[0]):
         P, R = _pair_pow(A, R1, unique_dt[s])
         pow_cache[s] = P
         rho_cache[s] = R
+
+
+# Spectral build is preferred only when intervals are long enough that the
+# ``O(log Δt)`` pair-power does meaningful work.  Benchmarks put the crossover
+# past this Δt for ``n ≥ 3``; below it (dense high-count-rate data, tiny Δt) the
+# pair-power is already trivially cheap and the eig setup would dominate.  For
+# ``n == 2`` the crossover is far higher, so the spectral build is not used
+# there (see :func:`_prefer_eig`).
+_EIG_MIN_DT = 512
+
+
+def _prefer_eig(n_states: int, unique_dt: np.ndarray) -> bool:
+    """Whether the spectral cache build is expected to beat pair-power here."""
+    return (
+        unique_dt.shape[0] > 0
+        and n_states >= 3
+        and int(unique_dt.max()) >= _EIG_MIN_DT
+    )
+
+
+def _build_caches_eig(A, unique_dt, pow_cache, rho_cache):
+    r"""Fill the ``A^Δt`` / ``ρ(Δt)`` caches from an eigendecomposition of ``A``.
+
+    Uses the spectral closed form instead of binary exponentiation.  With
+    ``A = V·diag(λ)·V⁻¹`` the τ-sum inside ``ρ`` collapses to a **divided
+    difference**::
+
+        ρ(Δt)[k,m,i,j] = A[i,j] · Re Σ_{a,b} V[k,a] V⁻¹[a,i] V[j,b] V⁻¹[b,m] · D[a,b]
+        D[a,b] = (λ_a^Δt − λ_b^Δt)/(λ_a − λ_b)      (a≠b)
+               = Δt · λ_a^{Δt−1}                     (a=b, confluent limit)
+
+    and ``A^Δt = Re(V·diag(λ^Δt)·V⁻¹)``.  Cost is ``O(n³)`` for the one
+    decomposition plus a vectorised per-slot contraction, with **no** dependence
+    on ``Δt`` beyond the elementwise power — so it wins over pair-power when the
+    unique intervals are long (sparse photon streams).
+
+    Only valid when ``A`` is diagonalisable; the function returns ``False`` (and
+    leaves the caches untouched) when the eigenvectors are ill-conditioned or the
+    reconstruction is inaccurate, so the caller can fall back to
+    :func:`_build_caches`.
+
+    Returns
+    -------
+    bool
+        ``True`` if the caches were filled, ``False`` if the caller must fall
+        back to the pair-power build.
+    """
+    n = A.shape[0]
+    if n == 1:
+        return False  # trivial; pair-power handles it without eig machinery
+    try:
+        lam, V = np.linalg.eig(A)
+        Vinv = np.linalg.inv(V)
+    except np.linalg.LinAlgError:
+        return False
+    # Diagonalisability / conditioning guard: a defective or near-defective A
+    # makes the divided differences blow up — fall back instead.
+    recon = (V * lam) @ Vinv
+    if np.linalg.cond(V) > 1e8 or np.abs(recon - A).max() > 1e-9:
+        return False
+
+    dt = unique_dt.astype(np.float64)
+    lam_dt = lam[None, :] ** unique_dt[:, None]  # (S, n) complex
+    lam_dtm1 = lam[None, :] ** (unique_dt[:, None] - 1)
+
+    num = lam_dt[:, :, None] - lam_dt[:, None, :]  # (S, n, n)
+    den = lam[None, :, None] - lam[None, None, :]  # (1, n, n)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        D = num / np.where(den == 0.0, 1.0, den)
+    confluent = dt[:, None] * lam_dtm1  # (S, n) = Δt·λ^{Δt−1}
+    close = np.broadcast_to(np.abs(den) <= 1e-12, D.shape)
+    D = np.where(close, np.broadcast_to(confluent[:, :, None], D.shape), D)
+
+    # A^Δt = Re(V diag(λ^Δt) V⁻¹), then row-normalise for parity with pair-power.
+    P = np.einsum("ia,sa,aj->sij", V, lam_dt, Vinv, optimize=True).real
+    rs = P.sum(axis=2, keepdims=True)
+    np.divide(P, rs, out=P, where=rs > 0.0)
+
+    # ρ[s,k,m,i,j] = A[i,j]·Re Σ_{a,b} V[k,a]V⁻¹[a,i] V[j,b]V⁻¹[b,m] D[s,a,b]
+    R = np.einsum("ka,ai,sab,jb,bm->skmij", V, Vinv, D, V, Vinv, optimize=True).real
+    R *= A[None, None, None, :, :]
+
+    pow_cache[:] = P
+    rho_cache[:] = R
+    return True
+
+
+def _fill_caches(A, unique_dt, pow_cache, rho_cache, prefer_eig):
+    """Fill both caches, using the spectral build when ``prefer_eig`` and valid.
+
+    Falls back to the robust pair-power :func:`_build_caches` whenever the
+    spectral build is disabled or declines (non-diagonalisable / ill-conditioned
+    ``A``).
+    """
+    if prefer_eig and _build_caches_eig(A, unique_dt, pow_cache, rho_cache):
+        return
+    _build_caches(A, unique_dt, pow_cache, rho_cache)
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +500,6 @@ def _estep(
     gap_slot,
     offsets,
     alpha,
-    beta,
     scale,
     xi_acc,
     gamma_obs_acc,
@@ -388,9 +511,16 @@ def _estep(
     thread accumulates its Baum-Welch statistics into **thread-local** arrays
     (so the hot ``ξ``/``γ`` writes never touch memory another core is writing —
     no false sharing) and touches only disjoint photon ranges of
-    ``alpha``/``beta``/``scale``.  The per-thread partials are stored to shared
-    buffers once per chunk and reduced serially.  Returns the total
-    log-likelihood ``Σ_bursts Σ_n log(scale[n])``.
+    ``alpha``/``scale``.  The per-thread partials are stored to shared buffers
+    once per chunk and reduced serially.  Returns the total log-likelihood
+    ``Σ_bursts Σ_n log(scale[n])``.
+
+    Only two sweeps over each burst's photons are made: a **forward** pass
+    filling ``alpha``/``scale``, then a **single backward** pass that folds in
+    both the occupancy statistics (``γ``) and the transition weight (``W``,
+    below).  ``β`` is held as two ``(n,)`` vectors (``β[n]`` needs only
+    ``β[n+1]``), so the full ``(N, n)`` backward array is never materialised —
+    halving the large-array memory traffic that dominates at high photon counts.
 
     Transition statistics are *not* contracted against the full ``ρ`` tensor per
     photon (that would cost ``O(N·n⁴)`` and stream ``rho_cache`` from memory once
@@ -417,6 +547,8 @@ def _estep(
         b1 = (c + 1) * n_bursts // nthreads
         # Thread-local accumulators (own stack → no cross-core false sharing).
         w = np.empty(n_states)
+        beta_next = np.empty(n_states)
+        beta_cur = np.empty(n_states)
         W_local = np.zeros((n_slots, n_states, n_states))
         gobs_local = np.zeros((n_states, n_streams))
         prior_local = np.zeros(n_states)
@@ -454,50 +586,49 @@ def _estep(
                         alpha[n, i] /= tot
                     ll_local += math.log(tot)
 
-            # ---- backward ----
+            # ---- backward, with γ (occupancy) and W (transitions) fused in ----
+            # β is carried as two (n,) vectors; the full (N,n) array is never
+            # built.  ``ξ`` is not formed here — the ρ contraction is deferred to
+            # the serial reduction so this hot loop stays ``O(n²)`` per gap and
+            # ``rho_cache`` is untouched until then (see the docstring).
+            yl = streams[e - 1]
             for i in range(n_states):
-                beta[e - 1, i] = 1.0
+                beta_next[i] = 1.0  # β[e-1] = 1
+                g = alpha[e - 1, i]
+                gobs_local[i, yl] += g
+                if e - 1 == s:
+                    prior_local[i] += g
             for n in range(e - 2, s - 1, -1):
                 slot = gap_slot[n]
                 yn1 = streams[n + 1]
                 cc = scale[n + 1]
                 inv_c = 1.0 / cc if cc > 0.0 else 0.0
+                # w = obs · β[n+1]; reused by both β[n] and the W accumulation.
                 for k in range(n_states):
-                    w[k] = obs[k, yn1] * beta[n + 1, k]
+                    w[k] = obs[k, yn1] * beta_next[k]
                 for i in range(n_states):
                     v = 0.0
                     for k in range(n_states):
                         v += pow_cache[slot, i, k] * w[k]
-                    beta[n, i] = v * inv_c
-
-            # ---- accumulate γ (occupancy) ----
-            for n in range(s, e):
+                    beta_cur[i] = v * inv_c
+                # γ at photon n (occupancy α[n]·β[n]).
                 yn = streams[n]
                 for i in range(n_states):
-                    g = alpha[n, i] * beta[n, i]
+                    g = alpha[n, i] * beta_cur[i]
                     gobs_local[i, yn] += g
                     if n == s:
                         prior_local[i] += g
-
-            # ---- accumulate the per-slot transition weight W[slot,k,m] ----
-            # ``ξ`` is not formed here; the ρ contraction is deferred to the
-            # serial reduction so the hot loop stays ``O(n²)`` per gap and
-            # ``rho_cache`` is untouched until then (see the docstring).
-            for n in range(s, e - 1):
-                slot = gap_slot[n]
-                yn1 = streams[n + 1]
-                cc = scale[n + 1]
-                if cc <= 0.0:
-                    continue
-                inv = 1.0 / cc
-                for m in range(n_states):
-                    w[m] = obs[m, yn1] * beta[n + 1, m]
-                for k in range(n_states):
-                    ak = alpha[n, k] * inv
-                    if ak == 0.0:
-                        continue
-                    for m in range(n_states):
-                        W_local[slot, k, m] += ak * w[m]
+                # W over gap n (skipped when the scale underflowed).
+                if cc > 0.0:
+                    for k in range(n_states):
+                        ak = alpha[n, k] * inv_c
+                        if ak == 0.0:
+                            continue
+                        for m in range(n_states):
+                            W_local[slot, k, m] += ak * w[m]
+                # advance β[n+1] ← β[n]
+                for i in range(n_states):
+                    beta_next[i] = beta_cur[i]
 
         W_p[c] = W_local
         gobs_p[c] = gobs_local
@@ -535,12 +666,134 @@ def _estep(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Parameter-vector helpers for SQUAREM acceleration
+# ---------------------------------------------------------------------------
+
+
+def _pack(prior: np.ndarray, trans: np.ndarray, obs: np.ndarray) -> np.ndarray:
+    """Flatten ``(prior, trans, obs)`` into one contiguous parameter vector."""
+    return np.concatenate([prior.ravel(), trans.ravel(), obs.ravel()])
+
+
+def _unpack(vec: np.ndarray, n: int, p: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Split a parameter vector back into ``(prior, trans, obs)`` copies."""
+    prior = vec[:n].copy()
+    trans = vec[n : n + n * n].reshape(n, n).copy()
+    obs = vec[n + n * n :].reshape(n, p).copy()
+    return prior, trans, obs
+
+
+def _project(vec: np.ndarray, n: int, p: int, min_trans: float) -> np.ndarray:
+    """Map an extrapolated parameter vector back onto the feasible model set.
+
+    Clips negatives, renormalises ``prior`` and every ``trans``/``obs`` row, and
+    re-applies the off-diagonal ``min_trans`` floor so the projected model is a
+    valid EM input (the SQUAREM step can otherwise overshoot outside the
+    simplex).
+    """
+    prior = _row_normalize(np.clip(vec[:n], 0.0, None).reshape(1, -1)).ravel()
+    trans = _row_normalize(np.clip(vec[n : n + n * n].reshape(n, n), 0.0, None))
+    obs = _row_normalize(np.clip(vec[n + n * n :].reshape(n, p), 0.0, None))
+    if min_trans > 0.0:
+        for i in range(n):
+            for j in range(n):
+                if i != j and trans[i, j] < min_trans:
+                    trans[i, j] = min_trans
+        trans = _row_normalize(trans)
+    return _pack(prior, trans, obs)
+
+
+def _plain_em(em_step, prior, trans, obs, max_iter, tol):
+    """Classic Baum-Welch loop: iterate the EM map until the logL increment < ``tol``."""
+    prev_ll = -np.inf
+    last_ll = -np.inf
+    converged = False
+    it = 0
+    for it in range(1, max_iter + 1):
+        prior, trans, obs, last_ll = em_step(prior, trans, obs)
+        if last_ll - prev_ll < tol and it > 1:
+            converged = True
+            prev_ll = last_ll
+            break
+        prev_ll = last_ll
+    return prior, trans, obs, last_ll, it, converged
+
+
+def _squarem(em_step, prior, trans, obs, n, p, max_iter, tol, min_trans):
+    r"""SQUAREM-accelerated EM (Varadhan & Roland 2008, scheme S3).
+
+    Each outer step takes two ordinary EM maps ``θ→p1→p2``, forms the squared
+    extrapolation ``θ' = θ − 2α r + α² v`` with ``r = p1−θ``, ``v = p2−2p1+θ``
+    and steplength ``α = −‖r‖/‖v‖ ≤ −1``, projects ``θ'`` back onto the model
+    simplex, and runs one stabilising EM map from it.  A monotonicity safeguard
+    keeps the better of the accelerated point and the plain double-EM point, so
+    the accepted log-likelihood is non-decreasing and the fixed point is exactly
+    that of plain EM — only reached in far fewer maps.  ``n_iter`` counts EM-map
+    evaluations, so it is directly comparable to the plain-EM iteration count.
+    """
+    def em_vec(vec):
+        pr, tr, ob = _unpack(vec, n, p)
+        npr, ntr, nob, ll = em_step(pr, tr, ob)
+        return _pack(npr, ntr, nob), ll
+
+    theta = _pack(prior, trans, obs)
+    prev_ll = -np.inf
+    last_ll = -np.inf
+    converged = False
+    evals = 0
+    while evals < max_iter:
+        p1, _l0 = em_vec(theta)
+        evals += 1
+        if evals >= max_iter:
+            theta, last_ll = p1, _l0
+            break
+        r = p1 - theta
+        p2, l1 = em_vec(p1)
+        evals += 1
+        v = (p2 - p1) - r
+        rn = math.sqrt(float(r @ r))
+        vn = math.sqrt(float(v @ v))
+        if vn < 1e-12 or rn < 1e-12:
+            # Already at (or numerically indistinguishable from) the fixed point.
+            theta, last_ll = p2, l1
+            if l1 - prev_ll < tol:
+                converged = True
+                break
+            prev_ll = l1
+            continue
+        a = -rn / vn
+        if a > -1.0:
+            a = -1.0
+        theta_e = _project(theta - 2.0 * a * r + (a * a) * v, n, p, min_trans)
+        if evals >= max_iter:
+            theta, last_ll = p2, l1
+            break
+        p3, l2 = em_vec(theta_e)
+        evals += 1
+        # Monotonicity safeguard: fall back to plain double-EM if the accelerated
+        # point did not improve on it (or went non-finite).
+        if (not math.isfinite(l2)) or l2 < l1:
+            theta, last_ll = p2, l1
+        else:
+            theta, last_ll = p3, l2
+        if last_ll - prev_ll < tol and evals > 2:
+            converged = True
+            break
+        prev_ll = last_ll
+
+    pr, tr, ob = _unpack(theta, n, p)
+    return pr, tr, ob, last_ll, evals, converged
+
+
 def optimize(
     model: H2mmModel,
     data: BurstPhotons,
     max_iter: int = 500,
     tol: float = 1e-7,
     min_trans: float = 1e-12,
+    accelerate: bool = True,
+    single_precision: bool = False,
 ) -> H2mmModel:
     """Baum-Welch (EM) optimisation of an H2MM model.
 
@@ -551,12 +804,24 @@ def optimize(
     data : BurstPhotons
         Photon data in engine layout (from :func:`prepare_bursts`).
     max_iter : int
-        Maximum number of EM iterations.
+        Maximum number of EM-map evaluations.
     tol : float
         Convergence threshold on the log-likelihood increment.
     min_trans : float
         Floor for off-diagonal transition probabilities, keeping ``trans``
         irreducible so rare transitions can still be discovered.
+    accelerate : bool
+        Use SQUAREM extrapolation (:func:`_squarem`) to reach the EM fixed point
+        in fewer maps.  The fixed point is identical to plain EM; set ``False``
+        for the unaccelerated loop.
+    single_precision : bool
+        Run the forward-backward hot loop and the ``A^Δt``/``ρ`` caches in
+        ``float32`` to roughly halve their memory bandwidth (the model
+        parameters and Baum-Welch reductions stay ``float64``).  This is an
+        **approximate** fast mode: the log-likelihood carries ``float32`` round-off
+        (~1e-2 at typical magnitudes), so it does *not* meet the ~1e-9 reference
+        tolerance and the convergence threshold is floored accordingly.  Use for
+        exploratory fits on very large datasets, not for final numbers.
 
     Returns
     -------
@@ -564,6 +829,7 @@ def optimize(
         The optimised model with ``loglik``, ``n_iter``, ``n_phot`` and
         ``converged`` populated.
     """
+    _sync_numba_threads()  # keep the float32 kernel compilable after env rewrites
     n = model.n_states
     p = data.n_streams
     n_dt = int(data.unique_dt.shape[0])
@@ -572,36 +838,39 @@ def optimize(
     trans = _row_normalize(model.trans)
     obs = _row_normalize(model.obs)
 
-    n_phot = data.n_photons
-    alpha = np.zeros((n_phot, n))
-    beta = np.zeros((n_phot, n))
-    scale = np.zeros(n_phot)
-    n_slots = max(n_dt, 1)
-    pow_cache = np.zeros((n_slots, n, n))
-    rho_cache = np.zeros((n_slots, n, n, n, n))
+    # float32 round-off swamps a tight logL threshold, so raise the floor.
+    cdt = np.float32 if single_precision else np.float64
+    if single_precision:
+        tol = max(tol, 1e-3)
 
-    prev_ll = -np.inf
-    last_ll = -np.inf
-    converged = False
-    it = 0
-    for it in range(1, max_iter + 1):
+    n_phot = data.n_photons
+    alpha = np.zeros((n_phot, n), dtype=cdt)
+    scale = np.zeros(n_phot, dtype=cdt)
+    n_slots = max(n_dt, 1)
+    pow_cache = np.zeros((n_slots, n, n), dtype=cdt)
+    rho_cache = np.zeros((n_slots, n, n, n, n), dtype=cdt)
+
+    # Spectral cache build pays off only when the unique intervals are long.
+    prefer_eig = _prefer_eig(n, data.unique_dt)
+
+    def em_step(prior_, trans_, obs_):
+        """One EM map: returns ``(new_prior, new_trans, new_obs, logL(input))``."""
         if n_dt > 0:
-            _build_caches(trans, data.unique_dt, pow_cache, rho_cache)
+            _fill_caches(trans_, data.unique_dt, pow_cache, rho_cache, prefer_eig)
 
         xi_acc = np.zeros((n, n))
         gamma_obs_acc = np.zeros((n, p))
         prior_acc = np.zeros(n)
 
-        last_ll = _estep(
-            prior,
-            obs,
+        ll = _estep(
+            prior_.astype(cdt, copy=False),
+            obs_.astype(cdt, copy=False),
             pow_cache,
             rho_cache,
             data.streams,
             data.gap_slot,
             data.burst_offsets,
             alpha,
-            beta,
             scale,
             xi_acc,
             gamma_obs_acc,
@@ -609,7 +878,7 @@ def optimize(
         )
 
         # ---- M-step ----
-        new_prior = prior_acc / data.n_bursts
+        new_prior = _row_normalize((prior_acc / data.n_bursts).reshape(1, -1)).ravel()
         new_trans = _row_normalize(xi_acc)
         new_obs = _row_normalize(gamma_obs_acc)
 
@@ -621,15 +890,16 @@ def optimize(
                         new_trans[i, j] = min_trans
             new_trans = _row_normalize(new_trans)
 
-        prior = _row_normalize(new_prior.reshape(1, -1)).ravel()
-        trans = new_trans
-        obs = new_obs
+        return new_prior, new_trans, new_obs, ll
 
-        if last_ll - prev_ll < tol and it > 1:
-            converged = True
-            prev_ll = last_ll
-            break
-        prev_ll = last_ll
+    if accelerate:
+        prior, trans, obs, last_ll, it, converged = _squarem(
+            em_step, prior, trans, obs, n, p, max_iter, tol, min_trans
+        )
+    else:
+        prior, trans, obs, last_ll, it, converged = _plain_em(
+            em_step, prior, trans, obs, max_iter, tol
+        )
 
     return H2mmModel(
         prior=prior,
@@ -712,7 +982,10 @@ def viterbi(model: H2mmModel, data: BurstPhotons) -> tuple[np.ndarray, float]:
     pow_cache = np.zeros((n_slots, n, n))
     rho_cache = np.zeros((n_slots, n, n, n, n))
     if n_dt > 0:
-        _build_caches(model.trans, data.unique_dt, pow_cache, rho_cache)
+        _fill_caches(
+            model.trans, data.unique_dt, pow_cache, rho_cache,
+            _prefer_eig(n, data.unique_dt),
+        )
 
     tiny = np.finfo(np.float64).tiny
     log_prior = np.log(np.clip(model.prior, tiny, None))
