@@ -223,6 +223,8 @@ CREATE_TABLES_SQL = [
         is_admin INTEGER DEFAULT 0,
         allow_passwordless_login INTEGER DEFAULT 0,
         password_hash TEXT,
+        auth_provider TEXT DEFAULT 'local',
+        external_id TEXT,
         details TEXT,
         active_branch_uuid TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1034,6 +1036,7 @@ FRESH_DB_TABLES_SQL = [
 ]
 
 CREATE_INDICES_SQL = [
+    "CREATE INDEX IF NOT EXISTS idx_users_external ON flr_sample_users (auth_provider, external_id)",
     "CREATE INDEX IF NOT EXISTS idx_probes_type ON probes (type_id)",
     "CREATE INDEX IF NOT EXISTS idx_probes_cat ON probes (category)",
     "CREATE INDEX IF NOT EXISTS idx_op_probe ON optical_properties (probe_id)",
@@ -1501,9 +1504,15 @@ def set_schema_version(conn: sqlite3.Connection, version: int):
 
 
 def _hash_admin_password() -> str:
-    """Hash the default admin password 'admin' (PBKDF2-SHA256)."""
+    """Hash the default admin password 'admin' (PBKDF2-SHA256, per-user salt).
+
+    Uses a fresh random salt each call (no hardcoded salt) — the bootstrap only
+    writes it once via ``COALESCE(password_hash, ?)``, and ``verify_password``
+    recovers the salt from the stored hash, so ``"admin"`` still authenticates.
+    """
     import hashlib
-    salt = "a1b2c3d4e5f6a7b8"  # fixed salt for reproducibility
+    import secrets
+    salt = secrets.token_hex(16)
     iterations = 100000
     dk = hashlib.pbkdf2_hmac(
         "sha256", b"admin", salt.encode("utf-8"), iterations,

@@ -18,12 +18,9 @@ from mfdb.security.auth import (
     chmod,
     chown,
     create_default_acl_for_object,
-    create_session,
     grant_acl,
-    is_throttled,
     list_sessions,
     principal_from_rpc_auth,
-    record_auth_attempt,
     require_access,
     require_authenticated,
     revoke_acl,
@@ -33,12 +30,20 @@ from mfdb.store.database_resolver import resolve_database_path
 from mfdb.admin.backend.password_services import (
     evaluate_password,
     hash_password,
-    verify_password,
 )
 
 
 def _get_db():
     return MFDatabase(resolve_database_path())
+
+
+def _auth_config() -> dict[str, Any] | None:
+    """Return the active auth configuration (provider selection + LDAP block).
+
+    Phase-1 stub — always ``None`` (the ``local`` provider). Phase 2 wires this to
+    the host-injected config resolver in :mod:`mfdb.config`.
+    """
+    return None
 
 
 def _get_conn(db):
@@ -87,80 +92,44 @@ def login_handler(
     user_id: str,
     password: str = "",
     client_metadata: dict[str, Any] | None = None,
+    provider: str | None = None,
 ) -> dict[str, Any]:
     """Authenticate a user and return a session token.
+
+    Delegates to the pluggable auth orchestrator (:func:`mfdb.security.login.login`),
+    which selects an auth provider (``local`` by default, or ``ldap``/other per
+    config), resolves/JIT-provisions the MFDB user, syncs mapped groups, and mints
+    a session.
 
     Parameters
     ----------
     user_id : str
-        User identifier.
+        User identifier (or directory login name for external providers).
     password : str
         Password for the user.
     client_metadata : dict, optional
         Optional client info (host, name, etc.).
+    provider : str, optional
+        Explicit provider override (``"local"`` / ``"ldap"``); defaults to the
+        configured provider.
 
     Returns
     -------
     dict
-        ``{token, expires_at, user}`` on success, or raises ``AuthError``.
+        ``{ok, authenticated, token, expires_at, user}`` on success, or raises
+        ``AuthError``.
     """
+    from mfdb.security.login import login as _login
+
     with _get_db() as db:
-        conn = _get_conn(db)
-
-        if is_throttled(conn, user_id):
-            raise AuthError("Too many failed login attempts. Try again later.")
-
-        row = conn.execute(
-            "SELECT display_name, is_admin, password_hash, allow_passwordless_login FROM flr_sample_users WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-
-        if not row:
-            record_auth_attempt(conn, user_id, False, reason="user_not_found")
-            raise AuthError("Invalid credentials")
-
-        display_name, is_admin, password_hash, allow_passwordless_login = row
-
-        # Admin accounts must always supply a password: no passwordless login and
-        # no empty-password "set password" shortcut. Bootstrap guarantees the
-        # built-in admin has a hash, and save_user_handler forbids empty admin
-        # passwords, so an admin can never be locked out by this rule.
-        if is_admin == 1 and not password:
-            record_auth_attempt(conn, user_id, False, reason="admin_requires_password")
-            raise AuthError("Invalid credentials")
-
-        if allow_passwordless_login == 1 and not password:
-            pass
-        elif password_hash:
-            if not verify_password(password, password_hash):
-                record_auth_attempt(conn, user_id, False, reason="wrong_password")
-                raise AuthError("Invalid credentials")
-        else:
-            if not password:
-                # Passwordless user or admin — allow login so admin can reach
-                # the "set password" prompt in the GUI.
-                pass
-            else:
-                record_auth_attempt(conn, user_id, False, reason="unexpected_password")
-                raise AuthError("Invalid credentials")
-
-        client_host = None
-        client_name = None
-        if client_metadata:
-            client_host = client_metadata.get("host")
-            client_name = client_metadata.get("name")
-
-        session = create_session(
-            conn,
+        return _login(
+            _get_conn(db),
+            provider=provider,
             user_id=user_id,
-            client_host=client_host,
-            client_name=client_name,
+            password=password,
             client_metadata=client_metadata,
+            config=_auth_config(),
         )
-
-        record_auth_attempt(conn, user_id, True)
-        conn.commit()
-        return {"ok": True, "authenticated": True, **session}
 
 
 def logout_handler(auth: dict[str, Any] | None = None) -> dict[str, Any]:
