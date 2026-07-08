@@ -116,15 +116,19 @@ is acceptable if the suite stays green; correctness of the store matters.
   `dao.list(table, *, filters=<equality dict>, order_by=, descending=, limit=, offset=)`.
 
 ### Burn-down (audit table: `okf/specs/mfdb-sql-audit.md` — keep it updated)
-Package totals now: **174 select · 53 insert · 48 update · 12 delete ·
-87 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
+Package totals now: **151 select · 52 insert · 48 update · 12 delete ·
+95 bespoke · 30 ddl** (down from 264/109/76/17/44/30). The **non-query-module
 scattered CRUD is fully eliminated** (api.py, adapters/chinet.py,
 sample_manager, seed_data, seed_example, all admin services, security/auth
 are SQL-free or intentional-raw-only), **no `INSERT OR REPLACE` remains anywhere
-in the package**, and the **trivial single-table SELECTs in `queries/*.py` have
-been swept onto `dao.get`/`list`** (select 241 → 174; the bespoke rise 68 → 87
-is a reclassification of `probes.py` JOIN/aggregate/source/merge reads, not new
-raw SQL). What remains is legitimately the centralized home / bespoke:
+in the package**, and the **trivial single-table SELECTs in `queries/*.py`
+*and* `repository.py` have been swept onto `dao.get`/`list`** (select 241 → 151;
+the bespoke rise 44 → 95 over the migration is mostly reclassification of
+JOIN/aggregate/subquery/source/merge reads that the hand-audit had miscounted as
+plain selects, not new raw SQL). A pile of **schema-mismatched dead code** was
+deleted along the way (citeulike/products/standards/product_categories +
+chem_descriptors/images methods). What remains is legitimately the centralized
+home / bespoke:
 `queries/` JOIN/aggregate/`DISTINCT`/`json_extract`/compound-`ORDER BY` SELECTs,
 `bootstrap_*` bulk seeders on a bare conn (incl. `schema.py` group-member
 `INSERT OR IGNORE`), hand-written `INSERT … ON CONFLICT DO UPDATE`
@@ -197,13 +201,14 @@ the audit table = running totals, git history = small self-describing commits.
 ---
 
 ## 4. Remaining lower-priority cleanup (optional; documented in memory)
-- **Schema constraint gap (found this session).** `citeulike`, `products`,
-  `standards`, `product_categories` have **no PK and no UNIQUE** in the reconciled
-  schema, so `add_citation`/`add_product`/`add_standard`/`add_product_category` are
-  insert-only (duplicate logical ids possible; their `delete_*` uses a `pk_column`
-  that isn't enforced). Real fix = declare the PK in whatever builds these tables
-  (they're not in `schema.py`'s hardcoded DDL — trace the `.dic`/reconcile path),
-  then flip the `dao.insert` calls to `dao.upsert`. Left as a follow-up.
+- ~~Schema constraint gap on `citeulike`/`products`/`standards`/`product_categories`~~
+  → **RESOLVED**: those tables **don't exist** in the reconciled schema at all (the
+  "PK=NONE" reading was a false negative — `PRAGMA` on a missing table returns empty).
+  Their methods were dead code and were **deleted**. Same for
+  `get/add_chemical_descriptor` and `get/add_image` (live `chem_descriptors`/`images`
+  columns don't match what the methods use). If you touch repository.py, watch for
+  more such schema-mismatched legacy methods — verify against `PRAGMA table_info`
+  before assuming a method works.
 - Drop `security/base.py` `MFDBClientBase` ABC only if you also retarget ~40 type-hint
   sites to `MFDatabase` (used across `result_registry` + chisurf plugins). Decided
   **skip** this session — low value, single-backend, churny/risky.
