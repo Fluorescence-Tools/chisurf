@@ -24,7 +24,12 @@ from mfdb.security.auth import (
     is_throttled,
     record_auth_attempt,
 )
-from mfdb.security.auth_providers import AuthIdentity, AuthProvider, LocalAuthProvider
+from mfdb.security.auth_providers import (
+    AuthIdentity,
+    AuthProvider,
+    ProviderContext,
+    build_provider,
+)
 
 #: Default active branch every user is attached to (the "main" branch).
 _MAIN_BRANCH_UUID = "00000000-0000-0000-0000-000000000000"
@@ -38,18 +43,12 @@ def resolve_provider(
 ) -> AuthProvider:
     """Return the :class:`AuthProvider` for *name* (or the configured default).
 
-    ``"local"`` is always constructible; ``"ldap"`` is loaded lazily (its
-    optional ``ldap3`` dependency is only imported when selected).
+    Dispatches through the provider registry
+    (:func:`~mfdb.security.auth_providers.build_provider`), so new providers are
+    added by registration alone. ``"local"`` is always available; optional
+    dependencies (e.g. ``ldap3``) are imported only when their provider is built.
     """
-    prov = (name or (config or {}).get("auth_provider") or "local").lower()
-    if prov == "local":
-        return LocalAuthProvider(conn)
-    if prov == "ldap":
-        from mfdb.security.auth_providers import LdapAuthProvider  # Phase 2
-
-        ldap_cfg = (config or {}).get("ldap") if config else None
-        return LdapAuthProvider(ldap_cfg or {})
-    raise AuthError(f"Unknown auth provider: {prov!r}")
+    return build_provider(name, ProviderContext(conn=conn, config=config))
 
 
 def _jit_enabled(config: dict[str, Any] | None) -> bool:
@@ -143,11 +142,69 @@ def _ensure_group_member(
         )
 
 
+def _remove_group_member(conn: sqlite3.Connection, group_id: str, user_id: str) -> None:
+    """Soft-delete *user_id*'s membership in *group_id* (idempotent)."""
+    from mfdb.schema._sqlutil import _utc_now
+
+    # raw: composite-key soft-delete on the PK-less UNIQUE(group_id, user_id)
+    # junction — the DAO cannot target it.
+    conn.execute(
+        "UPDATE mfdb_group_member SET deleted_at = ? "
+        "WHERE group_id = ? AND user_id = ? AND deleted_at IS NULL",
+        (_utc_now(), group_id, user_id),
+    )
+
+
 def sync_groups(conn: sqlite3.Connection, user_id: str, group_ids: tuple[str, ...]) -> None:
     """Ensure *user_id* belongs to each mapped MFDB group id (additive)."""
     for group_id in group_ids:
         if group_id:
             _ensure_group_member(conn, group_id, user_id)
+
+
+def sync_identity(conn: sqlite3.Connection, user_id: str, identity: AuthIdentity) -> None:
+    """Make the directory authoritative over *user_id* for an external identity.
+
+    Refreshes ``is_admin`` / ``email`` / ``display_name`` from the identity and
+    reconciles the provider's managed group universe: adds ``identity.groups`` and
+    removes any ``managed_groups`` the identity no longer carries (plus the
+    ``admins`` group, tracked via ``is_admin``). Locally-managed groups outside
+    ``managed_groups`` are never touched. No-op for the ``local`` provider.
+    """
+    if identity.provider == "local":
+        return
+    dao = _dao(conn)
+    updates: dict[str, Any] = {"is_admin": 1 if identity.is_admin else 0}
+    if identity.email is not None:
+        updates["email"] = identity.email
+    if identity.display_name:
+        updates["display_name"] = identity.display_name
+    dao.update("flr_sample_users", user_id, updates)
+
+    # Admin membership follows the directory's is_admin.
+    if identity.is_admin:
+        _ensure_group_member(conn, "admins", user_id)
+    else:
+        _remove_group_member(conn, "admins", user_id)
+
+    # Reconcile the provider-managed group universe.
+    current = set(identity.groups)
+    for group_id in current:
+        if group_id:
+            _ensure_group_member(conn, group_id, user_id)
+    for group_id in set(identity.managed_groups) - current:
+        _remove_group_member(conn, group_id, user_id)
+
+
+def _record_failure(conn: sqlite3.Connection, user_id: str, reason: str) -> None:
+    """Record a failed auth attempt and **commit** it.
+
+    The RPC login path opens a fresh connection per call, so without this commit
+    the attempt would roll back when the caller raises — leaving brute-force
+    throttling (``is_throttled``) unable to accumulate across attempts.
+    """
+    record_auth_attempt(conn, user_id, False, reason=reason)
+    conn.commit()
 
 
 def login(
@@ -172,16 +229,17 @@ def login(
     prov = resolve_provider(provider, conn=conn, config=config)
     identity = prov.authenticate(user_id=user_id, password=password)
     if identity is None:
-        record_auth_attempt(conn, user_id, False, reason="invalid_credentials")
+        _record_failure(conn, user_id, "invalid_credentials")
         raise AuthError("Invalid credentials")
 
     jit_enabled = _jit_enabled(config) if jit is None else jit
     mfdb_user_id = resolve_or_provision_user(conn, identity, jit=jit_enabled)
     if mfdb_user_id is None:
-        record_auth_attempt(conn, user_id, False, reason="unmatched_external_user")
+        _record_failure(conn, user_id, "unmatched_external_user")
         raise AuthError("Invalid credentials")
 
-    sync_groups(conn, mfdb_user_id, identity.groups)
+    # Directory-authoritative attribute + group reconciliation (no-op for local).
+    sync_identity(conn, mfdb_user_id, identity)
 
     client_host = client_name = None
     if client_metadata:

@@ -4,7 +4,7 @@ prd: "59"
 title: "PRD-59: Pluggable MFDB Authentication (local / LDAP)"
 description: A pluggable authentication layer for MFDB with local-password and LDAP/Active-Directory providers behind one interface, resolving to the existing Principal/session, with JIT provisioning and directory-group mapping.
 status: in-progress
-phase: "3 of 3 landed (local + LDAP + CLI); OIDC/eLabFTW-IdP deferred"
+phase: "4 phases landed (local + LDAP + CLI + hardening/registry); OIDC/eLabFTW-IdP deferred"
 resource: modules/mfdb/src/mfdb/security/
 tags: [prd, mfdb, auth, security, ldap]
 timestamp: '2026-07-08T00:00:00Z'
@@ -30,18 +30,27 @@ preserve the existing token→`Principal`→ACL machinery unchanged.
 A single provider interface, a configured default + always-available local fallback, and one
 orchestrator that owns identity resolution and session minting.
 
-## Provider interface (`security/auth_providers.py`)
-- `AuthIdentity(provider, external_id, email, display_name, is_admin, groups, raw)` — the neutral
-  result of a successful authentication.
+## Provider interface + registry (`security/auth_providers.py`)
+- `AuthIdentity(provider, external_id, email, display_name, is_admin, groups, managed_groups, raw)`
+  — the neutral result of a successful authentication. `managed_groups` is the universe of MFDB
+  groups the provider authoritatively controls (`groups ⊆ managed_groups`), enabling directory
+  reconciliation.
 - `AuthProvider` `Protocol`: `authenticate(*, user_id, password) -> AuthIdentity | None` (returns
   `None` for bad credentials; raises only on misconfiguration).
+- **Extensibility is the design's core.** A provider **registry** (`register_provider(name, factory)`
+  / `build_provider(name, ProviderContext)` / `available_providers()`) is the sole extension point:
+  adding a backend (OIDC, external-IdP, …) is a class plus one registration call — the orchestrator
+  dispatches by name and never changes. Built-in `local`/`ldap` register themselves at import.
 - `LocalAuthProvider` — verifies `flr_sample_users.password_hash` (PBKDF2-HMAC-SHA256, 100k) with the
   exact pre-existing admin / passwordless / no-hash rules.
 - `LdapAuthProvider` — **search+bind**: service-account bind → search `user_filter` under `base_dn`
   → re-bind as the located user DN to verify the password → map `memberOf` to MFDB groups
   (`group_map`) and admin status (`admin_groups`). The `ldap3` dependency is optional and lazy
   (`_require_ldap3`; `[ldap]` extra); an injectable `connection_factory` allows fully-offline
-  `ldap3` `MOCK_SYNC` testing. LDAP-filter values are escaped against injection.
+  `ldap3` `MOCK_SYNC` testing. Hardened: LDAP-filter values escaped against injection, required-key
+  validation (`base_dn`), connections always unbound (`try/finally`), optional TLS CA
+  (`ca_cert` → `ldap3.Tls`), and directory-unreachable/search errors surfaced as a clear `AuthError`
+  (never a crash) while a wrong user password is a plain `None`.
 
 ## Orchestrator (`security/login.py`)
 `login(conn, *, provider, user_id, password, client_metadata, config, jit)`:
@@ -51,6 +60,15 @@ success (prior behaviour preserved). `resolve_or_provision_user` matches by
 `(auth_provider, external_id)` → `email` (linking the row) → JIT-creates a `flr_sample_users` row for
 external providers (configurable); `local` returns its row unchanged. The RPC handler
 `mfdb.security.auth.login` (`admin/backend/auth_services.login_handler`) delegates here.
+
+**Directory-authoritative reconciliation** (`sync_identity`): on each external-provider login the
+user's `is_admin` / `email` / `display_name` are refreshed from the identity, and the provider's
+`managed_groups` are reconciled — mapped groups the identity carries are added, managed groups it no
+longer carries are removed (admin membership follows `is_admin`). Locally-managed groups outside
+`managed_groups` are never touched; `local` logins reconcile nothing. **Throttling correctness:**
+failed attempts are committed (`_record_failure`) so `is_throttled` accumulates across the
+per-request connections of the RPC path (previously they rolled back, silently disabling
+brute-force throttling).
 
 ## Identity linkage & schema
 `flr_sample_users` gains `auth_provider TEXT DEFAULT 'local'` and `external_id TEXT`, indexed by
