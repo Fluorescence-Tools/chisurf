@@ -1,34 +1,68 @@
-# MFDB simplification — HANDOVER
+# MFDB — HANDOVER
 
-**Branch:** `development` · **HEAD:** `77f10157` · **Working tree:** clean (only the
-`modules/ndxplorer` submodule shows dirty — leave it). Latest session added 9
-SQL→dao commits on top of the earlier 29; all **local** (never push — see below).
+**Branch:** `development` · **HEAD:** `24f49c0f` · all commits **local** (never push).
 
-This file is the start-fresh brief. The durable resume note also lives in agent
-memory (`mfdb-simplification-resume.md`, indexed in `MEMORY.md`) and the full
-plan at `~/.claude/plans/mfdb-is-a-bit-bubbly-sparrow.md`.
+This is the start-fresh brief. Two big MFDB threads have **landed** since this file was
+first written — the SQL→DAO migration (PRD-26; see §3, now historical) and a new
+**pluggable authentication** layer (PRD-59) + api.py auth enforcement (INC-04). A third,
+the **`mfdb.admin` → `mfdb_admin` package extraction, is IN FLIGHT in the working tree**
+(uncommitted). See §0 for what's next.
+
+---
+
+## 0. What's next (read first)
+
+**⚠️ In-flight, uncommitted refactor:** `mfdb.admin` is being extracted into a new
+standalone package `modules/mfdb-admin/src/mfdb_admin/`. The old `mfdb/admin/*` files are
+now `from mfdb_admin… import *` wrappers, and `chisurf/plugins/core/mfdb_admin/*` re-exports
+from it. This is **not committed** — finish/land it before large new work. Because of it,
+the test path now needs `mfdb-admin/src` (see §1). Watch: `import *` wrappers don't
+re-export underscore-prefixed names (`_validate_mfdb_methods_in_manifest` broke collection
+once — fixed). GUI (`mfdb-admin/src/mfdb_admin/gui/`) + `pyproject.toml`/`README` are still
+untracked.
+
+**Prioritized next steps:**
+1. **Land the `mfdb-admin` extraction** — commit it coherently; add its `pyproject.toml`
+   to the workspace; confirm both suites green with the new path.
+2. **INC-04 follow-ups** (auth enforcement, PRD-59-adjacent): extend owner ACLs to
+   `setups`/`parameters`/`branches` on write (samples/experiments/artifacts/operations
+   already do); add **v1-dispatcher round-trip tests** (drive `mfdb.v1.*` through the
+   dispatcher with a token, not just the api functions directly).
+3. **PRD-59 deferred providers:** OIDC/SAML SSO; eLabFTW external-IdP (ties into the
+   dropped **PRD-48** ELN work). All slot into the `AuthProvider` registry with no core edits.
+4. **Lower-priority cleanup** (see §4): drop `security/base.py` ABC; delete dead
+   `CREATE_TABLES_SQL` text; `boundary_validation.py` lint debt (D102 ×); local-auth
+   user-enumeration timing (deliberately skipped — low value).
+
+**Auth architecture (for context):** `security/auth_providers.py` = `AuthProvider` protocol +
+registry (`register_provider`/`build_provider`) + `LocalAuthProvider`/`LdapAuthProvider`;
+`security/login.py` = `login()` orchestrator (authenticate → resolve/JIT-provision via
+`flr_sample_users.auth_provider`/`external_id` → group reconcile → session). `api.py` threads
+`auth` through all `mfdb.v1.*` functions with graceful ACL enforcement. Concept: **PRD-59**
+(`okf/prds/prd-59.md`). Headless CLI: `mfdb-admin auth login|whoami|status`.
 
 ---
 
 ## 1. Environment & how to run (read first)
 
 - **Python:** the **arm64 conda env**, NOT pixi/base:
-  `PY=/Users/tpeulen/mambaforge/envs/arm64/bin/python`
-- **MFDB standalone suite (the primary gate)** — proves the package is
-  self-contained (no chisurf/chinet needed):
+  `PY=/Users/tpeulen/mambaforge/envs/arm64/bin/python`. `ldap3` is installed there for the
+  LDAP tests (optional `[ldap]` extra for real installs).
+- **MFDB standalone suite (the primary gate)** — note the **`mfdb-admin/src` path** now
+  required (admin extraction):
   ```
-  cd modules/mfdb && PYTHONPATH=src $PY -m pytest tests -q
+  cd modules/mfdb && PYTHONPATH=src:../mfdb-admin/src $PY -m pytest tests -q
   ```
-  **Expected: 419 passed, 1 skipped.** Run this after every change to the package.
-- **ChiSurf-side integration suite:**
+  **Expected: 468 passed, 1 skipped.** Run after every change to the package.
+- **ChiSurf-side integration suite** (also add `mfdb-admin/src`):
   ```
-  PYTHONPATH="modules/mfdb/src:modules/chinet:modules/imp-tricks/src:." \
+  PYTHONPATH="modules/mfdb/src:modules/mfdb-admin/src:modules/chinet:modules/imp-tricks/src:." \
     $PY -m pytest test/fio -q -p no:cacheprovider
   ```
   Expected: **236 passed, 1 pre-existing fail** (`test_ndxplorer_cli` — needs the
   `ndxplorer` submodule built; out of scope, ignore).
 - **Never `git push`.** Commit locally only. End commit messages with the
-  `Co-Authored-By: Claude Opus 4.8 (1M context)` trailer.
+  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` trailer.
 - Working practice: material changes update the matching `okf/` concept **and**
   append a dated bullet to `okf/log.md`.
 
