@@ -47,7 +47,7 @@ from dataclasses import dataclass
 import numpy as np
 
 try:  # numba is a first-class dependency; degrade gracefully if unavailable
-    from numba import njit, prange
+    from numba import get_num_threads, njit, prange
 
     _HAVE_NUMBA = True
 except Exception:  # pragma: no cover - exercised only without numba
@@ -65,6 +65,10 @@ except Exception:  # pragma: no cover - exercised only without numba
     def prange(*args):  # type: ignore
         """Return a serial range (``prange`` fallback without numba)."""
         return range(*args)
+
+    def get_num_threads():  # type: ignore
+        """Return a single thread (fallback without numba)."""
+        return 1
 
 
 # ---------------------------------------------------------------------------
@@ -277,7 +281,7 @@ def prepare_bursts(
 # ---------------------------------------------------------------------------
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _matmul_norm(a, b):
     """Return the row-normalised matrix product ``a @ b``."""
     n = a.shape[0]
@@ -307,7 +311,7 @@ def _rho_base(A):
     return R
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _pair_compose(Pa, Ra, Pb, Rb):
     """Compose interval propagators ``(Pa,Ra)`` then ``(Pb,Rb)``.
 
@@ -347,7 +351,7 @@ def _pair_pow(A, R1, power):
     return Pres, Rres
 
 
-@njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True, fastmath=True)
 def _build_caches(A, unique_dt, pow_cache, rho_cache):
     """Fill ``pow_cache[s]=A^Δt`` and ``rho_cache[s]=ρ(Δt)`` for each slot ``s``."""
     R1 = _rho_base(A)
@@ -362,7 +366,7 @@ def _build_caches(A, unique_dt, pow_cache, rho_cache):
 # ---------------------------------------------------------------------------
 
 
-@njit(cache=True)
+@njit(parallel=True, fastmath=True)
 def _estep(
     prior,
     obs,
@@ -376,97 +380,132 @@ def _estep(
     scale,
     xi_acc,
     gamma_obs_acc,
-    gamma_i_acc,
     prior_acc,
 ):
     """Run scaled forward-backward over all bursts; accumulate BW statistics.
 
-    Returns the total log-likelihood ``Σ_bursts Σ_n log(scale[n])``.
+    Bursts are partitioned into contiguous chunks processed in parallel.  Each
+    thread accumulates its Baum-Welch statistics into **thread-local** arrays
+    (so the hot ``ξ``/``γ`` writes never touch memory another core is writing —
+    no false sharing) and touches only disjoint photon ranges of
+    ``alpha``/``beta``/``scale``.  The per-thread partials are stored to shared
+    buffers once per chunk and reduced serially.  Returns the total
+    log-likelihood ``Σ_bursts Σ_n log(scale[n])``.
     """
     n_states = prior.shape[0]
+    n_streams = obs.shape[1]
     n_bursts = offsets.shape[0] - 1
-    loglik = 0.0
-    w = np.zeros(n_states)  # scratch: B[m, y]·β[n+1, m]
+    nthreads = get_num_threads()
 
-    for b in range(n_bursts):
-        s = offsets[b]
-        e = offsets[b + 1]
+    xi_p = np.zeros((nthreads, n_states, n_states))
+    gobs_p = np.zeros((nthreads, n_states, n_streams))
+    prior_p = np.zeros((nthreads, n_states))
+    ll_p = np.zeros(nthreads)
 
-        # ---- forward ----
-        y0 = streams[s]
-        tot = 0.0
-        for i in range(n_states):
-            alpha[s, i] = prior[i] * obs[i, y0]
-            tot += alpha[s, i]
-        scale[s] = tot
-        if tot > 0.0:
-            for i in range(n_states):
-                alpha[s, i] /= tot
-            loglik += math.log(tot)
+    for c in prange(nthreads):
+        b0 = c * n_bursts // nthreads
+        b1 = (c + 1) * n_bursts // nthreads
+        # Thread-local accumulators (own stack → no cross-core false sharing).
+        w = np.empty(n_states)
+        xi_local = np.zeros((n_states, n_states))
+        gobs_local = np.zeros((n_states, n_streams))
+        prior_local = np.zeros(n_states)
+        ll_local = 0.0
+        for b in range(b0, b1):
+            s = offsets[b]
+            e = offsets[b + 1]
 
-        for n in range(s + 1, e):
-            slot = gap_slot[n - 1]
-            P = pow_cache[slot]
-            yn = streams[n]
+            # ---- forward ----
+            y0 = streams[s]
             tot = 0.0
             for i in range(n_states):
-                v = 0.0
-                for k in range(n_states):
-                    v += alpha[n - 1, k] * P[k, i]
-                v *= obs[i, yn]
-                alpha[n, i] = v
-                tot += v
-            scale[n] = tot
+                alpha[s, i] = prior[i] * obs[i, y0]
+                tot += alpha[s, i]
+            scale[s] = tot
             if tot > 0.0:
                 for i in range(n_states):
-                    alpha[n, i] /= tot
-                loglik += math.log(tot)
+                    alpha[s, i] /= tot
+                ll_local += math.log(tot)
 
-        # ---- backward ----
-        for i in range(n_states):
-            beta[e - 1, i] = 1.0
-        for n in range(e - 2, s - 1, -1):
-            slot = gap_slot[n]
-            P = pow_cache[slot]
-            yn1 = streams[n + 1]
-            cc = scale[n + 1]
-            for i in range(n_states):
-                v = 0.0
-                for k in range(n_states):
-                    v += P[i, k] * obs[k, yn1] * beta[n + 1, k]
-                beta[n, i] = v / cc if cc > 0.0 else 0.0
-
-        # ---- accumulate γ (occupancy) ----
-        for n in range(s, e):
-            yn = streams[n]
-            for i in range(n_states):
-                g = alpha[n, i] * beta[n, i]
-                gamma_i_acc[i] += g
-                gamma_obs_acc[i, yn] += g
-                if n == s:
-                    prior_acc[i] += g
-
-        # ---- accumulate ξ (transitions) over each gap ----
-        for n in range(s, e - 1):
-            slot = gap_slot[n]
-            R = rho_cache[slot]
-            yn1 = streams[n + 1]
-            cc = scale[n + 1]
-            if cc <= 0.0:
-                continue
-            inv = 1.0 / cc
-            for m in range(n_states):
-                w[m] = obs[m, yn1] * beta[n + 1, m]
-            for i in range(n_states):
-                for j in range(n_states):
-                    acc = 0.0
+            for n in range(s + 1, e):
+                slot = gap_slot[n - 1]
+                yn = streams[n]
+                tot = 0.0
+                for i in range(n_states):
+                    v = 0.0
                     for k in range(n_states):
-                        ak = alpha[n, k]
-                        if ak == 0.0:
-                            continue
-                        for m in range(n_states):
-                            acc += ak * R[k, m, i, j] * w[m]
-                    xi_acc[i, j] += acc * inv
+                        v += alpha[n - 1, k] * pow_cache[slot, k, i]
+                    v *= obs[i, yn]
+                    alpha[n, i] = v
+                    tot += v
+                scale[n] = tot
+                if tot > 0.0:
+                    for i in range(n_states):
+                        alpha[n, i] /= tot
+                    ll_local += math.log(tot)
+
+            # ---- backward ----
+            for i in range(n_states):
+                beta[e - 1, i] = 1.0
+            for n in range(e - 2, s - 1, -1):
+                slot = gap_slot[n]
+                yn1 = streams[n + 1]
+                cc = scale[n + 1]
+                inv_c = 1.0 / cc if cc > 0.0 else 0.0
+                for k in range(n_states):
+                    w[k] = obs[k, yn1] * beta[n + 1, k]
+                for i in range(n_states):
+                    v = 0.0
+                    for k in range(n_states):
+                        v += pow_cache[slot, i, k] * w[k]
+                    beta[n, i] = v * inv_c
+
+            # ---- accumulate γ (occupancy) ----
+            for n in range(s, e):
+                yn = streams[n]
+                for i in range(n_states):
+                    g = alpha[n, i] * beta[n, i]
+                    gobs_local[i, yn] += g
+                    if n == s:
+                        prior_local[i] += g
+
+            # ---- accumulate ξ (transitions) over each gap ----
+            # ``k,m`` outer so ρ[slot,k,m,:,:] is a contiguous (n,n) block and
+            # the ``i,j`` accumulation streams over memory.
+            for n in range(s, e - 1):
+                slot = gap_slot[n]
+                yn1 = streams[n + 1]
+                cc = scale[n + 1]
+                if cc <= 0.0:
+                    continue
+                inv = 1.0 / cc
+                for m in range(n_states):
+                    w[m] = obs[m, yn1] * beta[n + 1, m]
+                for k in range(n_states):
+                    ak = alpha[n, k] * inv
+                    if ak == 0.0:
+                        continue
+                    for m in range(n_states):
+                        coef = ak * w[m]
+                        for i in range(n_states):
+                            for j in range(n_states):
+                                xi_local[i, j] += coef * rho_cache[slot, k, m, i, j]
+
+        xi_p[c] = xi_local
+        gobs_p[c] = gobs_local
+        prior_p[c] = prior_local
+        ll_p[c] = ll_local
+
+    # ---- reduce per-thread accumulators ----
+    loglik = 0.0
+    for c in range(nthreads):
+        loglik += ll_p[c]
+        for i in range(n_states):
+            prior_acc[i] += prior_p[c, i]
+            for k in range(n_streams):
+                gamma_obs_acc[i, k] += gobs_p[c, i, k]
+            for j in range(n_states):
+                xi_acc[i, j] += xi_p[c, i, j]
 
     return loglik
 
@@ -531,7 +570,6 @@ def optimize(
 
         xi_acc = np.zeros((n, n))
         gamma_obs_acc = np.zeros((n, p))
-        gamma_i_acc = np.zeros(n)
         prior_acc = np.zeros(n)
 
         last_ll = _estep(
@@ -547,7 +585,6 @@ def optimize(
             scale,
             xi_acc,
             gamma_obs_acc,
-            gamma_i_acc,
             prior_acc,
         )
 
