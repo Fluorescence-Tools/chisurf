@@ -958,6 +958,25 @@ def _viterbi_burst(log_prior, log_obs, log_pow, streams, gap_slot, s, e, path):
     return best
 
 
+@njit(parallel=True, cache=True)
+def _viterbi_all(log_prior, log_obs, log_pow, streams, gap_slot, offsets, path):
+    """Viterbi-decode every burst in parallel; return the summed path log-lik.
+
+    Each burst writes a disjoint ``path[s:e]`` range and allocates its own
+    ``delta``/``psi`` work arrays (in :func:`_viterbi_burst`), so the ``prange``
+    over bursts has no shared-write hazard — the same partitioning the E-step
+    uses.  The per-burst path log-likelihoods reduce into ``total``.
+    """
+    n_bursts = offsets.shape[0] - 1
+    total = 0.0
+    for b in prange(n_bursts):
+        total += _viterbi_burst(
+            log_prior, log_obs, log_pow, streams, gap_slot,
+            offsets[b], offsets[b + 1], path,
+        )
+    return total
+
+
 def viterbi(model: H2mmModel, data: BurstPhotons) -> tuple[np.ndarray, float]:
     """Most-likely hidden-state path per photon plus the ICL criterion.
 
@@ -993,13 +1012,11 @@ def viterbi(model: H2mmModel, data: BurstPhotons) -> tuple[np.ndarray, float]:
     log_pow = np.log(np.clip(pow_cache, tiny, None))
 
     path = np.zeros(data.n_photons, dtype=np.int64)
-    path_ll = 0.0
-    offsets = data.burst_offsets
-    for b in range(data.n_bursts):
-        path_ll += _viterbi_burst(
-            log_prior, log_obs, log_pow, data.streams, data.gap_slot,
-            int(offsets[b]), int(offsets[b + 1]), path,
-        )
+    _sync_numba_threads()
+    path_ll = _viterbi_all(
+        log_prior, log_obs, log_pow, data.streams, data.gap_slot,
+        data.burst_offsets, path,
+    )
 
     icl = -2.0 * path_ll + model.n_free * math.log(max(data.n_photons, 1))
     return path, icl

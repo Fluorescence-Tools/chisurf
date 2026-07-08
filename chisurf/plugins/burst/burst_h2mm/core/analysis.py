@@ -98,7 +98,15 @@ def scan_states(
     tol: float = 1e-7,
     seed: int = 0,
 ) -> list[StateFit]:
-    """Fit a model for each requested state count and score BIC/ICL."""
+    """Fit a model for each requested state count and score BIC/ICL.
+
+    Each state count is fitted independently with ``n_restarts`` random
+    restarts.  (State-splitting / warm-starting the ``k``-state fit from the
+    ``(k-1)``-state solution was evaluated as a speed-up but rejected: a single
+    split cannot undo the state merging in the smaller fit, so it reliably
+    reached *worse* optima than random restarts on well-separated data — the
+    robust version needs full split+merge SMEM, which is out of scope here.)
+    """
     fits: list[StateFit] = []
     for k in state_counts:
         model = fit_states(

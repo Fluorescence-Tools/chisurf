@@ -32,6 +32,8 @@ The numba engine is tuned to run faster than the reference `H2MM_C` while stayin
 
 An opt-in `single_precision` mode runs the hot loop and caches in `float32` to roughly halve their bandwidth (≈1.9× at 3 states); it is explicitly **approximate** (does not meet the reference tolerance) for exploratory fits on very large datasets. The engine also re-pins `NUMBA_NUM_THREADS` to numba's launched pool size before compiling, so ChiSurf's startup thread-env rewrite cannot break a late (e.g. `float32`) kernel compile.
 
+**Viterbi** decoding is likewise parallelised over bursts (`_viterbi_all`, a `prange` mirror of the E-step), ≈3× faster than the former serial loop and called on every model-selection scan (for ICL) and final path. State-splitting warm-starts for the multi-state model-selection scan were evaluated and **rejected**: a single split cannot undo the state merging in the smaller fit, so it reached worse optima than random restarts on well-separated data — a robust version would need full split+merge SMEM.
+
 Each plugin is discovered through its `manifest.json` (`id`, `display_name`, `categories: [Spectroscopy, Single-Molecule]`) by the plugin infrastructure in `chisurf/core/plugin/`; `bid_to_analysis` is a code-only helper without a manifest. Plugins receive datasets, fits and project state through `PluginContext` / `ChiSurfAPI` rather than the legacy process globals, and their GUIs are rendered from AutoForm view schemes. The integrated windows (`burst_analysis`) build on the shared `NavigationPanelTool` shell.
 
 Planned work for `burst_background`: replace the current exponential-tail fit with
