@@ -391,13 +391,23 @@ def _estep(
     ``alpha``/``beta``/``scale``.  The per-thread partials are stored to shared
     buffers once per chunk and reduced serially.  Returns the total
     log-likelihood ``Σ_bursts Σ_n log(scale[n])``.
+
+    Transition statistics are *not* contracted against the full ``ρ`` tensor per
+    photon (that would cost ``O(N·n⁴)`` and stream ``rho_cache`` from memory once
+    per gap).  Instead each thread accumulates the per-slot weight
+    ``W[slot,k,m] = Σ_gaps α[n,k]·obs[m,y_{n+1}]·β[n+1,m]/c`` in ``O(N·n²)``; the
+    single ``ξ[i,j] = Σ_{slot,k,m} W[slot,k,m]·ρ[slot,k,m,i,j]`` contraction
+    (``O(n_slots·n⁴)``, ``n_slots`` = unique Δt ≪ N) is done once in the serial
+    reduction.  Mathematically identical, but the hot loop is ``O(n²)`` and
+    ``rho_cache`` is read only ``n_slots`` times.
     """
     n_states = prior.shape[0]
     n_streams = obs.shape[1]
     n_bursts = offsets.shape[0] - 1
+    n_slots = pow_cache.shape[0]
     nthreads = get_num_threads()
 
-    xi_p = np.zeros((nthreads, n_states, n_states))
+    W_p = np.zeros((nthreads, n_slots, n_states, n_states))
     gobs_p = np.zeros((nthreads, n_states, n_streams))
     prior_p = np.zeros((nthreads, n_states))
     ll_p = np.zeros(nthreads)
@@ -407,7 +417,7 @@ def _estep(
         b1 = (c + 1) * n_bursts // nthreads
         # Thread-local accumulators (own stack → no cross-core false sharing).
         w = np.empty(n_states)
-        xi_local = np.zeros((n_states, n_states))
+        W_local = np.zeros((n_slots, n_states, n_states))
         gobs_local = np.zeros((n_states, n_streams))
         prior_local = np.zeros(n_states)
         ll_local = 0.0
@@ -469,9 +479,10 @@ def _estep(
                     if n == s:
                         prior_local[i] += g
 
-            # ---- accumulate ξ (transitions) over each gap ----
-            # ``k,m`` outer so ρ[slot,k,m,:,:] is a contiguous (n,n) block and
-            # the ``i,j`` accumulation streams over memory.
+            # ---- accumulate the per-slot transition weight W[slot,k,m] ----
+            # ``ξ`` is not formed here; the ρ contraction is deferred to the
+            # serial reduction so the hot loop stays ``O(n²)`` per gap and
+            # ``rho_cache`` is untouched until then (see the docstring).
             for n in range(s, e - 1):
                 slot = gap_slot[n]
                 yn1 = streams[n + 1]
@@ -486,12 +497,9 @@ def _estep(
                     if ak == 0.0:
                         continue
                     for m in range(n_states):
-                        coef = ak * w[m]
-                        for i in range(n_states):
-                            for j in range(n_states):
-                                xi_local[i, j] += coef * rho_cache[slot, k, m, i, j]
+                        W_local[slot, k, m] += ak * w[m]
 
-        xi_p[c] = xi_local
+        W_p[c] = W_local
         gobs_p[c] = gobs_local
         prior_p[c] = prior_local
         ll_p[c] = ll_local
@@ -504,8 +512,20 @@ def _estep(
             prior_acc[i] += prior_p[c, i]
             for k in range(n_streams):
                 gamma_obs_acc[i, k] += gobs_p[c, i, k]
-            for j in range(n_states):
-                xi_acc[i, j] += xi_p[c, i, j]
+
+    # Reduce W across threads, then contract with ρ once per slot:
+    # ξ[i,j] = Σ_{slot,k,m} W[slot,k,m]·ρ[slot,k,m,i,j].
+    for slot in range(n_slots):
+        for k in range(n_states):
+            for m in range(n_states):
+                wkm = 0.0
+                for c in range(nthreads):
+                    wkm += W_p[c, slot, k, m]
+                if wkm == 0.0:
+                    continue
+                for i in range(n_states):
+                    for j in range(n_states):
+                        xi_acc[i, j] += wkm * rho_cache[slot, k, m, i, j]
 
     return loglik
 
