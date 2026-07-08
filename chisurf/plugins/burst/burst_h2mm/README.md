@@ -79,9 +79,27 @@ client = H2mmClient()
 result = client.compute(analysis_folder="…", settings={"max_states": 4})
 ```
 
+## Validation
+
+The Numba port is verified **numerically equivalent to the reference `H2MM_C`**
+library by A/B tests (`tests/test_ab_vs_h2mm_c.py`) on data that is simulated,
+carried through a real `tttrlib.TTTR` object, and extracted with the plugin's
+own pipeline. On identical `(indexes, times)` inputs the two implementations
+agree to floating-point precision:
+
+| A/B check | Agreement |
+|---|---|
+| Fixed-model forward log-likelihood | Δ ≈ 1e-9 |
+| Converged log-likelihood & BIC | Δ ≈ 1e-9 |
+| Converged π / trans / obs (2- and 3-state) | max Δ ≈ 1e-7 |
+| Viterbi photon-state path (~36k photons) | 100 % |
+
+The A/B suite skips automatically when `H2MM_C` is not installed (it is an
+optional, test-only comparison dependency — `pip install H2MM-C`). The engine
+is additionally validated standalone against simulated ground truth
+(recovery, monotonic log-likelihood, BIC selection — `tests/test_h2mm_engine.py`).
+
 ## Status
 
-Marked **experimental**: the Numba engine is validated against simulated data
-(ground-truth recovery, monotonic log-likelihood, BIC model selection — see
-`tests/`) but has not yet been cross-checked against `H2MM_C` on experimental
-measurements.
+Marked **experimental**: cross-checked against `H2MM_C` on simulated data as
+above; not yet validated on experimental measurements.
