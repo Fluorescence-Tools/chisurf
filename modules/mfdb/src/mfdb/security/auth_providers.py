@@ -79,58 +79,6 @@ class AuthProvider(Protocol):
         ...
 
 
-@dataclass
-class ProviderContext:
-    """Everything a provider factory needs to construct a provider.
-
-    Parameters
-    ----------
-    conn : sqlite3.Connection
-        Live MFDB connection (used by DB-backed providers such as ``local``).
-    config : dict or None
-        The active auth config; a provider reads its own block (e.g.
-        ``config["ldap"]``).
-    """
-
-    conn: sqlite3.Connection
-    config: dict[str, Any] | None = None
-
-
-#: Provider name → factory. New providers (OIDC, external-IdP, …) register here
-#: without touching the orchestrator — see :func:`register_provider`.
-ProviderFactory = Callable[["ProviderContext"], "AuthProvider"]
-_PROVIDER_FACTORIES: dict[str, ProviderFactory] = {}
-
-
-def register_provider(name: str, factory: ProviderFactory) -> None:
-    """Register (or replace) an auth-provider factory under *name*.
-
-    This is the sole extension point: adding an authentication backend is a class
-    plus one ``register_provider`` call — the orchestrator dispatches by name and
-    never needs editing.
-    """
-    _PROVIDER_FACTORIES[name.lower()] = factory
-
-
-def available_providers() -> tuple[str, ...]:
-    """Return the registered provider names, sorted."""
-    return tuple(sorted(_PROVIDER_FACTORIES))
-
-
-def build_provider(name: str | None, ctx: ProviderContext) -> AuthProvider:
-    """Construct the provider registered under *name* (default ``"local"``).
-
-    Raises :class:`~mfdb.security.auth.AuthError` for an unknown provider.
-    """
-    from mfdb.security.auth import AuthError
-
-    key = (name or (ctx.config or {}).get("auth_provider") or "local").lower()
-    factory = _PROVIDER_FACTORIES.get(key)
-    if factory is None:
-        raise AuthError(f"Unknown auth provider: {key!r} (available: {available_providers()})")
-    return factory(ctx)
-
-
 class LocalAuthProvider:
     """Authenticate against ``flr_sample_users.password_hash`` (PBKDF2-SHA256).
 
@@ -393,9 +341,3 @@ def _safe_unbind(conn: Any) -> None:
         conn.unbind()
     except Exception:
         pass
-
-
-# ---- built-in provider registration (extension point: register_provider) ----
-
-register_provider("local", lambda ctx: LocalAuthProvider(ctx.conn))
-register_provider("ldap", lambda ctx: LdapAuthProvider((ctx.config or {}).get("ldap") or {}))

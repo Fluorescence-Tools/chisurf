@@ -27,8 +27,8 @@ from mfdb.security.auth import (
 from mfdb.security.auth_providers import (
     AuthIdentity,
     AuthProvider,
-    ProviderContext,
-    build_provider,
+    LdapAuthProvider,
+    LocalAuthProvider,
 )
 
 #: Default active branch every user is attached to (the "main" branch).
@@ -43,12 +43,17 @@ def resolve_provider(
 ) -> AuthProvider:
     """Return the :class:`AuthProvider` for *name* (or the configured default).
 
-    Dispatches through the provider registry
-    (:func:`~mfdb.security.auth_providers.build_provider`), so new providers are
-    added by registration alone. ``"local"`` is always available; optional
-    dependencies (e.g. ``ldap3``) are imported only when their provider is built.
+    MFDB supports two providers: ``"local"`` (always available) and ``"ldap"``
+    (its optional ``ldap3`` dependency is imported only when authenticating).
+    Raises :class:`~mfdb.security.auth.AuthError` for any other name.
     """
-    return build_provider(name, ProviderContext(conn=conn, config=config))
+    prov = (name or (config or {}).get("auth_provider") or "local").lower()
+    if prov == "local":
+        return LocalAuthProvider(conn)
+    if prov == "ldap":
+        ldap_cfg = (config or {}).get("ldap") if config else None
+        return LdapAuthProvider(ldap_cfg or {})
+    raise AuthError(f"Unknown auth provider: {prov!r}")
 
 
 def _jit_enabled(config: dict[str, Any] | None) -> bool:
@@ -241,9 +246,7 @@ def login(
         # default provider. This never weakens security — LocalAuthProvider
         # rejects users homed on an external provider — it only prevents locking
         # out local accounts. An explicit provider still runs first.
-        identity = build_provider("local", ProviderContext(conn=conn, config=config)).authenticate(
-            user_id=user_id, password=password
-        )
+        identity = LocalAuthProvider(conn).authenticate(user_id=user_id, password=password)
     if identity is None:
         _record_failure(conn, user_id, "invalid_credentials")
         raise AuthError("Invalid credentials")

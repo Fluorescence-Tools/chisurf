@@ -28,15 +28,15 @@ untracked.
    `setups`/`parameters`/`branches` on write (samples/experiments/artifacts/operations
    already do); add **v1-dispatcher round-trip tests** (drive `mfdb.v1.*` through the
    dispatcher with a token, not just the api functions directly).
-3. **PRD-59 deferred providers:** OIDC/SAML SSO; eLabFTW external-IdP (ties into the
-   dropped **PRD-48** ELN work). All slot into the `AuthProvider` registry with no core edits.
-4. **Lower-priority cleanup** (see §4): drop `security/base.py` ABC; delete dead
+3. **Lower-priority cleanup** (see §4): drop `security/base.py` ABC; delete dead
    `CREATE_TABLES_SQL` text; `boundary_validation.py` lint debt (D102 ×); local-auth
    user-enumeration timing (deliberately skipped — low value).
 
+**No further auth providers are planned** beyond local + LDAP (no OIDC/SAML/external-IdP).
+
 **Auth architecture (for context):** `security/auth_providers.py` = `AuthProvider` protocol +
-registry (`register_provider`/`build_provider`) + `LocalAuthProvider`/`LdapAuthProvider`;
-`security/login.py` = `login()` orchestrator (authenticate → resolve/JIT-provision via
+`LocalAuthProvider`/`LdapAuthProvider`; `security/login.py` = `resolve_provider` (fixed local/ldap
+dispatch) + `login()` orchestrator (authenticate → resolve/JIT-provision via
 `flr_sample_users.auth_provider`/`external_id` → group reconcile → session). `api.py` threads
 `auth` through all `mfdb.v1.*` functions with graceful ACL enforcement. Concept: **PRD-59**
 (`okf/prds/prd-59.md`). Headless CLI: `mfdb-admin auth login|whoami|status`.
@@ -53,7 +53,7 @@ registry (`register_provider`/`build_provider`) + `LocalAuthProvider`/`LdapAuthP
   ```
   cd modules/mfdb && PYTHONPATH=src:../mfdb-admin/src $PY -m pytest tests -q
   ```
-  **Expected: 468 passed, 1 skipped.** Run after every change to the package.
+  **Expected: 466 passed, 1 skipped.** Run after every change to the package.
 - **ChiSurf-side integration suite** (also add `mfdb-admin/src`):
   ```
   PYTHONPATH="modules/mfdb/src:modules/mfdb-admin/src:modules/chinet:modules/imp-tricks/src:." \

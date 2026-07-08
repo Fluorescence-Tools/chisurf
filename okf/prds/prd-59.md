@@ -4,7 +4,7 @@ prd: "59"
 title: "PRD-59: Pluggable MFDB Authentication (local / LDAP)"
 description: A pluggable authentication layer for MFDB with local-password and LDAP/Active-Directory providers behind one interface, resolving to the existing Principal/session, with JIT provisioning and directory-group mapping.
 status: in-progress
-phase: "4 phases landed (local + LDAP + CLI + hardening/registry); OIDC/eLabFTW-IdP deferred"
+phase: "landed: local + LDAP providers, CLI, hardening; no further providers planned"
 resource: modules/mfdb/src/mfdb/security/
 tags: [prd, mfdb, auth, security, ldap]
 timestamp: '2026-07-08T00:00:00Z'
@@ -30,17 +30,17 @@ preserve the existing token→`Principal`→ACL machinery unchanged.
 A single provider interface, a configured default + always-available local fallback, and one
 orchestrator that owns identity resolution and session minting.
 
-## Provider interface + registry (`security/auth_providers.py`)
+## Provider interface (`security/auth_providers.py`)
 - `AuthIdentity(provider, external_id, email, display_name, is_admin, groups, managed_groups, raw)`
   — the neutral result of a successful authentication. `managed_groups` is the universe of MFDB
   groups the provider authoritatively controls (`groups ⊆ managed_groups`), enabling directory
   reconciliation.
 - `AuthProvider` `Protocol`: `authenticate(*, user_id, password) -> AuthIdentity | None` (returns
   `None` for bad credentials; raises only on misconfiguration).
-- **Extensibility is the design's core.** A provider **registry** (`register_provider(name, factory)`
-  / `build_provider(name, ProviderContext)` / `available_providers()`) is the sole extension point:
-  adding a backend (OIDC, external-IdP, …) is a class plus one registration call — the orchestrator
-  dispatches by name and never changes. Built-in `local`/`ldap` register themselves at import.
+- **Two providers, fixed dispatch.** `login.resolve_provider` returns `LocalAuthProvider` (default,
+  always available) or `LdapAuthProvider` by name/config; any other name raises. No other providers
+  are planned, so there is no open registration mechanism — the `AuthProvider` protocol is the seam
+  if one is ever needed.
 - `LocalAuthProvider` — verifies `flr_sample_users.password_hash` (PBKDF2-HMAC-SHA256, 100k) with the
   exact pre-existing admin / passwordless / no-hash rules, but **only for users homed on the local
   provider** (`auth_provider = 'local'`). This closes a critical hole: external (LDAP) users are
@@ -112,9 +112,9 @@ password, unknown user, service-bind-failure, filter-injection escaping, missing
 JIT end-to-end, env/resolver config), `tests/test_auth_cli.py` (headless `mfdb-admin auth`). The
 existing `test_mfdb_auth.py` / `test_mfdb_user_management.py` stay green (Local behaviour preserved).
 
-# Non-goals / deferred
-- OIDC / SAML browser-flow SSO (future provider; LDAP covers the institutional need).
-- eLabFTW / ELN integration and any external-IdP-via-API-key path (PRD-48 remains untouched).
+# Non-goals
+- **No further auth providers** beyond local + LDAP (no OIDC/SAML/external-IdP). eLabFTW/ELN
+  integration is out of scope (PRD-48 remains untouched).
 - Argon2/bcrypt hash upgrade; per-provider password-reset flows.
 
 # Relationships

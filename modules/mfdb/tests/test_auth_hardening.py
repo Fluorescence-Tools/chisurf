@@ -1,11 +1,10 @@
-"""Auth hardening: provider registry, throttle persistence, reconciliation (PRD-59 Phase 4)."""
+"""Auth hardening: provider dispatch, throttle persistence, reconciliation (PRD-59 Phase 4)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import mfdb.config as config
-import mfdb.security.auth_providers as ap
 import mfdb.security.login as login_mod
 import pytest
 from mfdb.repository import MFDatabase
@@ -14,10 +13,6 @@ from mfdb.security.auth_providers import (
     AuthIdentity,
     LdapAuthProvider,
     LocalAuthProvider,
-    ProviderContext,
-    available_providers,
-    build_provider,
-    register_provider,
 )
 
 
@@ -25,46 +20,18 @@ def _db(tmp_path: Path, name: str = "hard.db") -> MFDatabase:
     return MFDatabase(tmp_path / name)
 
 
-# ---- extensible provider registry ----
+# ---- provider dispatch (local + ldap only) ----
 
-def test_builtin_providers_registered() -> None:
-    assert "local" in available_providers()
-    assert "ldap" in available_providers()
-
-
-def test_register_custom_provider_and_build(tmp_path: Path) -> None:
-    class _Custom:
-        name = "custom"
-
-        def __init__(self, ctx):
-            self.ctx = ctx
-
-        def authenticate(self, *, user_id, password=""):
-            if password != "ok":
-                return None
-            return AuthIdentity(provider="custom", external_id=user_id, email=f"{user_id}@x")
-
-    # A new backend is added by registration alone — no core edit.
-    register_provider("custom", _Custom)
-    try:
-        assert "custom" in available_providers()
-        with _db(tmp_path) as db:
-            prov = build_provider("custom", ProviderContext(conn=db.conn, config=None))
-            assert prov.authenticate(user_id="z", password="ok").provider == "custom"
-            assert prov.authenticate(user_id="z", password="bad") is None
-
-            # login() dispatches through the registry to the custom provider (JIT).
-            result = login_mod.login(db.conn, provider="custom", user_id="newbie", password="ok")
-            assert result["ok"]
-            assert authenticate_token(db.conn, result["token"]).user_id == "newbie"
-    finally:
-        ap._PROVIDER_FACTORIES.pop("custom", None)
-
-
-def test_build_unknown_provider_raises(tmp_path: Path) -> None:
+def test_resolve_provider_dispatch(tmp_path: Path) -> None:
     with _db(tmp_path) as db:
+        assert isinstance(login_mod.resolve_provider("local", conn=db.conn), LocalAuthProvider)
+        assert isinstance(login_mod.resolve_provider(None, conn=db.conn), LocalAuthProvider)
+        assert isinstance(
+            login_mod.resolve_provider("ldap", conn=db.conn, config={"ldap": {"base_dn": "dc=x"}}),
+            LdapAuthProvider,
+        )
         with pytest.raises(AuthError, match="Unknown auth provider"):
-            build_provider("nope", ProviderContext(conn=db.conn))
+            login_mod.resolve_provider("saml", conn=db.conn)
 
 
 # ---- throttle persistence across RPC connections (the security fix) ----

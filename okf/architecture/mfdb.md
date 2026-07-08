@@ -91,8 +91,9 @@ not a flat module list. Top level holds only the facade/entry surface —
 - `lifecycle/` — state/events/audit: `lifecycle`, `event_log`, `events`, `staleness`.
 - `security/` — identity & access: `auth` (Principal, token→principal, ACL/permissions,
   sessions), `credentials`, `session`, `boundary_validation`, `base`, plus the
-  **pluggable authentication** layer (PRD-59): `auth_providers` (`AuthProvider` protocol +
-  `LocalAuthProvider` / `LdapAuthProvider`) and `login` (the `login()` orchestrator that
+  **provider-based authentication** layer (PRD-59, local + LDAP only): `auth_providers`
+  (`AuthProvider` protocol + `LocalAuthProvider` / `LdapAuthProvider`) and `login` (the
+  `login()` orchestrator that
   authenticates → resolves/JIT-provisions the MFDB user via `flr_sample_users.auth_provider`/
   `external_id` → maps directory groups → mints the session). The `mfdb.security.auth.login`
   RPC and `mfdb-admin auth` CLI both route through `login()`; `ldap3` is an optional/lazy
