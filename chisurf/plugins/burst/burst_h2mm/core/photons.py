@@ -10,8 +10,8 @@ the arrays the Numba engine consumes.
 from __future__ import annotations
 
 import pathlib
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -35,11 +35,11 @@ class StreamDef:
     """
 
     name: str
-    channels: List[int]
-    micro_time_ranges: List[Tuple[int, int]] = field(default_factory=list)
+    channels: list[int]
+    micro_time_ranges: list[tuple[int, int]] = field(default_factory=list)
 
 
-def default_streams() -> List[StreamDef]:
+def default_streams() -> list[StreamDef]:
     """Return the canonical 2-colour donor/acceptor stream definition."""
     return [
         StreamDef("green", [0, 8], []),
@@ -47,9 +47,9 @@ def default_streams() -> List[StreamDef]:
     ]
 
 
-def streams_from_dicts(items: Sequence[dict]) -> List[StreamDef]:
+def streams_from_dicts(items: Sequence[dict]) -> list[StreamDef]:
     """Build :class:`StreamDef` objects from JSON-compatible dictionaries."""
-    out: List[StreamDef] = []
+    out: list[StreamDef] = []
     for it in items:
         ranges = [(int(a), int(b)) for a, b in (it.get("micro_time_ranges") or [])]
         out.append(
@@ -84,11 +84,11 @@ def _stream_index_arrays(
 
 def extract_burst_photons(
     df: pd.DataFrame,
-    tttrs: Dict[str, "tttrlib.TTTR"],
+    tttrs: dict[str, tttrlib.TTTR],
     streams: Sequence[StreamDef],
     time_scale: int = 1,
     min_photons: int = 3,
-) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Slice bursts into per-burst ``(times, stream_index)`` arrays.
 
     Parameters
@@ -115,7 +115,7 @@ def extract_burst_photons(
     col_fp = df.columns.get_loc("First Photon")
     col_lp = df.columns.get_loc("Last Photon")
 
-    cache: Dict[str, Tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    cache: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
     for ff, tttr in tttrs.items():
         cache[ff] = (
             np.asarray(tttr.macro_times),
@@ -123,8 +123,8 @@ def extract_burst_photons(
             np.asarray(tttr.micro_times),
         )
 
-    times_out: List[np.ndarray] = []
-    streams_out: List[np.ndarray] = []
+    times_out: list[np.ndarray] = []
+    streams_out: list[np.ndarray] = []
     for row in df.itertuples(index=False, name=None):
         ff = row[col_ff]
         if ff not in cache:
@@ -159,7 +159,7 @@ def extract_burst_photons(
 
 def bursts_from_dataframe(
     df: pd.DataFrame,
-    tttrs: Dict[str, "tttrlib.TTTR"],
+    tttrs: dict[str, tttrlib.TTTR],
     streams: Sequence[StreamDef],
     time_scale: int = 1,
     min_photons: int = 3,
@@ -187,10 +187,10 @@ def load_tttrs_for_dataframe(
     df: pd.DataFrame,
     data_dir: str | pathlib.Path,
     file_type: str = "SPC-130",
-) -> Dict[str, "tttrlib.TTTR"]:
+) -> dict[str, tttrlib.TTTR]:
     """Load the TTTR object referenced by each unique ``First File`` value."""
     data_dir = pathlib.Path(data_dir)
-    tttrs: Dict[str, "tttrlib.TTTR"] = {}
+    tttrs: dict[str, tttrlib.TTTR] = {}
     for ff in df["First File"].unique():
         if ff in tttrs:
             continue

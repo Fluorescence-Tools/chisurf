@@ -41,8 +41,8 @@ so both are obtained by binary exponentiation of the base pair
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
 
 import numpy as np
 
@@ -63,7 +63,7 @@ except Exception:  # pragma: no cover - exercised only without numba
         return _wrap
 
     def prange(*args):  # type: ignore
-        """Serial ``prange`` fallback used when numba is unavailable."""
+        """Return a serial range (``prange`` fallback without numba)."""
         return range(*args)
 
 
@@ -126,14 +126,14 @@ class H2mmModel:
             return np.inf
         return -2.0 * self.loglik + self.n_free * math.log(self.n_phot)
 
-    def normalize(self) -> "H2mmModel":
+    def normalize(self) -> H2mmModel:
         """Renormalise ``prior``, and the rows of ``trans`` and ``obs``."""
         self.prior = _row_normalize(self.prior.reshape(1, -1)).ravel()
         self.trans = _row_normalize(self.trans)
         self.obs = _row_normalize(self.obs)
         return self
 
-    def copy(self) -> "H2mmModel":
+    def copy(self) -> H2mmModel:
         """Return a deep copy of the model."""
         return H2mmModel(
             self.prior.copy(),
@@ -224,8 +224,8 @@ def prepare_bursts(
     if len(times) != len(streams):
         raise ValueError("times and streams must have the same number of bursts")
 
-    kept_times: List[np.ndarray] = []
-    kept_streams: List[np.ndarray] = []
+    kept_times: list[np.ndarray] = []
+    kept_streams: list[np.ndarray] = []
     for t, s in zip(times, streams):
         t = np.asarray(t).astype(np.int64, copy=False)
         s = np.asarray(s).astype(np.int32, copy=False)
@@ -244,7 +244,7 @@ def prepare_bursts(
     streams_concat = np.concatenate(kept_streams).astype(np.int32)
 
     # Inter-photon Δt per photon (0 at the last photon of each burst).
-    all_dt: List[np.ndarray] = []
+    all_dt: list[np.ndarray] = []
     for t in kept_times:
         if t.shape[0] > 1:
             all_dt.append(np.diff(t))
@@ -631,7 +631,7 @@ def _viterbi_burst(log_prior, log_obs, log_pow, streams, gap_slot, s, e, path):
     return best
 
 
-def viterbi(model: H2mmModel, data: BurstPhotons) -> Tuple[np.ndarray, float]:
+def viterbi(model: H2mmModel, data: BurstPhotons) -> tuple[np.ndarray, float]:
     """Most-likely hidden-state path per photon plus the ICL criterion.
 
     Parameters
@@ -730,7 +730,7 @@ def simulate_bursts(
     model: H2mmModel,
     burst_times: Sequence[np.ndarray],
     seed: int | None = None,
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """Monte-Carlo sample photon streams from a model along given time axes.
 
     The hidden chain is advanced tick-by-tick with the one-step ``trans``
@@ -753,7 +753,7 @@ def simulate_bursts(
     """
     rng = np.random.default_rng(seed)
     n_states = model.n_states
-    streams_out: List[np.ndarray] = []
+    streams_out: list[np.ndarray] = []
     for t in burst_times:
         t = np.asarray(t).astype(np.int64)
         m = t.shape[0]

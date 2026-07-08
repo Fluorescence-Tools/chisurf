@@ -15,10 +15,13 @@ The `burst/` group covers the confocal single-molecule FRET (smFRET) burst workf
 | `burst_selection` | Burst Selection | Selects photon bursts from TTTR data and computes per-burst FRET indicators. |
 | `burst_background` | Burst Background Estimation | Estimates detector background rates from TTTR burst data. |
 | `burst_bva` | BVA | Burst Variance Analysis — tests whether FRET-efficiency spread exceeds shot-noise (dynamics detection). |
+| `burst_h2mm` | H2MM | Photon-by-photon Hidden Markov Model — resolves sub-burst FRET-state dynamics on the microsecond scale via a self-contained numba engine, with BIC/ICL state selection and Viterbi dwell/transition analysis. |
 | `burst_mle_analysis` | Burst MLE | Maximum-likelihood fluorescence-lifetime analysis of single-molecule bursts. |
 | `burst_fcs_correlator` | Burst-wise FCS | Computes correlation functions per burst from Burst-ID (`.bst`)/BUR files. |
 | `burst_browser` | Burst Browser | Inspects burstwise analysis tables and plots. |
 | `bid_to_analysis` | BID→Analysis | Converts Seidel-style BID (Burst ID) files into a burstwise analysis folder (BUR/Info/MTI, optional HDF5/SL5) that ChiSurf and companion tools consume. |
+
+`burst_h2mm` follows the client-server standard: a Qt-free numba engine (`core/h2mm.py` — cached `A^Δt` and transition-count `ρ` tensors, scaled forward-backward, Baum-Welch EM, Viterbi+ICL) under a database-free RPC service (`burst_h2mm.jobs.compute`) with a thin `H2mmClient` GUI, and it embeds as step 6 of the `burst_analysis` shell, inheriting the burst folder and channel definitions from the shared workflow context.
 
 Each plugin is discovered through its `manifest.json` (`id`, `display_name`, `categories: [Spectroscopy, Single-Molecule]`) by the plugin infrastructure in `chisurf/core/plugin/`; `bid_to_analysis` is a code-only helper without a manifest. Plugins receive datasets, fits and project state through `PluginContext` / `ChiSurfAPI` rather than the legacy process globals, and their GUIs are rendered from AutoForm view schemes. The integrated windows (`burst_analysis`) build on the shared `NavigationPanelTool` shell.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, List, Tuple
+from typing import Any
 
 
 @dataclass
@@ -21,8 +21,8 @@ class StreamSettings:
     """
 
     name: str = "stream"
-    channels: List[int] = field(default_factory=list)
-    micro_time_ranges: List[Tuple[int, int]] = field(default_factory=list)
+    channels: list[int] = field(default_factory=list)
+    micro_time_ranges: list[tuple[int, int]] = field(default_factory=list)
 
 
 @dataclass
@@ -56,7 +56,7 @@ class H2mmSettings:
         Base RNG seed for reproducible restarts.
     """
 
-    streams: List[StreamSettings] = field(
+    streams: list[StreamSettings] = field(
         default_factory=lambda: [
             StreamSettings("green", [0, 8], []),
             StreamSettings("red", [1, 9], []),
@@ -74,7 +74,7 @@ class H2mmSettings:
     seed: int = 0
 
     @property
-    def state_counts(self) -> List[int]:
+    def state_counts(self) -> list[int]:
         """The list of state counts to scan."""
         return list(range(int(self.min_states), int(self.max_states) + 1))
 
@@ -133,14 +133,14 @@ class H2mmResult:
 
     n_states: int = 0
     criterion: str = "bic"
-    scan: List[StateFitSummary] = field(default_factory=list)
-    prior: List[float] = field(default_factory=list)
-    trans: List[List[float]] = field(default_factory=list)
-    obs: List[List[float]] = field(default_factory=list)
-    trans_rates: List[List[float]] = field(default_factory=list)
-    fret: List[float] = field(default_factory=list)
-    populations: List[float] = field(default_factory=list)
-    dwell_mean_s: List[float] = field(default_factory=list)
+    scan: list[StateFitSummary] = field(default_factory=list)
+    prior: list[float] = field(default_factory=list)
+    trans: list[list[float]] = field(default_factory=list)
+    obs: list[list[float]] = field(default_factory=list)
+    trans_rates: list[list[float]] = field(default_factory=list)
+    fret: list[float] = field(default_factory=list)
+    populations: list[float] = field(default_factory=list)
+    dwell_mean_s: list[float] = field(default_factory=list)
     n_transitions: int = 0
     n_bursts: int = 0
     n_photons: int = 0

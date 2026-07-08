@@ -8,8 +8,8 @@ Viterbi state paths, dwell times, and transition tables.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
@@ -69,11 +69,11 @@ class H2mmAnalysis:
     """
 
     best: StateFit
-    scan: List[StateFit]
+    scan: list[StateFit]
     fret: np.ndarray
     populations: np.ndarray
-    dwell_times: Dict[int, np.ndarray]
-    transitions: List[Transition]
+    dwell_times: dict[int, np.ndarray]
+    transitions: list[Transition]
     trans_rates: np.ndarray
     base_time_s: float
     n_photons: int
@@ -97,9 +97,9 @@ def scan_states(
     max_iter: int = 500,
     tol: float = 1e-7,
     seed: int = 0,
-) -> List[StateFit]:
+) -> list[StateFit]:
     """Fit a model for each requested state count and score BIC/ICL."""
-    fits: List[StateFit] = []
+    fits: list[StateFit] = []
     for k in state_counts:
         model = fit_states(
             data, n_states=int(k), n_restarts=n_restarts,
@@ -122,14 +122,14 @@ def _dwells_and_transitions(
     model: H2mmModel,
     data: BurstPhotons,
     fret: np.ndarray,
-) -> Tuple[Dict[int, List[int]], List[Transition], np.ndarray]:
+) -> tuple[dict[int, list[int]], list[Transition], np.ndarray]:
     """Derive dwell times, transitions, and photon populations via Viterbi."""
     path, _ = viterbi(model, data)
     n_states = model.n_states
     offsets = data.burst_offsets
 
-    dwells: Dict[int, List[int]] = {s: [] for s in range(n_states)}
-    transitions: List[Transition] = []
+    dwells: dict[int, list[int]] = {s: [] for s in range(n_states)}
+    transitions: list[Transition] = []
     populations = np.zeros(n_states, dtype=np.float64)
 
     # We need macro times to measure dwell durations; reconstruct per burst
