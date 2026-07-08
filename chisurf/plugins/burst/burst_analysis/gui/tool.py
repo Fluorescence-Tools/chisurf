@@ -278,6 +278,16 @@ def _burst_mle(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     return widget
 
 
+def _burst_h2mm(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
+    """Create the H2MM panel."""
+    from chisurf.plugins.burst.burst_h2mm.gui.tool import H2mmTool
+
+    widget = H2mmTool(parent=parent, embedded=True)
+    _hide_dock_tab_by_name(widget, "Channel Definitions")
+    _bind(parent, "h2mm", widget)
+    return widget
+
+
 def _burst_browser(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
     """Create the burst browser panel."""
     from chisurf.plugins.burst.burst_browser import BurstBrowserWidget
@@ -370,7 +380,14 @@ BURST_PANELS = [
         "role": "mle",
     },
     {
-        "name": "6. Browser",
+        "name": "6. H2MM",
+        "icon": "🔀",
+        "description": "Resolve sub-burst FRET dynamics with photon-by-photon HMM.",
+        "factory": _burst_h2mm,
+        "role": "h2mm",
+    },
+    {
+        "name": "7. Browser",
         "icon": "📋",
         "description": "Inspect the current burst workflow result.",
         "factory": _burst_browser,
@@ -611,6 +628,8 @@ class BurstAnalysisTool(NavigationPanelTool):
             self._apply_context_to_bva(widget)
         elif role == "mle":
             self._apply_context_to_mle(widget)
+        elif role == "h2mm":
+            self._apply_context_to_h2mm(widget)
         elif role == "browser":
             self._apply_context_to_browser(widget)
         elif role == "background":
@@ -641,6 +660,22 @@ class BurstAnalysisTool(NavigationPanelTool):
 
     def _apply_context_to_bva(self, widget: QtWidgets.QWidget) -> None:
         """Use upstream burst folder and channels in BVA."""
+        settings = self.workflow_context.channel_settings
+        detector_page = getattr(widget, "detector_page", None)
+        if settings and detector_page is not None:
+            try:
+                detector_page.load_data_into_tables(settings)
+                widget._refresh_detector_combos()
+            except Exception:
+                pass
+        if self.workflow_context.burst_folder is not None:
+            try:
+                widget._set_folder(str(self.workflow_context.burst_folder))
+            except Exception:
+                pass
+
+    def _apply_context_to_h2mm(self, widget: QtWidgets.QWidget) -> None:
+        """Use upstream burst folder and channels in H2MM."""
         settings = self.workflow_context.channel_settings
         detector_page = getattr(widget, "detector_page", None)
         if settings and detector_page is not None:

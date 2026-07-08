@@ -1,0 +1,41 @@
+{
+  "id": "burst_h2mm",
+  "version": "1.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:H2MM",
+  "description": "Photon-by-photon Hidden Markov Model (H2MM) analysis of single-molecule FRET burst data, with BIC/ICL state selection and Viterbi dwell/transition analysis.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "state_namespace": "burst_h2mm",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "burst_h2mm_window"
+    }
+  },
+  "experimental": true,
+  "experimental_message": "H2MM is a numba re-implementation and has not yet been cross-validated against H2MM_C on experimental data.",
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_h2mm.gui.tool:H2mmTool",
+    "cli": "h2mm=chisurf.plugins.burst.burst_h2mm.cli.main:cli",
+    "services": "chisurf.plugins.burst.burst_h2mm.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "burst_h2mm.jobs.compute",
+      "summary": "Fit photon-by-photon HMM (H2MM) models over burst data.",
+      "long_running": true
+    },
+    {
+      "name": "burst_h2mm.workflow.prepare",
+      "summary": "Resolve H2MM settings and folders from a burst workflow context.",
+      "long_running": false
+    },
+    {
+      "name": "burst_h2mm.contract.describe",
+      "summary": "Return the H2MM workflow contract.",
+      "long_running": false
+    }
+  ],
+  "menu_hidden": true
+}
