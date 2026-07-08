@@ -16,11 +16,12 @@ def test_burst_workflow_panel_order() -> None:
         "🔎 3. Burst Selection",
         "📊 4. BVA",
         "🎯 5. MLE-Lifetime",
-        "📋 6. Browser",
+        "🔀 6. H2MM",
+        "📋 7. Browser",
         "────────",
         "🌙 Background",
     ]
-    assert BURST_PANELS[6]["separator"] is True
+    assert BURST_PANELS[7]["separator"] is True
 
 
 def test_workflow_context_payload_is_json_ready(tmp_path: Path) -> None:
