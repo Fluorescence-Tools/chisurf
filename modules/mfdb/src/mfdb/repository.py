@@ -328,32 +328,6 @@ class MFDatabase(
             raw = self._os.path.join(self._os.path.dirname(self.db_path), raw)
         return self._os.path.normpath(raw)
 
-    # -- CiteULike / citations --
-
-    def get_citations(self, citeulike_ids=None):
-        if citeulike_ids is None:
-            return self.conn.execute("SELECT * FROM citeulike ORDER BY authors, title").fetchall()
-        placeholders = ",".join("?" for _ in citeulike_ids)
-        return self.conn.execute(f"SELECT * FROM citeulike WHERE citeulike_id IN ({placeholders}) ORDER BY authors, title", citeulike_ids).fetchall()
-
-    def add_citation(self, citeulike_id, title, authors, journal=None, year=None, volume=None, number=None, pages=None, doi=None, pmid=None, pmcid=None, details=None):
-        if not citeulike_id:
-            raise ValueError("citeulike_id is required")
-        with self.conn:
-            # No PK/UNIQUE on citeulike_id in the reconciled schema, so the old
-            # INSERT OR REPLACE degraded to a plain insert; dao.insert makes that
-            # explicit (a true upsert-by-id would need a schema constraint first).
-            self.dao.insert("citeulike", {
-                "citeulike_id": citeulike_id, "title": title, "authors": authors,
-                "journal": journal, "year": year, "volume": volume, "number": number,
-                "pages": pages, "doi": doi, "pmid": pmid, "pmcid": pmcid,
-                "details": details, "deleted_at": None,
-            })
-
-    def delete_citation(self, citeulike_id):
-        with self.conn:
-            self.dao.soft_delete("citeulike", citeulike_id, pk_column="citeulike_id", deleted_at=_utc_now())
-
     # -- entities --
 
     # -- mfdb operation management --
@@ -396,52 +370,6 @@ class MFDatabase(
             target_id=entity_id,
             limit=limit,
         )
-
-    # -- products / standards --
-
-    def get_product_categories(self):
-        return self.conn.execute("SELECT * FROM product_categories ORDER BY name").fetchall()
-
-    def add_product_category(self, name, description=None, details=None):
-        with self.conn:
-            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
-            self.dao.insert("product_categories", {
-                "name": name, "description": description, "details": details, "deleted_at": None,
-            })
-
-    def get_products(self, category_id=None, supplier_id=None):
-        query = "SELECT * FROM products WHERE 1=1"
-        params = []
-        if category_id:
-            query += " AND category_id = ?"
-            params.append(category_id)
-        if supplier_id:
-            query += " AND supplier_id = ?"
-            params.append(supplier_id)
-        query += " ORDER BY product_id"
-        return self.conn.execute(query, params).fetchall()
-
-    def add_product(self, product_id, name, catalog_number=None, supplier_id=None, category_id=None, cas_number=None, description=None, details=None):
-        with self.conn:
-            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
-            self.dao.insert("products", {
-                "product_id": product_id, "name": name, "catalog_number": catalog_number,
-                "supplier_id": supplier_id, "category_id": category_id, "cas_number": cas_number,
-                "description": description, "details": details, "deleted_at": None,
-            })
-
-    def get_standards(self):
-        return self.conn.execute("SELECT * FROM standards ORDER BY name").fetchall()
-
-    def add_standard(self, standard_id, name, probe_id=None, reference_id=None, certification_details=None, valid_until=None, description=None, details=None):
-        with self.conn:
-            # No PK/UNIQUE in the reconciled schema -> plain insert (see add_citation).
-            self.dao.insert("standards", {
-                "standard_id": standard_id, "name": name, "probe_id": probe_id,
-                "reference_id": reference_id, "certification_details": certification_details,
-                "valid_until": valid_until, "description": description, "details": details,
-                "deleted_at": None,
-            })
 
     # -- flr sample / experiment (read-only wrappers for Core API) --
 
