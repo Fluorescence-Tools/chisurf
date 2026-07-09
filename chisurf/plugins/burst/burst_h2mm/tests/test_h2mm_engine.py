@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from chisurf.plugins.burst.burst_h2mm.core import h2mm
+from chisurf.plugins.burst.burst_h2mm.core import analysis, h2mm
 
 
 def _make_ground_truth() -> h2mm.H2mmModel:
@@ -155,6 +155,24 @@ def test_eig_build_declines_on_defective_matrix():
     # exercised by _fill_caches without error.
     h2mm._fill_caches(trans, unique_dt, pow_c, rho_c, prefer_eig=True)
     assert np.all(np.isfinite(pow_c)) and np.all(np.isfinite(rho_c))
+
+
+def test_scan_early_stopping_matches_full_scan():
+    """`patience` stops the scan past the BIC minimum but keeps the selection."""
+    gt = _make_ground_truth()  # well-separated 2-state
+    times, streams = _simulate(gt, n_bursts=400, burst_len=80, seed=61)
+    data = h2mm.prepare_bursts(times, streams, n_streams=2)
+
+    full = analysis.scan_states(data, (1, 2, 3, 4), n_restarts=1, max_iter=200)
+    early = analysis.scan_states(
+        data, (1, 2, 3, 4), n_restarts=1, max_iter=200, criterion="bic", patience=1
+    )
+
+    # Early stop fits no more counts than the full scan...
+    assert len(early) <= len(full)
+    # ...and both select the same (true) state count by BIC.
+    assert min(full, key=lambda f: f.bic).n_states == 2
+    assert min(early, key=lambda f: f.bic).n_states == 2
 
 
 def test_single_precision_lands_near_double():
