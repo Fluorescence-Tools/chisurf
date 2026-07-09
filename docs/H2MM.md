@@ -129,6 +129,17 @@ print(ana.best.n_states, ana.fret)
 path, icl = h2mm.viterbi(ana.best.model, data)               # per-photon states
 ```
 
-See `examples/notebooks/H2MM_01_Simulated_smFRET.ipynb` for an end-to-end
-tutorial that simulates smFRET photons with `tttrlib`, fits H2MM, compares the
-engines, and exports the ndX tables.
+The plugin ships its own examples under
+`chisurf/plugins/burst/burst_h2mm/examples/`:
+
+* `H2MM_01_Simulated_smFRET.ipynb` — an end-to-end tutorial that simulates smFRET
+  photons with `tttrlib`, fits H2MM, compares the engines, and exports the ndX
+  tables;
+* `generate_example_data.py` — writes a **real, loadable** example dataset (a
+  Photon-HDF5 `tttrlib` file + a `.bur` burst table) so the GUI and CLI can be
+  run on genuine files:
+
+  ```bash
+  python -m chisurf.plugins.burst.burst_h2mm.examples.generate_example_data --out ./h2mm_example
+  h2mm compute ./h2mm_example --file-type auto
+  ```
