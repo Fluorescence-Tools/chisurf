@@ -91,10 +91,11 @@ def run_analysis(
         StreamDef(s.name, list(s.channels), [tuple(r) for r in s.micro_time_ranges])
         for s in settings.streams
     ]
-    data = bursts_from_dataframe(
+    data, meta = bursts_from_dataframe(
         df, tttrs, stream_defs,
         time_scale=int(settings.time_scale),
         min_photons=int(settings.min_photons),
+        return_meta=True,
     )
 
     acceptor = 1 if len(stream_defs) > 1 else 0
@@ -109,11 +110,59 @@ def run_analysis(
         max_iter=int(settings.max_iter),
         tol=float(settings.tol),
         seed=int(settings.seed),
+        engine=settings.engine,
+        surrogates=_load_surrogates(settings),
+        refine_iters=int(settings.refine_iters),
+        patience=settings.patience,
     )
 
     result = _result_from_analysis(ana, settings)
     bundle = H2mmAnalysisBundle(analysis=ana, data=data, settings=settings)
+    bundle.meta = meta
     return result, bundle
+
+
+def _load_surrogates(settings: H2mmSettings) -> dict[int, object] | None:
+    """Load a trained surrogate for the surrogate engines (keyed by its n_states)."""
+    if not getattr(settings, "surrogate_path", "") or "surrogate" not in settings.engine:
+        return None
+    from ..core.surrogate import SurrogateModel
+
+    sm = SurrogateModel.load(settings.surrogate_path)
+    return {int(sm.n_states): sm}
+
+
+def write_result_tables(
+    result: H2mmResult,
+    bundle: H2mmAnalysisBundle,
+    out_dir: pathlib.Path,
+) -> None:
+    """Write the JSON summary plus the ndX-openable per-photon/per-burst tables.
+
+    Records every written path in ``result.output_paths``.
+    """
+    from ..core.export import build_tables, write_csv, write_hdf5
+    from ..core.h2mm import viterbi
+
+    out_dir = pathlib.Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    out_path = out_dir / "h2mm_result.json"
+    with open(out_path, "w") as fh:
+        json.dump(result.to_dict(), fh, indent=2)
+    result.output_paths["result_json"] = str(out_path)
+
+    meta = getattr(bundle, "meta", None)
+    if meta is None or not getattr(bundle.settings, "write_photons", True):
+        return
+    ana = bundle.analysis
+    path, _ = viterbi(ana.best.model, bundle.data)
+    tables = build_tables(bundle.data, meta, path, ana.fret, ana.base_time_s)
+    try:
+        result.output_paths["photons_hdf5"] = write_hdf5(tables.photons, out_dir / "h2mm_photons.h5")
+    except Exception:  # pragma: no cover - pytables optional; CSV is the fallback
+        result.output_paths["photons_csv"] = write_csv(tables.photons, out_dir / "h2mm_photons.csv")
+    result.output_paths["bursts_csv"] = write_csv(tables.bursts, out_dir / "h2mm_bursts.csv")
 
 
 def _result_from_analysis(ana, settings: H2mmSettings) -> H2mmResult:
@@ -173,7 +222,7 @@ def compute_handler(
         resolved_folder = _resolve_analysis_folder(analysis_folder, files, workflow_context)
         h2mm_settings = _settings_from_workflow(settings, workflow_context)
 
-        result, _bundle = run_analysis(
+        result, bundle = run_analysis(
             h2mm_settings,
             analysis_folder=resolved_folder,
             files=files,
@@ -181,12 +230,7 @@ def compute_handler(
         )
 
         if write_output and resolved_folder is not None:
-            out_dir = pathlib.Path(resolved_folder) / "h2mm"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            out_path = out_dir / "h2mm_result.json"
-            with open(out_path, "w") as fh:
-                json.dump(result.to_dict(), fh, indent=2)
-            result.output_paths["result_json"] = str(out_path)
+            write_result_tables(result, bundle, pathlib.Path(resolved_folder) / "h2mm")
 
         payload = to_jsonable(result)
         payload["analysis_folder"] = str(resolved_folder) if resolved_folder else None

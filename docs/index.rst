@@ -15,6 +15,7 @@ Welcome to chisurf's documentation!
    client_server_agent_entrypoint
    proxy_rpc_design
    plugins
+   H2MM
    user_models
    parameter_registry_tools
    chisurf_settings

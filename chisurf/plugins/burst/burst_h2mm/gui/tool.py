@@ -38,6 +38,8 @@ from chisurf.gui.widgets.wizard import DetectorWizardPage
 
 from ..api.models import H2mmSettings, StreamSettings
 from ..backend.services import run_analysis
+from ..core.engines import ENGINE_LABELS
+from ..core.engines import ENGINES as H2mmEngines
 
 _STATE_COLORS = [
     "#4e79a7", "#f28e2b", "#59a14f", "#e15759",
@@ -216,13 +218,30 @@ class H2mmTool(QMainWindow):
         self.sb_max_states.setValue(3)
         self.cb_criterion = QComboBox()
         self.cb_criterion.addItems(["bic", "icl"])
+        self.sb_patience = QSpinBox()
+        self.sb_patience.setRange(-1, 8)
+        self.sb_patience.setValue(-1)
+        self.sb_patience.setSpecialValueText("off (scan all)")
+        self.sb_patience.setToolTip(
+            "Early-stop the state-count scan once the criterion rises "
+            "(safe ~1.6× faster). 'off' fits every state count."
+        )
         f.addRow("Min states:", self.sb_min_states)
         f.addRow("Max states:", self.sb_max_states)
         f.addRow("Criterion:", self.cb_criterion)
+        f.addRow("Scan patience:", self.sb_patience)
         layout.addWidget(group)
 
         opt = QGroupBox("Optimisation")
         of = QFormLayout(opt)
+        self.cb_engine = QComboBox()
+        for _e in H2mmEngines:
+            self.cb_engine.addItem(ENGINE_LABELS.get(_e, _e), _e)
+        self.cb_engine.setToolTip(
+            "Compute engine: exact EM, a fast float32 EM, or the amortised "
+            "neural surrogate (fastest, approximate)."
+        )
+        of.addRow("Engine:", self.cb_engine)
         self.sb_restarts = QSpinBox()
         self.sb_restarts.setRange(1, 20)
         self.sb_restarts.setValue(2)
@@ -322,6 +341,7 @@ class H2mmTool(QMainWindow):
         return [_stream(self.cb_donor.currentText()), _stream(self.cb_acceptor.currentText())]
 
     def _gather_settings(self) -> H2mmSettings:
+        patience = self.sb_patience.value()
         return H2mmSettings(
             streams=self._detector_streams(),
             min_states=self.sb_min_states.value(),
@@ -332,6 +352,8 @@ class H2mmTool(QMainWindow):
             min_photons=self.sb_min_photons.value(),
             time_scale=self.sb_time_scale.value(),
             file_type=self.file_type,
+            engine=self.cb_engine.currentData() or "em",
+            patience=None if patience < 0 else patience,
         )
 
     # ── run ──────────────────────────────────────────────────────────

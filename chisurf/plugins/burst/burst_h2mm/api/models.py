@@ -54,6 +54,22 @@ class H2mmSettings:
         tttrlib container name (e.g. ``"SPC-130"`` or ``"auto"``).
     seed : int
         Base RNG seed for reproducible restarts.
+    engine : str
+        Compute engine for the fits: ``"em"`` (exact, default),
+        ``"em-float32"`` (fast/approximate), ``"surrogate"`` (amortised NN,
+        fastest/approximate), or ``"surrogate-refine"``.
+    refine_iters : int
+        EM polish maps for the ``surrogate-refine`` engine.
+    patience : int or None
+        If set, early-stop the state-count scan once the criterion has risen for
+        ``patience + 1`` consecutive counts (safe ~1.6× faster scan). ``None``
+        scans every state count.
+    surrogate_path : str
+        Path to a trained surrogate (``.pkl``) for the surrogate engines; empty
+        falls back to exact EM.
+    write_photons : bool
+        Also write the per-photon Viterbi-state table (ndX-openable) alongside
+        the JSON summary.
     """
 
     streams: list[StreamSettings] = field(
@@ -72,6 +88,11 @@ class H2mmSettings:
     min_photons: int = 5
     file_type: str = "SPC-130"
     seed: int = 0
+    engine: str = "em"
+    refine_iters: int = 20
+    patience: int | None = None
+    surrogate_path: str = ""
+    write_photons: bool = True
 
     @property
     def state_counts(self) -> list[int]:
