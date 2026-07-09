@@ -197,10 +197,13 @@ class BurstPhotons:
     Attributes
     ----------
     streams : numpy.ndarray
-        Concatenated per-photon stream index, ``int32`` of length ``N``.
+        Concatenated per-photon stream index of length ``N``, in the narrowest
+        signed int that fits (``int8`` for ≤127 streams) to keep the hot-loop
+        read small.
     gap_slot : numpy.ndarray
         For each photon ``n``, the cache slot of ``Δt`` between photon ``n``
-        and ``n+1`` (``-1`` for the last photon of every burst), ``int32``.
+        and ``n+1`` (``-1`` for the last photon of every burst); ``int16`` for
+        up to 32767 unique Δt, else ``int32``.
     burst_offsets : numpy.ndarray
         CSR offsets, ``int64`` of length ``n_bursts + 1``.
     unique_dt : numpy.ndarray
@@ -267,7 +270,10 @@ def prepare_bursts(
 
     offsets = np.zeros(len(kept_times) + 1, dtype=np.int64)
     offsets[1:] = np.cumsum([t.shape[0] for t in kept_times])
-    streams_concat = np.concatenate(kept_streams).astype(np.int32)
+    # The stream index is tiny (0..n_streams-1); store it in the narrowest int so
+    # the per-photon read stays small in the memory-bound E-step hot loop.
+    stream_dtype = np.int8 if int(n_streams) <= 127 else np.int16
+    streams_concat = np.concatenate(kept_streams).astype(stream_dtype)
 
     # Inter-photon Δt per photon (0 at the last photon of each burst).
     all_dt: list[np.ndarray] = []
@@ -280,13 +286,16 @@ def prepare_bursts(
     else:
         unique_dt = np.zeros(0, dtype=np.int64)
 
-    gap_slot = np.full(streams_concat.shape[0], -1, dtype=np.int32)
+    # gap_slot indexes unique_dt (plus a -1 sentinel); int16 covers up to 32767
+    # unique Δt values, otherwise widen to int32.
+    slot_dtype = np.int16 if unique_dt.shape[0] < 32767 else np.int32
+    gap_slot = np.full(streams_concat.shape[0], -1, dtype=slot_dtype)
     for b, t in enumerate(kept_times):
         if t.shape[0] < 2:
             continue
         start = offsets[b]
         dt = np.diff(t)
-        slots = np.searchsorted(unique_dt, dt).astype(np.int32)
+        slots = np.searchsorted(unique_dt, dt).astype(slot_dtype)
         gap_slot[start : start + dt.shape[0]] = slots
 
     return BurstPhotons(
@@ -499,8 +508,6 @@ def _estep(
     streams,
     gap_slot,
     offsets,
-    alpha,
-    scale,
     xi_acc,
     gamma_obs_acc,
     prior_acc,
@@ -510,17 +517,21 @@ def _estep(
     Bursts are partitioned into contiguous chunks processed in parallel.  Each
     thread accumulates its Baum-Welch statistics into **thread-local** arrays
     (so the hot ``ξ``/``γ`` writes never touch memory another core is writing —
-    no false sharing) and touches only disjoint photon ranges of
-    ``alpha``/``scale``.  The per-thread partials are stored to shared buffers
-    once per chunk and reduced serially.  Returns the total log-likelihood
+    no false sharing).  The per-thread partials are stored to shared buffers once
+    per chunk and reduced serially.  Returns the total log-likelihood
     ``Σ_bursts Σ_n log(scale[n])``.
 
     Only two sweeps over each burst's photons are made: a **forward** pass
-    filling ``alpha``/``scale``, then a **single backward** pass that folds in
-    both the occupancy statistics (``γ``) and the transition weight (``W``,
-    below).  ``β`` is held as two ``(n,)`` vectors (``β[n]`` needs only
-    ``β[n+1]``), so the full ``(N, n)`` backward array is never materialised —
-    halving the large-array memory traffic that dominates at high photon counts.
+    filling ``α``/``scale``, then a **single backward** pass that folds in both
+    the occupancy statistics (``γ``) and the transition weight (``W``, below).
+
+    **Cache locality.**  ``α`` and ``scale`` are held in small **per-thread
+    scratch buffers** sized to the longest burst (a few KB), reused across
+    bursts, rather than a shared ``(N, n)`` array.  A burst's ``α`` is written by
+    the forward pass and read back by the backward pass while it is still hot in
+    L1/L2, and the reused buffer never streams ``N·n`` values out to DRAM — the
+    single largest memory transfer of the E-step is eliminated (``β`` was already
+    reduced to two ``(n,)`` vectors for the same reason).
 
     Transition statistics are *not* contracted against the full ``ρ`` tensor per
     photon (that would cost ``O(N·n⁴)`` and stream ``rho_cache`` from memory once
@@ -537,6 +548,13 @@ def _estep(
     n_slots = pow_cache.shape[0]
     nthreads = get_num_threads()
 
+    # Longest burst → size of the reused per-thread α/scale scratch buffers.
+    max_len = 0
+    for b in range(n_bursts):
+        length = offsets[b + 1] - offsets[b]
+        if length > max_len:
+            max_len = length
+
     W_p = np.zeros((nthreads, n_slots, n_states, n_states))
     gobs_p = np.zeros((nthreads, n_states, n_streams))
     prior_p = np.zeros((nthreads, n_states))
@@ -545,7 +563,11 @@ def _estep(
     for c in prange(nthreads):
         b0 = c * n_bursts // nthreads
         b1 = (c + 1) * n_bursts // nthreads
-        # Thread-local accumulators (own stack → no cross-core false sharing).
+        # Thread-local scratch + accumulators (own stack → no false sharing).
+        # α/scale are per-burst scratch, reused across bursts and kept hot in
+        # cache — never streamed to DRAM as an (N, n) array.
+        alpha = np.empty((max_len, n_states))
+        scale = np.empty(max_len)
         w = np.empty(n_states)
         beta_next = np.empty(n_states)
         beta_cur = np.empty(n_states)
@@ -556,34 +578,36 @@ def _estep(
         for b in range(b0, b1):
             s = offsets[b]
             e = offsets[b + 1]
+            m_len = e - s
 
-            # ---- forward ----
+            # ---- forward (local index li = photon - s) ----
             y0 = streams[s]
             tot = 0.0
             for i in range(n_states):
-                alpha[s, i] = prior[i] * obs[i, y0]
-                tot += alpha[s, i]
-            scale[s] = tot
+                alpha[0, i] = prior[i] * obs[i, y0]
+                tot += alpha[0, i]
+            scale[0] = tot
             if tot > 0.0:
                 for i in range(n_states):
-                    alpha[s, i] /= tot
+                    alpha[0, i] /= tot
                 ll_local += math.log(tot)
 
-            for n in range(s + 1, e):
+            for li in range(1, m_len):
+                n = s + li
                 slot = gap_slot[n - 1]
                 yn = streams[n]
                 tot = 0.0
                 for i in range(n_states):
                     v = 0.0
                     for k in range(n_states):
-                        v += alpha[n - 1, k] * pow_cache[slot, k, i]
+                        v += alpha[li - 1, k] * pow_cache[slot, k, i]
                     v *= obs[i, yn]
-                    alpha[n, i] = v
+                    alpha[li, i] = v
                     tot += v
-                scale[n] = tot
+                scale[li] = tot
                 if tot > 0.0:
                     for i in range(n_states):
-                        alpha[n, i] /= tot
+                        alpha[li, i] /= tot
                     ll_local += math.log(tot)
 
             # ---- backward, with γ (occupancy) and W (transitions) fused in ----
@@ -594,14 +618,15 @@ def _estep(
             yl = streams[e - 1]
             for i in range(n_states):
                 beta_next[i] = 1.0  # β[e-1] = 1
-                g = alpha[e - 1, i]
+                g = alpha[m_len - 1, i]
                 gobs_local[i, yl] += g
-                if e - 1 == s:
+                if m_len == 1:
                     prior_local[i] += g
-            for n in range(e - 2, s - 1, -1):
+            for li in range(m_len - 2, -1, -1):
+                n = s + li
                 slot = gap_slot[n]
                 yn1 = streams[n + 1]
-                cc = scale[n + 1]
+                cc = scale[li + 1]
                 inv_c = 1.0 / cc if cc > 0.0 else 0.0
                 # w = obs · β[n+1]; reused by both β[n] and the W accumulation.
                 for k in range(n_states):
@@ -614,14 +639,14 @@ def _estep(
                 # γ at photon n (occupancy α[n]·β[n]).
                 yn = streams[n]
                 for i in range(n_states):
-                    g = alpha[n, i] * beta_cur[i]
+                    g = alpha[li, i] * beta_cur[i]
                     gobs_local[i, yn] += g
-                    if n == s:
+                    if li == 0:
                         prior_local[i] += g
                 # W over gap n (skipped when the scale underflowed).
                 if cc > 0.0:
                     for k in range(n_states):
-                        ak = alpha[n, k] * inv_c
+                        ak = alpha[li, k] * inv_c
                         if ak == 0.0:
                             continue
                         for m in range(n_states):
@@ -844,8 +869,6 @@ def optimize(
         tol = max(tol, 1e-3)
 
     n_phot = data.n_photons
-    alpha = np.zeros((n_phot, n), dtype=cdt)
-    scale = np.zeros(n_phot, dtype=cdt)
     n_slots = max(n_dt, 1)
     pow_cache = np.zeros((n_slots, n, n), dtype=cdt)
     rho_cache = np.zeros((n_slots, n, n, n, n), dtype=cdt)
@@ -870,8 +893,6 @@ def optimize(
             data.streams,
             data.gap_slot,
             data.burst_offsets,
-            alpha,
-            scale,
             xi_acc,
             gamma_obs_acc,
             prior_acc,
@@ -1124,6 +1145,7 @@ def fit_states(
     seed: int | None = 0,
     surrogate=None,
     refine_iters: int = 0,
+    single_precision: bool = False,
 ) -> H2mmModel:
     """Fit an ``n_states`` H2MM model, keeping the best of ``n_restarts`` runs.
 
@@ -1149,6 +1171,8 @@ def fit_states(
     refine_iters : int
         Baum-Welch maps to polish the surrogate estimate (ignored without a
         ``surrogate``).
+    single_precision : bool
+        Run EM in the approximate ``float32`` fast mode (see :func:`optimize`).
 
     Returns
     -------
@@ -1168,7 +1192,9 @@ def fit_states(
             n_states, data.n_streams,
             seed=None if seed is None else seed + r,
         )
-        fit = optimize(init, data, max_iter=max_iter, tol=tol)
+        fit = optimize(
+            init, data, max_iter=max_iter, tol=tol, single_precision=single_precision
+        )
         if best is None or fit.loglik > best.loglik:
             best = fit
     assert best is not None

@@ -13,7 +13,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .h2mm import BurstPhotons, H2mmModel, fit_states, viterbi
+from .engines import fit_one
+from .h2mm import BurstPhotons, H2mmModel, viterbi
 
 
 @dataclass
@@ -97,21 +98,27 @@ def scan_states(
     max_iter: int = 500,
     tol: float = 1e-7,
     seed: int = 0,
+    engine: str = "em",
+    surrogates: dict[int, object] | None = None,
+    refine_iters: int = 20,
 ) -> list[StateFit]:
     """Fit a model for each requested state count and score BIC/ICL.
 
-    Each state count is fitted independently with ``n_restarts`` random
-    restarts.  (State-splitting / warm-starting the ``k``-state fit from the
-    ``(k-1)``-state solution was evaluated as a speed-up but rejected: a single
-    split cannot undo the state merging in the smaller fit, so it reliably
-    reached *worse* optima than random restarts on well-separated data — the
-    robust version needs full split+merge SMEM, which is out of scope here.)
+    Each state count is fitted independently with ``n_restarts`` random restarts
+    using the selected compute ``engine`` (see :mod:`.engines`); model selection
+    always scores the fitted models by BIC/ICL.  (State-splitting / warm-starting
+    the ``k``-state fit from the ``(k-1)``-state solution was evaluated as a
+    speed-up but rejected: a single split cannot undo the state merging in the
+    smaller fit, so it reliably reached *worse* optima than random restarts on
+    well-separated data — the robust version needs full split+merge SMEM, which
+    is out of scope here.)
     """
     fits: list[StateFit] = []
     for k in state_counts:
-        model = fit_states(
-            data, n_states=int(k), n_restarts=n_restarts,
-            max_iter=max_iter, tol=tol, seed=seed,
+        model = fit_one(
+            data, int(k), engine,
+            surrogates=surrogates, refine_iters=refine_iters,
+            n_restarts=n_restarts, max_iter=max_iter, tol=tol, seed=seed,
         )
         _, icl = viterbi(model, data)
         fits.append(
@@ -190,6 +197,9 @@ def analyze(
     max_iter: int = 500,
     tol: float = 1e-7,
     seed: int = 0,
+    engine: str = "em",
+    surrogates: dict[int, object] | None = None,
+    refine_iters: int = 20,
 ) -> H2mmAnalysis:
     """Fit, select, and characterise an H2MM model over a range of states.
 
@@ -208,6 +218,15 @@ def analyze(
         Stream indices used to compute apparent per-state FRET.
     n_restarts, max_iter, tol, seed
         Passed through to the optimiser.
+    engine : str
+        Compute engine for the per-state-count fits (see :mod:`.engines`):
+        ``"em"`` (exact, default), ``"em-float32"``, ``"surrogate"``, or
+        ``"surrogate-refine"``.
+    surrogates : dict, optional
+        Mapping ``n_states -> SurrogateModel`` for the surrogate engines;
+        missing entries fall back to exact EM.
+    refine_iters : int
+        EM polish maps for the ``surrogate-refine`` engine.
 
     Returns
     -------
@@ -217,6 +236,7 @@ def analyze(
     scan = scan_states(
         data, state_counts, n_restarts=n_restarts,
         max_iter=max_iter, tol=tol, seed=seed,
+        engine=engine, surrogates=surrogates, refine_iters=refine_iters,
     )
     key = (lambda f: f.icl) if criterion.lower() == "icl" else (lambda f: f.bic)
     best = min(scan, key=key)
