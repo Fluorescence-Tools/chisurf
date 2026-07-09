@@ -258,6 +258,8 @@ class SampleMixin:
                  "details": details, "deleted_at": None},
                 conflict=["sample_id", "key"],
             )
+            # An mfdb://<type>/<id> value materializes a provenance edge.
+            self._materialize_metadata_ref("sample", sample_id, key, value)
 
     def clear_sample_key_values(self, sample_id: str) -> None:
         self.conn.execute(

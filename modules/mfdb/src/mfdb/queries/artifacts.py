@@ -28,6 +28,32 @@ from mfdb.models import (
 from mfdb.provenance.graph import map_legacy_node_type
 from mfdb.schema._sqlutil import _exists, _json_dumps, _json_hash, _utc_now, _validate_checksum
 
+#: Reference URI in a metadata value that materializes a provenance edge to
+#: another MFDB node — ``mfdb://<node_type>/<node_id>`` (see
+#: :meth:`ArtifactOpsMixin._materialize_metadata_ref`).
+_NODE_REF_RE = re.compile(r"^\s*mfdb://([a-z_]+)/(.+?)\s*$")
+
+#: node_type -> (table, id_column, human-label column) for best-effort resolution
+#: of a node's title in audit-log / changelog entries.
+_NODE_LABEL_COLUMNS: dict[str, tuple[str, str, str]] = {
+    "sample": ("flr_sample", "sample_id", "description"),
+    "experiment": ("flr_experiment", "experiment_id", "details"),
+    "artifact": ("mfdb_artifact", "artifact_id", "artifact_kind"),
+    "operation": ("mfdb_operation", "operation_id", "operation_type"),
+}
+
+
+def parse_node_ref(value: Any) -> tuple[str, str] | None:
+    """Parse an ``mfdb://<node_type>/<node_id>`` reference string.
+
+    Returns ``(node_type, node_id)`` or ``None`` when *value* is not such a
+    reference (non-string or non-matching values pass through untouched).
+    """
+    if not isinstance(value, str):
+        return None
+    match = _NODE_REF_RE.match(value)
+    return (match.group(1), match.group(2)) if match else None
+
 
 class ArtifactOpsMixin:
     def refresh_materialized_views(self):
@@ -1083,7 +1109,11 @@ class ArtifactOpsMixin:
                 action=f"Link added: {operation_id} -> {artifact_id}",
                 target_type="operation_artifact",
                 target_id=f"{operation_id}/{artifact_id}",
-                details={"direction": direction, "role": role},
+                details={
+                    "direction": direction,
+                    "role": role,
+                    "target_label": self._resolve_node_label("artifact", artifact_id),
+                },
             )
 
     def _normalize_artifact_payload(
@@ -1616,8 +1646,82 @@ class ArtifactOpsMixin:
                 action="create",
                 target_type="edge",
                 target_id=f"{source_node_type}:{source_node_id}->{target_node_type}:{target_node_id}",
-                details={"relationship_type": relationship_type, "metadata": kwargs.get("metadata")},
+                details={
+                    "relationship_type": relationship_type,
+                    "metadata": kwargs.get("metadata"),
+                    "target_label": self._resolve_node_label(target_node_type, target_node_id),
+                },
             )
+
+    def _resolve_node_label(self, node_type: str, node_id: str) -> str | None:
+        """Best-effort human title for a node, for audit/changelog readability.
+
+        Returns ``None`` for unknown node types or missing rows — never raises.
+        """
+        spec = _NODE_LABEL_COLUMNS.get(node_type)
+        if spec is None:
+            return None
+        table, id_col, label_col = spec
+        try:
+            # identifiers come from the fixed _NODE_LABEL_COLUMNS map, never input
+            row = self.conn.execute(
+                f"SELECT {label_col} FROM {table} WHERE {id_col} = ? LIMIT 1", (node_id,)
+            ).fetchone()
+        except sqlite3.Error:
+            return None
+        return row[0] if row else None
+
+    def _materialize_metadata_ref(
+        self,
+        owner_node_type: str,
+        owner_node_id: str,
+        key: str,
+        value: Any,
+        relationship: str = "linked_to",
+    ) -> None:
+        """Materialize a provenance edge when a metadata *value* references a node.
+
+        Mirrors the ELN pattern where a typed metadata field that points at
+        another entity *is* a link: if *value* is an ``mfdb://<type>/<id>``
+        reference, an idempotent ``mfdb_edge`` is created from the owning node to
+        the referenced node (tagged with the originating metadata *key*). Runs
+        inside the caller's transaction; no-op for non-reference values and
+        self-references.
+        """
+        ref = parse_node_ref(value)
+        if ref is None:
+            return
+        target_type, target_id = ref
+        if (target_type, target_id) == (owner_node_type, owner_node_id):
+            return
+        exists = self.conn.execute(
+            "SELECT 1 FROM mfdb_edge WHERE source_node_type = ? AND source_node_id = ? "
+            "AND target_node_type = ? AND target_node_id = ? AND relationship_type = ? "
+            "AND deleted_at IS NULL LIMIT 1",
+            (owner_node_type, owner_node_id, target_type, target_id, relationship),
+        ).fetchone()
+        if exists:
+            return
+        now = _utc_now()
+        self.conn.execute(
+            "INSERT INTO mfdb_edge (source_node_type, source_node_id, target_node_type, "
+            "target_node_id, relationship_type, metadata_json, created_at, updated_at, deleted_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                owner_node_type, owner_node_id, target_type, target_id, relationship,
+                _json_dumps({"via_metadata_key": key}), now, now, None,
+            ),
+        )
+        self.add_audit_log(
+            action="create",
+            target_type="edge",
+            target_id=f"{owner_node_type}:{owner_node_id}->{target_type}:{target_id}",
+            details={
+                "relationship_type": relationship,
+                "via_metadata_key": key,
+                "target_label": self._resolve_node_label(target_type, target_id),
+            },
+        )
 
     def graph_upstream(self, node_type: str, node_id: str, max_depth: int = 100) -> list[dict[str, Any]]:
         from mfdb.provenance.graph import traverse_canonical_graph

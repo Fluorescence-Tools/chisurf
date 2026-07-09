@@ -398,6 +398,8 @@ class MFDatabase(
                  "details": details, "deleted_at": None},
                 conflict=["experiment_id", "key"],
             )
+            # An mfdb://<type>/<id> value materializes a provenance edge.
+            self._materialize_metadata_ref("experiment", experiment_id, key, value)
 
     def clear_experiment_key_values(self, experiment_id: str) -> None:
         self.conn.execute(
