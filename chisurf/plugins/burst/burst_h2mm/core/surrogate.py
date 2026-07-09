@@ -71,27 +71,64 @@ def surrogate_available() -> bool:
 # ---------------------------------------------------------------------------
 
 
+_AC_LAGS = np.array([1, 2, 4, 8, 16, 32], dtype=np.int64)
+
+
 @njit(cache=True)
-def _windowed_fret(streams, offsets, n_streams, win):
-    """Per-photon local acceptor fraction over a ``±win`` photon window."""
+def _feature_kernel(streams, offsets, n_streams, win, lags):
+    """Single O(N) pass: per-photon windowed FRET + signal mean + lag autocorr.
+
+    The windowed local-FRET is computed with a **sliding** two-pointer sum
+    (O(N), not O(N·win)); the photon-lag autocorrelation (per-burst mean,
+    averaged over bursts) is accumulated in the same njit sweep.  Returns
+    ``(loc, ac, mu)`` for the numpy tail (histogram/quantiles/Δt) to finish.
+    """
     n = streams.shape[0]
-    out = np.empty(n)
     scale = 1.0 / max(n_streams - 1, 1)
+    loc = np.empty(n)
+
+    tot = 0.0
+    for i in range(n):
+        tot += streams[i] * scale
+    mu = tot / n if n > 0 else 0.0
+
     for b in range(offsets.shape[0] - 1):
         s = offsets[b]
         e = offsets[b + 1]
+        a = s
+        c = e if s + win + 1 > e else s + win + 1
+        wsum = 0.0
+        for k in range(a, c):
+            wsum += streams[k] * scale
         for j in range(s, e):
-            a = j - win
-            if a < s:
-                a = s
-            c = j + win + 1
-            if c > e:
-                c = e
-            acc = 0.0
-            for k in range(a, c):
-                acc += streams[k] * scale
-            out[j] = acc / (c - a)
-    return out
+            na = s if j - win < s else j - win
+            nc = e if j + win + 1 > e else j + win + 1
+            while a < na:
+                wsum -= streams[a] * scale
+                a += 1
+            while c < nc:
+                wsum += streams[c] * scale
+                c += 1
+            loc[j] = wsum / (c - a)
+
+    ac = np.zeros(lags.shape[0])
+    for li in range(lags.shape[0]):
+        lag = lags[li]
+        num = 0.0
+        cnt = 0
+        for b in range(offsets.shape[0] - 1):
+            s = offsets[b]
+            e = offsets[b + 1]
+            m = e - s
+            if m > lag:
+                ss = 0.0
+                for j in range(s, e - lag):
+                    ss += (streams[j] * scale - mu) * (streams[j + lag] * scale - mu)
+                num += ss / (m - lag)
+                cnt += 1
+        ac[li] = num / cnt if cnt > 0 else 0.0
+
+    return loc, ac, mu
 
 
 def extract_features(data: BurstPhotons) -> np.ndarray:
@@ -101,36 +138,17 @@ def extract_features(data: BurstPhotons) -> np.ndarray:
     histogram + quantiles), the kinetics (photon-lag autocorrelation of the
     per-photon FRET signal), and the inter-photon timing — everything an
     amortised estimator needs to recover ``(prior, trans, obs)`` without seeing
-    the raw sequence.  Independent of burst order and burst count.
+    the raw sequence.  Independent of burst order and burst count.  The O(N) work
+    runs in a single compiled njit sweep (:func:`_feature_kernel`).
     """
-    streams = data.streams
-    offsets = data.burst_offsets
-    p = data.n_streams
-    scale = 1.0 / max(p - 1, 1)
-    sig = streams.astype(np.float64) * scale  # per-photon FRET-like signal in [0,1]
+    loc, ac, mu = _feature_kernel(data.streams, data.burst_offsets, data.n_streams, 12, _AC_LAGS)
 
-    feats: list[float] = [float(sig.mean())]
-
-    loc = _windowed_fret(streams, offsets, p, 12)
+    feats: list[float] = [float(mu)]
     hist, _ = np.histogram(loc, bins=10, range=(0.0, 1.0), density=True)
     feats += [float(v) for v in hist]
     feats += [float(v) for v in np.quantile(loc, [0.1, 0.25, 0.5, 0.75, 0.9])]
+    feats += [float(v) for v in ac]
 
-    # Photon-lag autocorrelation of the FRET signal, per burst then averaged.
-    mu = sig.mean()
-    for lag in (1, 2, 4, 8, 16, 32):
-        num = 0.0
-        cnt = 0
-        for b in range(data.n_bursts):
-            s = int(offsets[b])
-            e = int(offsets[b + 1])
-            if e - s > lag:
-                x = sig[s:e]
-                num += float(np.mean((x[:-lag] - mu) * (x[lag:] - mu)))
-                cnt += 1
-        feats.append(num / cnt if cnt else 0.0)
-
-    # Inter-photon Δt statistics.
     gs = data.gap_slot
     dt = data.unique_dt[gs[gs >= 0]] if data.unique_dt.shape[0] else np.zeros(1)
     feats += [float(dt.mean()), float(dt.std())]
