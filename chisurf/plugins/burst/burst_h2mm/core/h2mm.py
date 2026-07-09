@@ -1122,6 +1122,8 @@ def fit_states(
     max_iter: int = 500,
     tol: float = 1e-7,
     seed: int | None = 0,
+    surrogate=None,
+    refine_iters: int = 0,
 ) -> H2mmModel:
     """Fit an ``n_states`` H2MM model, keeping the best of ``n_restarts`` runs.
 
@@ -1139,12 +1141,27 @@ def fit_states(
         Convergence threshold on the log-likelihood increment.
     seed : int, optional
         Base seed for restart initialisations.
+    surrogate : SurrogateModel or path, optional
+        If given, use the **optional** amortised neural estimator
+        (:mod:`.surrogate`) instead of EM: the model is predicted in one forward
+        pass (an *approximate* MLE — see that module), optionally polished by
+        ``refine_iters`` Baum-Welch maps.  ``None`` (default) uses EM unchanged.
+    refine_iters : int
+        Baum-Welch maps to polish the surrogate estimate (ignored without a
+        ``surrogate``).
 
     Returns
     -------
     H2mmModel
         The best optimised model.
     """
+    if surrogate is not None:
+        from .surrogate import estimate_model
+
+        return estimate_model(
+            data, n_states, surrogate, refine_iters=refine_iters, tol=tol
+        )
+
     best: H2mmModel | None = None
     for r in range(max(n_restarts, 1)):
         init = factory_model(
