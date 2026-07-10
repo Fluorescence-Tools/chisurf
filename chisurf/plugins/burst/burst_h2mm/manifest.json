@@ -14,7 +14,7 @@
     }
   },
   "experimental": true,
-  "experimental_message": "H2MM is a numba re-implementation and has not yet been cross-validated against H2MM_C on experimental data.",
+  "experimental_message": "Experimental. The numba/surrogate H2MM engine is A/B-validated against the reference H2MM_C on simulated data, but not yet on measured experimental smFRET; the GUI also defaults to an approximate (float32) fast engine. Treat results as preliminary.",
   "entrypoints": {
     "gui": "chisurf.plugins.burst.burst_h2mm.gui.tool:H2mmTool",
     "cli": "h2mm=chisurf.plugins.burst.burst_h2mm.cli.main:cli",

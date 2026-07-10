@@ -142,7 +142,7 @@ class H2mmTool(QMainWindow):
     def __init__(self, parent=None, *, embedded: bool = False):
         super().__init__(parent)
         self._embedded = embedded
-        self.setWindowTitle("smFRET H2MM Analysis")
+        self.setWindowTitle("smFRET H2MM Analysis  ⚠ experimental")
         self.data_folder: pathlib.Path | None = None
         self.file_type = "SPC-130"
         self._result = None
@@ -167,8 +167,11 @@ class H2mmTool(QMainWindow):
         self.dock_area.addTab(self._build_plots(), "Results", close_mode="hide")
         layout.addWidget(self.dock_area, 1)
 
-        self._status_label = QLabel("Ready")
-        self._status_label.setStyleSheet("color: #888; font-style: italic; padding: 0 8px;")
+        self._status_label = QLabel(
+            "⚠ Experimental — validated on simulated data only; GUI default engine "
+            "is approximate (float32). Treat results as preliminary."
+        )
+        self._status_label.setStyleSheet("color: #b07000; font-style: italic; padding: 0 8px;")
         self._status_label.setFixedHeight(22)
         layout.addWidget(self._status_label)
 
