@@ -103,6 +103,7 @@ def scan_states(
     refine_iters: int = 20,
     criterion: str = "bic",
     patience: int | None = None,
+    progress=None,
 ) -> list[StateFit]:
     """Fit a model for each requested state count and score BIC/ICL.
 
@@ -123,9 +124,14 @@ def scan_states(
     the state merging in the smaller fit, so it reliably reached *worse* optima
     than random restarts on well-separated data — the robust version needs full
     split+merge SMEM, which is out of scope here.)
+
+    ``progress``, if given, is called ``progress(done, total, fits)`` after each
+    state-count fit (with the list of :class:`StateFit` so far) so a caller can
+    drive a progress bar / live plots.
     """
     use_icl = criterion.lower() == "icl"
     ordered = sorted(int(k) for k in state_counts)
+    total = len(ordered)
     fits: list[StateFit] = []
     best_score = np.inf
     worse = 0
@@ -145,6 +151,8 @@ def scan_states(
                 icl=float(icl),
             )
         )
+        if progress is not None:
+            progress(len(fits), total, fits)
         if patience is not None:
             score = float(icl) if use_icl else float(model.bic)
             if score < best_score:
@@ -225,6 +233,7 @@ def analyze(
     surrogates: dict[int, object] | None = None,
     refine_iters: int = 20,
     patience: int | None = None,
+    progress=None,
 ) -> H2mmAnalysis:
     """Fit, select, and characterise an H2MM model over a range of states.
 
@@ -256,6 +265,9 @@ def analyze(
         Early-stop the state-count scan once the criterion has risen for
         ``patience + 1`` consecutive counts (see :func:`scan_states`); ``None``
         scans every count.
+    progress : callable, optional
+        Called ``progress(done, total, fits)`` after each state-count fit (for
+        progress bars / live plots).
 
     Returns
     -------
@@ -266,7 +278,7 @@ def analyze(
         data, state_counts, n_restarts=n_restarts,
         max_iter=max_iter, tol=tol, seed=seed,
         engine=engine, surrogates=surrogates, refine_iters=refine_iters,
-        criterion=criterion, patience=patience,
+        criterion=criterion, patience=patience, progress=progress,
     )
     key = (lambda f: f.icl) if criterion.lower() == "icl" else (lambda f: f.bic)
     best = min(scan, key=key)

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
-import sys
-import glob
 import ctypes
-import pathlib
+import glob
 import logging
+import os
+import pathlib
 import site
-from typing import Iterable, Optional
+import sys
+from collections.abc import Iterable
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def _norm(p: pathlib.Path) -> pathlib.Path:
         return p
 
 
-def _first_existing(paths: Iterable[pathlib.Path]) -> Optional[pathlib.Path]:
+def _first_existing(paths: Iterable[pathlib.Path]) -> pathlib.Path | None:
     for p in paths:
         try:
             if p and p.is_dir():
@@ -104,7 +104,7 @@ def _add_libpath(path: pathlib.Path) -> None:
     _add_path(path)
 
 
-def _glob_one(patterns: Iterable[str]) -> Optional[str]:
+def _glob_one(patterns: Iterable[str]) -> str | None:
     for pat in patterns:
         try:
             hits = glob.glob(pat, recursive=True)
@@ -242,10 +242,11 @@ def _apply_thread_env_from_settings() -> None:
     """
     try:
         # Local imports to avoid any potential cycle during early bootstrap
+        import os as _os
+        import sys as _sys
+
         from .path_utils import get_path
         from .settings_utils import get_chisurf_settings
-        import sys as _sys
-        import os as _os
 
         settings_dir = get_path('settings')
         # YAML source (existing behavior)
@@ -259,7 +260,7 @@ def _apply_thread_env_from_settings() -> None:
             import json as _json
             json_file = settings_dir / 'settings.json'
             if json_file.is_file():
-                with open(json_file, 'r', encoding='utf-8') as fh:
+                with open(json_file, encoding='utf-8') as fh:
                     data = _json.load(fh)
                     if isinstance(data, dict):
                         jt = data.get('threads', {})
@@ -276,14 +277,26 @@ def _apply_thread_env_from_settings() -> None:
         if isinstance(json_threads, dict):
             threads.update(json_threads)
 
+        # Let numba use the CPU cores (its parallel=True kernels — e.g. the H2MM
+        # engine — are otherwise pinned to a single thread and run ~n_cores
+        # slower). BLAS/MKL/OMP stay single-threaded so numba's own threadpool
+        # does not oversubscribe against nested BLAS calls.
+        _ncpu = _os.cpu_count() or 2
+        _numba_multi = str(max(1, _ncpu - 1))
         defaults = {
-            'numba_num_threads': "1",
+            'numba_num_threads': _numba_multi,
             'numba_threading_layer': "workqueue",
             'mkl_num_threads': "1",
             'omp_num_threads': "1",
             'mkl_threading_layer': "SEQUENTIAL",
         }
         override = bool(threads.get('override_existing_env', False))
+
+        # Resolve the "auto"/"0"/empty sentinel for numba threads to (cores - 1).
+        _nn = str(threads.get('numba_num_threads', _numba_multi)).strip().lower()
+        if _nn in ("", "auto", "0"):
+            threads = dict(threads)
+            threads['numba_num_threads'] = _numba_multi
 
         def _set_env(var_name: str, value: str):
             if override or var_name not in _os.environ or _os.environ.get(var_name, "") == "":
@@ -341,9 +354,10 @@ def _apply_custom_env_from_settings() -> None:
       env_override_existing: false
     """
     try:
+        import json as _json
+
         from .path_utils import get_path
         from .settings_utils import get_chisurf_settings
-        import json as _json
 
         settings_dir = get_path('settings')
         settings_file = settings_dir / 'settings_chisurf.yaml'
@@ -354,7 +368,7 @@ def _apply_custom_env_from_settings() -> None:
         try:
             json_file = settings_dir / 'settings.json'
             if json_file.is_file():
-                with open(json_file, 'r', encoding='utf-8') as fh:
+                with open(json_file, encoding='utf-8') as fh:
                     data = _json.load(fh)
                     if isinstance(data, dict):
                         je = data.get('env', {})

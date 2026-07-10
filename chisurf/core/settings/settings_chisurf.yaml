@@ -177,8 +177,11 @@ env_override_existing: true
 #     * Leaving values empty to inherit system defaults (not recommended for NDxplorer)
 #
 threads:
-  # Number of threads used by Numba's parallel backend (as a string)
-  numba_num_threads: "1"
+  # Number of threads used by Numba's parallel backend (as a string).
+  # "auto" (recommended) uses (CPU cores - 1) so Numba's parallel=True kernels
+  # (e.g. the H2MM engine) actually use the CPU; set "1" to force single-thread
+  # if you hit instability. MKL/OMP stay at "1" so Numba does not oversubscribe.
+  numba_num_threads: "auto"
   # Numba threading implementation; "workqueue" is stable across platforms
   numba_threading_layer: workqueue
   # Maximum threads used by Intel MKL (BLAS/LAPACK)

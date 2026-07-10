@@ -3,11 +3,21 @@
 from __future__ import annotations
 
 import pathlib
+import threading
+import time
 from typing import Any
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy.QtCore import QCoreApplication, QSettings, QSize, Qt, Signal
+from qtpy.QtCore import (
+    QCoreApplication,
+    QObject,
+    QSettings,
+    QSize,
+    Qt,
+    QThreadPool,
+    Signal,
+)
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import (
     QComboBox,
@@ -21,7 +31,6 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
-    QProgressBar,
     QSizePolicy,
     QSpinBox,
     QTextEdit,
@@ -34,12 +43,23 @@ from qtpy.QtWidgets import (
 from chisurf import logging
 from chisurf.gui.misc_helpers import get_plugin_settings_path, persist_plugin_state
 from chisurf.gui.widgets.dock_area.dock_area import DockArea
+from chisurf.gui.widgets.progress import EnhancedProgressDialog, Worker
 from chisurf.gui.widgets.wizard import DetectorWizardPage
 
 from ..api.models import H2mmSettings, StreamSettings
 from ..backend.services import run_analysis
 from ..core.engines import ENGINE_LABELS
 from ..core.engines import ENGINES as H2mmEngines
+
+
+class _FitCancelled(Exception):
+    """Raised inside the fit worker when the user cancels the progress dialog."""
+
+
+class _FitSignals(QObject):
+    """Cross-thread progress signal carrying ``(done, total, fits)``."""
+
+    tick = Signal(int, int, object)
 
 _STATE_COLORS = [
     "#4e79a7", "#f28e2b", "#59a14f", "#e15759",
@@ -70,26 +90,6 @@ class _FolderLineEdit(QLineEdit):
         if urls and urls[0].toLocalFile():
             self.setText(urls[0].toLocalFile())
             self.folderDropped.emit(urls[0].toLocalFile())
-
-
-class _ProgressDialog(QDialog):
-    """A modal busy indicator shown while a fit runs."""
-
-    def __init__(self, title="Progress", message="Processing...", parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(Qt.WindowModal)
-        layout = QVBoxLayout(self)
-        self.label = QLabel(message)
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 0)  # busy indicator
-        layout.addWidget(self.label)
-        layout.addWidget(self.progress)
-
-    def set_message(self, msg: str):
-        """Update the progress message."""
-        self.label.setText(msg)
-        QCoreApplication.processEvents()
 
 
 class HelpDialog(QDialog):
@@ -220,7 +220,7 @@ class H2mmTool(QMainWindow):
         self.cb_criterion.addItems(["bic", "icl"])
         self.sb_patience = QSpinBox()
         self.sb_patience.setRange(-1, 8)
-        self.sb_patience.setValue(-1)
+        self.sb_patience.setValue(1)   # default: safe early-stop (~1.6× faster scan)
         self.sb_patience.setSpecialValueText("off (scan all)")
         self.sb_patience.setToolTip(
             "Early-stop the state-count scan once the criterion rises "
@@ -237,9 +237,13 @@ class H2mmTool(QMainWindow):
         self.cb_engine = QComboBox()
         for _e in H2mmEngines:
             self.cb_engine.addItem(ENGINE_LABELS.get(_e, _e), _e)
+        # Default to the fastest always-available method (float32 EM).
+        _fast = self.cb_engine.findData("em-float32")
+        if _fast >= 0:
+            self.cb_engine.setCurrentIndex(_fast)
         self.cb_engine.setToolTip(
-            "Compute engine: exact EM, a fast float32 EM, or the amortised "
-            "neural surrogate (fastest, approximate)."
+            "Compute engine: exact EM, a fast float32 EM (default), or the "
+            "amortised neural surrogate (fastest, approximate)."
         )
         of.addRow("Engine:", self.cb_engine)
         self.sb_restarts = QSpinBox()
@@ -375,24 +379,112 @@ class H2mmTool(QMainWindow):
             QMessageBox.warning(self, "No data", "Please select a folder of .bur files first.")
             return
         settings = self._gather_settings()
-        progress = _ProgressDialog("H2MM", "Fitting H2MM models (this may take a while)...", self)
-        progress.show()
-        QCoreApplication.processEvents()
+
+        self._prog = EnhancedProgressDialog(
+            "H2MM", "Loading bursts …", 0, 100, self
+        )
+        self._prog.show()
+        self._fit_t0 = time.perf_counter()
+        self._cancel = threading.Event()
         try:
-            result, bundle = run_analysis(settings, analysis_folder=str(self.data_folder))
-        except Exception as exc:
-            progress.close()
-            QMessageBox.critical(self, "H2MM error", str(exc))
-            logging.error(f"H2MM analysis failed: {exc}")
-            return
-        progress.close()
+            self._prog.canceled.connect(self._cancel.set)
+        except Exception:
+            pass
+        self.btn_run.setEnabled(False)
+        self._status("Fitting H2MM models …")
+
+        # Progress signal: emitted from the worker thread, handled on the UI thread.
+        self._fit_signals = _FitSignals()
+        self._fit_signals.tick.connect(self._on_fit_progress)
+
+        def _progress(done, total_, fits):
+            if self._cancel.is_set():
+                raise _FitCancelled()
+            # Hand a snapshot to the UI thread (queued connection).
+            self._fit_signals.tick.emit(done, total_, list(fits))
+
+        # run_analysis(...) -> (result, bundle); Worker emits it on `result`.
+        worker = Worker(
+            run_analysis, settings,
+            analysis_folder=str(self.data_folder),
+            progress=_progress,
+        )
+        worker.signals.result.connect(self._on_fit_result)
+        worker.signals.error.connect(self._on_fit_error)
+        QThreadPool.globalInstance().start(worker)
+
+    # ── fit worker callbacks (UI thread) ─────────────────────────────
+
+    def _on_fit_progress(self, done: int, total: int, fits: object):
+        """Update the progress bar (with ETA) and the live plots per state count."""
+        pct = int(90 * done / max(total, 1))  # last 10% reserved for finalisation
+        elapsed = time.perf_counter() - self._fit_t0
+        eta = elapsed * (total - done) / done if done > 0 else 0.0
+        try:
+            self._prog.setValue(pct)
+            self._prog.setLabelText(
+                f"Fitting … {done}/{total} state counts   (ETA {eta:0.0f} s)"
+            )
+        except Exception:
+            pass
+        self._plot_scan_live(fits)
+
+    def _on_fit_result(self, payload):
+        """Store results, finalise plots, and close the progress dialog."""
+        result, bundle = payload
         self._result = result
         self._bundle = bundle
+        try:
+            self._prog.setValue(100)
+            self._prog.close()
+        except Exception:
+            pass
+        self.btn_run.setEnabled(True)
         self._update_plots()
         self._status(
             f"Selected {result.n_states} states "
-            f"({result.criterion.upper()}) from {result.n_bursts} bursts / {result.n_photons} photons"
+            f"({result.criterion.upper()}) from {result.n_bursts} bursts / "
+            f"{result.n_photons} photons"
         )
+
+    def _on_fit_error(self, tb):
+        """Handle a worker failure or a user cancellation."""
+        try:
+            self._prog.close()
+        except Exception:
+            pass
+        self.btn_run.setEnabled(True)
+        if tb and "_FitCancelled" in str(tb):
+            self._status("Fit cancelled")
+            return
+        message = str(tb).strip().splitlines()[-1] if tb else "unknown error"
+        QMessageBox.critical(self, "H2MM error", message)
+        logging.error(f"H2MM analysis failed: {tb}")
+
+    def _plot_scan_live(self, fits):
+        """Live-update the model-selection and FRET-state plots during the scan."""
+        if not fits:
+            return
+        ns = [f.n_states for f in fits]
+        self._p_sel.clear()
+        self._p_sel.plot(ns, [f.bic for f in fits],
+                         pen=pg.mkPen("#4e79a7", width=2), symbol="o", name="BIC")
+        self._p_sel.plot(ns, [f.icl for f in fits],
+                         pen=pg.mkPen("#e15759", width=2), symbol="s", name="ICL")
+
+        crit = self.cb_criterion.currentText()
+        key = (lambda f: f.icl) if crit == "icl" else (lambda f: f.bic)
+        best = min(fits, key=key)
+        from ..core.analysis import state_fret
+
+        acc = 1 if best.model.n_streams > 1 else 0
+        fret = state_fret(best.model, acceptor_stream=acc, donor_stream=0)
+        self._p_fret.clear()
+        for i, e in enumerate(fret):
+            if not np.isfinite(e):
+                continue
+            color = _STATE_COLORS[i % len(_STATE_COLORS)]
+            self._p_fret.addItem(pg.BarGraphItem(x=[e], height=[1.0], width=0.03, brush=color))
 
     # ── plotting ─────────────────────────────────────────────────────
 

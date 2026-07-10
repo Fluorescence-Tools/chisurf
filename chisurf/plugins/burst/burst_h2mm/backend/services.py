@@ -52,6 +52,7 @@ def run_analysis(
     analysis_folder: str | pathlib.Path | None = None,
     files: list[str] | None = None,
     pattern: str = "*.bur",
+    progress=None,
 ) -> tuple[H2mmResult, H2mmAnalysisBundle]:
     """Load bursts, fit H2MM models, and build a serialisable result.
 
@@ -65,6 +66,9 @@ def run_analysis(
         Explicit ``.bur`` file paths (take precedence over the folder).
     pattern : str
         Glob for ``.bur`` files when ``analysis_folder`` is used.
+    progress : callable, optional
+        Forwarded to :func:`~..core.analysis.analyze` — called after each
+        state-count fit for progress bars / live plots.
 
     Returns
     -------
@@ -114,6 +118,7 @@ def run_analysis(
         surrogates=_load_surrogates(settings),
         refine_iters=int(settings.refine_iters),
         patience=settings.patience,
+        progress=progress,
     )
 
     result = _result_from_analysis(ana, settings)
@@ -310,15 +315,24 @@ def _resolve_analysis_folder(
 
 
 def _load_tttrs(df, data_dir: pathlib.Path, file_type: str):
-    """Load TTTR objects, trying the folder and its parent for each file."""
+    """Load TTTR objects referenced by the burst table.
+
+    ChiSurf burst outputs are commonly nested as
+    ``<tttr-folder>/<analysis-folder>/bi4_bur/*.bur`` while the ``First File``
+    column stores only ``m000.spc``.  Search upward from the ``.bur`` directory
+    so those relative references resolve back to the original TTTR folder.
+    """
     import tttrlib
 
+    data_dir = pathlib.Path(data_dir)
     tttrs: dict[str, Any] = {}
     for ff in df["First File"].unique():
+        if _is_empty_tttr_reference(ff):
+            continue
         if ff in tttrs:
             continue
         cand = pathlib.Path(ff)
-        for path in (cand, data_dir / ff, data_dir.parent / ff):
+        for path in _tttr_path_candidates(cand, data_dir):
             if path.exists():
                 ftype = file_type
                 if not ftype or ftype.lower() == "auto":
@@ -328,6 +342,26 @@ def _load_tttrs(df, data_dir: pathlib.Path, file_type: str):
     if not tttrs:
         raise FileNotFoundError("could not locate any TTTR file referenced by the .bur data")
     return tttrs
+
+
+def _is_empty_tttr_reference(value: Any) -> bool:
+    """Return ``True`` for placeholder ``First File`` values in empty .bur rows."""
+    text = str(value).strip()
+    return text == "" or text == "0" or text.lower() == "nan"
+
+
+def _tttr_path_candidates(candidate: pathlib.Path, data_dir: pathlib.Path):
+    """Yield plausible filesystem locations for a ``First File`` value."""
+    if candidate.is_absolute():
+        yield candidate
+        return
+
+    seen: set[pathlib.Path] = set()
+    for parent in (data_dir, *data_dir.parents):
+        path = parent / candidate
+        if path not in seen:
+            seen.add(path)
+            yield path
 
 
 def _macro_resolution(tttrs) -> float:
