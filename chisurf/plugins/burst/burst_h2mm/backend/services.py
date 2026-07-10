@@ -102,6 +102,24 @@ def run_analysis(
         return_meta=True,
     )
 
+    # The per-EM-map cache cost scales with the number of *unique* inter-photon
+    # Δt; unscaled fine-resolution macro times can make this huge and the fit
+    # slow. Point the user at the time-scale lever.
+    n_slots = int(data.unique_dt.shape[0])
+    if n_slots > 20000:
+        try:
+            from chisurf import logging as _log
+
+            _log.warning(
+                "H2MM: %d unique inter-photon Δt (time_scale=%d) — each EM map "
+                "rebuilds that many propagators, so fits will be slow. Increase "
+                "'Macro-time scale' (e.g. to %d) to speed up ~%.0fx.",
+                n_slots, int(settings.time_scale), int(settings.time_scale) * 100,
+                n_slots / 3000.0,
+            )
+        except Exception:
+            pass
+
     acceptor = 1 if len(stream_defs) > 1 else 0
     ana = analyze(
         data,

@@ -57,9 +57,9 @@ class _FitCancelled(Exception):
 
 
 class _FitSignals(QObject):
-    """Cross-thread progress signal carrying ``(done, total, fits)``."""
+    """Cross-thread progress signal carrying ``(done, total, fits_or_None)``."""
 
-    tick = Signal(int, int, object)
+    tick = Signal(float, int, object)
 
 _STATE_COLORS = [
     "#4e79a7", "#f28e2b", "#59a14f", "#e15759",
@@ -396,12 +396,20 @@ class H2mmTool(QMainWindow):
         # Progress signal: emitted from the worker thread, handled on the UI thread.
         self._fit_signals = _FitSignals()
         self._fit_signals.tick.connect(self._on_fit_progress)
+        self._last_emit = 0.0
 
         def _progress(done, total_, fits):
             if self._cancel.is_set():
                 raise _FitCancelled()
-            # Hand a snapshot to the UI thread (queued connection).
-            self._fit_signals.tick.emit(done, total_, list(fits))
+            now = time.perf_counter()
+            fit_done = float(done).is_integer()  # a state-count fit just finished
+            if fit_done:
+                # Emit a fits snapshot so the live plots update.
+                self._fit_signals.tick.emit(float(done), total_, list(fits))
+                self._last_emit = now
+            elif now - self._last_emit > 0.1:    # throttle per-iteration ticks to ~10 Hz
+                self._fit_signals.tick.emit(float(done), total_, None)
+                self._last_emit = now
 
         # run_analysis(...) -> (result, bundle); Worker emits it on `result`.
         worker = Worker(
@@ -415,19 +423,39 @@ class H2mmTool(QMainWindow):
 
     # ── fit worker callbacks (UI thread) ─────────────────────────────
 
-    def _on_fit_progress(self, done: int, total: int, fits: object):
-        """Update the progress bar (with ETA) and the live plots per state count."""
+    @staticmethod
+    def _fmt_eta(seconds: float) -> str:
+        """Human-readable ETA string."""
+        if seconds < 90:
+            return f"{seconds:.0f} s"
+        if seconds < 3600:
+            return f"{seconds / 60:.1f} min"
+        return f"{seconds / 3600:.1f} h"
+
+    def _on_fit_progress(self, done: float, total: int, fits: object):
+        """Update the progress bar (with ETA); refresh live plots on fit completion.
+
+        ``done`` is fractional — completed state-count fits plus the fraction of
+        the current (possibly long) fit — so the bar advances smoothly even while
+        a single fit runs for minutes.  ``fits`` is a snapshot when a fit finished,
+        else ``None`` (progress-only tick).
+        """
         pct = int(90 * done / max(total, 1))  # last 10% reserved for finalisation
         elapsed = time.perf_counter() - self._fit_t0
-        eta = elapsed * (total - done) / done if done > 0 else 0.0
         try:
             self._prog.setValue(pct)
-            self._prog.setLabelText(
-                f"Fitting … {done}/{total} state counts   (ETA {eta:0.0f} s)"
-            )
+            if done > 0.05:
+                eta = elapsed * (total - done) / done
+                self._prog.setLabelText(
+                    f"Fitting … {int(done)}/{total} state counts done   "
+                    f"({pct}%, ETA {self._fmt_eta(eta)})"
+                )
+            else:
+                self._prog.setLabelText("Fitting … (estimating ETA)")
         except Exception:
             pass
-        self._plot_scan_live(fits)
+        if fits is not None:
+            self._plot_scan_live(fits)
 
     def _on_fit_result(self, payload):
         """Store results, finalise plots, and close the progress dialog."""

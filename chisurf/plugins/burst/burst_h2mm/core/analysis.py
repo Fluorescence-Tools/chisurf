@@ -136,10 +136,20 @@ def scan_states(
     best_score = np.inf
     worse = 0
     for k in ordered:
+        # Per-EM-map progress so a long single fit still advances the bar:
+        # overall "done" = completed fits + fraction of the current one.
+        on_iter = None
+        if progress is not None:
+            completed = len(fits)
+
+            def on_iter(done, mx, _c=completed):
+                progress(_c + done / max(mx, 1), total, fits)
+
         model = fit_one(
             data, k, engine,
             surrogates=surrogates, refine_iters=refine_iters,
             n_restarts=n_restarts, max_iter=max_iter, tol=tol, seed=seed,
+            on_iter=on_iter,
         )
         _, icl = viterbi(model, data)
         fits.append(

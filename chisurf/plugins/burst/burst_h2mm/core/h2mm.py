@@ -729,7 +729,7 @@ def _project(vec: np.ndarray, n: int, p: int, min_trans: float) -> np.ndarray:
     return _pack(prior, trans, obs)
 
 
-def _plain_em(em_step, prior, trans, obs, max_iter, tol):
+def _plain_em(em_step, prior, trans, obs, max_iter, tol, on_iter=None):
     """Classic Baum-Welch loop: iterate the EM map until the logL increment < ``tol``."""
     prev_ll = -np.inf
     last_ll = -np.inf
@@ -737,6 +737,8 @@ def _plain_em(em_step, prior, trans, obs, max_iter, tol):
     it = 0
     for it in range(1, max_iter + 1):
         prior, trans, obs, last_ll = em_step(prior, trans, obs)
+        if on_iter is not None:
+            on_iter(it, max_iter)
         if last_ll - prev_ll < tol and it > 1:
             converged = True
             prev_ll = last_ll
@@ -745,7 +747,7 @@ def _plain_em(em_step, prior, trans, obs, max_iter, tol):
     return prior, trans, obs, last_ll, it, converged
 
 
-def _squarem(em_step, prior, trans, obs, n, p, max_iter, tol, min_trans):
+def _squarem(em_step, prior, trans, obs, n, p, max_iter, tol, min_trans, on_iter=None):
     r"""SQUAREM-accelerated EM (Varadhan & Roland 2008, scheme S3).
 
     Each outer step takes two ordinary EM maps ``θ→p1→p2``, forms the squared
@@ -802,6 +804,8 @@ def _squarem(em_step, prior, trans, obs, n, p, max_iter, tol, min_trans):
             theta, last_ll = p2, l1
         else:
             theta, last_ll = p3, l2
+        if on_iter is not None:
+            on_iter(evals, max_iter)
         if last_ll - prev_ll < tol and evals > 2:
             converged = True
             break
@@ -819,6 +823,7 @@ def optimize(
     min_trans: float = 1e-12,
     accelerate: bool = True,
     single_precision: bool = False,
+    on_iter=None,
 ) -> H2mmModel:
     """Baum-Welch (EM) optimisation of an H2MM model.
 
@@ -847,6 +852,8 @@ def optimize(
         (~1e-2 at typical magnitudes), so it does *not* meet the ~1e-9 reference
         tolerance and the convergence threshold is floored accordingly.  Use for
         exploratory fits on very large datasets, not for final numbers.
+    on_iter : callable, optional
+        Called ``on_iter(done, max_iter)`` after each EM map (for progress bars).
 
     Returns
     -------
@@ -915,11 +922,11 @@ def optimize(
 
     if accelerate:
         prior, trans, obs, last_ll, it, converged = _squarem(
-            em_step, prior, trans, obs, n, p, max_iter, tol, min_trans
+            em_step, prior, trans, obs, n, p, max_iter, tol, min_trans, on_iter=on_iter
         )
     else:
         prior, trans, obs, last_ll, it, converged = _plain_em(
-            em_step, prior, trans, obs, max_iter, tol
+            em_step, prior, trans, obs, max_iter, tol, on_iter=on_iter
         )
 
     return H2mmModel(
@@ -1146,6 +1153,7 @@ def fit_states(
     surrogate=None,
     refine_iters: int = 0,
     single_precision: bool = False,
+    on_iter=None,
 ) -> H2mmModel:
     """Fit an ``n_states`` H2MM model, keeping the best of ``n_restarts`` runs.
 
@@ -1173,6 +1181,9 @@ def fit_states(
         ``surrogate``).
     single_precision : bool
         Run EM in the approximate ``float32`` fast mode (see :func:`optimize`).
+    on_iter : callable, optional
+        Called ``on_iter(done, total)`` per EM map (across all restarts) for a
+        progress bar.
 
     Returns
     -------
@@ -1187,13 +1198,20 @@ def fit_states(
         )
 
     best: H2mmModel | None = None
-    for r in range(max(n_restarts, 1)):
+    restarts = max(n_restarts, 1)
+    for r in range(restarts):
         init = factory_model(
             n_states, data.n_streams,
             seed=None if seed is None else seed + r,
         )
+        # Report progress across all restarts as one 0..(restarts·max_iter) range.
+        oi = None
+        if on_iter is not None:
+            def oi(it, mx, _r=r):
+                on_iter(_r * mx + it, restarts * mx)
         fit = optimize(
-            init, data, max_iter=max_iter, tol=tol, single_precision=single_precision
+            init, data, max_iter=max_iter, tol=tol,
+            single_precision=single_precision, on_iter=oi,
         )
         if best is None or fit.loglik > best.loglik:
             best = fit

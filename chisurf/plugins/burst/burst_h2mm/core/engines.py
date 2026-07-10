@@ -55,6 +55,7 @@ def fit_one(
     max_iter: int = 500,
     tol: float = 1e-7,
     seed: int = 0,
+    on_iter=None,
 ) -> H2mmModel:
     """Fit a single ``n_states`` model with the selected ``engine``.
 
@@ -73,6 +74,8 @@ def fit_one(
         EM polish maps for ``surrogate-refine``.
     n_restarts, max_iter, tol, seed
         EM parameters (passed to :func:`~.h2mm.fit_states`).
+    on_iter : callable, optional
+        Per-EM-map progress callback ``on_iter(done, total)`` (EM engines only).
 
     Returns
     -------
@@ -97,4 +100,5 @@ def fit_one(
         tol=tol,
         seed=seed,
         single_precision=(engine == "em-float32"),
+        on_iter=on_iter,
     )
