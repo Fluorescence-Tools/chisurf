@@ -385,6 +385,13 @@ BURST_PANELS = [
         "description": "Resolve sub-burst FRET dynamics with photon-by-photon HMM.",
         "factory": _burst_h2mm,
         "role": "h2mm",
+        "experimental": True,
+        "experimental_message": (
+            "Experimental. The numba/surrogate H2MM engine is A/B-validated against "
+            "the reference H2MM_C on simulated data, but not yet on measured "
+            "experimental smFRET; the default engine is approximate (float32). "
+            "Treat results as preliminary."
+        ),
     },
     {
         "name": "7. Browser",

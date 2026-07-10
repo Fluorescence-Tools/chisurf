@@ -24,6 +24,15 @@ def test_burst_workflow_panel_order() -> None:
     assert BURST_PANELS[7]["separator"] is True
 
 
+def test_h2mm_panel_is_flagged_experimental() -> None:
+    """The H2MM step carries the experimental flag so the nav shows ⚠ + banner."""
+    from chisurf.plugins.burst.burst_analysis.gui.tool import BURST_PANELS
+
+    h2mm = next(p for p in BURST_PANELS if p.get("role") == "h2mm")
+    assert h2mm.get("experimental") is True
+    assert h2mm.get("experimental_message")
+
+
 def test_workflow_context_payload_is_json_ready(tmp_path: Path) -> None:
     """Workflow context serializes paths and MFDB artifact handoff data."""
     from chisurf.plugins.burst.burst_analysis.gui.tool import BurstWorkflowContext
